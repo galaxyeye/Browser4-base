@@ -100,6 +100,13 @@ open class BrowserPerceptiveAgent constructor(
     protected val closed = AtomicBoolean(false)
     val isClosed: Boolean get() = closed.get()
 
+    /**
+     * Tracks whether the agent is currently executing a task.
+     * The companionAgent can only execute one task at a time.
+     */
+    protected val running = AtomicBoolean(false)
+    val isRunning: Boolean get() = running.get()
+
     // A dedicated scope for all agent work so close() can cancel promptly
     protected val agentJob = SupervisorJob()
     protected val agentScope = CoroutineScope(Dispatchers.Default + agentJob)
@@ -147,10 +154,17 @@ open class BrowserPerceptiveAgent constructor(
      * Run an autonomous loop (observe -> act -> ...) attempting to fulfill the user goal described
      * in the ActionOptions. Applies retry and timeout strategies; records structured traces but keeps
      * stateHistory focused on executed tool actions only.
+     *
+     * @throws PerceptiveAgentError.AgentBusyException if the agent is already running a task.
      */
     override suspend fun run(action: ActionOptions): AgentHistory {
         if (isClosed) {
             return stateHistory
+        }
+
+        // Check if agent is already running - companionAgent can only execute one task at a time
+        if (!running.compareAndSet(false, true)) {
+            throw PerceptiveAgentError.AgentBusyException("Agent is busy executing another task. The companionAgent can only execute one task at a time.")
         }
 
         try {
@@ -158,6 +172,7 @@ open class BrowserPerceptiveAgent constructor(
         } catch (_: CancellationException) {
             logger.info("Cancelled due to cancellation")
         } finally {
+            running.set(false)
             stateManager.writeProcessTrace()
         }
 
