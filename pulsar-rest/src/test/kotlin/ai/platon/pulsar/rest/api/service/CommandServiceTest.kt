@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ContextConfiguration
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -391,7 +392,7 @@ class CommandServiceTest : MockEcServerTestBase() {
         val agentAsBrowserPerceptiveAgent = agent as? ai.platon.pulsar.agentic.BrowserPerceptiveAgent
         if (agentAsBrowserPerceptiveAgent != null) {
             // Initially, the agent should not be running
-            assertTrue { !agentAsBrowserPerceptiveAgent.isRunning }
+            assertFalse(agentAsBrowserPerceptiveAgent.isRunning)
         }
     }
 }
