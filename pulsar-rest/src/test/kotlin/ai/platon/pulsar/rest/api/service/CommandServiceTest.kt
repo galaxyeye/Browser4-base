@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ContextConfiguration
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -375,6 +376,24 @@ class CommandServiceTest : MockEcServerTestBase() {
 
         // currentAgentState may or may not be set depending on timing
         // We just verify that the agentHistory reference is available for tracking
+    }
+
+    @Test
+    fun `test companionAgent isRunning property is accessible`() {
+        // Access the agent via commandService.session
+        val agentSession = commandService.session
+        assertNotNull(agentSession)
+
+        val agent = agentSession.companionAgent
+        assertNotNull(agent)
+
+        // Verify that the companionAgent's isRunning property is accessible
+        // Note: BrowserPerceptiveAgent exposes isRunning as a public property
+        val agentAsBrowserPerceptiveAgent = agent as? ai.platon.pulsar.agentic.BrowserPerceptiveAgent
+        if (agentAsBrowserPerceptiveAgent != null) {
+            // Initially, the agent should not be running
+            assertFalse(agentAsBrowserPerceptiveAgent.isRunning)
+        }
     }
 }
 

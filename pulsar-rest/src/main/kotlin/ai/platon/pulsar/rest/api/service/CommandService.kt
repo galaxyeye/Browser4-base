@@ -1,6 +1,7 @@
 package ai.platon.pulsar.rest.api.service
 
 import ai.platon.pulsar.agentic.AgenticSession
+import ai.platon.pulsar.agentic.ai.agent.detail.PerceptiveAgentError
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
@@ -160,6 +161,8 @@ class CommandService(
      *
      * The status is updated with the agent's state history reference, allowing callers
      * to access the latest agent state via [CommandStatus.currentAgentState] during execution.
+     *
+     * @throws PerceptiveAgentError.AgentBusyException if the agent is already running a task.
      */
     private suspend fun executeAgentCommandInternal(plainCommand: String, status: CommandStatus) {
         try {
@@ -177,6 +180,13 @@ class CommandService(
             status.message = resultSummary
             status.ensureCommandResult().summary = resultSummary
             status.refresh(ResourceStatus.SC_OK)
+        } catch (e: PerceptiveAgentError.AgentBusyException) {
+            // Agent is busy executing another task - use 409 Conflict status
+            logger.warn("Agent busy, cannot execute command: {}", plainCommand)
+            status.failed(ResourceStatus.SC_CONFLICT)
+            status.message = e.message
+            // Re-throw the exception so callers can handle it appropriately
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to execute agent command: {}", plainCommand, e)
             status.failed(ResourceStatus.SC_EXPECTATION_FAILED)

@@ -57,6 +57,12 @@ sealed class PerceptiveAgentError(message: String, cause: Throwable? = null) : E
     class TimeoutError(message: String, cause: Throwable? = null) : PerceptiveAgentError(message, cause)
     class ResourceExhaustedError(message: String, cause: Throwable? = null) : PerceptiveAgentError(message, cause)
     class ValidationError(message: String, cause: Throwable? = null) : PerceptiveAgentError(message, cause)
+    /**
+     * Thrown when attempting to execute a new task while the agent is already running a task.
+     * The companionAgent can only execute one task at a time.
+     */
+    class AgentBusyException(message: String = "Agent is busy executing another task", cause: Throwable? = null) :
+        PerceptiveAgentError(message, cause)
 }
 
 /**
