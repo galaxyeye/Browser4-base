@@ -5,18 +5,20 @@ param(
     [string]$message = ""
 )
 
-# Find VERSION file
+$ErrorActionPreference = "Stop"
+
+# 🔍 Find the first parent directory containing the VERSION file
 $AppHome=(Get-Item -Path $MyInvocation.MyCommand.Path).Directory
 while ($AppHome -ne $null -and !(Test-Path "$AppHome/VERSION")) {
     $AppHome = Split-Path -Parent $AppHome
 }
-
-if (!$AppHome) {
-    Write-Error "VERSION file not found"
-    exit 1
-}
-
 Set-Location $AppHome
+
+# Import common utility script
+. $AppHome\bin\common\Util.ps1
+
+Fix-Encoding-UTF8
+
 Write-Host "Working in: $AppHome"
 
 # Check if we're in a git repo
@@ -98,7 +100,7 @@ if ($prevTag) {
     Write-Host "`nChanges since $prevTag :"
     $changes = git log --oneline --no-merges "$prevTag..HEAD"
     if ($changes) {
-        $changes | ForEach-Object { Write-Host "  • $_" }
+        $changes | ForEach-Object { Write-Host "  - $_" }
     } else {
         Write-Host "  No changes"
     }
@@ -135,13 +137,13 @@ try {
 
     # Push tag to remote
     git push $remote $newTag
-    Write-Host "✅ Successfully pushed tag: $newTag"
+    Write-Host "Successfully pushed tag: $newTag"
 
     # Try to show GitHub URL
     $remoteUrl = git config --get remote.$remote.url
     if ($remoteUrl -match 'github\.com[:/](.+?)(?:\.git)?$') {
         $repo = $matches[1]
-        Write-Host "🔗 Release URL: https://github.com/$repo/releases/tag/$newTag"
+        Write-Host "Release URL: https://github.com/$repo/releases/tag/$newTag"
     }
 
     Write-Output $newTag
@@ -149,4 +151,3 @@ try {
     Write-Error "Failed to create/push tag: $_"
     exit 1
 }
-
