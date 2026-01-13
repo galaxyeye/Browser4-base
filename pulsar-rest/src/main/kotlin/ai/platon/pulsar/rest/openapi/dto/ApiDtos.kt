@@ -1,5 +1,6 @@
 package ai.platon.pulsar.rest.openapi.dto
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
@@ -59,12 +60,13 @@ data class ErrorResponse(
     )
 }
 
-/**
- * Request to set/navigate to a URL.
- */
-data class SetUrlRequest(
-    val url: String
-)
+ /**
+  * Request to set/navigate to a URL.
+  */
+ data class SetUrlRequest @JsonCreator constructor(
+     @param:JsonProperty("url")
+     val url: String
+ )
 
 /**
  * Response containing a URL.
