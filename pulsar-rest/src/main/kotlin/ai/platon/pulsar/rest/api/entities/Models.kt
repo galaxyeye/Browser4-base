@@ -279,6 +279,14 @@ data class CommandStatus(
     val currentAgentState: AgentState?
         get() = agentHistory?.lastOrNull()
 
+    /**
+     * The server-side event handlers reference for tracking server-side events during command execution.
+     * This is set when executing commands and provides access to the event flow.
+     * It is excluded from JSON serialization as it's only used for internal event streaming.
+     */
+    @get:JsonIgnore
+    var serverSideEventHandlers: ai.platon.pulsar.skeleton.crawl.ServerSideEventHandlers? = null
+
     companion object {
         fun notFound(id: String) = CommandStatus(id, ResourceStatus.SC_NOT_FOUND, state = "done")
 

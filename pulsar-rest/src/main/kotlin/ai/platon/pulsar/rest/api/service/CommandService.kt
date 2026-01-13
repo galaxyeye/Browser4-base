@@ -213,20 +213,54 @@ class CommandService(
 
     fun commandStatusFlow(id: String): Flow<CommandStatus> = flow {
         var lastModifiedTime = Instant.EPOCH
-        do {
-            delay(FLOW_POLLING_INTERVAL)
-
-            val status = commandStatusCache[id] ?: CommandStatus.notFound(id)
-            if (status.refreshed(lastModifiedTime)) {
-                emit(status)
-                lastModifiedTime = status.lastModifiedTime
+        val status = commandStatusCache[id] ?: CommandStatus.notFound(id)
+        
+        // If there are server-side event handlers, merge their events into the status flow
+        val serverSideEventHandlers = status.serverSideEventHandlers
+        
+        if (serverSideEventHandlers != null) {
+            // Collect server-side events and emit status updates when events occur
+            val eventJob = kotlinx.coroutines.launch {
+                serverSideEventHandlers.eventFlow.collect { event ->
+                    // Update status with event information
+                    status.refresh(event.eventType)
+                    status.event = event.eventType
+                }
             }
+            
+            try {
+                do {
+                    delay(FLOW_POLLING_INTERVAL)
 
-            if (status.isDone) {
-                // emit a final event, it's OK to emit a duplicate event
-                emit(status)
+                    if (status.refreshed(lastModifiedTime)) {
+                        emit(status)
+                        lastModifiedTime = status.lastModifiedTime ?: Instant.EPOCH
+                    }
+
+                    if (status.isDone) {
+                        // emit a final event, it's OK to emit a duplicate event
+                        emit(status)
+                    }
+                } while (!status.isDone)
+            } finally {
+                eventJob.cancel()
             }
-        } while (!status.isDone)
+        } else {
+            // Fallback to original polling behavior
+            do {
+                delay(FLOW_POLLING_INTERVAL)
+
+                if (status.refreshed(lastModifiedTime)) {
+                    emit(status)
+                    lastModifiedTime = status.lastModifiedTime ?: Instant.EPOCH
+                }
+
+                if (status.isDone) {
+                    // emit a final event, it's OK to emit a duplicate event
+                    emit(status)
+                }
+            } while (!status.isDone)
+        }
     }
 
     /**
@@ -280,7 +314,21 @@ class CommandService(
     ): CommandStatus {
         try {
             status.refresh(ResourceStatus.SC_PROCESSING)
-            executeCommandStepByStep(request, status, eventHandlers)
+            
+            // Create and wire up ServerSideEventHandlers for this command
+            val serverSideEventHandlers = ai.platon.pulsar.skeleton.crawl.DefaultServerSideEventHandlers()
+            status.serverSideEventHandlers = serverSideEventHandlers
+            
+            // Set the global server-side event handlers
+            val previousServerSideEventHandlers = ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers.serverSideEventHandlers
+            ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers.serverSideEventHandlers = serverSideEventHandlers
+            
+            try {
+                executeCommandStepByStep(request, status, eventHandlers)
+            } finally {
+                // Restore previous server-side event handlers
+                ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers.serverSideEventHandlers = previousServerSideEventHandlers
+            }
         } catch (e: Exception) {
             status.failed(ResourceStatus.SC_EXPECTATION_FAILED)
         } finally {
