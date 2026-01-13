@@ -105,12 +105,52 @@ To add a custom icon:
 3. No installation required
 4. Size: ~500MB (app + bundled JRE)
 
-### Windows Installer
+### Windows Installer (EXE)
 1. Distribute `Browser4-4.4.0.exe`
 2. Users run the installer
 3. Creates Start Menu shortcuts
 4. Adds to Programs and Features
 5. Professional installation experience
+
+### Windows Installer (MSI) - Optional
+
+MSI format is an alternative to EXE, better suited for enterprise deployment:
+
+**Advantages:**
+- Native Windows Installer format
+- Group Policy deployment support
+- Silent installation: `msiexec /i Browser4.msi /quiet`
+- Better for automated/enterprise deployments
+- SCCM/MDT integration
+
+**To build MSI instead of EXE:**
+
+Add a new execution in `browser4/browser4-agents/pom.xml` under the `win-jpackage` profile:
+
+```xml
+<execution>
+    <id>jpackage-installer-msi</id>
+    <phase>package</phase>
+    <goals>
+        <goal>exec</goal>
+    </goals>
+    <configuration>
+        <executable>jpackage</executable>
+        <workingDirectory>${project.basedir}</workingDirectory>
+        <arguments>
+            <argument>--type</argument>
+            <argument>msi</argument>
+            <!-- Copy remaining arguments from exe execution -->
+        </arguments>
+        <skip>${jpackage.installer.skip}</skip>
+    </configuration>
+</execution>
+```
+
+**Which format to choose:**
+- **EXE**: General users, simple double-click installation
+- **MSI**: Enterprise deployment, automation, Group Policy
+- **Both**: Provide both options for different use cases
 
 ## Technical Details
 

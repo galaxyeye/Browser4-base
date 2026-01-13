@@ -42,11 +42,24 @@ mvnw package -Pwin-jpackage -Djpackage.installer.skip=false -DskipTests
 
 **Output**: `target/jpackage/dist/Browser4-4.4.0.exe`
 
-This creates a Windows installer that:
+This creates a Windows EXE installer that:
 - Installs the application to Program Files
 - Creates Start Menu shortcuts
 - Provides Add/Remove Programs integration
 - Includes automatic updates support
+
+### Alternative: MSI Installer (Enterprise Deployment)
+
+For enterprise environments that prefer MSI format:
+- Better Group Policy deployment support
+- Silent installation capability: `msiexec /i Browser4.msi /quiet`
+- SCCM/MDT integration
+
+To build MSI instead of EXE, modify the pom.xml `jpackage-installer-exe` execution and change `<argument>exe</argument>` to `<argument>msi</argument>`. Both formats use WiX Toolset and have similar features.
+
+**When to use:**
+- **EXE**: General users, simple installation
+- **MSI**: Enterprise deployment, automation, Group Policy
 
 ## Configuration Options
 
