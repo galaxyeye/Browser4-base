@@ -40,33 +40,37 @@
 
 ### 模块结构
 ```
-sdks/kotlin-sdk/
-├── src/
-│   ├── main/kotlin/ai/platon/pulsar/sdk/
-│   │   ├── PulsarClient.kt
-│   │   ├── WebDriver.kt
-│   │   ├── AgenticSession.kt
-│   │   └── Models.kt
-│   └── test/
-│       ├── kotlin/ai/platon/pulsar/sdk/
-│       │   ├── unit/                              # 单元测试（无需服务器）
-│       │   │   ├── PulsarClientTest.kt
-│       │   │   ├── WebDriverTest.kt
-│       │   │   └── SessionTest.kt
-│       │   └── integration/                       # 集成测试（需要服务器）
-│       │       ├── KotlinSdkIntegrationTestBase.kt
-│       │       ├── PulsarClientIntegrationTest.kt
-│       │       ├── WebDriverIntegrationTest.kt
-│       │       ├── PulsarSessionIntegrationTest.kt
-│       │       ├── AgenticSessionIntegrationTest.kt
-│       │       ├── server/
-│       │       │   ├── PulsarRestServerApplication.kt
-│       │       │   └── TestServerConfiguration.kt
-│       │       └── util/
-│       │           ├── TestUrls.kt
-│       │           └── TestHelpers.kt
-│       └── resources/
-│           └── application-sdk-integration-test.properties
+sdks/
+├── kotlin-sdk/                                   # SDK 模块（保持干净）
+│   ├── pom.xml                                   # 最小依赖，仅 SDK 核心
+│   └── src/
+│       ├── main/kotlin/ai/platon/pulsar/sdk/
+│       │   ├── PulsarClient.kt
+│       │   ├── WebDriver.kt
+│       │   ├── AgenticSession.kt
+│       │   └── Models.kt
+│       └── test/kotlin/ai/platon/pulsar/sdk/    # 仅单元测试
+│           ├── PulsarClientTest.kt
+│           ├── WebDriverTest.kt
+│           └── SessionTest.kt
+│
+└── kotlin-sdk-tests/                            # 独立测试模块
+    ├── pom.xml                                   # 包含所有测试依赖
+    └── src/test/
+        ├── kotlin/ai/platon/pulsar/sdk/integration/
+        │   ├── KotlinSdkIntegrationTestBase.kt
+        │   ├── PulsarClientIntegrationTest.kt
+        │   ├── WebDriverIntegrationTest.kt
+        │   ├── PulsarSessionIntegrationTest.kt
+        │   ├── AgenticSessionIntegrationTest.kt
+        │   ├── server/
+        │   │   ├── PulsarRestServerApplication.kt
+        │   │   └── TestServerConfiguration.kt
+        │   └── util/
+        │       ├── TestUrls.kt
+        │       └── TestHelpers.kt
+        └── resources/
+            └── application-sdk-integration-test.properties
 ```
 
 ### 测试基础类
@@ -833,20 +837,26 @@ object TestHelpers {
 ### 执行命令
 
 ```bash
-# 运行所有测试（包括单元测试和集成测试）
+# 运行 SDK 单元测试
+cd sdks/kotlin-sdk
 mvn test
 
-# 仅运行单元测试（默认）
-mvn test
+# 运行集成测试（在独立测试模块）
+cd sdks/kotlin-sdk-tests
+mvn test -DrunIntegrationTests=true
 
-# 运行集成测试
-mvn test -Pintegration-test
+# 运行所有测试（包括 AI）
+cd sdks/kotlin-sdk-tests
+mvn test -DrunFullTests=true
+
+# 从项目根目录运行
+mvn test -pl sdks/kotlin-sdk-tests -DrunIntegrationTests=true
 
 # 运行特定标签的测试
-mvn test -Dgroups="IntegrationTest,!RequiresAI"
+mvn test -pl sdks/kotlin-sdk-tests -Dgroups="IntegrationTest,!Slow"
 
 # 跳过慢速测试
-mvn test -Dgroups="IntegrationTest,!Slow"
+mvn test -pl sdks/kotlin-sdk-tests -Dgroups="IntegrationTest,!Slow"
 ```
 
 ### 测试顺序
@@ -875,13 +885,15 @@ mvn test -Dgroups="IntegrationTest,!Slow"
 
 ## 依赖和构建配置
 
-### pom.xml 修改
+### 模块分离策略
 
-在 `sdks/kotlin-sdk/pom.xml` 中添加测试依赖：
+为了保持 SDK 的 pom.xml 干净和最小化，集成测试被提取到独立模块 `kotlin-sdk-tests`：
+
+#### kotlin-sdk/pom.xml（保持最小）
 
 ```xml
 <dependencies>
-    <!-- 现有依赖 -->
+    <!-- 仅 SDK 核心依赖 -->
     <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib</artifactId>
@@ -893,35 +905,7 @@ mvn test -Dgroups="IntegrationTest,!Slow"
         <version>2.10.1</version>
     </dependency>
 
-    <!-- 集成测试依赖 -->
-    <dependency>
-        <groupId>ai.platon.pulsar</groupId>
-        <artifactId>pulsar-rest</artifactId>
-        <version>${pulsar.version}</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>ai.platon.pulsar</groupId>
-        <artifactId>pulsar-tests-common</artifactId>
-        <version>${pulsar.version}</version>
-        <scope>test</scope>
-    </dependency>
-
-    <!-- Spring Boot Test -->
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-test</artifactId>
-        <version>${spring.boot.version}</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-        <version>${spring.boot.version}</version>
-        <scope>test</scope>
-    </dependency>
-
-    <!-- 测试框架 -->
+    <!-- 单元测试依赖（轻量级） -->
     <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-test-junit5</artifactId>
@@ -935,6 +919,73 @@ mvn test -Dgroups="IntegrationTest,!Slow"
         <scope>test</scope>
     </dependency>
 </dependencies>
+```
+
+#### kotlin-sdk-tests/pom.xml（包含所有测试依赖）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ai.platon.pulsar</groupId>
+    <artifactId>pulsar-sdk-kotlin-tests</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>Pulsar Kotlin SDK Integration Tests</name>
+
+    <properties>
+        <!-- 默认跳过测试，需要显式运行 -->
+        <skipTests>true</skipTests>
+        <kotlin.version>2.2.21</kotlin.version>
+        <pulsar.version>4.5.0-SNAPSHOT</pulsar.version>
+        <spring.boot.version>3.2.1</spring.boot.version>
+    </properties>
+
+    <dependencies>
+        <!-- SDK 依赖 -->
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-sdk-kotlin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Pulsar 测试依赖 -->
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-rest</artifactId>
+            <version>${pulsar.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-tests-common</artifactId>
+            <version>${pulsar.version}</version>
+        </dependency>
+
+        <!-- Spring Boot Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <!-- 测试框架 -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.1</version>
+        </dependency>
+    </dependencies>
+</project>
 ```
 
 ### Maven Surefire 配置
@@ -984,23 +1035,31 @@ mvn test -Dgroups="IntegrationTest,!Slow"
 </build>
 ```
 
-### Maven Profile
+### Maven Profile（在 kotlin-sdk-tests/pom.xml）
 
 ```xml
 <profiles>
-    <!-- 集成测试 Profile -->
+    <!-- 运行集成测试 Profile -->
     <profile>
-        <id>integration-test</id>
+        <id>run-integration-tests</id>
+        <activation>
+            <property>
+                <name>runIntegrationTests</name>
+                <value>true</value>
+            </property>
+        </activation>
+        <properties>
+            <skipTests>false</skipTests>
+        </properties>
         <build>
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
-                        <!-- 运行集成测试 -->
+                        <!-- 运行集成测试，排除 AI 测试 -->
                         <groups>IntegrationTest</groups>
                         <excludedGroups>RequiresAI</excludedGroups>
-                        <!-- 更长的超时时间 -->
                         <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
                     </configuration>
                 </plugin>
@@ -1010,7 +1069,16 @@ mvn test -Dgroups="IntegrationTest,!Slow"
 
     <!-- 完整测试（包括 AI 功能） -->
     <profile>
-        <id>full-test</id>
+        <id>run-full-tests</id>
+        <activation>
+            <property>
+                <name>runFullTests</name>
+                <value>true</value>
+            </property>
+        </activation>
+        <properties>
+            <skipTests>false</skipTests>
+        </properties>
         <build>
             <plugins>
                 <plugin>
@@ -1028,20 +1096,27 @@ mvn test -Dgroups="IntegrationTest,!Slow"
 </profiles>
 ```
 
-### 属性配置
+### 执行命令
 
-```xml
-<properties>
-    <!-- Pulsar 版本 -->
-    <pulsar.version>4.5.0-SNAPSHOT</pulsar.version>
-    
-    <!-- Spring Boot 版本 -->
-    <spring.boot.version>3.2.1</spring.boot.version>
-    
-    <!-- 其他属性 -->
-    <javaVersion>17</javaVersion>
-    <kotlinVersion>2.2.21</kotlinVersion>
-</properties>
+```bash
+# 运行 SDK 单元测试
+cd sdks/kotlin-sdk
+mvn test
+
+# 运行集成测试（在独立模块）
+cd sdks/kotlin-sdk-tests
+mvn test -DrunIntegrationTests=true
+
+# 或使用 Profile
+mvn test -Prun-integration-tests
+
+# 运行所有测试（包括 AI）
+mvn test -DrunFullTests=true
+# 或
+mvn test -Prun-full-tests
+
+# 在项目根目录运行所有 SDK 相关测试
+mvn test -pl sdks/kotlin-sdk,sdks/kotlin-sdk-tests
 ```
 
 ---
@@ -1317,82 +1392,88 @@ echo -e "${GREEN}=== All tests completed successfully ===${NC}"
 
 ### 第一阶段：基础设施（优先级：高）
 
-1. ✅ **创建测试目录结构**
-   - [ ] `integration/` 目录
+1. ✅ **创建独立测试模块**
+   - [ ] 创建 `sdks/kotlin-sdk-tests/` 目录
+   - [ ] 创建 `kotlin-sdk-tests/pom.xml`
+   - [ ] 配置模块依赖（SDK + pulsar-rest + Spring Boot Test）
+
+2. ✅ **创建测试目录结构**
+   - [ ] `src/test/kotlin/ai/platon/pulsar/sdk/integration/`
    - [ ] `server/` 子目录
    - [ ] `util/` 子目录
+   - [ ] `src/test/resources/`
 
-2. ✅ **实现测试基类**
+3. ✅ **实现测试基类**
    - [ ] `KotlinSdkIntegrationTestBase`
    - [ ] 服务器生命周期管理
    - [ ] 客户端创建和清理
 
-3. ✅ **配置测试服务器**
+4. ✅ **配置测试服务器**
    - [ ] `PulsarRestServerApplication`
    - [ ] `TestServerConfiguration`
    - [ ] `application-sdk-integration-test.properties`
 
-4. ✅ **更新 pom.xml**
-   - [ ] 添加测试依赖
-   - [ ] 配置 Surefire 插件
-   - [ ] 创建 Maven Profile
+5. ✅ **配置 Maven Profile**
+   - [ ] `run-integration-tests` Profile
+   - [ ] `run-full-tests` Profile
+   - [ ] Surefire 插件配置
 
 ### 第二阶段：基础测试（优先级：高）
 
-5. ✅ **实现 PulsarClient 测试**
+6. ✅ **实现 PulsarClient 测试**
    - [ ] 会话创建/删除
    - [ ] HTTP 请求方法
    - [ ] 错误处理
 
-6. ✅ **实现基础 WebDriver 测试**
+7. ✅ **实现基础 WebDriver 测试**
    - [ ] 导航功能
    - [ ] 元素查找
    - [ ] 基础交互
 
 ### 第三阶段：完整功能测试（优先级：中）
 
-7. ✅ **实现完整 WebDriver 测试**
+8. ✅ **实现完整 WebDriver 测试**
    - [ ] 所有 API 方法
    - [ ] 错误场景
    - [ ] 边界情况
 
-8. ✅ **实现 PulsarSession 测试**
+9. ✅ **实现 PulsarSession 测试**
    - [ ] 页面加载
    - [ ] 数据提取
    - [ ] 批量操作
 
 ### 第四阶段：高级功能（优先级：低）
 
-9. ⚠️ **实现 AgenticSession 测试**（可选）
-   - [ ] AI 动作执行
-   - [ ] 自主任务
-   - [ ] 页面观察和提取
+10. ⚠️ **实现 AgenticSession 测试**（可选）
+    - [ ] AI 动作执行
+    - [ ] 自主任务
+    - [ ] 页面观察和提取
 
 ### 第五阶段：优化和文档（优先级：中）
 
-10. ✅ **创建工具类**
+11. ✅ **创建工具类**
     - [ ] `TestUrls`
     - [ ] `TestHelpers`
     - [ ] 测试数据工厂
 
-11. ✅ **编写文档**
+12. ✅ **编写文档**
     - [ ] 测试运行指南
     - [ ] 故障排除
     - [ ] 最佳实践
 
-12. ✅ **配置 CI/CD**
+13. ✅ **配置 CI/CD**
     - [ ] GitHub Actions 工作流
     - [ ] 本地测试脚本
     - [ ] 测试报告生成
 
 ### 第六阶段：持续改进（优先级：低）
 
-13. ⚠️ **性能优化**
+14. ⚠️ **性能优化**
     - [ ] 并行执行调优
     - [ ] 缓存策略
     - [ ] 资源使用优化
 
-14. ⚠️ **可靠性增强**
+15. ⚠️ **可靠性增强**
     - [ ] Flaky 测试分析
     - [ ] 重试机制优化
     - [ ] 错误诊断改进

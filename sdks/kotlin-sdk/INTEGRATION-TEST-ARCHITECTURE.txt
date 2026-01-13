@@ -83,56 +83,70 @@
                             Test Suite Structure
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                           │
-│  sdks/kotlin-sdk/src/test/kotlin/ai/platon/pulsar/sdk/                  │
+│  sdks/                                                                    │
 │  │                                                                        │
-│  ├── unit/                              # Unit tests (existing)          │
-│  │   ├── PulsarClientTest.kt            # No server required            │
-│  │   ├── WebDriverTest.kt               # State management only         │
-│  │   └── SessionTest.kt                 # Model validation              │
+│  ├── kotlin-sdk/                        # SDK 模块（保持干净）           │
+│  │   ├── pom.xml                        # 最小依赖                       │
+│  │   └── src/                                                             │
+│  │       ├── main/kotlin/               # SDK 源码                       │
+│  │       │   ├── PulsarClient.kt                                         │
+│  │       │   ├── WebDriver.kt                                            │
+│  │       │   ├── AgenticSession.kt                                       │
+│  │       │   └── Models.kt                                               │
+│  │       └── test/kotlin/               # 仅单元测试                     │
+│  │           ├── PulsarClientTest.kt    # No server required            │
+│  │           ├── WebDriverTest.kt       # State management only         │
+│  │           └── SessionTest.kt         # Model validation              │
 │  │                                                                        │
-│  └── integration/                       # Integration tests (new)        │
-│      │                                                                    │
-│      ├── KotlinSdkIntegrationTestBase.kt   # Base class                 │
-│      │   - @SpringBootTest                                               │
-│      │   - Server lifecycle                                              │
-│      │   - Client setup/cleanup                                          │
-│      │                                                                    │
-│      ├── PulsarClientIntegrationTest.kt    # HTTP client tests          │
-│      │   - Session creation/deletion                                     │
-│      │   - GET/POST/DELETE operations                                    │
-│      │   - Error handling                                                │
-│      │                                                                    │
-│      ├── WebDriverIntegrationTest.kt       # Browser automation          │
-│      │   - Navigation (navigateTo, currentUrl, reload)                   │
-│      │   - Element interaction (click, fill, type)                       │
-│      │   - Waiting (waitForSelector, exists)                             │
-│      │   - Scrolling (scrollDown, scrollToBottom)                        │
-│      │   - Content extraction (selectTextAll, extract)                   │
-│      │   - Screenshots (captureScreenshot)                               │
-│      │   - Script execution (executeScript)                              │
-│      │                                                                    │
-│      ├── PulsarSessionIntegrationTest.kt   # Page loading & scraping    │
-│      │   - load(), open(), submit()                                      │
-│      │   - normalize() URL handling                                      │
-│      │   - extract() field extraction                                    │
-│      │   - scrape() end-to-end                                           │
-│      │   - loadAll() batch operations                                    │
-│      │                                                                    │
-│      ├── AgenticSessionIntegrationTest.kt  # AI-powered automation      │
-│      │   - act() single AI action                                        │
-│      │   - run() autonomous tasks                                        │
-│      │   - observe() page observation                                    │
-│      │   - agentExtract() AI extraction                                  │
-│      │   - summarize() content summary                                   │
-│      │   (Optional, requires AI configuration)                           │
-│      │                                                                    │
-│      ├── server/                           # Test server config          │
-│      │   ├── PulsarRestServerApplication.kt                              │
-│      │   └── TestServerConfiguration.kt                                  │
-│      │                                                                    │
-│      └── util/                             # Test utilities              │
-│          ├── TestUrls.kt                   # Test URL constants          │
-│          └── TestHelpers.kt                # Helper methods              │
+│  └── kotlin-sdk-tests/                  # 独立测试模块                  │
+│      ├── pom.xml                        # 包含所有测试依赖               │
+│      └── src/test/                                                       │
+│          ├── kotlin/ai/platon/pulsar/sdk/integration/                   │
+│          │   │                                                            │
+│          │   ├── KotlinSdkIntegrationTestBase.kt   # Base class         │
+│          │   │   - @SpringBootTest                                       │
+│          │   │   - Server lifecycle                                      │
+│          │   │   - Client setup/cleanup                                  │
+│          │   │                                                            │
+│          │   ├── PulsarClientIntegrationTest.kt    # HTTP client tests  │
+│          │   │   - Session creation/deletion                             │
+│          │   │   - GET/POST/DELETE operations                            │
+│          │   │   - Error handling                                        │
+│          │   │                                                            │
+│          │   ├── WebDriverIntegrationTest.kt       # Browser automation │
+│          │   │   - Navigation (navigateTo, currentUrl, reload)          │
+│          │   │   - Element interaction (click, fill, type)              │
+│          │   │   - Waiting (waitForSelector, exists)                    │
+│          │   │   - Scrolling (scrollDown, scrollToBottom)               │
+│          │   │   - Content extraction (selectTextAll, extract)          │
+│          │   │   - Screenshots (captureScreenshot)                      │
+│          │   │   - Script execution (executeScript)                     │
+│          │   │                                                            │
+│          │   ├── PulsarSessionIntegrationTest.kt   # Page loading       │
+│          │   │   - load(), open(), submit()                             │
+│          │   │   - normalize() URL handling                             │
+│          │   │   - extract() field extraction                           │
+│          │   │   - scrape() end-to-end                                  │
+│          │   │   - loadAll() batch operations                           │
+│          │   │                                                            │
+│          │   ├── AgenticSessionIntegrationTest.kt  # AI automation      │
+│          │   │   - act() single AI action                               │
+│          │   │   - run() autonomous tasks                               │
+│          │   │   - observe() page observation                           │
+│          │   │   - agentExtract() AI extraction                         │
+│          │   │   - summarize() content summary                          │
+│          │   │   (Optional, requires AI configuration)                  │
+│          │   │                                                            │
+│          │   ├── server/                           # Test server config  │
+│          │   │   ├── PulsarRestServerApplication.kt                     │
+│          │   │   └── TestServerConfiguration.kt                         │
+│          │   │                                                            │
+│          │   └── util/                             # Test utilities      │
+│          │       ├── TestUrls.kt                   # Test URL constants │
+│          │       └── TestHelpers.kt                # Helper methods     │
+│          │                                                                │
+│          └── resources/                                                  │
+│              └── application-sdk-integration-test.properties            │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
 
@@ -153,10 +167,10 @@
 │      └─ @Tag("Slow")             ← > 10 seconds                          │
 │                                                                           │
 │  Test Execution:                                                         │
-│  - Default:          Run unit tests only                                 │
-│  - -Pintegration-test: Run IntegrationTest except RequiresAI            │
-│  - -Pfull-test:       Run all tests including AI                         │
-│  - -Dgroups="Fast":   Run only fast tests                                │
+│  - SDK unit tests:   cd sdks/kotlin-sdk && mvn test                     │
+│  - Integration tests: cd sdks/kotlin-sdk-tests && mvn test -DrunIntegrationTests=true │
+│  - Full tests:       cd sdks/kotlin-sdk-tests && mvn test -DrunFullTests=true │
+│  - Fast tests only:  mvn test -Dgroups="Fast"                           │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
 
@@ -226,10 +240,12 @@
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                           │
 │  Phase 1: Infrastructure (High Priority) ✓                              │
-│  ├─ Create test directory structure                                      │
+│  ├─ Create kotlin-sdk-tests module                                       │
+│  ├─ Create pom.xml with all test dependencies                            │
+│  ├─ Set up test directory structure                                      │
 │  ├─ Implement KotlinSdkIntegrationTestBase                              │
 │  ├─ Configure PulsarRestServerApplication                               │
-│  └─ Update pom.xml with dependencies                                     │
+│  └─ Configure Maven profiles for test execution                         │
 │                                                                           │
 │  Phase 2: Basic Tests (High Priority)                                   │
 │  ├─ PulsarClient integration tests                                       │

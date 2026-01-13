@@ -2,11 +2,33 @@
 
 ## 📋 概述
 
-本目录包含 Kotlin SDK 集成测试的完整设计方案。设计采用真实服务器测试策略，确保 SDK 在实际使用场景中的可靠性和正确性。
+本目录包含 Kotlin SDK 集成测试的完整设计方案。设计采用**模块分离策略**，将集成测试提取到独立模块 `kotlin-sdk-tests`，确保 SDK 的 pom.xml 保持干净和最小化。
 
 **状态**: ✅ 设计完成，待实施  
-**版本**: 1.0  
+**版本**: 1.1 (更新：模块分离)  
 **日期**: 2025-01-13
+
+## 🎯 关键设计决策
+
+### 模块分离策略
+为了保持 SDK 的简洁性和可发布性，集成测试被提取到独立模块：
+
+```
+sdks/
+├── kotlin-sdk/           # SDK 模块（干净、最小）
+│   ├── pom.xml           # 仅核心依赖
+│   └── src/              # SDK 代码 + 单元测试
+│
+└── kotlin-sdk-tests/     # 独立测试模块
+    ├── pom.xml           # 所有测试依赖
+    └── src/test/         # 集成测试代码
+```
+
+**优势**:
+- ✅ SDK pom.xml 保持干净，无重型测试依赖
+- ✅ 发布到 Maven Central 时不包含测试依赖
+- ✅ 测试可以独立运行和维护
+- ✅ 遵循项目现有模式（类似 pulsar-tests）
 
 ## 📚 文档列表
 
@@ -117,9 +139,12 @@
 - ✅ 真实的浏览器集成
 - ✅ 完整的请求/响应流程
 
-### 测试架构
+### 模块分离架构
 ```
-测试基类 → SpringBootTest → 启动服务器 → 自动管理客户端 → 4 大测试套件
+kotlin-sdk (干净)          kotlin-sdk-tests (独立)
+     ↓                            ↓
+仅核心依赖               所有测试依赖
+单元测试                集成测试
 ```
 
 ### 4 大测试套件
@@ -130,11 +155,11 @@
 
 ### 执行方式
 ```bash
-# 单元测试
-mvn test
+# SDK 单元测试
+cd sdks/kotlin-sdk && mvn test
 
-# 集成测试
-mvn test -Pintegration-test
+# 集成测试（独立模块）
+cd sdks/kotlin-sdk-tests && mvn test -DrunIntegrationTests=true
 
 # 所有测试
 mvn test -Pfull-test
