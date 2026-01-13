@@ -395,6 +395,13 @@ class AgenticSession(
         private var defaultSession: AgenticSession? = null
 
         /**
+         * Checks if the default session needs to be recreated.
+         */
+        private fun needsNewDefaultSession(): Boolean {
+            return defaultSession == null || defaultClient == null || defaultClient?.sessionId == null
+        }
+
+        /**
          * Gets or creates a default AgenticSession instance.
          * 
          * This convenience method creates a session using the default server
@@ -413,7 +420,7 @@ class AgenticSession(
          */
         @Synchronized
         fun getOrCreate(baseUrl: String = "http://localhost:8182"): AgenticSession {
-            if (defaultSession == null || defaultClient == null || defaultClient?.sessionId == null) {
+            if (needsNewDefaultSession()) {
                 val client = PulsarClient(baseUrl = baseUrl)
                 client.createSession()
                 defaultClient = client
