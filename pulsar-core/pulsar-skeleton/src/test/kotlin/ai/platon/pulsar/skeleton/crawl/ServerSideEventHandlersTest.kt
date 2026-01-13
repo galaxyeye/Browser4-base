@@ -1,6 +1,8 @@
 package ai.platon.pulsar.skeleton.crawl
 
+import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.persist.WebPage
+import ai.platon.pulsar.persist.model.GoraWebPage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 
 class ServerSideEventHandlersTest {
+    private val conf = ImmutableConfig()
 
     @Test
     fun `test ServerSideEvent creation`() {
@@ -60,7 +63,7 @@ class ServerSideEventHandlersTest {
     fun `test DefaultServerSideEventHandlers emits load events`() = runBlocking {
         val handlers = DefaultServerSideEventHandlers()
         val events = mutableListOf<ServerSideEvent>()
-        val page = WebPage.newWebPage("https://example.com")
+        val page = GoraWebPage.newWebPage("https://example.com", conf.toVolatileConfig())
 
         // Collect events in the background
         val job = launch {
@@ -89,7 +92,7 @@ class ServerSideEventHandlersTest {
     fun `test DefaultServerSideEventHandlers emits browse events`() = runBlocking {
         val handlers = DefaultServerSideEventHandlers()
         val events = mutableListOf<ServerSideEvent>()
-        val page = WebPage.newWebPage("https://example.com")
+        val page = GoraWebPage.newWebPage("https://example.com", conf.toVolatileConfig())
 
         // Collect events in the background
         val job = launch {
