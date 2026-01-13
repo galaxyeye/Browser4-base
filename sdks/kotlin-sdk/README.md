@@ -24,14 +24,14 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>pulsar-sdk-kotlin</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>4.5.0-SNAPSHOT</version>
 </dependency>
 ```
 
 Or for Gradle:
 
 ```kotlin
-implementation("ai.platon.pulsar:pulsar-sdk-kotlin:4.4.0-SNAPSHOT")
+implementation("ai.platon.pulsar:pulsar-sdk-kotlin:4.5.0-SNAPSHOT")
 ```
 
 ## Quick Start
@@ -45,21 +45,21 @@ fun main() {
     // Create client and session
     val client = PulsarClient(baseUrl = "http://localhost:8182")
     val sessionId = client.createSession()
-    
+
     val session = PulsarSession(client)
-    
+
     // Load a page
     val page = session.load("https://example.com", "-expire 1d")
     println("Loaded page: ${page.url}")
-    
+
     // Navigate and interact using WebDriver
     session.driver.navigateTo("https://example.com")
     println("Current URL: ${session.driver.currentUrl()}")
-    
+
     // Extract data
     val title = session.driver.selectFirstTextOrNull("h1")
     println("Title: $title")
-    
+
     // Clean up
     session.close()
     client.close()
@@ -74,34 +74,34 @@ import ai.platon.pulsar.sdk.*
 fun main() {
     val client = PulsarClient()
     client.createSession()
-    
+
     val session = AgenticSession(client)
-    
+
     // Navigate to a page
     session.driver.navigateTo("https://example.com")
-    
+
     // Use natural language to interact
     val actResult = session.act("click the search button")
     println("Action success: ${actResult.success}")
-    
+
     // Run autonomous task
     val runResult = session.run("search for 'kotlin' and click first result")
     println("Task success: ${runResult.success}")
-    
+
     // Observe page state
     val observation = session.observe("find all interactive elements")
     observation.observations.forEach { obs ->
         println("Found: ${obs.description}")
     }
-    
+
     // AI-powered extraction
     val extraction = session.agentExtract("extract the main heading and first paragraph")
     println("Extracted data: ${extraction.data}")
-    
+
     // Summarize page content
     val summary = session.summarize()
     println("Summary: $summary")
-    
+
     session.close()
     client.close()
 }
@@ -116,28 +116,28 @@ fun main() {
     val client = PulsarClient()
     client.createSession()
     val driver = WebDriver(client)
-    
+
     // Navigation
     driver.navigateTo("https://example.com")
     println("URL: ${driver.currentUrl()}")
     println("Title: ${driver.title()}")
-    
+
     // Element interaction
     driver.click("button.submit")
     driver.fill("input[name='search']", "kotlin")
     driver.press("input[name='search']", "Enter")
-    
+
     // Wait for elements
     driver.waitForSelector(".results")
-    
+
     // Scrolling
     driver.scrollToBottom()
     driver.scrollTo(".footer")
-    
+
     // Content extraction
     val texts = driver.selectTextAll(".result-item")
     texts.forEach { println(it) }
-    
+
     // Extract multiple fields
     val fields = driver.extract(mapOf(
         "title" to "h1",
@@ -145,15 +145,15 @@ fun main() {
         "price" to ".price"
     ))
     println("Fields: $fields")
-    
+
     // Screenshots
     val screenshot = driver.captureScreenshot()
     println("Screenshot length: ${screenshot?.length}")
-    
+
     // Execute JavaScript
     val result = driver.executeScript("return document.querySelectorAll('a').length")
     println("Links count: $result")
-    
+
     driver.close()
     client.deleteSession()
     client.close()
