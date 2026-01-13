@@ -359,14 +359,28 @@ open class PulsarSession(
  * - Agent extract: AI-powered data extraction
  * - Agent summarize: Generate page summaries
  *
- * Example usage:
+ * Example usage (FusedActs-style):
+ * ```kotlin
+ * val session = AgenticSession.getOrCreate()
+ * val driver = session.getOrCreateBoundDriver()
+ * val agent = session.companionAgent
+ * 
+ * val page = session.open("https://example.com")
+ * val document = session.parse(page)
+ * val fields = session.extract(document, mapOf("title" to "h1"))
+ * 
+ * val result = agent.act("click the search button")
+ * val history = agent.run("search for 'kotlin' and extract results")
+ * session.close()
+ * ```
+ *
+ * Example usage (explicit client):
  * ```kotlin
  * val client = PulsarClient()
  * client.createSession()
  * val session = AgenticSession(client)
  * session.open("https://example.com")
  * val result = session.act("click the search button")
- * val history = session.run("search for 'kotlin' and extract results")
  * session.close()
  * ```
  *
@@ -375,6 +389,71 @@ open class PulsarSession(
 class AgenticSession(
     client: PulsarClient
 ) : PulsarSession(client) {
+
+    companion object {
+        private var defaultClient: PulsarClient? = null
+        private var defaultSession: AgenticSession? = null
+
+        /**
+         * Gets or creates a default AgenticSession instance.
+         * 
+         * This convenience method creates a session using the default server
+         * configuration (http://localhost:8182). The session is reused across
+         * multiple calls.
+         * 
+         * Usage pattern similar to AgenticContexts.getOrCreateSession():
+         * ```kotlin
+         * val session = AgenticSession.getOrCreate()
+         * val agent = session.companionAgent
+         * val driver = session.getOrCreateBoundDriver()
+         * ```
+         *
+         * @param baseUrl The base URL of the Browser4 server (default: http://localhost:8182)
+         * @return The default AgenticSession instance
+         */
+        @Synchronized
+        fun getOrCreate(baseUrl: String = "http://localhost:8182"): AgenticSession {
+            if (defaultSession == null || defaultClient == null || defaultClient?.sessionId == null) {
+                val client = PulsarClient(baseUrl = baseUrl)
+                client.createSession()
+                defaultClient = client
+                defaultSession = AgenticSession(client)
+            }
+            return defaultSession!!
+        }
+
+        /**
+         * Creates a new AgenticSession instance.
+         * 
+         * Unlike [getOrCreate], this always creates a fresh session.
+         *
+         * @param baseUrl The base URL of the Browser4 server (default: http://localhost:8182)
+         * @return A new AgenticSession instance
+         */
+        fun create(baseUrl: String = "http://localhost:8182"): AgenticSession {
+            val client = PulsarClient(baseUrl = baseUrl)
+            client.createSession()
+            return AgenticSession(client)
+        }
+
+        /**
+         * Closes and resets the default session.
+         * 
+         * Call this to clean up the default session created by [getOrCreate].
+         */
+        @Synchronized
+        fun resetDefault() {
+            try {
+                defaultSession?.close()
+            } catch (e: Exception) {
+                // Ignore errors during cleanup
+            } finally {
+                defaultSession = null
+                defaultClient?.close()
+                defaultClient = null
+            }
+        }
+    }
 
     private val _processTrace: MutableList<String> = mutableListOf()
 
