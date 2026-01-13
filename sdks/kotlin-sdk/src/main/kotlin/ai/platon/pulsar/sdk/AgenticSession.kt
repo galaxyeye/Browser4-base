@@ -364,11 +364,11 @@ open class PulsarSession(
  * val session = AgenticSession.getOrCreate()
  * val driver = session.getOrCreateBoundDriver()
  * val agent = session.companionAgent
- * 
+ *
  * val page = session.open("https://example.com")
  * val document = session.parse(page)
  * val fields = session.extract(document, mapOf("title" to "h1"))
- * 
+ *
  * val result = agent.act("click the search button")
  * val history = agent.run("search for 'kotlin' and extract results")
  * session.close()
@@ -403,11 +403,11 @@ class AgenticSession(
 
         /**
          * Gets or creates a default AgenticSession instance.
-         * 
+         *
          * This convenience method creates a session using the default server
          * configuration (http://localhost:8182). The session is reused across
          * multiple calls.
-         * 
+         *
          * Usage pattern similar to AgenticContexts.getOrCreateSession():
          * ```kotlin
          * val session = AgenticSession.getOrCreate()
@@ -431,7 +431,7 @@ class AgenticSession(
 
         /**
          * Creates a new AgenticSession instance.
-         * 
+         *
          * Unlike [getOrCreate], this always creates a fresh session.
          *
          * @param baseUrl The base URL of the Browser4 server (default: http://localhost:8182)
@@ -445,7 +445,7 @@ class AgenticSession(
 
         /**
          * Closes and resets the default session.
-         * 
+         *
          * Call this to clean up the default session created by [getOrCreate].
          */
         @Synchronized
@@ -763,11 +763,11 @@ class AgenticSession(
      * @return [PageSnapshot] with the captured page
      */
     @Suppress("UNCHECKED_CAST")
-    fun capture(driver: WebDriver? = null, url: String? = null): PageSnapshot {
+    fun capture(driver: WebDriver? = null, url: String? = null): WebPage {
         val drv = driver ?: this.driver
         val currentUrl = url ?: drv.getCurrentUrl()
         val value = client.post("/session/{sessionId}/open", mapOf("url" to currentUrl))
-        return PageSnapshot(
+        return WebPage(
             url = if (value is Map<*, *>) (value as Map<String, Any?>)["url"] as? String ?: currentUrl else currentUrl,
             html = if (value is Map<*, *>) (value as Map<String, Any?>)["html"] as? String else null
         )
