@@ -4,8 +4,8 @@
 
 本目录包含 Kotlin SDK 集成测试的完整设计方案。设计采用**模块分离策略**，将集成测试提取到独立模块 `kotlin-sdk-tests`，确保 SDK 的 pom.xml 保持干净和最小化。
 
-**状态**: ✅ 设计完成，待实施  
-**版本**: 1.1 (更新：模块分离)  
+**状态**: ✅ 设计完成，待实施
+**版本**: 1.1 (更新：模块分离)
 **日期**: 2025-01-13
 
 ## 🎯 关键设计决策
@@ -33,8 +33,8 @@ sdks/
 ## 📚 文档列表
 
 ### 1. 完整设计文档（英文）
-**文件**: [INTEGRATION-TEST-DESIGN.md](./INTEGRATION-TEST-DESIGN.md)  
-**大小**: ~32KB  
+**文件**: [INTEGRATION-TEST-DESIGN.md](INTEGRATION-TEST-DESIGN.md)
+**大小**: ~32KB
 **语言**: English
 
 **内容**:
@@ -54,8 +54,8 @@ sdks/
 - 代码审查和技术决策
 
 ### 2. 中文摘要文档
-**文件**: [INTEGRATION-TEST-DESIGN-SUMMARY.zh.md](./INTEGRATION-TEST-DESIGN-SUMMARY.zh.md)  
-**大小**: ~8KB  
+**文件**: [INTEGRATION-TEST-DESIGN-SUMMARY.zh.md](INTEGRATION-TEST-DESIGN-SUMMARY.zh.md)
+**大小**: ~8KB
 **语言**: 中文
 
 **内容**:
@@ -72,8 +72,8 @@ sdks/
 - 团队沟通和讨论
 
 ### 3. 架构可视化图
-**文件**: [INTEGRATION-TEST-ARCHITECTURE.txt](./INTEGRATION-TEST-ARCHITECTURE.txt)  
-**大小**: ~21KB  
+**文件**: [INTEGRATION-TEST-ARCHITECTURE.txt](INTEGRATION-TEST-ARCHITECTURE.txt)
+**大小**: ~21KB
 **格式**: ASCII Art
 
 **内容**:
@@ -92,8 +92,8 @@ sdks/
 - 文档和 PPT 引用
 
 ### 4. 本索引文档
-**文件**: [INTEGRATION-TEST-DESIGN-INDEX.md](./INTEGRATION-TEST-DESIGN-INDEX.md)（当前文件）  
-**大小**: ~4KB  
+**文件**: [INTEGRATION-TEST-DESIGN-INDEX.md](./INTEGRATION-TEST-DESIGN-INDEX.md)（当前文件）
+**大小**: ~4KB
 **语言**: 中文
 
 **内容**:
@@ -104,31 +104,31 @@ sdks/
 ## 🚀 快速开始
 
 ### 1. 了解设计方案（5 分钟）
-阅读 → [中文摘要文档](./INTEGRATION-TEST-DESIGN-SUMMARY.zh.md)
+阅读 → [中文摘要文档](INTEGRATION-TEST-DESIGN-SUMMARY.zh.md)
 
 ### 2. 查看架构图（3 分钟）
-浏览 → [架构可视化图](./INTEGRATION-TEST-ARCHITECTURE.txt)
+浏览 → [架构可视化图](INTEGRATION-TEST-ARCHITECTURE.txt)
 
 ### 3. 深入技术细节（30 分钟）
-学习 → [完整设计文档](./INTEGRATION-TEST-DESIGN.md)
+学习 → [完整设计文档](INTEGRATION-TEST-DESIGN.md)
 
 ## 📖 推荐阅读路径
 
 ### 路径 1: 快速了解（项目经理、产品）
-1. [中文摘要](./INTEGRATION-TEST-DESIGN-SUMMARY.zh.md) - 概览
-2. [架构图](./INTEGRATION-TEST-ARCHITECTURE.txt) - 可视化
+1. [中文摘要](INTEGRATION-TEST-DESIGN-SUMMARY.zh.md) - 概览
+2. [架构图](INTEGRATION-TEST-ARCHITECTURE.txt) - 可视化
 3. 完成！了解设计方案的核心内容
 
 ### 路径 2: 技术实施（开发工程师）
-1. [中文摘要](./INTEGRATION-TEST-DESIGN-SUMMARY.zh.md) - 快速预览
-2. [架构图](./INTEGRATION-TEST-ARCHITECTURE.txt) - 理解结构
-3. [完整设计](./INTEGRATION-TEST-DESIGN.md) - 详细学习
+1. [中文摘要](INTEGRATION-TEST-DESIGN-SUMMARY.zh.md) - 快速预览
+2. [架构图](INTEGRATION-TEST-ARCHITECTURE.txt) - 理解结构
+3. [完整设计](INTEGRATION-TEST-DESIGN.md) - 详细学习
 4. 参考现有代码：`pulsar-rest/src/test/` 和 `pulsar-tests/`
 5. 开始实施！
 
 ### 路径 3: 代码审查（技术负责人）
-1. [完整设计](./INTEGRATION-TEST-DESIGN.md) - 完整技术方案
-2. [架构图](./INTEGRATION-TEST-ARCHITECTURE.txt) - 架构合理性
+1. [完整设计](INTEGRATION-TEST-DESIGN.md) - 完整技术方案
+2. [架构图](INTEGRATION-TEST-ARCHITECTURE.txt) - 架构合理性
 3. 检查与现有项目的一致性
 4. 提出改进建议
 
@@ -189,7 +189,7 @@ mvn test -Pfull-test
 ## 🔗 相关链接
 
 ### 项目内
-- [SDK README](./README.md) - Kotlin SDK 使用指南
+- [SDK README](../kotlin-sdk/README.md) - Kotlin SDK 使用指南
 - [REST API 文档](../../docs/rest-api-examples.md) - API 示例
 - [配置指南](../../docs/config.md) - 配置说明
 - [构建指南](../../docs/build.md) - 构建说明
@@ -244,7 +244,7 @@ A: 不是必须的，AI 测试标记为可选，需要 LLM 配置。
 
 ---
 
-**状态**: ✅ 设计完成，待审核和实施  
+**状态**: ✅ 设计完成，待审核和实施
 **下一步**: Review → 实施 → 测试 → 集成
 
 感谢阅读！如有任何问题或建议，欢迎通过 GitHub Issue 或 PR 讨论。

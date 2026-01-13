@@ -1,6 +1,6 @@
 # Kotlin SDK 集成测试设计方案 - 摘要
 
-> 完整设计文档请查看：[INTEGRATION-TEST-DESIGN.md](./INTEGRATION-TEST-DESIGN.md)
+> 完整设计文档请查看：[INTEGRATION-TEST-DESIGN.md](INTEGRATION-TEST-DESIGN.md)
 
 ## 📋 快速概览
 
@@ -53,15 +53,15 @@ sdks/
 abstract class KotlinSdkIntegrationTestBase {
     @LocalServerPort
     protected var serverPort: Int = 0
-    
+
     protected lateinit var client: PulsarClient
     protected val baseUrl: String get() = "http://localhost:$serverPort"
-    
+
     @BeforeEach
     fun setupClient() {
         client = PulsarClient(baseUrl = baseUrl)
     }
-    
+
     @AfterEach
     fun cleanupClient() {
         // 清理会话和资源
@@ -276,18 +276,18 @@ fun `should navigate and extract content`() {
     // 1. 创建会话
     val sessionId = client.createSession()
     client.sessionId = sessionId
-    
+
     // 2. 创建 WebDriver
     val driver = WebDriver(client)
-    
+
     // 3. 导航到页面
     driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-    
+
     // 4. 提取内容
     val title = driver.selectFirstTextOrNull("#productTitle")
     assertNotNull(title)
     assertTrue(title.isNotBlank())
-    
+
     // 5. 清理
     driver.close()
     client.deleteSession()
@@ -301,20 +301,20 @@ fun `should scrape page with selectors`() {
     // 1. 创建会话
     createSession()
     val session = PulsarSession(client)
-    
+
     // 2. 定义提取规则
     val selectors = mapOf(
         "title" to "#productTitle",
         "price" to ".a-price-whole",
         "rating" to ".a-icon-star"
     )
-    
+
     // 3. 抓取数据
     val result = session.scrape(
         url = TestUrls.PRODUCT_DETAIL,
         selectors = selectors
     )
-    
+
     // 4. 验证结果
     assertNotNull(result)
     assertTrue(result.containsKey("title"))
@@ -364,8 +364,8 @@ jobs:
 ## 📚 参考资料
 
 ### 项目内文档
-- 完整设计文档：[INTEGRATION-TEST-DESIGN.md](./INTEGRATION-TEST-DESIGN.md)
-- SDK README：[README.md](./README.md)
+- 完整设计文档：[INTEGRATION-TEST-DESIGN.md](INTEGRATION-TEST-DESIGN.md)
+- SDK README：[README.md](../kotlin-sdk/README.md)
 - REST API 示例：[../../docs/rest-api-examples.md](../../docs/rest-api-examples.md)
 
 ### 现有测试参考
@@ -393,7 +393,7 @@ A: 使用 Maven Profile：`mvn test -Pintegration-test`，或通过 GitHub Actio
 A: 不是必须的。AI 功能测试标记为 `@Tag("RequiresAI")`，默认被排除。需要 LLM API 配置才能运行。
 
 ### Q: 如何调试失败的测试？
-A: 
+A:
 1. 增加日志级别：`logging.level.ai.platon.pulsar.sdk=DEBUG`
 2. 查看服务器日志：`~/.pulsar/logs/`
 3. 使用 IDE 断点调试
