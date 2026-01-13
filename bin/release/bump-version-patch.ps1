@@ -1,3 +1,4 @@
 #!/usr/bin/env pwsh
 
-.\bump-version.ps1 -Part patch
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+& "$ScriptDir\bump-version.ps1" -Part patch

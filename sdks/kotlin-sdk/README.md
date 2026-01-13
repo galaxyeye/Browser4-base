@@ -36,7 +36,52 @@ implementation("ai.platon.pulsar:pulsar-sdk-kotlin:4.5.0-SNAPSHOT")
 
 ## Quick Start
 
+### Simple Usage (FusedActs-style)
+
+The simplest way to get started, matching the internal examples pattern:
+
+```kotlin
+import ai.platon.pulsar.sdk.*
+
+suspend fun main() {
+    // Get or create default session (similar to AgenticContexts.getOrCreateSession())
+    val session = AgenticSession.getOrCreate()
+    val agent = session.companionAgent
+    val driver = session.getOrCreateBoundDriver()
+    
+    // Open and parse a page
+    val url = "https://example.com"
+    var page = session.open(url)
+    var document = session.parse(page)
+    
+    // Extract data with CSS selectors
+    var fields = session.extract(document, mapOf("title" to "h1"))
+    println("Title: ${fields["title"]}")
+    
+    // Use natural language actions
+    var result = agent.act("click the search button")
+    println("Action: ${result.message}")
+    
+    // Run autonomous tasks
+    var history = agent.run("search for 'kotlin' and extract results")
+    println("Task: ${history.message}")
+    
+    // Capture live page state
+    page = session.capture(driver)
+    document = session.parse(page)
+    
+    // Get content from live DOM
+    val content = driver.selectFirstTextOrNull("body")
+    println("Content: ${content?.take(100)}")
+    
+    // Clean up
+    session.context.close()
+}
+```
+
 ### Basic Usage with PulsarSession
+
+For more control over client configuration:
 
 ```kotlin
 import ai.platon.pulsar.sdk.*
@@ -67,6 +112,8 @@ fun main() {
 ```
 
 ### AI-Powered Automation with AgenticSession
+
+Using explicit client creation:
 
 ```kotlin
 import ai.platon.pulsar.sdk.*
