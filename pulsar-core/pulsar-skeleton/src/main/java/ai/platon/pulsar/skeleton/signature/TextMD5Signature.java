@@ -18,7 +18,6 @@
 package ai.platon.pulsar.skeleton.signature;
 
 import ai.platon.pulsar.persist.WebPage;
-import org.apache.hadoop.io.MD5Hash;
 
 public class TextMD5Signature extends Signature {
 
@@ -28,20 +27,19 @@ public class TextMD5Signature extends Signature {
 
     /**
      * We need to calculate signature using a more clean signature content, eg, extracted by signature-persist
-     * */
+     */
     @Override
     public byte[] calculate(WebPage page) {
         String text = page.getContentText();
-        assert text != null;
-        if (text.isEmpty() || text.length() < GOOD_CONTENT_TEXT_LENGTH) {
+        if (text == null || text.isEmpty() || text.length() < GOOD_CONTENT_TEXT_LENGTH) {
             text = page.getPageText();
         }
 
-        assert text != null;
-        if (text.isEmpty()) {
+        if (text == null || text.isEmpty()) {
             return fallback.calculate(page);
         }
 
-        return MD5Hash.digest(text).getDigest();
+        byte[] bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return MD5Signature.digest(bytes, 0, bytes.length);
     }
 }

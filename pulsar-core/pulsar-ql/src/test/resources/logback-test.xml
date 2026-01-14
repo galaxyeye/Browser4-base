@@ -81,9 +81,6 @@
     </logger>
 
     <logger name="org.apache.gora" level="ERROR"/>
-    <logger name="org.apache.zookeeper" level="ERROR"/>
-    <logger name="org.apache.solr" level="INFO"/>
-    <logger name="org.apache.hadoop" level="WARN"/>
 
     <logger name="org.springframework.context" level="INFO"/>
     <logger name="org.springframework.core" level="INFO"/>

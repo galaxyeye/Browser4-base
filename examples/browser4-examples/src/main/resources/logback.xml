@@ -48,7 +48,6 @@
     <logger name="org.springframework.transaction" level="INFO"/>
 
     <logger name="org.apache.gora" level="ERROR"/>
-    <logger name="org.apache.hadoop" level="WARN"/>
 
     <logger name="dev.langchain4j.http.client.log" level="WARN" />
 

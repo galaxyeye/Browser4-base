@@ -92,18 +92,6 @@
                 <version>${kotlin.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>*</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
             <!-- TODO: This artifact was moved to: jakarta.servlet » jakarta.servlet-api -->
             <dependency>
                 <groupId>javax.servlet</groupId>
@@ -158,18 +146,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-math3</artifactId>
                 <version>${commons-math3.version}</version>
-            </dependency>
-            <!--  Required by org.apache.hadoop.conf.Configuration  -->
-            <dependency>
-                <groupId>commons-configuration</groupId>
-                <artifactId>commons-configuration</artifactId>
-                <version>${commons-configuration.version}</version>
-            </dependency>
-            <!--  Required by org.apache.hadoop.conf.Configuration  -->
-            <dependency>
-                <groupId>commons-collections</groupId>
-                <artifactId>commons-collections</artifactId>
-                <version>${commons-collections.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -415,8 +391,6 @@
         <!--        <commons-lang3.version>3.12.0</commons-lang3.version>-->
         <commons-math3.version>3.6.1</commons-math3.version>
         <commons-numbers-bom.version>1.1</commons-numbers-bom.version>
-        <commons-configuration.version>1.6</commons-configuration.version>
-        <commons-collections.version>3.2.2</commons-collections.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-logging.version>1.3.2</commons-logging.version>
         <commons-compress.version>1.26.2</commons-compress.version>
@@ -430,9 +404,6 @@
         <trove4j-core.version>3.0.3</trove4j-core.version>
         <trove4j.version>3.0.3</trove4j.version>
         <jodd-trove4j-core.version>3.5.2</jodd-trove4j-core.version>
-
-        <!-- 2.5.2 suggested, but 2.7.2 is a correct version, we will consider using a shaded gora -->
-        <hadoop.version>2.7.2</hadoop.version>
 
         <!--  HTML parsing  -->
         <xerces.version>2.11.0</xerces.version>

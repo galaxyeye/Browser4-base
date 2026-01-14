@@ -28,15 +28,31 @@
             <artifactId>gora-shaded-mongodb</artifactId>
             <version>${gora-shaded-mongodb.version}</version>
         </dependency>
+
         <!-- Requires org.apache.hadoop.conf.Configuration only, required by GoraStorage -->
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
+            <version>${hadoop.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
         <!-- Required by hadoop-common -->
         <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
+            <version>${commons-collections.version}</version>
+        </dependency>
+        <!--  Required by org.apache.hadoop.conf.Configuration  -->
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>${commons-configuration.version}</version>
         </dependency>
 
         <dependency>
@@ -103,6 +119,10 @@
 
     <properties>
         <gora-shaded-mongodb.version>0.9</gora-shaded-mongodb.version>
+        <!-- 2.5.2 suggested, but 2.7.2 is a correct version, we will consider using a shaded gora -->
+        <hadoop.version>2.7.2</hadoop.version>
+        <commons-configuration.version>1.10</commons-configuration.version>
+        <commons-collections.version>3.2.2</commons-collections.version>
     </properties>
 
 </project>

@@ -78,8 +78,5 @@
 
     <logger name="org.apache.hadoop.conf.Configuration" level="WARN"/>
     <logger name="org.apache.gora" level="ERROR"/>
-    <logger name="org.apache.zookeeper" level="ERROR"/>
-    <logger name="org.apache.solr" level="INFO"/>
-    <logger name="org.hibernate.SQL" level="INFO"/>
 
 </configuration>
