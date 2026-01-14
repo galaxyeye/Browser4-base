@@ -63,19 +63,6 @@
             <artifactId>spring-context</artifactId>
         </dependency>
 
-        <!-- Requires org.apache.hadoop.io.Text, etc -->
-        <!-- Will remove hadoop dependency in the future -->
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <!-- apache common -->
         <dependency>
             <groupId>org.apache.commons</groupId>
