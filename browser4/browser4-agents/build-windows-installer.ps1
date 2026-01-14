@@ -5,7 +5,7 @@
 param(
     [switch]$Installer = $false,
     [switch]$WithTests = $false,
-    [string]$AppVersion = "4.5.0-SNAPSHOT"
+    [string]$AppVersion = "0.0.1"
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
