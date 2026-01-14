@@ -182,7 +182,7 @@ class SkillComposerTest {
 
         val composite = composer.sequential("composite", listOf("skill-1", "skill-2", "skill-3"))
 
-        assertNotNull(composite)
+        Assertions.assertNotNull(composite)
         assertEquals("composite", composite.metadata.id)
         assertEquals(3, composite.metadata.dependencies.size)
     }
@@ -236,7 +236,7 @@ class SkillComposerTest {
 
         val composite = composer.parallel("composite", listOf("skill-1", "skill-2"))
 
-        assertNotNull(composite)
+        Assertions.assertNotNull(composite)
         assertEquals("composite", composite.metadata.id)
         assertEquals(2, composite.metadata.dependencies.size)
     }
@@ -290,24 +290,24 @@ class SkillComposerTest {
 
     // Test helper classes
 
-    class TestSkill(id: String) : AbstractSkill() {
-        override val metadata = SkillMetadata(id = id, name = "Test $id", version = "1.0.0")
+    class TestSkill(private val skillId: String) : AbstractSkill() {
+        override val metadata = SkillMetadata(id = skillId, name = "Test $skillId", version = "1.0.0")
         override suspend fun execute(context: SkillContext, params: Map<String, Any>) =
-            SkillResult.success(message = "Executed $id")
+            SkillResult.success(message = "Executed $skillId")
     }
 
-    class CountingSkill(id: String) : AbstractSkill() {
+    class CountingSkill(private val skillId: String) : AbstractSkill() {
         var executionCount = 0
-        override val metadata = SkillMetadata(id = id, name = "Counting $id", version = "1.0.0")
+        override val metadata = SkillMetadata(id = skillId, name = "Counting $skillId", version = "1.0.0")
         override suspend fun execute(context: SkillContext, params: Map<String, Any>): SkillResult {
             executionCount++
-            return SkillResult.success(message = "Executed $id")
+            return SkillResult.success(message = "Executed $skillId")
         }
     }
 
-    class FailingSkill(id: String) : AbstractSkill() {
-        override val metadata = SkillMetadata(id = id, name = "Failing $id", version = "1.0.0")
+    class FailingSkill(private val skillId: String) : AbstractSkill() {
+        override val metadata = SkillMetadata(id = skillId, name = "Failing $skillId", version = "1.0.0")
         override suspend fun execute(context: SkillContext, params: Map<String, Any>) =
-            SkillResult.failure(message = "Failed $id")
+            SkillResult.failure(message = "Failed $skillId")
     }
 }

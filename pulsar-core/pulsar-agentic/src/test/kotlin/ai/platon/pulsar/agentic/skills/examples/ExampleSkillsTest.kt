@@ -50,7 +50,7 @@ class ExampleSkillsTest {
         val result = registry.execute("web-scraping", context, params)
 
         assertTrue(result.success)
-        assertNotNull(result.data)
+        Assertions.assertNotNull(result.data)
         assertTrue(result.message!!.contains("Successfully extracted"))
     }
 
@@ -127,7 +127,7 @@ class ExampleSkillsTest {
 
         registry.execute("web-scraping", context, params)
 
-        assertNotNull(context.getResource<Long>("last_scraping_success"))
+        Assertions.assertNotNull(context.getResource<Long>("last_scraping_success"))
     }
 
     @Test

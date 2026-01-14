@@ -100,7 +100,7 @@ class SkillTest {
 
         assertEquals("value1", context.getResource<String>("resource1"))
         assertEquals(123, context.getResource<Int>("resource2"))
-        assertNull(context.getResource<String>("nonexistent"))
+        Assertions.assertNull(context.getResource<String>("nonexistent"))
     }
 
     @Test
