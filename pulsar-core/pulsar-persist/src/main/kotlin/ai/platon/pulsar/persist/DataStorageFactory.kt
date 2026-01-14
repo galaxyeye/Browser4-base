@@ -15,7 +15,6 @@ import org.apache.gora.mongodb.store.MongoStoreParameters.PROP_MONGO_SERVERS
 import org.apache.gora.persistency.Persistent
 import org.apache.gora.store.DataStore
 import org.apache.gora.util.GoraException
-import org.apache.hadoop.conf.Configuration
 import org.slf4j.LoggerFactory
 
 /**
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory
  * Copyright @ 2013-2019 Platon AI. All rights reserved
  */
 class DataStorageFactory(val conf: ImmutableConfig) {
-    // private val hadoopConf = HadoopUtils.toHadoopConfiguration(conf)
     private val pageStoreClass: Class<out DataStore<String, GWebPage>> get() = detectDataStoreClass(conf)
 
     private var _dataStore: DataStore<String, GWebPage>? = null
@@ -37,7 +35,7 @@ class DataStorageFactory(val conf: ImmutableConfig) {
     fun isInitialized() = _dataStore != null
 
     @Synchronized
-    fun canConnect() = runCatching { _dataStore?.schemaExists() == true }.getOrNull() ?: false
+    fun schemaAvailable() = runCatching { _dataStore?.schemaExists() == true }.getOrNull() ?: false
 
     @Synchronized
     fun getOrCreatePageStore(): DataStore<String, GWebPage> {

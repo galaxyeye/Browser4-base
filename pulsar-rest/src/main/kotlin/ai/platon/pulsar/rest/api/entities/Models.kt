@@ -56,8 +56,6 @@ data class ScrapeResponse(
     var event: String = "",
 ) {
     val status: String get() = ResourceStatus.getStatusText(statusCode)
-    val pageStatus: String get() = ProtocolStatus.getMinorName(pageStatusCode)
-    val createTime: Instant = Instant.now()
     var lastModifiedTime: Instant? = null
     var finishTime: Instant? = null
 
@@ -257,8 +255,6 @@ data class CommandStatus(
     var instructResults: MutableList<InstructResult> = mutableListOf()
 ) {
     val status: String get() = ResourceStatus.getStatusText(statusCode)
-    val pageStatus: String get() = ProtocolStatus.getStatusText(pageStatusCode)
-    val createTime: Instant = Instant.now()
     var lastModifiedTime: Instant? = null
     var finishTime: Instant? = null
 
