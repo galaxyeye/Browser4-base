@@ -17,7 +17,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <name>Pulsar Kotlin SDK</name>
-    <description>Kotlin SDK for Browser4 WebDriver-Compatible API based on OpenAPI specification</description>
+    <description>Kotlin SDK for Browser4 based on OpenAPI specification</description>
 
     <url>https://browser4.io</url>
     <inceptionYear>2025</inceptionYear>
@@ -89,15 +89,6 @@
         </dependency>
     </dependencies>
 
-    <!-- Required by dokka-maven-plugin -->
-    <pluginRepositories>
-        <pluginRepository>
-            <id>jcenter</id>
-            <name>JCenter</name>
-            <url>https://jcenter.bintray.com/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
     <build>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
         <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
@@ -156,39 +147,6 @@
                         </executions>
                     </plugin>
 
-                    <!-- Calculate checksums -->
-                    <plugin>
-                        <groupId>net.nicoulaj.maven.plugins</groupId>
-                        <artifactId>checksum-maven-plugin</artifactId>
-                        <version>${checksum-maven-plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>source-release-checksum</id>
-                                <goals>
-                                    <goal>files</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <algorithms>
-                                <algorithm>SHA-512</algorithm>
-                                <algorithm>SHA-256</algorithm>
-                            </algorithms>
-                            <csvSummary>false</csvSummary>
-                            <fileSets>
-                                <fileSet>
-                                    <directory>${project.build.directory}</directory>
-                                    <includes>
-                                        <include>${project.artifactId}-${project.version}-sources.jar</include>
-                                        <include>${project.artifactId}-${project.version}-javadoc.jar</include>
-                                        <include>${project.artifactId}-${project.version}.jar</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
-                            <failIfNoFiles>false</failIfNoFiles>
-                        </configuration>
-                    </plugin>
-
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
@@ -207,7 +165,6 @@
     <properties>
         <!-- Plugin versions -->
         <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
-        <checksum-maven-plugin.version>1.11</checksum-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
 
         <!--  Language  -->
