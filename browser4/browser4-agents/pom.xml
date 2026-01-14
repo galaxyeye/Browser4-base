@@ -159,6 +159,15 @@
                                                 <include>${project.build.finalName}.jar</include>
                                             </includes>
                                         </resource>
+                                        <!-- Extra launch scripts placed next to Browser4.exe in app-image -->
+                                        <resource>
+                                            <directory>${project.basedir}/src/main/packaging</directory>
+                                            <includes>
+                                                <include>Browser4.ps1</include>
+                                                <include>Browser4.cmd</include>
+                                            </includes>
+                                            <filtering>false</filtering>
+                                        </resource>
                                     </resources>
                                 </configuration>
                             </execution>
