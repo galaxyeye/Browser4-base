@@ -39,6 +39,16 @@
             <artifactId>pulsar-protocol</artifactId>
         </dependency>
 
+        <!-- MCP SDK for plugin support -->
+        <dependency>
+            <groupId>io.modelcontextprotocol</groupId>
+            <artifactId>kotlin-sdk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-client-cio</artifactId>
+        </dependency>
+
         <!-- MockK for Kotlin-friendly mocking -->
         <dependency>
             <groupId>org.mockito</groupId>
