@@ -5,7 +5,7 @@
 param(
     [switch]$Installer = $false,
     [switch]$WithTests = $false,
-    [string]$AppVersion = "4.4.0"
+    [string]$AppVersion = "4.5.0-SNAPSHOT"
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -39,7 +39,7 @@ Write-Host "  - Portable App-Image: YES" -ForegroundColor White
 if ($Installer) {
     Write-Host "  - Windows Installer: YES" -ForegroundColor White
     Write-Host "  - [WARN] Building installer requires WiX Toolset v3.x" -ForegroundColor Yellow
-    
+
     # Check for WiX
     try {
         $null = & candle.exe '-?' 2>&1

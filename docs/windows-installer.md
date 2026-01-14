@@ -15,7 +15,7 @@ This document provides instructions for building the Browser4 Agents application
    ```cmd
    build-windows-installer.cmd --installer
    ```
-   
+
    Or with PowerShell:
    ```powershell
    .\build-windows-installer.ps1 -Installer
@@ -23,7 +23,7 @@ This document provides instructions for building the Browser4 Agents application
 
 3. The installer will be created at:
    ```
-   target\jpackage\dist\Browser4-4.4.0.exe
+   target\jpackage\dist\Browser4-0.0.1.exe
    ```
 
 ### For Developers
@@ -54,7 +54,7 @@ mvnw clean package -pl browser4/browser4-agents -am -Pwin-jpackage -Djpackage.in
 |--------|----------|-------------|
 | Spring Boot JAR | `target/Browser4.jar` | Executable JAR (~314MB) |
 | App-Image | `target/jpackage/app-image/Browser4/` | Portable directory with exe |
-| Windows Installer | `target/jpackage/dist/Browser4-4.4.0.exe` | Traditional installer |
+| Windows Installer | `target/jpackage/dist/Browser4-0.0.1.exe` | Traditional installer |
 
 ## Configuration
 
@@ -65,7 +65,7 @@ mvnw package -Pwin-jpackage -Djpackage.appVersion=4.5.0 -DskipTests
 ```
 
 Properties:
-- `jpackage.appVersion`: Application version (default: 4.4.0)
+- `jpackage.appVersion`: Application version (default: 0.0.1)
 - `jpackage.skip`: Skip app-image creation (default: false in profile)
 - `jpackage.installer.skip`: Skip installer creation (default: true)
 
@@ -106,7 +106,7 @@ To add a custom icon:
 4. Size: ~500MB (app + bundled JRE)
 
 ### Windows Installer (EXE)
-1. Distribute `Browser4-4.4.0.exe`
+1. Distribute `Browser4-0.0.1.exe`
 2. Users run the installer
 3. Creates Start Menu shortcuts
 4. Adds to Programs and Features
@@ -197,15 +197,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      
+
       - name: Install WiX Toolset
         run: |
           choco install wixtoolset -y
-          
+
       - name: Build Installer
         run: |
           mvnw clean package -pl browser4/browser4-agents -am -Pwin-jpackage -Djpackage.installer.skip=false -DskipTests
-          
+
       - name: Upload Installer
         uses: actions/upload-artifact@v3
         with:

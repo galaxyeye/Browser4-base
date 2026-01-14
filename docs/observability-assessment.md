@@ -142,7 +142,7 @@ class AppMetricRegistry : MetricRegistry() {
     // 日计数器、小时计数器自动重置
     val dailyCounters = mutableSetOf<Counter>()
     val hourlyCounters = mutableSetOf<Counter>()
-    
+
     // 多维度指标
     fun multiMetric(obj: Any, name: String): MultiMetric
 }
@@ -282,7 +282,7 @@ interface Tracing {
 @RestController
 @RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
 class HealthController(private val sessionManager: SessionManager) {
-    
+
     @GetMapping("/health")
     fun health(): ResponseEntity<Map<String, Any>> {
         return ResponseEntity.ok(mapOf(
@@ -290,10 +290,10 @@ class HealthController(private val sessionManager: SessionManager) {
             "activeSessions" to sessionManager.getActiveSessionCount()
         ))
     }
-    
+
     @GetMapping("/health/ready")
     fun ready(): ResponseEntity<Map<String, Any>>
-    
+
     @GetMapping("/health/live")
     fun live(): ResponseEntity<Map<String, Any>>
 }
@@ -380,7 +380,7 @@ fun networkIFsReceivedBytes(): Long {
 
 ```kotlin
 // 综合临界状态检测
-val isSystemOverCriticalLoad get() = 
+val isSystemOverCriticalLoad get() =
     isCriticalMemory || isCriticalCPULoad || isCriticalDiskSpace
 ```
 

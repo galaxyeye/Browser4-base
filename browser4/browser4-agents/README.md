@@ -40,7 +40,7 @@ The EXE installer provides a traditional Windows installation experience:
 mvnw package -Pwin-jpackage -Djpackage.installer.skip=false -DskipTests
 ```
 
-**Output**: `target/jpackage/dist/Browser4-4.4.0.exe`
+**Output**: `target/jpackage/dist/Browser4-0.0.1.exe`
 
 This creates a Windows EXE installer that:
 - Installs the application to Program Files
@@ -69,7 +69,7 @@ The following properties can be customized:
 |----------|---------|-------------|
 | `jpackage.skip` | `true` (false in win-jpackage profile) | Skip app-image creation |
 | `jpackage.installer.skip` | `true` | Skip installer creation (requires WiX) |
-| `jpackage.appVersion` | `4.4.0` | Application version (must be numeric) |
+| `jpackage.appVersion` | `0.0.1` | Application version (must be numeric) |
 
 ### Example: Custom Version
 
@@ -106,7 +106,7 @@ target/
 │   │       ├── app/                          # Application files
 │   │       └── runtime/                      # Bundled JRE
 │   └── dist/                                 # Only if installer created
-│       └── Browser4-4.4.0.exe                # Windows installer
+│       └── Browser4-0.0.1.exe                # Windows installer
 ```
 
 ## Running the Application

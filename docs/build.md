@@ -47,7 +47,7 @@ Output: `target/jpackage/app-image/Browser4/Browser4.exe`
 ```shell
 mvnw package -Pwin-jpackage -Djpackage.installer.skip=false -DskipTests
 ```
-Output: `target/jpackage/dist/Browser4-4.4.0.exe`
+Output: `target/jpackage/dist/Browser4-0.0.1.exe`
 
 **PowerShell with Installer**:
 ```powershell
