@@ -179,10 +179,11 @@ MCPPluginRegistry.instance.close()
 
 The MCP plugin support requires:
 
-- `io.modelcontextprotocol:kotlin-sdk:0.8.1`
-- `io.ktor:ktor-client-cio:3.3.1` (for HTTP/WebSocket transports)
+- `io.modelcontextprotocol:kotlin-sdk` (latest compatible version)
+- `io.ktor:ktor-client-cio` (Ktor client for HTTP/WebSocket transports)
 
 These are automatically included when using the pulsar-agentic module.
+Specific versions are managed through the parent POM dependency management.
 
 ## Troubleshooting
 

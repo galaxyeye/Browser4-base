@@ -132,8 +132,11 @@ Full documentation is available at: [docs/mcp-plugin-support.md](../../../docs/m
 
 ## Dependencies
 
-- **kotlin-sdk**: `io.modelcontextprotocol:kotlin-sdk:0.8.1`
-- **ktor-client-cio**: `io.ktor:ktor-client-cio:3.3.1`
+The MCP plugin requires:
+- **kotlin-sdk**: `io.modelcontextprotocol:kotlin-sdk` (latest compatible version)
+- **ktor-client-cio**: `io.ktor:ktor-client-cio` (Ktor client engine)
+
+Specific versions are managed through the parent POM dependency management.
 
 ## License
 
