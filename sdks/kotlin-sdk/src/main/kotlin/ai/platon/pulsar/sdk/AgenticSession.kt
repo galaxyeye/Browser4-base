@@ -56,7 +56,7 @@ package ai.platon.pulsar.sdk
  */
 class AgenticSession(
     client: PulsarClient
-) : PulsarSession(client) {
+) : PulsarSession(client), PerceptiveAgent {
 
     companion object {
         private var defaultClient: PulsarClient? = null
@@ -130,6 +130,7 @@ class AgenticSession(
         }
     }
 
+    private val _stateHistory: MutableList<AgentState> = mutableListOf()
     private val _processTrace: MutableList<String> = mutableListOf()
 
     /**
@@ -137,12 +138,24 @@ class AgenticSession(
      *
      * In this implementation, AgenticSession itself provides the agent functionality.
      */
-    val companionAgent: AgenticSession get() = this
+    val companionAgent: PerceptiveAgent get() = this
+
+    /**
+     * Gets the agent state history.
+     *
+     * The state history tracks executed actions and their results,
+     * providing memory for the agent's decision-making process.
+     */
+    override val stateHistory: AgentHistory
+        get() = AgentHistory(
+            states = _stateHistory.toMutableList(),
+            hasErrors = _stateHistory.any { !it.success }
+        )
 
     /**
      * Gets the process trace (list of actions taken).
      */
-    val processTrace: List<String> get() = _processTrace.toList()
+    override val processTrace: List<String> get() = _processTrace.toList()
 
     /**
      * Gets the context (self, for API compatibility).
@@ -166,13 +179,13 @@ class AgenticSession(
      * @return [AgentActResult] with the action result
      */
     @Suppress("UNCHECKED_CAST")
-    fun act(
+    override fun act(
         action: String,
-        multiAct: Boolean = false,
-        modelName: String? = null,
-        variables: Map<String, String>? = null,
-        domSettleTimeoutMs: Long? = null,
-        timeoutMs: Long? = null
+        multiAct: Boolean,
+        modelName: String?,
+        variables: Map<String, String>?,
+        domSettleTimeoutMs: Long?,
+        timeoutMs: Long?
     ): AgentActResult {
         return agentAct(action, multiAct, modelName, variables, domSettleTimeoutMs, timeoutMs)
     }
@@ -207,9 +220,23 @@ class AgenticSession(
         val value = client.post("/session/{sessionId}/agent/act", payload)
 
         val result = if (value is Map<*, *>) {
-            val trace = (value as Map<String, Any?>)["trace"] as? List<String>
+            val map = value as Map<String, Any?>
+            val trace = map["trace"] as? List<String>
             trace?.let { _processTrace.addAll(it) }
-            AgentActResult.fromMap(value)
+            
+            // Add to state history
+            val step = _stateHistory.size + 1
+            _stateHistory.add(
+                AgentState(
+                    step = step,
+                    action = action,
+                    result = map["result"],
+                    success = map["success"] as? Boolean ?: false,
+                    message = map["message"] as? String ?: ""
+                )
+            )
+            
+            AgentActResult.fromMap(map)
         } else {
             AgentActResult()
         }
@@ -231,13 +258,13 @@ class AgenticSession(
      * @param timeoutMs Overall timeout
      * @return [AgentRunResult] with the task result
      */
-    fun run(
+    override fun run(
         task: String,
-        multiAct: Boolean = false,
-        modelName: String? = null,
-        variables: Map<String, String>? = null,
-        domSettleTimeoutMs: Long? = null,
-        timeoutMs: Long? = null
+        multiAct: Boolean,
+        modelName: String?,
+        variables: Map<String, String>?,
+        domSettleTimeoutMs: Long?,
+        timeoutMs: Long?
     ): AgentRunResult {
         return agentRun(task, multiAct, modelName, variables, domSettleTimeoutMs, timeoutMs)
     }
@@ -272,9 +299,24 @@ class AgenticSession(
         val value = client.post("/session/{sessionId}/agent/run", payload)
 
         val result = if (value is Map<*, *>) {
-            val trace = (value as Map<String, Any?>)["trace"] as? List<String>
+            val map = value as Map<String, Any?>
+            val trace = map["trace"] as? List<String>
             trace?.let { _processTrace.addAll(it) }
-            AgentRunResult.fromMap(value)
+            
+            // The run operation typically involves multiple steps
+            // We track this as a high-level task in the state history
+            val step = _stateHistory.size + 1
+            _stateHistory.add(
+                AgentState(
+                    step = step,
+                    action = "run: $task",
+                    result = map["finalResult"],
+                    success = map["success"] as? Boolean ?: false,
+                    message = map["message"] as? String ?: ""
+                )
+            )
+            
+            AgentRunResult.fromMap(map)
         } else {
             AgentRunResult()
         }
@@ -292,12 +334,12 @@ class AgenticSession(
      * @param drawOverlay Whether to highlight interactive elements
      * @return [AgentObservation] with observation results
      */
-    fun observe(
-        instruction: String? = null,
-        modelName: String? = null,
-        domSettleTimeoutMs: Long? = null,
-        returnAction: Boolean? = null,
-        drawOverlay: Boolean = true
+    override fun observe(
+        instruction: String?,
+        modelName: String?,
+        domSettleTimeoutMs: Long?,
+        returnAction: Boolean?,
+        drawOverlay: Boolean
     ): AgentObservation {
         return agentObserve(instruction, modelName, domSettleTimeoutMs, returnAction, drawOverlay)
     }
@@ -341,6 +383,27 @@ class AgenticSession(
      * @return [ExtractionResult] with extracted data
      */
     @Suppress("UNCHECKED_CAST")
+    override fun extract(
+        instruction: String,
+        schema: Map<String, Any?>?,
+        selector: String?,
+        modelName: String?,
+        domSettleTimeoutMs: Long?
+    ): ExtractionResult {
+        return agentExtract(instruction, schema, selector, modelName, domSettleTimeoutMs)
+    }
+
+    /**
+     * Extracts structured data from the page using AI (internal implementation).
+     *
+     * @param instruction Extraction instruction describing what to extract
+     * @param schema Optional JSON schema for the extraction result
+     * @param selector Optional CSS selector to scope extraction
+     * @param modelName Optional LLM model name
+     * @param domSettleTimeoutMs Timeout for DOM settling
+     * @return [ExtractionResult] with extracted data
+     */
+    @Suppress("UNCHECKED_CAST")
     fun agentExtract(
         instruction: String,
         schema: Map<String, Any?>? = null,
@@ -369,7 +432,7 @@ class AgenticSession(
      * @param selector Optional CSS selector to limit summarization scope
      * @return Summary text
      */
-    fun summarize(instruction: String? = null, selector: String? = null): String {
+    override fun summarize(instruction: String?, selector: String?): String {
         return agentSummarize(instruction, selector)
     }
 
@@ -404,7 +467,7 @@ class AgenticSession(
      *
      * @return True if history was cleared successfully
      */
-    fun clearHistory(): Boolean {
+    override fun clearHistory(): Boolean {
         return agentClearHistory()
     }
 
@@ -416,6 +479,7 @@ class AgenticSession(
     fun agentClearHistory(): Boolean {
         val value = client.post("/session/{sessionId}/agent/clearHistory", emptyMap())
         _processTrace.clear()
+        _stateHistory.clear()
         return if (value != null) value as? Boolean ?: true else true
     }
 
@@ -424,6 +488,7 @@ class AgenticSession(
      */
     override fun close() {
         _processTrace.clear()
+        _stateHistory.clear()
         super.close()
     }
 }
