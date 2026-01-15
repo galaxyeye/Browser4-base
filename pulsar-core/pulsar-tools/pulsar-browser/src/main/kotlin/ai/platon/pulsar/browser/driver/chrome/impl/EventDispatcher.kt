@@ -52,7 +52,7 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
         const val PARAMS_PROPERTY = "params"
 
         val OBJECT_MAPPER = ObjectMapper()
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE, true)
     }

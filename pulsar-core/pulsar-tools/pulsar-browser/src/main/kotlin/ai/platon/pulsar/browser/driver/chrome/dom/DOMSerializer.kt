@@ -14,8 +14,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 object DOMSerializer {
     val MAPPER: ObjectMapper = jacksonObjectMapper().apply {
-        setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+        setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY)
         registerModule(doubleBindModule())
     }
 

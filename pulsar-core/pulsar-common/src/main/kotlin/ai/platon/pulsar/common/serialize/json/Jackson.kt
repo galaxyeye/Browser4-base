@@ -111,7 +111,7 @@ fun pulsarObjectMapper(): ObjectMapper = jacksonObjectMapper()
     .configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-    // Prefer non-deprecated API; setSerializationInclusion is deprecated in newer Jackson.
+    // Prefer non-deprecated API; setDefaultPropertyInclusion is deprecated in newer Jackson.
     .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY))
     // Ensure Double/Number formatting works in containers like List<Number>, Map<String, Any>, etc.
     .registerModule(doubleBindModule())

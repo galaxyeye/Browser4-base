@@ -14,7 +14,7 @@ class DoubleSerializerTest {
     private fun mapper(includeNulls: Boolean = true): ObjectMapper =
         jacksonObjectMapper().apply {
             if (includeNulls) {
-                // ObjectMapper#setSerializationInclusion is deprecated; use default property inclusion instead.
+                // ObjectMapper#setDefaultPropertyInclusion is deprecated; use default property inclusion instead.
                 setDefaultPropertyInclusion(
                     JsonInclude.Value.construct(JsonInclude.Include.ALWAYS, JsonInclude.Include.ALWAYS)
                 )

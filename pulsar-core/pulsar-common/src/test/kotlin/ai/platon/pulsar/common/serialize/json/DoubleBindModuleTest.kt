@@ -10,7 +10,7 @@ class DoubleBindModuleTest {
     private fun mapper(decimals: Int = 2, includeNulls: Boolean = false) =
         jacksonObjectMapper().apply {
             if (includeNulls) {
-                // ObjectMapper#setSerializationInclusion is deprecated; use default property inclusion instead.
+                // ObjectMapper#setDefaultPropertyInclusion is deprecated; use default property inclusion instead.
                 setDefaultPropertyInclusion(
                     JsonInclude.Value.construct(JsonInclude.Include.ALWAYS, JsonInclude.Include.ALWAYS)
                 )

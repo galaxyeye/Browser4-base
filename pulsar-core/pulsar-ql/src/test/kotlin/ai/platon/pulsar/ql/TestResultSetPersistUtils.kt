@@ -69,7 +69,7 @@ class TestResultSetPersistUtils {
         val rs = ResultSets.newSimpleResultSet()
         val columnCount = 5
         val transposedRowCount = 10
-        IntRange(1, columnCount).map { i ->
+        IntRange(1, columnCount).forEach { i ->
             rs.addColumn("C$i", Types.ARRAY, 0, 0)
         }
 
