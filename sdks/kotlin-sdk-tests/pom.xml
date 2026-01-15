@@ -61,7 +61,7 @@
                         <configuration>
                             <groups>IntegrationTest</groups>
                             <!-- Don't exclude any tests in full mode -->
-                            <excludedGroups></excludedGroups>
+                            <excludedGroups>None</excludedGroups>
                         </configuration>
                     </plugin>
                 </plugins>
