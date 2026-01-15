@@ -1,16 +1,14 @@
-package ai.platon.pulsar.e2e
+package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.AppFiles
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.emoji.PopularEmoji
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.persist.model.ActiveDOMMessage
-import ai.platon.pulsar.common.printlnPro
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import java.io.IOException
 import java.nio.file.Path
@@ -118,7 +116,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
         val data = detail?.value?.toString()
         assertNotNull(data)
 
-        val message = ActiveDOMMessage.fromJson(data)
+        val message = ActiveDOMMessage.Companion.fromJson(data)
         val urls = message.urls
         assertNotNull(urls)
         assertEquals(e2eOriginUrl, urls.URL)
@@ -439,4 +437,3 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
         return AppFiles.saveTo(bytes, path, true)
     }
 }
-
