@@ -155,4 +155,36 @@ class CalculatorToolExecutorTest {
         }
         assertTrue(exception.message!!.contains("Division by zero"))
     }
+
+    @Test
+    fun `help returns available calculator methods`() {
+        val help = executor.help()
+        
+        assertTrue(help.isNotBlank())
+        assertTrue(help.contains("Add two numbers") || help.contains("add"))
+    }
+
+    @Test
+    fun `help for add returns detailed help`() {
+        val help = executor.help("add")
+        
+        assertTrue(help.contains("Add two numbers"))
+    }
+
+    @Test
+    fun `help for all calculator methods is available`() {
+        val methods = listOf("add", "subtract", "multiply", "divide")
+        
+        methods.forEach { method ->
+            val help = executor.help(method)
+            org.junit.jupiter.api.Assertions.assertNotNull(help, "Help for $method should not be null")
+            assertTrue(help.isNotBlank(), "Help for $method should not be blank")
+        }
+    }
+
+    @Test
+    fun `help for unknown method returns empty string`() {
+        val help = executor.help("unknownMethod")
+        assertEquals("", help)
+    }
 }
