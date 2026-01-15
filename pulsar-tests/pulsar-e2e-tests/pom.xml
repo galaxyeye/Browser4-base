@@ -20,6 +20,10 @@
     <artifactId>pulsar-e2e-tests</artifactId>
     <name>Pulsar Tests</name>
 
+    <build>
+        <defaultGoal>package</defaultGoal>
+    </build>
+
     <properties>
         <!-- Skip tests by default in this module because they are time-consuming.
              To run tests, use: mvn test -DrunITs=true -->
