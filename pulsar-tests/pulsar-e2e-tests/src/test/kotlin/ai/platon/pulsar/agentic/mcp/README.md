@@ -25,22 +25,22 @@ The tests in the `pulsar-tests` module are skipped by default because they are t
 
 ### Run all MCP tests
 ```bash
-./mvnw -pl pulsar-tests test -Dtest="MCPToolExecutorE2ETest" -DrunPulsarTests=true
+./mvnw -pl pulsar-tests test -Dtest="MCPToolExecutorE2ETest" -DrunITs=true
 ```
 
 ### Run a specific test method
 ```bash
-./mvnw -pl pulsar-tests test -Dtest="MCPToolExecutorE2ETest#test server is accessible via HTTP" -DrunPulsarTests=true
+./mvnw -pl pulsar-tests test -Dtest="MCPToolExecutorE2ETest#test server is accessible via HTTP" -DrunITs=true
 ```
 
 ### Run all tests with MCP tag
 ```bash
-./mvnw -pl pulsar-tests test -Dgroups="mcp" -DrunPulsarTests=true
+./mvnw -pl pulsar-tests test -Dgroups="mcp" -DrunITs=true
 ```
 
 ### Run all E2E tests (including MCP)
 ```bash
-./mvnw -pl pulsar-tests test -Dgroups="E2ETest" -DrunPulsarTests=true
+./mvnw -pl pulsar-tests test -Dgroups="E2ETest" -DrunITs=true
 ```
 
 ## Test Coverage
@@ -85,7 +85,7 @@ The MCP tests require:
 
 Potential areas for expansion:
 1. Add tests for SSE (Server-Sent Events) transport
-2. Add tests for WebSocket transport  
+2. Add tests for WebSocket transport
 3. Add tests for STDIO transport with process management
 4. Add concurrent tool execution tests
 5. Add performance/load testing scenarios

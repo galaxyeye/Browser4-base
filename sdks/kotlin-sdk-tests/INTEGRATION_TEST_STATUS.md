@@ -11,7 +11,7 @@ Integration tests for the Kotlin SDK have been partially fixed. Out of 35 total 
 ### 1. Compilation Issues
 - Fixed `AgenticSessionIntegrationTest.kt` compilation error where `result.isNotBlank()` was called on `AgentRunResult` instead of `result.message.isNotBlank()`
 
-### 2. Configuration Issues  
+### 2. Configuration Issues
 - Added `PulsarContext` bean to `PulsarContextConfiguration.kt`
   - SessionManager requires PulsarContext bean to be registered
   - Added singleton `pulsarContext()` bean method
@@ -32,7 +32,7 @@ Integration tests for the Kotlin SDK have been partially fixed. Out of 35 total 
 ### Passing Tests (8)
 **PulsarClientIntegrationTest** - All basic operations work:
 1. ✅ `should create and delete session`
-2. ✅ `should create session with capabilities`  
+2. ✅ `should create session with capabilities`
 3. ✅ `should make GET request`
 4. ✅ `should support multiple sessions`
 5. ✅ `should handle basic auth`
@@ -63,7 +63,7 @@ All tests fail with **HTTP 400** on `/session/{sessionId}/url` endpoint:
 HTTP 400: {"timestamp":"...","status":400,"error":"Bad Request","path":"/session/{sessionId}/url"}
 ```
 
-#### PulsarSessionIntegrationTest (15 failures)  
+#### PulsarSessionIntegrationTest (15 failures)
 All tests fail with **HTTP 400/500** on various endpoints:
 
 1. ❌ `should load page` - HTTP 500 on `/load`
@@ -87,7 +87,7 @@ All tests fail with **HTTP 400/500** on various endpoints:
 HTTP 500: {"timestamp":"...","status":500,"error":"Internal Server Error","path":"/session/{sessionId}/..."}
 ```
 
-#### AgenticSessionIntegrationTest  
+#### AgenticSessionIntegrationTest
 All tests are **@Disabled** (not run):
 - These require AI/LLM configuration
 - Would need additional setup to enable
@@ -174,7 +174,7 @@ Check `ControllerUtils.errorResponse()` implementation:
 ### 5. Add Integration Test Debug Mode
 Create test configuration with:
 - Verbose exception logging
-- Request/response logging  
+- Request/response logging
 - Session state debugging
 
 ### 6. Verify DTO Serialization
@@ -187,12 +187,12 @@ Ensure all DTOs serialize/deserialize correctly:
 
 ### Run All Tests
 ```bash
-./mvnw -pl sdks/kotlin-sdk-tests test -DrunIntegrationTests=true
+./mvnw -pl sdks/kotlin-sdk-tests test -DrunITs=true
 ```
 
 ### Run Specific Test Class
 ```bash
-./mvnw -pl sdks/kotlin-sdk-tests test -DrunIntegrationTests=true -Dtest=PulsarClientIntegrationTest
+./mvnw -pl sdks/kotlin-sdk-tests test -DrunITs=true -Dtest=PulsarClientIntegrationTest
 ```
 
 ### Build Without Tests

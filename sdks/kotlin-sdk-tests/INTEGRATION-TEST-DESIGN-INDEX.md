@@ -159,7 +159,7 @@ kotlin-sdk (干净)          kotlin-sdk-tests (独立)
 cd sdks/kotlin-sdk && mvn test
 
 # 集成测试（独立模块）
-cd sdks/kotlin-sdk-tests && mvn test -DrunIntegrationTests=true
+cd sdks/kotlin-sdk-tests && mvn test -DrunITs=true
 
 # 所有测试
 mvn test -Pfull-test

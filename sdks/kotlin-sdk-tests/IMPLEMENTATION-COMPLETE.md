@@ -1,8 +1,8 @@
 # Kotlin SDK Integration Tests - Implementation Complete
 
-**Date**: 2026-01-13  
-**Status**: ✅ Implementation Complete  
-**Total Tests**: 49 integration tests  
+**Date**: 2026-01-13
+**Status**: ✅ Implementation Complete
+**Total Tests**: 49 integration tests
 **Lines of Code**: 1,154 lines
 
 ## Summary
@@ -100,7 +100,7 @@ mvn clean install
 
 #### Integration Tests (Exclude AI)
 ```bash
-mvn test -DrunIntegrationTests=true -pl sdks/kotlin-sdk-tests
+mvn test -DrunITs=true -pl sdks/kotlin-sdk-tests
 # Runs: PulsarClient + WebDriver + PulsarSession tests
 # Excludes: AgenticSession tests (require AI)
 ```
@@ -114,19 +114,19 @@ mvn test -DrunFullTests=true -pl sdks/kotlin-sdk-tests
 
 #### Specific Test Class
 ```bash
-mvn test -Dtest=PulsarSessionIntegrationTest -DrunIntegrationTests=true
+mvn test -Dtest=PulsarSessionIntegrationTest -DrunITs=true
 ```
 
 #### Tag-Based Filtering
 ```bash
 # Only fast tests
-mvn test -Dgroups="IntegrationTest,Fast" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,Fast" -DrunITs=true
 
 # Exclude slow tests
-mvn test -Dgroups="IntegrationTest,!Slow" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,!Slow" -DrunITs=true
 
 # Exclude browser tests (if Chrome not available)
-mvn test -Dgroups="IntegrationTest,!RequiresBrowser" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,!RequiresBrowser" -DrunITs=true
 ```
 
 ## Technical Details
@@ -213,12 +213,12 @@ To use these tests in CI/CD:
    ```bash
    cd /home/runner/work/Browser4/Browser4
    mvn clean install -DskipTests
-   mvn test -pl sdks/kotlin-sdk-tests -DrunIntegrationTests=true
+   mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
    ```
 
 3. **Enable in CI**: Add GitHub Actions workflow for SDK tests (template already in design docs).
 
-4. **Optional - Enable AI Tests**: 
+4. **Optional - Enable AI Tests**:
    - Remove `@Disabled` annotation from AgenticSessionIntegrationTest
    - Configure LLM API keys in test environment
    - Run with `-DrunFullTests=true`
@@ -231,6 +231,6 @@ The implementation follows the design documents and provides a solid foundation 
 
 ---
 
-**Implementation by**: AI Copilot  
-**Date**: 2026-01-13  
+**Implementation by**: AI Copilot
+**Date**: 2026-01-13
 **PR Branch**: copilot/continue-kotlin-sdk-tests

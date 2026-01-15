@@ -98,7 +98,7 @@ import kotlin.test.assertTrue
 
 /**
  * 集成测试基类
- * 
+ *
  * 特性：
  * - 自动启动完整的 Browser4 REST 服务器
  * - 使用随机端口避免冲突
@@ -128,7 +128,7 @@ abstract class KotlinSdkIntegrationTestBase {
     /**
      * 服务器基础 URL
      */
-    protected val baseUrl: String 
+    protected val baseUrl: String
         get() = "http://localhost:$serverPort"
 
     /**
@@ -203,7 +203,7 @@ import org.springframework.test.context.ContextConfiguration
 
 /**
  * 测试服务器应用
- * 
+ *
  * 启动完整的 Browser4 REST API 服务器用于 SDK 集成测试
  */
 @SpringBootApplication
@@ -235,7 +235,7 @@ import java.net.ServerSocket
 
 /**
  * Mock 测试站点服务器配置
- * 
+ *
  * 在端口 18080 启动 Mock EC 服务器，提供测试页面
  */
 @TestConfiguration
@@ -363,14 +363,14 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
         val sessionId = client.createSession()
         assertNotNull(sessionId)
         assertTrue(sessionId.isNotBlank())
-        
+
         // 验证会话已设置
         client.sessionId = sessionId
         assertEquals(sessionId, client.sessionId)
-        
+
         // 删除会话
         client.deleteSession()
-        
+
         // 清空会话 ID
         client.sessionId = null
         assertNull(client.sessionId)
@@ -382,10 +382,10 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
             "browserName" to "chrome",
             "pageLoadStrategy" to "normal"
         )
-        
+
         val sessionId = client.createSession(capabilities)
         assertNotNull(sessionId)
-        
+
         client.sessionId = sessionId
         client.deleteSession()
     }
@@ -393,7 +393,7 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should make GET request`() {
         val sessionId = createSession()
-        
+
         // GET 当前 URL（应该返回空或默认值）
         val result = client.get("/session/$sessionId/url")
         assertNotNull(result)
@@ -402,14 +402,14 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should make POST request`() {
         val sessionId = createSession()
-        
+
         // POST 导航到 URL
         val url = "${TestUrls.MOCK_SERVER_BASE}/ec/"
         val result = client.post(
             "/session/$sessionId/url",
             mapOf("url" to url)
         )
-        
+
         // 应该成功返回
         assertNotNull(result)
     }
@@ -454,7 +454,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     fun `should navigate to URL`() {
         val url = TestUrls.SIMPLE_PAGE
         driver.navigateTo(url)
-        
+
         val currentUrl = driver.currentUrl()
         assertNotNull(currentUrl)
         assertTrue(currentUrl.contains(url) || currentUrl == url)
@@ -463,7 +463,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should get page title`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         val title = driver.title()
         assertNotNull(title)
         assertTrue(title.isNotBlank())
@@ -472,7 +472,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should check element exists`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         // 检查常见元素
         assertTrue(driver.exists("body"))
         assertTrue(driver.exists("html"))
@@ -481,7 +481,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should extract text content`() {
         driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-        
+
         val title = driver.selectFirstTextOrNull("#productTitle")
         assertNotNull(title)
         assertTrue(title.isNotBlank())
@@ -490,10 +490,10 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should scroll page`() {
         driver.navigateTo(TestUrls.PRODUCT_LIST)
-        
+
         // 滚动到底部
         driver.scrollToBottom()
-        
+
         // 滚动到顶部
         driver.scrollToTop()
     }
@@ -501,7 +501,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should capture screenshot`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         val screenshot = driver.captureScreenshot()
         assertNotNull(screenshot)
         assertTrue(screenshot.isNotEmpty())
@@ -510,7 +510,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should execute script`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         val result = driver.executeScript("return document.title")
         assertNotNull(result)
     }
@@ -518,7 +518,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should wait for selector`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         // 等待 body 元素
         driver.waitForSelector("body", timeout = 5000)
         assertTrue(driver.exists("body"))
@@ -527,12 +527,12 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should extract multiple fields`() {
         driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-        
+
         val fields = driver.extract(mapOf(
             "title" to "#productTitle",
             "price" to ".a-price-whole"
         ))
-        
+
         assertNotNull(fields)
         assertTrue(fields.containsKey("title"))
     }
@@ -568,7 +568,7 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     fun `should normalize URL`() {
         val url = "https://example.com"
         val normalized = session.normalize(url)
-        
+
         assertNotNull(normalized)
         assertTrue(normalized.isNotBlank())
     }
@@ -577,7 +577,7 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     fun `should load page`() {
         val url = TestUrls.PRODUCT_DETAIL
         val page = session.load(url)
-        
+
         assertNotNull(page)
         assertFalse(page.isNil)
         assertEquals(url, page.url)
@@ -587,7 +587,7 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     fun `should open page immediately`() {
         val url = TestUrls.SIMPLE_PAGE
         val page = session.open(url)
-        
+
         assertNotNull(page)
         assertFalse(page.isNil)
     }
@@ -599,9 +599,9 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
             "title" to "#productTitle",
             "price" to ".a-price-whole"
         )
-        
+
         val result = session.scrape(url, selectors = selectors)
-        
+
         assertNotNull(result)
         assertTrue(result.containsKey("title"))
     }
@@ -612,9 +612,9 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
             TestUrls.SIMPLE_PAGE,
             TestUrls.PRODUCT_DETAIL
         )
-        
+
         val pages = session.loadAll(urls)
-        
+
         assertEquals(urls.size, pages.size)
         pages.forEach { page ->
             assertNotNull(page)
@@ -639,7 +639,7 @@ import kotlin.test.*
 
 /**
  * AgenticSession 集成测试
- * 
+ *
  * 注意：这些测试需要 AI/LLM 配置才能运行
  */
 @Tag("RequiresAI")
@@ -657,9 +657,9 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should execute single action`() {
         session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         val result = session.act("scroll to the bottom")
-        
+
         assertNotNull(result)
         // AI 功能可能返回不同结果，只验证不抛异常
     }
@@ -667,16 +667,16 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should run autonomous task`() {
         val result = session.run("visit ${TestUrls.PRODUCT_DETAIL} and summarize the product")
-        
+
         assertNotNull(result)
     }
 
     @Test
     fun `should observe page`() {
         session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-        
+
         val observation = session.observe("find interactive elements")
-        
+
         assertNotNull(observation)
         assertNotNull(observation.observations)
     }
@@ -684,9 +684,9 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should extract data with AI`() {
         session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-        
+
         val extraction = session.agentExtract("extract product name, price, and description")
-        
+
         assertNotNull(extraction)
         assertNotNull(extraction.data)
     }
@@ -694,9 +694,9 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should summarize page`() {
         session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-        
+
         val summary = session.summarize()
-        
+
         assertNotNull(summary)
         assertTrue(summary.isNotBlank())
     }
@@ -765,7 +765,7 @@ import java.util.concurrent.TimeoutException
  * 测试辅助工具
  */
 object TestHelpers {
-    
+
     /**
      * 重试执行直到成功或超时
      */
@@ -775,7 +775,7 @@ object TestHelpers {
         block: () -> T
     ): T {
         var lastException: Exception? = null
-        
+
         repeat(maxAttempts) { attempt ->
             try {
                 return block()
@@ -786,7 +786,7 @@ object TestHelpers {
                 }
             }
         }
-        
+
         throw lastException ?: IllegalStateException("Retry failed")
     }
 
@@ -799,14 +799,14 @@ object TestHelpers {
         condition: () -> Boolean
     ) {
         val endTime = System.currentTimeMillis() + timeout.toMillis()
-        
+
         while (System.currentTimeMillis() < endTime) {
             if (condition()) {
                 return
             }
             Thread.sleep(pollInterval.toMillis())
         }
-        
+
         throw TimeoutException("Condition not met within ${timeout.seconds} seconds")
     }
 
@@ -843,14 +843,14 @@ mvn test
 
 # 运行集成测试（在独立测试模块）
 cd sdks/kotlin-sdk-tests
-mvn test -DrunIntegrationTests=true
+mvn test -DrunITs=true
 
 # 运行所有测试（包括 AI）
 cd sdks/kotlin-sdk-tests
 mvn test -DrunFullTests=true
 
 # 从项目根目录运行
-mvn test -pl sdks/kotlin-sdk-tests -DrunIntegrationTests=true
+mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
 
 # 运行特定标签的测试
 mvn test -pl sdks/kotlin-sdk-tests -Dgroups="IntegrationTest,!Slow"
@@ -1044,7 +1044,7 @@ mvn test -pl sdks/kotlin-sdk-tests -Dgroups="IntegrationTest,!Slow"
         <id>run-integration-tests</id>
         <activation>
             <property>
-                <name>runIntegrationTests</name>
+                <name>runITs</name>
                 <value>true</value>
             </property>
         </activation>
@@ -1105,7 +1105,7 @@ mvn test
 
 # 运行集成测试（在独立模块）
 cd sdks/kotlin-sdk-tests
-mvn test -DrunIntegrationTests=true
+mvn test -DrunITs=true
 
 # 或使用 Profile
 mvn test -Prun-integration-tests
@@ -1151,22 +1151,22 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      
+
       - name: Run unit tests
         run: |
           cd sdks/kotlin-sdk
           mvn test
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -1178,41 +1178,41 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: unit-tests
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      
+
       - name: Install Chrome
         run: |
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
           sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
-      
+
       - name: Build project
         run: mvn install -DskipTests -pl pulsar-core,pulsar-rest,pulsar-tests-common -am
-      
+
       - name: Run integration tests
         run: |
           cd sdks/kotlin-sdk
           mvn test -Pintegration-test
         env:
           DISPLAY: :99
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-results
           path: sdks/kotlin-sdk/target/surefire-reports/
-      
+
       - name: Upload logs
         if: failure()
         uses: actions/upload-artifact@v4
@@ -1227,11 +1227,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests]
     if: always()
-    
+
     steps:
       - name: Download test results
         uses: actions/download-artifact@v4
-      
+
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
@@ -1301,12 +1301,12 @@ fi
 # 运行集成测试
 if [ "$RUN_INTEGRATION" = true ]; then
     echo -e "${YELLOW}Running integration tests...${NC}"
-    
+
     # 检查 Chrome 是否安装
     if ! command -v google-chrome &> /dev/null; then
         echo -e "${YELLOW}Warning: Chrome not found. Some tests may fail.${NC}"
     fi
-    
+
     # 运行集成测试
     mvn test -Pintegration-test
     if [ $? -eq 0 ]; then

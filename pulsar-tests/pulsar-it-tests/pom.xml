@@ -22,16 +22,16 @@
 
     <properties>
         <!-- Skip tests by default in this module because they are time-consuming.
-             To run tests, use: mvn test -DrunPulsarTests=true -->
+             To run tests, use: mvn test -DrunITs=true -->
         <skipTests>true</skipTests>
     </properties>
 
     <profiles>
         <profile>
-            <id>run-pulsar-tests</id>
+            <id>run-its</id>
             <activation>
                 <property>
-                    <name>runPulsarTests</name>
+                    <name>runITs</name>
                     <value>true</value>
                 </property>
             </activation>

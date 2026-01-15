@@ -161,7 +161,7 @@ abstract class KotlinSdkIntegrationTestBase {
     <id>run-integration-tests</id>
     <activation>
         <property>
-            <name>runIntegrationTests</name>
+            <name>runITs</name>
             <value>true</value>
         </property>
     </activation>
@@ -192,14 +192,14 @@ mvn test
 
 # 运行集成测试（在独立模块）
 cd sdks/kotlin-sdk-tests
-mvn test -DrunIntegrationTests=true
+mvn test -DrunITs=true
 
 # 运行所有测试（包括 AI 功能）
 cd sdks/kotlin-sdk-tests
 mvn test -DrunFullTests=true
 
 # 从项目根目录运行
-mvn test -pl sdks/kotlin-sdk-tests -DrunIntegrationTests=true
+mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
 ```
 
 ### 本地脚本

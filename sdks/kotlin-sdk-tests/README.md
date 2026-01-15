@@ -23,7 +23,7 @@ This module contains comprehensive integration tests that:
 
 ```bash
 # From this directory
-mvn test -DrunIntegrationTests=true
+mvn test -DrunITs=true
 
 # Or use the profile
 mvn test -Prun-integration-tests
@@ -32,15 +32,15 @@ mvn test -Prun-integration-tests
 mvn test -DrunFullTests=true
 
 # From project root
-mvn test -pl sdks/kotlin-sdk-tests -DrunIntegrationTests=true
+mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
 ```
 
 ### Run Specific Test Classes
 
 ```bash
-mvn test -Dtest=PulsarClientIntegrationTest -DrunIntegrationTests=true
-mvn test -Dtest=WebDriverIntegrationTest -DrunIntegrationTests=true
-mvn test -Dtest=PulsarSessionIntegrationTest -DrunIntegrationTests=true
+mvn test -Dtest=PulsarClientIntegrationTest -DrunITs=true
+mvn test -Dtest=WebDriverIntegrationTest -DrunITs=true
+mvn test -Dtest=PulsarSessionIntegrationTest -DrunITs=true
 
 # AgenticSession tests are disabled by default (require AI/LLM config)
 # To enable them, remove @Disabled annotation and configure AI
@@ -51,13 +51,13 @@ mvn test -Dtest=AgenticSessionIntegrationTest -DrunFullTests=true
 
 ```bash
 # Run only fast tests
-mvn test -Dgroups="IntegrationTest,Fast" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,Fast" -DrunITs=true
 
 # Exclude slow tests
-mvn test -Dgroups="IntegrationTest,!Slow" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,!Slow" -DrunITs=true
 
 # Exclude AI tests (default)
-mvn test -Dgroups="IntegrationTest,!RequiresAI" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,!RequiresAI" -DrunITs=true
 ```
 
 ## Test Structure
@@ -148,7 +148,7 @@ Key settings:
 ## Troubleshooting
 
 ### Tests are skipped
-By default, tests are skipped. Use `-DrunIntegrationTests=true` to run them.
+By default, tests are skipped. Use `-DrunITs=true` to run them.
 
 ### Port already in use
 The REST server uses a random port. The mock server uses port 18080. If 18080 is in use, tests may fail.
@@ -156,14 +156,14 @@ The REST server uses a random port. The mock server uses port 18080. If 18080 is
 ### Chrome not found
 Browser tests require Chrome/Chromium. Install it or skip browser tests:
 ```bash
-mvn test -Dgroups="IntegrationTest,!RequiresBrowser" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,!RequiresBrowser" -DrunITs=true
 ```
 
 ### Tests are slow
 Integration tests are slower than unit tests. Use:
 ```bash
 # Run only fast tests
-mvn test -Dgroups="IntegrationTest,!Slow" -DrunIntegrationTests=true
+mvn test -Dgroups="IntegrationTest,!Slow" -DrunITs=true
 ```
 
 ## Related Documentation

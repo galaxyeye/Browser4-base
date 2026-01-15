@@ -29,7 +29,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Skip tests by default in this module because they are time-consuming.
-             To run tests, use: mvn test -DrunIntegrationTests=true -->
+             To run tests, use: mvn test -DrunITs=true -->
         <skipTests>true</skipTests>
 
         <!--  Language  -->
@@ -42,10 +42,10 @@
 
     <profiles>
         <profile>
-            <id>run-integration-tests</id>
+            <id>run-its</id>
             <activation>
                 <property>
-                    <name>runIntegrationTests</name>
+                    <name>runITs</name>
                     <value>true</value>
                 </property>
             </activation>
@@ -65,6 +65,7 @@
             <properties>
                 <skipTests>false</skipTests>
             </properties>
+
             <build>
                 <plugins>
                     <plugin>

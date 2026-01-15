@@ -168,7 +168,7 @@
 │                                                                           │
 │  Test Execution:                                                         │
 │  - SDK unit tests:   cd sdks/kotlin-sdk && mvn test                     │
-│  - Integration tests: cd sdks/kotlin-sdk-tests && mvn test -DrunIntegrationTests=true │
+│  - Integration tests: cd sdks/kotlin-sdk-tests && mvn test -DrunITs=true │
 │  - Full tests:       cd sdks/kotlin-sdk-tests && mvn test -DrunFullTests=true │
 │  - Fast tests only:  mvn test -Dgroups="Fast"                           │
 │                                                                           │
