@@ -29,7 +29,7 @@ mvn test -DrunITs=true
 mvn test -Prun-integration-tests
 
 # Run all tests including AI features
-mvn test -DrunFullTests=true
+mvn test -DrunSDKTests=true
 
 # From project root
 mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
@@ -44,7 +44,7 @@ mvn test -Dtest=PulsarSessionIntegrationTest -DrunITs=true
 
 # AgenticSession tests are disabled by default (require AI/LLM config)
 # To enable them, remove @Disabled annotation and configure AI
-mvn test -Dtest=AgenticSessionIntegrationTest -DrunFullTests=true
+mvn test -Dtest=AgenticSessionIntegrationTest -DrunSDKTests=true
 ```
 
 ### Run Tests with Specific Tags

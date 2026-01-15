@@ -107,7 +107,7 @@ mvn test -DrunITs=true -pl sdks/kotlin-sdk-tests
 
 #### Full Tests (Include AI)
 ```bash
-mvn test -DrunFullTests=true -pl sdks/kotlin-sdk-tests
+mvn test -DrunSDKTests=true -pl sdks/kotlin-sdk-tests
 # Runs: All tests including AgenticSession
 # Note: AgenticSession tests are @Disabled, need to be enabled manually
 ```
@@ -221,7 +221,7 @@ To use these tests in CI/CD:
 4. **Optional - Enable AI Tests**:
    - Remove `@Disabled` annotation from AgenticSessionIntegrationTest
    - Configure LLM API keys in test environment
-   - Run with `-DrunFullTests=true`
+   - Run with `-DrunSDKTests=true`
 
 ## Conclusion
 

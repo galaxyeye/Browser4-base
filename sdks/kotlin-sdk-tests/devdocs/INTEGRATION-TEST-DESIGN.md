@@ -847,7 +847,7 @@ mvn test -DrunITs=true
 
 # 运行所有测试（包括 AI）
 cd sdks/kotlin-sdk-tests
-mvn test -DrunFullTests=true
+mvn test -DrunSDKTests=true
 
 # 从项目根目录运行
 mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
@@ -1072,7 +1072,7 @@ mvn test -pl sdks/kotlin-sdk-tests -Dgroups="IntegrationTest,!Slow"
         <id>run-full-tests</id>
         <activation>
             <property>
-                <name>runFullTests</name>
+                <name>runSDKTests</name>
                 <value>true</value>
             </property>
         </activation>
@@ -1111,7 +1111,7 @@ mvn test -DrunITs=true
 mvn test -Prun-integration-tests
 
 # 运行所有测试（包括 AI）
-mvn test -DrunFullTests=true
+mvn test -DrunSDKTests=true
 # 或
 mvn test -Prun-full-tests
 

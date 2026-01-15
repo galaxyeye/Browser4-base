@@ -196,7 +196,7 @@ mvn test -DrunITs=true
 
 # 运行所有测试（包括 AI 功能）
 cd sdks/kotlin-sdk-tests
-mvn test -DrunFullTests=true
+mvn test -DrunSDKTests=true
 
 # 从项目根目录运行
 mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true

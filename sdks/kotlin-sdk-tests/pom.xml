@@ -42,23 +42,10 @@
 
     <profiles>
         <profile>
-            <id>run-its</id>
+            <id>run-sdk-tests</id>
             <activation>
                 <property>
-                    <name>runITs</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <properties>
-                <skipTests>false</skipTests>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>run-full-tests</id>
-            <activation>
-                <property>
-                    <name>runFullTests</name>
+                    <name>runSDKTests</name>
                     <value>true</value>
                 </property>
             </activation>
