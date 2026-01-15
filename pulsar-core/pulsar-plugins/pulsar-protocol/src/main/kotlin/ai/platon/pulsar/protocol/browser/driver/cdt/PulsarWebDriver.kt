@@ -452,6 +452,7 @@ class PulsarWebDriver(
         return driverHelper.invokeOnElement(selector, "outerHTML") { node ->
             when {
                 node.isNull() -> null
+                // TODO: performance issue for large HTML
                 else -> domAPI?.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
             }
         }
@@ -499,6 +500,7 @@ function() {
                     val nd = domAPI?.resolveNode(null, node.backendNodeId)
                     if (nd?.objectId != null) {
                         val remoteObject = runtimeAPI?.callFunctionOn(functionDeclaration, objectId = nd.objectId, returnByValue = true)
+                        // TODO: performance issue for large text
                         remoteObject?.result?.value?.toString()
                     } else null
                 }
