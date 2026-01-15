@@ -633,6 +633,9 @@
     </dependencies>
 
     <properties>
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <surefire.excludedGroups>
             TimeConsumingTest,ExternalResourceDependent,IntegrationTest,E2ETest,HeavyTest,

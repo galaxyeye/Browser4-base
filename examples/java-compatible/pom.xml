@@ -67,7 +67,7 @@
     </dependencies>
 
     <properties>
-        <!-- Keep this module copy/paste friendly: explicitly pin UTF-8 instead of relying on repo parent -->
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
