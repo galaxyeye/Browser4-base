@@ -276,12 +276,12 @@
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-tests</artifactId>
+                <artifactId>pulsar-it-tests</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-tests</artifactId>
+                <artifactId>pulsar-it-tests</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <classifier>tests</classifier>

@@ -91,7 +91,7 @@
         <module>pulsar-rest</module>
         <module>pulsar-client</module>
         <module>pulsar-tests-common</module>
-        <module>pulsar-tests</module>
+        <module>pulsar-it-tests</module>
         <module>pulsar-e2e-tests</module>
         <module>pulsar-bom</module>
     </modules>
@@ -596,12 +596,12 @@
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-tests</artifactId>
+                <artifactId>pulsar-it-tests</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-tests</artifactId>
+                <artifactId>pulsar-it-tests</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <classifier>tests</classifier>
