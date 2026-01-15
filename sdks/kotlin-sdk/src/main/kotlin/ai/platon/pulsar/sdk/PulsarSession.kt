@@ -139,6 +139,24 @@ open class PulsarSession(
     }
 
     /**
+     * Opens a URL immediately with event handlers.
+     *
+     * This method is reserved for future support of page event handlers.
+     * Event handlers allow customization of page loading behavior.
+     *
+     * @param url The URL to open
+     * @param eventHandlers Page event handlers for customization
+     * @param args Optional load arguments
+     * @return [WebPage] with the loaded page information
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun open(url: String, eventHandlers: PageEventHandlers, args: String? = null): WebPage {
+        // For now, event handlers are reserved for future use
+        // The implementation will delegate to the standard open method
+        return open(url, args)
+    }
+
+    /**
      * Loads a URL from local storage or fetches from internet.
      *
      * This method first checks if the page exists in local storage and
@@ -212,25 +230,45 @@ open class PulsarSession(
     // ========== Parsing and Extraction ==========
 
     /**
-     * Parses a [WebPage] into a document.
+     * Parses a [WebPage] into a Jsoup document.
      *
-     * Note: Parsing is typically done locally. This method returns the
-     * HTML content for local parsing with libraries like jsoup.
+     * This method parses the HTML content using Jsoup, providing a rich DOM
+     * API for querying and manipulating the document structure.
      *
      * @param page The [WebPage] to parse
-     * @return HTML content for local parsing
+     * @return Jsoup Document object, or null if HTML is not available
      */
-    fun parse(page: WebPage): String? {
-        return page.html
+    fun parse(page: WebPage): org.jsoup.nodes.Document? {
+        val html = page.html ?: return null
+        val baseUrl = page.url
+        return org.jsoup.Jsoup.parse(html, baseUrl)
+    }
+
+    /**
+     * Extracts fields from a Jsoup document using CSS selectors.
+     *
+     * @param document The Jsoup document to extract from
+     * @param fieldSelectors Map of field names to CSS selectors
+     * @return Map of field names to extracted values (text content)
+     */
+    fun extract(document: org.jsoup.nodes.Document, fieldSelectors: Map<String, String>): Map<String, String?> {
+        return fieldSelectors.mapValues { (_, selector) ->
+            val elements = document.select(selector)
+            if (elements.isEmpty()) null else elements.first()?.text()
+        }
     }
 
     /**
      * Extracts fields from a document using CSS selectors.
      *
+     * This is a legacy method that delegates to the WebDriver.
+     * For Jsoup-based extraction, use extract(document: org.jsoup.nodes.Document, ...) instead.
+     *
      * @param document The document (or page) to extract from
      * @param fieldSelectors Map of field names to selectors
      * @return Map of field names to extracted values
      */
+    @Deprecated("Use extract(document: org.jsoup.nodes.Document, ...) for Jsoup documents")
     fun extract(document: Any, fieldSelectors: Map<String, String>): Map<String, String?> {
         return driver.extract(fieldSelectors)
     }
@@ -242,6 +280,21 @@ open class PulsarSession(
      * @param selectors List of selectors (selector becomes field name)
      * @return Map of field names to extracted values
      */
+    fun extract(document: org.jsoup.nodes.Document, selectors: Iterable<String>): Map<String, String?> {
+        val fieldSelectors = selectors.associateWith { it }
+        return extract(document, fieldSelectors)
+    }
+
+    /**
+     * Extracts fields from a document using CSS selectors.
+     *
+     * This is a legacy method that delegates to the WebDriver.
+     *
+     * @param document The document (or page) to extract from
+     * @param selectors List of selectors (selector becomes field name)
+     * @return Map of field names to extracted values
+     */
+    @Deprecated("Use extract(document: org.jsoup.nodes.Document, ...) for Jsoup documents")
     fun extract(document: Any, selectors: Iterable<String>): Map<String, String?> {
         val fieldSelectors = selectors.associateWith { it }
         return driver.extract(fieldSelectors)
@@ -257,7 +310,46 @@ open class PulsarSession(
      */
     fun scrape(url: String, args: String, fieldSelectors: Map<String, String>): Map<String, String?> {
         val page = load(url, args)
-        return extract(page, fieldSelectors)
+        val document = parse(page) ?: return emptyMap()
+        return extract(document, fieldSelectors)
+    }
+
+    // ========== Chat/LLM Operations ==========
+
+    /**
+     * Sends a prompt to the LLM and returns the response.
+     *
+     * This method provides direct access to chat/LLM capabilities for
+     * natural language processing tasks.
+     *
+     * @param prompt The user prompt to send to the LLM
+     * @return [ChatResponse] with the LLM's response
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun chat(prompt: String): ChatResponse {
+        val payload = mapOf("prompt" to prompt)
+        val value = client.post("/session/{sessionId}/chat", payload)
+        return ChatResponse.fromAny(value)
+    }
+
+    /**
+     * Sends a user message and system message to the LLM.
+     *
+     * The system message provides context or instructions for how the LLM
+     * should respond to the user message.
+     *
+     * @param userMessage The user's message/question
+     * @param systemMessage System instructions for the LLM
+     * @return [ChatResponse] with the LLM's response
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun chat(userMessage: String, systemMessage: String): ChatResponse {
+        val payload = mapOf(
+            "userMessage" to userMessage,
+            "systemMessage" to systemMessage
+        )
+        val value = client.post("/session/{sessionId}/chat", payload)
+        return ChatResponse.fromAny(value)
     }
 
     // ========== Driver Management ==========

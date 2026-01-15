@@ -297,3 +297,82 @@ class PageEventHandlers {
      */
     fun getCrawlEventHandlers(): Map<String, Any> = crawlEventHandlers.toMap()
 }
+
+/**
+ * Represents a single state in agent history.
+ * Contains information about a step in the agent's execution.
+ */
+data class AgentState(
+    val step: Int = 0,
+    val action: String? = null,
+    val result: Any? = null,
+    val success: Boolean = false,
+    val message: String = ""
+)
+
+/**
+ * Agent history tracking execution states.
+ * Provides memory of what actions have been performed.
+ */
+data class AgentHistory(
+    val states: MutableList<AgentState> = mutableListOf(),
+    val hasErrors: Boolean = false,
+    val finalResult: Any? = null
+) {
+    val size: Int get() = states.size
+    
+    companion object {
+        /**
+         * Creates an AgentHistory from an API response map.
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun fromMap(data: Map<String, Any?>): AgentHistory {
+            val statesList = data["states"] as? List<Map<String, Any?>> ?: emptyList()
+            val states = statesList.map { stateMap ->
+                AgentState(
+                    step = (stateMap["step"] as? Number)?.toInt() ?: 0,
+                    action = stateMap["action"] as? String,
+                    result = stateMap["result"],
+                    success = stateMap["success"] as? Boolean ?: false,
+                    message = stateMap["message"] as? String ?: ""
+                )
+            }.toMutableList()
+            
+            return AgentHistory(
+                states = states,
+                hasErrors = data["hasErrors"] as? Boolean ?: false,
+                finalResult = data["finalResult"]
+            )
+        }
+    }
+}
+
+/**
+ * Chat response from the LLM.
+ */
+data class ChatResponse(
+    val content: String = "",
+    val role: String = "assistant",
+    val model: String? = null
+) {
+    companion object {
+        /**
+         * Creates a ChatResponse from an API response.
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun fromAny(data: Any?): ChatResponse {
+            return when (data) {
+                is Map<*, *> -> {
+                    val map = data as Map<String, Any?>
+                    ChatResponse(
+                        content = map["content"] as? String ?: "",
+                        role = map["role"] as? String ?: "assistant",
+                        model = map["model"] as? String
+                    )
+                }
+                is String -> ChatResponse(content = data)
+                else -> ChatResponse()
+            }
+        }
+    }
+}
