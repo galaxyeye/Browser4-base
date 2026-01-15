@@ -23,6 +23,7 @@
     </description>
 
     <build>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
         <defaultGoal>package</defaultGoal>
 
         <plugins>

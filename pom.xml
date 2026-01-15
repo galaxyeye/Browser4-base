@@ -330,6 +330,8 @@
 
     <build>
         <defaultGoal>install</defaultGoal>
+
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
         <directory>target</directory>
         <finalName>${project.artifactId}-${project.version}</finalName>
 

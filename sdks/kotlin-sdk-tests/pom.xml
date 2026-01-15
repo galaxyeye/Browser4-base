@@ -24,6 +24,10 @@
     <description>Integration tests for Kotlin SDK with real server</description>
 
     <properties>
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <!-- Skip tests by default in this module because they are time-consuming.
              To run tests, use: mvn test -DrunIntegrationTests=true -->
         <skipTests>true</skipTests>
