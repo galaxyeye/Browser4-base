@@ -261,7 +261,7 @@ class FileSystemToolExecutorTest {
         
         methods.forEach { method ->
             val help = executor.help(method)
-            assertNotNull(help, "Help for $method should not be null")
+            org.junit.jupiter.api.Assertions.assertNotNull(help, "Help for $method should not be null")
             assertTrue(help.isNotBlank(), "Help for $method should not be blank")
         }
     }

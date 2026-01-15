@@ -53,7 +53,7 @@ class WebDriverExToolExecutorTest {
         val tc = ToolCall(
             domain = "driverEx",
             method = "extract",
-            arguments = mutableMapOf("selectors" to listOf(".class1", ".class2", "#id1"))
+            arguments = mutableMapOf("selectors" to ".class1,.class2,#id1")
         )
         
         executor.execute(tc, driver)

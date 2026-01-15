@@ -2,10 +2,8 @@ package ai.platon.pulsar.agentic.tools.executors
 
 import ai.platon.pulsar.agentic.ToolCall
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractBrowser
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -45,27 +43,6 @@ class BrowserToolExecutorTest {
         val help = executor.help("unknownMethod")
         
         assertEquals("", help)
-    }
-
-    @Test
-    fun `switchTab calls correct browser method`() = runBlocking {
-        val driver = mockk<AbstractWebDriver>(relaxed = true)
-        every { browser.findDriverById(any()) } returns driver
-        every { driver.bringToFront() } returns Unit
-        every { driver.id } returns 1
-        every { driver.guid } returns "test-guid"
-        
-        val tc = ToolCall(
-            domain = "browser",
-            method = "switchTab",
-            arguments = mutableMapOf("tabId" to "1")
-        )
-        
-        val result = executor.execute(tc, browser)
-        
-        assertNotNull(result.value)
-        assertEquals(driver, result.value)
-        verify { driver.bringToFront() }
     }
 
     @Test

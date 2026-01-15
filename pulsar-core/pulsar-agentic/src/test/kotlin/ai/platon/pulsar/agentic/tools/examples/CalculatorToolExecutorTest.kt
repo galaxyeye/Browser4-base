@@ -160,7 +160,6 @@ class CalculatorToolExecutorTest {
     fun `help returns available calculator methods`() {
         val help = executor.help()
         
-        assertNotNull(help)
         assertTrue(help.isNotBlank())
         assertTrue(help.contains("Add two numbers") || help.contains("add"))
     }
@@ -169,7 +168,6 @@ class CalculatorToolExecutorTest {
     fun `help for add returns detailed help`() {
         val help = executor.help("add")
         
-        assertNotNull(help)
         assertTrue(help.contains("Add two numbers"))
     }
 
@@ -179,7 +177,7 @@ class CalculatorToolExecutorTest {
         
         methods.forEach { method ->
             val help = executor.help(method)
-            assertNotNull(help, "Help for $method should not be null")
+            org.junit.jupiter.api.Assertions.assertNotNull(help, "Help for $method should not be null")
             assertTrue(help.isNotBlank(), "Help for $method should not be blank")
         }
     }
