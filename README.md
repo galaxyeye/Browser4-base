@@ -262,15 +262,14 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ## 📦 Modules Overview
 
-| Module | Description |
-|--------|-------------|
-| `pulsar-core` | Core engine: sessions, scheduling, DOM, browser control |
-| `pulsar-rest` | Spring Boot REST layer & command endpoints |
-| `pulsar-client` | Client SDK / CLI utilities |
-| `browser4-spa` | Single Page Application for browser agents |
-| `browser4-agents` | Agent & crawler orchestration with product packaging |
-| `pulsar-tests` | Heavy integration & scenario tests |
-| `pulsar-tests-common` | Shared test utilities & fixtures |
+| Module            | Description                                             |
+|-------------------|---------------------------------------------------------|
+| `pulsar-core`     | Core engine: sessions, scheduling, DOM, browser control |
+| `pulsar-rest`     | Spring Boot REST layer & command endpoints              |
+| `pulsar-sdk`      | Multi-language SDK                                      |
+| `browser4-spa`    | Single Page Application for browser agents              |
+| `browser4-agents` | Agent & crawler orchestration with product packaging    |
+| `pulsar-tests`    | E2E & heavy integration & scenario tests                |
 
 ---
 
