@@ -227,4 +227,48 @@ class FileSystemToolExecutorTest {
         val result = executor.execute(tc, fs)
         assertNotNull(result.exception)
     }
+
+    @Test
+    fun `help returns available file system methods`() {
+        val help = executor.help()
+        
+        assertNotNull(help)
+        assertTrue(help.isNotBlank())
+        assertTrue(help.contains("Write content to a file") || help.contains("writeString"))
+    }
+
+    @Test
+    fun `help for writeString returns detailed help`() {
+        val help = executor.help("writeString")
+        
+        assertNotNull(help)
+        assertTrue(help.contains("Write content to a file"))
+    }
+
+    @Test
+    fun `help for readString returns detailed help`() {
+        val help = executor.help("readString")
+        
+        assertNotNull(help)
+        assertTrue(help.contains("Read content from a file"))
+    }
+
+    @Test
+    fun `help for all methods is available`() {
+        val methods = listOf("writeString", "readString", "append", "replaceContent", 
+                             "fileExists", "getFileInfo", "deleteFile", "copyFile", 
+                             "moveFile", "listFiles")
+        
+        methods.forEach { method ->
+            val help = executor.help(method)
+            assertNotNull(help, "Help for $method should not be null")
+            assertTrue(help.isNotBlank(), "Help for $method should not be blank")
+        }
+    }
+
+    @Test
+    fun `help for unknown method returns empty string`() {
+        val help = executor.help("unknownMethod")
+        assertEquals("", help)
+    }
 }
