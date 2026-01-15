@@ -42,11 +42,21 @@
         <!-- MCP SDK for plugin support -->
         <dependency>
             <groupId>io.modelcontextprotocol</groupId>
-            <artifactId>kotlin-sdk</artifactId>
+            <artifactId>kotlin-sdk-core-jvm</artifactId>
+            <version>0.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.modelcontextprotocol</groupId>
+            <artifactId>kotlin-sdk-client-jvm</artifactId>
+            <version>0.8.1</version>
         </dependency>
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-cio</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.ktor</groupId>
+            <artifactId>ktor-serialization-kotlinx-json-jvm</artifactId>
         </dependency>
 
         <!-- MockK for Kotlin-friendly mocking -->

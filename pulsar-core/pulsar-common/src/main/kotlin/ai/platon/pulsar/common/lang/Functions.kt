@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package ai.platon.pulsar.common.lang
 
 import ai.platon.pulsar.common.warnUnexpected

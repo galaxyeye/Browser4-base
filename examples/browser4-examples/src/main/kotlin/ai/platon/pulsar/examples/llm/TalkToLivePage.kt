@@ -39,7 +39,7 @@ get the text of the element with id 'productTitle'
                     val functionResult = result.evaluate
                     println()
                     println("> $expression")
-                    if (functionResult != null && functionResult !is Unit) {
+                    if (functionResult != null) {
                         val s = functionResult.toString()
                         if (s.isNotBlank()) {
                             println()

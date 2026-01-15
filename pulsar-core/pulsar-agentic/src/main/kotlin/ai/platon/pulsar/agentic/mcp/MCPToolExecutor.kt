@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic.mcp
 
 import ai.platon.pulsar.agentic.TcEvaluate
+import ai.platon.pulsar.agentic.TcException
 import ai.platon.pulsar.agentic.ToolCall
 import ai.platon.pulsar.agentic.ToolCallSpec
 import ai.platon.pulsar.agentic.tools.executors.ToolExecutor
@@ -8,6 +9,7 @@ import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
+import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.reflect.KClass
@@ -55,7 +57,7 @@ class MCPToolExecutor(
                 value = null,
                 className = "null",
                 expression = pseudoExpression,
-                exception = IllegalStateException(error)
+                exception = TcException(pseudoExpression, IllegalStateException(error))
             )
         }
         
@@ -81,8 +83,7 @@ class MCPToolExecutor(
                 value = null,
                 className = "null",
                 expression = pseudoExpression,
-                exception = e,
-                help = helpText
+                exception = TcException(pseudoExpression, e, helpText)
             )
         }
     }
@@ -130,19 +131,17 @@ class MCPToolExecutor(
         )
     }
     
-    private fun extractArgumentsFromSchema(inputSchema: JsonObject?): List<ToolCallSpec.Arg> {
-        if (inputSchema == null) return emptyList()
-        
-        val properties = inputSchema["properties"] as? JsonObject ?: return emptyList()
-        val required = (inputSchema["required"] as? kotlinx.serialization.json.JsonArray)
-            ?.mapNotNull { (it as? JsonPrimitive)?.content }
-            ?.toSet() ?: emptySet()
-        
-        return properties.entries.map { (name, schema) ->
-            val schemaObj = schema as? JsonObject
+    private fun extractArgumentsFromSchema(inputSchema: ToolSchema?): List<ToolCallSpec.Arg> {
+        val schema = inputSchema ?: return emptyList()
+
+        val properties = schema.properties ?: return emptyList()
+        val required = schema.required?.toSet().orEmpty()
+
+        return properties.entries.map { (name, element) ->
+            val schemaObj = element as? JsonObject
             val type = schemaObj?.get("type")?.let { (it as? JsonPrimitive)?.content } ?: "Any"
             val isRequired = name in required
-            
+
             ToolCallSpec.Arg(
                 name = name,
                 type = mapJsonTypeToKotlinType(type),

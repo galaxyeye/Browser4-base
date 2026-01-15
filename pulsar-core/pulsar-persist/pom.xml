@@ -108,7 +108,6 @@
         <gora-shaded-mongodb.version>0.9</gora-shaded-mongodb.version>
         <!-- 2.5.2 suggested, but 2.7.2 is a correct version, we will consider using a shaded gora -->
         <hadoop.version>2.7.2</hadoop.version>
-        <commons-configuration.version>1.10</commons-configuration.version>
         <commons-collections.version>3.2.2</commons-collections.version>
     </properties>
 
