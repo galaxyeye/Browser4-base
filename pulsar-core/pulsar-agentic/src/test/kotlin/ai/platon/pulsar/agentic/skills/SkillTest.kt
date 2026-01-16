@@ -141,8 +141,10 @@ class SkillTest {
         skill.onLoad(context)
 
         assertThrows<IllegalStateException> {
-            runBlocking { skill.onLoad(context) }
+            skill.onLoad(context)
         }
+
+        Unit
     }
 
     @Test
@@ -150,8 +152,10 @@ class SkillTest {
         val skill = TestSkill()
 
         assertThrows<IllegalStateException> {
-            runBlocking { skill.onUnload(context) }
+            skill.onUnload(context)
         }
+
+        Unit
     }
 
     @Test

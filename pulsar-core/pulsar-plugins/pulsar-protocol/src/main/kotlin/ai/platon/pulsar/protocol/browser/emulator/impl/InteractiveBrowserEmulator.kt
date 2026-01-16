@@ -166,35 +166,41 @@ open class InteractiveBrowserEmulator(
     }
 
     override suspend fun onWillNavigate(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onWillNavigate", page)
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
     }
 
     override suspend fun onNavigated(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onNavigated", page)
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onNavigated?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onNavigated?.invoke(page, driver)
     }
 
     override suspend fun onWillInteract(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
+        GlobalEventHandlers.emitBrowseEvent("onWillInteract", page)
+        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillInteract?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
-        page.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
+        page.browseEventHandlers?.onWillInteract?.invoke(page, driver)
     }
 
     override suspend fun onWillCheckDocumentState(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onWillCheckDocumentState", page)
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillCheckDocumentState?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillCheckDocumentState?.invoke(page, driver)
     }
 
     override suspend fun onDocumentFullyLoaded(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onDocumentFullyLoaded", page)
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDocumentFullyLoaded?.invoke(page, driver)
         page.browseEventHandlers?.onDocumentFullyLoaded?.invoke(page, driver)
     }
 
     override suspend fun onWillScroll(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onWillScroll", page)
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillScroll?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillScroll?.invoke(page, driver)
@@ -204,15 +210,18 @@ open class InteractiveBrowserEmulator(
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDidScroll?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onDidScroll?.invoke(page, driver)
+        GlobalEventHandlers.emitBrowseEvent("onDidScroll", page)
     }
 
     override suspend fun onDocumentSteady(page: WebPage, driver: WebDriver) {
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDocumentSteady?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onDocumentSteady?.invoke(page, driver)
+        GlobalEventHandlers.emitBrowseEvent("onDocumentSteady", page)
     }
 
     override suspend fun onWillComputeFeature(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onWillComputeFeature", page)
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillComputeFeature?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillComputeFeature?.invoke(page, driver)
@@ -222,15 +231,18 @@ open class InteractiveBrowserEmulator(
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onFeatureComputed?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onFeatureComputed?.invoke(page, driver)
+        GlobalEventHandlers.emitBrowseEvent("onFeatureComputed", page)
     }
 
     override suspend fun onDidInteract(page: WebPage, driver: WebDriver) {
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDidInteract?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onDidInteract?.invoke(page, driver)
+        GlobalEventHandlers.emitBrowseEvent("onDidInteract", page)
     }
 
     override suspend fun onWillStopTab(page: WebPage, driver: WebDriver) {
+        GlobalEventHandlers.emitBrowseEvent("onWillStopTab", page)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillStopTab?.invoke(page, driver)
         page.browseEventHandlers?.onWillStopTab?.invoke(page, driver)
@@ -240,6 +252,7 @@ open class InteractiveBrowserEmulator(
         GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onTabStopped?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onTabStopped?.invoke(page, driver)
+        GlobalEventHandlers.emitBrowseEvent("onTabStopped", page)
     }
 
     override fun close() {
