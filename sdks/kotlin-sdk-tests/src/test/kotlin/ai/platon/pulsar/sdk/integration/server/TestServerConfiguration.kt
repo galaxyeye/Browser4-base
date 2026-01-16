@@ -13,12 +13,14 @@
 package ai.platon.pulsar.sdk.integration.server
 
 import ai.platon.pulsar.test.server.MockSiteApplication
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.context.annotation.Bean
 import java.net.BindException
 import java.net.ServerSocket
 
@@ -39,6 +41,9 @@ class TestServerConfiguration : InitializingBean, DisposableBean {
     }
 
     private var serverThread: Thread? = null
+
+    @Bean
+    fun objectMapper(): ObjectMapper = ObjectMapper().findAndRegisterModules()
 
     override fun afterPropertiesSet() {
         startMockServer()
