@@ -414,7 +414,9 @@ class CommandService(
             if (alwaysFalse()) {
                 val allURIText = allURIs.joinToString("\n")
                 val path = AppPaths.getProcTmpTmpDirectory("command").resolve("uris.txt")
-                Files.createDirectories(path.parent)
+                withContext(Dispatchers.IO) {
+                    Files.createDirectories(path.parent)
+                }
                 path.writeText(allURIText)
             }
 
