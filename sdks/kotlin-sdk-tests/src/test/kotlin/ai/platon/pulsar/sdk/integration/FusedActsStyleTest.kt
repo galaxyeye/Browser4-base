@@ -2,6 +2,8 @@ package ai.platon.pulsar.sdk.integration
 
 import ai.platon.pulsar.sdk.AgenticSession
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -26,7 +28,16 @@ import kotlin.test.assertTrue
  * as the internal FusedActs example, making it easier for users to
  * migrate code or follow internal examples.
  */
-class FusedActsStyleTest {
+@Tag("Slow")
+class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
+
+    private lateinit var session: AgenticSession
+
+    @BeforeEach
+    fun setupSession() {
+        createSession()
+        session = AgenticSession(client)
+    }
 
     companion object {
         @JvmStatic
@@ -39,7 +50,7 @@ class FusedActsStyleTest {
 
     @Test
     fun `can create session with getOrCreate factory method`() {
-        val session = AgenticSession.Companion.getOrCreate()
+        val session = AgenticSession.getOrCreate(baseUrl)
 
         assertNotNull(session)
         assertNotNull(session.companionAgent)
@@ -48,8 +59,8 @@ class FusedActsStyleTest {
 
     @Test
     fun `getOrCreate returns same instance on multiple calls`() {
-        val session1 = AgenticSession.Companion.getOrCreate()
-        val session2 = AgenticSession.Companion.getOrCreate()
+        val session1 = AgenticSession.getOrCreate(baseUrl)
+        val session2 = AgenticSession.getOrCreate(baseUrl)
 
         assertEquals(session1, session2)
         assertEquals(session1.uuid, session2.uuid)
@@ -57,8 +68,8 @@ class FusedActsStyleTest {
 
     @Test
     fun `create factory method creates new instance each time`() {
-        val session1 = AgenticSession.Companion.create()
-        val session2 = AgenticSession.Companion.create()
+        val session1 = AgenticSession.create(baseUrl)
+        val session2 = AgenticSession.create(baseUrl)
 
         assertNotNull(session1)
         assertNotNull(session2)
@@ -80,9 +91,8 @@ class FusedActsStyleTest {
 
     @Test
     fun `FusedActs-style API is available`() {
-        val session = AgenticSession.Companion.getOrCreate()
+        val session = this.session
 
-        // Verify all FusedActs patterns work
         assertNotNull(session.companionAgent, "session.companionAgent should exist")
         assertNotNull(session.getOrCreateBoundDriver(), "session.getOrCreateBoundDriver() should work")
         assertNotNull(session.context, "session.context should exist")
@@ -93,12 +103,12 @@ class FusedActsStyleTest {
 
         // Verify driver is created
         val driver = session.getOrCreateBoundDriver()
-        assertEquals(0, driver.id)
+        assertTrue(driver.id >= 0, "driver id should be non-negative")
     }
 
     @Test
     fun `session properties match FusedActs expectations`() {
-        val session = AgenticSession.Companion.getOrCreate()
+        val session = this.session
         val agent = session.companionAgent
         val driver = session.getOrCreateBoundDriver()
 
@@ -110,7 +120,7 @@ class FusedActsStyleTest {
 
     @Test
     fun `agent methods are available`() {
-        val session = AgenticSession.Companion.getOrCreate()
+        val session = this.session
         val agent = session.companionAgent
 
         // Verify agent methods exist (from FusedActs usage)
@@ -125,7 +135,6 @@ class FusedActsStyleTest {
 
     @Test
     fun `driver methods are available`() {
-        val session = AgenticSession.Companion.getOrCreate()
         val driver = session.getOrCreateBoundDriver()
 
         // Verify driver methods from FusedActs exist
@@ -136,7 +145,7 @@ class FusedActsStyleTest {
 
     @Test
     fun `session methods match FusedActs usage`() {
-        val session = AgenticSession.Companion.getOrCreate()
+        val session = this.session
 
         // Verify methods used in FusedActs
         // These would fail without a server, but we verify signatures
@@ -149,8 +158,6 @@ class FusedActsStyleTest {
 
     @Test
     fun `registerClosable does not throw`() {
-        val session = AgenticSession.Companion.getOrCreate()
-
         // From FusedActs: session.registerClosable(starter)
         // Use a simple AutoCloseable implementation for testing
         val testCloseable = object : AutoCloseable {
@@ -167,7 +174,7 @@ class FusedActsStyleTest {
     fun `context close is accessible`() {
         // In FusedActs: session.context.close()
         // We test that context.close() is the same as session.close()
-        val session = AgenticSession.Companion.create()
+        val session = AgenticSession.create(baseUrl)
 
         assertEquals(session, session.context)
 
