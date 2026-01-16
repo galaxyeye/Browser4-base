@@ -81,6 +81,7 @@
     <modules>
         <module>pulsar-parent</module>
         <module>pulsar-dependencies</module>
+        <module>pulsar-tests/pulsar-tests-common</module>
         <module>pulsar-core</module>
         <module>pulsar-rest</module>
         <module>pulsar-client</module>

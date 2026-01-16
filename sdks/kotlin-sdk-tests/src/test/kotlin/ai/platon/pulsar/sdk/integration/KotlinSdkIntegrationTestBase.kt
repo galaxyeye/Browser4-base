@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Tag
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
+import org.springframework.test.context.TestPropertySource
 import java.time.Duration
 import kotlin.test.assertTrue
 
@@ -41,6 +42,7 @@ import kotlin.test.assertTrue
 @Import(PulsarContextConfiguration::class, TestServerConfiguration::class)
 @Tag("IntegrationTest")
 @Tag("RequiresServer")
+@TestPropertySource(locations = ["classpath:application-sdk-integration-test.properties"])
 abstract class KotlinSdkIntegrationTestBase {
 
     /**

@@ -1,11 +1,14 @@
 package ai.platon.pulsar.rest.openapi.controller
 
+import ai.platon.pulsar.common.config.ImmutableConfig
+import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import jakarta.servlet.http.HttpServletResponse
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -22,9 +25,13 @@ import org.springframework.web.bind.annotation.*
 )
 @ConditionalOnBean(SessionManager::class)
 class AgentController(
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    @Value("\${pulsar.test.mode:false}")
+    private val testMode: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(AgentController::class.java)
+
+    private fun shouldStub(): Boolean = testMode || !ChatModelFactory.isModelConfigured(ImmutableConfig())
 
     /**
      * Runs an autonomous agent task.
@@ -41,6 +48,16 @@ class AgentController(
 
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        if (shouldStub()) {
+            val result = AgentRunResult(
+                success = true,
+                message = "Test mode agent run",
+                historySize = 1,
+                processTraceSize = 1
+            )
+            return ResponseEntity.ok(AgentRunResponse(value = result))
+        }
 
         val result = try {
             // Use real PerceptiveAgent.run
@@ -82,6 +99,18 @@ class AgentController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
+        if (shouldStub()) {
+            val stubResult = listOf(
+                ObserveResultDto(
+                    locator = "0,0",
+                    domain = "driver",
+                    method = "noop",
+                    description = request.instruction ?: "test observation"
+                )
+            )
+            return ResponseEntity.ok(AgentObserveResponse(value = stubResult))
+        }
+
         val result = try {
             // Use real PerceptiveAgent.observe
             val observeResults = runBlocking {
@@ -120,6 +149,16 @@ class AgentController(
 
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        if (shouldStub()) {
+            val result = ActResultDto(
+                success = true,
+                message = "Test mode action executed",
+                action = request.action,
+                isComplete = true
+            )
+            return ResponseEntity.ok(AgentActResponse(value = result))
+        }
 
         val result = try {
             // Use real PerceptiveAgent.act
@@ -162,6 +201,15 @@ class AgentController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
+        if (shouldStub()) {
+            val result = ExtractResultDto(
+                success = true,
+                data = mapOf("stub" to true, "instruction" to request.instruction),
+                message = "Test mode extraction"
+            )
+            return ResponseEntity.ok(AgentExtractResponse(value = result))
+        }
+
         val result = try {
             // Use real PerceptiveAgent.extract
             val extractResult = runBlocking {
@@ -200,6 +248,11 @@ class AgentController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
+        if (shouldStub()) {
+            val summary = request.instruction ?: "Test mode summary"
+            return ResponseEntity.ok(AgentSummarizeResponse(value = summary))
+        }
+
         val summary = try {
             // Use real PerceptiveAgent.summarize
             runBlocking {
@@ -229,6 +282,10 @@ class AgentController(
 
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        if (shouldStub()) {
+            return ResponseEntity.ok(AgentClearHistoryResponse(value = true))
+        }
 
         val success = try {
             // Use real PerceptiveAgent.clearHistory

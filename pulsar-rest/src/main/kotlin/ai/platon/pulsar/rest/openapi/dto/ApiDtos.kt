@@ -287,7 +287,7 @@ data class SubscriptionResponse(
  */
 data class AgentRunRequest(
     @param:JsonProperty("task") val task: String,
-    @param:JsonProperty("multiAct") val multiAct: Boolean = false,
+    @param:JsonProperty("multiAct") val multiAct: Boolean? = false,
     @param:JsonProperty("modelName") val modelName: String? = null,
     @param:JsonProperty("variables") val variables: Map<String, String>? = null,
     @param:JsonProperty("domSettleTimeoutMs") val domSettleTimeoutMs: Long? = null,
@@ -354,7 +354,7 @@ data class AgentObserveResponse(
  */
 data class AgentActRequest(
     @param:JsonProperty("action") val action: String,
-    @param:JsonProperty("multiAct") val multiAct: Boolean = false,
+    @param:JsonProperty("multiAct") val multiAct: Boolean? = false,
     @param:JsonProperty("modelName") val modelName: String? = null,
     @param:JsonProperty("variables") val variables: Map<String, String>? = null,
     @param:JsonProperty("domSettleTimeoutMs") val domSettleTimeoutMs: Long? = null,
