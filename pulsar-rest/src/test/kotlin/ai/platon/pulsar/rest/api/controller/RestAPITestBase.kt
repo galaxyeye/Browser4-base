@@ -2,7 +2,7 @@ package ai.platon.pulsar.rest.api.controller
 
 import ai.platon.pulsar.common.sql.SQLTemplate
 import ai.platon.pulsar.rest.api.config.MockEcServerConfiguration
-import ai.platon.pulsar.test.TestResourceUtil
+import ai.platon.pulsar.test.TestUrls
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -14,8 +14,8 @@ open class RestAPITestBase : IntegrationTestBase() {
 
     companion object {
         val urls = mapOf(
-            "productListPage" to TestResourceUtil.MOCK_PRODUCT_LIST_URL,
-            "productDetailPage" to TestResourceUtil.MOCK_PRODUCT_DETAIL_URL
+            "productListPage" to TestUrls.MOCK_PRODUCT_LIST_URL,
+            "productDetailPage" to TestUrls.MOCK_PRODUCT_DETAIL_URL
         )
 
         @JvmStatic

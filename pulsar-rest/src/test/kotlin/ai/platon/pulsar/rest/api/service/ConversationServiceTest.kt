@@ -10,7 +10,7 @@ import ai.platon.pulsar.rest.api.common.MockEcServerTestBase
 import ai.platon.pulsar.rest.api.config.MockEcServerConfiguration
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.PromptRequest
-import ai.platon.pulsar.test.TestResourceUtil
+import ai.platon.pulsar.test.TestUrls
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
@@ -205,7 +205,7 @@ Page summary prompt: Provide a brief introduction of this product.
      * */
     @Test
     fun `When chat about a page then the result is not empty`() {
-        val request = PromptRequest(TestResourceUtil.MOCK_PRODUCT_LIST_URL, "Tell me something about the page")
+        val request = PromptRequest(TestUrls.MOCK_PRODUCT_LIST_URL, "Tell me something about the page")
 
         val response = runBlocking { conversationService.chat(request) }
         printlnPro(response.toString())

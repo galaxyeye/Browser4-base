@@ -3,7 +3,7 @@ package ai.platon.pulsar.rest.util.server
 import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.getLogger
-import ai.platon.pulsar.test.TestResourceUtil
+import ai.platon.pulsar.test.TestUrls
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
@@ -35,7 +35,7 @@ class MockWebSiteAccess {
 
     protected val warnUpUrl = "https://www.amazon.com/"
     protected val e2eOriginUrl = "https://www.amazon.com/"
-    protected val e2eProductUrl = TestResourceUtil.PRODUCT_DETAIL_URL
+    protected val e2eProductUrl = TestUrls.PRODUCT_DETAIL_URL
 
     protected val resourceUrl2 = "https://www.amazon.com/robots.txt"
 
