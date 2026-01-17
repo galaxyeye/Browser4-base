@@ -8,7 +8,12 @@ import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
 import ai.platon.pulsar.agentic.ai.agent.detail.PageStateTracker
 import ai.platon.pulsar.agentic.ai.tta.ContextToAction
 import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
+import ai.platon.pulsar.agentic.skills.SkillContext
+import ai.platon.pulsar.agentic.skills.SkillRegistry
+import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
+import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
 import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import ai.platon.pulsar.common.*
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.TimeoutCancellationException
@@ -50,6 +55,27 @@ open class BrowserAgentActor(
             }.onFailure {
                 // Make wiring best-effort and non-fatal; MCP may be unused.
                 logger.debug("Failed to auto-wire MCP targets: {}", it.message)
+            }
+
+            // Auto-wire Skills as a custom tool domain: skill.run(id, params)
+            runCatching {
+                val skillDomain = "skill"
+                val customRegistry = CustomToolRegistry.instance
+                if (!customRegistry.contains(skillDomain)) {
+                    customRegistry.register(SkillToolExecutor())
+                }
+
+                val ctx = SkillContext(
+                    sessionId = uuid.toString(),
+                    sharedResources = mutableMapOf(
+                        "session" to session,
+                        "agent" to this,
+                        "driver" to activeDriver,
+                    ),
+                )
+                tm.registerCustomTarget(skillDomain, SkillToolTarget(ctx, SkillRegistry.instance))
+            }.onFailure {
+                logger.debug("Failed to auto-wire skill tools: {}", it.message)
             }
         }
     }
