@@ -40,13 +40,13 @@ abstract class AbstractToolExecutor : ToolExecutor {
     }
 
     override suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
-        val objectName = tc.domain
+        val domain = tc.domain
         val functionName = tc.method
         val args = tc.arguments
         val pseudoExpression = tc.pseudoExpression
 
         return try {
-            val r = callFunctionOn(objectName, functionName, args, target)
+            val r = callFunctionOn(domain, functionName, args, target)
 
             val className = if (r == null) "null" else r::class.qualifiedName
             val value = if (r == Unit) null else r
@@ -63,7 +63,7 @@ abstract class AbstractToolExecutor : ToolExecutor {
 
     @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(domain, functionName, args, target)"))
     @Throws(IllegalArgumentException::class)
-    open suspend fun execute(domain: String, functionName: String, args: Map<String, Any?>, target: Any): Any? = callFunctionOn(objectName, functionName, args, target)
+    open suspend fun execute(domain: String, functionName: String, args: Map<String, Any?>, target: Any): Any? = callFunctionOn(domain, functionName, args, target)
 
     // ---------------- Shared helpers for named parameter executors ----------------
     protected fun validateArgs(

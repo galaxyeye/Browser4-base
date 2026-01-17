@@ -72,7 +72,7 @@ open class BasicToolCallExecutor(
     }
 
     @Throws(UnsupportedOperationException::class)
-    suspend fun execute(tc: ToolCall, target: Any): TcEvaluate {
+    suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
         return toolExecutors
             .firstOrNull { it.targetClass.isSuperclassOf(target::class) }
             ?.callFunctionOn(tc, target)
