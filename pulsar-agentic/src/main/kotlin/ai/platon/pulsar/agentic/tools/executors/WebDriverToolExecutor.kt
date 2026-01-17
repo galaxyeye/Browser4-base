@@ -28,7 +28,7 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
      * args: (parameterName -> value). If provided names don't match a supported signature, throw IllegalArgumentException.
      */
     @Suppress("UNUSED_PARAMETER")
-    override suspend fun execute(
+    override suspend fun callFunctionOn(
         objectName: String, functionName: String, args: Map<String, Any?>, target: Any
     ): Any? {
         val driver = requireNotNull(target as? WebDriver) { "The target must be a WebDriver" }

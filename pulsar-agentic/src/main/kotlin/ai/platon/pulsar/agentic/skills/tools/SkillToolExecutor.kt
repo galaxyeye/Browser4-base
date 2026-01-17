@@ -47,7 +47,7 @@ class SkillToolExecutor(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    override suspend fun execute(
+    override suspend fun callFunctionOn(
         objectName: String,
         functionName: String,
         args: Map<String, Any?>,

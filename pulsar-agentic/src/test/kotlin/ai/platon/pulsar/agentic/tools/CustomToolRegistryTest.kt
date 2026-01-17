@@ -144,7 +144,7 @@ class CustomToolRegistryTest {
         override val domain = "test"
         override val targetClass: KClass<*> = TestTarget::class
 
-        override suspend fun execute(
+        override suspend fun callFunctionOn(
             objectName: String,
             functionName: String,
             args: Map<String, Any?>,
@@ -165,7 +165,7 @@ class CustomToolRegistryTest {
         override val domain = "another"
         override val targetClass: KClass<*> = TestTarget::class
 
-        override suspend fun execute(
+        override suspend fun callFunctionOn(
             objectName: String,
             functionName: String,
             args: Map<String, Any?>,
@@ -179,7 +179,7 @@ class CustomToolRegistryTest {
         override val domain = ""
         override val targetClass: KClass<*> = TestTarget::class
 
-        override suspend fun execute(
+        override suspend fun callFunctionOn(
             objectName: String,
             functionName: String,
             args: Map<String, Any?>,

@@ -3,7 +3,6 @@ package ai.platon.pulsar.agentic.tools.executors
 import ai.platon.pulsar.agentic.TcEvaluate
 import ai.platon.pulsar.agentic.ToolCall
 import ai.platon.pulsar.agentic.ToolSpec
-import ai.platon.pulsar.agentic.common.SimpleKotlinParser
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
 import kotlin.reflect.KClass
@@ -47,7 +46,7 @@ abstract class AbstractToolExecutor : ToolExecutor {
         val pseudoExpression = tc.pseudoExpression
 
         return try {
-            val r = execute(objectName, functionName, args, target)
+            val r = callFunctionOn(objectName, functionName, args, target)
 
             val className = if (r == null) "null" else r::class.qualifiedName
             val value = if (r == Unit) null else r
@@ -60,7 +59,11 @@ abstract class AbstractToolExecutor : ToolExecutor {
     }
 
     @Throws(IllegalArgumentException::class)
-    abstract suspend fun execute(objectName: String, functionName: String, args: Map<String, Any?>, target: Any): Any?
+    abstract suspend fun callFunctionOn(objectName: String, functionName: String, args: Map<String, Any?>, target: Any): Any?
+
+    @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(objectName, functionName, args, target)"))
+    @Throws(IllegalArgumentException::class)
+    open suspend fun execute(objectName: String, functionName: String, args: Map<String, Any?>, target: Any): Any? = callFunctionOn(objectName, functionName, args, target)
 
     // ---------------- Shared helpers for named parameter executors ----------------
     protected fun validateArgs(

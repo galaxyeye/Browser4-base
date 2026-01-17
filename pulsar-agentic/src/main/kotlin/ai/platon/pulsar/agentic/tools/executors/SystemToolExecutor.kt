@@ -57,7 +57,7 @@ class SystemToolExecutor(
      */
     @Suppress("UNUSED_PARAMETER")
     @Throws(IllegalArgumentException::class)
-    override suspend fun execute(
+    override suspend fun callFunctionOn(
         objectName: String, functionName: String, args: Map<String, Any?>, target: Any
     ): Any? {
         require(objectName == "system") { "Object must be an System" }

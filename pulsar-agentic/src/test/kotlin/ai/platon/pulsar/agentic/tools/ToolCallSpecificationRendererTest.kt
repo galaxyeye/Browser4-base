@@ -54,7 +54,7 @@ class ToolCallSpecificationRendererTest {
         override val domain: String = "db"
         override val targetClass: KClass<*> = Any::class
 
-        override suspend fun execute(
+        override suspend fun callFunctionOn(
             objectName: String,
             functionName: String,
             args: Map<String, Any?>,
