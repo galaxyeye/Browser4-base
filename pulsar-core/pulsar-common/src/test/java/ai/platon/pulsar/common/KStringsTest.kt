@@ -30,7 +30,7 @@ driver.click(selector: String)
         assertFalse(brief) { brief.contains("将 `locator` 视为 `selector`")}
         assertFalse(brief) { brief.contains("包括节点文本内容") }
 
-        printlnPro(brief)
+        // printlnPro(brief)
     }
 
     fun compactPrompt(prompt: String, maxWidth: Int = 20000): String {

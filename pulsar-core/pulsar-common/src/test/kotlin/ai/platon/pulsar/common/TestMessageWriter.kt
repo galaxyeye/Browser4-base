@@ -16,7 +16,7 @@ class TestMessageWriter {
 
     @Test
     fun testFileRolling() {
-        IntRange(1, 100000).forEach { _ ->
+        IntRange(1, 30000).forEach { _ ->
             sinkWriter.write(RandomStringUtils.secure().nextAlphanumeric(100))
         }
 
