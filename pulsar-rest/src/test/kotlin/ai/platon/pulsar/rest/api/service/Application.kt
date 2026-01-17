@@ -8,6 +8,9 @@ import org.springframework.test.context.ContextConfiguration
 
 @SpringBootApplication
 @ContextConfiguration(initializers = [PulsarTestContextInitializer::class])
-@ComponentScan(basePackages = ["ai.platon.pulsar.rest.api"])
+@ComponentScan(basePackages = [
+    "ai.platon.pulsar.rest.api",
+    "ai.platon.pulsar.rest.openapi",
+])
 @ImportResource("classpath:rest-beans/app-context.xml")
 class ServiceApplication
