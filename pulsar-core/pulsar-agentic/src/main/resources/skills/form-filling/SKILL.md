@@ -77,7 +77,7 @@ val result = registry.execute(
 ## Tool Call Specification
 
 ```kotlin
-ToolCallSpec(
+ToolSpec(
     domain = "skill.form",
     method = "fill",
     arguments = [

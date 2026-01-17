@@ -45,7 +45,7 @@ class CustomToolRegistry private constructor() {
     private val logger = getLogger(this)
 
     private val executors = ConcurrentHashMap<String, ToolExecutor>()
-    private val toolCallSpecs = ConcurrentHashMap<String, List<ai.platon.pulsar.agentic.ToolCallSpec>>()
+    private val toolCallSpecs = ConcurrentHashMap<String, List<ai.platon.pulsar.agentic.ToolSpec>>()
 
     companion object {
         /**
@@ -89,7 +89,7 @@ class CustomToolRegistry private constructor() {
      *
      * This is useful when the executor cannot (or doesn't want to) implement [ToolCallSpecificationProvider].
      */
-    fun register(executor: ToolExecutor, specs: List<ai.platon.pulsar.agentic.ToolCallSpec>) {
+    fun register(executor: ToolExecutor, specs: List<ai.platon.pulsar.agentic.ToolSpec>) {
         register(executor)
         if (specs.isNotEmpty()) {
             toolCallSpecs[executor.domain] = specs
@@ -153,14 +153,14 @@ class CustomToolRegistry private constructor() {
     /**
      * Get prompt-visible tool-call specs for a given domain.
      */
-    fun getToolCallSpecifications(domain: String): List<ai.platon.pulsar.agentic.ToolCallSpec> {
+    fun getToolCallSpecifications(domain: String): List<ai.platon.pulsar.agentic.ToolSpec> {
         return toolCallSpecs[domain].orEmpty()
     }
 
     /**
      * Get all prompt-visible tool-call specs.
      */
-    fun getAllToolCallSpecifications(): List<ai.platon.pulsar.agentic.ToolCallSpec> {
+    fun getAllToolCallSpecifications(): List<ai.platon.pulsar.agentic.ToolSpec> {
         return toolCallSpecs.values.flatten()
     }
 

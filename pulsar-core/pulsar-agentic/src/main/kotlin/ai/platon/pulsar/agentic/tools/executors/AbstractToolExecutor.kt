@@ -2,7 +2,7 @@ package ai.platon.pulsar.agentic.tools.executors
 
 import ai.platon.pulsar.agentic.TcEvaluate
 import ai.platon.pulsar.agentic.ToolCall
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.agentic.common.SimpleKotlinParser
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
@@ -22,9 +22,8 @@ interface ToolExecutor {
 abstract class AbstractToolExecutor : ToolExecutor {
 
     private val logger = getLogger(this)
-    private val simpleParser = SimpleKotlinParser()
 
-    protected val toolCallSpecs = mutableMapOf<String, ToolCallSpec>()
+    protected val toolCallSpecs = mutableMapOf<String, ToolSpec>()
 
     override fun help(): String {
         return toolCallSpecs.values.mapNotNull { it.description }.joinToString("\n")

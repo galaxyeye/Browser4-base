@@ -39,7 +39,7 @@ data class DetailedActResult(
     }
 }
 
-data class ToolCallSpec constructor(
+data class ToolSpec constructor(
     val domain: String,
     val method: String,
     val arguments: List<Arg> = listOf(),
@@ -65,6 +65,9 @@ data class ToolCallSpec constructor(
             return "$domain.$method$args"
         }
 }
+
+@Deprecated("Use ToolSpec instead", ReplaceWith("ToolSpec"))
+typealias ToolCallSpec = ToolSpec
 
 data class ToolCall constructor(
     val domain: String,

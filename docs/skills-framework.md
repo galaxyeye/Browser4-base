@@ -81,12 +81,12 @@ class MyCustomSkill : AbstractSkill() {
         params: Map<String, Any>
     ): SkillResult {
         // Your implementation here
-        val url = params["url"] as? String 
+        val url = params["url"] as? String
             ?: return SkillResult.failure("Missing url parameter")
-        
+
         // Do something useful
         val result = performAutomation(url)
-        
+
         return SkillResult.success(
             data = result,
             message = "Successfully completed automation"
@@ -306,19 +306,19 @@ class WebScrapingSkill : AbstractSkill() {
     )
 
     override val toolCallSpecs = listOf(
-        ToolCallSpec(
+        ToolSpec(
             domain = "skill.scraping",
             method = "extract",
             arguments = listOf(
-                ToolCallSpec.Arg("url", "String"),
-                ToolCallSpec.Arg("selector", "String"),
-                ToolCallSpec.Arg("attributes", "List<String>", "listOf(\"text\")")
+                ToolSpec.Arg("url", "String"),
+                ToolSpec.Arg("selector", "String"),
+                ToolSpec.Arg("attributes", "List<String>", "listOf(\"text\")")
             ),
             returnType = "Map<String, Any>",
             description = "Extract data from a web page"
         )
     )
-    
+
     // ... implementation
 }
 ```
@@ -393,9 +393,9 @@ See the `examples` package for complete implementations.
 ```kotlin
 interface Skill {
     val metadata: SkillMetadata
-    val toolCallSpecs: List<ToolCallSpec>
+    val toolCallSpecs: List<ToolSpec>
     val targetClass: KClass<*>?
-    
+
     suspend fun execute(context: SkillContext, params: Map<String, Any>): SkillResult
     suspend fun onLoad(context: SkillContext)
     suspend fun onUnload(context: SkillContext)
@@ -412,7 +412,7 @@ class SkillRegistry {
     companion object {
         val instance: SkillRegistry
     }
-    
+
     suspend fun register(skill: Skill, context: SkillContext)
     suspend fun unregister(skillId: String, context: SkillContext): Boolean
     fun get(skillId: String): Skill?
@@ -478,7 +478,7 @@ definitions.forEach { definition ->
     println("Description: ${definition.description}")
     println("Dependencies: ${definition.dependencies}")
     println("Parameters: ${definition.parameters.keys}")
-    
+
     // Access associated resources
     val scripts = definitionLoader.getSkillScripts(definition)
     val references = definitionLoader.getSkillReferences(definition)

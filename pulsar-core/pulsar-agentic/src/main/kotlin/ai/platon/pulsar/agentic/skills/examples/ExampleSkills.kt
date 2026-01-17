@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.skills.examples
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.agentic.skills.*
 
 /**
@@ -44,13 +44,13 @@ class WebScrapingSkill : AbstractSkill() {
     )
 
     override val toolCallSpecs = listOf(
-        ToolCallSpec(
+        ToolSpec(
             domain = "skill.scraping",
             method = "extract",
             arguments = listOf(
-                ToolCallSpec.Arg("url", "String"),
-                ToolCallSpec.Arg("selector", "String"),
-                ToolCallSpec.Arg("attributes", "List<String>", "listOf(\"text\")")
+                ToolSpec.Arg("url", "String"),
+                ToolSpec.Arg("selector", "String"),
+                ToolSpec.Arg("attributes", "List<String>", "listOf(\"text\")")
             ),
             returnType = "Map<String, Any>",
             description = "Extract data from a web page using CSS selectors"
@@ -148,13 +148,13 @@ class FormFillingSkill : AbstractSkill() {
     )
 
     override val toolCallSpecs = listOf(
-        ToolCallSpec(
+        ToolSpec(
             domain = "skill.form",
             method = "fill",
             arguments = listOf(
-                ToolCallSpec.Arg("url", "String"),
-                ToolCallSpec.Arg("formData", "Map<String, String>"),
-                ToolCallSpec.Arg("submit", "Boolean", "false")
+                ToolSpec.Arg("url", "String"),
+                ToolSpec.Arg("formData", "Map<String, String>"),
+                ToolSpec.Arg("submit", "Boolean", "false")
             ),
             returnType = "SkillResult",
             description = "Fill a web form with the provided data"

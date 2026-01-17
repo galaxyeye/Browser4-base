@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 
 /**
  * Renders tool-call specifications (signatures) into a prompt-friendly string.
@@ -45,28 +45,28 @@ object ToolCallSpecificationRenderer {
     }
 
     /**
-     * Render a list of [ToolCallSpec] into kotlin-like signatures.
+     * Render a list of [ToolSpec] into kotlin-like signatures.
      */
-    fun render(specs: List<ToolCallSpec>): String {
+    fun render(specs: List<ToolSpec>): String {
         return specs
             .asSequence()
             .distinctBy { distinctKey(it) }
-            .sortedWith(compareBy<ToolCallSpec>({ it.domain }, { it.method }, { it.arguments.size }))
+            .sortedWith(compareBy<ToolSpec>({ it.domain }, { it.method }, { it.arguments.size }))
             .joinToString("\n") { renderSpec(it) }
     }
 
-    private fun renderCustomTools(specs: List<ToolCallSpec>): String {
+    private fun renderCustomTools(specs: List<ToolSpec>): String {
         // Custom specs are rendered using our structured format so the model can see the signature.
         return render(specs)
     }
 
-    private fun renderSpec(spec: ToolCallSpec): String {
+    private fun renderSpec(spec: ToolSpec): String {
         val args = spec.arguments.joinToString(prefix = "(", postfix = ")") { it.expression }
         val returnPart = spec.returnType.takeIf { it.isNotBlank() && it != "Unit" }?.let { ": $it" } ?: ""
         return "${spec.domain}.${spec.method}$args$returnPart".trim()
     }
 
-    private fun distinctKey(spec: ToolCallSpec): String {
+    private fun distinctKey(spec: ToolSpec): String {
         val argsKey = spec.arguments.joinToString(",") { it.expression }
         return "${spec.domain}.${spec.method}($argsKey):${spec.returnType}".trim()
     }

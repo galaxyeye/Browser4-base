@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.agentic.tools.executors.AbstractToolExecutor
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -27,10 +27,10 @@ class ToolCallSpecificationRendererTest {
     fun `render should keep ToolSpecification verbatim and append custom tools`() {
         val executor = DbToolExecutor()
         val specs = listOf(
-            ToolCallSpec(
+            ToolSpec(
                 domain = "db",
                 method = "query",
-                arguments = listOf(ToolCallSpec.Arg("sql", "String")),
+                arguments = listOf(ToolSpec.Arg("sql", "String")),
                 returnType = "String",
                 description = "Run a SQL query"
             )

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools.executors
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import kotlin.reflect.KClass
 
@@ -11,104 +11,104 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
     override val targetClass: KClass<*> = AgentFileSystem::class
 
     init {
-        toolCallSpecs["writeString"] = ToolCallSpec(
+        toolCallSpecs["writeString"] = ToolSpec(
             domain = domain,
             method = "writeString",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null),
-                ToolCallSpec.Arg("content", "String", "\"\"")
+                ToolSpec.Arg("filename", "String", null),
+                ToolSpec.Arg("content", "String", "\"\"")
             ),
             returnType = "String",
             description = "Write content to a file"
         )
-        
-        toolCallSpecs["readString"] = ToolCallSpec(
+
+        toolCallSpecs["readString"] = ToolSpec(
             domain = domain,
             method = "readString",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null),
-                ToolCallSpec.Arg("external", "Boolean", "false")
+                ToolSpec.Arg("filename", "String", null),
+                ToolSpec.Arg("external", "Boolean", "false")
             ),
             returnType = "String",
             description = "Read content from a file"
         )
-        
-        toolCallSpecs["append"] = ToolCallSpec(
+
+        toolCallSpecs["append"] = ToolSpec(
             domain = domain,
             method = "append",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null),
-                ToolCallSpec.Arg("content", "String", null)
+                ToolSpec.Arg("filename", "String", null),
+                ToolSpec.Arg("content", "String", null)
             ),
             returnType = "String",
             description = "Append content to a file"
         )
-        
-        toolCallSpecs["replaceContent"] = ToolCallSpec(
+
+        toolCallSpecs["replaceContent"] = ToolSpec(
             domain = domain,
             method = "replaceContent",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null),
-                ToolCallSpec.Arg("oldStr", "String", null),
-                ToolCallSpec.Arg("newStr", "String", null)
+                ToolSpec.Arg("filename", "String", null),
+                ToolSpec.Arg("oldStr", "String", null),
+                ToolSpec.Arg("newStr", "String", null)
             ),
             returnType = "String",
             description = "Replace content in a file"
         )
-        
-        toolCallSpecs["fileExists"] = ToolCallSpec(
+
+        toolCallSpecs["fileExists"] = ToolSpec(
             domain = domain,
             method = "fileExists",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null)
+                ToolSpec.Arg("filename", "String", null)
             ),
             returnType = "Boolean",
             description = "Check if a file exists"
         )
-        
-        toolCallSpecs["getFileInfo"] = ToolCallSpec(
+
+        toolCallSpecs["getFileInfo"] = ToolSpec(
             domain = domain,
             method = "getFileInfo",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null)
+                ToolSpec.Arg("filename", "String", null)
             ),
             returnType = "Map<String, Any>",
             description = "Get information about a file"
         )
-        
-        toolCallSpecs["deleteFile"] = ToolCallSpec(
+
+        toolCallSpecs["deleteFile"] = ToolSpec(
             domain = domain,
             method = "deleteFile",
             arguments = listOf(
-                ToolCallSpec.Arg("filename", "String", null)
+                ToolSpec.Arg("filename", "String", null)
             ),
             returnType = "String",
             description = "Delete a file"
         )
-        
-        toolCallSpecs["copyFile"] = ToolCallSpec(
+
+        toolCallSpecs["copyFile"] = ToolSpec(
             domain = domain,
             method = "copyFile",
             arguments = listOf(
-                ToolCallSpec.Arg("source", "String", null),
-                ToolCallSpec.Arg("dest", "String", null)
+                ToolSpec.Arg("source", "String", null),
+                ToolSpec.Arg("dest", "String", null)
             ),
             returnType = "String",
             description = "Copy a file from source to destination"
         )
-        
-        toolCallSpecs["moveFile"] = ToolCallSpec(
+
+        toolCallSpecs["moveFile"] = ToolSpec(
             domain = domain,
             method = "moveFile",
             arguments = listOf(
-                ToolCallSpec.Arg("source", "String", null),
-                ToolCallSpec.Arg("dest", "String", null)
+                ToolSpec.Arg("source", "String", null),
+                ToolSpec.Arg("dest", "String", null)
             ),
             returnType = "String",
             description = "Move a file from source to destination"
         )
-        
-        toolCallSpecs["listFiles"] = ToolCallSpec(
+
+        toolCallSpecs["listFiles"] = ToolSpec(
             domain = domain,
             method = "listFiles",
             arguments = emptyList(),

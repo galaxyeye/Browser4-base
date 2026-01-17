@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.skills
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import kotlin.reflect.KClass
 
 /**
@@ -26,8 +26,8 @@ data class SkillMetadata(
     init {
         require(id.isNotBlank()) { "Skill id must not be blank" }
         require(name.isNotBlank()) { "Skill name must not be blank" }
-        require(version.matches(Regex("""\d+\.\d+\.\d+"""))) { 
-            "Skill version must follow semantic versioning (e.g., 1.0.0)" 
+        require(version.matches(Regex("""\d+\.\d+\.\d+"""))) {
+            "Skill version must follow semantic versioning (e.g., 1.0.0)"
         }
     }
 }
@@ -152,7 +152,7 @@ interface Skill {
      * Tool call specifications provided by this skill.
      * These are exposed to the agent for use in automation tasks.
      */
-    val toolCallSpecs: List<ToolCallSpec>
+    val toolCallSpecs: List<ToolSpec>
         get() = emptyList()
 
     /**

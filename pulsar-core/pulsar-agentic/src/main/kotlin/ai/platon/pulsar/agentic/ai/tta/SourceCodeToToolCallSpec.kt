@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.ai.tta
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
@@ -9,8 +9,8 @@ import ai.platon.pulsar.skeleton.common.llm.LLMUtils
 @ExperimentalApi
 object SourceCodeToToolCallSpec {
 
-    val webDriverToolCallList = mutableListOf<ToolCallSpec>()
-    val perceptiveAgentToolCallList = mutableListOf<ToolCallSpec>()
+    val webDriverToolCallList = mutableListOf<ToolSpec>()
+    val perceptiveAgentToolCallList = mutableListOf<ToolSpec>()
 
     init {
         var sourceCode = LLMUtils.readSourceFileFromResource("WebDriver.kt")
@@ -28,20 +28,20 @@ object SourceCodeToToolCallSpec {
         LLMUtils.writeAsResource(fileName, content)
     }
 
-    fun extractInterface(domain: String, sourceCode: String, interfaceName: String): List<ToolCallSpec> {
+    fun extractInterface(domain: String, sourceCode: String, interfaceName: String): List<ToolSpec> {
         // Parse WebDriver interface methods and build ToolCall specs
         val interfaceBody = extractInterfaceBody(sourceCode, interfaceName) ?: sourceCode
         val methods = parseFunctionsWithKDoc(interfaceBody)
-        val toolCallSpecs = mutableListOf<ToolCallSpec>()
+        val toolCallSpecs = mutableListOf<ToolSpec>()
         for (m in methods) {
-            val arguments = mutableListOf<ToolCallSpec.Arg>()
+            val arguments = mutableListOf<ToolSpec.Arg>()
             for (p in m.params) {
                 val defaultValue = when {
                     p.defaultValue != null && p.type.equals("String", ignoreCase = true) -> unquote(p.defaultValue)
                     p.defaultValue != null -> p.defaultValue
                     else -> ""
                 }
-                val arg = ToolCallSpec.Arg(p.name, p.type, defaultValue)
+                val arg = ToolSpec.Arg(p.name, p.type, defaultValue)
                 arguments.add(arg)
             }
 
@@ -49,7 +49,7 @@ object SourceCodeToToolCallSpec {
             // Use parsed return type; default to Unit when absent
             val returnType = m.returnType.ifBlank { "Unit" }
             val description = m.kdoc
-            toolCallSpecs += ToolCallSpec(domain, method, arguments, returnType, description)
+            toolCallSpecs += ToolSpec(domain, method, arguments, returnType, description)
         }
 
         return toolCallSpecs

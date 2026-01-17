@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools.examples
 
-import ai.platon.pulsar.agentic.ToolCallSpec
+import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.agentic.tools.executors.AbstractToolExecutor
 import kotlin.reflect.KClass
 
@@ -38,45 +38,45 @@ class CalculatorToolExecutor : AbstractToolExecutor() {
     override val targetClass: KClass<*> = Calculator::class
 
     init {
-        toolCallSpecs["add"] = ToolCallSpec(
+        toolCallSpecs["add"] = ToolSpec(
             domain = domain,
             method = "add",
             arguments = listOf(
-                ToolCallSpec.Arg("a", "Double", null),
-                ToolCallSpec.Arg("b", "Double", null)
+                ToolSpec.Arg("a", "Double", null),
+                ToolSpec.Arg("b", "Double", null)
             ),
             returnType = "Double",
             description = "Add two numbers"
         )
-        
-        toolCallSpecs["subtract"] = ToolCallSpec(
+
+        toolCallSpecs["subtract"] = ToolSpec(
             domain = domain,
             method = "subtract",
             arguments = listOf(
-                ToolCallSpec.Arg("a", "Double", null),
-                ToolCallSpec.Arg("b", "Double", null)
+                ToolSpec.Arg("a", "Double", null),
+                ToolSpec.Arg("b", "Double", null)
             ),
             returnType = "Double",
             description = "Subtract b from a"
         )
-        
-        toolCallSpecs["multiply"] = ToolCallSpec(
+
+        toolCallSpecs["multiply"] = ToolSpec(
             domain = domain,
             method = "multiply",
             arguments = listOf(
-                ToolCallSpec.Arg("a", "Double", null),
-                ToolCallSpec.Arg("b", "Double", null)
+                ToolSpec.Arg("a", "Double", null),
+                ToolSpec.Arg("b", "Double", null)
             ),
             returnType = "Double",
             description = "Multiply two numbers"
         )
-        
-        toolCallSpecs["divide"] = ToolCallSpec(
+
+        toolCallSpecs["divide"] = ToolSpec(
             domain = domain,
             method = "divide",
             arguments = listOf(
-                ToolCallSpec.Arg("a", "Double", null),
-                ToolCallSpec.Arg("b", "Double", null)
+                ToolSpec.Arg("a", "Double", null),
+                ToolSpec.Arg("b", "Double", null)
             ),
             returnType = "Double",
             description = "Divide a by b (b must not be zero)"

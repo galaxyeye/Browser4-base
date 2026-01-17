@@ -69,7 +69,7 @@ val result = registry.execute(
 ## Tool Call Specification
 
 ```kotlin
-ToolCallSpec(
+ToolSpec(
     domain = "skill.scraping",
     method = "extract",
     arguments = [
