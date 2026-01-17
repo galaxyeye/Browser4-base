@@ -24,7 +24,7 @@ class WebDriverExToolExecutorTest {
     @Test
     fun `help returns available methods`() {
         val help = executor.help()
-        
+
         assertNotNull(help)
         assertTrue(help.isNotBlank())
         assertTrue(help.contains("Extract text content"))
@@ -33,7 +33,7 @@ class WebDriverExToolExecutorTest {
     @Test
     fun `help for extract method returns detailed help`() {
         val help = executor.help("extract")
-        
+
         assertNotNull(help)
         assertTrue(help.contains("Extract text content"))
         assertTrue(help.contains("extract"))
@@ -42,37 +42,37 @@ class WebDriverExToolExecutorTest {
     @Test
     fun `help for unknown method returns empty string`() {
         val help = executor.help("unknownMethod")
-        
+
         assertEquals("", help)
     }
 
     @Test
     fun `extract calls selectTextAll with union selector`() = runBlocking {
         coEvery { driver.selectTextAll(any()) } returns listOf("text1", "text2")
-        
+
         val tc = ToolCall(
             domain = "driverEx",
             method = "extract",
             arguments = mutableMapOf("selectors" to ".class1,.class2,#id1")
         )
-        
-        executor.execute(tc, driver)
-        
+
+        executor.callFunctionOn(tc, driver)
+
         coVerify { driver.selectTextAll(".class1,.class2,#id1") }
     }
 
     @Test
     fun `extract with comma-separated string selectors`() = runBlocking {
         coEvery { driver.selectTextAll(any()) } returns listOf("text")
-        
+
         val tc = ToolCall(
             domain = "driverEx",
             method = "extract",
             arguments = mutableMapOf("selectors" to ".class1,.class2")
         )
-        
-        executor.execute(tc, driver)
-        
+
+        executor.callFunctionOn(tc, driver)
+
         coVerify { driver.selectTextAll(".class1,.class2") }
     }
 
@@ -83,9 +83,9 @@ class WebDriverExToolExecutorTest {
             method = "unsupportedMethod",
             arguments = mutableMapOf()
         )
-        
-        val result = executor.execute(tc, driver)
-        
+
+        val result = executor.callFunctionOn(tc, driver)
+
         assertNotNull(result.exception)
         assertTrue(result.exception?.cause?.message?.contains("Unsupported") == true)
     }

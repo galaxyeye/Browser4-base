@@ -31,10 +31,10 @@ internal class SessionActExecutor(
         val toolCall = action.toolCall ?: return ToolCallResult(success = false, message = "no tool call")
 
         val evaluate = when (toolCall.domain) {
-            "driver" -> toolCallExecutor.execute(toolCall, driver)
-            "browser" -> toolCallExecutor.execute(toolCall, driver.browser)
-//            "fs" -> toolCallExecutor.execute(toolCall, fs)
-//            "agent" -> toolCallExecutor.execute(toolCall, this)
+            "driver" -> toolCallexecutor.callFunctionOn(toolCall, driver)
+            "browser" -> toolCallexecutor.callFunctionOn(toolCall, driver.browser)
+//            "fs" -> toolCallexecutor.callFunctionOn(toolCall, fs)
+//            "agent" -> toolCallexecutor.callFunctionOn(toolCall, this)
             else -> throw IllegalArgumentException("❓ Unsupported domain: ${toolCall.domain} | $toolCall")
         }
 

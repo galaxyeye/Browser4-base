@@ -120,7 +120,7 @@ class CustomToolRegistryTest {
         val executor = TestToolExecutor()
         val toolCall = ToolCall("test", "echo", mutableMapOf("message" to "Hello"))
 
-        val result = executor.execute(toolCall)
+        val result = executor.callFunctionOn(toolCall)
 
         assertEquals("Hello", result.value)
         assertTrue(result.expression?.startsWith("test.echo") ?: false)
@@ -132,7 +132,7 @@ class CustomToolRegistryTest {
         val target = TestTarget()
         val toolCall = ToolCall("test", "echo", mutableMapOf())
 
-        val result = executor.execute(toolCall, target)
+        val result = executor.callFunctionOn(toolCall, target)
 
         assertTrue(result.exception != null)
         assertTrue(result.exception?.cause is IllegalArgumentException)

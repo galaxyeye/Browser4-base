@@ -156,7 +156,7 @@ open class BrowserAgentActor(
         logger.info("🛠️ tool.exec sid={} step={} tool={}", context.sid, context.step, toolCall.pseudoExpression)
 
         return try {
-            val result = toolExecutor.execute(actionDescription, "resolve, #$step")
+            val result = toolexecutor.callFunctionOn(actionDescription, "resolve, #$step")
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 

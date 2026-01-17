@@ -62,7 +62,7 @@ class SkillToolExecutorTest {
             pseudoExpression = "skill.run(id=\"web-scraping\", params=...)"
         )
 
-        val eval = executor.execute(tc, target)
+        val eval = executor.callFunctionOn(tc, target)
         val result = eval.value
 
         assertNotNull(result)
@@ -79,7 +79,7 @@ class SkillToolExecutorTest {
         CustomToolRegistry.instance.register(executor)
 
         val tc = ToolCall(domain = "skill", method = "run", arguments = emptyMap(), pseudoExpression = "skill.run()")
-        val eval = executor.execute(tc, SkillToolTarget(ctx, registry))
+        val eval = executor.callFunctionOn(tc, SkillToolTarget(ctx, registry))
 
         assertNotNull(eval.exception)
         assertTrue(eval.help?.contains("skill.run") == true)

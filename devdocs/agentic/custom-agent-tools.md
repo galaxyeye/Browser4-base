@@ -47,13 +47,13 @@ import ai.platon.pulsar.agentic.tools.executors.AbstractToolExecutor
 import kotlin.reflect.KClass
 
 class CalculatorToolExecutor : AbstractToolExecutor() {
-    
+
     // Define the domain name (used in tool calls like: calc.add(...))
     override val domain = "calc"
-    
+
     // Specify the target class type
     override val targetClass: KClass<*> = Calculator::class
-    
+
     /**
      * Execute the tool call with named arguments.
      * This is where you implement the logic to dispatch to your target methods.
@@ -67,9 +67,9 @@ class CalculatorToolExecutor : AbstractToolExecutor() {
         require(objectName == "calc") { "Object must be calc" }
         require(functionName.isNotBlank()) { "Function name must not be blank" }
         require(target is Calculator) { "Target must be a Calculator instance" }
-        
+
         val calc = target
-        
+
         return when (functionName) {
             "add" -> {
                 // Validate arguments
@@ -149,7 +149,7 @@ override suspend fun execute(
         "greet" -> {
             // Validate that only 'name' parameter is provided and it's required
             validateArgs(args, allowed = setOf("name"), required = setOf("name"), functionName)
-            
+
             // Extract the 'name' parameter as a string
             val name = paramString(args, "name", functionName)!!
             "Hello, $name!"
@@ -157,7 +157,7 @@ override suspend fun execute(
         "repeat" -> {
             // 'text' is required, 'times' is optional with default value 1
             validateArgs(args, allowed = setOf("text", "times"), required = setOf("text"), functionName)
-            
+
             val text = paramString(args, "text", functionName)!!
             val times = paramInt(args, "times", functionName, required = false, default = 1)!!
             text.repeat(times)
@@ -252,11 +252,11 @@ Here's a more complex example of a database tool:
 ```kotlin
 class Database {
     private val connection = // ... database connection
-    
+
     suspend fun query(sql: String): List<Map<String, Any>> {
         // Execute query and return results
     }
-    
+
     suspend fun execute(sql: String): Int {
         // Execute update/insert/delete and return affected rows
     }
@@ -265,7 +265,7 @@ class Database {
 class DatabaseToolExecutor : AbstractToolExecutor() {
     override val domain = "db"
     override val targetClass: KClass<*> = Database::class
-    
+
     override suspend fun execute(
         objectName: String,
         functionName: String,
@@ -274,7 +274,7 @@ class DatabaseToolExecutor : AbstractToolExecutor() {
     ): Any? {
         require(target is Database) { "Target must be a Database" }
         val db = target
-        
+
         return when (functionName) {
             "query" -> {
                 validateArgs(args, allowed = setOf("sql"), required = setOf("sql"), functionName)
@@ -309,26 +309,26 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 
 class CalculatorToolExecutorTest {
-    
+
     @Test
     fun `test calculator add operation`() = runTest {
         val executor = CalculatorToolExecutor()
         val calculator = Calculator()
         val toolCall = ToolCall("calc", "add", mapOf("a" to 5.0, "b" to 3.0))
-        
-        val result = executor.execute(toolCall, calculator)
-        
+
+        val result = executor.callFunctionOn(toolCall, calculator)
+
         assertEquals(8.0, result.value as Double, 0.001)
     }
-    
+
     @Test
     fun `test calculator divide by zero fails`() = runTest {
         val executor = CalculatorToolExecutor()
         val calculator = Calculator()
         val toolCall = ToolCall("calc", "divide", mapOf("a" to 10.0, "b" to 0.0))
-        
-        val result = executor.execute(toolCall, calculator)
-        
+
+        val result = executor.callFunctionOn(toolCall, calculator)
+
         assertNotNull(result.cause)
         assertTrue(result.cause!!.message!!.contains("Division by zero"))
     }

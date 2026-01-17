@@ -7,7 +7,7 @@ This guide provides a quick overview of how to create and use custom agent tools
 Custom agent tools allow you to add domain-specific functionality to the Browser4 agent system beyond the built-in tools (driver, browser, fs, agent, system). You can create tools for:
 
 - Database operations
-- API integrations  
+- API integrations
 - Custom business logic
 - External service interactions
 - Data processing
@@ -40,7 +40,7 @@ import kotlin.reflect.KClass
 class CalculatorToolExecutor : AbstractToolExecutor() {
     override val domain = "calc"  // The domain prefix for tool calls
     override val targetClass: KClass<*> = Calculator::class
-    
+
     override suspend fun execute(
         objectName: String,
         functionName: String,
@@ -49,7 +49,7 @@ class CalculatorToolExecutor : AbstractToolExecutor() {
     ): Any? {
         require(target is Calculator) { "Target must be a Calculator" }
         val calc = target
-        
+
         return when (functionName) {
             "add" -> {
                 validateArgs(args, allowed = setOf("a", "b"), required = setOf("a", "b"), functionName)
@@ -126,7 +126,7 @@ The `AbstractToolExecutor` base class provides helper methods for parameter extr
 class DatabaseToolExecutor : AbstractToolExecutor() {
     override val domain = "db"
     override val targetClass: KClass<*> = Database::class
-    
+
     override suspend fun execute(
         objectName: String,
         functionName: String,
@@ -135,7 +135,7 @@ class DatabaseToolExecutor : AbstractToolExecutor() {
     ): Any? {
         require(target is Database) { "Target must be a Database" }
         val db = target
-        
+
         return when (functionName) {
             "query" -> {
                 validateArgs(args, allowed = setOf("sql"), required = setOf("sql"), functionName)
@@ -186,9 +186,9 @@ fun `test calculator add operation`() = runBlocking {
     val executor = CalculatorToolExecutor()
     val calculator = Calculator()
     val toolCall = ToolCall("calc", "add", mutableMapOf("a" to "5.0", "b" to "3.0"))
-    
-    val result = executor.execute(toolCall, calculator)
-    
+
+    val result = executor.callFunctionOn(toolCall, calculator)
+
     assertEquals(8.0, result.value as Double, 0.001)
 }
 ```

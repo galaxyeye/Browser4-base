@@ -100,11 +100,11 @@ class AgentToolManager constructor(
 
             // First try built-in tool domains
             val evaluate = when (tc.domain) {
-                "driver" -> executor.execute(tc, driver)
-                "browser" -> executor.execute(tc, driver.browser)
-                "fs" -> executor.execute(tc, fs)
-                "agent" -> executor.execute(tc, agent)
-                "system" -> executor.execute(tc, system)
+                "driver" -> executor.callFunctionOn(tc, driver)
+                "browser" -> executor.callFunctionOn(tc, driver.browser)
+                "fs" -> executor.callFunctionOn(tc, fs)
+                "agent" -> executor.callFunctionOn(tc, agent)
+                "system" -> executor.callFunctionOn(tc, system)
                 else -> {
                     // Check if this is a custom tool domain
                     val customExecutor = CustomToolRegistry.instance.get(tc.domain)
@@ -114,7 +114,7 @@ class AgentToolManager constructor(
                                 "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
                                 "Use registerCustomTarget() to provide the target object."
                             )
-                        customExecutor.execute(tc, target)
+                        customexecutor.callFunctionOn(tc, target)
                     } else {
                         throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
                     }

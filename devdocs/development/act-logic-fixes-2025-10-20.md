@@ -124,7 +124,7 @@ val internalResults = withTimeout(config.llmInferenceTimeoutMs) {
 
 ```kotlin
 val expressions = action.expressions  // No .take(1)
-val functionResults = expressions.map { fc -> toolCallExecutor.execute(fc, driver) }
+val functionResults = expressions.map { fc -> toolCallexecutor.callFunctionOn(fc, driver) }
 ```
 
 ## Medium Priority Fixes

@@ -13,7 +13,10 @@ interface ToolExecutor {
     val domain: String
     val targetClass: KClass<*>
 
-    suspend fun execute(tc: ToolCall, target: Any = Any()): TcEvaluate
+    suspend fun callFunctionOn(tc: ToolCall, target: Any = Any()): TcEvaluate
+
+    @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(tc, target)"))
+    suspend fun execute(tc: ToolCall, target: Any): TcEvaluate = callFunctionOn(tc, target)
 
     fun help(): String
     fun help(method: String): String
@@ -37,7 +40,7 @@ abstract class AbstractToolExecutor : ToolExecutor {
         """.trimIndent()
     }
 
-    override suspend fun execute(tc: ToolCall, target: Any): TcEvaluate {
+    override suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
         val objectName = tc.domain
         val functionName = tc.method
         val args = tc.arguments

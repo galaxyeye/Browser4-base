@@ -23,7 +23,7 @@ class SystemToolExecutorTest {
     @Test
     fun `help returns available system tools`() {
         val help = executor.help()
-        
+
         assertNotNull(help)
         assertTrue(help.isNotBlank())
         assertTrue(help.contains("System Tools"))
@@ -33,7 +33,7 @@ class SystemToolExecutorTest {
     @Test
     fun `help for help method returns detailed help`() {
         val help = executor.help("help")
-        
+
         assertNotNull(help)
         assertTrue(help.contains("Get help information"))
         assertTrue(help.contains("help"))
@@ -42,7 +42,7 @@ class SystemToolExecutorTest {
     @Test
     fun `help for unknown method returns not found message`() {
         val help = executor.help("unknownMethod")
-        
+
         assertNotNull(help)
         assertTrue(help.contains("not found"))
     }
@@ -50,24 +50,24 @@ class SystemToolExecutorTest {
     @Test
     fun `help with domain and method delegates to agent tool manager`() = runBlocking {
         every { agentToolManager.help("fs", "writeString") } returns "File system help"
-        
+
         val result = executor.help("fs", "writeString")
-        
+
         assertEquals("File system help", result)
     }
 
     @Test
     fun `system help method executes correctly`() = runBlocking {
         every { agentToolManager.help("driver", "click") } returns "Click help text"
-        
+
         val tc = ToolCall(
             domain = "system",
             method = "help",
             arguments = mutableMapOf("domain" to "driver", "method" to "click")
         )
-        
-        val result = executor.execute(tc, executor)
-        
+
+        val result = executor.callFunctionOn(tc, executor)
+
         assertEquals("Click help text", result.value)
     }
 

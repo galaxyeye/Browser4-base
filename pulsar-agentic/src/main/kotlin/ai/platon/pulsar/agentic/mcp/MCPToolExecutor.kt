@@ -45,7 +45,7 @@ class MCPToolExecutor(
      * @param target Ignored for MCP tools.
      * @return The evaluation result.
      */
-    override suspend fun execute(tc: ToolCall, target: Any): TcEvaluate {
+    override suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
         val toolName = tc.method
         val args = tc.arguments
         val pseudoExpression = tc.pseudoExpression

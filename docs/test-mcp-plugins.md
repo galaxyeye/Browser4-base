@@ -32,7 +32,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 class MyMCPTest {
     private lateinit var server: TestMCPServer
     private val objectMapper = jacksonObjectMapper()
-    
+
     @BeforeEach
     fun setUp() {
         server = TestMCPServer(
@@ -40,17 +40,17 @@ class MyMCPTest {
             serverVersion = "1.0.0"
         )
     }
-    
+
     @AfterEach
     fun tearDown() {
         server.close()
     }
-    
+
     @Test
     fun testToolExecution() {
         // List available tools
         val tools = server.listTools()
-        
+
         // Execute a tool
         val request = objectMapper.createObjectNode().apply {
             put("name", "echo")
@@ -59,7 +59,7 @@ class MyMCPTest {
             })
         }
         val result = server.callTool(request)
-        
+
         // Validate result
         val content = result["content"] as List<Map<String, Any>>
         assertEquals("Hello MCP!", content[0]["text"])
@@ -113,7 +113,7 @@ Create an HTTP-based transport adapter for TestMCPServer:
 ```kotlin
 class HttpMCPTransport(val baseUrl: String) : MCPTransport {
     private val httpClient = HttpClient(CIO)
-    
+
     override suspend fun send(request: MCPRequest): MCPResponse {
         // Implement HTTP-based MCP protocol
         // POST to $baseUrl/mcp/list_tools or $baseUrl/mcp/call_tool
@@ -130,7 +130,7 @@ Start TestMCPServer in a Spring Boot test context:
 class MCPPluginIntegrationTest {
     @LocalServerPort
     private var port: Int = 0
-    
+
     @Test
     fun `test MCP plugin with TestMCPServer`() = runBlocking {
         val config = MCPConfig(
@@ -138,12 +138,12 @@ class MCPPluginIntegrationTest {
             transportType = MCPTransportType.SSE,
             url = "http://localhost:$port/mcp"
         )
-        
+
         MCPPluginRegistry.instance.registerMCPServer(config)
         val executor = MCPPluginRegistry.instance.getToolExecutor("test-server")
-        
+
         // Test tool execution through the plugin framework
-        val result = executor.execute(
+        val result = executor.callFunctionOn(
             ToolCall("test-server", "echo", mapOf("message" to "test"))
         )
         assertEquals("test", result.value)
@@ -255,7 +255,7 @@ Executes a tool with given arguments:
 
 ### add
 - **Description**: Adds two numbers together
-- **Parameters**: 
+- **Parameters**:
   - `a` (number, required)
   - `b` (number, required)
 - **Example**: `{"a": 5, "b": 3}` → `"8.0"`

@@ -59,7 +59,7 @@ val toolCall = ToolCall(
     method = "get_forecast",
     arguments = mutableMapOf("location" to "San Francisco")
 )
-val result = executor.execute(toolCall)
+val result = executor.callFunctionOn(toolCall)
 ```
 
 ## Configuration

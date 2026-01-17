@@ -16,15 +16,15 @@ class ExecutorsNamedArgsTest {
     @Test
     fun agent_act_uses_named_args() {
         val agent = mockk<PerceptiveAgent>(relaxed = true)
-        val exec = AgentToolExecutor()
+        val executor = AgentToolExecutor()
         val tc = ToolCall(domain = "agent", method = "act", arguments = mutableMapOf("action" to "Do it"))
 
-        runBlocking { exec.execute(tc, agent) }
+        runBlocking { executor.callFunctionOn(tc, agent) }
         coVerify { agent.act("Do it") }
 
         // missing param throws
         runBlocking {
-            val r = exec.execute(ToolCall("agent", "act", mutableMapOf()), agent)
+            val r = executor.callFunctionOn(ToolCall("agent", "act", mutableMapOf()), agent)
             assertNotNull(r.exception)
         }
     }
@@ -32,10 +32,10 @@ class ExecutorsNamedArgsTest {
     @Test
     fun fs_readString_uses_named_args() {
         val fs = mockk<AgentFileSystem>(relaxed = true)
-        val exec = FileSystemToolExecutor()
+        val executor = FileSystemToolExecutor()
         val tc = ToolCall(domain = "fs", method = "readString", arguments = mutableMapOf("filename" to "a.txt", "external" to "true"))
 
-        runBlocking { exec.execute(tc, fs) }
+        runBlocking { executor.callFunctionOn(tc, fs) }
         coVerify { fs.readString("a.txt", true) }
     }
 
@@ -44,20 +44,20 @@ class ExecutorsNamedArgsTest {
         val browser = mockk<ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractBrowser>(relaxed = true)
         val driver = mockk<ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver>(relaxed = true)
         every { browser.drivers } returns linkedMapOf("abc" to driver)
-        val exec = BrowserToolExecutor()
+        val executor = BrowserToolExecutor()
         val tc = ToolCall(domain = "browser", method = "switchTab", arguments = mutableMapOf("tabId" to "abc"))
 
-        runBlocking { exec.execute(tc, browser) }
+        runBlocking { executor.callFunctionOn(tc, browser) }
         coVerify { driver.bringToFront() }
     }
 
     @Test
     fun driver_click_uses_named_args() {
         val driver = mockk<WebDriver>(relaxed = true)
-        val exec = WebDriverToolExecutor()
+        val executor = WebDriverToolExecutor()
         val tc = ToolCall(domain = "driver", method = "click", arguments = mutableMapOf("selector" to "#ok", "count" to "2"))
 
-        runBlocking { exec.execute(tc, driver) }
+        runBlocking { executor.callFunctionOn(tc, driver) }
         coVerify { driver.click(selector = "#ok", count = 2) }
     }
 }

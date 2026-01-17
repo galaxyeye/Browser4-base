@@ -28,7 +28,7 @@ import kotlin.reflect.full.isSuperclassOf
  *
  * ```kotlin
  * val executor = ToolCallExecutor()
- * val result = executor.execute("driver.open('https://example.com')", driver)
+ * val result = executor.callFunctionOn("driver.open('https://example.com')", driver)
  * ```
  *
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
@@ -75,7 +75,7 @@ open class BasicToolCallExecutor(
     suspend fun execute(tc: ToolCall, target: Any): TcEvaluate {
         return toolExecutors
             .firstOrNull { it.targetClass.isSuperclassOf(target::class) }
-            ?.execute(tc, target)
+            ?.callFunctionOn(tc, target)
             ?: throw UnsupportedOperationException("❓ Unsupported target ${target::class}")
     }
 
