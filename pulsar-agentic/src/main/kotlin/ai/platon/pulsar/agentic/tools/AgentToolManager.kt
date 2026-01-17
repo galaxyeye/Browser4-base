@@ -114,7 +114,7 @@ class AgentToolManager constructor(
                                 "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
                                 "Use registerCustomTarget() to provide the target object."
                             )
-                        customexecutor.callFunctionOn(tc, target)
+                        customExecutor.callFunctionOn(tc, target)
                     } else {
                         throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
                     }
