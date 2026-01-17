@@ -27,7 +27,6 @@
     </build>
 
     <modules>
-        <module>pulsar-tests-common</module>
         <module>pulsar-it-tests</module>
         <module>pulsar-e2e-tests</module>
     </modules>

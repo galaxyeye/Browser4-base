@@ -44,7 +44,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         @AfterAll
         fun cleanup() {
             // Clean up the default session after all tests
-            AgenticSession.Companion.resetDefault()
+            AgenticSession.resetDefault()
         }
     }
 
