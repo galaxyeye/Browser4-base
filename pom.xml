@@ -85,7 +85,6 @@
         <module>pulsar-core</module>
         <module>pulsar-agentic</module>
         <module>pulsar-rest</module>
-        <module>pulsar-client</module>
         <module>pulsar-bom</module>
     </modules>
 
