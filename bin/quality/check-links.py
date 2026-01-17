@@ -57,10 +57,10 @@ class Statistics:
 
 class LinkChecker:
     """Main link checker class"""
-    
+
     # File extensions to check
     SUPPORTED_EXTENSIONS = {'.md', '.markdown', '.html', '.htm', '.rst', '.txt'}
-    
+
     # Link patterns for different file types
     MARKDOWN_LINK_PATTERN = re.compile(
         r'\[([^\]]*?)\]\(([^)]+?)\)'  # [text](url)
@@ -79,7 +79,7 @@ class LinkChecker:
         r'`[^`]+<([^>]+)>`_|'  # `text <url>`_
         r'\.\. _[^:]+:\s*(\S+)'  # .. _name: url
     )
-    
+
     def __init__(self, root_dir: Path, exclude_patterns: List[str] = None,
                  max_workers: int = 10, timeout: int = 10, skip_external: bool = False):
         self.root_dir = root_dir.resolve()
@@ -90,7 +90,7 @@ class LinkChecker:
         self.stats = Statistics()
         self.checked_external_urls: Set[str] = set()
         self.external_urls_lock = threading.Lock()  # Thread safety for checked URLs
-        
+
         # Configure requests session with retries
         self.session = requests.Session()
         retry_strategy = Retry(
@@ -104,7 +104,7 @@ class LinkChecker:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (compatible; LinkChecker/1.0)'
         })
-    
+
     def should_skip_file(self, file_path: Path) -> bool:
         """Check if file should be skipped based on exclude patterns"""
         rel_path = str(file_path.relative_to(self.root_dir))
@@ -112,7 +112,7 @@ class LinkChecker:
             if pattern in rel_path:
                 return True
         return False
-    
+
     def find_documentation_files(self, search_dirs: List[Path]) -> List[Path]:
         """Find all documentation files in the given directories"""
         doc_files = []
@@ -120,7 +120,7 @@ class LinkChecker:
             if not search_path.exists():
                 print(f"Warning: Path does not exist: {search_path}", file=sys.stderr)
                 continue
-            
+
             # If it's a file, add it directly if it's a supported type
             if search_path.is_file():
                 if search_path.suffix in self.SUPPORTED_EXTENSIONS:
@@ -132,9 +132,9 @@ class LinkChecker:
                     if file_path.is_file() and file_path.suffix in self.SUPPORTED_EXTENSIONS:
                         if not self.should_skip_file(file_path):
                             doc_files.append(file_path)
-        
+
         return sorted(doc_files)
-    
+
     def extract_links_from_file(self, file_path: Path) -> List[Tuple[str, int]]:
         """Extract all links from a file with line numbers"""
         links = []
@@ -142,7 +142,7 @@ class LinkChecker:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
                 lines = content.split('\n')
-                
+
                 # Determine file type and use appropriate patterns
                 if file_path.suffix in {'.md', '.markdown'}:
                     patterns = [
@@ -156,7 +156,7 @@ class LinkChecker:
                     patterns = [self.RST_LINK_PATTERN]
                 else:
                     patterns = [self.MARKDOWN_LINK_PATTERN]  # Default to markdown
-                
+
                 for line_num, line in enumerate(lines, 1):
                     for pattern in patterns:
                         for match in pattern.finditer(line):
@@ -172,19 +172,19 @@ class LinkChecker:
                                     if group:
                                         url = group.strip()
                                         break
-                            
+
                             if url:
                                 url = url.strip()
                                 # Skip certain URLs
                                 if self._should_skip_url(url):
                                     continue
                                 links.append((url, line_num))
-        
+
         except Exception as e:
             print(f"Warning: Failed to read {file_path}: {e}", file=sys.stderr)
-        
+
         return links
-    
+
     def _should_skip_url(self, url: str) -> bool:
         """Check if URL should be skipped"""
         # Skip email links
@@ -200,26 +200,26 @@ class LinkChecker:
         if '${' in url or '{{' in url:
             return True
         return False
-    
+
     def check_internal_link(self, url: str, source_file: Path) -> Tuple[bool, str]:
         """Check if an internal link is valid"""
         # Remove query parameters and fragments for file checking
         url_parts = url.split('#', 1)
         file_part = url_parts[0].split('?', 1)[0]
         anchor = url_parts[1] if len(url_parts) > 1 else None
-        
+
         if not file_part:  # Just an anchor reference
             return True, ""
-        
+
         # Resolve the path relative to the source file
         source_dir = source_file.parent
-        
+
         # Handle absolute paths from root
         if file_part.startswith('/'):
             target_path = self.root_dir / file_part.lstrip('/')
         else:
             target_path = (source_dir / file_part).resolve()
-        
+
         # Check if target exists
         if target_path.exists():
             if target_path.is_file():
@@ -236,11 +236,11 @@ class LinkChecker:
                 for ext in ['.md', '.html', '.rst']:
                     if target_path.with_suffix(ext).exists():
                         return True, ""
-            
+
             return False, f"File not found: {target_path}"
-        
+
         return True, ""
-    
+
     def check_external_link(self, url: str) -> Tuple[bool, str]:
         """Check if an external link is accessible"""
         # Skip if we've already checked this URL (thread-safe check)
@@ -248,23 +248,23 @@ class LinkChecker:
             if url in self.checked_external_urls:
                 return True, ""
             self.checked_external_urls.add(url)
-        
+
         try:
             # Try HEAD request first (faster)
             response = self.session.head(url, timeout=self.timeout, allow_redirects=True)
             if response.status_code < 400:
                 return True, ""
-            
+
             # If HEAD fails, try GET (some servers don't support HEAD)
             response = self.session.get(url, timeout=self.timeout, stream=True, allow_redirects=True)
             # Close immediately to avoid downloading content
             response.close()
-            
+
             if response.status_code < 400:
                 return True, ""
             else:
                 return False, f"HTTP {response.status_code}"
-        
+
         except requests.exceptions.Timeout:
             return False, "Timeout"
         except requests.exceptions.TooManyRedirects:
@@ -273,11 +273,11 @@ class LinkChecker:
             return False, f"Request failed: {str(e)}"
         except Exception as e:
             return False, f"Unexpected error: {str(e)}"
-    
+
     def check_link(self, url: str, source_file: Path, line_number: int) -> LinkCheckResult:
         """Check a single link"""
         parsed = urlparse(url)
-        
+
         # Determine link type
         if parsed.scheme in ('http', 'https'):
             link_type = 'external'
@@ -304,12 +304,12 @@ class LinkChecker:
             is_valid = True
             error = f"Unsupported scheme: {parsed.scheme}"
             self.stats.skipped_links += 1
-        
+
         if is_valid:
             self.stats.valid_links += 1
         else:
             self.stats.broken_links += 1
-        
+
         return LinkCheckResult(
             url=url,
             source_file=str(source_file.relative_to(self.root_dir)),
@@ -318,79 +318,82 @@ class LinkChecker:
             error_message=error,
             link_type=link_type
         )
-    
+
     def check_file(self, file_path: Path) -> List[LinkCheckResult]:
         """Check all links in a single file"""
+
+        print (f"🔍 Checking file: {file_path.relative_to(self.root_dir)}")
+
         results = []
         links = self.extract_links_from_file(file_path)
-        
+
         for url, line_number in links:
             self.stats.total_links += 1
             result = self.check_link(url, file_path, line_number)
             if not result.is_valid:
                 results.append(result)
                 self.stats.errors.append(result)
-        
+
         return results
-    
+
     def run(self, search_dirs: List[Path]) -> Statistics:
         """Run link checker on all files"""
         print(f"🔍 Scanning for documentation files in {len(search_dirs)} path{'s' if len(search_dirs) != 1 else ''}...")
-        
+
         doc_files = self.find_documentation_files(search_dirs)
         self.stats.total_files = len(doc_files)
-        
+
         if not doc_files:
             print("⚠️  No documentation files found!")
             return self.stats
-        
+
         print(f"📄 Found {len(doc_files)} documentation file(s)")
         print(f"🔗 Checking links with {self.max_workers} worker(s)...")
-        
+
         start_time = time.time()
-        
+
         # Process files in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {executor.submit(self.check_file, f): f for f in doc_files}
-            
+
             for future in concurrent.futures.as_completed(futures):
                 file_path = futures[future]
                 try:
                     future.result()
                 except Exception as e:
                     print(f"❌ Error processing {file_path}: {e}", file=sys.stderr)
-        
+
         elapsed = time.time() - start_time
         print(f"\n⏱️  Completed in {elapsed:.2f} seconds")
-        
+
         return self.stats
-    
+
     def print_report(self):
         """Print detailed report"""
         print("\n" + "="*80)
         print("📊 LINK CHECK REPORT")
         print("="*80)
-        
+
         print(f"\n📁 Files checked:     {self.stats.total_files}")
         print(f"🔗 Total links:       {self.stats.total_links}")
         print(f"   ├─ Internal:       {self.stats.internal_links}")
         print(f"   ├─ External:       {self.stats.external_links}")
         print(f"   └─ Skipped:        {self.stats.skipped_links}")
-        
+
         print(f"\n✅ Valid links:       {self.stats.valid_links}")
         print(f"❌ Broken links:      {self.stats.broken_links}")
-        
+
         if self.stats.errors:
             print(f"\n{'='*80}")
             print(f"💔 BROKEN LINKS ({len(self.stats.errors)}):")
             print(f"{'='*80}\n")
-            
+
             for error in self.stats.errors:
                 print(f"📄 {error.source_file}:{error.line_number}")
                 print(f"   🔗 {error.url}")
                 print(f"   ❌ {error.error_message} ({error.link_type})")
                 print()
-        
+
         print("="*80)
 
 
@@ -416,50 +419,50 @@ Examples:
   %(prog)s --exclude node_modules --exclude .git
         """
     )
-    
+
     parser.add_argument(
         'paths',
         nargs='*',
         default=['docs', 'README.md', 'README.zh.md'],
         help='Directories or files to check (default: docs README.md README.zh.md)'
     )
-    
+
     parser.add_argument(
         '--exclude',
         action='append',
         default=[],
         help='Patterns to exclude (can be used multiple times)'
     )
-    
+
     parser.add_argument(
         '--workers',
         type=int,
         default=10,
         help='Number of worker threads (default: 10)'
     )
-    
+
     parser.add_argument(
         '--timeout',
         type=int,
         default=10,
         help='Timeout for external link checks in seconds (default: 10)'
     )
-    
+
     parser.add_argument(
         '--skip-external',
         action='store_true',
         help='Skip checking external links (faster)'
     )
-    
+
     parser.add_argument(
         '--root',
         type=Path,
         default=None,
         help='Root directory of the project (default: auto-detect)'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Determine root directory
     if args.root:
         root_dir = args.root
@@ -477,9 +480,9 @@ Examples:
                     root_dir = current
                     break
                 current = current.parent
-    
+
     print(f"📂 Root directory: {root_dir}")
-    
+
     # Convert paths to Path objects
     search_paths = []
     for path_str in args.paths:
@@ -487,11 +490,11 @@ Examples:
         if not path.is_absolute():
             path = root_dir / path
         search_paths.append(path)
-    
+
     # Add default exclude patterns
     default_excludes = ['.git', 'node_modules', '__pycache__', '.mvn', 'target']
     exclude_patterns = default_excludes + args.exclude
-    
+
     # Create checker and run
     checker = LinkChecker(
         root_dir=root_dir,
@@ -500,18 +503,18 @@ Examples:
         timeout=args.timeout,
         skip_external=args.skip_external
     )
-    
+
     try:
         stats = checker.run(search_paths)
         checker.print_report()
-        
+
         # Exit with error code if broken links found
         if stats.broken_links > 0:
             sys.exit(1)
         else:
             print("\n✨ All links are valid!")
             sys.exit(0)
-    
+
     except KeyboardInterrupt:
         print("\n\n⚠️  Interrupted by user", file=sys.stderr)
         sys.exit(130)

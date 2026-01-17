@@ -20,4 +20,3 @@ class SkillToolTarget(
         return registry.execute(skillId, context, casted)
     }
 }
-

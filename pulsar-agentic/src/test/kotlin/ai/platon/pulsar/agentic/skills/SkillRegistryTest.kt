@@ -43,7 +43,7 @@ class SkillRegistryTest {
         registry.register(skill1, context)
 
         val exception = assertThrows<IllegalArgumentException> {
-            runBlocking { registry.register(skill2, context) }
+            registry.register(skill2, context)
         }
         assertTrue(exception.message!!.contains("already registered"))
     }
@@ -53,7 +53,7 @@ class SkillRegistryTest {
         val skill = TestSkill("test-skill", dependencies = listOf("missing-dep"))
 
         val exception = assertThrows<IllegalStateException> {
-            runBlocking { registry.register(skill, context) }
+            registry.register(skill, context)
         }
         assertTrue(exception.message!!.contains("missing dependencies"))
     }

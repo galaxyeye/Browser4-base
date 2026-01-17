@@ -66,9 +66,6 @@ data class ToolSpec constructor(
         }
 }
 
-@Deprecated("Use ToolSpec instead", ReplaceWith("ToolSpec"))
-typealias ToolCallSpec = ToolSpec
-
 data class ToolCall constructor(
     val domain: String,
     val method: String,
