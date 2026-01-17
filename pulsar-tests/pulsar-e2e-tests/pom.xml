@@ -24,12 +24,6 @@
         <defaultGoal>package</defaultGoal>
     </build>
 
-    <properties>
-        <!-- Skip tests by default in this module because they are time-consuming.
-             To run tests, use: mvn test -DrunITs=true -->
-        <skipTests>true</skipTests>
-    </properties>
-
     <dependencies>
         <!-- Internal Dependencies -->
         <dependency>
