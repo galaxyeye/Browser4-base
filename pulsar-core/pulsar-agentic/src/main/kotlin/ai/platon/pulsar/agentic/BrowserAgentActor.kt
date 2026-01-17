@@ -7,6 +7,7 @@ import ai.platon.pulsar.agentic.ai.agent.detail.AgentStateManager
 import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
 import ai.platon.pulsar.agentic.ai.agent.detail.PageStateTracker
 import ai.platon.pulsar.agentic.ai.tta.ContextToAction
+import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
 import ai.platon.pulsar.agentic.tools.AgentToolManager
 import ai.platon.pulsar.common.*
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -35,7 +36,23 @@ open class BrowserAgentActor(
     protected val domService get() = inference.domService
     protected val promptBuilder = PromptBuilder()
 
-    protected val toolExecutor by lazy { AgentToolManager(_baseDir, this) }
+    protected val toolExecutor by lazy {
+        AgentToolManager(_baseDir, this).also { tm ->
+            // Auto-wire MCP servers (pure library mode): domain -> MCPClientManager
+            // This ensures that when MCPToolExecutor is registered in CustomToolRegistry under domain
+            // "mcp.<serverName>", the AgentToolManager has the corresponding target object.
+            runCatching {
+                val registry = MCPPluginRegistry.instance
+                registry.getRegisteredServers().forEach { serverName ->
+                    val domain = "mcp.$serverName"
+                    registry.getClientManager(serverName)?.let { tm.registerCustomTarget(domain, it) }
+                }
+            }.onFailure {
+                // Make wiring best-effort and non-fatal; MCP may be unused.
+                logger.debug("Failed to auto-wire MCP targets: {}", it.message)
+            }
+        }
+    }
     protected val fs get() = toolExecutor.fs
 
     // Helper classes for better code organization
@@ -179,7 +196,7 @@ open class BrowserAgentActor(
      * @return The extraction result produced by the model.
      */
     override suspend fun extract(instruction: String): ExtractResult {
-        val opts = ExtractOptions(instruction = instruction, ExtractionSchema.Companion.DEFAULT)
+        val opts = ExtractOptions(instruction = instruction, ExtractionSchema.DEFAULT)
         return extract(opts)
     }
 
