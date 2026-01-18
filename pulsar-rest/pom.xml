@@ -114,14 +114,6 @@
             <artifactId>kotlinx-coroutines-reactor</artifactId>
         </dependency>
 
-        <!-- Automatic Restart, LiveReload, Remote Debug -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-devtools</artifactId>-->
-<!--            <scope>runtime</scope>-->
-<!--            <optional>true</optional> &lt;!&ndash; 推荐设置 &ndash;&gt;-->
-<!--        </dependency>-->
-
         <!--
             - health checks, metrics, and monitoring
          -->
