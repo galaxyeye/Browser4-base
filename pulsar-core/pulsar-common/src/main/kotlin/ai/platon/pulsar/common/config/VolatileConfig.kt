@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
- * Created by vincent on 18-1-17.
+ * Created by Vincent on 18-1-17.
  * Copyright @ 2013-2023 Platon AI. All rights reserved.
  *
  * The volatile config is designed to read/write frequently.

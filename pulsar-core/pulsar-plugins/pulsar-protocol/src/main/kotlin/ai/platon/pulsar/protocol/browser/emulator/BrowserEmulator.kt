@@ -39,7 +39,7 @@ enum class EmulateEvents {
 }
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved.
  *
  * About emulate, simulate, mimic and imitate:
@@ -78,7 +78,7 @@ interface BrowserEmulator: EventEmitter<EmulateEvents>, AutoCloseable {
     suspend fun onDidScroll(page: WebPage, driver: WebDriver)
 
     suspend fun onDocumentSteady(page: WebPage, driver: WebDriver)
-    
+
     suspend fun onWillComputeFeature(page: WebPage, driver: WebDriver)
 
     suspend fun onFeatureComputed(page: WebPage, driver: WebDriver)

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Created by vincent on 16-10-12.
+ * Created by Vincent on 16-10-12.
  * Copyright @ 2013-2016 Platon AI. All rights reserved
  *
  * Multiple sink message writer. Messages from different source are write to different files.

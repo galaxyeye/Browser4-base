@@ -19,7 +19,7 @@ import org.h2.value.ValueString
 import org.jsoup.nodes.Element
 
 /**
- * Created by vincent on 17-11-1.
+ * Created by Vincent on 17-11-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved.
  */
 @Suppress("unused")

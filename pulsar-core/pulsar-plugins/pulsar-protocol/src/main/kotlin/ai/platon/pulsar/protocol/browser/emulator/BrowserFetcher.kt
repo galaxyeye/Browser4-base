@@ -22,15 +22,15 @@ import ai.platon.pulsar.skeleton.crawl.fetch.Fetcher
 import ai.platon.pulsar.skeleton.crawl.fetch.WebDriverFetcher
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 interface BrowserFetcher: AutoCloseable {
-    
+
     val conf: ImmutableConfig
-    
+
     val browserEmulator: BrowserEmulator
-    
+
     fun reset()
 
     fun cancel(page: WebPage)

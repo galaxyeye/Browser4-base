@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Created by vincent on 17-7-29.
+ * Created by Vincent on 17-7-29.
  * Copyright @ 2013-2023 Platon AI. All rights reserved.
  */
 class TestDomToH2Queries: TestBase() {

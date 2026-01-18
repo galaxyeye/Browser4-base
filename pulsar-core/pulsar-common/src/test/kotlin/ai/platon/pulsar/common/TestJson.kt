@@ -6,7 +6,7 @@ import com.google.gson.GsonBuilder
 import kotlin.test.*
 
 /**
- * Created by vincent on 17-1-14.
+ * Created by Vincent on 17-1-14.
  */
 class TestJson {
     var urls = arrayOf(

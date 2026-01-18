@@ -5,7 +5,7 @@ import org.apache.commons.lang3.math.NumberUtils
 import java.util.*
 
 /**
- * Created by vincent on 17-8-2.
+ * Created by Vincent on 17-8-2.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 class FieldGroupFormatter {
@@ -25,15 +25,15 @@ class FieldGroupFormatter {
     var sourceTitle: String? = null
     private var fieldGroup: GFieldGroup
     var id: Long = 0
-    
+
     constructor(fieldGroup: GFieldGroup) {
         this.fieldGroup = fieldGroup
     }
-    
+
     constructor(fieldGroup: FieldGroup) {
         this.fieldGroup = fieldGroup.unbox()
     }
-    
+
     fun parseFields() {
         val fields = fieldGroup.fields
         var k: CharSequence = "id"
@@ -79,7 +79,7 @@ class FieldGroupFormatter {
         v = fields[k]
         if (v != null) sourceTitle = v.toString()
     }
-    
+
     fun format(): String {
         val sb = StringBuilder()
         sb.append("id:\t").append(fieldGroup.id)
@@ -89,7 +89,7 @@ class FieldGroupFormatter {
         sb.append("\tfields:\t").append(fields)
         return sb.toString()
     }
-    
+
     val fields: Map<String, Any>
         get() {
             val result: MutableMap<String, Any> = HashMap()
@@ -100,7 +100,7 @@ class FieldGroupFormatter {
             result["fields"] = fields
             return result
         }
-    
+
     override fun toString(): String {
         return format()
     }

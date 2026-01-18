@@ -3,7 +3,7 @@ package ai.platon.pulsar.common
 import kotlin.test.*
 
 /**
- * Created by vincent on 17-1-14.
+ * Created by Vincent on 17-1-14.
  */
 class TestPriority {
     @Test

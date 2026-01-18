@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat
 import kotlin.test.*
 
 /**
- * Created by vincent on 16-7-20.
+ * Created by Vincent on 16-7-20.
  */
 class TestAppFiles {
     private val readableTime = SimpleDateFormat("MMdd.HHmmss").format(System.currentTimeMillis())

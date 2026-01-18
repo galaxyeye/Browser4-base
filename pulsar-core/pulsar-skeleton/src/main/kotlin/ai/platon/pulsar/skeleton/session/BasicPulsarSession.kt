@@ -5,7 +5,7 @@ import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.skeleton.context.support.AbstractPulsarContext
 
 /**
- * Created by vincent on 18-1-17.
+ * Created by Vincent on 18-1-17.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 open class BasicPulsarSession(

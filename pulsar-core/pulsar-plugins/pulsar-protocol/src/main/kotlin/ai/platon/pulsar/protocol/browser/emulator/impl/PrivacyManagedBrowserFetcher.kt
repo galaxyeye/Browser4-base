@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.run
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 open class BrowserWebDriverFetcher(
@@ -100,7 +100,7 @@ open class BrowserWebDriverFetcher(
 }
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 open class PrivacyManagedBrowserFetcher(

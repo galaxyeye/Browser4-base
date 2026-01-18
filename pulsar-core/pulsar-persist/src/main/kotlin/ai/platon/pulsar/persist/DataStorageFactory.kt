@@ -18,7 +18,7 @@ import org.apache.gora.util.GoraException
 import org.slf4j.LoggerFactory
 
 /**
- * Created by vincent on 19-1-19.
+ * Created by Vincent on 19-1-19.
  * Copyright @ 2013-2019 Platon AI. All rights reserved
  */
 class DataStorageFactory(val conf: ImmutableConfig) {

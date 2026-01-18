@@ -5,7 +5,7 @@ import ai.platon.pulsar.common.config.Params;
 import java.util.Map;
 
 /**
- * Created by vincent on 16-9-24.
+ * Created by Vincent on 16-9-24.
  *
  * @author vincent
  * @version $Id: $Id

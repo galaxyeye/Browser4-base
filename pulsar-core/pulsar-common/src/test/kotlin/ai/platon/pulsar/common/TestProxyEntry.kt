@@ -8,7 +8,7 @@ import java.net.URL
 import kotlin.test.*
 
 /**
- * Created by vincent on 17-1-14.
+ * Created by Vincent on 17-1-14.
  */
 class TestProxyEntry {
 

@@ -14,7 +14,7 @@ import java.time.Instant
 import java.util.*
 
 /**
- * Created by vincent on 17-4-7.
+ * Created by Vincent on 17-4-7.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 class DurationConverter : IStringConverter<Duration> {
@@ -49,7 +49,7 @@ class FetchModeConverter : IStringConverter<FetchMode> {
 }
 
 /**
- * Created by vincent on 17-4-7.
+ * Created by Vincent on 17-4-7.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 class WeightedKeywordsConverter : IStringConverter<Map<String, Double>> {

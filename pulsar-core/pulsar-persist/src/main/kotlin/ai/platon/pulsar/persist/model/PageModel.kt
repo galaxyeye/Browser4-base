@@ -4,7 +4,7 @@ import ai.platon.pulsar.persist.PersistUtils.u8
 import ai.platon.pulsar.persist.gora.generated.GPageModel
 
 /**
- * Created by vincent on 17-8-3.
+ * Created by Vincent on 17-8-3.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  *
  * The core concept of Page Model
@@ -23,7 +23,7 @@ class PageModel(
 
     @get:Synchronized
     val unboxedFieldGroups get() = pageModel.fieldGroups
-    
+
     @get:Synchronized
     val boxedFieldGroups get() = unboxedFieldGroups.map { FieldGroup.box(it) }
 

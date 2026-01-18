@@ -1,7 +1,7 @@
 package ai.platon.pulsar.persist.metadata;
 
 /**
- * Created by vincent on 17-3-19.
+ * Created by Vincent on 17-3-19.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  * <p>
  * All valid Metadata names are listed here.

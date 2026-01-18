@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils
 import kotlin.test.*
 
 /**
- * Created by vincent on 16-7-20.
+ * Created by Vincent on 16-7-20.
  * Copyright @ 2013-2016 Platon AI. All rights reserved
  */
 class TestLoadResources: WebDriverTestBase() {

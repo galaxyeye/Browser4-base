@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Created by vincent on 17-1-14.
+ * Created by Vincent on 17-1-14.
  */
 class ConfigTest {
 
