@@ -5,7 +5,6 @@ import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.rest.openapi.store.InMemoryStore
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriverException
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
@@ -77,7 +76,7 @@ class ElementController(
      * Clicks an element by ID.
      */
     @PostMapping("/element/{elementId}/click")
-    fun clickElement(
+    suspend fun clickElement(
         @PathVariable sessionId: String,
         @PathVariable elementId: String,
         response: HttpServletResponse
@@ -92,10 +91,8 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.click(element.selector)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.click(element.selector)
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Element click failed | sessionId={} elementId={} | {}", sessionId, elementId, e.message)
@@ -110,7 +107,7 @@ class ElementController(
      * Sends keys to an element by ID.
      */
     @PostMapping("/element/{elementId}/value", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun sendKeysToElement(
+    suspend fun sendKeysToElement(
         @PathVariable sessionId: String,
         @PathVariable elementId: String,
         @RequestBody request: SendKeysRequest,
@@ -126,10 +123,8 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.fill(element.selector, request.text)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.fill(element.selector, request.text)
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Send keys failed | sessionId={} elementId={} | {}", sessionId, elementId, e.message)
@@ -144,7 +139,7 @@ class ElementController(
      * Gets an element attribute by name.
      */
     @GetMapping("/element/{elementId}/attribute/{name}")
-    fun getElementAttribute(
+    suspend fun getElementAttribute(
         @PathVariable sessionId: String,
         @PathVariable elementId: String,
         @PathVariable name: String,
@@ -160,10 +155,8 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            val value = runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.selectFirstAttributeOrNull(element.selector, name)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val value = driver.selectFirstAttributeOrNull(element.selector, name)
             ResponseEntity.ok(AttributeResponse(value = value ?: ""))
         } catch (e: WebDriverException) {
             logger.error("Get attribute failed | sessionId={} elementId={} name={} | {}", sessionId, elementId, name, e.message)
@@ -178,7 +171,7 @@ class ElementController(
      * Gets an element's text content.
      */
     @GetMapping("/element/{elementId}/text")
-    fun getElementText(
+    suspend fun getElementText(
         @PathVariable sessionId: String,
         @PathVariable elementId: String,
         response: HttpServletResponse
@@ -193,10 +186,8 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            val text = runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.selectFirstTextOrNull(element.selector) ?: ""
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val text = driver.selectFirstTextOrNull(element.selector) ?: ""
             ResponseEntity.ok(TextResponse(value = text))
         } catch (e: WebDriverException) {
             logger.error("Get text failed | sessionId={} elementId={} | {}", sessionId, elementId, e.message)

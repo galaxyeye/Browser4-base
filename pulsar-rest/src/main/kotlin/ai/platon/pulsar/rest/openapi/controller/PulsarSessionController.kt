@@ -3,7 +3,6 @@ package ai.platon.pulsar.rest.openapi.controller
 import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
@@ -57,7 +56,7 @@ class PulsarSessionController(
      * Opens a URL immediately, bypassing the local cache.
      */
     @PostMapping("/open", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun open(
+    suspend fun open(
         @PathVariable sessionId: String,
         @RequestBody request: OpenRequest,
         response: HttpServletResponse
@@ -69,9 +68,7 @@ class PulsarSessionController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         // Use real PulsarSession.open (which fetches fresh from internet)
-        val page = runBlocking {
-            session.pulsarSession.open(request.url)
-        }
+        val page = session.pulsarSession.open(request.url)
 
         sessionManager.setSessionUrl(sessionId, request.url)
 

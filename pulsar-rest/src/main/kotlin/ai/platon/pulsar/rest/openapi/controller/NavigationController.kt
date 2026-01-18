@@ -3,7 +3,6 @@ package ai.platon.pulsar.rest.openapi.controller
 import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
@@ -29,7 +28,7 @@ class NavigationController(
      * Navigates to a URL.
      */
     @PostMapping("/url", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun navigateTo(
+    suspend fun navigateTo(
         @PathVariable sessionId: String,
         @RequestBody request: SetUrlRequest,
         response: HttpServletResponse
@@ -42,10 +41,8 @@ class NavigationController(
 
         try {
             // Get or create bound driver and navigate to URL
-            runBlocking {
-                val driver = session.pulsarSession.getOrCreateBoundDriver()
-                driver.navigateTo(request.url)
-            }
+            val driver = session.pulsarSession.getOrCreateBoundDriver()
+            driver.navigateTo(request.url)
             sessionManager.setSessionUrl(sessionId, request.url)
         } catch (e: Exception) {
             logger.error("Error navigating to URL: {}", e.message, e)
