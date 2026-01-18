@@ -68,7 +68,7 @@ class Browser4Driver(
          */
         fun defaultJarPath(): String {
             val userHome = System.getProperty("user.home")
-            val browser4Dir = File(userHome, ".browser4")
+            val browser4Dir = File(userHome, ".browser4").resolve("lib")
             browser4Dir.mkdirs()
             return File(browser4Dir, "Browser4.jar").absolutePath
         }
