@@ -38,6 +38,7 @@
         <kotlinx-coroutines.version>1.10.1</kotlinx-coroutines.version>
 
         <pulsar.version>4.5.0-SNAPSHOT</pulsar.version>
+        <browser4.sdk.version>0.0.1-SNAPSHOT</browser4.sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -55,9 +56,9 @@
     <dependencies>
         <!-- SDK dependency -->
         <dependency>
-            <groupId>ai.platon.pulsar</groupId>
+            <groupId>io.browser4</groupId>
             <artifactId>browser4-sdk-kotlin</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${browser4.sdk.version}</version>
         </dependency>
 
         <!-- Pulsar test dependencies -->

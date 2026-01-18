@@ -58,6 +58,8 @@
     </distributionManagement>
 
     <build>
+        <defaultGoal>install</defaultGoal>
+
         <plugins>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
