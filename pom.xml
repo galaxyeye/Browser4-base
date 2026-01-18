@@ -85,7 +85,6 @@
     <!-- Default active modules. The main goal is to allow the user to run PulsarApplication
      with a single click in the IDE right after opening the project. -->
     <modules>
-        <module>pulsar-parent</module>
         <module>pulsar-dependencies</module>
         <module>pulsar-tests/pulsar-tests-common</module>
         <module>pulsar-core</module>
@@ -98,7 +97,6 @@
         <profile>
             <id>all-modules</id>
             <modules>
-                <module>pulsar-parent</module>
                 <module>pulsar-dependencies</module>
                 <module>pulsar-core</module>
                 <module>pulsar-agentic</module>
@@ -192,7 +190,6 @@
                 <deploy-active>true</deploy-active>
             </properties>
             <modules>
-                <module>pulsar-parent</module>
                 <module>pulsar-dependencies</module>
                 <module>pulsar-core</module>
 
