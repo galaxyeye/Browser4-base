@@ -5,7 +5,6 @@ import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.beans.factory.annotation.Value
@@ -38,7 +37,7 @@ class AgentController(
      * The agent observes the page, acts, and repeats until the goal is achieved.
      */
     @PostMapping("/run", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun run(
+    suspend fun run(
         @PathVariable sessionId: String,
         @RequestBody request: AgentRunRequest,
         response: HttpServletResponse
@@ -61,9 +60,7 @@ class AgentController(
 
         val result = try {
             // Use real PerceptiveAgent.run
-            val history = runBlocking {
-                session.agent.run(request.task)
-            }
+            val history = session.agent.run(request.task)
 
             AgentRunResult(
                 success = !history.hasErrors,
@@ -88,7 +85,7 @@ class AgentController(
      * Observes the current page and returns potential actions.
      */
     @PostMapping("/observe", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun observe(
+    suspend fun observe(
         @PathVariable sessionId: String,
         @RequestBody request: AgentObserveRequest,
         response: HttpServletResponse
@@ -113,9 +110,7 @@ class AgentController(
 
         val result = try {
             // Use real PerceptiveAgent.observe
-            val observeResults = runBlocking {
-                session.agent.observe(request.instruction ?: "")
-            }
+            val observeResults = session.agent.observe(request.instruction ?: "")
 
             // Convert to DTOs
             observeResults.map { observeResult ->
@@ -139,7 +134,7 @@ class AgentController(
      * Executes a single action on the page.
      */
     @PostMapping("/act", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun act(
+    suspend fun act(
         @PathVariable sessionId: String,
         @RequestBody request: AgentActRequest,
         response: HttpServletResponse
@@ -162,9 +157,7 @@ class AgentController(
 
         val result = try {
             // Use real PerceptiveAgent.act
-            val actResult = runBlocking {
-                session.agent.act(request.action)
-            }
+            val actResult = session.agent.act(request.action)
 
             ActResultDto(
                 success = actResult.success,
@@ -190,7 +183,7 @@ class AgentController(
      * Extracts structured data from the page.
      */
     @PostMapping("/extract", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun extract(
+    suspend fun extract(
         @PathVariable sessionId: String,
         @RequestBody request: AgentExtractRequest,
         response: HttpServletResponse
@@ -212,9 +205,7 @@ class AgentController(
 
         val result = try {
             // Use real PerceptiveAgent.extract
-            val extractResult = runBlocking {
-                session.agent.extract(request.instruction)
-            }
+            val extractResult = session.agent.extract(request.instruction)
 
             ExtractResultDto(
                 success = extractResult.success,
@@ -237,7 +228,7 @@ class AgentController(
      * Summarizes the current page content.
      */
     @PostMapping("/summarize", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun summarize(
+    suspend fun summarize(
         @PathVariable sessionId: String,
         @RequestBody request: AgentSummarizeRequest,
         response: HttpServletResponse
@@ -255,12 +246,10 @@ class AgentController(
 
         val summary = try {
             // Use real PerceptiveAgent.summarize
-            runBlocking {
-                session.agent.summarize(
-                    instruction = request.instruction,
-                    selector = request.selector
-                )
-            }
+            session.agent.summarize(
+                instruction = request.instruction,
+                selector = request.selector
+            )
         } catch (e: Exception) {
             logger.error("Error summarizing page: {}", e.message, e)
             "Error: ${e.message}"
@@ -273,7 +262,7 @@ class AgentController(
      * Clears the agent's history.
      */
     @PostMapping("/clearHistory", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun clearHistory(
+    suspend fun clearHistory(
         @PathVariable sessionId: String,
         response: HttpServletResponse
     ): ResponseEntity<Any> {
@@ -289,9 +278,7 @@ class AgentController(
 
         val success = try {
             // Use real PerceptiveAgent.clearHistory
-            runBlocking {
-                session.agent.clearHistory()
-            }
+            session.agent.clearHistory()
             true
         } catch (e: Exception) {
             logger.error("Error clearing agent history: {}", e.message, e)

@@ -7,7 +7,6 @@ import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.rest.openapi.store.InMemoryStore
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriverException
 import jakarta.servlet.http.HttpServletResponse
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.beans.factory.annotation.Value
@@ -39,7 +38,7 @@ class SelectorController(
      * Checks if an element matching the selector exists.
      */
     @PostMapping("/exists", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun selectorExists(
+    suspend fun selectorExists(
         @PathVariable sessionId: String,
         @RequestBody request: SelectorRef,
         response: HttpServletResponse
@@ -55,10 +54,8 @@ class SelectorController(
         }
 
         return try {
-            val exists = runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.exists(request.selector)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val exists = driver.exists(request.selector)
             ResponseEntity.ok(ExistsResponse(value = ExistsResponse.ExistsValue(exists = exists)))
         } catch (e: WebDriverException) {
             logger.error("Selector exists check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -73,7 +70,7 @@ class SelectorController(
      * Waits for an element matching the selector to appear.
      */
     @PostMapping("/waitFor", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun waitForSelector(
+    suspend fun waitForSelector(
         @PathVariable sessionId: String,
         @RequestBody request: WaitForRequest,
         response: HttpServletResponse
@@ -91,10 +88,8 @@ class SelectorController(
         }
 
         return try {
-            val remainingMillis = runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.waitForSelector(request.selector, timeoutMillis)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val remainingMillis = driver.waitForSelector(request.selector, timeoutMillis)
 
             if (remainingMillis <= 0L) {
                 // OpenAPI defines 408 for waitFor timeout.
@@ -164,7 +159,7 @@ class SelectorController(
      * Clicks an element by selector.
      */
     @PostMapping("/click", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun clickBySelector(
+    suspend fun clickBySelector(
         @PathVariable sessionId: String,
         @RequestBody request: SelectorRef,
         response: HttpServletResponse
@@ -176,10 +171,8 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.click(request.selector)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.click(request.selector)
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Click failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -194,7 +187,7 @@ class SelectorController(
      * Fills an input element by selector.
      */
     @PostMapping("/fill", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun fillBySelector(
+    suspend fun fillBySelector(
         @PathVariable sessionId: String,
         @RequestBody request: FillRequest,
         response: HttpServletResponse
@@ -206,10 +199,8 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.fill(request.selector, request.value)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.fill(request.selector, request.value)
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Fill failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -224,7 +215,7 @@ class SelectorController(
      * Presses a key on an element by selector.
      */
     @PostMapping("/press", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun pressBySelector(
+    suspend fun pressBySelector(
         @PathVariable sessionId: String,
         @RequestBody request: PressRequest,
         response: HttpServletResponse
@@ -236,10 +227,8 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.press(request.selector, request.key)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.press(request.selector, request.key)
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Press failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -254,7 +243,7 @@ class SelectorController(
      * Gets the outer HTML of an element by selector.
      */
     @PostMapping("/outerHtml", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun getOuterHtmlBySelector(
+    suspend fun getOuterHtmlBySelector(
         @PathVariable sessionId: String,
         @RequestBody request: SelectorRef,
         response: HttpServletResponse
@@ -266,10 +255,8 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val html = runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.outerHTML(request.selector)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val html = driver.outerHTML(request.selector)
             ResponseEntity.ok(HtmlResponse(value = html))
         } catch (e: WebDriverException) {
             logger.error("Get outerHtml failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -284,7 +271,7 @@ class SelectorController(
      * Takes a screenshot of an element by selector.
      */
     @PostMapping("/screenshot", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun screenshotBySelector(
+    suspend fun screenshotBySelector(
         @PathVariable sessionId: String,
         @RequestBody request: SelectorRef,
         response: HttpServletResponse
@@ -296,10 +283,8 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val base64 = runBlocking {
-                val driver = managed.pulsarSession.getOrCreateBoundDriver()
-                driver.captureScreenshot(request.selector)
-            }
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val base64 = driver.captureScreenshot(request.selector)
             ResponseEntity.ok(ScreenshotResponse(value = base64))
         } catch (e: WebDriverException) {
             logger.error("Screenshot failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
