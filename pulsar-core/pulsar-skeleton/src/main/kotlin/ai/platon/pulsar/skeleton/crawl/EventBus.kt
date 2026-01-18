@@ -7,9 +7,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * The global event handlers.
+ * The global EventBus for handling events.
  * */
-object GlobalEventHandlers {
+object EventBus {
     /**
      * The page event handlers.
      *

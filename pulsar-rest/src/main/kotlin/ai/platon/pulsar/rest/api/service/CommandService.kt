@@ -214,10 +214,10 @@ class CommandService(
     fun commandStatusFlow(id: String): Flow<CommandStatus> = flow {
         var lastModifiedTime = Instant.EPOCH
         val status = commandStatusCache[id] ?: CommandStatus.notFound(id)
-        
+
         // If there are server-side event handlers, merge their events into the status flow
         val serverSideEventHandlers = status.serverSideEventHandlers
-        
+
         if (serverSideEventHandlers != null) {
             // Collect server-side events and emit status updates when events occur
             coroutineScope {
@@ -230,7 +230,7 @@ class CommandService(
                         }
                     }
                 }
-                
+
                 try {
                     do {
                         delay(FLOW_POLLING_INTERVAL)
@@ -323,20 +323,20 @@ class CommandService(
     ): CommandStatus {
         try {
             status.refresh(ResourceStatus.SC_PROCESSING)
-            
+
             // Create and wire up ServerSideEventHandlers for this command
             val serverSideEventHandlers = ai.platon.pulsar.skeleton.crawl.DefaultServerSideEventHandlers()
             status.serverSideEventHandlers = serverSideEventHandlers
-            
+
             // Set the global server-side event handlers
-            val previousServerSideEventHandlers = ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers.serverSideEventHandlers
-            ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers.serverSideEventHandlers = serverSideEventHandlers
-            
+            val previousServerSideEventHandlers = ai.platon.pulsar.skeleton.crawl.EventBus.serverSideEventHandlers
+            ai.platon.pulsar.skeleton.crawl.EventBus.serverSideEventHandlers = serverSideEventHandlers
+
             try {
                 executeCommandStepByStep(request, status, eventHandlers)
             } finally {
                 // Restore previous server-side event handlers
-                ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers.serverSideEventHandlers = previousServerSideEventHandlers
+                ai.platon.pulsar.skeleton.crawl.EventBus.serverSideEventHandlers = previousServerSideEventHandlers
             }
         } catch (e: Exception) {
             status.failed(ResourceStatus.SC_EXPECTATION_FAILED)

@@ -21,7 +21,7 @@ import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.common.persist.ext.eventHandlers
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
 import ai.platon.pulsar.skeleton.common.urls.NormURL
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
+import ai.platon.pulsar.skeleton.crawl.EventBus
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.common.FetchEntry
 import ai.platon.pulsar.skeleton.crawl.common.FetchState
@@ -529,11 +529,11 @@ class LoadComponent(
     private fun doHandleOnWillLoadEvent(normURL: NormURL, page: WebPage? = null) {
         val url = normURL.spec
         try {
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onWillLoad?.invoke(url)
+            EventBus.pageEventHandlers?.loadEventHandlers?.onWillLoad?.invoke(url)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             getPageEventHandlersOrNull(normURL, page)?.loadEventHandlers?.onWillLoad?.invoke(url)
             // Forward to server-side event handlers (non-blocking)
-            GlobalEventHandlers.emitCrawlEvent("onWillLoad", url)
+            EventBus.emitCrawlEvent("onWillLoad", url)
         } catch (e: Throwable) {
             val configuredUrl = page?.configuredUrl ?: normURL.configuredUrl
             logger.warn("Failed to invoke beforeLoad | $configuredUrl", e)
@@ -560,11 +560,11 @@ class LoadComponent(
                 }
             }
 
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onLoaded?.invoke(page0)
+            EventBus.pageEventHandlers?.loadEventHandlers?.onLoaded?.invoke(page0)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             getPageEventHandlersOrNull(normURL, page)?.loadEventHandlers?.onLoaded?.invoke(page0)
             // Forward to server-side event handlers (non-blocking)
-            GlobalEventHandlers.emitLoadEvent("onLoaded", page0)
+            EventBus.emitLoadEvent("onLoaded", page0)
         } catch (e: Throwable) {
             val configuredUrl = page?.configuredUrl ?: normURL.configuredUrl
             logger.warn("Failed to invoke doHandleOnLoadedEvent | $configuredUrl", e)
