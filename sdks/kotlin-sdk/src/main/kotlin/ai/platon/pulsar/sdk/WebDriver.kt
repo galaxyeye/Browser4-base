@@ -269,7 +269,7 @@ class WebDriver(
      */
     suspend fun waitForNavigation(oldUrl: String = "", timeout: Int = 30000): Boolean {
         // Simple implementation using delay
-        delay(minOf(timeout, 1000))
+        kotlinx.coroutines.delay(minOf(timeout, 1000).toLong())
         return true
     }
 

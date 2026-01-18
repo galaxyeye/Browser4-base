@@ -7,8 +7,6 @@ import io.ktor.client.statement.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.StringReader
 
 /**
  * A minimal Server-Sent Events (SSE) client using Ktor.
@@ -47,7 +45,6 @@ internal class SseClient(
         val channel = response.bodyAsChannel()
         
         withContext(Dispatchers.IO) {
-            val buffer = StringBuilder()
             var eventName: String? = null
             var id: String? = null
             val data = StringBuilder()
@@ -63,13 +60,10 @@ internal class SseClient(
                 data.setLength(0)
             }
 
-            while (!channel.isClosedForRead && !shouldStop()) {
-                val byte = channel.readByte()
-                val char = byte.toInt().toChar()
-                
-                if (char == '\n') {
-                    val line = buffer.toString()
-                    buffer.clear()
+            try {
+                while (!channel.isClosedForRead && !shouldStop()) {
+                    // Read lines using readUTF8Line for efficiency
+                    val line = channel.readUTF8Line() ?: break
 
                     if (line.isEmpty()) {
                         emit()
@@ -89,13 +83,13 @@ internal class SseClient(
                             data.append('\n')
                         }
                     }
-                } else if (char != '\r') {
-                    buffer.append(char)
                 }
+            } catch (e: Exception) {
+                // Handle channel closing or reading errors gracefully
+            } finally {
+                // flush last event if any
+                emit()
             }
-
-            // flush last event if any
-            emit()
         }
     }
 }

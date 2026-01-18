@@ -1,7 +1,9 @@
 package ai.platon.pulsar.sdk
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 
 /**
  * PulsarSession provides methods for loading pages from storage or internet,
@@ -177,8 +179,8 @@ open class PulsarSession(
 
         val stopFlag = java.util.concurrent.atomic.AtomicBoolean(false)
 
-        // Start listener in a coroutine before open, so we can receive early events.
-        val listenerJob = kotlinx.coroutines.GlobalScope.launch {
+        // Start listener in a coroutine scope tied to the current operation
+        val listenerJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             try {
                 val base = client.resolvedBaseUrl.trimEnd('/')
                 val sessionId = client.sessionId ?: return@launch
