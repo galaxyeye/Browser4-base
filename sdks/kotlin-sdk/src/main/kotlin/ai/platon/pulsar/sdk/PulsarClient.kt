@@ -141,16 +141,18 @@ class PulsarClient
         }
         val endpoints = listOf("$base/health", "$base/actuator/health")
         return try {
-            endpoints.any { endpoint ->
-                runCatching {
-                    kotlinx.coroutines.runBlocking {
+            kotlinx.coroutines.runBlocking {
+                endpoints.any { endpoint ->
+                    runCatching {
                         val response = tempClient.get(endpoint)
                         response.status.value in 200..299
-                    }
-                }.getOrElse { false }
+                    }.getOrElse { false }
+                }
             }
         } finally {
-            tempClient.close()
+            kotlinx.coroutines.runBlocking {
+                tempClient.close()
+            }
         }
     }
 
