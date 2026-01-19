@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 import pytest
 
-from browser4-sdk import (
+from browser4 import (
     PulsarClient,
     PulsarSession,
     AgenticSession,
