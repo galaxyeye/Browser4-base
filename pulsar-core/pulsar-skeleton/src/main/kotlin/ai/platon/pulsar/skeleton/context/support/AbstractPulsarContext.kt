@@ -28,6 +28,7 @@ import ai.platon.pulsar.skeleton.crawl.component.LoadComponent
 import ai.platon.pulsar.skeleton.crawl.component.ParseComponent
 import ai.platon.pulsar.skeleton.crawl.component.UpdateComponent
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFactory
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFetcher
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import ai.platon.pulsar.skeleton.crawl.filter.ChainedUrlNormalizer
@@ -159,6 +160,8 @@ abstract class AbstractPulsarContext(
     open val updateComponent: UpdateComponent get() = getBean()
 
     open val loadComponent: LoadComponent get() = getBean()
+
+    open val browserFetcher: BrowserFetcher get() = getBean()
 
     override val globalCache: GlobalCache get() = globalCacheFactory.globalCache
 

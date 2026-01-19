@@ -69,7 +69,7 @@ open class BasicBrowserManager(
     }
 
     @Synchronized
-    fun closeDriver(driver: WebDriver) {
+    override fun closeDriver(driver: WebDriver) {
         kotlin.runCatching { driver.close() }.onFailure { warnForClose(this, it) }
     }
 

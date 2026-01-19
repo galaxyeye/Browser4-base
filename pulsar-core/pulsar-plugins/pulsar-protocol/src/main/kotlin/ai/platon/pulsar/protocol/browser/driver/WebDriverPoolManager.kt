@@ -30,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * The web driver pool manager provides web drivers to run web page fetch tasks.
  */
-open class WebDriverPoolManager(
-    val browserManager: BasicBrowserManager,
+open class WebDriverPoolManager constructor(
+    val browserManager: BrowserManager,
     val browserFactory: BrowserFactory,
     val immutableConfig: ImmutableConfig,
     val suppressMetrics: Boolean = false,
@@ -325,7 +325,7 @@ open class WebDriverPoolManager(
          * Check if there is zombie browsers who are not in active browser list nor in closed browser list,
          * if there are some of such browsers, issue warnings and destroy them.
          * */
-        browserManager.destroyZombieBrowsersForcibly()
+        (browserManager as BasicBrowserManager).destroyZombieBrowsersForcibly()
 
         val idleDriverPoolCount = workingDriverPools.values.count { it.isIdle }
         if (idleDriverPoolCount > 0) {

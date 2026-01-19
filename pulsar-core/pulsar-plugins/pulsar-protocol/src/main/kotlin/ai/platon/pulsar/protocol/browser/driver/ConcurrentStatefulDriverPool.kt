@@ -4,6 +4,7 @@ import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.warnInterruptible
 import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.runBlocking
 import java.util.*
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
 class ConcurrentStatefulDriverPool(
-    private val browserManager: BasicBrowserManager,
+    private val browserManager: BrowserManager,
     private val capacity: Int
 ) {
     private val logger = getLogger(this)

@@ -10,4 +10,6 @@ interface BrowserManager : AutoCloseable {
     fun closeBrowser(browserId: BrowserId)
 
     fun closeBrowser(browser: Browser)
+
+    fun closeDriver(driver: WebDriver)
 }

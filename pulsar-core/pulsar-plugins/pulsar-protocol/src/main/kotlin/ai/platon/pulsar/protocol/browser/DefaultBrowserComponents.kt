@@ -17,6 +17,7 @@ package ai.platon.pulsar.protocol.browser
 
 import ai.platon.pulsar.common.ObjectCache
 import ai.platon.pulsar.common.config.ImmutableConfig
+import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.protocol.browser.driver.WebDriverPoolManager
 import ai.platon.pulsar.protocol.browser.emulator.BrowserEmulator
 import ai.platon.pulsar.protocol.browser.emulator.IncognitoBrowserFetcher
@@ -28,6 +29,7 @@ import ai.platon.pulsar.protocol.browser.emulator.impl.PrivacyManagedBrowserFetc
 import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFactory
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserManager
 
 class DefaultBrowserManager(conf: ImmutableConfig) : BasicBrowserManager(DefaultBrowserFactory(conf), conf)
 
@@ -48,7 +50,7 @@ class DefaultBrowserEmulator(
 )
 
 class DefaultPrivacyManagedBrowserFetcher(
-    browserManager: BasicBrowserManager,
+    browserManager: BrowserManager,
     browserFactory: BrowserFactory,
     browserEmulator: BrowserEmulator,
     privacyManager: BrowserPrivacyManager,
@@ -76,10 +78,12 @@ class DefaultPrivacyManagedBrowserFetcher(
 }
 
 class DefaultBrowserComponents(val conf: ImmutableConfig = ImmutableConfig.DEFAULT) {
+    private val logger = getLogger(this)
 
     private val cache = ObjectCache.get(conf)
 
     val incognitoBrowserFetcher: IncognitoBrowserFetcher = cache.computeIfAbsent<IncognitoBrowserFetcher> {
+        logger.info("Creating DefaultPrivacyManagedBrowserFetcher")
         DefaultPrivacyManagedBrowserFetcher(conf)
     }
 
@@ -89,7 +93,7 @@ class DefaultBrowserComponents(val conf: ImmutableConfig = ImmutableConfig.DEFAU
     val driverPoolManager: WebDriverPoolManager
         get() = privacyManager.driverPoolManager
 
-    val browserManager: BasicBrowserManager
+    val browserManager: BrowserManager
         get() = privacyManager.browserManager
 
     val browserFactory: BrowserFactory

@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class LoadingWebDriverPool constructor(
     val browserId: BrowserId,
-    val browserManager: BasicBrowserManager,
+    val browserManager: BrowserManager,
     val browserFactory: BrowserFactory,
     val immutableConfig: ImmutableConfig
 ) : AutoCloseable {

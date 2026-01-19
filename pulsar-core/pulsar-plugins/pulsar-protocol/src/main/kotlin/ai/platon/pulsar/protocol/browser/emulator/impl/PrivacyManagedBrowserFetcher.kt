@@ -102,8 +102,8 @@ open class BrowserWebDriverFetcher(
  * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
-open class PrivacyManagedBrowserFetcher(
-    val browserManager: BasicBrowserManager,
+open class PrivacyManagedBrowserFetcher constructor(
+    val browserManager: BrowserManager,
     val browserFactory: BrowserFactory,
     override val privacyManager: BrowserPrivacyManager,
     override val browserEmulator: BrowserEmulator,

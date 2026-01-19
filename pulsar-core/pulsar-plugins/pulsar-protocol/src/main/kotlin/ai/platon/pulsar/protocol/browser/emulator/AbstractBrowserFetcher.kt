@@ -20,6 +20,7 @@ import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.persist.model.GoraWebPage
 import ai.platon.pulsar.skeleton.crawl.fetch.Fetcher
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFetcher
 import ai.platon.pulsar.skeleton.crawl.protocol.Response
 import kotlinx.coroutines.runBlocking
 
@@ -27,7 +28,7 @@ import kotlinx.coroutines.runBlocking
  * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
-abstract class AbstractBrowserFetcher: BrowserFetcher, Fetcher {
+abstract class AbstractBrowserFetcher : BrowserFetcher, Fetcher {
 
     private val logger = getLogger(this::class)
 
