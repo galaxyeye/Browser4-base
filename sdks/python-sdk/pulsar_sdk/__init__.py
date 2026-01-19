@@ -50,6 +50,9 @@ from .models import (
     ExtractionResult,
     ToolCallResult,
     ActionDescription,
+    AgentState,
+    AgentHistory,
+    ChatResponse,
     # Event system (placeholder)
     PageEventHandlers,
 )
@@ -76,6 +79,9 @@ __all__ = [
     "ExtractionResult",
     "ToolCallResult",
     "ActionDescription",
+    "AgentState",
+    "AgentHistory",
+    "ChatResponse",
     # Events
     "PageEventHandlers",
 ]
