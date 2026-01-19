@@ -30,6 +30,9 @@ from .models import (
     AgentActResult,
     AgentObservation,
     AgentRunResult,
+    AgentState,
+    AgentHistory,
+    ChatResponse,
     ExtractionResult,
     FieldsExtraction,
     NormURL,
@@ -252,18 +255,26 @@ class PulsarSession:
 
     def parse(self, page: WebPage) -> Any:
         """
-        Parse a WebPage into a document.
+        Parse a WebPage into a BeautifulSoup document.
         
-        Note: Parsing is typically done locally. This method returns the
-        HTML content for local parsing with libraries like BeautifulSoup.
+        This method parses the HTML content using BeautifulSoup, providing a rich DOM
+        API for querying and manipulating the document structure.
         
         Args:
             page: The WebPage to parse.
             
         Returns:
-            HTML content for local parsing.
+            BeautifulSoup Document object, or None if HTML is not available.
         """
-        return page.html
+        if not page.html:
+            return None
+        
+        try:
+            from bs4 import BeautifulSoup
+            return BeautifulSoup(page.html, 'html.parser')
+        except ImportError:
+            # If BeautifulSoup is not available, return raw HTML
+            return page.html
 
     def extract(
         self,
@@ -273,19 +284,36 @@ class PulsarSession:
         """
         Extract fields from a document using CSS selectors.
         
+        Supports both BeautifulSoup documents (from parse()) and live page extraction
+        via WebDriver.
+        
         Args:
-            document: The document (or page) to extract from.
+            document: The document to extract from (BeautifulSoup or WebPage).
             field_selectors: Either a dict mapping field names to selectors,
                            or an iterable of selectors (selector becomes field name).
             
         Returns:
             Dictionary mapping field names to extracted values.
         """
+        # Convert to dict if iterable
         if isinstance(field_selectors, Mapping):
             selectors = dict(field_selectors)
         else:
             selectors = {s: s for s in field_selectors}
         
+        # Try to extract from BeautifulSoup document
+        try:
+            from bs4 import BeautifulSoup
+            if isinstance(document, BeautifulSoup):
+                result = {}
+                for name, selector in selectors.items():
+                    elements = document.select(selector)
+                    result[name] = elements[0].get_text(strip=True) if elements else None
+                return result
+        except ImportError:
+            pass
+        
+        # Fall back to WebDriver extraction for live pages
         return self.driver.extract(selectors)
 
     def scrape(
@@ -307,6 +335,33 @@ class PulsarSession:
         """
         page = self.load(url, args)
         return self.extract(page, field_selectors)
+
+    # ========== Chat/LLM Operations ==========
+
+    def chat(self, prompt: str, system_message: Optional[str] = None) -> ChatResponse:
+        """
+        Send a prompt to the LLM and return the response.
+        
+        This method provides direct access to chat/LLM capabilities for
+        natural language processing tasks.
+        
+        Args:
+            prompt: The user prompt to send to the LLM (or userMessage if system_message is provided).
+            system_message: Optional system instructions for the LLM.
+            
+        Returns:
+            ChatResponse with the LLM's response.
+        """
+        if system_message:
+            payload: Dict[str, Any] = {
+                "userMessage": prompt,
+                "systemMessage": system_message
+            }
+        else:
+            payload = {"prompt": prompt}
+        
+        value = self.client.post("/session/{sessionId}/chat", payload)
+        return ChatResponse.from_dict(value)
 
     # ========== Driver Management ==========
 
@@ -404,6 +459,7 @@ class AgenticSession(PulsarSession):
         """
         super().__init__(client)
         self._process_trace: List[str] = []
+        self._state_history: List[AgentState] = []
 
     @property
     def companion_agent(self) -> "AgenticSession":
@@ -414,6 +470,24 @@ class AgenticSession(PulsarSession):
         Here, AgenticSession itself provides the agent functionality.
         """
         return self
+
+    @property
+    def state_history(self) -> AgentHistory:
+        """
+        Get the agent state history.
+        
+        The state history tracks executed actions and their results,
+        providing memory for the agent's decision-making process.
+        """
+        return AgentHistory(
+            states=list(self._state_history),
+            has_errors=any(not s.success for s in self._state_history)
+        )
+
+    @property
+    def stateHistory(self) -> AgentHistory:
+        """Get the state history (Kotlin-style naming)."""
+        return self.state_history
 
     @property
     def process_trace(self) -> List[str]:
@@ -473,6 +547,17 @@ class AgenticSession(PulsarSession):
         if trace:
             self._process_trace.extend(trace)
         
+        # Add to state history
+        if isinstance(value, dict):
+            step = len(self._state_history) + 1
+            self._state_history.append(AgentState(
+                step=step,
+                action=action,
+                result=value.get("result"),
+                success=value.get("success", False),
+                message=value.get("message", "")
+            ))
+        
         return AgentActResult.from_dict(value) if isinstance(value, dict) else AgentActResult()
 
     def run(self, task: str, **kwargs: Any) -> AgentRunResult:
@@ -515,6 +600,18 @@ class AgenticSession(PulsarSession):
         trace = value.get("trace") if isinstance(value, dict) else None
         if trace:
             self._process_trace.extend(trace)
+        
+        # The run operation typically involves multiple steps
+        # We track this as a high-level task in the state history
+        if isinstance(value, dict):
+            step = len(self._state_history) + 1
+            self._state_history.append(AgentState(
+                step=step,
+                action=f"run: {task}",
+                result=value.get("finalResult"),
+                success=value.get("success", False),
+                message=value.get("message", "")
+            ))
         
         return AgentRunResult.from_dict(value) if isinstance(value, dict) else AgentRunResult()
 
@@ -638,6 +735,7 @@ class AgenticSession(PulsarSession):
         """
         value = self.client.post("/session/{sessionId}/agent/clearHistory", {})
         self._process_trace.clear()
+        self._state_history.clear()
         return bool(value) if value is not None else True
 
     # ========== Capture Operations ==========
@@ -719,6 +817,7 @@ class AgenticSession(PulsarSession):
     def close(self) -> None:
         """Close the session and release resources."""
         self._process_trace.clear()
+        self._state_history.clear()
         self.client.delete_session()
 
 

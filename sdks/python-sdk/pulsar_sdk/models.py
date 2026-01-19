@@ -226,6 +226,81 @@ class ActionDescription:
     parameters: Optional[Dict[str, Any]] = None
 
 
+@dataclass
+class AgentState:
+    """
+    Represents a single state in agent history.
+    Contains information about a step in the agent's execution.
+    Mirrors the Kotlin AgentState class.
+    """
+    step: int = 0
+    action: Optional[str] = None
+    result: Any = None
+    success: bool = False
+    message: str = ""
+
+
+@dataclass
+class AgentHistory:
+    """
+    Agent history tracking execution states.
+    Provides memory of what actions have been performed.
+    Mirrors the Kotlin AgentHistory class.
+    """
+    states: List[AgentState] = field(default_factory=list)
+    has_errors: bool = False
+    final_result: Any = None
+
+    @property
+    def size(self) -> int:
+        """Get the size of the history."""
+        return len(self.states)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AgentHistory":
+        """Create AgentHistory from API response dict."""
+        states_list = data.get("states", [])
+        states = [
+            AgentState(
+                step=state.get("step", 0),
+                action=state.get("action"),
+                result=state.get("result"),
+                success=state.get("success", False),
+                message=state.get("message", "")
+            )
+            for state in states_list
+        ]
+        return cls(
+            states=states,
+            has_errors=data.get("hasErrors", False),
+            final_result=data.get("finalResult")
+        )
+
+
+@dataclass
+class ChatResponse:
+    """
+    Chat response from the LLM.
+    Mirrors the Kotlin ChatResponse class.
+    """
+    content: str = ""
+    role: str = "assistant"
+    model: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, data: Any) -> "ChatResponse":
+        """Create ChatResponse from API response."""
+        if isinstance(data, dict):
+            return cls(
+                content=data.get("content", ""),
+                role=data.get("role", "assistant"),
+                model=data.get("model")
+            )
+        elif isinstance(data, str):
+            return cls(content=data)
+        return cls()
+
+
 # Placeholder for event mechanism (to be implemented in future tasks)
 class PageEventHandlers:
     """
@@ -274,5 +349,8 @@ __all__ = [
     "FieldsExtraction",
     "ToolCallResult",
     "ActionDescription",
+    "AgentState",
+    "AgentHistory",
+    "ChatResponse",
     "PageEventHandlers",
 ]

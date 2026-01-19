@@ -24,6 +24,9 @@ from pulsar_sdk import (
     NormURL,
     AgentRunResult,
     AgentActResult,
+    AgentState,
+    AgentHistory,
+    ChatResponse,
     PageEventHandlers,
 )
 
@@ -138,6 +141,13 @@ class StubRequestsSession:
                 "success": True,
                 "message": "Extracted",
                 "data": {"field1": "value1"}
+            }})
+        
+        if "/chat" in url:
+            return StubResponse(payload={"value": {
+                "content": "Chat response",
+                "role": "assistant",
+                "model": "gpt-4"
             }})
         
         if "/selectors/exists" in url:
@@ -555,4 +565,144 @@ def test_full_workflow(stub_client):
     
     # Clear and verify
     session.clear_history()
+    assert len(session.process_trace) == 0
+
+
+# ========== New Feature Tests ==========
+
+def test_agent_state_creation():
+    """Test AgentState creation."""
+    state = AgentState(
+        step=1,
+        action="click button",
+        result="success",
+        success=True,
+        message="Clicked"
+    )
+    
+    assert state.step == 1
+    assert state.action == "click button"
+    assert state.success
+
+
+def test_agent_history_from_dict():
+    """Test AgentHistory creation from dictionary."""
+    data = {
+        "states": [
+            {"step": 1, "action": "act1", "success": True, "message": "msg1"},
+            {"step": 2, "action": "act2", "success": False, "message": "msg2"}
+        ],
+        "hasErrors": True,
+        "finalResult": "done"
+    }
+    
+    history = AgentHistory.from_dict(data)
+    
+    assert history.size == 2
+    assert history.has_errors
+    assert history.final_result == "done"
+    assert history.states[0].action == "act1"
+    assert not history.states[1].success
+
+
+def test_chat_response_from_dict():
+    """Test ChatResponse creation from dictionary."""
+    data = {
+        "content": "Hello!",
+        "role": "assistant",
+        "model": "gpt-4"
+    }
+    
+    response = ChatResponse.from_dict(data)
+    
+    assert response.content == "Hello!"
+    assert response.role == "assistant"
+    assert response.model == "gpt-4"
+
+
+def test_chat_response_from_string():
+    """Test ChatResponse creation from string."""
+    response = ChatResponse.from_dict("Simple response")
+    
+    assert response.content == "Simple response"
+    assert response.role == "assistant"
+
+
+def test_pulsar_session_chat(stub_client):
+    """Test chat functionality in PulsarSession."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = PulsarSession(client)
+    
+    response = session.chat("Hello")
+    
+    assert isinstance(response, ChatResponse)
+    assert response.content == "Chat response"
+    assert response.role == "assistant"
+
+
+def test_pulsar_session_chat_with_system(stub_client):
+    """Test chat with system message."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = PulsarSession(client)
+    
+    response = session.chat("Hello", system_message="You are a helpful assistant")
+    
+    assert isinstance(response, ChatResponse)
+    request_body = json.loads(stub.calls[-1]["data"])
+    assert "userMessage" in request_body
+    assert "systemMessage" in request_body
+
+
+def test_agentic_session_state_history(stub_client):
+    """Test state history tracking in AgenticSession."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    # Execute some actions
+    session.act("click button")
+    session.run("complete task")
+    
+    # Check state history
+    history = session.state_history
+    assert isinstance(history, AgentHistory)
+    assert history.size == 2
+    assert history.states[0].action == "click button"
+    assert history.states[1].action == "run: complete task"
+
+
+def test_agentic_session_state_history_kotlin_style(stub_client):
+    """Test stateHistory property (Kotlin-style naming)."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    session.act("test action")
+    
+    # Test Kotlin-style property name
+    history = session.stateHistory
+    assert isinstance(history, AgentHistory)
+    assert history.size == 1
+
+
+def test_agentic_session_clear_state_history(stub_client):
+    """Test clearing state history."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    # Add some history
+    session.act("action 1")
+    session.act("action 2")
+    
+    # Verify history exists
+    assert session.state_history.size == 2
+    
+    # Clear history
+    session.clear_history()
+    
+    # Verify cleared
+    assert session.state_history.size == 0
     assert len(session.process_trace) == 0
