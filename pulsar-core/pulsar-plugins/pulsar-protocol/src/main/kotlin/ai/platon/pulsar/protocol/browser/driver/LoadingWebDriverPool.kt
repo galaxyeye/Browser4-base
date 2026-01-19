@@ -12,7 +12,7 @@ import ai.platon.pulsar.common.readable
 import ai.platon.pulsar.common.stringify
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.protocol.browser.emulator.WebDriverPoolExhaustedException
-import ai.platon.pulsar.protocol.browser.impl.BrowserManager
+import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.skeleton.common.AppSystemInfo
 import ai.platon.pulsar.skeleton.common.metrics.MetricsSystem
 import ai.platon.pulsar.skeleton.crawl.BrowseEventHandlers
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class LoadingWebDriverPool constructor(
     val browserId: BrowserId,
-    val browserManager: BrowserManager,
+    val browserManager: BasicBrowserManager,
     val browserFactory: BrowserFactory,
     val immutableConfig: ImmutableConfig
 ) : AutoCloseable {

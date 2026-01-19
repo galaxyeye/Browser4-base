@@ -205,7 +205,6 @@ abstract class AbstractPulsarSession(
         val mode = BrowserProfileMode.fromString(sessionConfig[BROWSER_CONTEXT_MODE])
         val driver = context.browserFactory.launch(mode).newDriver()
         bindDriver(driver)
-        // return context.launchDefaultBrowser().newDriver().also { bindDriver(it) }
         return driver
     }
 

@@ -8,7 +8,7 @@ import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.config.Parameterized
 import ai.platon.pulsar.protocol.browser.emulator.WebDriverPoolException
 import ai.platon.pulsar.protocol.browser.emulator.WebDriverPoolExhaustedException
-import ai.platon.pulsar.protocol.browser.impl.BrowserManager
+import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.skeleton.common.metrics.MetricsSystem
 import ai.platon.pulsar.skeleton.common.persist.ext.eventHandlers
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchResult
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * The web driver pool manager provides web drivers to run web page fetch tasks.
  */
 open class WebDriverPoolManager(
-    val browserManager: BrowserManager,
+    val browserManager: BasicBrowserManager,
     val browserFactory: BrowserFactory,
     val immutableConfig: ImmutableConfig,
     val suppressMetrics: Boolean = false,

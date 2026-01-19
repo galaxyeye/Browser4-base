@@ -3,6 +3,23 @@ package ai.platon.pulsar.ql
 import ai.platon.pulsar.test.TestUrls
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class TestSQLSession: TestBase() {
+
+    @Test
+    fun whenCloseSession_thenBrowserClosed() {
+        val sqlSession = context.getOrCreateSession()
+
+        sqlSession.open("https://example.com")
+
+        sqlSession.close()
+
+        Thread.sleep(2000)
+
+        context.browserFactory.browsers
+    }
+}
 
 class TestCases: TestBase() {
 

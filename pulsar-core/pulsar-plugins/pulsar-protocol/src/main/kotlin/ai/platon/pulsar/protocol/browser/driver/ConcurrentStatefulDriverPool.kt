@@ -2,7 +2,7 @@ package ai.platon.pulsar.protocol.browser.driver
 
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.warnInterruptible
-import ai.platon.pulsar.protocol.browser.impl.BrowserManager
+import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.runBlocking
@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
 class ConcurrentStatefulDriverPool(
-    private val browserManager: BrowserManager,
+    private val browserManager: BasicBrowserManager,
     private val capacity: Int
 ) {
     private val logger = getLogger(this)
@@ -68,7 +68,7 @@ class ConcurrentStatefulDriverPool(
     @Synchronized
     fun offer(driver: WebDriver) {
         require(driver is AbstractWebDriver)
-        
+
         if (!driver.isRecyclable) {
             // this driver is not recyclable, it should keep open
             return

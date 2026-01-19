@@ -5,7 +5,7 @@ import ai.platon.pulsar.common.concurrent.GracefulScheduledExecutor
 import java.time.Duration
 
 open class BrowserMonitor(
-    private val browserManager: BrowserManager,
+    private val browserManager: BasicBrowserManager,
     initialDelay: Long = 30,
     interval: Long = 30
 ): GracefulScheduledExecutor(Duration.ofSeconds(initialDelay), Duration.ofSeconds(interval)) {

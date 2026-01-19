@@ -27,7 +27,6 @@ class BrowserEmulatorProtocol : ForwardingProtocol() {
     private val context get() = PulsarContexts.create()
 
     private val browserEmulator: IncognitoBrowserFetcher by lazy {
-        // require(conf === context.configuration)
         context.getBeanOrNull(IncognitoBrowserFetcher::class) ?: defaults.incognitoBrowserFetcher
     }
 

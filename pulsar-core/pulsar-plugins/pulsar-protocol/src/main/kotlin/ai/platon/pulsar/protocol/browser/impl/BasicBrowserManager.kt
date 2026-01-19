@@ -10,12 +10,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
 
-open class BrowserManager(
+open class BasicBrowserManager(
     val browserFactory: BrowserFactory,
     val conf: ImmutableConfig
 ) : AutoCloseable {
     private val logger = getLogger(this)
-    private var registered = AtomicBoolean()
     private val closed = AtomicBoolean()
     private val _browsers = ConcurrentHashMap<BrowserId, Browser>()
     private val historicalBrowsers = ConcurrentLinkedDeque<Browser>()
@@ -25,23 +24,6 @@ open class BrowserManager(
      * The active browsers
      * */
     val browsers: Map<BrowserId, Browser> = _browsers
-
-    /**
-     * Launch a browser. If the browser with the id is already launched, return the existing one.
-     * */
-//    @Throws(BrowserLaunchException::class)
-//    fun launch(browserId: BrowserId, settings: BrowserSettings, capabilities: Map<String, Any>): Browser {
-//        registerAsClosableIfNecessary()
-//
-//        val launcherOptions = LauncherOptions(settings)
-//        if (settings.isSupervised) {
-//            launcherOptions.supervisorProcess = settings.supervisorProcess
-//            launcherOptions.supervisorProcessArgs.addAll(settings.supervisorProcessArgs)
-//        }
-//
-//        val launchOptions = settings.createChromeOptions(capabilities)
-//        return launchIfAbsent(browserId, launcherOptions, launchOptions)
-//    }
 
     /**
      * Find an existing browser by id.
@@ -146,34 +128,4 @@ open class BrowserManager(
             _browsers.clear()
         }
     }
-
-//    @Throws(BrowserLaunchException::class)
-//    private fun launchIfAbsent(
-//        browserId: BrowserId, launcherOptions: LauncherOptions, launchOptions: ChromeOptions
-//    ): Browser {
-//        synchronized(browserFactory) {
-//            if (closed.get()) {
-//                throw BrowserLaunchException("The browser manager has been closed, this should be caused by the application closing")
-//            }
-//
-//            val browser = _browsers[browserId]
-//            if (browser != null) {
-//                return browser
-//            }
-//
-//            val browser1 = browserFactory.launch(browserId, launcherOptions, launchOptions)
-//            _browsers[browserId] = browser1
-//            historicalBrowsers.add(browser1)
-//
-//            return browser1
-//        }
-//    }
-//
-//    private fun registerAsClosableIfNecessary() {
-//        if (registered.compareAndSet(false, true)) {
-//            // Actually, it's safe to register multiple times, the manager will be closed only once, and the browsers
-//            // will be closed in the manager's close function.
-//            PulsarContexts.registerClosable(this, -100)
-//        }
-//    }
 }

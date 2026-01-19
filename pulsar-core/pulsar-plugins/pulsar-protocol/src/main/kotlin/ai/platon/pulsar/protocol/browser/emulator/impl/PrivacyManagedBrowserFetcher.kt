@@ -25,7 +25,7 @@ import ai.platon.pulsar.protocol.browser.emulator.AbstractBrowserFetcher
 import ai.platon.pulsar.protocol.browser.emulator.BrowserEmulator
 import ai.platon.pulsar.protocol.browser.emulator.IncognitoBrowserFetcher
 import ai.platon.pulsar.protocol.browser.emulator.context.BrowserPrivacyManager
-import ai.platon.pulsar.protocol.browser.impl.BrowserManager
+import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.skeleton.common.persist.ext.browseEventHandlers
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchResult
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchTask
@@ -35,7 +35,6 @@ import ai.platon.pulsar.skeleton.crawl.protocol.ForwardingResponse
 import ai.platon.pulsar.skeleton.crawl.protocol.Response
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.run
 
 /**
  * Created by Vincent on 18-1-1.
@@ -104,7 +103,7 @@ open class BrowserWebDriverFetcher(
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 open class PrivacyManagedBrowserFetcher(
-    val browserManager: BrowserManager,
+    val browserManager: BasicBrowserManager,
     val browserFactory: BrowserFactory,
     override val privacyManager: BrowserPrivacyManager,
     override val browserEmulator: BrowserEmulator,
