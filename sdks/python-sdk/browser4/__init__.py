@@ -11,21 +11,21 @@ Key classes:
 - WebDriver: Browser control and element interaction
 
 Quick start:
-    >>> from pulsar_sdk import PulsarClient, AgenticSession
-    >>> 
+    >>> from browser4-sdk import PulsarClient, AgenticSession
+    >>>
     >>> # Create client and session
     >>> client = PulsarClient(base_url="http://localhost:8182")
     >>> session_id = client.create_session()
     >>> session = AgenticSession(client)
-    >>> 
+    >>>
     >>> # Navigate and interact
     >>> session.driver.navigate_to("https://example.com")
     >>> print(session.driver.get_current_url())
-    >>> 
+    >>>
     >>> # Use AI-powered actions
     >>> result = session.run("scroll to the bottom of the page")
     >>> print(result.success)
-    >>> 
+    >>>
     >>> # Clean up
     >>> session.close()
 

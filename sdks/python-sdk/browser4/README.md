@@ -36,7 +36,7 @@ Session management with AI-powered automation:
 ## Usage
 
 ```python
-from pulsar_sdk import PulsarClient, AgenticSession
+from browser4-sdk import PulsarClient, AgenticSession
 
 client = PulsarClient(base_url="http://localhost:8182")
 client.create_session()

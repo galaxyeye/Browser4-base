@@ -20,7 +20,7 @@ pip install requests beautifulsoup4
 ## Quick Start
 
 ```python
-from pulsar_sdk import PulsarClient, AgenticSession
+from browser4-sdk import PulsarClient, AgenticSession
 
 # Create client and session
 client = PulsarClient(base_url="http://localhost:8182")
@@ -62,7 +62,7 @@ session.close()
 Low-level HTTP client for API communication.
 
 ```python
-from pulsar_sdk import PulsarClient
+from browser4-sdk import PulsarClient
 
 client = PulsarClient(
     base_url="http://localhost:8182",
@@ -82,7 +82,7 @@ client.delete_session()
 Session management for page loading and data extraction.
 
 ```python
-from pulsar_sdk import PulsarClient, PulsarSession
+from browser4-sdk import PulsarClient, PulsarSession
 
 client = PulsarClient()
 client.create_session()
@@ -120,7 +120,7 @@ data = session.scrape(
 AI-powered browser automation extending PulsarSession.
 
 ```python
-from pulsar_sdk import PulsarClient, AgenticSession
+from browser4-sdk import PulsarClient, AgenticSession
 
 client = PulsarClient()
 client.create_session()
@@ -163,7 +163,7 @@ print(session.process_trace)
 Browser control and element interaction.
 
 ```python
-from pulsar_sdk import PulsarClient, WebDriver
+from browser4-sdk import PulsarClient, WebDriver
 
 client = PulsarClient()
 client.create_session()
@@ -239,7 +239,7 @@ driver.stop()
 Represents a loaded web page.
 
 ```python
-from pulsar_sdk import WebPage
+from browser4-sdk import WebPage
 
 page = session.load("https://example.com")
 print(page.url)           # Page URL
@@ -253,7 +253,7 @@ print(page.is_nil)        # True if page is invalid/not found
 Normalized URL with parsed arguments.
 
 ```python
-from pulsar_sdk import NormURL
+from browser4-sdk import NormURL
 
 norm = session.normalize("https://example.com", args="-expire 1d")
 print(norm.spec)    # Full normalized specification
@@ -265,7 +265,7 @@ print(norm.is_nil)  # True if URL is invalid
 ### Agent Results
 
 ```python
-from pulsar_sdk import AgentRunResult, AgentActResult
+from browser4-sdk import AgentRunResult, AgentActResult
 
 # Run result
 run_result = session.run("complete the task")
@@ -285,7 +285,7 @@ print(act_result.is_complete)
 Event handlers are reserved for future implementation.
 
 ```python
-from pulsar_sdk import PageEventHandlers
+from browser4-sdk import PageEventHandlers
 
 # Placeholder - will be implemented in future releases
 handlers = PageEventHandlers()
@@ -297,7 +297,7 @@ handlers = PageEventHandlers()
 The SDK is designed to mirror the Kotlin FusedActs example:
 
 ```python
-from pulsar_sdk import PulsarClient, AgenticSession
+from browser4-sdk import PulsarClient, AgenticSession
 
 client = PulsarClient(base_url="http://localhost:8182")
 client.create_session()
@@ -351,7 +351,7 @@ session.close()
 pytest
 
 # Run with coverage
-pytest --cov=pulsar_sdk
+pytest --cov=browser4-sdk
 ```
 
 ## Configuration

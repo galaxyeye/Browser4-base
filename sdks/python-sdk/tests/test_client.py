@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 import pytest
 
-from pulsar_sdk import (
+from browser4-sdk import (
     PulsarClient,
     PulsarSession,
     AgenticSession,
@@ -33,7 +33,7 @@ from pulsar_sdk import (
 
 class StubResponse:
     """Mock HTTP response for testing."""
-    
+
     def __init__(self, status_code: int = 200, payload: Any = None):
         self.status_code = status_code
         self._payload = payload
@@ -49,7 +49,7 @@ class StubResponse:
 
 class StubRequestsSession:
     """Mock requests session for testing."""
-    
+
     def __init__(self):
         self.calls = []
 
@@ -62,17 +62,17 @@ class StubRequestsSession:
             "timeout": timeout
         })
         body = json.loads(data) if data else None
-        
+
         # Route responses based on endpoint
         if url.endswith("/session") and method == "POST":
             return StubResponse(payload={"value": {"sessionId": "test-session-123"}})
-        
+
         if "/url" in url and method == "POST":
             return StubResponse(payload={"value": body})
-        
+
         if "/url" in url and method == "GET":
             return StubResponse(payload={"value": "https://example.com"})
-        
+
         if "/normalize" in url:
             return StubResponse(payload={"value": {
                 "spec": body.get("url", ""),
@@ -80,7 +80,7 @@ class StubRequestsSession:
                 "args": body.get("args"),
                 "isNil": False
             }})
-        
+
         if "/open" in url:
             return StubResponse(payload={"value": {
                 "url": body.get("url", ""),
@@ -90,7 +90,7 @@ class StubRequestsSession:
                 "protocolStatus": "200 OK",
                 "isNil": False
             }})
-        
+
         if "/load" in url:
             return StubResponse(payload={"value": {
                 "url": body.get("url", ""),
@@ -100,10 +100,10 @@ class StubRequestsSession:
                 "protocolStatus": "200 OK (cached)",
                 "isNil": False
             }})
-        
+
         if "/submit" in url:
             return StubResponse(payload={"value": True})
-        
+
         if "/agent/run" in url:
             return StubResponse(payload={"value": {
                 "success": True,
@@ -113,7 +113,7 @@ class StubRequestsSession:
                 "finalResult": "done",
                 "trace": ["step1", "step2"]
             }})
-        
+
         if "/agent/act" in url:
             return StubResponse(payload={"value": {
                 "success": True,
@@ -122,46 +122,46 @@ class StubRequestsSession:
                 "isComplete": True,
                 "trace": ["action_trace"]
             }})
-        
+
         if "/agent/observe" in url:
             return StubResponse(payload={"value": [{
                 "locator": "0,123",
                 "method": "click",
                 "description": "Click button"
             }]})
-        
+
         if "/agent/summarize" in url:
             return StubResponse(payload={"value": "Page summary text"})
-        
+
         if "/agent/clearHistory" in url:
             return StubResponse(payload={"value": True})
-        
+
         if "/agent/extract" in url:
             return StubResponse(payload={"value": {
                 "success": True,
                 "message": "Extracted",
                 "data": {"field1": "value1"}
             }})
-        
+
         if "/chat" in url:
             return StubResponse(payload={"value": {
                 "content": "Chat response",
                 "role": "assistant",
                 "model": "gpt-4"
             }})
-        
+
         if "/selectors/exists" in url:
             return StubResponse(payload={"value": {"exists": True}})
-        
+
         if "/selectors/waitFor" in url:
             return StubResponse(payload={"value": {"exists": True}})
-        
+
         if "/execute/sync" in url:
             return StubResponse(payload={"value": "script result"})
-        
+
         if "/control/delay" in url:
             return StubResponse(payload={"value": None})
-        
+
         # Default response
         return StubResponse(payload={"value": body or {}})
 
@@ -184,7 +184,7 @@ def test_create_session_sets_id(stub_client):
     """Test that create_session returns and stores session ID."""
     client, stub = stub_client
     session_id = client.create_session()
-    
+
     assert session_id == "test-session-123"
     assert client.session_id == "test-session-123"
     assert stub.calls[-1]["url"].endswith("/session")
@@ -194,7 +194,7 @@ def test_create_session_with_capabilities(stub_client):
     """Test create_session with custom capabilities."""
     client, stub = stub_client
     session_id = client.create_session(capabilities={"browserName": "chrome"})
-    
+
     assert session_id == "test-session-123"
     request_body = json.loads(stub.calls[-1]["data"])
     assert request_body["capabilities"] == {"browserName": "chrome"}
@@ -207,7 +207,7 @@ def test_pulsar_session_properties(stub_client):
     client, _ = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     assert session.uuid == "test-session-123"
     assert session.is_active
     assert "PulsarSession" in session.display
@@ -218,9 +218,9 @@ def test_pulsar_session_normalize(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     result = session.normalize("https://example.com", args="-expire 1d")
-    
+
     assert isinstance(result, NormURL)
     assert result.url == "https://example.com"
     assert not result.is_nil
@@ -231,9 +231,9 @@ def test_pulsar_session_open(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     page = session.open("https://example.com")
-    
+
     assert isinstance(page, WebPage)
     assert page.url == "https://example.com"
     assert page.content_type == "text/html"
@@ -245,12 +245,12 @@ def test_pulsar_session_load(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     page = session.load("https://example.com", args="-expire 1d")
-    
+
     assert isinstance(page, WebPage)
     assert page.url == "https://example.com"
-    
+
     # Verify args were sent
     request_body = json.loads(stub.calls[-1]["data"])
     assert request_body["args"] == "-expire 1d"
@@ -261,9 +261,9 @@ def test_pulsar_session_submit(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     result = session.submit("https://example.com")
-    
+
     assert result is True
 
 
@@ -272,10 +272,10 @@ def test_pulsar_session_driver(stub_client):
     client, _ = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     driver = session.driver
     assert isinstance(driver, WebDriver)
-    
+
     # Same instance should be returned
     assert session.driver is driver
 
@@ -287,9 +287,9 @@ def test_agentic_session_run(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     result = session.run("complete the task")
-    
+
     assert isinstance(result, AgentRunResult)
     assert result.success
     assert result.message == "Task completed"
@@ -301,9 +301,9 @@ def test_agentic_session_run_and_trace(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     result = session.agent_run("do it")
-    
+
     assert result.final_result == "done"
     assert result.trace == ["step1", "step2"]
     assert session.process_trace == ["step1", "step2"]
@@ -314,9 +314,9 @@ def test_agentic_session_act(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     result = session.act("click the button")
-    
+
     assert isinstance(result, AgentActResult)
     assert result.success
     assert result.is_complete
@@ -327,9 +327,9 @@ def test_agentic_session_observe(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     observations = session.observe("what can I do?")
-    
+
     assert len(observations.observations) > 0
     assert observations.observations[0].method == "click"
 
@@ -339,9 +339,9 @@ def test_agentic_session_summarize(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     summary = session.summarize("Summarize this page")
-    
+
     assert summary == "Page summary text"
 
 
@@ -350,12 +350,12 @@ def test_agentic_session_clear_history(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     # Add some trace
     session._process_trace = ["item1", "item2"]
-    
+
     result = session.clear_history()
-    
+
     assert result is True
     assert session.process_trace == []
 
@@ -365,7 +365,7 @@ def test_agentic_session_companion_agent(stub_client):
     client, _ = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     assert session.companion_agent is session
 
 
@@ -374,12 +374,12 @@ def test_agentic_session_agent_extract(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     result = session.agent_extract(
         instruction="Extract product names",
         schema={"type": "array"}
     )
-    
+
     assert result.success
     assert result.data == {"field1": "value1"}
 
@@ -391,9 +391,9 @@ def test_webdriver_navigate(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     driver.navigate_to("https://example.com")
-    
+
     assert stub.calls[-1]["url"].endswith("/session/test-session-123/url")
     assert json.loads(stub.calls[-1]["data"]) == {"url": "https://example.com"}
 
@@ -403,9 +403,9 @@ def test_webdriver_current_url(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     url = driver.current_url()
-    
+
     assert url == "https://example.com"
 
 
@@ -414,9 +414,9 @@ def test_webdriver_exists(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     exists = driver.exists("h1.title")
-    
+
     assert exists is True
 
 
@@ -425,9 +425,9 @@ def test_webdriver_wait_for_selector(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     found = driver.wait_for_selector("h1.title", timeout=5000)
-    
+
     assert found is True
 
 
@@ -436,9 +436,9 @@ def test_webdriver_execute_script(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     result = driver.execute_script("return document.title")
-    
+
     assert result == "script result"
 
 
@@ -447,9 +447,9 @@ def test_webdriver_delay(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     driver.delay(1000)
-    
+
     request_body = json.loads(stub.calls[-1]["data"])
     assert request_body["ms"] == 1000
 
@@ -459,10 +459,10 @@ def test_webdriver_navigate_history(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     driver = WebDriver(client)
-    
+
     driver.navigate_to("https://example.com")
     driver.navigate_to("https://example.com/page2")
-    
+
     history = driver.navigate_history
     assert len(history) == 2
     assert history[0] == "https://example.com"
@@ -481,9 +481,9 @@ def test_webpage_from_dict():
         "protocolStatus": "200 OK",
         "isNil": False
     }
-    
+
     page = WebPage.from_dict(data)
-    
+
     assert page.url == "https://example.com"
     assert page.location == "https://example.com/final"
     assert page.content_type == "text/html"
@@ -499,9 +499,9 @@ def test_normurl_from_dict():
         "args": "-expire 1d",
         "isNil": False
     }
-    
+
     norm = NormURL.from_dict(data)
-    
+
     assert norm.spec == "https://example.com -expire 1d"
     assert norm.url == "https://example.com"
     assert norm.args == "-expire 1d"
@@ -516,9 +516,9 @@ def test_agent_run_result_from_dict():
         "processTraceSize": 3,
         "finalResult": {"key": "value"}
     }
-    
+
     result = AgentRunResult.from_dict(data)
-    
+
     assert result.success
     assert result.message == "Completed"
     assert result.history_size == 5
@@ -530,7 +530,7 @@ def test_agent_run_result_from_dict():
 def test_page_event_handlers_placeholder():
     """Test PageEventHandlers placeholder."""
     handlers = PageEventHandlers()
-    
+
     assert isinstance(handlers.browse_event_handlers, dict)
     assert isinstance(handlers.load_event_handlers, dict)
     assert isinstance(handlers.crawl_event_handlers, dict)
@@ -543,26 +543,26 @@ def test_full_workflow(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     # Open URL
     page = session.open("https://example.com")
     assert page.url == "https://example.com"
-    
+
     # Get driver
     driver = session.get_or_create_bound_driver()
     assert driver is session.driver
-    
+
     # Execute action
     result = session.act("click the search button")
     assert result.success
-    
+
     # Run task
     history = session.run("search for 'test'")
     assert history.success
-    
+
     # Check trace
     assert len(session.process_trace) > 0
-    
+
     # Clear and verify
     session.clear_history()
     assert len(session.process_trace) == 0
@@ -579,7 +579,7 @@ def test_agent_state_creation():
         success=True,
         message="Clicked"
     )
-    
+
     assert state.step == 1
     assert state.action == "click button"
     assert state.success
@@ -595,9 +595,9 @@ def test_agent_history_from_dict():
         "hasErrors": True,
         "finalResult": "done"
     }
-    
+
     history = AgentHistory.from_dict(data)
-    
+
     assert history.size == 2
     assert history.has_errors
     assert history.final_result == "done"
@@ -612,9 +612,9 @@ def test_chat_response_from_dict():
         "role": "assistant",
         "model": "gpt-4"
     }
-    
+
     response = ChatResponse.from_dict(data)
-    
+
     assert response.content == "Hello!"
     assert response.role == "assistant"
     assert response.model == "gpt-4"
@@ -623,7 +623,7 @@ def test_chat_response_from_dict():
 def test_chat_response_from_string():
     """Test ChatResponse creation from string."""
     response = ChatResponse.from_dict("Simple response")
-    
+
     assert response.content == "Simple response"
     assert response.role == "assistant"
 
@@ -633,9 +633,9 @@ def test_pulsar_session_chat(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     response = session.chat("Hello")
-    
+
     assert isinstance(response, ChatResponse)
     assert response.content == "Chat response"
     assert response.role == "assistant"
@@ -646,9 +646,9 @@ def test_pulsar_session_chat_with_system(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = PulsarSession(client)
-    
+
     response = session.chat("Hello", system_message="You are a helpful assistant")
-    
+
     assert isinstance(response, ChatResponse)
     request_body = json.loads(stub.calls[-1]["data"])
     assert "userMessage" in request_body
@@ -660,11 +660,11 @@ def test_agentic_session_state_history(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     # Execute some actions
     session.act("click button")
     session.run("complete task")
-    
+
     # Check state history
     history = session.state_history
     assert isinstance(history, AgentHistory)
@@ -678,9 +678,9 @@ def test_agentic_session_state_history_kotlin_style(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     session.act("test action")
-    
+
     # Test Kotlin-style property name
     history = session.stateHistory
     assert isinstance(history, AgentHistory)
@@ -692,17 +692,17 @@ def test_agentic_session_clear_state_history(stub_client):
     client, stub = stub_client
     client.session_id = "test-session-123"
     session = AgenticSession(client)
-    
+
     # Add some history
     session.act("action 1")
     session.act("action 2")
-    
+
     # Verify history exists
     assert session.state_history.size == 2
-    
+
     # Clear history
     session.clear_history()
-    
+
     # Verify cleared
     assert session.state_history.size == 0
     assert len(session.process_trace) == 0

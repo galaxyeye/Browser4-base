@@ -10,15 +10,15 @@ The AgenticSession class mirrors the Kotlin AgenticSession interface, providing:
 - WebDriver access for low-level browser control
 
 Usage example:
-    >>> from pulsar_sdk import PulsarClient, AgenticSession
+    >>> from browser4-sdk import PulsarClient, AgenticSession
     >>> client = PulsarClient()
     >>> session_id = client.create_session()
     >>> session = AgenticSession(client)
-    >>> 
+    >>>
     >>> # PulsarSession-like operations
     >>> page = session.open("https://example.com")
     >>> fields = session.extract(page, {"title": "h1"})
-    >>> 
+    >>>
     >>> # Agentic operations
     >>> result = session.act("click the login button")
     >>> history = session.run("search for 'python' and click first result")
@@ -49,10 +49,10 @@ class PulsarSession:
     """
     PulsarSession provides methods for loading pages from storage or internet,
     parsing them, and extracting data.
-    
+
     This class mirrors the Kotlin PulsarSession interface, providing a consistent
     API across languages for web scraping and data extraction tasks.
-    
+
     Key methods:
     - open: Open a URL immediately (bypass cache)
     - load: Load from cache or fetch from internet
@@ -66,7 +66,7 @@ class PulsarSession:
     def __init__(self, client: PulsarClient):
         """
         Initialize PulsarSession with a PulsarClient.
-        
+
         Args:
             client: PulsarClient instance for API communication.
         """
@@ -116,12 +116,12 @@ class PulsarSession:
     ) -> NormURL:
         """
         Normalize a URL with optional load arguments.
-        
+
         Args:
             url: The URL to normalize.
             args: Optional load arguments (e.g., "-expire 1d").
             to_item_option: Whether to convert to item load options.
-            
+
         Returns:
             NormURL with normalized URL and parsed arguments.
         """
@@ -141,12 +141,12 @@ class PulsarSession:
     ) -> Optional[NormURL]:
         """
         Normalize a URL, returning None if invalid.
-        
+
         Args:
             url: The URL to normalize (can be None).
             args: Optional load arguments.
             to_item_option: Whether to convert to item load options.
-            
+
         Returns:
             NormURL or None if URL is invalid.
         """
@@ -160,14 +160,14 @@ class PulsarSession:
     def open(self, url: str, args: Optional[str] = None) -> WebPage:
         """
         Open a URL immediately, bypassing local cache.
-        
+
         This method opens the URL immediately, regardless of the previous
         state of the page in local storage.
-        
+
         Args:
             url: The URL to open.
             args: Optional load arguments.
-            
+
         Returns:
             WebPage with the loaded page information.
         """
@@ -180,15 +180,15 @@ class PulsarSession:
     def load(self, url: str, args: Optional[str] = None) -> WebPage:
         """
         Load a URL from local storage or fetch from internet.
-        
+
         This method first checks if the page exists in local storage and
         meets the specified criteria. If so, it returns the cached version.
         Otherwise, it fetches the page from the internet.
-        
+
         Args:
             url: The URL to load.
             args: Optional load arguments (e.g., "-expire 1d", "-refresh").
-            
+
         Returns:
             WebPage with the loaded page information.
         """
@@ -205,11 +205,11 @@ class PulsarSession:
     ) -> List[WebPage]:
         """
         Load multiple URLs.
-        
+
         Args:
             urls: Iterable of URLs to load.
             args: Optional load arguments applied to all URLs.
-            
+
         Returns:
             List of loaded WebPages.
         """
@@ -218,14 +218,14 @@ class PulsarSession:
     def submit(self, url: str, args: Optional[str] = None) -> bool:
         """
         Submit a URL to the crawl pool for asynchronous processing.
-        
+
         This is a non-blocking operation that returns immediately.
         The URL will be processed later in the crawl loop.
-        
+
         Args:
             url: The URL to submit.
             args: Optional load arguments.
-            
+
         Returns:
             True if the URL was submitted successfully.
         """
@@ -238,11 +238,11 @@ class PulsarSession:
     def submit_all(self, urls: Iterable[str], args: Optional[str] = None) -> bool:
         """
         Submit multiple URLs to the crawl pool.
-        
+
         Args:
             urls: Iterable of URLs to submit.
             args: Optional load arguments applied to all URLs.
-            
+
         Returns:
             True if all URLs were submitted successfully.
         """
@@ -256,19 +256,19 @@ class PulsarSession:
     def parse(self, page: WebPage) -> Any:
         """
         Parse a WebPage into a BeautifulSoup document.
-        
+
         This method parses the HTML content using BeautifulSoup, providing a rich DOM
         API for querying and manipulating the document structure.
-        
+
         Args:
             page: The WebPage to parse.
-            
+
         Returns:
             BeautifulSoup Document object, or None if HTML is not available.
         """
         if not page.html:
             return None
-        
+
         try:
             from bs4 import BeautifulSoup
             return BeautifulSoup(page.html, 'html.parser')
@@ -283,15 +283,15 @@ class PulsarSession:
     ) -> Dict[str, Optional[str]]:
         """
         Extract fields from a document using CSS selectors.
-        
+
         Supports both BeautifulSoup documents (from parse()) and live page extraction
         via WebDriver.
-        
+
         Args:
             document: The document to extract from (BeautifulSoup or WebPage).
             field_selectors: Either a dict mapping field names to selectors,
                            or an iterable of selectors (selector becomes field name).
-            
+
         Returns:
             Dictionary mapping field names to extracted values.
         """
@@ -300,7 +300,7 @@ class PulsarSession:
             selectors = dict(field_selectors)
         else:
             selectors = {s: s for s in field_selectors}
-        
+
         # Try to extract from BeautifulSoup document
         try:
             from bs4 import BeautifulSoup
@@ -312,7 +312,7 @@ class PulsarSession:
                 return result
         except ImportError:
             pass
-        
+
         # Fall back to WebDriver extraction for live pages
         return self.driver.extract(selectors)
 
@@ -324,12 +324,12 @@ class PulsarSession:
     ) -> Dict[str, Optional[str]]:
         """
         Load a page, parse it, and extract fields in one operation.
-        
+
         Args:
             url: The URL to scrape.
             args: Load arguments.
             field_selectors: Field selectors for extraction.
-            
+
         Returns:
             Dictionary mapping field names to extracted values.
         """
@@ -341,14 +341,14 @@ class PulsarSession:
     def chat(self, prompt: str, system_message: Optional[str] = None) -> ChatResponse:
         """
         Send a prompt to the LLM and return the response.
-        
+
         This method provides direct access to chat/LLM capabilities for
         natural language processing tasks.
-        
+
         Args:
             prompt: The user prompt to send to the LLM (or userMessage if system_message is provided).
             system_message: Optional system instructions for the LLM.
-            
+
         Returns:
             ChatResponse with the LLM's response.
         """
@@ -359,7 +359,7 @@ class PulsarSession:
             }
         else:
             payload = {"prompt": prompt}
-        
+
         value = self.client.post("/session/{sessionId}/chat", payload)
         return ChatResponse.from_dict(value)
 
@@ -368,7 +368,7 @@ class PulsarSession:
     def get_or_create_bound_driver(self) -> WebDriver:
         """
         Get or create a bound WebDriver.
-        
+
         Returns:
             The bound WebDriver instance.
         """
@@ -377,7 +377,7 @@ class PulsarSession:
     def create_bound_driver(self) -> WebDriver:
         """
         Create a new bound WebDriver.
-        
+
         Returns:
             A new WebDriver instance.
         """
@@ -387,7 +387,7 @@ class PulsarSession:
     def bind_driver(self, driver: WebDriver) -> None:
         """
         Bind a WebDriver to this session.
-        
+
         Args:
             driver: The WebDriver to bind.
         """
@@ -396,7 +396,7 @@ class PulsarSession:
     def unbind_driver(self, driver: WebDriver) -> None:
         """
         Unbind a WebDriver from this session.
-        
+
         Args:
             driver: The WebDriver to unbind.
         """
@@ -408,10 +408,10 @@ class PulsarSession:
     def exists(self, url: str) -> bool:
         """
         Check if a page exists in storage.
-        
+
         Args:
             url: The URL to check.
-            
+
         Returns:
             True if the page exists in storage.
         """
@@ -430,11 +430,11 @@ class PulsarSession:
 class AgenticSession(PulsarSession):
     """
     AgenticSession extends PulsarSession with AI-powered browser automation.
-    
+
     This class provides methods for intelligent browser interaction using
     natural language instructions. It combines the data extraction capabilities
     of PulsarSession with AI-powered agent functionality.
-    
+
     Key capabilities:
     - All PulsarSession methods (open, load, submit, extract, etc.)
     - Agent act: Execute single actions described in natural language
@@ -442,7 +442,7 @@ class AgenticSession(PulsarSession):
     - Agent observe: Analyze page and suggest actions
     - Agent extract: AI-powered data extraction
     - Agent summarize: Generate page summaries
-    
+
     Usage example:
         >>> session = AgenticSession(client)
         >>> session.open("https://example.com")
@@ -453,7 +453,7 @@ class AgenticSession(PulsarSession):
     def __init__(self, client: PulsarClient):
         """
         Initialize AgenticSession with a PulsarClient.
-        
+
         Args:
             client: PulsarClient instance for API communication.
         """
@@ -465,7 +465,7 @@ class AgenticSession(PulsarSession):
     def companion_agent(self) -> "AgenticSession":
         """
         Get the companion agent (self, for API compatibility with Kotlin).
-        
+
         In the Kotlin implementation, companionAgent is a PerceptiveAgent.
         Here, AgenticSession itself provides the agent functionality.
         """
@@ -475,7 +475,7 @@ class AgenticSession(PulsarSession):
     def state_history(self) -> AgentHistory:
         """
         Get the agent state history.
-        
+
         The state history tracks executed actions and their results,
         providing memory for the agent's decision-making process.
         """
@@ -509,14 +509,14 @@ class AgenticSession(PulsarSession):
     def act(self, action: str, **kwargs: Any) -> AgentActResult:
         """
         Execute a single action described in natural language.
-        
+
         This method converts the action description into browser operations
         and executes them.
-        
+
         Args:
             action: Natural language description of the action to perform.
             **kwargs: Additional parameters (multiAct, modelName, etc.).
-            
+
         Returns:
             AgentActResult with the action result.
         """
@@ -525,7 +525,7 @@ class AgenticSession(PulsarSession):
     def agent_act(self, action: str, **kwargs: Any) -> AgentActResult:
         """
         Execute a single action described in natural language.
-        
+
         Args:
             action: Natural language description of the action.
             **kwargs: Additional parameters:
@@ -534,19 +534,19 @@ class AgenticSession(PulsarSession):
                 - variables: Extra variables for prompt/tool.
                 - domSettleTimeoutMs: Timeout for DOM settling.
                 - timeoutMs: Overall timeout.
-                
+
         Returns:
             AgentActResult with the action result.
         """
         payload: Dict[str, Any] = {"action": action}
         payload.update(kwargs)
-        
+
         value = self.client.post("/session/{sessionId}/agent/act", payload)
-        
+
         trace = value.get("trace") if isinstance(value, dict) else None
         if trace:
             self._process_trace.extend(trace)
-        
+
         # Add to state history
         if isinstance(value, dict):
             step = len(self._state_history) + 1
@@ -557,20 +557,20 @@ class AgenticSession(PulsarSession):
                 success=value.get("success", False),
                 message=value.get("message", "")
             ))
-        
+
         return AgentActResult.from_dict(value) if isinstance(value, dict) else AgentActResult()
 
     def run(self, task: str, **kwargs: Any) -> AgentRunResult:
         """
         Run an autonomous agent task.
-        
+
         This method runs an observe-act loop attempting to fulfill the
         task described in natural language.
-        
+
         Args:
             task: Natural language description of the task to accomplish.
             **kwargs: Additional parameters.
-            
+
         Returns:
             AgentRunResult with the task result.
         """
@@ -579,7 +579,7 @@ class AgenticSession(PulsarSession):
     def agent_run(self, task: str, **kwargs: Any) -> AgentRunResult:
         """
         Run an autonomous agent task.
-        
+
         Args:
             task: Natural language description of the task.
             **kwargs: Additional parameters:
@@ -588,19 +588,19 @@ class AgenticSession(PulsarSession):
                 - variables: Extra variables for prompt/tool.
                 - domSettleTimeoutMs: Timeout for DOM settling.
                 - timeoutMs: Overall timeout.
-                
+
         Returns:
             AgentRunResult with the task result.
         """
         payload: Dict[str, Any] = {"task": task}
         payload.update(kwargs)
-        
+
         value = self.client.post("/session/{sessionId}/agent/run", payload)
-        
+
         trace = value.get("trace") if isinstance(value, dict) else None
         if trace:
             self._process_trace.extend(trace)
-        
+
         # The run operation typically involves multiple steps
         # We track this as a high-level task in the state history
         if isinstance(value, dict):
@@ -612,17 +612,17 @@ class AgenticSession(PulsarSession):
                 success=value.get("success", False),
                 message=value.get("message", "")
             ))
-        
+
         return AgentRunResult.from_dict(value) if isinstance(value, dict) else AgentRunResult()
 
     def observe(self, instruction: Optional[str] = None, **kwargs: Any) -> AgentObservation:
         """
         Observe the page and return potential actions.
-        
+
         Args:
             instruction: Optional observation instruction.
             **kwargs: Additional parameters.
-            
+
         Returns:
             AgentObservation with observation results.
         """
@@ -631,7 +631,7 @@ class AgenticSession(PulsarSession):
     def agent_observe(self, instruction: Optional[str] = None, **kwargs: Any) -> AgentObservation:
         """
         Observe the page and return potential actions.
-        
+
         Args:
             instruction: Optional observation instruction.
             **kwargs: Additional parameters:
@@ -639,7 +639,7 @@ class AgenticSession(PulsarSession):
                 - domSettleTimeoutMs: Timeout for DOM settling.
                 - returnAction: Whether to return actionable tool calls.
                 - drawOverlay: Whether to highlight interactive elements.
-                
+
         Returns:
             AgentObservation with observation results.
         """
@@ -647,7 +647,7 @@ class AgenticSession(PulsarSession):
         if instruction:
             payload["instruction"] = instruction
         payload.update(kwargs)
-        
+
         value = self.client.post("/session/{sessionId}/agent/observe", payload)
         return AgentObservation.from_dict(value)
 
@@ -660,13 +660,13 @@ class AgenticSession(PulsarSession):
     ) -> ExtractionResult:
         """
         Extract structured data from the page using AI.
-        
+
         Args:
             instruction: Extraction instruction describing what to extract.
             schema: Optional JSON schema for the extraction result.
             selector: Optional CSS selector to scope extraction.
             **kwargs: Additional parameters.
-            
+
         Returns:
             ExtractionResult with extracted data.
         """
@@ -676,18 +676,18 @@ class AgenticSession(PulsarSession):
         if selector:
             payload["selector"] = selector
         payload.update(kwargs)
-        
+
         value = self.client.post("/session/{sessionId}/agent/extract", payload)
         return ExtractionResult.from_dict(value) if isinstance(value, dict) else ExtractionResult()
 
     def summarize(self, instruction: Optional[str] = None, selector: Optional[str] = None) -> str:
         """
         Summarize page content.
-        
+
         Args:
             instruction: Optional guidance for summarization.
             selector: Optional CSS selector to limit summarization scope.
-            
+
         Returns:
             Summary text.
         """
@@ -696,11 +696,11 @@ class AgenticSession(PulsarSession):
     def agent_summarize(self, instruction: Optional[str] = None, selector: Optional[str] = None) -> str:
         """
         Summarize page content.
-        
+
         Args:
             instruction: Optional guidance for summarization.
             selector: Optional CSS selector to limit summarization scope.
-            
+
         Returns:
             Summary text.
         """
@@ -709,7 +709,7 @@ class AgenticSession(PulsarSession):
             payload["instruction"] = instruction
         if selector:
             payload["selector"] = selector
-        
+
         value = self.client.post("/session/{sessionId}/agent/summarize", payload)
         if isinstance(value, dict):
             return value.get("summary", value.get("value", ""))
@@ -718,9 +718,9 @@ class AgenticSession(PulsarSession):
     def clear_history(self) -> bool:
         """
         Clear the agent's history.
-        
+
         This clears the history so new tasks remain unaffected by previous ones.
-        
+
         Returns:
             True if history was cleared successfully.
         """
@@ -729,7 +729,7 @@ class AgenticSession(PulsarSession):
     def agent_clear_history(self) -> bool:
         """
         Clear the agent's history.
-        
+
         Returns:
             True if history was cleared successfully.
         """
@@ -743,13 +743,13 @@ class AgenticSession(PulsarSession):
     def capture(self, driver: Optional[WebDriver] = None, url: Optional[str] = None) -> PageSnapshot:
         """
         Capture the live page controlled by a WebDriver.
-        
+
         This creates a static snapshot of the current page state.
-        
+
         Args:
             driver: The WebDriver controlling the page (uses bound driver if None).
             url: Optional URL to identify the capture.
-            
+
         Returns:
             PageSnapshot with the captured page.
         """
@@ -766,7 +766,7 @@ class AgenticSession(PulsarSession):
     def register_closable(self, closable: Any) -> None:
         """
         Register a closable object with the session.
-        
+
         Args:
             closable: Object with a close() method.
         """
@@ -776,11 +776,11 @@ class AgenticSession(PulsarSession):
     def data(self, name: str, value: Any = None) -> Any:
         """
         Get or set session data.
-        
+
         Args:
             name: Data key name.
             value: Value to set (if provided).
-            
+
         Returns:
             Stored value for the name.
         """
@@ -790,11 +790,11 @@ class AgenticSession(PulsarSession):
     def property(self, name: str, value: Optional[str] = None) -> Optional[str]:
         """
         Get or set a session property.
-        
+
         Args:
             name: Property name.
             value: Value to set (if provided).
-            
+
         Returns:
             Property value.
         """
@@ -804,11 +804,11 @@ class AgenticSession(PulsarSession):
     def options(self, args: str = "", event_handlers: Optional[PageEventHandlers] = None) -> Dict[str, Any]:
         """
         Create load options from arguments string.
-        
+
         Args:
             args: Load arguments string.
             event_handlers: Optional event handlers.
-            
+
         Returns:
             Options dictionary.
         """
