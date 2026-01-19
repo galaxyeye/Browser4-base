@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*
 @ConditionalOnBean(SessionManager::class)
 class AgentController(
     private val sessionManager: SessionManager,
-    @Value("\${pulsar.test.mode:false}")
+    @param:Value("\${pulsar.test.mode:false}")
     private val testMode: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(AgentController::class.java)

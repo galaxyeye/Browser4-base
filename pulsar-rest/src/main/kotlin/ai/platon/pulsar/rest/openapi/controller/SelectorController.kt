@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*
 class SelectorController(
     private val sessionManager: SessionManager,
     private val store: InMemoryStore,
-    @Value("\${pulsar.test.mode:false}")
+    @param:Value("\${pulsar.test.mode:false}")
     private val testMode: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(SelectorController::class.java)

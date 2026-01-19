@@ -47,10 +47,9 @@
         <url>https://www.github.com/platonai</url>
     </issueManagement>
     <scm>
-        <connection>scm:git:https://github.com/platonai/platon.git</connection>
-        <developerConnection>scm:git:https://github.com/platonai/platon.git</developerConnection>
-        <url>https://github.com/platonai/platon.git</url>
-        <tag>v4.0.3-SNAPSHOT</tag>
+        <connection>scm:git:https://github.com/platonai/Browser4.git</connection>
+        <developerConnection>scm:git:https://github.com/platonai/Browser4.git</developerConnection>
+        <url>https://github.com/platonai/Browser4.git</url>
     </scm>
 
     <distributionManagement>
@@ -90,14 +89,6 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-serialization</artifactId>
                 <version>${kotlin.version}</version>
-            </dependency>
-
-            <!-- TODO: This artifact was moved to: jakarta.servlet » jakarta.servlet-api -->
-            <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>${javax.servlet-api.version}</version>
-                <scope>provided</scope>
             </dependency>
 
             <!--  Tika for general document parsers  -->

@@ -120,12 +120,12 @@ class OpenApiContractTest {
     /**
      * Extract patterns from Spring's RequestMappingInfo, supporting both:
      * - Spring MVC PathPattern (Boot 2.6+/3.x): `pathPatternsCondition`
-     * - Legacy AntPathMatcher: `patternsCondition`
+     * - Legacy AntPathMatcher (Boot 2.x): `patternsCondition` (accessed reflectively to avoid deprecation warnings)
      */
     private fun extractPatterns(info: RequestMappingInfo): Set<String> {
         val patterns = linkedSetOf<String>()
 
-        // Spring 6 / Boot 3: PathPatternsCondition
+        // Spring 6 / Boot 3+: PathPatternsCondition
         val pathPatternsCondition = info.pathPatternsCondition
         if (pathPatternsCondition != null) {
             for (p in pathPatternsCondition.patterns) {
@@ -133,13 +133,27 @@ class OpenApiContractTest {
             }
         }
 
-        // Spring 5 / Boot 2: PatternsRequestCondition
-        val legacy = info.patternsCondition
-        if (legacy != null) {
-            patterns += legacy.patterns
-        }
+        // Spring 5 / Boot 2.x: PatternsRequestCondition
+        patterns += extractLegacyAntPatterns(info)
 
         return patterns
+    }
+
+    /**
+     * Extract legacy Ant-style patterns without directly calling the deprecated `patternsCondition` accessor.
+     */
+    private fun extractLegacyAntPatterns(info: RequestMappingInfo): Set<String> {
+        return runCatching {
+            val method = info.javaClass.methods.firstOrNull { it.name == "getPatternsCondition" && it.parameterCount == 0 }
+                ?: return@runCatching emptySet<String>()
+
+            val condition = method.invoke(info) ?: return@runCatching emptySet<String>()
+            val patternsMethod = condition.javaClass.methods.firstOrNull { it.name == "getPatterns" && it.parameterCount == 0 }
+                ?: return@runCatching emptySet<String>()
+
+            @Suppress("UNCHECKED_CAST")
+            (patternsMethod.invoke(condition) as? Collection<String>)?.toSet() ?: emptySet()
+        }.getOrDefault(emptySet())
     }
 
     /**
