@@ -1,6 +1,7 @@
 package ai.platon.pulsar.skeleton.crawl.parse
 
 import ai.platon.pulsar.common.config.ImmutableConfig
+import ai.platon.pulsar.skeleton.crawl.common.MimeTypeResolver
 import ai.platon.pulsar.skeleton.crawl.parse.html.PrimerHtmlParser
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -59,7 +60,7 @@ class ParserFactory(private val conf: ImmutableConfig) {
      */
     @Throws(ParserNotFound::class)
     fun getParsers(contentType: String, url: String = ""): List<Parser> {
-        val mimeType = cleanMimeType(contentType) ?: DEFAULT_MINE_TYPE
+        val mimeType = MimeTypeResolver.cleanMimeType(contentType) ?: DEFAULT_MINE_TYPE
         return mineType2Parsers[mimeType] ?: mineType2Parsers[DEFAULT_MINE_TYPE] ?: listOf()
     }
 
@@ -69,20 +70,5 @@ class ParserFactory(private val conf: ImmutableConfig) {
 
     companion object {
         const val DEFAULT_MINE_TYPE = "*"
-
-        const val SEPARATOR: String = ";"
-
-        fun cleanMimeType(origType: String): String? {
-            // take the origType and split it on ';'
-            val tokenizedMimeType: Array<String?> = origType.split(SEPARATOR.toRegex())
-                .dropLastWhile { it.isEmpty() }.toTypedArray()
-            return if (tokenizedMimeType.size > 1) {
-                // there was a ';' in there, take the first value
-                tokenizedMimeType[0]
-            } else {
-                // there wasn't a ';', so just return the orig type
-                origType
-            }
-        }
     }
 }

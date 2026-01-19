@@ -11,12 +11,12 @@ import ai.platon.pulsar.persist.metadata.FetchMode
 import ai.platon.pulsar.persist.metadata.MultiMetadata
 import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
+import ai.platon.pulsar.skeleton.crawl.common.MimeTypeResolver
 import ai.platon.pulsar.skeleton.crawl.protocol.ForwardingResponse
 import ai.platon.pulsar.skeleton.crawl.protocol.Protocol
 import ai.platon.pulsar.skeleton.crawl.protocol.ProtocolOutput
 import ai.platon.pulsar.skeleton.crawl.protocol.Response
 import crawlercommons.robots.BaseRobotRules
-import org.apache.tika.Tika
 import org.slf4j.LoggerFactory
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -44,7 +44,7 @@ abstract class AbstractHttpProtocol : Protocol {
 
     private lateinit var robots: HttpRobotRulesParser
 
-    private val tika = Tika()
+    private val mimeTypeResolver = MimeTypeResolver()
 
     /**
      * Set up the protocol.
@@ -156,7 +156,7 @@ abstract class AbstractHttpProtocol : Protocol {
         val content = pageDatum.content
 
         val contentType = response.getHeader(HttpHeaders.CONTENT_TYPE)
-        pageDatum.contentType = resolveMimeType(contentType, url, content)
+        pageDatum.contentType = mimeTypeResolver.resolveMimeType(contentType, url, content)
 
         val headers = pageDatum.headers
         val finalProtocolStatus = if (httpCode >= ProtocolStatusCodes.INCOMPATIBLE_CODE_START) {
@@ -176,27 +176,6 @@ abstract class AbstractHttpProtocol : Protocol {
         }
 
         return ProtocolOutput(pageDatum, headers, finalProtocolStatus)
-    }
-
-    protected fun resolveMimeType(contentType: String?, url: String, data: ByteArray?): String? {
-        val cleaned = contentType
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?.substringBefore(';')
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-
-        if (cleaned != null) {
-            return cleaned
-        }
-
-        // Avoid calling magic detection when there is no content.
-        if (data != null && data.isNotEmpty()) {
-            return tika.detect(data)
-        }
-
-        // Fall back to URL/extension-based detection.
-        return tika.detect(url).takeIf { it.isNotBlank() } ?: org.apache.tika.mime.MimeTypes.OCTET_STREAM
     }
 
     private fun getFailedResponse(lastThrowable: Throwable?, tryCount: Int, maxRry: Int): ProtocolOutput {
