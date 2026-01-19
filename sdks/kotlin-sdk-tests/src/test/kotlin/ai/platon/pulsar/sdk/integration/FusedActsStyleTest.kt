@@ -227,7 +227,6 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         if (document != null) {
             val fields = session.extract(document, mapOf("title" to "title"))
             assertNotNull(fields, "Extracted fields should not be null")
-            assertTrue(fields is Map, "Extracted fields should be a map")
         }
     }
 
@@ -314,7 +313,6 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val trace = agent.processTrace
 
         assertNotNull(trace, "Process trace should not be null")
-        assertTrue(trace is List<*>, "Process trace should be a list")
     }
 
     @Test
@@ -349,10 +347,8 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         assertNotNull(document, "Parsed document should not be null")
 
         // Step 3: Extract fields
-        if (document != null) {
-            val fields = session.extract(document, mapOf("title" to "title"))
-            assertNotNull(fields, "Extracted fields should not be null")
-        }
+        val fields = session.extract(document, mapOf("title" to "title"))
+        assertNotNull(fields, "Extracted fields should not be null")
 
         // Step 4-5: Execute action and capture text
         val result = agent.act("scroll down")
