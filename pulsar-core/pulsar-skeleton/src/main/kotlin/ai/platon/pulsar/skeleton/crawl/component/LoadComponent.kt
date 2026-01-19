@@ -59,17 +59,6 @@ class LoadComponent(
     companion object {
         val pageCacheHits = AtomicLong()
         val dbGetCount = AtomicLong()
-
-        var IGNORED_PAGE_FIELDS = setOf(
-            GWebPage.Field.PAGE_MODEL,
-        )
-
-        var LAZY_PAGE_FIELDS = setOf(
-            GWebPage.Field.PAGE_MODEL,
-            GWebPage.Field.CONTENT
-        )
-
-        var PAGE_FIELDS = GWebPage.Field.entries.toSet() - LAZY_PAGE_FIELDS
     }
 
     private val logger = LoggerFactory.getLogger(LoadComponent::class.java)

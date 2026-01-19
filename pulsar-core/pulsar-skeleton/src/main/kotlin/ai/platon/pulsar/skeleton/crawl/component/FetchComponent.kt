@@ -2,7 +2,10 @@ package ai.platon.pulsar.skeleton.crawl.component
 
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.config.ImmutableConfig
-import ai.platon.pulsar.persist.*
+import ai.platon.pulsar.persist.PageDatum
+import ai.platon.pulsar.persist.ProtocolStatus
+import ai.platon.pulsar.persist.WebPage
+import ai.platon.pulsar.persist.WebPageExt
 import ai.platon.pulsar.persist.model.GoraWebPage
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
@@ -25,7 +28,6 @@ open class FetchComponent(
     val immutableConfig: ImmutableConfig,
 ) : AutoCloseable {
     private val logger = LoggerFactory.getLogger(FetchComponent::class.java)
-    private val tracer = logger.takeIf { it.isTraceEnabled }
 
     private val closed = AtomicBoolean()
     val isActive get() = !closed.get() && AppContext.isActive
@@ -171,6 +173,7 @@ open class FetchComponent(
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {
+            // nothing to do
         }
     }
 
