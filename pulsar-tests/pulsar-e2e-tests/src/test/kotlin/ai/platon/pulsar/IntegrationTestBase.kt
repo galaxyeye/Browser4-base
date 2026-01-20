@@ -4,8 +4,8 @@ import ai.platon.pulsar.agentic.BasicAgenticSession
 import ai.platon.pulsar.boot.autoconfigure.PulsarContextConfiguration
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.sleepSeconds
-import ai.platon.pulsar.rest.api.entities.ScrapeResponse
 import ai.platon.pulsar.skeleton.session.PulsarSession
+import ai.platon.pulsar.tools.crawl.ScrapeResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -67,7 +67,8 @@ class IntegrationTestBase {
      * Test for Controller [ai.platon.pulsar.rest.api.controller.ScrapeController.submitJob]
      * */
     fun llmScrape(url: String): ScrapeResponse? {
-        val sql = "select llm_extract(dom, 'Title, Price, Description') as llm_extracted_fields from load_and_select('$url', 'body')"
+        val sql =
+            "select llm_extract(dom, 'Title, Price, Description') as llm_extracted_fields from load_and_select('$url', 'body')"
         val uuid = client.post().uri("/api/x/s")
             .body(sql)
             .exchange()
@@ -86,7 +87,7 @@ class IntegrationTestBase {
         var response: ScrapeResponse = client.get().uri("/api/x/status?uuid=$uuid")
             .exchange()
             .expectStatus().is2xxSuccessful
-            .expectBody(ScrapeResponse::class.java)
+            .expectBody<ScrapeResponse>()
             .returnResult()
             .responseBody!!
 
@@ -95,12 +96,11 @@ class IntegrationTestBase {
             response = client.get().uri("/api/x/status?uuid=$uuid")
                 .exchange()
                 .expectStatus().is2xxSuccessful
-                .expectBody(ScrapeResponse::class.java)
+                .expectBody<ScrapeResponse>()
                 .returnResult()
                 .responseBody!!
         }
 
         return response
     }
-
 }
