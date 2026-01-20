@@ -1,7 +1,7 @@
-package ai.platon.pulsar.browser.driver.chrome.dom.util
+package ai.platon.browser4.driver.chrome.dom.util
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMRect
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.DOMRect
+import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.awt.Color

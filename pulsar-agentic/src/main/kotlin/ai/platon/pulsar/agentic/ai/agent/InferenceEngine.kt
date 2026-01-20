@@ -6,7 +6,7 @@ import ai.platon.pulsar.agentic.ai.PromptBuilder
 import ai.platon.pulsar.agentic.ai.SimpleMessage
 import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
 import ai.platon.pulsar.agentic.ai.tta.ContextToAction
-import ai.platon.pulsar.browser.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.external.BrowserChatModel

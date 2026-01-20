@@ -10,9 +10,9 @@ import ai.platon.pulsar.agentic.ObserveOptions
 import ai.platon.pulsar.agentic.ProcessTrace
 import ai.platon.pulsar.agentic.ToolCall
 import ai.platon.pulsar.agentic.ToolCallResult
-import ai.platon.pulsar.browser.driver.chrome.dom.model.BrowserUseState
-import ai.platon.pulsar.browser.driver.chrome.dom.model.SnapshotOptions
-import ai.platon.pulsar.browser.driver.chrome.dom.model.TabState
+import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
+import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.browser4.driver.chrome.dom.model.TabState
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.MessageWriter
 import ai.platon.pulsar.common.getLogger

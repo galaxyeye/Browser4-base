@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.*
-import ai.platon.pulsar.browser.driver.chrome.dom.util.ScrollUtils
+import ai.platon.browser4.driver.chrome.dom.model.*
+import ai.platon.browser4.driver.chrome.dom.util.ScrollUtils
 
 object DOMStateBuilder {
     /**

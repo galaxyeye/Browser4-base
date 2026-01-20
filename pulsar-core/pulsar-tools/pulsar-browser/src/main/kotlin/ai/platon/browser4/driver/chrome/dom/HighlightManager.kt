@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.pulsar.browser.driver.chrome.dom.model.InteractiveDOMTreeNodeList
+import ai.platon.browser4.driver.chrome.dom.model.InteractiveDOMTreeNodeList
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
 

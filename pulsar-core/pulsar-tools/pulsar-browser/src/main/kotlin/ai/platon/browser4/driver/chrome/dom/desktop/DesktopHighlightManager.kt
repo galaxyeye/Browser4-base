@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom.desktop
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.InteractiveDOMTreeNodeList
+import ai.platon.browser4.driver.chrome.dom.model.InteractiveDOMTreeNodeList
 import ai.platon.pulsar.common.getLogger
 import java.awt.*
 import java.awt.event.WindowAdapter

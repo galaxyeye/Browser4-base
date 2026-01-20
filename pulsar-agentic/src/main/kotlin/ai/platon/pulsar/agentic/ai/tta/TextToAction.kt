@@ -3,8 +3,8 @@ package ai.platon.pulsar.agentic.ai.tta
 import ai.platon.pulsar.agentic.ai.AgentMessageList
 import ai.platon.pulsar.agentic.ai.PromptBuilder.Companion.SINGLE_ACTION_GENERATION_PROMPT
 import ai.platon.pulsar.agentic.ai.PromptBuilder.Companion.buildObserveResultSchema
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMTreeNodeEx
-import ai.platon.pulsar.browser.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.Strings

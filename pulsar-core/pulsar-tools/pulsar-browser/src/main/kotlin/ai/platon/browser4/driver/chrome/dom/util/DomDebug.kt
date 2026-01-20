@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
-import ai.platon.pulsar.browser.driver.chrome.dom.DOMSerializer
-import ai.platon.pulsar.browser.driver.chrome.dom.model.*
+import ai.platon.browser4.driver.chrome.dom.DOMSerializer
+import ai.platon.browser4.driver.chrome.dom.model.*
 import java.util.*
 import kotlin.math.round
 

@@ -12,7 +12,7 @@ import org.jsoup.select.NodeTraversor
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Deprecated, use [ai.platon.pulsar.browser.driver.chrome.dom.DomService] instead.
+ * Deprecated, use [ai.platon.browser4.driver.chrome.dom.DomService] instead.
  * */
 object DomUtils {
 

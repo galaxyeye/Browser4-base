@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMTreeNodeEx
-import ai.platon.pulsar.browser.driver.chrome.dom.model.NodeType
+import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.NodeType
 
 class ClickableElementDetector {
     /**

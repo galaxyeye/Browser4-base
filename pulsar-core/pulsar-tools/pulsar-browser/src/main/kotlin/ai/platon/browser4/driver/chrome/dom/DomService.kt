@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.*
+import ai.platon.browser4.driver.chrome.dom.model.*
 
 /**
  * Kotlin-native DOM service interface.

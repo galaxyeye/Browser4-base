@@ -6,7 +6,7 @@ import ai.platon.browser4.driver.chrome.DevToolsConfig
 import ai.platon.browser4.driver.chrome.RemoteChrome
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.pulsar.browser.common.BrowserSettings
-import ai.platon.pulsar.browser.driver.chrome.*
+import ai.platon.browser4.driver.chrome.*
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl.Companion.ABOUT_BLANK_PAGE
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException

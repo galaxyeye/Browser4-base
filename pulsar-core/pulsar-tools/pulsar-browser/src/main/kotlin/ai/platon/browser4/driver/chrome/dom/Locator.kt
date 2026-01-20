@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import org.apache.commons.lang3.StringUtils
 
 open class Locator(

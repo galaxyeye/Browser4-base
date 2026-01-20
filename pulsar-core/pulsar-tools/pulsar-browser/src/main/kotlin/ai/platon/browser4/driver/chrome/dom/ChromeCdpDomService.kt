@@ -2,12 +2,12 @@ package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.pulsar.browser.driver.chrome.dom.AccessibilityHandler.AccessibilityTreeResult
-import ai.platon.pulsar.browser.driver.chrome.dom.model.*
-import ai.platon.pulsar.browser.driver.chrome.dom.util.DomDebug
-import ai.platon.pulsar.browser.driver.chrome.dom.util.HashUtils
-import ai.platon.pulsar.browser.driver.chrome.dom.util.ScrollUtils
-import ai.platon.pulsar.browser.driver.chrome.dom.util.XPathUtils
+import ai.platon.browser4.driver.chrome.dom.AccessibilityHandler.AccessibilityTreeResult
+import ai.platon.browser4.driver.chrome.dom.model.*
+import ai.platon.browser4.driver.chrome.dom.util.DomDebug
+import ai.platon.browser4.driver.chrome.dom.util.HashUtils
+import ai.platon.browser4.driver.chrome.dom.util.ScrollUtils
+import ai.platon.browser4.driver.chrome.dom.util.XPathUtils
 import ai.platon.pulsar.common.getLogger
 import java.awt.Dimension
 import java.util.*

@@ -1,4 +1,4 @@
-package ai.platon.pulsar.browser.driver.chrome
+package ai.platon.browser4.driver.chrome
 
 import ai.platon.cdt.kt.protocol.commands.DOM
 import ai.platon.cdt.kt.protocol.commands.Runtime

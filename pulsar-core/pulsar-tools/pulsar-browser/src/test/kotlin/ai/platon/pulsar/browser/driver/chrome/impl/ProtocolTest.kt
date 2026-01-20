@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package ai.platon.pulsar.browser.driver.chrome.impl
+package ai.platon.browser4.driver.chrome.impl
 
 import ai.platon.browser4.driver.chrome.impl.EventDispatcher
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode

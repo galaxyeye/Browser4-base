@@ -5,8 +5,8 @@ import ai.platon.pulsar.agentic.ai.agent.ExtractParams
 import ai.platon.pulsar.agentic.ai.agent.ObserveParams
 import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
 import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
-import ai.platon.pulsar.browser.driver.chrome.dom.DOMSerializer
-import ai.platon.pulsar.browser.driver.chrome.dom.model.TabState
+import ai.platon.browser4.driver.chrome.dom.DOMSerializer
+import ai.platon.browser4.driver.chrome.dom.model.TabState
 import ai.platon.pulsar.common.KStrings
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.ai.llm.PromptTemplate

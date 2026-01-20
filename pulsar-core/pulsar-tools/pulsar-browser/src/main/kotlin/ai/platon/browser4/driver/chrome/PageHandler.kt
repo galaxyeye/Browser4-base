@@ -10,7 +10,7 @@ import ai.platon.cdt.kt.protocol.types.page.TransitionType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
 import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
 import ai.platon.pulsar.browser.common.ScriptConfuser
-import ai.platon.pulsar.browser.driver.chrome.dom.Locator
+import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.util.CDPReturnError
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException

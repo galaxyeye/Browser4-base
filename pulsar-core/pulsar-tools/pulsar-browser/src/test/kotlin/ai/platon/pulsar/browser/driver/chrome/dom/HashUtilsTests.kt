@@ -1,7 +1,7 @@
-package ai.platon.pulsar.browser.driver.chrome.dom
+package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMTreeNodeEx
-import ai.platon.pulsar.browser.driver.chrome.dom.util.HashUtils
+import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.util.HashUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

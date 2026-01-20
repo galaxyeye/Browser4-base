@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic
 
-import ai.platon.pulsar.browser.driver.chrome.dom.model.BrowserUseState
-import ai.platon.pulsar.browser.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
+import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.compactedBrief
 import ai.platon.pulsar.external.ModelResponse
