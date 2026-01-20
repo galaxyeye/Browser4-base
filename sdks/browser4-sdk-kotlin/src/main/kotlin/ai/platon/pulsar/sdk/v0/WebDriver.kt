@@ -1,3 +1,4 @@
+@file:Suppress("UNUSED")
 package ai.platon.pulsar.sdk.v0
 
 import ai.platon.pulsar.sdk.v0.detail.PulsarClient
@@ -43,11 +44,17 @@ class WebDriver(
     val client: PulsarClient
 ) {
     private var _id: Int = 0
+    private val _navigateHistory: MutableList<String> = mutableListOf()
 
     /**
      * Gets the driver ID.
      */
     val id: Int get() = _id
+
+    /**
+     * Gets the navigation history.
+     */
+    val navigateHistory: List<String> get() = _navigateHistory.toList()
 
     // ========== Navigation ==========
 
@@ -58,7 +65,6 @@ class WebDriver(
      */
     suspend fun open(url: String) {
         navigateTo(url)
-        waitForNavigation()
     }
 
     /**
@@ -68,7 +74,9 @@ class WebDriver(
      * @return Navigation result
      */
     suspend fun navigateTo(url: String): Any? {
-        return client.post("/session/{sessionId}/url", mapOf("url" to url))
+        val result = client.post("/session/{sessionId}/url", mapOf("url" to url))
+        _navigateHistory.add(url)
+        return result
     }
 
     /**

@@ -1,3 +1,4 @@
+@file:Suppress("UNUSED")
 package ai.platon.pulsar.sdk.v0
 
 import ai.platon.pulsar.sdk.v0.detail.PulsarClient

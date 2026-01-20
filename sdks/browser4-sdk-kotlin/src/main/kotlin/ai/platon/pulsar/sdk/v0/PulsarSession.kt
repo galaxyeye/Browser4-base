@@ -1,6 +1,6 @@
+@file:Suppress("UNUSED")
 package ai.platon.pulsar.sdk.v0
 
-import ai.platon.pulsar.sdk.v0.WebDriver
 import ai.platon.pulsar.sdk.v0.detail.OpenApiEvent
 import ai.platon.pulsar.sdk.v0.detail.PulsarClient
 import ai.platon.pulsar.sdk.v0.detail.SseClient
