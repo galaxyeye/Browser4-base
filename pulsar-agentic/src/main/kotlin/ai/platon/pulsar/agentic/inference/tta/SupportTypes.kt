@@ -1,10 +1,10 @@
-package ai.platon.pulsar.agentic.ai.tta
+package ai.platon.pulsar.agentic.inference.tta
 
-import ai.platon.pulsar.agentic.ai.AgentMessageList
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.pulsar.agentic.ActionDescription
 import ai.platon.pulsar.agentic.AgentState
 import ai.platon.pulsar.agentic.DetailedActResult
+import ai.platon.pulsar.agentic.inference.AgentMessageList
 
 data class AgentResponseAction(
     val domain: String? = null,

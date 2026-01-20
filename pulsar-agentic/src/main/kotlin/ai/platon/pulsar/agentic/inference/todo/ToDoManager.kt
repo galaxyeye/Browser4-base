@@ -1,14 +1,14 @@
-package ai.platon.pulsar.agentic.ai.todo
+package ai.platon.pulsar.agentic.inference.todo
 
 import ai.platon.pulsar.agentic.AgentConfig
-import ai.platon.pulsar.agentic.ai.agent.detail.StructuredAgentLogger
-import ai.platon.pulsar.agentic.common.AgentFileSystem
-import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.agentic.ObserveElement
 import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.common.AgentFileSystem
+import ai.platon.pulsar.agentic.inference.agent.detail.StructuredAgentLogger
+import ai.platon.pulsar.common.Strings
 import java.time.Instant
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 /**
  * Manage writing and updating todolist.md for an agent session.

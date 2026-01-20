@@ -1,19 +1,19 @@
-package ai.platon.pulsar.agentic.ai
+package ai.platon.pulsar.agentic.inference
 
-import ai.platon.pulsar.agentic.AgentHistory
-import ai.platon.pulsar.agentic.ai.agent.ExtractParams
-import ai.platon.pulsar.agentic.ai.agent.ObserveParams
-import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
-import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
+import ai.platon.pulsar.agentic.AgentHistory
+import ai.platon.pulsar.agentic.AgentState
+import ai.platon.pulsar.agentic.inference.agent.ExtractParams
+import ai.platon.pulsar.agentic.inference.agent.ObserveParams
+import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.KStrings
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
-import ai.platon.pulsar.agentic.AgentState
 import java.time.LocalDate
 import java.util.*
 
@@ -113,6 +113,48 @@ class PromptBuilder() {
        - 如果你在开放式任务中被卡住（例如遇到登录或验证码），可以重新评估任务并尝试替代方案，例如有时即使出现登录弹窗，页面的某些部分仍可访问，或者可以通过网络搜索获得信息。
 
     """.trimIndent()
+
+        val TOOL_CALL_RULE_CONTENT_EN = """
+Strictly follow the rules below when using the browser and browsing web pages:
+
+* **domain**: the method domain, such as `driver`, `browser`, etc.
+* In the output, when locating a node, always set the `selector` field to the value of `locator`. Do not provide parameters that cannot be determined.
+* Ensure that the `locator` exactly matches the `locator` of the corresponding interactive element in the element list, or exactly matches the attributes of the accessibility tree node, so that the node is located precisely.
+* When outputting in JSON format, do **not** include any extra text.
+* Obtain information about all open tabs from the **`## Browser State`** section.
+* When information retrieval is required, open a **new tab** instead of reusing the current one.
+* Use `click(selector, "Ctrl")` to open a link in a **new tab**. On macOS, the system will automatically map `Ctrl` to `Meta`.
+* If the target page opens in a **new tab**, switch to it using `browser.switchTab(tabId: String)`. Obtain the `tabId` from the **`## Browser State`** section.
+* For keyboard actions (e.g., “press Enter”), use the `press` method (parameters such as `"A"`, `"Enter"`, `"Space"`). Capitalize the first letter of special keys. Do not simulate clicking keys on an on-screen keyboard.
+* Only capitalize the first letter for special keys (e.g., Enter, Tab, Escape).
+* Note: users may have difficulty distinguishing between buttons and links.
+* If an expected element is missing, try refreshing the page, scrolling, or going back to the previous page.
+* When entering text into a field:
+
+  1. No need to scroll or focus first (handled internally by the tool).
+  2. You may need to complete the action by:
+
+     1. pressing Enter,
+     2. clicking an explicit search button, or
+     3. selecting an option from a dropdown.
+* If the operation sequence is interrupted after filling an input field, it is usually because the page has changed (e.g., suggestion options appear below the input).
+* If a CAPTCHA appears, try to solve it if possible; if it cannot be solved, activate a fallback strategy (e.g., switch to another site or revert to the previous step).
+* If the page changes due to actions such as text input, determine whether newly appeared elements need to be interacted with (e.g., selecting the correct option from a list).
+* If the previous operation sequence is interrupted due to a page change, complete the remaining unexecuted steps. For example, if you attempted to enter text and click a search button but the click did not execute due to a page change, retry the click in the next step.
+* Always keep the final goal in mind: the content specified in `<user_request>`. If the user specifies explicit steps, those steps always have the highest priority.
+* If `<user_request>` contains specific page information (such as product type, rating, price, location, etc.), try to use filtering features to improve efficiency.
+* Do not log in unless necessary. If credentials are not provided, **never** attempt to log in.
+* Always first determine which of the following two categories the task belongs to:
+
+  1. **Very specific step-by-step instructions**
+
+     * Follow these steps precisely, do not skip any, and make every effort to fulfill each requirement.
+  2. **Open-ended tasks**
+
+     * Plan and complete the task independently and creatively.
+     * If you get stuck in an open-ended task (e.g., due to login or CAPTCHA), reassess the task and try alternative approaches. For example, even if a login pop-up appears, some parts of the page may still be accessible, or the information may be obtained through web search.
+
+        """.trimIndent()
 
         val EXTRACTION_TOOL_NOTE_CONTENT_2 = """
 使用 `agent.extract` 满足高级数据提取要求，仅当 `textContent`, `selectFirstTextOrNull` 不能满足要求时使用。

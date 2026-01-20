@@ -1,7 +1,8 @@
-package ai.platon.pulsar.agentic.ai.tta
+package ai.platon.pulsar.agentic.inference.tta
 
-import ai.platon.pulsar.agentic.ai.AgentMessageList
-import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.ActionDescription
+import ai.platon.pulsar.agentic.inference.AgentMessageList
+import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.brief
@@ -11,7 +12,6 @@ import ai.platon.pulsar.external.BrowserChatModel
 import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.external.ResponseState
-import ai.platon.pulsar.agentic.ActionDescription
 import java.nio.file.Files
 
 open class ContextToAction(

@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.ai.agent.detail
+package ai.platon.pulsar.agentic.inference.agent.detail
 
 import ai.platon.pulsar.agentic.AgentState
 import com.fasterxml.jackson.annotation.JsonIgnore

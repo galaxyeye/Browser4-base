@@ -1,14 +1,14 @@
-package ai.platon.pulsar.agentic.ai.agent.detail
+package ai.platon.pulsar.agentic.inference.agent.detail
 
 import ai.platon.pulsar.common.getLogger
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Circuit breaker to prevent infinite loops from repeated failures.
- * 
+ *
  * Tracks different types of failures and trips when consecutive failures
  * exceed configured thresholds.
- * 
+ *
  * @param maxLLMFailures Maximum consecutive LLM failures before tripping
  * @param maxValidationFailures Maximum consecutive validation failures before tripping
  * @param maxExecutionFailures Maximum consecutive execution failures before tripping
@@ -19,20 +19,20 @@ class CircuitBreaker(
     private val maxExecutionFailures: Int = 3
 ) {
     private val logger = getLogger(this)
-    
+
     private val llmFailureCounter = AtomicInteger(0)
     private val validationFailureCounter = AtomicInteger(0)
     private val executionFailureCounter = AtomicInteger(0)
-    
+
     enum class FailureType {
         LLM_FAILURE,
         VALIDATION_FAILURE,
         EXECUTION_FAILURE
     }
-    
+
     /**
      * Record a failure and check if circuit should trip.
-     * 
+     *
      * @param type Type of failure
      * @return true if circuit has tripped, false otherwise
      * @throws CircuitBreakerTrippedException if threshold exceeded
@@ -70,11 +70,11 @@ class CircuitBreaker(
                 c
             }
         }
-        
+
         logger.debug("🔌 Failure recorded type={} count={}", type, count)
         return count
     }
-    
+
     /**
      * Record a success and reset the corresponding failure counter.
      */
@@ -85,7 +85,7 @@ class CircuitBreaker(
             FailureType.EXECUTION_FAILURE -> executionFailureCounter.set(0)
         }
     }
-    
+
     /**
      * Reset all failure counters.
      */
@@ -95,7 +95,7 @@ class CircuitBreaker(
         executionFailureCounter.set(0)
         logger.info("🔌 Circuit breaker RESET")
     }
-    
+
     /**
      * Get current failure counts.
      */
@@ -104,7 +104,7 @@ class CircuitBreaker(
         FailureType.VALIDATION_FAILURE to validationFailureCounter.get(),
         FailureType.EXECUTION_FAILURE to executionFailureCounter.get()
     )
-    
+
     /**
      * Check if circuit is healthy (no counters near threshold).
      */

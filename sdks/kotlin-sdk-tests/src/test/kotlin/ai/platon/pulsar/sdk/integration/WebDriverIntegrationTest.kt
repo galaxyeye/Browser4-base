@@ -12,12 +12,15 @@
  */
 package ai.platon.pulsar.sdk.integration
 
-import ai.platon.pulsar.sdk.v0.WebDriver
 import ai.platon.pulsar.sdk.integration.util.TestUrls
+import ai.platon.pulsar.sdk.v0.WebDriver
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * WebDriver integration tests.
@@ -326,7 +329,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should extract text content`() {
+    suspend fun `should extract text content from simple DOM`() {
         driver.navigateTo(TestUrls.SIMPLE_DOM)
 
         // Get text content

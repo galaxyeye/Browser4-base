@@ -1,18 +1,9 @@
-package ai.platon.pulsar.agentic.ai.agent.detail
+package ai.platon.pulsar.agentic.inference.agent.detail
 
-import ai.platon.pulsar.agentic.ActionOptions
-import ai.platon.pulsar.agentic.AgentHistory
-import ai.platon.pulsar.agentic.AgentState
-import ai.platon.pulsar.agentic.BrowserAgentActor
-import ai.platon.pulsar.agentic.DetailedActResult
-import ai.platon.pulsar.agentic.ObserveElement
-import ai.platon.pulsar.agentic.ObserveOptions
-import ai.platon.pulsar.agentic.ProcessTrace
-import ai.platon.pulsar.agentic.ToolCall
-import ai.platon.pulsar.agentic.ToolCallResult
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.model.TabState
+import ai.platon.pulsar.agentic.*
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.MessageWriter
 import ai.platon.pulsar.common.getLogger

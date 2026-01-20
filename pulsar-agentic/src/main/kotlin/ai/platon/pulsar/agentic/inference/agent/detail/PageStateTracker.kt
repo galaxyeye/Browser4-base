@@ -1,8 +1,8 @@
-package ai.platon.pulsar.agentic.ai.agent.detail
+package ai.platon.pulsar.agentic.inference.agent.detail
 
+import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.pulsar.agentic.AgentConfig
 import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay

@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.ai.agent.detail
+package ai.platon.pulsar.agentic.inference.agent.detail
 
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
@@ -12,10 +12,10 @@ import kotlin.math.pow
 
 /**
  * Retry strategy with exponential backoff and jitter.
- * 
+ *
  * Determines whether exceptions should be retried and calculates appropriate
  * delays between retry attempts.
- * 
+ *
  * @param maxRetries Maximum number of retry attempts
  * @param baseDelayMs Base delay in milliseconds for exponential backoff
  * @param maxDelayMs Maximum delay in milliseconds (cap for exponential backoff)
@@ -26,7 +26,7 @@ class RetryStrategy(
     private val maxDelayMs: Long = 30_000
 ) {
     private val logger = getLogger(this)
-    
+
     /**
      * Determine if an error should trigger a retry.
      */
@@ -44,10 +44,10 @@ class RetryStrategy(
             else -> false
         }
     }
-    
+
     /**
      * Calculate retry delay with exponential backoff and jitter.
-     * 
+     *
      * @param attempt Current attempt number (0-based)
      * @return Delay in milliseconds
      */
@@ -58,10 +58,10 @@ class RetryStrategy(
         val withJitter = baseExp * (1.0 + jitterPercent)
         return min(withJitter.toLong(), maxDelayMs)
     }
-    
+
     /**
      * Execute an action with retry logic.
-     * 
+     *
      * @param action The suspending action to execute
      * @param onRetry Optional callback invoked before each retry (receives attempt number and delay)
      * @param onError Optional callback invoked on each error (receives attempt number and error)
@@ -74,14 +74,14 @@ class RetryStrategy(
         onError: ((attempt: Int, error: Throwable) -> Unit)? = null
     ): T {
         var lastError: Throwable? = null
-        
+
         for (attempt in 0..maxRetries) {
             try {
                 return action()
             } catch (e: Exception) {
                 lastError = e
                 onError?.invoke(attempt, e)
-                
+
                 if (shouldRetry(e) && attempt < maxRetries) {
                     val delayMs = calculateDelay(attempt)
                     logger.info(
@@ -95,10 +95,10 @@ class RetryStrategy(
                 }
             }
         }
-        
+
         throw lastError ?: IllegalStateException("Retry loop completed without result or error")
     }
-    
+
     /**
      * Classify an exception into a PerceptiveAgentError type for better handling.
      */
@@ -111,19 +111,19 @@ class RetryStrategy(
             is UnknownHostException -> PerceptiveAgentError.TransientError("🔄 DNS resolution failed: $context", error)
             is IOException -> {
                 when {
-                    error.message?.contains("connection") == true -> 
+                    error.message?.contains("connection") == true ->
                         PerceptiveAgentError.TransientError("🔄 Connection issue: $context", error)
-                    error.message?.contains("timeout") == true -> 
+                    error.message?.contains("timeout") == true ->
                         PerceptiveAgentError.TimeoutError("⏳ Network timeout: $context", error)
-                    else -> 
+                    else ->
                         PerceptiveAgentError.TransientError("🔄 IO error: $context - ${error.message}", error)
                 }
             }
-            is IllegalArgumentException -> 
+            is IllegalArgumentException ->
                 PerceptiveAgentError.ValidationError("🚫 Validation error: $context - ${error.message}", error)
-            is IllegalStateException -> 
+            is IllegalStateException ->
                 PerceptiveAgentError.PermanentError("🛑 Invalid state: $context - ${error.message}", error)
-            else -> 
+            else ->
                 PerceptiveAgentError.TransientError("💥 Unexpected error: $context - ${error.message}", error)
         }
     }

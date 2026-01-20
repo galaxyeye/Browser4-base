@@ -1,10 +1,15 @@
-package ai.platon.pulsar.agentic.ai.tta
+package ai.platon.pulsar.agentic.inference.tta
 
-import ai.platon.pulsar.agentic.ai.AgentMessageList
-import ai.platon.pulsar.agentic.ai.PromptBuilder.Companion.SINGLE_ACTION_GENERATION_PROMPT
-import ai.platon.pulsar.agentic.ai.PromptBuilder.Companion.buildObserveResultSchema
 import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.pulsar.agentic.ActionDescription
+import ai.platon.pulsar.agentic.AgentState
+import ai.platon.pulsar.agentic.ObserveElement
+import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.inference.AgentMessageList
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_ACTION_GENERATION_PROMPT
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveResultSchema
+import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.Strings
@@ -15,11 +20,6 @@ import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.external.BrowserChatModel
 import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.external.ModelResponse
-import ai.platon.pulsar.agentic.ActionDescription
-import ai.platon.pulsar.agentic.AgentState
-import ai.platon.pulsar.agentic.ObserveElement
-import ai.platon.pulsar.agentic.ToolCall
-import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

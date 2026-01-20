@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.ai
+package ai.platon.pulsar.agentic.inference
 
 data class SimpleMessage(
     val role: String,

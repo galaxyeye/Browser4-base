@@ -1,18 +1,21 @@
-package ai.platon.pulsar.agentic.ai.agent
+package ai.platon.pulsar.agentic.inference.agent
 
-import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.ai.AgentMessageList
-import ai.platon.pulsar.agentic.ai.PromptBuilder
-import ai.platon.pulsar.agentic.ai.SimpleMessage
-import ai.platon.pulsar.agentic.ai.agent.detail.ExecutionContext
-import ai.platon.pulsar.agentic.ai.tta.ContextToAction
 import ai.platon.browser4.driver.chrome.dom.DomService
-import ai.platon.pulsar.common.*
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
-import ai.platon.pulsar.external.BrowserChatModel
 import ai.platon.pulsar.agentic.ActionDescription
 import ai.platon.pulsar.agentic.AgentState
+import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.ExtractionSchema
+import ai.platon.pulsar.agentic.inference.AgentMessageList
+import ai.platon.pulsar.agentic.inference.PromptBuilder
+import ai.platon.pulsar.agentic.inference.SimpleMessage
+import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.inference.tta.ContextToAction
+import ai.platon.pulsar.common.AppPaths
+import ai.platon.pulsar.common.DateTimes
+import ai.platon.pulsar.common.MessageWriter
+import ai.platon.pulsar.common.Strings
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
+import ai.platon.pulsar.external.BrowserChatModel
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -25,6 +28,8 @@ import dev.langchain4j.model.chat.request.ChatRequest
 import dev.langchain4j.model.chat.response.ChatResponse
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.time.Instant
 import java.util.*
 
@@ -54,11 +59,11 @@ class InferenceEngine(
     private val session: AgenticSession,
     private val chatModel: BrowserChatModel,
 ) {
-    private val logger = getLogger(this)
     private val promptBuilder = PromptBuilder()
 
     // Reuse a single ObjectMapper for JSON parsing within this class
     private val mapper = ObjectMapper()
+
     private val cta = ContextToAction(session.sessionConfig)
     private val auxLogDir: Path get() = AppPaths.detectAuxiliaryLogDir().resolve("agent")
 
@@ -296,23 +301,63 @@ class InferenceEngine(
     private fun writeAuxLog(
         prefix: String, kind: String, timestamp: String, payload: Any
     ): Path {
-        val path = auxLogDir.resolve(prefix).resolve("${kind}_$timestamp.txt")
-        val content = runCatching { prettyPulsarObjectMapper().writeValueAsString(payload) }
-            .getOrNull() ?: payload
+        val dir = auxLogDir.resolve(prefix)
+        Files.createDirectories(dir)
+
+        val path = dir.resolve("${kind}_$timestamp.txt")
+        val content: Any = runCatching { prettyPulsarObjectMapper().writeValueAsString(payload) }
+            .getOrNull() ?: payload.toString()
         MessageWriter.writeOnce(path, content)
         return path
     }
 
     private fun appendSummaryToFile(prefix: String, entry: Map<String, Any?>) {
+        Files.createDirectories(auxLogDir)
+
+        // Use a file lock to avoid concurrent writes corrupting the JSON array.
         val file = auxLogDir.resolve("${prefix}_summary.json")
-        val mapper = ObjectMapper()
-        val current: ArrayNode = if (Files.exists(file)) {
-            runCatching { mapper.readTree(Files.readAllBytes(file)) as? ArrayNode }
-                .getOrNull() ?: JsonNodeFactory.instance.arrayNode()
-        } else JsonNodeFactory.instance.arrayNode()
+        Files.createDirectories(file.parent)
+
+        val lockFile = auxLogDir.resolve("${prefix}_summary.json.lock")
+        val tempFile = Files.createTempFile(auxLogDir, "${prefix}_summary_", ".json")
+
+        // Serialize entry using the same mapper as reading.
         val entryNode: JsonNode = mapper.valueToTree(entry)
-        current.add(entryNode)
-        Files.write(file, prettyPulsarObjectMapper().writeValueAsBytes(current))
+
+        // Poor-man's cross-OS lock: create a lock file exclusively; retry briefly if contended.
+        var lockAcquired = false
+        repeat(50) {
+            lockAcquired = runCatching {
+                Files.createFile(lockFile)
+                true
+            }.getOrElse { false }
+            if (lockAcquired) return@repeat
+            Thread.sleep(10)
+        }
+
+        if (!lockAcquired) {
+            // If we can't acquire the lock, don't fail the caller; just skip summary append.
+            return
+        }
+
+        try {
+            val current: ArrayNode = if (Files.exists(file)) {
+                runCatching { mapper.readTree(Files.readAllBytes(file)) as? ArrayNode }
+                    .getOrNull() ?: JsonNodeFactory.instance.arrayNode()
+            } else JsonNodeFactory.instance.arrayNode()
+
+            current.add(entryNode)
+            Files.write(
+                tempFile,
+                prettyPulsarObjectMapper().writeValueAsBytes(current),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+            )
+            Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        } finally {
+            runCatching { Files.deleteIfExists(lockFile) }
+            runCatching { Files.deleteIfExists(tempFile) }
+        }
     }
 
     // ------------------------------ Small utilities --------------------------------

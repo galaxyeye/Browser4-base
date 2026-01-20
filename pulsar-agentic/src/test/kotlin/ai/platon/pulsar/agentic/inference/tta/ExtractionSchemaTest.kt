@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.ai.tta
+package ai.platon.pulsar.agentic.inference.tta
 
 import ai.platon.pulsar.agentic.ExtractionField
 import ai.platon.pulsar.agentic.ExtractionSchema
