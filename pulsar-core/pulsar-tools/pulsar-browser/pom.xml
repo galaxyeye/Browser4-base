@@ -17,11 +17,15 @@
             <artifactId>pulsar-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>ai.platon.cdt</groupId>
+            <artifactId>cdt-kotlin-client</artifactId>
+            <version>${cdt-kotlin-client.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
         </dependency>
-
-
 
         <!-- Ktor client for coroutine-friendly WebSocket transport -->
         <dependency>
@@ -91,5 +95,6 @@
         <tyrus.version>1.13.1</tyrus.version>
         <!-- Reflect, org.javassist:javassist, required by ProxyClasses -->
         <javassist.version>3.30.2-GA</javassist.version>
+        <cdt-kotlin-client.version>4.0.0</cdt-kotlin-client.version>
     </properties>
 </project>

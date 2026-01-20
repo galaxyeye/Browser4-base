@@ -1,8 +1,8 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
-import ai.platon.pulsar.browser.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NetworkResourceResponse
 import ai.platon.pulsar.browser.driver.chrome.dom.model.NanoDOMTree
-import ai.platon.pulsar.browser.driver.chrome.impl.ChromeImpl
+import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.pulsar.common.NotSupportedException
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.getLogger

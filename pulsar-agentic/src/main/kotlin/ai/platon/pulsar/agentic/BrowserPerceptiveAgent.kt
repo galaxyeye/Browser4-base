@@ -3,7 +3,7 @@ package ai.platon.pulsar.agentic
 import ai.platon.pulsar.agentic.ai.agent.detail.*
 import ai.platon.pulsar.agentic.ai.todo.ToDoManager
 import ai.platon.pulsar.agentic.tools.ActionValidator
-import ai.platon.pulsar.browser.driver.chrome.dom.util.DomDebug
+import ai.platon.browser4.driver.chrome.dom.util.DomDebug
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.config.AppConstants

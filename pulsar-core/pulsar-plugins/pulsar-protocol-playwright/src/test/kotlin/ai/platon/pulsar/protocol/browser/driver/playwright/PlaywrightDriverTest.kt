@@ -1,7 +1,7 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
-import ai.platon.pulsar.browser.driver.chrome.common.ChromeOptions
-import ai.platon.pulsar.browser.driver.chrome.common.LauncherOptions
+import ai.platon.browser4.driver.chrome.common.ChromeOptions
+import ai.platon.browser4.driver.chrome.common.LauncherOptions
 import ai.platon.pulsar.common.Runtimes
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.IllegalWebDriverStateException

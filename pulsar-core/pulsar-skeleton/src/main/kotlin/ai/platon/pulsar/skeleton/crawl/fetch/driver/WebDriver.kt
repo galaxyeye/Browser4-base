@@ -1,7 +1,7 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.pulsar.browser.common.BrowserSettings
-import ai.platon.pulsar.browser.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NetworkResourceResponse
 import ai.platon.pulsar.browser.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.browser.BrowserType

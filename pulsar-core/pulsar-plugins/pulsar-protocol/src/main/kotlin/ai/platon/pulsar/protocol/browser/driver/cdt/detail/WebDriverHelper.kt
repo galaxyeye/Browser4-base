@@ -5,9 +5,9 @@ import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
 import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
-import ai.platon.pulsar.browser.driver.chrome.NodeRef
-import ai.platon.pulsar.browser.driver.chrome.PageHandler
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeDriverException
+import ai.platon.browser4.driver.chrome.NodeRef
+import ai.platon.browser4.driver.chrome.PageHandler
+import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.warnInterruptible

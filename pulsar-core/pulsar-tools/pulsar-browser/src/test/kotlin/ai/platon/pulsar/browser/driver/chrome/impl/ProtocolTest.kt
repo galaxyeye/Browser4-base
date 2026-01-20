@@ -19,6 +19,7 @@
  */
 package ai.platon.pulsar.browser.driver.chrome.impl
 
+import ai.platon.browser4.driver.chrome.impl.EventDispatcher
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.pulsar.common.ResourceLoader
 import org.junit.jupiter.api.Assertions

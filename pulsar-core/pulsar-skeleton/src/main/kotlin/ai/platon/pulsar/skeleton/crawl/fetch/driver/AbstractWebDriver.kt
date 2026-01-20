@@ -1,6 +1,6 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
-import ai.platon.pulsar.browser.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NetworkResourceResponse
 import ai.platon.pulsar.browser.driver.chrome.dom.DomService
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.urls.Hyperlink
@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.random.Random
-import kotlin.random.nextInt
 
 @Suppress("unused")
 abstract class AbstractWebDriver(

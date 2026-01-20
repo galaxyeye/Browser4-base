@@ -1,7 +1,7 @@
 package ai.platon.pulsar.browser
 
 import ai.platon.pulsar.WebDriverTestBase
-import ai.platon.pulsar.browser.driver.chrome.RemoteDevTools
+import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
 import ai.platon.pulsar.common.printlnPro

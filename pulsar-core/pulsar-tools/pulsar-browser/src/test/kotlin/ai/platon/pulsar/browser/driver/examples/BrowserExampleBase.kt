@@ -20,9 +20,9 @@
 package ai.platon.pulsar.browser.driver.examples
 
 import ai.platon.pulsar.browser.common.BrowserSettings
-import ai.platon.pulsar.browser.driver.chrome.ChromeLauncher
-import ai.platon.pulsar.browser.driver.chrome.DevToolsConfig
-import ai.platon.pulsar.browser.driver.chrome.common.ChromeOptions
+import ai.platon.browser4.driver.chrome.ChromeLauncher
+import ai.platon.browser4.driver.chrome.DevToolsConfig
+import ai.platon.browser4.driver.chrome.common.ChromeOptions
 import ai.platon.pulsar.common.browser.BrowserFiles
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory

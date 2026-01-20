@@ -3,12 +3,11 @@ package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 import ai.platon.cdt.kt.protocol.events.fetch.AuthRequired
 import ai.platon.cdt.kt.protocol.events.fetch.RequestPaused
 import ai.platon.cdt.kt.protocol.events.network.*
-import ai.platon.cdt.kt.protocol.events.page.FrameNavigated
 import ai.platon.cdt.kt.protocol.types.fetch.AuthChallengeResponse
 import ai.platon.cdt.kt.protocol.types.fetch.AuthChallengeResponseResponse
 import ai.platon.cdt.kt.protocol.types.fetch.RequestPattern
 import ai.platon.cdt.kt.protocol.types.network.Response
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeRPCException
+import ai.platon.browser4.driver.chrome.util.ChromeRPCException
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.event.AbstractEventEmitter
 import ai.platon.pulsar.common.getLogger

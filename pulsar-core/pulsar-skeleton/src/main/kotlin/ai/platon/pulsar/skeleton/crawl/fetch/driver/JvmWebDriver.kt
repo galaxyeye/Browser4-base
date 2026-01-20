@@ -1,6 +1,6 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
-import ai.platon.pulsar.browser.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NetworkResourceResponse
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
 import org.jsoup.Connection
