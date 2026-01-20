@@ -43,17 +43,11 @@ class WebDriver(
     val client: PulsarClient
 ) {
     private var _id: Int = 0
-    private val _navigateHistory: MutableList<String> = mutableListOf()
 
     /**
      * Gets the driver ID.
      */
     val id: Int get() = _id
-
-    /**
-     * Gets the navigation history.
-     */
-    val navigateHistory: List<String> get() = _navigateHistory.toList()
 
     // ========== Navigation ==========
 
@@ -64,6 +58,7 @@ class WebDriver(
      */
     suspend fun open(url: String) {
         navigateTo(url)
+        waitForNavigation()
     }
 
     /**
@@ -73,9 +68,7 @@ class WebDriver(
      * @return Navigation result
      */
     suspend fun navigateTo(url: String): Any? {
-        val result = client.post("/session/{sessionId}/url", mapOf("url" to url))
-        _navigateHistory.add(url)
-        return result
+        return client.post("/session/{sessionId}/url", mapOf("url" to url))
     }
 
     /**
@@ -270,8 +263,7 @@ class WebDriver(
      * @return True if navigation completed
      */
     suspend fun waitForNavigation(oldUrl: String = "", timeout: Int = 30000): Boolean {
-        // Simple implementation using delay
-        kotlinx.coroutines.delay(minOf(timeout, 1000).toLong())
+        client.post("/session/{sessionId}/control/delay", mapOf("ms" to minOf(timeout, 1000)))
         return true
     }
 

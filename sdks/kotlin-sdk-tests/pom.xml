@@ -18,8 +18,6 @@
     </parent>
 
     <artifactId>kotlin-sdk-tests</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
 
     <name>Browser4 Kotlin SDK Integration Tests</name>
     <description>Integration tests for Kotlin SDK with real server</description>

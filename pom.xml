@@ -144,7 +144,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
-                <module>sdks/kotlin-sdk</module>
+                <module>sdks/browser4-sdk-kotlin</module>
                 <module>sdks/kotlin-sdk-tests</module>
             </modules>
         </profile>
