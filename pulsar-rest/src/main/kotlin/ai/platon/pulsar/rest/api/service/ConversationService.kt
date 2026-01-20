@@ -6,12 +6,12 @@ import ai.platon.pulsar.common.ai.llm.PromptTemplateLoader
 import ai.platon.pulsar.common.serialize.json.JSONExtractor
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
-import ai.platon.pulsar.rest.api.common.*
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
 import ai.platon.pulsar.rest.api.entities.PromptRequest
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.session.PulsarSession
+import ai.platon.pulsar.tools.crawl.common.*
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.stereotype.Service
 
@@ -20,7 +20,6 @@ class ConversationService(
     val session: PulsarSession,
     val loadService: LoadService,
 ) {
-
     suspend fun chat(prompt: String): String {
         return session.chat(prompt).content
     }
@@ -101,7 +100,8 @@ class ConversationService(
 
     val resource = "prompts/api/request/command/convert_response_to_markdown_prompt.md"
     suspend fun convertResponseToMarkdown(jsonResponse: String): String {
-        val userMessage = PromptTemplateLoader(resource,
+        val userMessage = PromptTemplateLoader(
+            resource,
             CONVERT_RESPONSE_TO_MARKDOWN_PROMPT,
             mapOf(PLACEHOLDER_JSON_STRING to jsonResponse)
         ).load().render()

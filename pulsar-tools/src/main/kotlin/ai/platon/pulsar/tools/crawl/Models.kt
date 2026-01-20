@@ -10,35 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 import java.util.*
 
-/**
- * Request for chat
- *
- * @property url The page url
- * @property prompt The prompt, e.g. "Tell me something about the page"
- * @property args The load arguments
- * @property actions Instructs, e.g. "click the button with id 'submit'", [actions]  are performed after the active DOM is ready
- * */
-data class PromptRequest(
-    /**
-     * The page url
-     * */
-    var url: String,
-    /**
-     * The prompt, e.g. "Tell me something about the page"
-     * */
-    var prompt: String? = null,
-    /**
-     * The load arguments
-     *
-     * @see [LoadOptions]
-     * */
-    var args: String? = null,
-    /**
-     * Actions, e.g. "click the button with id 'submit'", [actions] are performed after the active DOM is ready
-     * */
-    var actions: List<String>? = null
-)
-
 data class ScrapeRequest(
     var sql: String,
 )
@@ -190,7 +161,7 @@ data class PageVisitResult(
  * @property resultType The json type of the result, e.g. "string", "number", "boolean", "array", "object".
  * @property instruct The instruction text.
  * */
-data class InstructResult @JsonCreator constructor(
+data class PGInstructResult @JsonCreator constructor(
     @param:JsonProperty("name") var name: String,
     @param:JsonProperty("statusCode") var statusCode: Int = ResourceStatus.SC_CREATED,
     @param:JsonProperty("result") var result: Any? = null,
@@ -199,12 +170,12 @@ data class InstructResult @JsonCreator constructor(
 ) {
     companion object {
 
-        fun ok(name: String, result: Any, resultType: String = "string"): InstructResult {
-            return InstructResult(name, ResourceStatus.SC_OK, result = result, resultType = resultType)
+        fun ok(name: String, result: Any, resultType: String = "string"): PGInstructResult {
+            return PGInstructResult(name, ResourceStatus.SC_OK, result = result, resultType = resultType)
         }
 
-        fun failed(name: String, statusCode: Int = ResourceStatus.SC_EXPECTATION_FAILED): InstructResult {
-            return InstructResult(name, statusCode)
+        fun failed(name: String, statusCode: Int = ResourceStatus.SC_EXPECTATION_FAILED): PGInstructResult {
+            return PGInstructResult(name, statusCode)
         }
     }
 }
@@ -237,7 +208,7 @@ data class PageVisitStatus(
 
     var request: PageVisitRequest? = null,
     var pageVisitResult: PageVisitResult? = null,
-    var instructResults: MutableList<InstructResult> = mutableListOf()
+    var instructResults: MutableList<PGInstructResult> = mutableListOf()
 ) {
     val status: String get() = ResourceStatus.getStatusText(statusCode)
     var lastModifiedTime: Instant? = null
@@ -305,7 +276,7 @@ fun PageVisitStatus.failed(statusCode: Int, pageStatusCode: Int): PageVisitStatu
     return this
 }
 
-fun PageVisitStatus.addInstructResult(result: InstructResult) {
+fun PageVisitStatus.addInstructResult(result: PGInstructResult) {
     instructResults.add(result)
 
     val name = result.name
@@ -337,11 +308,3 @@ fun PageVisitStatus.refreshed(lastModifiedTime: Instant): Boolean {
     val modifiedTime = this.lastModifiedTime ?: return false
     return modifiedTime > lastModifiedTime
 }
-
-data class NavigateRequest(
-    var url: String,
-)
-
-data class ScreenshotRequest(
-    var id: String
-)

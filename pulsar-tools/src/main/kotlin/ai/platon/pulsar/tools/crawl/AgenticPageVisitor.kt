@@ -22,29 +22,31 @@ import ai.platon.pulsar.tools.crawl.common.PLACEHOLDER_PAGE_CONTENT
 import ai.platon.pulsar.tools.crawl.common.RestAPIPromptUtils
 import ai.platon.pulsar.tools.crawl.common.ScrapeAPIUtils
 import ai.platon.pulsar.tools.crawl.service.ScrapeService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.Executors
 import kotlin.io.path.writeText
 
 class AgenticPageVisitor(
     val session: AgenticSession,
-    val scrapeService: ScrapeService,
 ) : Closeable {
+    private val logger = getLogger(AgenticPageVisitor::class)
+
+    private val scrapeService = ScrapeService(session)
+
     // TODO: use ehcache
     private val commandStatusCache = ConcurrentSkipListMap<String, PageVisitStatus>()
 
     // Create a dedicated dispatcher for long-running command operations
-    private val crawlerExecutor = Executors.newFixedThreadPool(10)
-    private val commandDispatcher = crawlerExecutor.asCoroutineDispatcher()
-
-    private val commanderScope: CoroutineScope = CoroutineScope(
-        commandDispatcher + SupervisorJob() + CoroutineName("commander")
-    )
-
-    private val logger = getLogger(AgenticPageVisitor::class)
+//    private val crawlerExecutor = Executors.newFixedThreadPool(10)
+//    private val commandDispatcher = crawlerExecutor.asCoroutineDispatcher()
+//
+//    private val commanderScope: CoroutineScope = CoroutineScope(
+//        commandDispatcher + SupervisorJob() + CoroutineName("commander")
+//    )
 
     /**
      * Executes a page-visit command.
@@ -59,11 +61,11 @@ class AgenticPageVisitor(
         return status
     }
 
-    fun submitAsync(request: PageVisitRequest, eventHandlers: PageEventHandlers): String {
-        val status = createCachedCommandStatus(request)
-        commanderScope.launch { executeCommand(request, status, eventHandlers) }
-        return status.id
-    }
+//    fun submitAsync(request: PageVisitRequest, eventHandlers: PageEventHandlers): String {
+//        val status = createCachedCommandStatus(request)
+//        commanderScope.launch { executeCommand(request, status, eventHandlers) }
+//        return status.id
+//    }
 
     fun getStatus(id: String) = commandStatusCache[id]
 
@@ -265,7 +267,7 @@ class AgenticPageVisitor(
 
             val uris = allURIs.filter { it.matches(regex) }
             if (uris.isNotEmpty()) {
-                val result = InstructResult.ok("links", uris, "list")
+                val result = PGInstructResult.ok("links", uris, "list")
                 status.addInstructResult(result)
             }
 
@@ -279,7 +281,7 @@ class AgenticPageVisitor(
         mappingFunction: (String) -> Any = { it.trim() }
     ) {
         val content = chatWithLLM(instruct)
-        val result = InstructResult.ok(name, mappingFunction(content), resultType)
+        val result = PGInstructResult.ok(name, mappingFunction(content), resultType)
         status.addInstructResult(result)
     }
 
@@ -308,8 +310,8 @@ class AgenticPageVisitor(
 
     override fun close() {
         // Make best effort to stop in-flight tasks and release the backing threads.
-        commanderScope.cancel("AgenticPageVisitor is closed")
-        crawlerExecutor.shutdownNow()
-        commandDispatcher.close()
+//        commanderScope.cancel("AgenticPageVisitor is closed")
+//        crawlerExecutor.shutdownNow()
+//        commandDispatcher.close()
     }
 }
