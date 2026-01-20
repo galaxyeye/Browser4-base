@@ -6,8 +6,8 @@ on:
     paths:
       - 'docs/**'
       - '*.md'
-      - 'devdocs/**'
-  
+      - '../../dev-docs/**'
+
   # Run on push to main branches
   push:
     branches:
@@ -16,8 +16,8 @@ on:
     paths:
       - 'docs/**'
       - '*.md'
-      - 'devdocs/**'
-  
+      - '../../dev-docs/**'
+
   # Allow manual trigger
   workflow_dispatch:
 
@@ -28,33 +28,33 @@ on:
 jobs:
   check-links:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
-      
+
       - name: Check documentation links
         id: link_check
         continue-on-error: true
         run: |
           ./bin/quality/check-links.sh
-      
+
       - name: Check documentation links (skip external)
         if: steps.link_check.outcome == 'failure'
         run: |
           echo "⚠️ Full link check failed. Running internal-only check..."
           ./bin/quality/check-links.sh --skip-external
-      
+
       - name: Report results
         if: always()
         run: |
