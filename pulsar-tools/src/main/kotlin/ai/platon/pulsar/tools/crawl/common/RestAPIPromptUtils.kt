@@ -1,9 +1,10 @@
 package ai.platon.pulsar.tools.crawl.common
 
 import ai.platon.pulsar.common.ai.llm.PromptTemplateLoader
-import ai.platon.pulsar.rest.api.service.CommandService.Companion.MIN_USER_MESSAGE_LENGTH
 
 object RestAPIPromptUtils {
+
+    const val MIN_USER_MESSAGE_LENGTH = 2
 
     fun normalizePageSummaryPrompt(message: String?): String? {
         val message2 = normalizeUserMessage(message) ?: return null

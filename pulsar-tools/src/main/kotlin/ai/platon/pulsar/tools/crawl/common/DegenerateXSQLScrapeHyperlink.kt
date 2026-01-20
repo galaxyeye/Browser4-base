@@ -2,13 +2,13 @@ package ai.platon.pulsar.tools.crawl.common
 
 import ai.platon.pulsar.common.urls.DegenerateUrl
 import ai.platon.pulsar.common.warnUnexpected
-import ai.platon.pulsar.crawl.ScrapeRequest
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.persist.model.GoraWebPage
 import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.DefaultPageEventHandlers
 import ai.platon.pulsar.skeleton.session.PulsarSession
+import ai.platon.pulsar.tools.crawl.ScrapeRequest
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -20,6 +20,7 @@ open class DegenerateXSQLScrapeHyperlink(
     session: PulsarSession,
     uuid: String = UUID.randomUUID().toString(),
 ) : AbstractScrapeHyperlink(request, DegenerateXSQL(uuid, sql = request.sql), session, uuid), DegenerateUrl {
+
     private val logger = LoggerFactory.getLogger(DegenerateXSQLScrapeHyperlink::class.java)
     override var args: String? = "-taskId $uuid ${sql.args}"
     override var eventHandlers: PageEventHandlers = createPageEventHandlers()
