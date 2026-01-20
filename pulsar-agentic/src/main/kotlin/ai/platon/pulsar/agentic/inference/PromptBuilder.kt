@@ -4,9 +4,7 @@ import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
 import ai.platon.pulsar.agentic.AgentHistory
 import ai.platon.pulsar.agentic.AgentState
-import ai.platon.pulsar.agentic.inference.agent.ExtractParams
-import ai.platon.pulsar.agentic.inference.agent.ObserveParams
-import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.KStrings
 import ai.platon.pulsar.common.Strings

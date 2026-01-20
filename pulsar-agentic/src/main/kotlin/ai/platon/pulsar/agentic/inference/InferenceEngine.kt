@@ -1,14 +1,11 @@
-package ai.platon.pulsar.agentic.inference.agent
+package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.pulsar.agentic.ActionDescription
 import ai.platon.pulsar.agentic.AgentState
 import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.ExtractionSchema
-import ai.platon.pulsar.agentic.inference.AgentMessageList
-import ai.platon.pulsar.agentic.inference.PromptBuilder
-import ai.platon.pulsar.agentic.inference.SimpleMessage
-import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.agentic.inference.tta.ContextToAction
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.DateTimes

@@ -2,7 +2,7 @@ package ai.platon.pulsar.app.api.controller
 
 import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.context.QLAgenticContext
-import ai.platon.pulsar.agentic.inference.agent.detail.ActResultHelper
+import ai.platon.pulsar.agentic.inference.detail.ActResultHelper
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.ResourceStatus.SC_INTERNAL_SERVER_ERROR
 import ai.platon.pulsar.common.getLogger

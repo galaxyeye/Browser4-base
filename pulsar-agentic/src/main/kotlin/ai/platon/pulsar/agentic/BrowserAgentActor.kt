@@ -1,11 +1,11 @@
 package ai.platon.pulsar.agentic
 
+import ai.platon.pulsar.agentic.inference.InferenceEngine
 import ai.platon.pulsar.agentic.inference.PromptBuilder
-import ai.platon.pulsar.agentic.inference.agent.InferenceEngine
-import ai.platon.pulsar.agentic.inference.agent.detail.ActResultHelper
-import ai.platon.pulsar.agentic.inference.agent.detail.AgentStateManager
-import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
-import ai.platon.pulsar.agentic.inference.agent.detail.PageStateTracker
+import ai.platon.pulsar.agentic.inference.detail.ActResultHelper
+import ai.platon.pulsar.agentic.inference.detail.AgentStateManager
+import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
+import ai.platon.pulsar.agentic.inference.detail.PageStateTracker
 import ai.platon.pulsar.agentic.inference.tta.ContextToAction
 import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
 import ai.platon.pulsar.agentic.skills.SkillContext

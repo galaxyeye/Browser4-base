@@ -1,8 +1,8 @@
-package ai.platon.pulsar.agentic.inference.agent.detail
+package ai.platon.pulsar.agentic.inference.detail
 
 import ai.platon.pulsar.agentic.*
-import ai.platon.pulsar.agentic.inference.agent.ExtractParams
-import ai.platon.pulsar.agentic.inference.agent.ObserveParams
+import ai.platon.pulsar.agentic.inference.ExtractParams
+import ai.platon.pulsar.agentic.inference.ObserveParams
 import ai.platon.pulsar.common.Strings
 import java.lang.ref.WeakReference
 import java.time.Instant

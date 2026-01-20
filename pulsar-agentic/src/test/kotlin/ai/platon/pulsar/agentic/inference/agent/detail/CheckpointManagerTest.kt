@@ -1,5 +1,8 @@
 package ai.platon.pulsar.agentic.inference.agent.detail
 
+import ai.platon.pulsar.agentic.inference.detail.AgentCheckpoint
+import ai.platon.pulsar.agentic.inference.detail.AgentStateSnapshot
+import ai.platon.pulsar.agentic.inference.detail.CheckpointManager
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

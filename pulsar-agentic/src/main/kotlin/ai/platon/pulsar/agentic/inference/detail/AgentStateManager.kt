@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.inference.agent.detail
+package ai.platon.pulsar.agentic.inference.detail
 
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions

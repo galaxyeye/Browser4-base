@@ -2,7 +2,7 @@ package ai.platon.pulsar.agentic.inference.tta
 
 import ai.platon.pulsar.agentic.ActionDescription
 import ai.platon.pulsar.agentic.inference.AgentMessageList
-import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.brief

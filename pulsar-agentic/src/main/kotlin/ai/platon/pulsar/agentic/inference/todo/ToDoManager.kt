@@ -4,7 +4,7 @@ import ai.platon.pulsar.agentic.AgentConfig
 import ai.platon.pulsar.agentic.ObserveElement
 import ai.platon.pulsar.agentic.ToolCall
 import ai.platon.pulsar.agentic.common.AgentFileSystem
-import ai.platon.pulsar.agentic.inference.agent.detail.StructuredAgentLogger
+import ai.platon.pulsar.agentic.inference.detail.StructuredAgentLogger
 import ai.platon.pulsar.common.Strings
 import java.time.Instant
 import java.time.LocalDateTime

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic
 
-import ai.platon.pulsar.agentic.inference.agent.detail.ExecutionContext
+import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
 

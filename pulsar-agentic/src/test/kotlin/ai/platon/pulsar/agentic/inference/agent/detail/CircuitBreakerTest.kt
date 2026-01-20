@@ -1,5 +1,7 @@
 package ai.platon.pulsar.agentic.inference.agent.detail
 
+import ai.platon.pulsar.agentic.inference.detail.CircuitBreaker
+import ai.platon.pulsar.agentic.inference.detail.CircuitBreakerTrippedException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
