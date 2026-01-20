@@ -58,6 +58,7 @@ jobs:
         uses: ./.github/actions/run-tests
         with:
           # Run all tests in this nightly build, do not exclude any
+          maven_profiles: 'all-modules'
           # test_excludes: '**integration**,**e2e**'
           timeout_minutes: '35'
 

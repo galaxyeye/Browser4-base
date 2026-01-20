@@ -334,7 +334,7 @@ class CommandService(
         }
     }
 
-    private fun PGInstructResult.toRestInstructResultOrNull(): InstructResult? {
+    private fun PGInstructResult.toRestInstructResultOrNull(): InstructResult {
         // Keep naming aligned to REST API conventions.
         val t = resultType ?: "string"
         return InstructResult.ok(name, result ?: "", t)

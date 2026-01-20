@@ -133,7 +133,7 @@ jobs:
             SKIP_TESTS_FLAG="-DskipTests"
           else
             # Enable pulsar-tests module tests for release builds
-            SKIP_TESTS_FLAG="-DrunITs=true"
+            SKIP_TESTS_FLAG="-Ptests"
           fi
 
           ./mvnw clean install $SKIP_TESTS_FLAG --batch-mode --show-version
