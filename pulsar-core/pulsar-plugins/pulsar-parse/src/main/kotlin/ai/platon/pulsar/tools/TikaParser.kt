@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ai.platon.pulsar.parse.tika
+package ai.platon.pulsar.tools
 
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.CapabilityTypes
@@ -24,12 +24,13 @@ import ai.platon.pulsar.persist.metadata.ParseStatusCodes
 import ai.platon.pulsar.skeleton.crawl.parse.ParseFilters
 import ai.platon.pulsar.skeleton.crawl.parse.ParseResult
 import ai.platon.pulsar.skeleton.crawl.parse.Parser
+import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.parser.ParseContext
 import org.apache.tika.sax.BodyContentHandler
 import java.time.Duration
 
-typealias TikaMetadata = org.apache.tika.metadata.Metadata
+typealias TikaMetadata = Metadata
 
 class TikaParser(
     val parseFilters: ParseFilters? = null,

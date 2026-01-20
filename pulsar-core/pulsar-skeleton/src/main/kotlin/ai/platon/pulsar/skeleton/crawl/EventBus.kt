@@ -1,10 +1,10 @@
 package ai.platon.pulsar.skeleton.crawl
 
 import ai.platon.pulsar.persist.WebPage
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import ai.platon.pulsar.skeleton.crawl.EventBus.serverSideEventHandlers
+import ai.platon.pulsar.skeleton.crawl.EventBus.withServerSideEventHandlers
+import kotlinx.coroutines.*
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The global EventBus for handling events.
@@ -22,10 +22,52 @@ object EventBus {
     /**
      * The server-side event handlers for broadcasting events to external listeners.
      *
-     * When set, events from page event handlers will be forwarded to this handler,
-     * which can broadcast them to clients via SSE or other mechanisms.
-     * */
+     * NOTE: kept for backward compatibility as the default handlers.
+     */
     var serverSideEventHandlers: ServerSideEventHandlers? = null
+
+    /**
+     * Per-coroutine override for [serverSideEventHandlers].
+     *
+     * We use ThreadLocal because it works across the existing thread-based execution model.
+     * When used with [withServerSideEventHandlers], it is installed for the duration of the coroutine
+     * context and restored automatically.
+     */
+    private val serverSideEventHandlersTL = ThreadLocal<ServerSideEventHandlers?>()
+
+    private class ServerSideEventHandlersContext(
+        private val handlers: ServerSideEventHandlers?
+    ) : ThreadContextElement<ServerSideEventHandlers?> {
+        companion object Key : CoroutineContext.Key<ServerSideEventHandlersContext>
+
+        override val key: CoroutineContext.Key<ServerSideEventHandlersContext> = Key
+
+        override fun updateThreadContext(context: CoroutineContext): ServerSideEventHandlers? {
+            val previous = serverSideEventHandlersTL.get()
+            serverSideEventHandlersTL.set(handlers)
+            return previous
+        }
+
+        override fun restoreThreadContext(context: CoroutineContext, oldState: ServerSideEventHandlers?) {
+            serverSideEventHandlersTL.set(oldState)
+        }
+    }
+
+    /**
+     * Returns the handlers for the current context (per-coroutine override first, then global fallback).
+     */
+    private fun currentServerSideEventHandlers(): ServerSideEventHandlers? {
+        return serverSideEventHandlersTL.get() ?: serverSideEventHandlers
+    }
+
+    /**
+     * Runs [block] with [handlers] bound to the current coroutine execution context.
+     */
+    suspend fun <T> withServerSideEventHandlers(handlers: ServerSideEventHandlers?, block: suspend () -> T): T {
+        return withContext(ServerSideEventHandlersContext(handlers)) {
+            block()
+        }
+    }
 
     /**
      * Background coroutine scope for non-blocking event emission.
@@ -38,7 +80,7 @@ object EventBus {
      * This method can be called from any thread without blocking.
      */
     fun emitCrawlEvent(eventType: String, url: String? = null, message: String? = null) {
-        serverSideEventHandlers?.let { handlers ->
+        currentServerSideEventHandlers()?.let { handlers ->
             eventScope.launch {
                 handlers.onCrawlEvent(eventType, url, message)
             }
@@ -49,8 +91,13 @@ object EventBus {
      * Emits a load event to server-side event handlers in a non-blocking manner.
      * This method can be called from any thread without blocking.
      */
-    fun emitLoadEvent(eventType: String, page: WebPage, message: String? = null, metadata: Map<String, Any?> = emptyMap()) {
-        serverSideEventHandlers?.let { handlers ->
+    fun emitLoadEvent(
+        eventType: String,
+        page: WebPage,
+        message: String? = null,
+        metadata: Map<String, Any?> = emptyMap()
+    ) {
+        currentServerSideEventHandlers()?.let { handlers ->
             eventScope.launch {
                 handlers.onLoadEvent(eventType, page, message, metadata)
             }
@@ -61,8 +108,13 @@ object EventBus {
      * Emits a browse event to server-side event handlers in a non-blocking manner.
      * This method can be called from any thread without blocking.
      */
-    fun emitBrowseEvent(eventType: String, page: WebPage, message: String? = null, metadata: Map<String, Any?> = emptyMap()) {
-        serverSideEventHandlers?.let { handlers ->
+    fun emitBrowseEvent(
+        eventType: String,
+        page: WebPage,
+        message: String? = null,
+        metadata: Map<String, Any?> = emptyMap()
+    ) {
+        currentServerSideEventHandlers()?.let { handlers ->
             eventScope.launch {
                 handlers.onBrowseEvent(eventType, page, message, metadata)
             }

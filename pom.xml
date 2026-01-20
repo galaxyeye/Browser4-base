@@ -99,6 +99,7 @@
             <modules>
                 <module>pulsar-dependencies</module>
                 <module>pulsar-core</module>
+                <module>pulsar-tools</module>
                 <module>pulsar-agentic</module>
                 <module>pulsar-rest</module>
                 <module>pulsar-bom</module>

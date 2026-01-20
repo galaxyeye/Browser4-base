@@ -49,8 +49,8 @@ class CommandService(
     private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
 
     // Create a dedicated dispatcher for long-running command operations
-    private val scrapingExecutor = Executors.newFixedThreadPool(10)
-    private val commandDispatcher = scrapingExecutor.asCoroutineDispatcher()
+    private val crawlerExecutor = Executors.newFixedThreadPool(10)
+    private val commandDispatcher = crawlerExecutor.asCoroutineDispatcher()
 
     private val commanderScope: CoroutineScope = CoroutineScope(
         commandDispatcher + SupervisorJob() + CoroutineName("commander")

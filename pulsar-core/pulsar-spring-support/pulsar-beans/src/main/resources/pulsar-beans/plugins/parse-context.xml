@@ -13,7 +13,7 @@
         <constructor-arg ref="conf"/>
     </bean>
 
-    <bean id="tikaParser" class="ai.platon.pulsar.parse.tika.TikaParser">
+    <bean id="tikaParser" class="ai.platon.pulsar.tools.TikaParser">
         <constructor-arg ref="parseFilters"/>
         <constructor-arg ref="conf"/>
     </bean>

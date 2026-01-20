@@ -1,7 +1,5 @@
-package ai.platon.pulsar.rest.api.entities
+package ai.platon.pulsar.tools.crawl
 
-import ai.platon.pulsar.agentic.model.AgentHistory
-import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
@@ -113,18 +111,6 @@ fun ScrapeResponse.refreshed(lastModifiedTime: Instant): Boolean {
     return time > lastModifiedTime
 }
 
-data class ScrapeStatusRequest(
-    val id: String,
-)
-
-/**
- * W3 resources
- * */
-data class W3DocumentRequest(
-    var url: String,
-    val args: String? = null,
-)
-
 /**
  * Request for web page interactions with structured data extraction capabilities.
  *
@@ -138,9 +124,8 @@ data class W3DocumentRequest(
  * @property xsql An X-SQL query for structured data extraction, e.g. "select dom_first_text(dom, '#title') as title, llm_extract(dom, 'price') as price".
  * @property richText Whether to retain rich text formatting in the extracted content.
  * @property async If true, the command is executed asynchronous; otherwise, it's synchronously.
- * @property mode The execution mode, either "sync" or "async", default to "sync". (Deprecated: use [async] instead)
  */
-data class CommandRequest @JsonCreator constructor(
+data class PageVisitRequest @JsonCreator constructor(
     @param:JsonProperty("url") var url: String,
     @param:JsonProperty("args") var args: String? = null,
     @param:JsonProperty("onBrowserLaunchedActions") var onBrowserLaunchedActions: List<String>? = null,
@@ -186,7 +171,7 @@ data class CommandRequest @JsonCreator constructor(
  * @property links The extracted links from the page.
  * @property xsqlResultSet The result set from the X-SQL query.
  */
-data class CommandResult(
+data class PageVisitResult(
     var summary: String? = null,
     var pageSummary: String? = null,
 //    var fields: String? = null,
@@ -235,10 +220,10 @@ data class InstructResult @JsonCreator constructor(
  * @property pageContentBytes The size of the page content in bytes.
  * @property message An optional message providing additional information about the command status.
  * @property request The original command request associated with this status.
- * @property commandResult The result of the command execution.
+ * @property pageVisitResult The result of the command execution.
  * @property instructResults A list of results from the instructions executed during the command.
  * */
-data class CommandStatus(
+data class PageVisitStatus(
     val id: String = UUID.randomUUID().toString(),
 
     var statusCode: Int = ResourceStatus.SC_CREATED,
@@ -250,8 +235,8 @@ data class CommandStatus(
 
     var message: String? = null, // additional message, e.g. the action flow
 
-    var request: CommandRequest? = null,
-    var commandResult: CommandResult? = null,
+    var request: PageVisitRequest? = null,
+    var pageVisitResult: PageVisitResult? = null,
     var instructResults: MutableList<InstructResult> = mutableListOf()
 ) {
     val status: String get() = ResourceStatus.getStatusText(statusCode)
@@ -259,21 +244,6 @@ data class CommandStatus(
     var finishTime: Instant? = null
 
     val isDone: Boolean get() = state == "done"
-
-    /**
-     * The agent's state history reference for tracking agent execution progress.
-     * This is set when executing agent commands and provides access to the latest agent state.
-     * It is excluded from JSON serialization as it's only used for internal tracking.
-     */
-    @get:JsonIgnore
-    var agentHistory: AgentHistory? = null
-
-    /**
-     * Returns the current (latest) agent state from the agent history.
-     * This provides real-time access to the agent's execution state during async operations.
-     */
-    val currentAgentState: AgentState?
-        get() = agentHistory?.lastOrNull()
 
     /**
      * The server-side event handlers reference for tracking server-side events during command execution.
@@ -284,58 +254,58 @@ data class CommandStatus(
     var serverSideEventHandlers: ServerSideEventHandlers? = null
 
     companion object {
-        fun notFound(id: String) = CommandStatus(id, ResourceStatus.SC_NOT_FOUND, state = "done")
+        fun notFound(id: String) = PageVisitStatus(id, ResourceStatus.SC_NOT_FOUND, state = "done")
 
-        fun failed(id: String) = CommandStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+        fun failed(id: String) = PageVisitStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
 
         fun failed(id: String, statusCode: Int, pageStatusCode: Int = statusCode) =
-            CommandStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, state = "done")
+            PageVisitStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, state = "done")
 
         fun failed(statusCode: Int, pageStatusCode: Int = statusCode) = failed("", statusCode, pageStatusCode)
 
-        fun failed(id: String, e: Exception): CommandStatus {
-            return CommandStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+        fun failed(id: String, e: Exception): PageVisitStatus {
+            return PageVisitStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
         }
     }
 }
 
-fun CommandStatus.ensureCommandResult(): CommandResult {
-    val r = commandResult ?: CommandResult()
-    commandResult = r
+fun PageVisitStatus.ensureCommandResult(): PageVisitResult {
+    val r = pageVisitResult ?: PageVisitResult()
+    pageVisitResult = r
     return r
 }
 
-fun CommandStatus.refresh(isDone: Boolean = false) {
+fun PageVisitStatus.refresh(isDone: Boolean = false) {
     lastModifiedTime = Instant.now()
     state = "done".takeIf { isDone } ?: "in_progress"
 }
 
-fun CommandStatus.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
+fun PageVisitStatus.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
 
-fun CommandStatus.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolean) {
+fun PageVisitStatus.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolean) {
     lastModifiedTime = Instant.now()
     this.statusCode = statusCode
     this.pageStatusCode = pageStatusCode
     state = "done".takeIf { isDone } ?: "in_progress"
 }
 
-fun CommandStatus.failed(statusCode: Int): CommandStatus {
+fun PageVisitStatus.failed(statusCode: Int): PageVisitStatus {
     // do not change pageStatusCode
     refresh(statusCode, pageStatusCode, isDone = true)
     return this
 }
 
-fun CommandStatus.refresh(event: String) {
+fun PageVisitStatus.refresh(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
 }
 
-fun CommandStatus.failed(statusCode: Int, pageStatusCode: Int): CommandStatus {
+fun PageVisitStatus.failed(statusCode: Int, pageStatusCode: Int): PageVisitStatus {
     refresh(statusCode, pageStatusCode, isDone = true)
     return this
 }
 
-fun CommandStatus.addInstructResult(result: InstructResult) {
+fun PageVisitStatus.addInstructResult(result: InstructResult) {
     instructResults.add(result)
 
     val name = result.name
@@ -358,12 +328,12 @@ fun CommandStatus.addInstructResult(result: InstructResult) {
     refresh(result.name)
 }
 
-fun CommandStatus.done() {
+fun PageVisitStatus.done() {
     refresh(isDone = true)
     finishTime = Instant.now()
 }
 
-fun CommandStatus.refreshed(lastModifiedTime: Instant): Boolean {
+fun PageVisitStatus.refreshed(lastModifiedTime: Instant): Boolean {
     val modifiedTime = this.lastModifiedTime ?: return false
     return modifiedTime > lastModifiedTime
 }

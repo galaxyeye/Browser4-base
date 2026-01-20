@@ -10,7 +10,6 @@ import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
-import java.util.concurrent.Executors
 
 @RestController
 @CrossOrigin

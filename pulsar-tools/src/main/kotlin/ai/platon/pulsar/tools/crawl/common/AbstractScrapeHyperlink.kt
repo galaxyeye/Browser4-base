@@ -1,15 +1,12 @@
-package ai.platon.pulsar.rest.api.common
+package ai.platon.pulsar.tools.crawl.common
 
-import ai.platon.pulsar.common.AppContext
-import ai.platon.pulsar.common.ResourceStatus
-import ai.platon.pulsar.common.brief
-import ai.platon.pulsar.common.getLogger
+import ai.platon.pulsar.common.*
+import ai.platon.pulsar.crawl.ScrapeRequest
+import ai.platon.pulsar.crawl.ScrapeResponse
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.ql.common.ResultSets
 import ai.platon.pulsar.ql.context.AbstractSQLContext
 import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
-import ai.platon.pulsar.rest.api.entities.ScrapeRequest
-import ai.platon.pulsar.rest.api.entities.ScrapeResponse
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.common.url.CompletableListenableHyperlink
 import ai.platon.pulsar.skeleton.session.PulsarSession
