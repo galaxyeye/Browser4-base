@@ -3,14 +3,14 @@
 ## 快速导航 | Quick Navigation
 
 ### 📖 核心文档 | Core Documents
-- **[完整升级计划 (中文)](./dependency-upgrade-plan.md)** - 详细的依赖升级策略、流程和工具
-- **[Upgrade Plan (English)](./dependency-upgrade-plan-en.md)** - Comprehensive upgrade strategy and guidelines
-- **[升级检查清单](./dependency-upgrade-checklist.md)** - 可复用的升级检查清单模板
+- **[完整升级计划 (中文)](dependency-upgrade-plan.md)** - 详细的依赖升级策略、流程和工具
+- **[Upgrade Plan (English)](dependency-upgrade-plan-en.md)** - Comprehensive upgrade strategy and guidelines
+- **[升级检查清单](dependency-upgrade-checklist.md)** - 可复用的升级检查清单模板
 
 ### 🛠️ 工具使用 | Tools
-- **[工具使用指南](../bin/tools/README.md)** - 依赖管理工具的详细使用说明
-- **[健康检查脚本](../bin/tools/check-dependencies.sh)** - 自动化依赖检查脚本
-- **[版本规则配置](../maven-version-rules.xml)** - Maven Versions Plugin 配置
+- **[工具使用指南](../../bin/tools/README.md)** - 依赖管理工具的详细使用说明
+- **[健康检查脚本](../../bin/tools/check-dependencies.sh)** - 自动化依赖检查脚本
+- **[版本规则配置](../../maven-version-rules.xml)** - Maven Versions Plugin 配置
 
 ---
 
@@ -309,10 +309,10 @@ Browser4/
 ## 获取帮助 | Getting Help
 
 ### 📚 文档资源 | Documentation
-- [完整升级计划](./dependency-upgrade-plan.md)
-- [English Version](./dependency-upgrade-plan-en.md)
-- [升级检查清单](./dependency-upgrade-checklist.md)
-- [工具使用指南](../bin/tools/README.md)
+- [完整升级计划](dependency-upgrade-plan.md)
+- [English Version](dependency-upgrade-plan-en.md)
+- [升级检查清单](dependency-upgrade-checklist.md)
+- [工具使用指南](../../bin/tools/README.md)
 
 ### 🔗 外部资源 | External Resources
 - [Maven Versions Plugin](https://www.mojohaus.org/versions-maven-plugin/)
@@ -339,9 +339,9 @@ Browser4/
 
 ---
 
-**维护者**: Browser4 Team  
-**创建日期**: 2026-01-14  
-**最后更新**: 2026-01-14  
+**维护者**: Browser4 Team
+**创建日期**: 2026-01-14
+**最后更新**: 2026-01-14
 **版本**: 1.0.0
 
 ---
@@ -351,11 +351,11 @@ Browser4/
 | 文档 | 用途 | 读者 |
 |-----|------|------|
 | [README-SUMMARY](./README-SUMMARY.md) | 总体概览 | 所有人 |
-| [dependency-upgrade-plan.md](./dependency-upgrade-plan.md) | 完整计划 | 维护者 |
-| [dependency-upgrade-plan-en.md](./dependency-upgrade-plan-en.md) | English plan | Maintainers |
-| [dependency-upgrade-checklist.md](./dependency-upgrade-checklist.md) | 执行清单 | 开发者 |
-| [../bin/tools/README.md](../bin/tools/README.md) | 工具说明 | 开发者 |
-| [../maven-version-rules.xml](../maven-version-rules.xml) | 版本规则 | 高级用户 |
+| [dependency-upgrade-plan.md](dependency-upgrade-plan.md) | 完整计划 | 维护者 |
+| [dependency-upgrade-plan-en.md](dependency-upgrade-plan-en.md) | English plan | Maintainers |
+| [dependency-upgrade-checklist.md](dependency-upgrade-checklist.md) | 执行清单 | 开发者 |
+| [../bin/tools/README.md](../../bin/tools/README.md) | 工具说明 | 开发者 |
+| [../maven-version-rules.xml](../../maven-version-rules.xml) | 版本规则 | 高级用户 |
 
 ---
 
