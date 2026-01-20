@@ -15,6 +15,8 @@ env:
   DEPENDENCY_SERVICES: 'mongodb'
   MONGODB_CONTAINER: 'mongodb'
   MONGODB_PORT: '27017'
+  JAVA_VERSION: '17'
+  MAVEN_OPTS: '-Xmx3g -XX:+UseG1GC'
 
 jobs:
   nightly-build:
@@ -29,7 +31,7 @@ jobs:
         if: success()
         uses: ./.github/actions/setup-environment
         with:
-          java_version: '17'
+          java_version: ${{ env.JAVA_VERSION }}
 
       - name: Verify Dependencies
         id: deps
@@ -137,7 +139,7 @@ jobs:
               echo "E2E_status=success" >> $GITHUB_OUTPUT
             else
               echo "❌ E2E tests failed"
-              echo "integration_status=failed" >> $GITHUB_OUTPUT
+              echo "e2e_status=failed" >> $GITHUB_OUTPUT
               exit 1
             fi
           else
@@ -158,11 +160,11 @@ jobs:
           echo "  - Setup: ${{ steps.setup.outcome }}"
           echo "  - Dependencies: ${{ steps.deps.outcome }}"
           echo "  - Maven Build: ${{ steps.build-maven.outcome }}"
-          echo "  - Tests: ${{ steps.tests.outcome || 'skipped' }}"
+          echo "  - Unit Tests: ${{ steps.run-tests.outcome || 'skipped' }}"
           echo "  - Docker Build: ${{ steps.build.outcome }}"
           echo "  - Application: ${{ steps.app.outcome }}"
           echo "  - Health Check: ${{ steps.health.outcome }}"
-          echo "  - Integration Tests: ${{ steps.integration-tests.outcome || 'skipped' }}"
+          echo "  - E2E Tests: ${{ steps.end-to-end-tests.outcome || 'skipped' }}"
 
           echo ""
           echo "🌐 Infrastructure:"

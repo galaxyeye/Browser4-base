@@ -6,8 +6,8 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+-ci.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+-ci.[0-9]+'
     paths:
-      - '*.java'
-      - '*.kt'
+      - '**/*.java'
+      - '**/*.kt'
   workflow_dispatch:
     inputs:
       skip_tests:
@@ -152,7 +152,7 @@ jobs:
               echo "e2e_status=success" >> $GITHUB_OUTPUT
             else
               echo "❌ E2E tests failed"
-              echo "integration_status=failed" >> $GITHUB_OUTPUT
+              echo "e2e_status=failed" >> $GITHUB_OUTPUT
               exit 1
             fi
           else
@@ -173,11 +173,11 @@ jobs:
           echo "  - Setup: ${{ steps.setup.outcome }}"
           echo "  - Dependencies: ${{ steps.deps.outcome }}"
           echo "  - Maven Build: ${{ steps.build-maven.outcome }}"
-          echo "  - Tests: ${{ steps.tests.outcome || 'skipped' }}"
+          echo "  - Unit Tests: ${{ steps.run-tests.outcome || 'skipped' }}"
           echo "  - Docker Build: ${{ steps.build.outcome }}"
           echo "  - Application: ${{ steps.app.outcome }}"
           echo "  - Health Check: ${{ steps.health.outcome }}"
-          echo "  - Integration Tests: ${{ steps.integration-tests.outcome || 'skipped' }}"
+          echo "  - E2E Tests: ${{ steps.end-to-end-tests.outcome || 'skipped' }}"
 
           echo ""
           echo "🌐 Infrastructure:"
