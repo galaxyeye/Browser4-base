@@ -168,7 +168,7 @@ mvn test -Dgroups="IntegrationTest,!Slow" -DrunITs=true
 
 ## Related Documentation
 
-- [Design Document](../kotlin-sdk/INTEGRATION-TEST-DESIGN.md)
-- [Chinese Summary](../kotlin-sdk/INTEGRATION-TEST-DESIGN-SUMMARY.zh.md)
-- [Architecture Diagram](../kotlin-sdk/INTEGRATION-TEST-ARCHITECTURE.txt)
-- [Kotlin SDK README](../kotlin-sdk/README.md)
+- [Design Document](../browser4-sdk-kotlin/INTEGRATION-TEST-DESIGN.md)
+- [Chinese Summary](../browser4-sdk-kotlin/INTEGRATION-TEST-DESIGN-SUMMARY.zh.md)
+- [Architecture Diagram](../browser4-sdk-kotlin/INTEGRATION-TEST-ARCHITECTURE.txt)
+- [Kotlin SDK README](../browser4-sdk-kotlin/README.md)
