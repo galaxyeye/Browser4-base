@@ -1,8 +1,8 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.agentic.AgentConfig
 import ai.platon.pulsar.agentic.BasicAgenticSession
-import ai.platon.pulsar.agentic.BrowserAgentActor
+import ai.platon.pulsar.agentic.agents.AgentConfig
+import ai.platon.pulsar.agentic.agents.BrowserAgentActor
 import ai.platon.pulsar.agentic.context.DefaultClassPathXmlAgenticContext
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import org.junit.jupiter.api.AfterEach

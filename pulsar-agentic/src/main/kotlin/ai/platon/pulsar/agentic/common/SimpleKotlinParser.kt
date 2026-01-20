@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.common
 
-import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.model.ToolCall
 
 class SimpleKotlinParser {
 

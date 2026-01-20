@@ -1,8 +1,12 @@
-package ai.platon.pulsar.agentic
+package ai.platon.pulsar.agentic.agents
 
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
+import ai.platon.pulsar.agentic.*
 import ai.platon.pulsar.agentic.inference.detail.*
 import ai.platon.pulsar.agentic.inference.todo.ToDoManager
+import ai.platon.pulsar.agentic.model.ActionDescription
+import ai.platon.pulsar.agentic.model.AgentHistory
+import ai.platon.pulsar.agentic.model.DetailedActResult
 import ai.platon.pulsar.agentic.tools.ActionValidator
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.Strings

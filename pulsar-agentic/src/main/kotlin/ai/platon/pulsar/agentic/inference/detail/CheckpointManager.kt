@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.inference.detail
 
-import ai.platon.pulsar.agentic.AgentState
+import ai.platon.pulsar.agentic.model.AgentState
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature

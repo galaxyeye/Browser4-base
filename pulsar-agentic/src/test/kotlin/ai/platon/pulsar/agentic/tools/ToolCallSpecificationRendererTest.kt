@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools
 
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.executors.AbstractToolExecutor
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue

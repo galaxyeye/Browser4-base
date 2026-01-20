@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools
 
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper

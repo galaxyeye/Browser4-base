@@ -1,5 +1,6 @@
-package ai.platon.pulsar.agentic
+package ai.platon.pulsar.agentic.agents
 
+import ai.platon.pulsar.agentic.*
 import ai.platon.pulsar.agentic.inference.InferenceEngine
 import ai.platon.pulsar.agentic.inference.PromptBuilder
 import ai.platon.pulsar.agentic.inference.action.ContextToAction
@@ -8,6 +9,7 @@ import ai.platon.pulsar.agentic.inference.detail.AgentStateManager
 import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.agentic.inference.detail.PageStateTracker
 import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
+import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.agentic.skills.SkillContext
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
@@ -47,7 +49,7 @@ open class BrowserAgentActor(
             // This ensures that when MCPToolExecutor is registered in CustomToolRegistry under domain
             // "mcp.<serverName>", the AgentToolManager has the corresponding target object.
             runCatching {
-                val registry = MCPPluginRegistry.instance
+                val registry = MCPPluginRegistry.Companion.instance
                 registry.getRegisteredServers().forEach { serverName ->
                     val domain = "mcp.$serverName"
                     registry.getClientManager(serverName)?.let { tm.registerCustomTarget(domain, it) }
@@ -60,7 +62,7 @@ open class BrowserAgentActor(
             // Auto-wire Skills as a custom tool domain: skill.run(id, params)
             runCatching {
                 val skillDomain = "skill"
-                val customRegistry = CustomToolRegistry.instance
+                val customRegistry = CustomToolRegistry.Companion.instance
                 if (!customRegistry.contains(skillDomain)) {
                     customRegistry.register(SkillToolExecutor())
                 }
@@ -73,7 +75,7 @@ open class BrowserAgentActor(
                         "driver" to activeDriver,
                     ),
                 )
-                tm.registerCustomTarget(skillDomain, SkillToolTarget(ctx, SkillRegistry.instance))
+                tm.registerCustomTarget(skillDomain, SkillToolTarget(ctx, SkillRegistry.Companion.instance))
             }.onFailure {
                 logger.debug("Failed to auto-wire skill tools: {}", it.message)
             }
@@ -219,7 +221,7 @@ open class BrowserAgentActor(
      * @return The extraction result produced by the model.
      */
     override suspend fun extract(instruction: String): ExtractResult {
-        val opts = ExtractOptions(instruction = instruction, ExtractionSchema.DEFAULT)
+        val opts = ExtractOptions(instruction = instruction, ExtractionSchema.Companion.DEFAULT)
         return extract(opts)
     }
 

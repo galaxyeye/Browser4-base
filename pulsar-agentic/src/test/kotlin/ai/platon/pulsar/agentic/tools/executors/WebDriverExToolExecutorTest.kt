@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools.executors
 
-import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import io.mockk.coEvery
 import io.mockk.coVerify

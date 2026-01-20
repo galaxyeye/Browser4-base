@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.skills
 
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.ToolSpec
 import kotlin.reflect.KClass
 
 /**

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.skills.examples
 
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.skills.*
 
 /**

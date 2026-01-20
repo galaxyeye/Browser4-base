@@ -2,13 +2,13 @@ package ai.platon.pulsar.agentic.inference.action
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
-import ai.platon.pulsar.agentic.ActionDescription
-import ai.platon.pulsar.agentic.AgentState
-import ai.platon.pulsar.agentic.ObserveElement
-import ai.platon.pulsar.agentic.ToolCall
 import ai.platon.pulsar.agentic.inference.AgentMessageList
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_ACTION_GENERATION_PROMPT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveResultSchema
+import ai.platon.pulsar.agentic.model.ActionDescription
+import ai.platon.pulsar.agentic.model.AgentState
+import ai.platon.pulsar.agentic.model.ObserveElement
+import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ExperimentalApi

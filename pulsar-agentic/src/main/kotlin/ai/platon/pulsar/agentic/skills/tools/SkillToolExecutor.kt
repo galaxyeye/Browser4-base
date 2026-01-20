@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.skills.tools
 
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.skills.Skill
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.tools.ToolCallSpecificationProvider

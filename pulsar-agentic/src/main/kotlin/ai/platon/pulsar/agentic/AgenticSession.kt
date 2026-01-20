@@ -1,7 +1,10 @@
 package ai.platon.pulsar.agentic
 
+import ai.platon.pulsar.agentic.agents.ObserveActBrowserAgent
 import ai.platon.pulsar.agentic.context.AbstractAgenticContext
 import ai.platon.pulsar.agentic.inference.SessionActExecutor
+import ai.platon.pulsar.agentic.model.ActionDescription
+import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.ql.SessionConfig
 import ai.platon.pulsar.ql.h2.AbstractH2SQLSession

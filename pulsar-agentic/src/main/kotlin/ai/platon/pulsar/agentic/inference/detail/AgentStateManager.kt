@@ -3,7 +3,10 @@ package ai.platon.pulsar.agentic.inference.detail
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.model.TabState
-import ai.platon.pulsar.agentic.*
+import ai.platon.pulsar.agentic.ActionOptions
+import ai.platon.pulsar.agentic.ObserveOptions
+import ai.platon.pulsar.agentic.agents.BrowserAgentActor
+import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.MessageWriter
 import ai.platon.pulsar.common.getLogger

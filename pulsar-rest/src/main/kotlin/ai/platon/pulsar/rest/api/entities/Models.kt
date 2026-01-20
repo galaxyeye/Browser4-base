@@ -1,9 +1,8 @@
 package ai.platon.pulsar.rest.api.entities
 
-import ai.platon.pulsar.agentic.AgentHistory
-import ai.platon.pulsar.agentic.AgentState
+import ai.platon.pulsar.agentic.model.AgentHistory
+import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.common.ResourceStatus
-import ai.platon.pulsar.persist.ProtocolStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import com.fasterxml.jackson.annotation.JsonCreator

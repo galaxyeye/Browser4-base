@@ -1,5 +1,9 @@
-package ai.platon.pulsar.agentic
+package ai.platon.pulsar.agentic.agents
 
+import ai.platon.pulsar.agentic.*
+import ai.platon.pulsar.agentic.model.AgentHistory
+import ai.platon.pulsar.agentic.model.ExtractionSchema
+import ai.platon.pulsar.agentic.model.ProcessTrace
 import java.util.*
 
 /**

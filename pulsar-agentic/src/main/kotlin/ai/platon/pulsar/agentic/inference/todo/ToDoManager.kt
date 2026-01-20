@@ -1,10 +1,10 @@
 package ai.platon.pulsar.agentic.inference.todo
 
-import ai.platon.pulsar.agentic.AgentConfig
-import ai.platon.pulsar.agentic.ObserveElement
-import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.agents.AgentConfig
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import ai.platon.pulsar.agentic.inference.detail.StructuredAgentLogger
+import ai.platon.pulsar.agentic.model.ObserveElement
+import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.common.Strings
 import java.time.Instant
 import java.time.LocalDateTime

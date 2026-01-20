@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic.tools.executors
 
-import ai.platon.pulsar.agentic.ToolSpec
 import ai.platon.pulsar.agentic.common.AgentFileSystem
+import ai.platon.pulsar.agentic.model.ToolSpec
 import kotlin.reflect.KClass
 
 class FileSystemToolExecutor : AbstractToolExecutor() {

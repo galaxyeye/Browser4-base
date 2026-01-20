@@ -3,7 +3,7 @@ package ai.platon.pulsar.agentic.mcp.examples
 import ai.platon.pulsar.agentic.mcp.MCPConfig
 import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
 import ai.platon.pulsar.agentic.mcp.MCPTransportType
-import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.model.ToolCall
 import kotlinx.coroutines.runBlocking
 
 /**

@@ -1,10 +1,6 @@
 package ai.platon.pulsar.agentic.skills.tools
 
-import ai.platon.pulsar.agentic.ActionDescription
-import ai.platon.pulsar.agentic.AgentConfig
-import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.BrowserAgentActor
-import ai.platon.pulsar.agentic.ToolCall
+import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.skills.SkillContext
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.skills.examples.WebScrapingSkill

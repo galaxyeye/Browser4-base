@@ -1,14 +1,14 @@
 package ai.platon.pulsar.agentic.tools
 
 import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.BrowserAgentActor
+import ai.platon.pulsar.agentic.agents.BrowserAgentActor
 import ai.platon.pulsar.agentic.common.AgentFileSystem
+import ai.platon.pulsar.agentic.model.ActionDescription
+import ai.platon.pulsar.agentic.model.TcEvaluate
+import ai.platon.pulsar.agentic.model.ToolCall
+import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.tools.executors.*
 import ai.platon.pulsar.common.getLogger
-import ai.platon.pulsar.agentic.ActionDescription
-import ai.platon.pulsar.agentic.TcEvaluate
-import ai.platon.pulsar.agentic.ToolCall
-import ai.platon.pulsar.agentic.ToolCallResult
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay

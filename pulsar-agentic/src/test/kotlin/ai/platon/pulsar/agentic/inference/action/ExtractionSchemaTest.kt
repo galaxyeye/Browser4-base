@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic.inference.action
 
-import ai.platon.pulsar.agentic.ExtractionField
-import ai.platon.pulsar.agentic.ExtractionSchema
+import ai.platon.pulsar.agentic.model.ExtractionField
+import ai.platon.pulsar.agentic.model.ExtractionSchema
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse

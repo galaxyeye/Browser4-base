@@ -1,9 +1,9 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.agentic.TcEvaluate
-import ai.platon.pulsar.agentic.TcException
-import ai.platon.pulsar.agentic.ToolCall
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.TcEvaluate
+import ai.platon.pulsar.agentic.model.TcException
+import ai.platon.pulsar.agentic.model.ToolCall
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.executors.ToolExecutor
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger

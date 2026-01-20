@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.tools
 
-import ai.platon.pulsar.agentic.ToolSpec
+import ai.platon.pulsar.agentic.model.ToolSpec
 
 /**
  * Renders tool-call specifications (signatures) into a prompt-friendly string.

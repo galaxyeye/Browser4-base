@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic
+package ai.platon.pulsar.agentic.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
