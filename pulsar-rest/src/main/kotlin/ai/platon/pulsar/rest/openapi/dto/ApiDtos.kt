@@ -143,6 +143,15 @@ data class FillRequest(
 )
 
 /**
+ * Request to get an attribute from an element.
+ */
+data class AttributeRequest(
+    @param:JsonProperty("selector") val selector: String,
+    @param:JsonProperty("strategy") val strategy: String = "css",
+    @param:JsonProperty("attrName") val attrName: String
+)
+
+/**
  * Request to press a key on an element.
  */
 data class PressRequest(
@@ -207,6 +216,28 @@ data class ScriptResponse(
  */
 data class DelayRequest(
     @param:JsonProperty("ms") val ms: Int
+)
+
+/**
+ * Request for scrolling with count.
+ */
+data class ScrollCountRequest(
+    @param:JsonProperty("count") val count: Int = 1
+)
+
+/**
+ * Request for scrolling to a position by ratio.
+ */
+data class ScrollRatioRequest(
+    @param:JsonProperty("ratio") val ratio: Double = 0.5
+)
+
+/**
+ * Request for scrolling by pixels.
+ */
+data class ScrollByRequest(
+    @param:JsonProperty("pixels") val pixels: Double = 200.0,
+    @param:JsonProperty("smooth") val smooth: Boolean = true
 )
 
 /**

@@ -118,4 +118,124 @@ class NavigationController(
 
         return ResponseEntity.ok(WebDriverResponse(value = baseUri))
     }
+
+    /**
+     * Reloads the current page.
+     */
+    @PostMapping("/reload")
+    suspend fun reload(
+        @PathVariable sessionId: String,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} reloading page", sessionId)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.reload()
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: Exception) {
+            logger.error("Reload failed | sessionId={} | {}", sessionId, e.message)
+            ControllerUtils.errorResponse("navigation error", e.message ?: "Failed to reload")
+        }
+    }
+
+    /**
+     * Navigates back in browser history.
+     */
+    @PostMapping("/back")
+    suspend fun goBack(
+        @PathVariable sessionId: String,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} going back", sessionId)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.goBack()
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: Exception) {
+            logger.error("Go back failed | sessionId={} | {}", sessionId, e.message)
+            ControllerUtils.errorResponse("navigation error", e.message ?: "Failed to go back")
+        }
+    }
+
+    /**
+     * Navigates forward in browser history.
+     */
+    @PostMapping("/forward")
+    suspend fun goForward(
+        @PathVariable sessionId: String,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} going forward", sessionId)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.goForward()
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: Exception) {
+            logger.error("Go forward failed | sessionId={} | {}", sessionId, e.message)
+            ControllerUtils.errorResponse("navigation error", e.message ?: "Failed to go forward")
+        }
+    }
+
+    /**
+     * Gets the page title.
+     */
+    @GetMapping("/title")
+    suspend fun getTitle(
+        @PathVariable sessionId: String,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} getting title", sessionId)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val title = driver.title()
+            ResponseEntity.ok(WebDriverResponse(value = title))
+        } catch (e: Exception) {
+            logger.error("Get title failed | sessionId={} | {}", sessionId, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "Failed to get title")
+        }
+    }
+
+    /**
+     * Brings the browser window to the front.
+     */
+    @PostMapping("/bringToFront")
+    suspend fun bringToFront(
+        @PathVariable sessionId: String,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} bringing window to front", sessionId)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.bringToFront()
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: Exception) {
+            logger.error("Bring to front failed | sessionId={} | {}", sessionId, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "Failed to bring to front")
+        }
+    }
 }

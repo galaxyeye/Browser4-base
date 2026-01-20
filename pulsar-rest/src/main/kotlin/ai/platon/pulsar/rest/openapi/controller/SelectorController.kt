@@ -296,4 +296,284 @@ class SelectorController(
             ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
         }
     }
+
+    /**
+     * Checks if an element is visible.
+     */
+    @PostMapping("/isVisible", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun isVisible(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} checking if selector is visible: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val visible = driver.isVisible(request.selector)
+            ResponseEntity.ok(WebDriverResponse(value = visible))
+        } catch (e: WebDriverException) {
+            logger.error("isVisible check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("isVisible check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Checks if an element is checked (checkbox/radio).
+     */
+    @PostMapping("/isChecked", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun isChecked(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} checking if selector is checked: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val checked = driver.isChecked(request.selector)
+            ResponseEntity.ok(WebDriverResponse(value = checked))
+        } catch (e: WebDriverException) {
+            logger.error("isChecked check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("isChecked check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Hovers over an element.
+     */
+    @PostMapping("/hover", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun hover(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} hovering over selector: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.hover(request.selector)
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: WebDriverException) {
+            logger.error("Hover failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Hover failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Focuses on an element.
+     */
+    @PostMapping("/focus", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun focus(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} focusing on selector: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.focus(request.selector)
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: WebDriverException) {
+            logger.error("Focus failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Focus failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Checks a checkbox element.
+     */
+    @PostMapping("/check", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun check(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} checking selector: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.check(request.selector)
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: WebDriverException) {
+            logger.error("Check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Unchecks a checkbox element.
+     */
+    @PostMapping("/uncheck", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun uncheck(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} unchecking selector: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            driver.uncheck(request.selector)
+            ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
+        } catch (e: WebDriverException) {
+            logger.error("Uncheck failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Uncheck failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Gets text content of the first matching element.
+     */
+    @PostMapping("/textContent", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun getTextContent(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} getting text content for selector: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val text = driver.selectFirstTextOrNull(request.selector)
+            ResponseEntity.ok(TextResponse(value = text))
+        } catch (e: WebDriverException) {
+            logger.error("Get text content failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Get text content failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Gets text content of all matching elements.
+     */
+    @PostMapping("/textContentAll", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun getTextContentAll(
+        @PathVariable sessionId: String,
+        @RequestBody request: SelectorRef,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} getting text content for all selectors: {}", sessionId, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val texts = driver.selectTextAll(request.selector)
+            ResponseEntity.ok(WebDriverResponse(value = texts))
+        } catch (e: WebDriverException) {
+            logger.error("Get text content all failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Get text content all failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Gets an attribute value of the first matching element.
+     */
+    @PostMapping("/attribute", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun getAttribute(
+        @PathVariable sessionId: String,
+        @RequestBody request: AttributeRequest,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} getting attribute {} for selector: {}", sessionId, request.attrName, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val value = driver.selectFirstAttributeOrNull(request.selector, request.attrName)
+            ResponseEntity.ok(AttributeResponse(value = value))
+        } catch (e: WebDriverException) {
+            logger.error("Get attribute failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Get attribute failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
+
+    /**
+     * Gets attribute values of all matching elements.
+     */
+    @PostMapping("/attributeAll", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    suspend fun getAttributeAll(
+        @PathVariable sessionId: String,
+        @RequestBody request: AttributeRequest,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} getting attribute {} for all selectors: {}", sessionId, request.attrName, request.selector)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val driver = managed.pulsarSession.getOrCreateBoundDriver()
+            val values = driver.selectAttributeAll(request.selector, request.attrName)
+            ResponseEntity.ok(WebDriverResponse(value = values))
+        } catch (e: WebDriverException) {
+            logger.error("Get attribute all failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
+        } catch (e: Exception) {
+            logger.error("Get attribute all failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message, e)
+            ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
+        }
+    }
 }

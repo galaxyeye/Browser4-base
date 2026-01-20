@@ -77,7 +77,7 @@ class WebDriver(
      * @return Reload result
      */
     suspend fun reload(): Any? {
-        return executeScript("location.reload()")
+        return client.post("/session/{sessionId}/reload", emptyMap())
     }
 
     /**
@@ -86,7 +86,7 @@ class WebDriver(
      * @return Navigation result
      */
     suspend fun goBack(): Any? {
-        return executeScript("history.back()")
+        return client.post("/session/{sessionId}/back", emptyMap())
     }
 
     /**
@@ -95,7 +95,7 @@ class WebDriver(
      * @return Navigation result
      */
     suspend fun goForward(): Any? {
-        return executeScript("history.forward()")
+        return client.post("/session/{sessionId}/forward", emptyMap())
     }
 
     /**
@@ -153,7 +153,7 @@ class WebDriver(
      * @return The page title
      */
     suspend fun title(): String {
-        return executeScript("return document.title") as? String ?: ""
+        return client.get("/session/{sessionId}/title") as? String ?: ""
     }
 
     /**
@@ -194,15 +194,15 @@ class WebDriver(
      * @return True if the element is visible
      */
     suspend fun isVisible(selector: String): Boolean {
-        val script = """
-            (() => {
-                const el = document.querySelector('$selector');
-                if (!el) return false;
-                const style = window.getComputedStyle(el);
-                return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-            })()
-        """.trimIndent()
-        return executeScript(script) as? Boolean ?: false
+        val value = client.post(
+            "/session/{sessionId}/selectors/isVisible",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
+        return when (value) {
+            is Map<*, *> -> (value as? Map<String, Any?>)?.get("value") as? Boolean ?: false
+            is Boolean -> value
+            else -> false
+        }
     }
 
     /**
@@ -220,8 +220,15 @@ class WebDriver(
      * @return True if the element is checked
      */
     suspend fun isChecked(selector: String): Boolean {
-        val script = "document.querySelector('$selector')?.checked"
-        return executeScript(script) as? Boolean ?: false
+        val value = client.post(
+            "/session/{sessionId}/selectors/isChecked",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
+        return when (value) {
+            is Map<*, *> -> (value as? Map<String, Any?>)?.get("value") as? Boolean ?: false
+            is Boolean -> value
+            else -> false
+        }
     }
 
     // ========== Wait Operations ==========
@@ -365,16 +372,10 @@ class WebDriver(
      * @return Hover result
      */
     suspend fun hover(selector: String): Any? {
-        val script = """
-            (() => {
-                const el = document.querySelector('$selector');
-                if (el) {
-                    const event = new MouseEvent('mouseover', {bubbles: true});
-                    el.dispatchEvent(event);
-                }
-            })()
-        """.trimIndent()
-        return executeScript(script)
+        return client.post(
+            "/session/{sessionId}/selectors/hover",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
     }
 
     /**
@@ -384,7 +385,10 @@ class WebDriver(
      * @return Focus result
      */
     suspend fun focus(selector: String): Any? {
-        return executeScript("document.querySelector('$selector')?.focus()")
+        return client.post(
+            "/session/{sessionId}/selectors/focus",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
     }
 
     /**
@@ -449,13 +453,10 @@ class WebDriver(
      * @return Check result
      */
     suspend fun check(selector: String): Any? {
-        val script = """
-            (() => {
-                const el = document.querySelector('$selector');
-                if (el && !el.checked) el.click();
-            })()
-        """.trimIndent()
-        return executeScript(script)
+        return client.post(
+            "/session/{sessionId}/selectors/check",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
     }
 
     /**
@@ -465,13 +466,10 @@ class WebDriver(
      * @return Uncheck result
      */
     suspend fun uncheck(selector: String): Any? {
-        val script = """
-            (() => {
-                const el = document.querySelector('$selector');
-                if (el && el.checked) el.click();
-            })()
-        """.trimIndent()
-        return executeScript(script)
+        return client.post(
+            "/session/{sessionId}/selectors/uncheck",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
     }
 
     // ========== Scrolling ==========
@@ -483,8 +481,15 @@ class WebDriver(
      * @return Current scroll position
      */
     suspend fun scrollDown(count: Int = 1): Double {
-        val script = "window.scrollBy(0, ${200 * count}); return window.scrollY;"
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post(
+            "/session/{sessionId}/scroll/down",
+            mapOf("count" to count)
+        )
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     /**
@@ -494,8 +499,15 @@ class WebDriver(
      * @return Current scroll position
      */
     suspend fun scrollUp(count: Int = 1): Double {
-        val script = "window.scrollBy(0, ${-200 * count}); return window.scrollY;"
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post(
+            "/session/{sessionId}/scroll/up",
+            mapOf("count" to count)
+        )
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     /**
@@ -505,14 +517,15 @@ class WebDriver(
      * @return Current scroll position
      */
     suspend fun scrollTo(selector: String): Double {
-        val script = """
-            (() => {
-                const el = document.querySelector('$selector');
-                if (el) el.scrollIntoView({behavior: 'smooth', block: 'center'});
-                return window.scrollY;
-            })()
-        """.trimIndent()
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post(
+            "/session/{sessionId}/scroll/to",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     /**
@@ -521,8 +534,12 @@ class WebDriver(
      * @return Current scroll position (0)
      */
     suspend fun scrollToTop(): Double {
-        val script = "window.scrollTo(0, 0); return window.scrollY;"
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post("/session/{sessionId}/scroll/top", emptyMap())
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     /**
@@ -531,8 +548,12 @@ class WebDriver(
      * @return Current scroll position
      */
     suspend fun scrollToBottom(): Double {
-        val script = "window.scrollTo(0, document.body.scrollHeight); return window.scrollY;"
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post("/session/{sessionId}/scroll/bottom", emptyMap())
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     /**
@@ -542,14 +563,15 @@ class WebDriver(
      * @return Current scroll position
      */
     suspend fun scrollToMiddle(ratio: Double = 0.5): Double {
-        val script = """
-            (() => {
-                const maxScroll = document.body.scrollHeight - window.innerHeight;
-                window.scrollTo(0, maxScroll * $ratio);
-                return window.scrollY;
-            })()
-        """.trimIndent()
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post(
+            "/session/{sessionId}/scroll/middle",
+            mapOf("ratio" to ratio)
+        )
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     /**
@@ -560,14 +582,15 @@ class WebDriver(
      * @return Current scroll position
      */
     suspend fun scrollBy(pixels: Double = 200.0, smooth: Boolean = true): Double {
-        val behavior = if (smooth) "'smooth'" else "'auto'"
-        val script = """
-            (() => {
-                window.scrollBy({top: $pixels, behavior: $behavior});
-                return window.scrollY;
-            })()
-        """.trimIndent()
-        return (executeScript(script) as? Number)?.toDouble() ?: 0.0
+        val value = client.post(
+            "/session/{sessionId}/scroll/by",
+            mapOf("pixels" to pixels, "smooth" to smooth)
+        )
+        return when (value) {
+            is Map<*, *> -> ((value as? Map<String, Any?>)?.get("value") as? Number)?.toDouble() ?: 0.0
+            is Number -> value.toDouble()
+            else -> 0.0
+        }
     }
 
     // ========== Content Extraction ==========
@@ -587,12 +610,21 @@ class WebDriver(
                 mapOf("selector" to selector, "strategy" to strategy)
             )
             when (value) {
-                is Map<*, *> -> (value as Map<String, Any?>)["outerHtml"] as? String
+                is Map<*, *> -> (value as Map<String, Any?>)["value"] as? String
                 is String -> value
                 else -> null
             }
         } else {
-            executeScript("return document.documentElement.outerHTML") as? String
+            // For full document HTML, request with "html" or "body" selector
+            val value = client.post(
+                "/session/{sessionId}/selectors/outerHtml",
+                mapOf("selector" to "html", "strategy" to strategy)
+            )
+            when (value) {
+                is Map<*, *> -> (value as Map<String, Any?>)["value"] as? String
+                is String -> value
+                else -> null
+            }
         }
     }
 
@@ -606,7 +638,9 @@ class WebDriver(
         return if (selector != null) {
             selectFirstTextOrNull(selector)
         } else {
-            executeScript("return document.body.innerText") as? String
+            // For document text content, use outerHtml endpoint to get full page
+            // and extract text, or use a new endpoint
+            selectFirstTextOrNull("body")
         }
     }
 
@@ -617,7 +651,15 @@ class WebDriver(
      * @return Text content or null if not found
      */
     suspend fun selectFirstTextOrNull(selector: String): String? {
-        return executeScript("document.querySelector('$selector')?.innerText") as? String
+        val value = client.post(
+            "/session/{sessionId}/selectors/textContent",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
+        return when (value) {
+            is Map<*, *> -> (value as? Map<String, Any?>)?.get("value") as? String
+            is String -> value
+            else -> null
+        }
     }
 
     /**
@@ -628,12 +670,18 @@ class WebDriver(
      */
     @Suppress("UNCHECKED_CAST")
     suspend fun selectTextAll(selector: String): List<String> {
-        val script = """
-            Array.from(document.querySelectorAll('$selector'))
-                .map(el => el.innerText)
-        """.trimIndent()
-        val result = executeScript(script)
-        return (result as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+        val value = client.post(
+            "/session/{sessionId}/selectors/textContentAll",
+            mapOf("selector" to selector, "strategy" to "css")
+        )
+        return when (value) {
+            is Map<*, *> -> {
+                val list = (value as? Map<String, Any?>)?.get("value") as? List<*>
+                list?.mapNotNull { it as? String } ?: emptyList()
+            }
+            is List<*> -> value.mapNotNull { it as? String }
+            else -> emptyList()
+        }
     }
 
     /**
@@ -644,7 +692,15 @@ class WebDriver(
      * @return Attribute value or null
      */
     suspend fun selectFirstAttributeOrNull(selector: String, attrName: String): String? {
-        return executeScript("document.querySelector('$selector')?.getAttribute('$attrName')") as? String
+        val value = client.post(
+            "/session/{sessionId}/selectors/attribute",
+            mapOf("selector" to selector, "strategy" to "css", "attrName" to attrName)
+        )
+        return when (value) {
+            is Map<*, *> -> (value as? Map<String, Any?>)?.get("value") as? String
+            is String -> value
+            else -> null
+        }
     }
 
     /**
@@ -656,13 +712,18 @@ class WebDriver(
      */
     @Suppress("UNCHECKED_CAST")
     suspend fun selectAttributeAll(selector: String, attrName: String): List<String> {
-        val script = """
-            Array.from(document.querySelectorAll('$selector'))
-                .map(el => el.getAttribute('$attrName'))
-                .filter(v => v !== null)
-        """.trimIndent()
-        val result = executeScript(script)
-        return (result as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+        val value = client.post(
+            "/session/{sessionId}/selectors/attributeAll",
+            mapOf("selector" to selector, "strategy" to "css", "attrName" to attrName)
+        )
+        return when (value) {
+            is Map<*, *> -> {
+                val list = (value as? Map<String, Any?>)?.get("value") as? List<*>
+                list?.mapNotNull { it as? String } ?: emptyList()
+            }
+            is List<*> -> value.mapNotNull { it as? String }
+            else -> emptyList()
+        }
     }
 
     /**
@@ -804,7 +865,7 @@ class WebDriver(
      * @return Result
      */
     suspend fun bringToFront(): Any? {
-        return executeScript("window.focus()")
+        return client.post("/session/{sessionId}/bringToFront", emptyMap())
     }
 
     // ========== Events (Placeholder) ==========
