@@ -14,7 +14,6 @@ import ai.platon.pulsar.dom.UriExtractor
 import ai.platon.pulsar.dom.nodes.node.ext.numChars
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.rest.api.entities.*
-import ai.platon.pulsar.skeleton.crawl.EventBus
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
 import ai.platon.pulsar.tools.crawl.common.DomUtils
@@ -49,8 +48,8 @@ class CommandService(
     private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
 
     // Create a dedicated dispatcher for long-running command operations
-    private val crawlerExecutor = Executors.newFixedThreadPool(10)
-    private val commandDispatcher = crawlerExecutor.asCoroutineDispatcher()
+    private val scrapingExecutor = Executors.newFixedThreadPool(10)
+    private val commandDispatcher = scrapingExecutor.asCoroutineDispatcher()
 
     private val commanderScope: CoroutineScope = CoroutineScope(
         commandDispatcher + SupervisorJob() + CoroutineName("commander")
@@ -214,63 +213,20 @@ class CommandService(
 
     fun commandStatusFlow(id: String): Flow<CommandStatus> = flow {
         var lastModifiedTime = Instant.EPOCH
-        val status = commandStatusCache[id] ?: CommandStatus.notFound(id)
+        do {
+            delay(FLOW_POLLING_INTERVAL)
 
-        // If there are server-side event handlers, merge their events into the status flow
-        val serverSideEventHandlers = status.serverSideEventHandlers
-
-        if (serverSideEventHandlers != null) {
-            // Collect server-side events and emit status updates when events occur
-            coroutineScope {
-                val eventJob = launch {
-                    serverSideEventHandlers.eventFlow.collect { event ->
-                        // Update status with event information - synchronized access
-                        synchronized(status) {
-                            status.refresh(event.eventType)
-                            status.event = event.eventType
-                        }
-                    }
-                }
-
-                try {
-                    do {
-                        delay(FLOW_POLLING_INTERVAL)
-
-                        val shouldEmit = synchronized(status) {
-                            status.refreshed(lastModifiedTime).also {
-                                if (it) lastModifiedTime = status.lastModifiedTime ?: Instant.EPOCH
-                            }
-                        }
-
-                        if (shouldEmit) {
-                            emit(status)
-                        }
-
-                        if (status.isDone) {
-                            // emit a final event, it's OK to emit a duplicate event
-                            emit(status)
-                        }
-                    } while (!status.isDone)
-                } finally {
-                    eventJob.cancel()
-                }
+            val status = commandStatusCache[id] ?: CommandStatus.notFound(id)
+            if (status.refreshed(lastModifiedTime)) {
+                emit(status)
+                lastModifiedTime = status.lastModifiedTime
             }
-        } else {
-            // Fallback to original polling behavior
-            do {
-                delay(FLOW_POLLING_INTERVAL)
 
-                if (status.refreshed(lastModifiedTime)) {
-                    emit(status)
-                    lastModifiedTime = status.lastModifiedTime ?: Instant.EPOCH
-                }
-
-                if (status.isDone) {
-                    // emit a final event, it's OK to emit a duplicate event
-                    emit(status)
-                }
-            } while (!status.isDone)
-        }
+            if (status.isDone) {
+                // emit a final event, it's OK to emit a duplicate event
+                emit(status)
+            }
+        } while (!status.isDone)
     }
 
     /**
@@ -324,21 +280,7 @@ class CommandService(
     ): CommandStatus {
         try {
             status.refresh(ResourceStatus.SC_PROCESSING)
-
-            // Create and wire up ServerSideEventHandlers for this command
-            val serverSideEventHandlers = ai.platon.pulsar.skeleton.crawl.DefaultServerSideEventHandlers()
-            status.serverSideEventHandlers = serverSideEventHandlers
-
-            // Set the global server-side event handlers
-            val previousServerSideEventHandlers = EventBus.serverSideEventHandlers
-            EventBus.serverSideEventHandlers = serverSideEventHandlers
-
-            try {
-                executeCommandStepByStep(request, status, eventHandlers)
-            } finally {
-                // Restore previous server-side event handlers
-                EventBus.serverSideEventHandlers = previousServerSideEventHandlers
-            }
+            executeCommandStepByStep(request, status, eventHandlers)
         } catch (e: Exception) {
             status.failed(ResourceStatus.SC_EXPECTATION_FAILED)
         } finally {
@@ -472,7 +414,9 @@ class CommandService(
             if (alwaysFalse()) {
                 val allURIText = allURIs.joinToString("\n")
                 val path = AppPaths.getProcTmpTmpDirectory("command").resolve("uris.txt")
-                Files.createDirectories(path.parent)
+                withContext(Dispatchers.IO) {
+                    Files.createDirectories(path.parent)
+                }
                 path.writeText(allURIText)
             }
 
