@@ -697,12 +697,12 @@ class PageHandler(
                 return null
             }
 
-            if (remoteObject?.objectId == null) {
+            val tempObjectId = remoteObject?.objectId
+            if (tempObjectId == null) {
                 logger.warn("Failed to resolve node: {}, {}", nodeId, backendNodeId)
                 return null
             }
 
-            val tempObjectId = remoteObject.objectId
             // Use DOM.requestNode to get the nodeId from the runtime object
             val resolvedNodeId = domAPI?.requestNode(tempObjectId) ?: 0
             // Release the remote object to avoid memory leaks
@@ -730,16 +730,17 @@ class PageHandler(
             // Use DOM.resolveNode to convert backendNodeId to a runtime object
             val remoteObject = domAPI?.resolveNode(null, backendNodeId, null, null)
 
-            if (remoteObject?.objectId == null) {
+            val tempObjectId = remoteObject?.objectId
+            if (tempObjectId == null) {
                 logger.warn("Failed to resolve backend node ID: {}", backendNodeId)
                 return null
             }
 
             // Use DOM.requestNode to get the nodeId from the runtime object
-            val nodeId = domAPI?.requestNode(remoteObject.objectId)
+            val nodeId = domAPI?.requestNode(tempObjectId)
 
             // Release the remote object to avoid memory leaks
-            try { runtimeAPI?.releaseObject(remoteObject.objectId) } catch (_: Exception) { }
+            try { runtimeAPI?.releaseObject(tempObjectId) } catch (_: Exception) { }
 
             nodeId
         } catch (e: Exception) {
