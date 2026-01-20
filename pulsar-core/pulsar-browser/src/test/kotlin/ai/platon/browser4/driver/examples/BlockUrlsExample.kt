@@ -1,4 +1,4 @@
-package ai.platon.pulsar.browser.driver.examples
+package ai.platon.browser4.driver.examples
 
 import ai.platon.cdt.kt.protocol.events.page.DomContentEventFired
 import ai.platon.cdt.kt.protocol.events.page.FrameAttached

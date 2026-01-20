@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package ai.platon.pulsar.browser.driver.examples
+package ai.platon.browser4.driver.examples
 
 import ai.platon.cdt.kt.protocol.events.tracing.DataCollected
 import com.fasterxml.jackson.databind.ObjectMapper

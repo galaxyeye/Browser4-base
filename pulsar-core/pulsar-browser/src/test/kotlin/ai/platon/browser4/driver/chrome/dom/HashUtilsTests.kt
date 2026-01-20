@@ -5,6 +5,7 @@ import ai.platon.browser4.driver.chrome.dom.util.HashUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.concurrent.ConcurrentHashMap
 
 class HashUtilsTests {
 
@@ -13,11 +14,11 @@ class HashUtilsTests {
         // Clear any cached values between tests
         HashUtils::class.java.getDeclaredField("elementHashCache").apply {
             isAccessible = true
-            (get(null) as java.util.concurrent.ConcurrentHashMap<*, *>).clear()
+            (get(null) as ConcurrentHashMap<*, *>).clear()
         }
         HashUtils::class.java.getDeclaredField("parentBranchHashCache").apply {
             isAccessible = true
-            (get(null) as java.util.concurrent.ConcurrentHashMap<*, *>).clear()
+            (get(null) as ConcurrentHashMap<*, *>).clear()
         }
     }
 

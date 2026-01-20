@@ -1,6 +1,6 @@
-package ai.platon.pulsar.browser.driver.examples.sites
+package ai.platon.browser4.driver.examples.site
 
-import ai.platon.pulsar.browser.driver.examples.BrowserExampleBase
+import ai.platon.browser4.driver.examples.BrowserExampleBase
 
 class Crawler: BrowserExampleBase() {
 
