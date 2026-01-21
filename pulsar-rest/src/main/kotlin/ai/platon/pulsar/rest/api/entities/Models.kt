@@ -2,7 +2,10 @@ package ai.platon.pulsar.rest.api.entities
 
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
+import ai.platon.pulsar.agentic.tools.agent.AgentTaskStatus
+import ai.platon.pulsar.agentic.tools.crawl.PGInstructResult
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
@@ -380,6 +383,70 @@ fun CommandStatus.done() {
 fun CommandStatus.refreshed(lastModifiedTime: Instant): Boolean {
     val modifiedTime = this.lastModifiedTime ?: return false
     return modifiedTime > lastModifiedTime
+}
+
+fun AgentTaskStatus.toCommandStatus(): CommandStatus {
+    val status = CommandStatus(this.id)
+    // Transfer all status fields
+    status.statusCode = this.statusCode
+    status.event = this.event
+    status.processState = this.processState
+    status.message = this.message
+    status.lastModifiedTime = this.lastModifiedTime
+    status.finishTime = this.finishTime
+
+    // Transfer agent-specific data
+    status.agentHistory = this.agentHistory
+    if (this.agentHistory != null) {
+        val summary = this.agentHistory?.lastOrNull()?.summary ?: ""
+        if (summary.isNotBlank()) {
+            status.ensureCommandResult().summary = summary
+        }
+    }
+
+    // Note: pageStatusCode and pageContentBytes remain at their default values
+    // as AgentTaskStatus doesn't have these fields
+
+    return status
+}
+
+fun PageVisitStatus.toCommandStatus(): CommandStatus {
+    val status = CommandStatus(this.id)
+
+    // Transfer all basic status fields
+    status.statusCode = this.statusCode
+    status.event = this.event
+    status.processState = this.processState
+    status.pageStatusCode = this.pageStatusCode
+    status.pageContentBytes = this.pageContentBytes
+    status.message = this.message
+    status.lastModifiedTime = this.lastModifiedTime
+    status.finishTime = this.finishTime
+
+    // Transfer request if present
+    status.request = this.request
+
+    // instruct results -> REST instruct results
+    @Suppress("UNCHECKED_CAST")
+    val restResults = instructResults.map { it.toRestInstructResult() }
+    status.instructResults = restResults.toMutableList()
+
+    // best-effort summary mapping
+    val visitResult = pageVisitResult
+    if (visitResult != null) {
+        val commandResult = status.ensureCommandResult()
+        commandResult.pageSummary = visitResult.pageSummary
+        commandResult.fields = visitResult.fields
+        commandResult.xsqlResultSet = visitResult.xsqlResultSet
+    }
+
+    return status
+}
+
+fun PGInstructResult.toRestInstructResult(): InstructResult {
+    // Keep naming aligned to REST API conventions.
+    val t = resultType ?: "string"
+    return InstructResult.ok(name, result ?: "", t)
 }
 
 data class NavigateRequest(

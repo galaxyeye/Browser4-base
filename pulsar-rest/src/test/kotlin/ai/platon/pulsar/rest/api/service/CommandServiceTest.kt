@@ -11,15 +11,16 @@ import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
 import ai.platon.pulsar.rest.api.common.MockEcServerTestBase
 import ai.platon.pulsar.rest.api.config.MockEcServerConfiguration
 import ai.platon.pulsar.rest.api.entities.CommandRequest
+import ai.platon.pulsar.rest.api.entities.toCommandStatus
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertNotNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ContextConfiguration
 import kotlin.test.Test
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -44,7 +45,7 @@ class CommandServiceTest : MockEcServerTestBase() {
     @Test
     fun `test executeCommand WITHOUT instructions`() {
         val request = CommandRequest(MOCK_PRODUCT_DETAIL_URL)
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request).toCommandStatus() }
         val result = status.commandResult
         // nothing to do if page is not loaded
         Assumptions.assumeTrue(status.pageStatusCode == 200)
@@ -68,7 +69,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             onPageReadyActions = actions
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
 
         printlnPro(status)
         Assumptions.assumeTrue(status.pageStatusCode == 200)
@@ -95,7 +96,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             pageSummaryPrompt = "Tell me something about the page",
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
 
         printlnPro(status)
         Assumptions.assumeTrue(status.pageStatusCode == 200)
@@ -117,7 +118,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             pageSummaryPrompt = "Give me the product name",
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
         val result = status.commandResult
 
         Assumptions.assumeTrue(status.pageStatusCode == 200)
@@ -141,7 +142,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             dataExtractionRules = "product name, ratings, price"
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         val result = status.commandResult
 
@@ -173,7 +174,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             uriExtractionRules = "links containing /dp/"
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         val result = status.commandResult
 
@@ -213,7 +214,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             """.trimIndent()
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         val result = status.commandResult
 
@@ -235,7 +236,7 @@ class CommandServiceTest : MockEcServerTestBase() {
             uriExtractionRules = "Regex: http://localhost:\\d+/ec/dp/\\w+"
         )
 
-        val status = runBlocking { commandService.executePageVisitCommand(request) }
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         val result = status.commandResult
 
@@ -260,7 +261,7 @@ class CommandServiceTest : MockEcServerTestBase() {
     fun `test executeCommand with simple and clean command`() {
         val prompt = PAGE_VISIT_COMMAND_PROMPT1
 
-        val status = runBlocking { commandService.executePageVisitCommand(prompt) }
+        val status = runBlocking { commandService.executePageVisitCommand(prompt) }.toCommandStatus()
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         assertNotNull(status)
 
@@ -276,7 +277,7 @@ class CommandServiceTest : MockEcServerTestBase() {
     fun `test executeCommand with detailed and verbose command`() {
         val prompt = PAGE_VISIT_COMMAND_PROMPT3
 
-        val status = runBlocking { commandService.executePageVisitCommand(prompt) }
+        val status = runBlocking { commandService.executePageVisitCommand(prompt) }.toCommandStatus()
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         assertNotNull(status)
 

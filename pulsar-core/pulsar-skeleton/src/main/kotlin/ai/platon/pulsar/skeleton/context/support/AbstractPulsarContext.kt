@@ -464,7 +464,7 @@ abstract class AbstractPulsarContext(
      */
     override fun parse(page: WebPage): FeaturedDocument? {
         val parser = loadComponentOrNull?.parseComponent
-        return parser?.parse(page, noLinkFilter = true)?.document
+        return parser?.parse(page)?.document
     }
 
     override suspend fun chat(prompt: String): ModelResponse {
