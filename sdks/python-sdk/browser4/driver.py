@@ -54,9 +54,9 @@ class Browser4Driver:
         ...     # ... use client ...
 
     Args:
-        jar_path: Path where Browser4.jar should be stored 
+        jar_path: Path where Browser4.jar should be stored
                   (default: ~/.browser4/lib/Browser4.jar)
-        download_url: URL to download Browser4.jar from 
+        download_url: URL to download Browser4.jar from
                       (default: GitHub release v4.4.0)
         port: Port for the Browser4 server (default: 8182)
         java_options: Additional Java options for the process
@@ -138,7 +138,7 @@ class Browser4Driver:
                 last_error = e
                 is_last_attempt = attempt == attempts - 1
                 msg = f"Failed to download Browser4.jar (attempt {attempt + 1}/{attempts}): {e}"
-                
+
                 if not is_last_attempt:
                     print(f"{msg}; retrying in {backoff_ms / 1000}s...")
                     time.sleep(backoff_ms / 1000)
@@ -192,12 +192,12 @@ class Browser4Driver:
         """Downloads a file from URL to target path with progress tracking."""
         request = Request(url)
         opener = self._create_opener()
-        
+
         with opener.open(request, timeout=120) as response:
             total_size = int(response.headers.get("Content-Length", 0))
             downloaded = 0
             last_percent = -1
-            
+
             with open(target_path, "wb") as f:
                 while True:
                     chunk = response.read(8192)
@@ -205,7 +205,7 @@ class Browser4Driver:
                         break
                     f.write(chunk)
                     downloaded += len(chunk)
-                    
+
                     if total_size > 0:
                         percent = int((downloaded * 100) / total_size)
                         if percent != last_percent and percent % 5 == 0:
@@ -213,7 +213,7 @@ class Browser4Driver:
                             last_percent = percent
                     elif downloaded % Browser4Driver.MEGABYTE == 0:
                         print(f"Downloading Browser4.jar... {downloaded // Browser4Driver.MEGABYTE} MB")
-            
+
             if total_size > 0 and last_percent != 100:
                 print("Downloading Browser4.jar... 100%")
 
@@ -247,7 +247,7 @@ class Browser4Driver:
             k.lower() == profile_property.lower() for k in self.java_options.keys()
         )
         env_profile = os.environ.get("SPRING_PROFILES_ACTIVE")
-        
+
         if not has_profile and not env_profile:
             commands.append(f"-D{profile_property}=rest,private,advanced")
 
@@ -272,7 +272,7 @@ class Browser4Driver:
             stderr=subprocess.STDOUT,
             universal_newlines=True,
         )
-        
+
         self._install_shutdown_hook()
 
         if wait_for_ready:
@@ -339,7 +339,7 @@ class Browser4Driver:
             force: If True, forcibly kills the process; otherwise attempts graceful shutdown.
         """
         self._remove_shutdown_hook()
-        
+
         if self._process is not None:
             if self.is_running:
                 print("Stopping Browser4 server...")

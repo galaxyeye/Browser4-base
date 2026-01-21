@@ -1,5 +1,5 @@
 # Fast build Dockerfile - assumes Browser4.jar is already built
-# Usage: 
+# Usage:
 #   1. Build the JAR first: ./mvnw clean package -DskipTests
 #   2. Build the image: docker build -f Dockerfile.fast -t browser4:latest .
 #
@@ -55,8 +55,8 @@ RUN addgroup --system --gid 1001 appuser && \
 USER appuser
 
 # Create app data directory in appuser's home
-# The application will create ~/.pulsar/ at runtime if needed
-RUN mkdir -p ~/.pulsar/
+# The application will create ~/.browser4/ at runtime if needed
+RUN mkdir -p ~/.browser4/
 
 # Add build arguments
 LABEL maintainer="Vincent Zhang <ivincent.zhang@gmail.com>" \

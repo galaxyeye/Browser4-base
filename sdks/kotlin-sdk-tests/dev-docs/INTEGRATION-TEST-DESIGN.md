@@ -1220,7 +1220,7 @@ jobs:
           name: integration-test-logs
           path: |
             sdks/kotlin-sdk/target/*.log
-            ~/.pulsar/logs/
+            ~/.browser4/logs/
 
   publish-results:
     name: Publish Test Results
@@ -1496,7 +1496,7 @@ mvn test -Pintegration-test
 ### Q3: 如何调试失败的集成测试？
 
 1. 增加日志级别：设置 `logging.level.ai.platon.pulsar.sdk=DEBUG`
-2. 检查服务器日志：`~/.pulsar/logs/`
+2. 检查服务器日志：`~/.browser4/logs/`
 3. 使用 IDE 断点调试
 
 ### Q4: 集成测试需要多长时间？

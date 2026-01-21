@@ -67,7 +67,7 @@ COPY --from=builder /build/app.jar app.jar
 EXPOSE 8182
 
 # Create app data directory
-RUN mkdir -p ~/.pulsar/
+RUN mkdir -p ~/.browser4/
 
 # Create non-root user and set directory permissions
 RUN addgroup --system --gid 1001 appuser && \
