@@ -88,7 +88,6 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    @Tag("Slow")
     suspend fun `should capture screenshot`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
@@ -291,7 +290,6 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     // ========== Hover Tests ==========
 
     @Test
-    @Tag("Slow")
     suspend fun `should hover over element`() {
         driver.navigateTo(TestUrls.INTERACTIVE_2)
         driver.delay(500)

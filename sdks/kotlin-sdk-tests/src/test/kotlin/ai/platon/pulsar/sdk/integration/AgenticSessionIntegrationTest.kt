@@ -12,8 +12,9 @@
  */
 package ai.platon.pulsar.sdk.integration
 
-import ai.platon.pulsar.sdk.v0.AgenticSession
 import ai.platon.pulsar.sdk.integration.util.TestUrls
+import ai.platon.pulsar.sdk.v0.AgenticSession
+import kotlinx.coroutines.delay
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -148,7 +149,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
         session.act("click on the first product")
 
         // Wait a bit for navigation
-        Thread.sleep(2000)
+        delay(2000)
 
         // Extract product details
         val extraction = session.agentExtract("extract product name and price")

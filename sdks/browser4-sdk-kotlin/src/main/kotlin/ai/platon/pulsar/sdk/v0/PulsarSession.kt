@@ -329,21 +329,6 @@ open class PulsarSession(
     /**
      * Extracts fields from a document using CSS selectors.
      *
-     * This is a legacy method that delegates to the WebDriver.
-     * For Jsoup-based extraction, use extract(document: org.jsoup.nodes.Document, ...) instead.
-     *
-     * @param document The document (or page) to extract from
-     * @param fieldSelectors Map of field names to selectors
-     * @return Map of field names to extracted values
-     */
-    @Deprecated("Use extract(document: org.jsoup.nodes.Document, ...) for Jsoup documents")
-    suspend fun extract(document: Any, fieldSelectors: Map<String, String>): Map<String, String?> {
-        return driver.extract(fieldSelectors)
-    }
-
-    /**
-     * Extracts fields from a document using CSS selectors.
-     *
      * @param document The document (or page) to extract from
      * @param selectors List of selectors (selector becomes field name)
      * @return Map of field names to extracted values
@@ -351,21 +336,6 @@ open class PulsarSession(
     fun extract(document: Document, selectors: Iterable<String>): Map<String, String?> {
         val fieldSelectors = selectors.associateWith { it }
         return extract(document, fieldSelectors)
-    }
-
-    /**
-     * Extracts fields from a document using CSS selectors.
-     *
-     * This is a legacy method that delegates to the WebDriver.
-     *
-     * @param document The document (or page) to extract from
-     * @param selectors List of selectors (selector becomes field name)
-     * @return Map of field names to extracted values
-     */
-    @Deprecated("Use extract(document: org.jsoup.nodes.Document, ...) for Jsoup documents")
-    suspend fun extract(document: Any, selectors: Iterable<String>): Map<String, String?> {
-        val fieldSelectors = selectors.associateWith { it }
-        return driver.extract(fieldSelectors)
     }
 
     /**
@@ -393,7 +363,6 @@ open class PulsarSession(
      * @param prompt The user prompt to send to the LLM
      * @return [ChatResponse] with the LLM's response
      */
-    @Suppress("UNCHECKED_CAST")
     suspend fun chat(prompt: String): ChatResponse {
         val payload = mapOf("prompt" to prompt)
         val value = client.post("/session/{sessionId}/chat", payload)
@@ -410,7 +379,6 @@ open class PulsarSession(
      * @param systemMessage System instructions for the LLM
      * @return [ChatResponse] with the LLM's response
      */
-    @Suppress("UNCHECKED_CAST")
     suspend fun chat(userMessage: String, systemMessage: String): ChatResponse {
         val payload = mapOf(
             "userMessage" to userMessage,
@@ -474,59 +442,7 @@ open class PulsarSession(
      */
     @Suppress("UNCHECKED_CAST")
     suspend fun capture(driver: WebDriver? = null, url: String? = null): WebPage {
-        val drv = driver ?: this.driver
-        val currentUrl = url ?: drv.getCurrentUrl()
-        val value = client.post("/session/{sessionId}/open", mapOf("url" to currentUrl))
-        return WebPage(
-            url = if (value is Map<*, *>) (value as Map<String, Any?>)["url"] as? String ?: currentUrl else currentUrl,
-            html = if (value is Map<*, *>) (value as Map<String, Any?>)["html"] as? String else null
-        )
-    }
-
-    // ========== Helper Methods (API Compatibility) ==========
-
-    /**
-     * Registers a closable object with the session.
-     *
-     * @param closable Object with a close() method
-     */
-    fun registerClosable(closable: Any) {
-        // Placeholder for resource management
-    }
-
-    /**
-     * Gets or sets session data.
-     *
-     * @param name Data key name
-     * @param value Value to set (if provided)
-     * @return Stored value for the name
-     */
-    fun data(name: String, value: Any? = null): Any? {
-        // Placeholder for session data storage
-        return null
-    }
-
-    /**
-     * Gets or sets a session property.
-     *
-     * @param name Property name
-     * @param value Value to set (if provided)
-     * @return Property value
-     */
-    fun property(name: String, value: String? = null): String? {
-        // Placeholder for session properties
-        return null
-    }
-
-    /**
-     * Creates load options from arguments string.
-     *
-     * @param args Load arguments string
-     * @param eventHandlers Optional event handlers
-     * @return Options map
-     */
-    fun options(args: String = "", eventHandlers: PageEventHandlers? = null): Map<String, Any?> {
-        return mapOf("args" to args, "eventHandlers" to eventHandlers)
+        TODO()
     }
 
     // ========== Utility Methods ==========
@@ -538,15 +454,7 @@ open class PulsarSession(
      * @return True if the page exists in storage
      */
     fun exists(url: String): Boolean {
-        // This would need a dedicated endpoint; using a workaround
-        return false
-    }
-
-    /**
-     * Flushes pending changes to storage.
-     */
-    fun flush() {
-        // Placeholder
+        TODO()
     }
 
     /**
