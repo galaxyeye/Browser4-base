@@ -46,9 +46,6 @@ COPY browser4/browser4-agents/target/Browser4.jar app.jar
 # Expose port (documentation only)
 EXPOSE 8182
 
-# Create app data directory
-RUN mkdir -p ~/.pulsar/
-
 # Create non-root user and set directory permissions
 RUN addgroup --system --gid 1001 appuser && \
     adduser --system --uid 1001 --ingroup appuser appuser && \
@@ -56,6 +53,10 @@ RUN addgroup --system --gid 1001 appuser && \
 
 # Switch to non-root user
 USER appuser
+
+# Create app data directory in appuser's home
+# The application will create ~/.pulsar/ at runtime if needed
+RUN mkdir -p ~/.pulsar/
 
 # Add build arguments
 LABEL maintainer="Vincent Zhang <ivincent.zhang@gmail.com>" \
