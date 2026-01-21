@@ -59,6 +59,21 @@ object TestUrls {
     const val SIMPLE_DOM = "$ASSETS_BASE/dom.html"
 
     /**
+     * Form test page for comprehensive form interaction tests
+     */
+    const val FORM_PAGE = "$ASSETS_BASE/test-pages/form-page.html"
+
+    /**
+     * Error test page for testing error conditions and edge cases
+     */
+    const val ERROR_PAGE = "$ASSETS_BASE/test-pages/error-page.html"
+
+    /**
+     * Keyboard test page for testing keyboard interactions
+     */
+    const val KEYBOARD_PAGE = "$ASSETS_BASE/test-pages/keyboard-test.html"
+
+    /**
      * Interactive page 1
      */
     const val INTERACTIVE_1 = "$GENERATED_BASE/interactive-1.html"
