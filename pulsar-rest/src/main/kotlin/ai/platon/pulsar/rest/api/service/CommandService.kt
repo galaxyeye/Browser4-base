@@ -1,15 +1,15 @@
 package ai.platon.pulsar.rest.api.service
 
 import ai.platon.pulsar.agentic.AgenticSession
+import ai.platon.pulsar.agentic.tools.crawl.PGInstructResult
+import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
+import ai.platon.pulsar.agentic.tools.crawl.StatefulPageVisitor
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.rest.api.entities.*
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
-import ai.platon.pulsar.tools.crawl.AgenticPageVisitor
-import ai.platon.pulsar.tools.crawl.PGInstructResult
-import ai.platon.pulsar.tools.crawl.PageVisitRequest
-import ai.platon.pulsar.tools.crawl.PageVisitStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.springframework.http.codec.ServerSentEvent
@@ -29,6 +29,8 @@ class CommandService(
         const val FLOW_POLLING_INTERVAL = 1000L
     }
 
+    private val logger = getLogger(CommandService::class)
+
     // TODO: use ehcache
     private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
 
@@ -40,9 +42,7 @@ class CommandService(
         commandDispatcher + SupervisorJob() + CoroutineName("commander")
     )
 
-    private val logger = getLogger(CommandService::class)
-
-    private val pageVisitor = AgenticPageVisitor(session)
+    private val pageVisitor = StatefulPageVisitor(session)
 
     suspend fun executePageVisitCommandSync(request: CommandRequest, eventHandlers: PageEventHandlers): CommandStatus {
         val status = createCachedCommandStatus(request)

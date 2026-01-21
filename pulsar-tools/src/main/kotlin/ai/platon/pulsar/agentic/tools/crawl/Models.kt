@@ -1,4 +1,4 @@
-package ai.platon.pulsar.tools.crawl
+package ai.platon.pulsar.agentic.tools.crawl
 
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
@@ -195,11 +195,22 @@ data class PGInstructResult @JsonCreator constructor(
  * @property instructResults A list of results from the instructions executed during the command.
  * */
 data class PageVisitStatus(
+    /**
+     * The unique identifier for the page visit status.
+     * */
     val id: String = UUID.randomUUID().toString(),
-
+    /**
+     * The status code representing the task status.
+     * */
     var statusCode: Int = ResourceStatus.SC_CREATED,
+    /**
+     * The last event associated with the task.
+     * */
     var event: String = "",
-    var state: String = "created", // created, in_progress, done
+    /**
+     * The progress state of the agent task. Can be "created", "in_progress", or "done".
+     * */
+    var processState: String = "created", // created, in_progress, done
 
     var pageStatusCode: Int = ProtocolStatusCodes.SC_CREATED,
     var pageContentBytes: Int = 0,
@@ -214,7 +225,7 @@ data class PageVisitStatus(
     var lastModifiedTime: Instant? = null
     var finishTime: Instant? = null
 
-    val isDone: Boolean get() = state == "done"
+    val isDone: Boolean get() = processState == "done"
 
     /**
      * The server-side event handlers reference for tracking server-side events during command execution.
@@ -225,17 +236,17 @@ data class PageVisitStatus(
     var serverSideEventHandlers: ServerSideEventHandlers? = null
 
     companion object {
-        fun notFound(id: String) = PageVisitStatus(id, ResourceStatus.SC_NOT_FOUND, state = "done")
+        fun notFound(id: String) = PageVisitStatus(id, ResourceStatus.SC_NOT_FOUND, processState = "done")
 
-        fun failed(id: String) = PageVisitStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+        fun failed(id: String) = PageVisitStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
 
         fun failed(id: String, statusCode: Int, pageStatusCode: Int = statusCode) =
-            PageVisitStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, state = "done")
+            PageVisitStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, processState = "done")
 
         fun failed(statusCode: Int, pageStatusCode: Int = statusCode) = failed("", statusCode, pageStatusCode)
 
         fun failed(id: String, e: Exception): PageVisitStatus {
-            return PageVisitStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+            return PageVisitStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
         }
     }
 }
@@ -248,7 +259,7 @@ fun PageVisitStatus.ensureCommandResult(): PageVisitResult {
 
 fun PageVisitStatus.refresh(isDone: Boolean = false) {
     lastModifiedTime = Instant.now()
-    state = "done".takeIf { isDone } ?: "in_progress"
+    processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun PageVisitStatus.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
@@ -257,7 +268,7 @@ fun PageVisitStatus.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolea
     lastModifiedTime = Instant.now()
     this.statusCode = statusCode
     this.pageStatusCode = pageStatusCode
-    state = "done".takeIf { isDone } ?: "in_progress"
+    processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun PageVisitStatus.failed(statusCode: Int): PageVisitStatus {

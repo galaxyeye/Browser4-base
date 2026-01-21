@@ -1,6 +1,11 @@
-package ai.platon.pulsar.tools.crawl
+package ai.platon.pulsar.agentic.tools.crawl
 
 import ai.platon.pulsar.agentic.AgenticSession
+import ai.platon.pulsar.agentic.tools.crawl.common.DomUtils
+import ai.platon.pulsar.agentic.tools.crawl.common.PLACEHOLDER_PAGE_CONTENT
+import ai.platon.pulsar.agentic.tools.crawl.common.RestAPIPromptUtils
+import ai.platon.pulsar.agentic.tools.crawl.common.ScrapeAPIUtils
+import ai.platon.pulsar.agentic.tools.crawl.service.ScrapeService
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
@@ -18,11 +23,6 @@ import ai.platon.pulsar.skeleton.crawl.DefaultServerSideEventHandlers
 import ai.platon.pulsar.skeleton.crawl.EventBus
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
-import ai.platon.pulsar.tools.crawl.common.DomUtils
-import ai.platon.pulsar.tools.crawl.common.PLACEHOLDER_PAGE_CONTENT
-import ai.platon.pulsar.tools.crawl.common.RestAPIPromptUtils
-import ai.platon.pulsar.tools.crawl.common.ScrapeAPIUtils
-import ai.platon.pulsar.tools.crawl.service.ScrapeService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,10 +31,10 @@ import java.nio.file.Files
 import java.time.Duration
 import kotlin.io.path.writeText
 
-class AgenticPageVisitor(
+class StatefulPageVisitor(
     val session: AgenticSession,
 ) : Closeable {
-    private val logger = getLogger(AgenticPageVisitor::class)
+    private val logger = getLogger(StatefulPageVisitor::class)
 
     private val scrapeService = ScrapeService(session)
 

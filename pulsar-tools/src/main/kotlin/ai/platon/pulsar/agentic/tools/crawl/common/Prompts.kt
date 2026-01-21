@@ -1,4 +1,4 @@
-package ai.platon.pulsar.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.crawl.common
 
 const val DEFAULT_INTRODUCE = """
 Hi, I am Browser4!

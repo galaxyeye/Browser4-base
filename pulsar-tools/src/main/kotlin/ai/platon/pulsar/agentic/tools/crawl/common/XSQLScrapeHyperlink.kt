@@ -1,5 +1,8 @@
-package ai.platon.pulsar.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.crawl.common
 
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.crawl.refresh
 import ai.platon.pulsar.common.PulsarParams.VAR_IS_SCRAPE
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.getLogger
@@ -13,9 +16,6 @@ import ai.platon.pulsar.skeleton.crawl.event.impl.DefaultCrawlEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.DefaultLoadEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
 import ai.platon.pulsar.skeleton.session.PulsarSession
-import ai.platon.pulsar.tools.crawl.ScrapeRequest
-import ai.platon.pulsar.tools.crawl.ScrapeResponse
-import ai.platon.pulsar.tools.crawl.refresh
 import java.util.*
 
 open class XSQLScrapeHyperlink(

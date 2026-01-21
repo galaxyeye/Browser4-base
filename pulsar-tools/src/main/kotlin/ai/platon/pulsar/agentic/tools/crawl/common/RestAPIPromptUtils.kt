@@ -1,4 +1,4 @@
-package ai.platon.pulsar.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.crawl.common
 
 import ai.platon.pulsar.common.ai.llm.PromptTemplateLoader
 

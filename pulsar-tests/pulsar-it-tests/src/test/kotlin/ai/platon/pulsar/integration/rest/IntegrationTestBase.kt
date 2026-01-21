@@ -1,11 +1,11 @@
 package ai.platon.pulsar.integration.rest
 
 import ai.platon.pulsar.agentic.BasicAgenticSession
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
 import ai.platon.pulsar.boot.autoconfigure.PulsarContextConfiguration
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.sleepSeconds
 import ai.platon.pulsar.skeleton.session.PulsarSession
-import ai.platon.pulsar.tools.crawl.ScrapeResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort

@@ -239,11 +239,22 @@ data class InstructResult @JsonCreator constructor(
  * @property instructResults A list of results from the instructions executed during the command.
  * */
 data class CommandStatus(
+    /**
+     * The unique identifier for the page visit status.
+     * */
     val id: String = UUID.randomUUID().toString(),
-
+    /**
+     * The status code representing the task status.
+     * */
     var statusCode: Int = ResourceStatus.SC_CREATED,
+    /**
+     * The last event associated with the task.
+     * */
     var event: String = "",
-    var state: String = "created", // created, in_progress, done
+    /**
+     * The progress state of the agent task. Can be "created", "in_progress", or "done".
+     * */
+    var processState: String = "created", // created, in_progress, done
 
     var pageStatusCode: Int = ProtocolStatusCodes.SC_CREATED,
     var pageContentBytes: Int = 0,
@@ -258,7 +269,7 @@ data class CommandStatus(
     var lastModifiedTime: Instant? = null
     var finishTime: Instant? = null
 
-    val isDone: Boolean get() = state == "done"
+    val isDone: Boolean get() = processState == "done"
 
     /**
      * The agent's state history reference for tracking agent execution progress.
@@ -284,17 +295,17 @@ data class CommandStatus(
     var serverSideEventHandlers: ServerSideEventHandlers? = null
 
     companion object {
-        fun notFound(id: String) = CommandStatus(id, ResourceStatus.SC_NOT_FOUND, state = "done")
+        fun notFound(id: String) = CommandStatus(id, ResourceStatus.SC_NOT_FOUND, processState = "done")
 
-        fun failed(id: String) = CommandStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+        fun failed(id: String) = CommandStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
 
         fun failed(id: String, statusCode: Int, pageStatusCode: Int = statusCode) =
-            CommandStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, state = "done")
+            CommandStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, processState = "done")
 
         fun failed(statusCode: Int, pageStatusCode: Int = statusCode) = failed("", statusCode, pageStatusCode)
 
         fun failed(id: String, e: Exception): CommandStatus {
-            return CommandStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+            return CommandStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
         }
     }
 }
@@ -307,7 +318,7 @@ fun CommandStatus.ensureCommandResult(): CommandResult {
 
 fun CommandStatus.refresh(isDone: Boolean = false) {
     lastModifiedTime = Instant.now()
-    state = "done".takeIf { isDone } ?: "in_progress"
+    processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun CommandStatus.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
@@ -316,7 +327,7 @@ fun CommandStatus.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolean)
     lastModifiedTime = Instant.now()
     this.statusCode = statusCode
     this.pageStatusCode = pageStatusCode
-    state = "done".takeIf { isDone } ?: "in_progress"
+    processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun CommandStatus.failed(statusCode: Int): CommandStatus {

@@ -1,5 +1,6 @@
-package ai.platon.pulsar.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.crawl.common
 
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
 import ai.platon.pulsar.common.urls.DegenerateUrl
 import ai.platon.pulsar.common.warnUnexpected
 import ai.platon.pulsar.persist.WebPage
@@ -8,7 +9,6 @@ import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.DefaultPageEventHandlers
 import ai.platon.pulsar.skeleton.session.PulsarSession
-import ai.platon.pulsar.tools.crawl.ScrapeRequest
 import org.slf4j.LoggerFactory
 import java.util.*
 

@@ -1,5 +1,7 @@
-package ai.platon.pulsar.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.crawl.common
 
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.brief
@@ -11,8 +13,6 @@ import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.common.url.CompletableListenableHyperlink
 import ai.platon.pulsar.skeleton.session.PulsarSession
-import ai.platon.pulsar.tools.crawl.ScrapeRequest
-import ai.platon.pulsar.tools.crawl.ScrapeResponse
 import org.h2.jdbc.JdbcSQLException
 import java.sql.Connection
 import java.sql.ResultSet
