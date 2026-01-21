@@ -32,8 +32,6 @@ class CommandService(
 
     private val logger = getLogger(CommandService::class)
 
-//    private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
-
     // Create a dedicated dispatcher for long-running command operations
     private val scrapingExecutor = Executors.newFixedThreadPool(10)
     private val commandDispatcher = scrapingExecutor.asCoroutineDispatcher()
@@ -210,41 +208,35 @@ class CommandService(
         return status
     }
 
-    /**
-     * Map a visitor execution result back onto REST [CommandStatus]/[CommandResult] types.
-     */
-    private fun CommandStatus.applyVisitStatus(visitStatus: PageVisitStatus) {
+    private fun PageVisitStatus.toCommandStatus(): CommandStatus {
+        val status = CommandStatus(this.id)
         // high-level status
-        statusCode = visitStatus.statusCode
-        pageStatusCode = visitStatus.pageStatusCode
-        pageContentBytes = visitStatus.pageContentBytes
-        message = visitStatus.message
+        status.statusCode = statusCode
+        status.pageStatusCode = pageStatusCode
+        status.pageContentBytes = pageContentBytes
+        status.message = message
 
         // instruct results -> REST instruct results
-        @Suppress("UNCHECKED_CAST") val restResults = visitStatus.instructResults.map { it.toRestInstructResult() }
-        restResults.forEach { addInstructResult(it) }
+        @Suppress("UNCHECKED_CAST")
+        val restResults = instructResults.map { it.toRestInstructResult() }
+        restResults.forEach { status.addInstructResult(it) }
 
         // best-effort summary mapping
-        val visitResult = visitStatus.pageVisitResult
+        val visitResult = pageVisitResult
         if (visitResult != null) {
-            val commandResult = ensureCommandResult()
+            val commandResult = status.ensureCommandResult()
             commandResult.pageSummary = visitResult.pageSummary
             commandResult.fields = visitResult.fields
             commandResult.xsqlResultSet = visitResult.xsqlResultSet
         }
 
         // Align internal state string with HTTP status.
-        if (visitStatus.statusCode == ResourceStatus.SC_OK) {
-            refresh(ResourceStatus.SC_OK)
-        } else if (visitStatus.statusCode >= 400) {
-            failed(visitStatus.statusCode)
+        if (statusCode == ResourceStatus.SC_OK) {
+            status.refresh(ResourceStatus.SC_OK)
+        } else if (statusCode >= 400) {
+            status.failed(statusCode)
         }
-    }
 
-    private fun PageVisitStatus.toCommandStatus(): CommandStatus {
-        val status = CommandStatus(this.id)
-        status.applyVisitStatus(this)
-        status.done()
         return status
     }
 
