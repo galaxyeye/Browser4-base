@@ -578,34 +578,8 @@ class LoadComponent(
 
     private fun parse(page: WebPage, options: LoadOptions): ParseResult? {
         val parser = parseComponent.takeIf { options.parse } ?: return null
-        val parseResult = parser.parse(page, options.reparseLinks, options.noFilter)
-        tracer?.trace("ParseResult: {} ParseReport: {}", parseResult, parser.getTraceInfo())
-
+        val parseResult = parser.parse(page)
         return parseResult
-    }
-
-    /**
-     * Because the content is large, a general webpage is up to 2M, so we do not load it from the database unless have to
-     *
-     * if the page is fetched, the content is set by the fetch component, so we do not load it from the database
-     * if the protocol status is not success, the content is useless and not loaded
-     * */
-    private fun processPageContent(page: WebPage, normURL: NormURL) {
-        val options = normURL.options
-
-        if (page.protocolStatus.isSuccess && page.content == null) {
-            shouldBe(false, page.isFetched) { "Page should not be fetched | ${page.configuredUrl}" }
-            // load the content of the page
-            val contentPage = webDb.getOrNull(page.url, GWebPage.Field.CONTENT)
-            if (contentPage != null) {
-                page.setByteBufferContent(contentPage.content)
-                // TODO: test the dirty flag
-                require(page is GoraWebPage)
-                page.unbox().clearDirty(GWebPage.Field.CONTENT.index)
-            }
-        }
-
-        shouldBe(options.conf, page.conf) { "Conf should be the same \n${options.conf} \n${page.conf}" }
     }
 
     private fun report(page: WebPage) {

@@ -696,58 +696,6 @@ open class LoadOptions(
     var parse = LoadOptionDefaults.parse
 
     /**
-     * Forces re-parsing of links even for previously parsed pages.
-     *
-     * When enabled, link extraction will be performed even if the page has been
-     * parsed before. Useful when link extraction rules have changed.
-     */
-    @Parameter(
-        names = ["-rpl", "-reparseLinks", "--reparse-links"],
-        description = "Re-parse links if the page has been parsed before."
-    )
-    @Beta
-    var reparseLinks = false
-
-    /**
-     * Removes query parameters from URLs during processing.
-     *
-     * When enabled, query strings (parameters after '?') are stripped from URLs.
-     * Useful for treating URLs with different query parameters as the same resource.
-     */
-    @Parameter(
-        names = ["-ignoreUrlQuery", "--ignore-url-query"],
-        description = "Remove the query parameters in the url"
-    )
-    @Beta
-    var ignoreUrlQuery = false
-
-    /**
-     * Disables URL normalization during link processing.
-     *
-     * When enabled, extracted links are used exactly as found without normalization.
-     * This can lead to duplicate URLs in different formats being treated as distinct.
-     */
-    @Parameter(
-        names = ["-noNorm", "--no-link-normalizer"],
-        description = "If true, no normalizer will be applied when parse links."
-    )
-    @Beta
-    var noNorm = false
-
-    /**
-     * Disables URL filtering during link processing.
-     *
-     * When enabled, all extracted links are processed without filtering.
-     * This can lead to following links that would normally be excluded (like external domains).
-     */
-    @Parameter(
-        names = ["-noFilter", "--no-link-filter"],
-        description = "If true, no filter will be applied when parse links."
-    )
-    @Beta
-    var noFilter = false
-
-    /**
      * Controls the level of interaction with web pages during crawling.
      *
      * This setting balances content quality against performance:

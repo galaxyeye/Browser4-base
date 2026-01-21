@@ -29,18 +29,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
-/**
- * A multi-valued data container.
- *
- * @author Chris Mattmann
- * @author J&eacute;r&ocirc;me Charron
- * @version $Id: $Id
- */
 public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
-
-    public static final String META_TMP = "TMP_";
 
     /**
      * A map of all data attributes.
@@ -54,43 +44,14 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
 
     }
 
-    public MultiMetadata(Map<String, String> kvs) {
-        kvs.forEach(this::put);
-    }
-
-    /**
-     * Constructs a new, empty data.
-     *
-     * @param kvs a {@link java.lang.String} object.
-     */
-    public MultiMetadata(String... kvs) {
-        int length = kvs.length;
-        if (length % 2 == 0) {
-            for (int i = 0; i < length; i += 2) {
-                put(kvs[i], kvs[1 + i]);
-            }
-        } else {
-            throw new IllegalArgumentException("Length of the variable argument 'kvs' must be an even number");
-        }
-    }
-
-    /**
-     * Returns true if named value is multivalued.
-     *
-     * @param name name of data
-     * @return true is named value is multivalued, false if single value or null
-     */
-    public boolean isMultiValued(String name) {
-        return data.get(name) != null && data.get(name).size() > 1;
-    }
-
     /**
      * Returns a set of the names contained in the data.
      *
      * @return Metadata names
      */
     public Set<String> names() {
-        return data.keySet();
+        // Defensive copy: Guava's Multimap#keySet() is a view.
+        return new LinkedHashSet<>(data.keySet());
     }
 
     /**
@@ -139,16 +100,6 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     }
 
     /**
-     * <p>getNonNullValues.</p>
-     *
-     * @param name a {@link java.lang.String} object.
-     * @return a {@link java.util.Collection} object.
-     */
-    public Collection<String> getNonNullValues(String name) {
-        return getValues(name).stream().filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    /**
      * Add a data name/value mapping. Add the specified value to the list of
      * values associated to the specified data name.
      *
@@ -162,7 +113,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>put.</p>
      *
-     * @param name a {@link ai.platon.pulsar.persist.metadata.Name} object.
+     * @param name  a {@link ai.platon.pulsar.persist.metadata.Name} object.
      * @param value a {@link java.lang.String} object.
      */
     public void put(Name name, String value) {
@@ -172,7 +123,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>put.</p>
      *
-     * @param name a {@link ai.platon.pulsar.persist.metadata.Name} object.
+     * @param name  a {@link ai.platon.pulsar.persist.metadata.Name} object.
      * @param value a int.
      */
     public void put(Name name, int value) {
@@ -182,7 +133,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>put.</p>
      *
-     * @param name a {@link ai.platon.pulsar.persist.metadata.Name} object.
+     * @param name  a {@link ai.platon.pulsar.persist.metadata.Name} object.
      * @param value a long.
      */
     public void put(Name name, long value) {
@@ -192,7 +143,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>put.</p>
      *
-     * @param name a {@link ai.platon.pulsar.persist.metadata.Name} object.
+     * @param name  a {@link ai.platon.pulsar.persist.metadata.Name} object.
      * @param value a {@link java.time.Instant} object.
      */
     public void put(Name name, Instant value) {
@@ -202,7 +153,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>set.</p>
      *
-     * @param name a {@link java.lang.String} object.
+     * @param name  a {@link java.lang.String} object.
      * @param value a {@link java.lang.String} object.
      */
     public void set(String name, String value) {
@@ -213,7 +164,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>getInt.</p>
      *
-     * @param name a {@link java.lang.String} object.
+     * @param name         a {@link java.lang.String} object.
      * @param defaultValue a int.
      * @return a int.
      */
@@ -225,7 +176,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>getLong.</p>
      *
-     * @param name a {@link java.lang.String} object.
+     * @param name         a {@link java.lang.String} object.
      * @param defaultValue a long.
      * @return a long.
      */
@@ -237,7 +188,7 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     /**
      * <p>getBoolean.</p>
      *
-     * @param name a {@link java.lang.String} object.
+     * @param name         a {@link java.lang.String} object.
      * @param defaultValue a {@link java.lang.Boolean} object.
      * @return a boolean.
      */
@@ -250,45 +201,37 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
     }
 
     /**
-     * <p>getInstant.</p>
-     *
-     * @param name a {@link java.lang.String} object.
-     * @param defaultValue a {@link java.time.Instant} object.
-     * @return a {@link java.time.Instant} object.
+     * A primitive-friendly overload to avoid null defaults.
      */
-    public Instant getInstant(String name, Instant defaultValue) {
-        return DateTimes.parseInstant(get(name), defaultValue);
+    public boolean getBoolean(String name, boolean defaultValue) {
+        return getBoolean(name, Boolean.valueOf(defaultValue));
     }
 
     /**
-     * Copy All key-value pairs from properties.
-     *
-     * @param properties properties to copy from
+     * Returns true if the data contains at least one value for the given name.
      */
-    public void putAll(Properties properties) {
-        Enumeration<?> names = properties.propertyNames();
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-            data.put(name, properties.getProperty(name));
-        }
+    public boolean has(String name) {
+        return !data.get(name).isEmpty();
     }
 
     /**
-     * <p>putAll.</p>
+     * Removes all values for the given name.
      *
-     * @param metadata a {@link java.util.Map} object.
+     * @return number of removed values
      */
-    public void putAll(Map<String, String> metadata) {
-        metadata.forEach((key, value) -> data.put(key, value));
-    }
-
-    /**
-     * Remove a data and all its associated values.
-     *
-     * @param name data name to remove
-     */
-    public void removeAll(String name) {
+    public int remove(String name) {
+        int size = data.get(name).size();
         data.removeAll(name);
+        return size;
+    }
+
+    /**
+     * Creates a deep copy of this metadata.
+     */
+    public MultiMetadata copy() {
+        MultiMetadata m = new MultiMetadata();
+        m.data.putAll(this.data);
+        return m;
     }
 
     /**
@@ -298,7 +241,6 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
         data.clear();
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -319,11 +261,18 @@ public class MultiMetadata implements DublinCore, HttpHeaders, AppConstants {
         return data.equals(other.data);
     }
 
-    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        return Objects.hash(data);
+    }
+
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (String name : data.keySet()) {
+        // Sort keys for stable output.
+        List<String> keys = Lists.newArrayList(data.keySet());
+        keys.sort(String::compareTo);
+        for (String name : keys) {
             List<String> values = Lists.newArrayList(data.get(name));
             buf.append(name).append("=").append(StringUtils.join(values, ",")).append(StringUtils.SPACE);
         }
