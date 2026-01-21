@@ -91,7 +91,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
         driver.navigateTo(TestUrls.KEYBOARD_PAGE)
 
         driver.focus("#keyInput")
-        driver.press("Enter")
+        driver.press("#keyInput", "Enter")
 
         // Verify operation completed
         assertTrue(driver.exists("#keyInput"), "Input should exist after key press")
@@ -102,7 +102,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
         driver.navigateTo(TestUrls.FORM_PAGE)
 
         driver.focus("#username")
-        driver.press("Tab")
+        driver.press("#username", "Tab")
 
         // Tab should move focus (operation completed)
         assertTrue(driver.exists("#username"), "Form should be accessible after Tab")
@@ -113,7 +113,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
         driver.navigateTo(TestUrls.KEYBOARD_PAGE)
 
         driver.focus("#keyInput")
-        driver.press("Escape")
+        driver.press("#keyInput", "Escape")
 
         // Verify operation completed
         assertTrue(driver.exists("#keyInput"), "Input should exist after Escape")
@@ -124,10 +124,10 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
         driver.navigateTo(TestUrls.KEYBOARD_PAGE)
 
         driver.focus("#keyInput")
-        driver.press("ArrowDown")
-        driver.press("ArrowUp")
-        driver.press("ArrowLeft")
-        driver.press("ArrowRight")
+        driver.press("#keyInput", "ArrowDown")
+        driver.press("#keyInput", "ArrowUp")
+        driver.press("#keyInput", "ArrowLeft")
+        driver.press("#keyInput", "ArrowRight")
 
         // Verify operations completed
         assertTrue(driver.exists("#keyInput"), "Input should exist after arrow key presses")
@@ -219,9 +219,9 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
 
         // Fill form using keyboard operations
         driver.type("#username", "testuser")
-        driver.press("Tab")
+        driver.press("#username", "Tab")
         driver.type("#email", "test@example.com")
-        driver.press("Tab")
+        driver.press("#email", "Tab")
         driver.type("#password", "secure123")
 
         // Verify all fields are accessible
@@ -247,7 +247,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
 
         driver.type("#username", "submituser")
         driver.focus("#username")
-        driver.press("Enter")
+        driver.press("#username", "Enter")
 
         // Verify form is still accessible (might have submitted)
         assertTrue(driver.exists("#testForm"), "Form should exist after Enter press")
