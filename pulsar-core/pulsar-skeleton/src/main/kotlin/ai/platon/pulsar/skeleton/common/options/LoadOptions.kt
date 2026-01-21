@@ -56,6 +56,7 @@ open class LoadOptions(
     var referrer: String? = null,
 ) : PulsarOptions(argv) {
 
+
     /**
      * Represents the type of content being crawled, such as an article, product, or hotel.
      * This is used for classifying and applying specialized processing to different content types.
@@ -694,6 +695,30 @@ open class LoadOptions(
      */
     @Parameter(names = ["-ps", "-parse", "--parse"], description = "If true, parse the page when it's just be fetched.")
     var parse = LoadOptionDefaults.parse
+
+    /**
+     * Removes query parameters from URLs during processing.
+     *
+     * When enabled, query strings (parameters after '?') are stripped from URLs.
+     * Useful for treating URLs with different query parameters as the same resource.
+     */
+    @Parameter(
+        names = ["-ignoreUrlQuery", "--ignore-url-query"],
+        description = "Remove the query parameters in the url"
+    )
+    var ignoreUrlQuery = false
+
+    /**
+     * Disables URL normalization during link processing.
+     *
+     * When enabled, extracted links are used exactly as found without normalization.
+     * This can lead to duplicate URLs in different formats being treated as distinct.
+     */
+    @Parameter(
+        names = ["-noNorm", "--no-link-normalizer"],
+        description = "If true, no normalizer will be applied when normalize urls."
+    )
+    var noNorm = false
 
     /**
      * Controls the level of interaction with web pages during crawling.
