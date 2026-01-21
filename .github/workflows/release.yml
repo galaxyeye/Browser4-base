@@ -206,7 +206,7 @@ jobs:
               echo "E2E_status=success" >> $GITHUB_OUTPUT
             else
               echo "❌ E2E tests failed"
-              echo "E2E_status=failed" >> $GITHUB_OUTPUT
+              echo "e2e_status=failed" >> $GITHUB_OUTPUT
               exit 1
             fi
           else
