@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 import java.time.Instant
-import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.Executors
 
 @Service
@@ -33,7 +32,7 @@ class CommandService(
 
     private val logger = getLogger(CommandService::class)
 
-    private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
+//    private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
 
     // Create a dedicated dispatcher for long-running command operations
     private val scrapingExecutor = Executors.newFixedThreadPool(10)
@@ -46,15 +45,15 @@ class CommandService(
     private val statefulPageVisitor = StatefulPageVisitor(session)
     private val statefulAgentRunner = StatefulAgentRunner(session)
 
-    suspend fun executePageVisitCommandSync(request: CommandRequest, eventHandlers: PageEventHandlers): CommandStatus {
-        val status = createCachedCommandStatus(request)
-        executePageVisitCommand(request, status, eventHandlers)
-        return status
+    suspend fun executePageVisitCommandSync(
+        request: CommandRequest, eventHandlers: PageEventHandlers
+    ): PageVisitStatus {
+        return statefulPageVisitor.visit(request, eventHandlers)
     }
 
     fun submitPageVisitCommandAsync(request: CommandRequest, eventHandlers: PageEventHandlers): String {
-        val status = createCachedCommandStatus(request)
-        commanderScope.launch { executePageVisitCommand(request, status, eventHandlers) }
+        val status = statefulPageVisitor.create()
+        commanderScope.launch { statefulPageVisitor.visit(request, status, eventHandlers) }
         return status.id
     }
 
@@ -70,21 +69,15 @@ class CommandService(
      * @return CommandStatus containing the execution result.
      */
     suspend fun executePlainCommandSync(plainCommand: String): CommandStatus {
-        if (plainCommand.isBlank()) {
-            val status = createCachedCommandStatus()
-            status.failed(ResourceStatus.SC_BAD_REQUEST)
-            return status
-        }
-
         val request = conversationService.normalizePlainCommand(plainCommand)
         return if (request != null) {
             // Page visit execution
-            val status = createCachedCommandStatus(request)
+            val status = statefulPageVisitor.create()
             val eventHandlers = PageEventHandlersFactory.create()
-            executePageVisitCommand(request, status, eventHandlers)
+            statefulPageVisitor.visit(request, status, eventHandlers)
+            status.toCommandStatus()
         } else {
             // Open task execution
-            // executeAgentCommand(plainCommand)
             val agentStatus = statefulAgentRunner.execute(plainCommand)
             agentStatus.toCommandStatus()
         }
@@ -102,12 +95,6 @@ class CommandService(
      * @return The command status ID for tracking execution progress.
      */
     suspend fun submitPlainCommandAsync(plainCommand: String): String {
-        if (plainCommand.isBlank()) {
-            val status = createCachedCommandStatus()
-            status.failed(ResourceStatus.SC_BAD_REQUEST)
-            return status.id
-        }
-
         val request = conversationService.normalizePlainCommand(plainCommand)
         return if (request != null) {
             // Standard URL-based async command execution
@@ -129,65 +116,29 @@ class CommandService(
      * @return CommandStatus containing the execution result.
      */
     suspend fun executeAgentCommand(plainCommand: String): CommandStatus {
-        val agentStatus = statefulAgentRunner.execute(plainCommand)
-
-        val status = createCachedCommandStatus()
-        status.refresh(agentStatus.statusCode)
-        status.message = agentStatus.message
-
-        // expose history for real-time state tracking in SSE streaming
-        status.agentHistory = agentStatus.agentHistory
-
-        val summary = agentStatus.agentHistory?.lastOrNull()?.summary ?: ""
-        if (summary.isNotBlank()) {
-            status.ensureCommandResult().summary = summary
-        }
-
-        status.done()
-        return status
+        val status = statefulAgentRunner.execute(plainCommand)
+        return status.toCommandStatus()
     }
 
     suspend fun submitAgentTaskAsync(plainCommand: String): String {
-        val status = createCachedCommandStatus()
-        submitAgentTaskAsync(plainCommand, status)
+        val status = statefulAgentRunner.create()
+        statefulAgentRunner.execute(plainCommand, status)
         return status.id
     }
 
-    private suspend fun submitAgentTaskAsync(plainCommand: String, status: CommandStatus) {
-        try {
-            status.refresh(ResourceStatus.SC_PROCESSING)
-
-            val agentStatus = statefulAgentRunner.submit(plainCommand)
-            val finalState = statefulAgentRunner.getResult(agentStatus.id)
-
-            // AgentState has 'summary' for the final result message
-            val resultSummary = finalState?.summary ?: finalState?.description ?: ""
-            status.message = resultSummary
-            status.ensureCommandResult().summary = resultSummary
-            status.refresh(ResourceStatus.SC_OK)
-        } catch (e: Exception) {
-            logger.error("Failed to execute agent command: {}", plainCommand, e)
-            status.failed(ResourceStatus.SC_EXPECTATION_FAILED)
-            status.message = e.message
-        } finally {
-            status.done()
-        }
+    fun getStatus(id: String): CommandStatus? {
+        return statefulPageVisitor.getStatus(id)?.toCommandStatus() ?: statefulAgentRunner.getStatus(id)
+            ?.toCommandStatus()
     }
 
-    fun getStatus(id: String) = commandStatusCache[id]
-
-    fun getResult(id: String) = commandStatusCache[id]?.commandResult
+    fun getResult(id: String): CommandResult? = getStatus(id)?.commandResult
 
     fun streamEvents(id: String): Flux<ServerSentEvent<CommandStatus>> {
         val handleFluxSink = { sink: FluxSink<CommandStatus> ->
-            val job = commandStatusFlow(id)
-                .onEach { sink.next(it) }
-                .onCompletion { sink.complete() }
-                .catch {
-                    logger.error("Error in command status flow", it)
-                    sink.error(it)
-                }
-                .launchIn(commanderScope)
+            val job = commandStatusFlow(id).onEach { sink.next(it) }.onCompletion { sink.complete() }.catch {
+                logger.error("Error in command status flow", it)
+                sink.error(it)
+            }.launchIn(commanderScope)
 
             sink.onDispose { job.cancel() }
         }
@@ -204,7 +155,7 @@ class CommandService(
         do {
             delay(FLOW_POLLING_INTERVAL)
 
-            val status = commandStatusCache[id] ?: CommandStatus.notFound(id)
+            val status = getStatus(id) ?: CommandStatus.notFound(id)
             if (status.refreshed(lastModifiedTime)) {
                 emit(status)
                 lastModifiedTime = status.lastModifiedTime
@@ -227,60 +178,21 @@ class CommandService(
      * @param request The request string containing a URL and other parameters.
      * @return A PromptResponseL2 object containing the result of the command execution.
      * */
-    suspend fun executePageVisitCommand(request: String): CommandStatus {
+    suspend fun executePageVisitCommand(request: String): PageVisitStatus {
         if (request.isBlank()) {
-            return CommandStatus.failed(ResourceStatus.SC_BAD_REQUEST)
+            return PageVisitStatus.failed(ResourceStatus.SC_BAD_REQUEST)
         }
 
-        val request2 = conversationService.normalizePlainCommand(request)
-        val status = createCachedCommandStatus(request2)
-        if (request2 == null) {
-            status.failed(ResourceStatus.SC_EXPECTATION_FAILED)
-            return status
-        }
+        val request2 = conversationService.normalizePlainCommand(request) ?: return PageVisitStatus.failed(
+            ResourceStatus.SC_EXPECTATION_FAILED
+        )
 
         val eventHandlers = PageEventHandlersFactory.create()
-        return executePageVisitCommand(request2, status, eventHandlers)
+        return statefulPageVisitor.visit(request2, eventHandlers)
     }
 
-    suspend fun executePageVisitCommand(request: PageVisitRequest): CommandStatus {
-        val status = createCachedCommandStatus(request)
-
-        val eventHandlers = PageEventHandlersFactory.create()
-        executePageVisitCommand(request, status, eventHandlers)
-        return status
-    }
-
-    suspend fun executePageVisitCommand(
-        request: PageVisitRequest,
-        status: CommandStatus,
-        eventHandlers: PageEventHandlers
-    ): CommandStatus {
-        try {
-            status.refresh(ResourceStatus.SC_PROCESSING)
-
-            // Delegate the heavy lifting to AgenticPageVisitor so CommandService stays thin.
-            val visitStatus = statefulPageVisitor.visit(request, eventHandlers)
-            status.applyVisitStatus(visitStatus)
-        } catch (e: Exception) {
-            status.message = e.message
-            status.failed(ResourceStatus.SC_EXPECTATION_FAILED)
-        } finally {
-            status.done()
-        }
-
-        return status
-    }
-
-    // =====================
-    // Internals
-    // =====================
-
-    private fun createCachedCommandStatus(request: CommandRequest? = null): CommandStatus {
-        val status = CommandStatus()
-        commandStatusCache[status.id] = status
-        status.refresh("created")
-        return status
+    suspend fun executePageVisitCommand(request: PageVisitRequest): PageVisitStatus {
+        return statefulPageVisitor.visit(request)
     }
 
     private fun AgentTaskStatus.toCommandStatus(): CommandStatus {
@@ -309,8 +221,7 @@ class CommandService(
         message = visitStatus.message
 
         // instruct results -> REST instruct results
-        @Suppress("UNCHECKED_CAST")
-        val restResults = visitStatus.instructResults.map { it.toRestInstructResult() }
+        @Suppress("UNCHECKED_CAST") val restResults = visitStatus.instructResults.map { it.toRestInstructResult() }
         restResults.forEach { addInstructResult(it) }
 
         // best-effort summary mapping
@@ -328,6 +239,13 @@ class CommandService(
         } else if (visitStatus.statusCode >= 400) {
             failed(visitStatus.statusCode)
         }
+    }
+
+    private fun PageVisitStatus.toCommandStatus(): CommandStatus {
+        val status = CommandStatus(this.id)
+        status.applyVisitStatus(this)
+        status.done()
+        return status
     }
 
     private fun PGInstructResult.toRestInstructResult(): InstructResult {

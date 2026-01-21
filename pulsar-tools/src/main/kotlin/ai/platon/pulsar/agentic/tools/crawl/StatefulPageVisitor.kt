@@ -40,9 +40,22 @@ class StatefulPageVisitor(
 
     private val statusCache = ConcurrentExpiringLRUCache<String, PageVisitStatus>(Duration.ofHours(2))
 
+    fun create(): PageVisitStatus {
+        val status = PageVisitStatus()
+        // status.request = request
+        statusCache.putDatum(status.id, status)
+        status.refresh("created")
+        return status
+    }
+
     suspend fun visit(request: PageVisitRequest): PageVisitStatus {
         val eventHandlers = PageEventHandlersFactory.create()
         return visit(request, eventHandlers)
+    }
+
+    suspend fun visit(request: PageVisitRequest, status: PageVisitStatus, eventHandlers: PageEventHandlers): PageVisitStatus {
+        doVisit(request, status, eventHandlers)
+        return status
     }
 
     /**
@@ -53,7 +66,7 @@ class StatefulPageVisitor(
      * cross-talk between SSE streams.
      */
     suspend fun visit(request: PageVisitRequest, eventHandlers: PageEventHandlers): PageVisitStatus {
-        val status = createCachedStatus(request)
+        val status = create()
         doVisit(request, status, eventHandlers)
         return status
     }
@@ -96,14 +109,6 @@ class StatefulPageVisitor(
             status.done()
         }
 
-        return status
-    }
-
-    private fun createCachedStatus(request: PageVisitRequest? = null): PageVisitStatus {
-        val status = PageVisitStatus()
-        // status.request = request
-        statusCache.putDatum(status.id, status)
-        status.refresh("created")
         return status
     }
 

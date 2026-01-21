@@ -21,6 +21,14 @@ class StatefulAgentRunner(
     )
     private val statusCache = ConcurrentExpiringLRUCache<String, AgentTaskStatus>(Duration.ofHours(2))
 
+    fun create(): AgentTaskStatus {
+        val status = AgentTaskStatus()
+        // status.request = request
+        statusCache.putDatum(status.id, status)
+        status.refresh("created")
+        return status
+    }
+
     fun submit(plainCommand: String): AgentTaskStatus {
         val status = createCachedStatus()
         commanderScope.launch { execute(plainCommand, status) }
