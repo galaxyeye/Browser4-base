@@ -8,21 +8,21 @@
                               Test Execution Flow
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                           │
-│  1. Maven/JUnit starts test                                             │
+│  1. Maven/Surefire starts JUnit 5 tests (default: groups=IntegrationTest) │
 │                    ↓                                                     │
-│  2. @SpringBootTest starts PulsarRestServerApplication                  │
+│  2. @SpringBootTest starts PulsarRestServerApplication                    │
 │                    ↓                                                     │
-│  3. Server starts on random port (e.g., 52341)                          │
+│  3. Server starts on random port (e.g., 52341)                            │
 │                    ↓                                                     │
-│  4. TestServerConfiguration starts Mock EC Server (port 18080)          │
+│  4. TestServerConfiguration starts Mock EC Server (port 18080)            │
 │                    ↓                                                     │
-│  5. Test Base class creates PulsarClient(baseUrl = "http://localhost:52341") │
+│  5. KotlinSdkIntegrationTestBase creates PulsarClient(baseUrl=localhost)  │
 │                    ↓                                                     │
-│  6. Test methods execute SDK operations                                 │
+│  6. Test methods execute SDK operations via real HTTP calls               │
 │                    ↓                                                     │
-│  7. After test: cleanup sessions and resources                          │
+│  7. After each test: cleanup session and close client                     │
 │                    ↓                                                     │
-│  8. After all tests: servers shut down                                  │
+│  8. After all tests: Spring context shuts down                            │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
 
@@ -30,13 +30,13 @@
                            Component Architecture
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                           │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  ┌──────────────────────────────────────────────────���──────────────┐   │
 │  │                     Test Layer                                   │   │
 │  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐ │   │
 │  │  │ PulsarClient     │  │ WebDriver        │  │ PulsarSession│ │   │
 │  │  │ IntegrationTest  │  │ IntegrationTest  │  │ Integration  │ │   │
 │  │  └──────────────────┘  └──────────────────┘  └──────────────┘ │   │
-│  │           ↓                      ↓                    ↓         │   │
+│  │           ↓                      ↓                    ��         │   │
 │  │  ┌────────────────────────────────────────────────────────────┐│   │
 │  │  │      KotlinSdkIntegrationTestBase (@BeforeEach/@AfterEach) ││   │
 │  │  └────────────────────────────────────────────────────────────┘│   │
@@ -61,11 +61,11 @@
 │  │  │  - AgenticSession API Controllers                            ││   │
 │  │  │  - Page Loading & Extraction                                 ││   │
 │  │  └─────────────────────────────────────────────────────────────┘│   │
-│  └─────────────────────────────────────────────────────────────────┘   │
+│  └───────────────────────────────────��─────────────────────────────┘   │
 │                                 ↓                                        │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │              Browser Layer (PulsarContext)                       │   │
-│  │  - Chrome/Chromium instances                                     │   │
+│  │  - Chrome/Chromium instances                                     │
 │  │  - Browser automation                                            │   │
 │  │  - Page rendering                                                │   │
 │  └─────────────────────────────────────────────────────────────────┘   │
@@ -85,68 +85,34 @@
 │                                                                           │
 │  sdks/                                                                    │
 │  │                                                                        │
-│  ├── kotlin-sdk/                        # SDK 模块（保持干净）           │
-│  │   ├── pom.xml                        # 最小依赖                       │
-│  │   └── src/                                                             │
-│  │       ├── main/kotlin/               # SDK 源码                       │
-│  │       │   ├── PulsarClient.kt                                         │
-│  │       │   ├── WebDriver.kt                                            │
-│  │       │   ├── AgenticSession.kt                                       │
-│  │       │   └── Models.kt                                               │
-│  │       └── test/kotlin/               # 仅单元测试                     │
-│  │           ├── PulsarClientTest.kt    # No server required            │
-│  │           ├── WebDriverTest.kt       # State management only         │
-│  │           └── SessionTest.kt         # Model validation              │
+│  ├── browser4-sdk-kotlin/              # Kotlin SDK (prod code + unit tests)│
+│  │   ├── pom.xml                                                            │
+│  │   └── src/                                                               │
+│  │       ├── main/kotlin/                                                   │
+│  │       └── test/kotlin/                # Unit tests only (no server)      │
 │  │                                                                        │
-│  └── kotlin-sdk-tests/                  # 独立测试模块                  │
-│      ├── pom.xml                        # 包含所有测试依赖               │
-│      └── src/test/                                                       │
+│  └── kotlin-sdk-tests/                # Dedicated integration test module  │
+│      ├── pom.xml                      # Includes all test dependencies     │
+│      └── src/test/                                                     │
 │          ├── kotlin/ai/platon/pulsar/sdk/integration/                   │
-│          │   │                                                            │
-│          │   ├── KotlinSdkIntegrationTestBase.kt   # Base class         │
-│          │   │   - @SpringBootTest                                       │
-│          │   │   - Server lifecycle                                      │
-│          │   │   - Client setup/cleanup                                  │
-│          │   │                                                            │
-│          │   ├── PulsarClientIntegrationTest.kt    # HTTP client tests  │
-│          │   │   - Session creation/deletion                             │
-│          │   │   - GET/POST/DELETE operations                            │
-│          │   │   - Error handling                                        │
-│          │   │                                                            │
-│          │   ├── WebDriverIntegrationTest.kt       # Browser automation │
-│          │   │   - Navigation (navigateTo, currentUrl, reload)          │
-│          │   │   - Element interaction (click, fill, type)              │
-│          │   │   - Waiting (waitForSelector, exists)                    │
-│          │   │   - Scrolling (scrollDown, scrollToBottom)               │
-│          │   │   - Content extraction (selectTextAll, extract)          │
-│          │   │   - Screenshots (captureScreenshot)                      │
-│          │   │   - Script execution (executeScript)                     │
-│          │   │                                                            │
-│          │   ├── PulsarSessionIntegrationTest.kt   # Page loading       │
-│          │   │   - load(), open(), submit()                             │
-│          │   │   - normalize() URL handling                             │
-│          │   │   - extract() field extraction                           │
-│          │   │   - scrape() end-to-end                                  │
-│          │   │   - loadAll() batch operations                           │
-│          │   │                                                            │
-│          │   ├── AgenticSessionIntegrationTest.kt  # AI automation      │
-│          │   │   - act() single AI action                               │
-│          │   │   - run() autonomous tasks                               │
-│          │   │   - observe() page observation                           │
-│          │   │   - agentExtract() AI extraction                         │
-│          │   │   - summarize() content summary                          │
-│          │   │   (Optional, requires AI configuration)                  │
-│          │   │                                                            │
-│          │   ├── server/                           # Test server config  │
-│          │   │   ├── PulsarRestServerApplication.kt                     │
-│          │   │   └── TestServerConfiguration.kt                         │
-│          │   │                                                            │
-│          │   └── util/                             # Test utilities      │
-│          │       ├── TestUrls.kt                   # Test URL constants │
-│          │       └── TestHelpers.kt                # Helper methods     │
-│          │                                                                │
-│          └── resources/                                                  │
-│              └── application-sdk-integration-test.properties            │
+│          │   ├── KotlinSdkIntegrationTestBase.kt   # Base class           │
+│          │   │   - @SpringBootTest (random port)                          │
+│          │   │   - server + mock server lifecycle                         │
+│          │   │   - client setup/cleanup                                   │
+│          │   ├── PulsarClientIntegrationTest.kt    # HTTP client tests    │
+│          │   ├── WebDriverIntegrationTest.kt       # Browser automation   │
+│          │   ├── PulsarSessionIntegrationTest.kt   # Page loading & parse │
+│          │   ├── EventMechanismIntegrationTest.kt  # SSE event mechanism  │
+│          │   ├── FusedActsStyleTest.kt             # FusedActs-style usage│
+│          │   ├── AgenticSessionIntegrationTest.kt  # AI (optional)        │
+│          │   ├── server/                           # Test server wiring  │
+│          │   │   ├── PulsarRestServerApplication.kt                        │
+│          │   │   └── TestServerConfiguration.kt                            │
+│          │   └── util/                             # Test helpers        │
+│          │       ├── TestUrls.kt                                         │
+│          │       └── TestHelpers.kt                                      │
+│          └── resources/                                                   │
+│              └── application-sdk-integration-test.properties              │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
 
@@ -154,23 +120,34 @@
                           Test Tag Strategy
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                           │
-│  @Tag("IntegrationTest")     ← All integration tests                    │
-│      │                                                                    │
-│      ├─ @Tag("RequiresServer")   ← Needs REST server                    │
-│      │                                                                    │
-│      ├─ @Tag("RequiresBrowser")  ← Needs Chrome/Chromium                │
-│      │                                                                    │
-│      ├─ @Tag("RequiresAI")       ← Needs AI/LLM config (optional)       │
-│      │                                                                    │
-│      ├─ @Tag("Fast")             ← < 5 seconds                           │
-│      │                                                                    │
-│      └─ @Tag("Slow")             ← > 10 seconds                          │
+│  Base class tags (in KotlinSdkIntegrationTestBase):                        │
+│    @Tag("IntegrationTest"), @Tag("RequiresServer")                         │
 │                                                                           │
-│  Test Execution:                                                         │
-│  - SDK unit tests:   cd sdks/kotlin-sdk && mvn test                     │
-│  - Integration tests: cd sdks/kotlin-sdk-tests && mvn test -DrunITs=true │
-│  - Full tests:       cd sdks/kotlin-sdk-tests && mvn test -DrunSDKTests=true │
-│  - Fast tests only:  mvn test -Dgroups="Fast"                           │
+│  Conventional tags used by tests:                                          │
+│    @Tag("RequiresBrowser")  ← Needs Chrome/Chromium                        │
+│    @Tag("RequiresAI")       ← Needs AI/LLM config (optional)               │
+│    @Tag("Fast")             ← < 5 seconds                                  │
+│    @Tag("Slow")             ← > 10 seconds                                 │
+│                                                                           │
+│  Default execution behavior (sdks/kotlin-sdk-tests/pom.xml):               │
+│    - surefire.groups = IntegrationTest                                     │
+│    - surefire.excludedGroups = RequiresAI                                  │
+│                                                                           │
+│  Test Execution (Windows PowerShell, recommended from repo root):          │
+│    - Run integration tests (default tags):                                 │
+│        .\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test                        │
+│                                                                           │
+│    - Run a single test class:                                              │
+│        .\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dtest=WebDriverIntegrationTest
+│                                                                           │
+│    - Override tags (examples):                                             │
+│        .\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dgroups="IntegrationTest,Fast"
+│        .\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dgroups="IntegrationTest" -DexcludedGroups="RequiresBrowser"
+│        .\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dgroups="IntegrationTest,RequiresAI" -DexcludedGroups=""
+│                                                                           │
+│  Notes:                                                                    │
+│    - Do NOT rely on legacy flags like -DrunITs / -DrunSDKTests;             │
+│      current behavior is driven by Surefire groups/excludedGroups.         │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
 
@@ -184,7 +161,7 @@
 │ Single integration test  │ < 10 seconds │ 30 seconds   │ With server   │
 ├──────────────────────────┼──────────────┼──────────────┼───────────────┤
 │ Unit test suite          │ < 10 seconds │ 30 seconds   │ Fast feedback │
-├──────────────────────────┼──────────────┼──────────────┼───────────────┤
+├──────────────────────────┼──────────────┼────────────���─┼───────────────┤
 │ Integration test suite   │ < 5 minutes  │ 10 minutes   │ Full coverage │
 ├──────────────────────────┼──────────────┼──────────────┼───────────────┤
 │ Mock server startup      │ < 5 seconds  │ 10 seconds   │ Background    │
@@ -239,44 +216,40 @@
                     Implementation Phases
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                                                                           │
-│  Phase 1: Infrastructure (High Priority) ✓                              │
+│  Phase 1: Infrastructure (High Priority) ✓                               │
 │  ├─ Create kotlin-sdk-tests module                                       │
 │  ├─ Create pom.xml with all test dependencies                            │
 │  ├─ Set up test directory structure                                      │
-│  ├─ Implement KotlinSdkIntegrationTestBase                              │
-│  ├─ Configure PulsarRestServerApplication                               │
-│  └─ Configure Maven profiles for test execution                         │
+│  ├─ Implement KotlinSdkIntegrationTestBase                               │
+│  ├─ Configure PulsarRestServerApplication                                │
+│  └─ Configure Maven/Surefire tags for test execution                      │
 │                                                                           │
-│  Phase 2: Basic Tests (High Priority)                                   │
+│  Phase 2: Basic Tests (High Priority)                                    │
 │  ├─ PulsarClient integration tests                                       │
-│  │  └─ Session, HTTP methods, error handling                             │
 │  └─ Basic WebDriver tests                                                │
-│     └─ Navigation and element finding                                    │
 │                                                                           │
-│  Phase 3: Full Feature Tests (Medium Priority)                          │
+│  Phase 3: Full Feature Tests (Medium Priority)                           │
 │  ├─ Complete WebDriver test suite                                        │
-│  │  └─ All API methods and edge cases                                    │
-│  └─ PulsarSession tests                                                  │
-│     └─ Page loading and data extraction                                  │
+│  ├─ PulsarSession tests                                                  │
+│  └─ SSE / event mechanism tests                                          │
 │                                                                           │
-│  Phase 4: Advanced Features (Low Priority)                              │
+│  Phase 4: Advanced Features (Low Priority)                               │
 │  └─ AgenticSession tests (Optional)                                      │
-│     └─ AI-powered automation features                                    │
 │                                                                           │
-│  Phase 5: Optimization & Docs (Medium Priority)                         │
+│  Phase 5: Optimization & Docs (Medium Priority)                          │
 │  ├─ Create utility classes                                               │
 │  ├─ Write documentation                                                  │
 │  └─ Configure CI/CD workflows                                            │
 │                                                                           │
-│  Phase 6: Continuous Improvement (Low Priority)                         │
+│  Phase 6: Continuous Improvement (Low Priority)                          │
 │  ├─ Performance optimization                                             │
 │  └─ Reliability enhancements                                             │
 │                                                                           │
-└─────────────────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────���──────────────────┘
 
 
                       Key Benefits
-┌─────────────────────────────────────────────────────────────────────────┐
+┌──────────────��──────────────────────────────────────────────────────────┐
 │                                                                           │
 │  ✓ Real Server Testing                                                  │
 │    - Complete request/response flow                                      │
@@ -284,7 +257,7 @@
 │    - True end-to-end validation                                          │
 │                                                                           │
 │  ✓ Comprehensive Coverage                                               │
-│    - All SDK APIs tested                                                 │
+���    - All SDK APIs tested                                                 │
 │    - Error scenarios included                                            │
 │    - Edge cases validated                                                │
 │                                                                           │
@@ -306,14 +279,13 @@
 │  ✓ Extensible Design                                                    │
 │    - Easy to add new tests                                               │
 │    - Support for future SDK features                                     │
-│    - Template for other SDKs (Python, Node.js)                          │
+│    - Template for other SDKs (Python, Node.js)                           │
 │                                                                           │
 └─────────────────────────────────────────────────────────────────────────┘
-```
 
 ---
 
 **Document**: Architecture Diagram
-**Version**: 1.0
-**Date**: 2025-01-13
-**Status**: Design Complete
+**Version**: 1.1
+**Date**: 2026-01-21
+**Status**: Updated to match repository implementation
