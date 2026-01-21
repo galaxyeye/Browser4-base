@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Test Page</title>
+</head>
+<body>
+    <h1>Keyboard Test Page</h1>
+    
+    <div>
+        <label for="keyInput">Type here:</label>
+        <input type="text" id="keyInput" data-testid="key-input" placeholder="Type something...">
+    </div>
+    
+    <div>
+        <label for="focusInput">Focus test:</label>
+        <input type="text" id="focusInput" data-testid="focus-input" placeholder="Focus test">
+    </div>
+    
+    <div id="keyResult" data-testid="key-result"></div>
+    <div id="focusResult" data-testid="focus-result"></div>
+    
+    <script>
+        document.getElementById('keyInput').addEventListener('keypress', function(e) {
+            document.getElementById('keyResult').textContent = 'Key pressed: ' + e.key;
+        });
+        
+        document.getElementById('focusInput').addEventListener('focus', function() {
+            document.getElementById('focusResult').textContent = 'Input focused';
+        });
+        
+        document.getElementById('focusInput').addEventListener('blur', function() {
+            document.getElementById('focusResult').textContent = 'Input blurred';
+        });
+    </script>
+</body>
+</html>
