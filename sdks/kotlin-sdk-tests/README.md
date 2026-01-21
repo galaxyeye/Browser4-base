@@ -17,7 +17,7 @@ This module contains comprehensive integration tests that:
 ### Prerequisites
 - JDK 17+
 - Chrome/Chromium installed (for browser tests)
-- Maven 3.6+
+- Maven 3.9+
 
 ### Run Integration Tests
 
