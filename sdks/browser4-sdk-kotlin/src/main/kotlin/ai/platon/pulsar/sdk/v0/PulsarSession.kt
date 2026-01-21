@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -45,6 +46,7 @@ open class PulsarSession(
 
     private var _driver: WebDriver? = null
     private var _id: Int = 0
+    private val closeableObjects = ConcurrentLinkedQueue<AutoCloseable>()
 
     /**
      * Gets the session ID (numeric).
@@ -457,6 +459,10 @@ open class PulsarSession(
         TODO()
     }
 
+    fun registerClosable(closable: AutoCloseable) {
+        closeableObjects.add(closable)
+    }
+
     /**
      * Closes the session.
      *
@@ -464,7 +470,14 @@ open class PulsarSession(
      * from a suspend context before closing. This method only closes resources that don't require suspension.
      */
     override fun close() {
-        // Cannot call suspend deleteSession from non-suspend close()
-        // Users should call deleteSession() explicitly in suspend context if needed
+        while (closeableObjects.isNotEmpty()) {
+            closeableObjects.poll()?.also {
+                try {
+                    it.close()
+                } catch (_: Exception) {
+                    // Swallow close errors
+                }
+            }
+        }
     }
 }
