@@ -1,6 +1,8 @@
 package ai.platon.pulsar.rest.api.service
 
 import ai.platon.pulsar.agentic.AgenticSession
+import ai.platon.pulsar.agentic.tools.agent.AgentTaskStatus
+import ai.platon.pulsar.agentic.tools.agent.StatefulAgentRunner
 import ai.platon.pulsar.agentic.tools.crawl.PGInstructResult
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
@@ -31,7 +33,6 @@ class CommandService(
 
     private val logger = getLogger(CommandService::class)
 
-    // TODO: use ehcache
     private val commandStatusCache = ConcurrentSkipListMap<String, CommandStatus>()
 
     // Create a dedicated dispatcher for long-running command operations
@@ -42,7 +43,8 @@ class CommandService(
         commandDispatcher + SupervisorJob() + CoroutineName("commander")
     )
 
-    private val pageVisitor = StatefulPageVisitor(session)
+    private val statefulPageVisitor = StatefulPageVisitor(session)
+    private val statefulAgentRunner = StatefulAgentRunner(session)
 
     suspend fun executePageVisitCommandSync(request: CommandRequest, eventHandlers: PageEventHandlers): CommandStatus {
         val status = createCachedCommandStatus(request)
@@ -82,7 +84,9 @@ class CommandService(
             executePageVisitCommand(request, status, eventHandlers)
         } else {
             // Open task execution
-            executeAgentCommand(plainCommand)
+            // executeAgentCommand(plainCommand)
+            val agentStatus = statefulAgentRunner.execute(plainCommand)
+            agentStatus.toCommandStatus()
         }
     }
 
@@ -118,46 +122,43 @@ class CommandService(
     /**
      * Execute a plain command using the agent's run method.
      *
-     * This method creates a cached status, executes the agent's run method, and updates
-     * the status with the result.
+     * This delegates to [StatefulAgentRunner] so the execution logic (history tracking,
+     * error handling, status transitions) is shared across modules.
      *
      * @param plainCommand The plain text command for the agent to execute.
      * @return CommandStatus containing the execution result.
      */
     suspend fun executeAgentCommand(plainCommand: String): CommandStatus {
+        val agentStatus = statefulAgentRunner.execute(plainCommand)
+
         val status = createCachedCommandStatus()
-        executeAgentTaskInternal(plainCommand, status)
+        status.refresh(agentStatus.statusCode)
+        status.message = agentStatus.message
+
+        // expose history for real-time state tracking in SSE streaming
+        status.agentHistory = agentStatus.agentHistory
+
+        val summary = agentStatus.agentHistory?.lastOrNull()?.summary ?: ""
+        if (summary.isNotBlank()) {
+            status.ensureCommandResult().summary = summary
+        }
+
+        status.done()
         return status
     }
 
-    /**
-     * Submit a plain command for asynchronous agent execution.
-     *
-     * @param plainCommand The plain text command for the agent to execute.
-     * @return The command status ID for tracking execution progress.
-     */
-    fun submitAgentTaskAsync(plainCommand: String): String {
+    suspend fun submitAgentTaskAsync(plainCommand: String): String {
         val status = createCachedCommandStatus()
-        commanderScope.launch { executeAgentTaskInternal(plainCommand, status) }
+        submitAgentTaskAsync(plainCommand, status)
         return status.id
     }
 
-    /**
-     * Internal method to execute agent command with a pre-created status.
-     *
-     * The status is updated with the agent's state history reference, allowing callers
-     * to access the latest agent state via [CommandStatus.currentAgentState] during execution.
-     */
-    private suspend fun executeAgentTaskInternal(plainCommand: String, status: CommandStatus) {
+    private suspend fun submitAgentTaskAsync(plainCommand: String, status: CommandStatus) {
         try {
             status.refresh(ResourceStatus.SC_PROCESSING)
-            val agent = session.companionAgent
 
-            // Set agent history reference to allow real-time state tracking
-            status.agentHistory = agent.stateHistory
-
-            val history = agent.run(plainCommand)
-            val finalState = history.finalResult
+            val agentStatus = statefulAgentRunner.submit(plainCommand)
+            val finalState = statefulAgentRunner.getResult(agentStatus.id)
 
             // AgentState has 'summary' for the final result message
             val resultSummary = finalState?.summary ?: finalState?.description ?: ""
@@ -242,7 +243,7 @@ class CommandService(
         return executePageVisitCommand(request2, status, eventHandlers)
     }
 
-    suspend fun executePageVisitCommand(request: CommandRequest): CommandStatus {
+    suspend fun executePageVisitCommand(request: PageVisitRequest): CommandStatus {
         val status = createCachedCommandStatus(request)
 
         val eventHandlers = PageEventHandlersFactory.create()
@@ -251,7 +252,7 @@ class CommandService(
     }
 
     suspend fun executePageVisitCommand(
-        request: CommandRequest,
+        request: PageVisitRequest,
         status: CommandStatus,
         eventHandlers: PageEventHandlers
     ): CommandStatus {
@@ -259,7 +260,7 @@ class CommandService(
             status.refresh(ResourceStatus.SC_PROCESSING)
 
             // Delegate the heavy lifting to AgenticPageVisitor so CommandService stays thin.
-            val visitStatus = pageVisitor.visit(request.toPageVisitRequest(), eventHandlers)
+            val visitStatus = statefulPageVisitor.visit(request, eventHandlers)
             status.applyVisitStatus(visitStatus)
         } catch (e: Exception) {
             status.message = e.message
@@ -277,27 +278,24 @@ class CommandService(
 
     private fun createCachedCommandStatus(request: CommandRequest? = null): CommandStatus {
         val status = CommandStatus()
-        // status.request = request
         commandStatusCache[status.id] = status
         status.refresh("created")
         return status
     }
 
-    private fun CommandRequest.toPageVisitRequest(): PageVisitRequest {
-        return PageVisitRequest(
-            url = url,
-            args = args,
-            onBrowserLaunchedActions = onBrowserLaunchedActions,
-            onPageReadyActions = onPageReadyActions,
-            actions = actions,
-            pageSummaryPrompt = pageSummaryPrompt,
-            dataExtractionRules = dataExtractionRules,
-            uriExtractionRules = uriExtractionRules,
-            xsql = xsql,
-            richText = richText,
-            async = async,
-            id = null,
-        )
+    private fun AgentTaskStatus.toCommandStatus(): CommandStatus {
+        val status = CommandStatus(this.id)
+        status.statusCode = this.statusCode
+        status.message = this.message
+        status.agentHistory = this.agentHistory
+        if (this.agentHistory != null) {
+            val summary = this.agentHistory?.lastOrNull()?.summary ?: ""
+            if (summary.isNotBlank()) {
+                status.ensureCommandResult().summary = summary
+            }
+        }
+        status.done()
+        return status
     }
 
     /**

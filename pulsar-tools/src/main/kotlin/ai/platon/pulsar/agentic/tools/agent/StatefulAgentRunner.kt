@@ -4,14 +4,28 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.concurrent.ConcurrentExpiringLRUCache
 import ai.platon.pulsar.common.getLogger
+import kotlinx.coroutines.*
 import java.time.Duration
+import java.util.concurrent.Executors
 
 class StatefulAgentRunner(
     val session: AgenticSession
 ) {
     private val logger = getLogger(StatefulAgentRunner::class)
 
+    // Create a dedicated dispatcher for long-running command operations
+    private val scrapingExecutor = Executors.newFixedThreadPool(10)
+    private val commandDispatcher = scrapingExecutor.asCoroutineDispatcher()
+    private val commanderScope: CoroutineScope = CoroutineScope(
+        commandDispatcher + SupervisorJob() + CoroutineName("commander")
+    )
     private val statusCache = ConcurrentExpiringLRUCache<String, AgentTaskStatus>(Duration.ofHours(2))
+
+    fun submit(plainCommand: String): AgentTaskStatus {
+        val status = createCachedStatus()
+        commanderScope.launch { execute(plainCommand, status) }
+        return status
+    }
 
     /**
      * Execute a plain command using the agent's run method.
@@ -24,7 +38,7 @@ class StatefulAgentRunner(
      */
     suspend fun execute(plainCommand: String): AgentTaskStatus {
         val status = createCachedStatus()
-        executeAgentTaskInternal(plainCommand, status)
+        execute(plainCommand, status)
         return status
     }
 
@@ -34,7 +48,7 @@ class StatefulAgentRunner(
      * The status is updated with the agent's state history reference, allowing callers
      * to access the latest agent state via [AgentTaskStatus.currentAgentState] during execution.
      */
-    private suspend fun executeAgentTaskInternal(plainCommand: String, status: AgentTaskStatus) {
+    suspend fun execute(plainCommand: String, status: AgentTaskStatus) {
         try {
             status.refresh(ResourceStatus.SC_PROCESSING)
             val agent = session.companionAgent
@@ -48,7 +62,6 @@ class StatefulAgentRunner(
             // AgentState has 'summary' for the final result message
             val resultSummary = finalState?.summary ?: finalState?.description ?: ""
             status.message = resultSummary
-            status.ensureCommandResult().summary = resultSummary
             status.refresh(ResourceStatus.SC_OK)
         } catch (e: Exception) {
             logger.error("Failed to execute agent command: {}", plainCommand, e)
@@ -65,7 +78,6 @@ class StatefulAgentRunner(
 
     private fun createCachedStatus(): AgentTaskStatus {
         val status = AgentTaskStatus()
-        // status.request = request
         statusCache.putDatum(status.id, status)
         status.refresh("created")
         return status

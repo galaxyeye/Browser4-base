@@ -355,26 +355,5 @@ class CommandServiceTest : MockEcServerTestBase() {
         // The command should be done
         assertTrue { status.isDone }
     }
-
-    @Test
-    fun `test submitAgentCommandAsync sets agentHistory allowing real-time state tracking`() {
-        // Use a simple command that will trigger agent execution
-        val plainCommand = "Search for test information"
-
-        val statusId = commandService.submitAgentTaskAsync(plainCommand)
-        assertNotNull(statusId)
-        assertTrue { statusId.isNotBlank() }
-
-        // Retrieve the status
-        val status = commandService.getStatus(statusId)
-        assertNotNull(status)
-
-        // Agent history should be set immediately after submission, allowing state tracking
-        // Note: agentHistory is set before agent.run() is called, so it should be available
-        assertNotNull(status.agentHistory)
-
-        // currentAgentState may or may not be set depending on timing
-        // We just verify that the agentHistory reference is available for tracking
-    }
 }
 

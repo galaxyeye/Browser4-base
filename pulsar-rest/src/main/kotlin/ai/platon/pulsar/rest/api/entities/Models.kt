@@ -2,6 +2,7 @@ package ai.platon.pulsar.rest.api.entities
 
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
+import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
@@ -125,58 +126,60 @@ data class W3DocumentRequest(
     val args: String? = null,
 )
 
-/**
- * Request for web page interactions with structured data extraction capabilities.
- *
- * @property url The target page URL to process.
- * @property args Optional load arguments to customize page loading behavior.
- * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigateTo").
- * @property onPageReadyActions Actions to perform when the document is fully loaded (e.g., "scroll down", "click button").
- * @property pageSummaryPrompt A prompt to analyze or discuss the HTML structure of the page.
- * @property dataExtractionRules Specifications for extracting structured fields from the HTML content.
- * @property uriExtractionRules A regex pattern to extract specific URIs from the page, e.g. "links containing /dp/".
- * @property xsql An X-SQL query for structured data extraction, e.g. "select dom_first_text(dom, '#title') as title, llm_extract(dom, 'price') as price".
- * @property richText Whether to retain rich text formatting in the extracted content.
- * @property async If true, the command is executed asynchronous; otherwise, it's synchronously.
- * @property mode The execution mode, either "sync" or "async", default to "sync". (Deprecated: use [async] instead)
- */
-data class CommandRequest @JsonCreator constructor(
-    @param:JsonProperty("url") var url: String,
-    @param:JsonProperty("args") var args: String? = null,
-    @param:JsonProperty("onBrowserLaunchedActions") var onBrowserLaunchedActions: List<String>? = null,
-    @param:JsonProperty("onPageReadyActions") var onPageReadyActions: List<String>? = null,
-    @param:JsonProperty("actions") var actions: List<String>? = null,
-    @param:JsonProperty("pageSummaryPrompt") var pageSummaryPrompt: String? = null,
-    @param:JsonProperty("dataExtractionRules") var dataExtractionRules: String? = null,
-    @param:JsonProperty("uriExtractionRules") var uriExtractionRules: String? = null,
-    @param:JsonProperty("xsql") var xsql: String? = null,
-    @param:JsonProperty("richText") var richText: Boolean? = null,
-    @param:JsonProperty("async") var async: Boolean? = null,
-    @param:JsonProperty("id") var id: String? = null,
-) {
-    fun hasAction(): Boolean {
-        return !onBrowserLaunchedActions.isNullOrEmpty() || !onPageReadyActions.isNullOrEmpty()
-    }
+///**
+// * Request for web page interactions with structured data extraction capabilities.
+// *
+// * @property url The target page URL to process.
+// * @property args Optional load arguments to customize page loading behavior.
+// * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigateTo").
+// * @property onPageReadyActions Actions to perform when the document is fully loaded (e.g., "scroll down", "click button").
+// * @property pageSummaryPrompt A prompt to analyze or discuss the HTML structure of the page.
+// * @property dataExtractionRules Specifications for extracting structured fields from the HTML content.
+// * @property uriExtractionRules A regex pattern to extract specific URIs from the page, e.g. "links containing /dp/".
+// * @property xsql An X-SQL query for structured data extraction, e.g. "select dom_first_text(dom, '#title') as title, llm_extract(dom, 'price') as price".
+// * @property richText Whether to retain rich text formatting in the extracted content.
+// * @property async If true, the command is executed asynchronous; otherwise, it's synchronously.
+// * @property mode The execution mode, either "sync" or "async", default to "sync". (Deprecated: use [async] instead)
+// */
+//data class CommandRequest @JsonCreator constructor(
+//    @param:JsonProperty("url") var url: String,
+//    @param:JsonProperty("args") var args: String? = null,
+//    @param:JsonProperty("onBrowserLaunchedActions") var onBrowserLaunchedActions: List<String>? = null,
+//    @param:JsonProperty("onPageReadyActions") var onPageReadyActions: List<String>? = null,
+//    @param:JsonProperty("actions") var actions: List<String>? = null,
+//    @param:JsonProperty("pageSummaryPrompt") var pageSummaryPrompt: String? = null,
+//    @param:JsonProperty("dataExtractionRules") var dataExtractionRules: String? = null,
+//    @param:JsonProperty("uriExtractionRules") var uriExtractionRules: String? = null,
+//    @param:JsonProperty("xsql") var xsql: String? = null,
+//    @param:JsonProperty("richText") var richText: Boolean? = null,
+//    @param:JsonProperty("async") var async: Boolean? = null,
+//    @param:JsonProperty("id") var id: String? = null,
+//) {
+//    fun hasAction(): Boolean {
+//        return !onBrowserLaunchedActions.isNullOrEmpty() || !onPageReadyActions.isNullOrEmpty()
+//    }
+//
+//    fun isAsync(): Boolean {
+//        return when {
+//            async == true -> true
+//            else -> false
+//        }
+//    }
+//
+//    fun enhanceArgs(): String {
+//        val minimalSize = 100 // minimal page size required
+//        val args = if (hasAction()) {
+//            LoadOptions.mergeArgs(this.args, "-refresh -requireSize $minimalSize")
+//        } else {
+//            LoadOptions.mergeArgs(this.args, "-requireSize $minimalSize")
+//        }
+//
+//        this.args = args
+//        return args
+//    }
+//}
 
-    fun isAsync(): Boolean {
-        return when {
-            async == true -> true
-            else -> false
-        }
-    }
-
-    fun enhanceArgs(): String {
-        val minimalSize = 100 // minimal page size required
-        val args = if (hasAction()) {
-            LoadOptions.mergeArgs(this.args, "-refresh -requireSize $minimalSize")
-        } else {
-            LoadOptions.mergeArgs(this.args, "-requireSize $minimalSize")
-        }
-
-        this.args = args
-        return args
-    }
-}
+typealias CommandRequest = PageVisitRequest
 
 /**
  * Command result

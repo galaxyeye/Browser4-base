@@ -4,7 +4,6 @@ import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.agentic.tools.crawl.PGInstructResult
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitResult
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.skeleton.crawl.ServerSideEventHandlers
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -66,6 +65,8 @@ data class AgentTaskStatus(
     val currentAgentState: AgentState?
         get() = agentHistory?.lastOrNull()
 
+    val summary get() = currentAgentState?.summary
+
     /**
      * The server-side event handlers reference for tracking server-side events during command execution.
      * This is set when executing commands and provides access to the event flow.
@@ -79,21 +80,10 @@ data class AgentTaskStatus(
 
         fun failed(id: String) = AgentTaskStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
 
-        fun failed(id: String, statusCode: Int, pageStatusCode: Int = statusCode) =
-            AgentTaskStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, processState = "done")
-
-        fun failed(statusCode: Int, pageStatusCode: Int = statusCode) = failed("", statusCode, pageStatusCode)
-
         fun failed(id: String, e: Exception): AgentTaskStatus {
             return AgentTaskStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
         }
     }
-}
-
-fun AgentTaskStatus.ensureCommandResult(): PageVisitResult {
-    val r = pageVisitResult ?: PageVisitResult()
-    pageVisitResult = r
-    return r
 }
 
 fun AgentTaskStatus.refresh(isDone: Boolean = false) {
@@ -101,52 +91,23 @@ fun AgentTaskStatus.refresh(isDone: Boolean = false) {
     processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
-fun AgentTaskStatus.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
+fun AgentTaskStatus.refresh(statusCode: Int) = refresh(statusCode, false)
 
-fun AgentTaskStatus.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolean) {
+fun AgentTaskStatus.refresh(statusCode: Int, isDone: Boolean) {
     lastModifiedTime = Instant.now()
     this.statusCode = statusCode
-    this.pageStatusCode = pageStatusCode
     processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun AgentTaskStatus.failed(statusCode: Int): AgentTaskStatus {
     // do not change pageStatusCode
-    refresh(statusCode, pageStatusCode, isDone = true)
+    refresh(statusCode, isDone = true)
     return this
 }
 
 fun AgentTaskStatus.refresh(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
-}
-
-fun AgentTaskStatus.failed(statusCode: Int, pageStatusCode: Int): AgentTaskStatus {
-    refresh(statusCode, pageStatusCode, isDone = true)
-    return this
-}
-
-fun AgentTaskStatus.addInstructResult(result: PGInstructResult) {
-    instructResults.add(result)
-
-    val name = result.name
-    val commandResult = ensureCommandResult()
-    when (name) {
-        "pageSummary" -> {
-            commandResult.pageSummary = result.result?.toString()
-        }
-
-        "fields" -> {
-            @Suppress("UNCHECKED_CAST")
-            commandResult.fields = result.result as? Map<String, String>?
-        }
-
-        "links" -> {
-            @Suppress("UNCHECKED_CAST")
-            commandResult.links = result.result as? List<String>?
-        }
-    }
-    refresh(result.name)
 }
 
 fun AgentTaskStatus.done() {
