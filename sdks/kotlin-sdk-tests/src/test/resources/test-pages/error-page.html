@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Test Page</title>
+</head>
+<body>
+    <h1>Error Test Page</h1>
+    
+    <!-- Elements for testing error conditions -->
+    <div id="emptyDiv" data-testid="empty-div"></div>
+    
+    <div id="contentDiv" data-testid="content-div">
+        <p>This has content</p>
+    </div>
+    
+    <!-- Hidden element -->
+    <div id="hiddenDiv" style="display: none;" data-testid="hidden-div">Hidden content</div>
+    
+    <!-- Element that appears after delay -->
+    <div id="delayedDiv" data-testid="delayed-div"></div>
+    
+    <script>
+        // Add content to delayed div after 2 seconds
+        setTimeout(function() {
+            document.getElementById('delayedDiv').textContent = 'Delayed content loaded';
+        }, 2000);
+    </script>
+</body>
+</html>
