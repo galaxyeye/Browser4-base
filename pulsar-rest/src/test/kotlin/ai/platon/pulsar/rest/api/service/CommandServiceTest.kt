@@ -356,5 +356,23 @@ class CommandServiceTest : MockEcServerTestBase() {
         // The command should be done
         assertTrue { status.isDone }
     }
-}
 
+    @Test
+    fun `test executeCommand with uriExtractionRules without regex and regex inference disabled`() {
+        val request = CommandRequest(
+            MOCK_PRODUCT_DETAIL_URL,
+            uriExtractionRules = "links containing /dp/",
+            inferUriExtractionRegex = false
+        )
+
+        val status = runBlocking { commandService.executePageVisitCommand(request) }.toCommandStatus()
+        printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
+
+        Assumptions.assumeTrue(status.pageStatusCode == 200)
+        Assumptions.assumeTrue(status.isDone)
+        Assumptions.assumeTrue(status.statusCode == 200)
+
+        // Since inference is disabled and the rules are not a Regex: pattern, link extraction is skipped.
+        assertNull(status.commandResult?.links)
+    }
+}

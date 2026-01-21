@@ -26,6 +26,7 @@ import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.Closeable
 import java.nio.file.Files
 import java.time.Duration
@@ -222,16 +223,7 @@ class StatefulPageVisitor(
         var uriExtractionRules = request.uriExtractionRules
         uriExtractionRules = RestAPIPromptUtils.normalizeURIExtractionRules(uriExtractionRules)
         if (uriExtractionRules != null) {
-            if (!uriExtractionRules.startsWith("Regex:")) {
-                val prompt = RestAPIPromptUtils.normalizeURIExtractionRules(uriExtractionRules) ?: return
-                uriExtractionRules = chatWithLLM(prompt)
-                if (!uriExtractionRules.startsWith("Regex:")) {
-                    logger.warn("Link extraction rules must start with 'Regex:', but got: {}", uriExtractionRules)
-                    return
-                }
-            }
-
-            val regex = RestAPIPromptUtils.normalizeURIExtractionRegex(uriExtractionRules) ?: return
+            val regex = resolveUriExtractionRegex(uriExtractionRules, request.inferUriExtractionRegex == true) ?: return
 
             val allURIs = UriExtractor().extractAllUris(document, document.baseURI)
 
@@ -252,6 +244,51 @@ class StatefulPageVisitor(
 
             logger.info("Extracted {}/{} uris using regex >>>{}<<<", uris.size, allURIs.size, regex)
         }
+    }
+
+    /**
+     * Resolves a URI extraction regex.
+     *
+     * If [uriExtractionRules] already starts with `Regex:`, we parse it directly.
+     * Otherwise, we optionally infer a `Regex:` rule via LLM with a timeout.
+     *
+     * @return The resolved [Regex], or null if it cannot be resolved.
+     */
+    private suspend fun resolveUriExtractionRegex(uriExtractionRules: String, inferRegex: Boolean): Regex? {
+        val rules = RestAPIPromptUtils.normalizeURIExtractionRules(uriExtractionRules) ?: return null
+
+        var resolvedRules = rules
+        if (!resolvedRules.startsWith("Regex:")) {
+            if (!inferRegex) {
+                logger.info(
+                    "Skip URI regex inference (inferUriExtractionRegex!=true). " +
+                        "Please provide uriExtractionRules as a 'Regex:' pattern."
+                )
+                return null
+            }
+
+            val inferred = chatWithLLMWithTimeout(resolvedRules, Duration.ofSeconds(45))
+            if (inferred.isBlank()) {
+                logger.warn("URI regex inference timed out or returned empty")
+                return null
+            }
+
+            resolvedRules = inferred
+            if (!resolvedRules.startsWith("Regex:")) {
+                logger.warn("Link extraction rules must start with 'Regex:', but got: {}", resolvedRules)
+                return null
+            }
+        }
+
+        return RestAPIPromptUtils.normalizeURIExtractionRegex(resolvedRules)
+    }
+
+    private suspend fun chatWithLLMWithTimeout(instruct: String, timeout: Duration): String {
+        val content = withTimeoutOrNull(timeout.toMillis()) {
+            chatWithLLM(instruct)
+        }
+
+        return content ?: ""
     }
 
     private suspend fun performInstruct(

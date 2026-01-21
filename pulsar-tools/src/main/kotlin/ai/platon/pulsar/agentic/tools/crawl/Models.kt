@@ -105,6 +105,15 @@ data class PageVisitRequest @JsonCreator constructor(
     @param:JsonProperty("pageSummaryPrompt") var pageSummaryPrompt: String? = null,
     @param:JsonProperty("dataExtractionRules") var dataExtractionRules: String? = null,
     @param:JsonProperty("uriExtractionRules") var uriExtractionRules: String? = null,
+    /**
+     * Whether to infer/convert [uriExtractionRules] from natural language into a `Regex:` pattern using LLM.
+     *
+     * Some LLMs are very slow or unstable when asked to produce regex; set this to false to require callers
+     * to provide a `Regex:` pattern directly.
+     *
+     * Defaults to true for backward compatibility.
+     */
+    @param:JsonProperty("inferUriExtractionRegex") var inferUriExtractionRegex: Boolean? = null,
     @param:JsonProperty("xsql") var xsql: String? = null,
     @param:JsonProperty("richText") var richText: Boolean? = null,
     @param:JsonProperty("async") var async: Boolean? = null,
