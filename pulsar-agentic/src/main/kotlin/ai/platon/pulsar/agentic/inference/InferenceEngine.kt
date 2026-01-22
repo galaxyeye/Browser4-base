@@ -49,8 +49,7 @@ data class ObserveParams constructor(
     val resolve: Boolean = false,
     val logInferenceToFile: Boolean = false,
     val fromAct: Boolean = false,
-) {
-}
+) {}
 
 class InferenceEngine(
     private val session: AgenticSession,
@@ -85,7 +84,7 @@ class InferenceEngine(
         var callFile: Path? = null
         if (params.logInferenceToFile) {
             callFile = logModelCall(
-                dirPrefix = "extractSummary",
+                dirPrefix = "extract-summary",
                 kind = "extractCall",
                 timestamp = timestamp,
                 requestId = params.requestId,
@@ -105,10 +104,7 @@ class InferenceEngine(
         var extractRespFile: Path
         if (params.logInferenceToFile) {
             extractRespFile = writeAuxLog(
-                prefix = "extractSummary",
-                kind = "extractResponse",
-                timestamp = timestamp,
-                payload = mapOf(
+                prefix = "extractSummary", kind = "extractResponse", suffix = "$timestamp.json", payload = mapOf(
                     "requestId" to params.requestId,
                     "modelResponse" to "extract",
                     "rawResponse" to safeJsonPreview(extractResponse.content),
@@ -116,8 +112,7 @@ class InferenceEngine(
             )
 
             appendSummaryToFile(
-                prefix = "extract",
-                entry = mapOf(
+                prefix = "extract", entry = mapOf(
                     "extractInferenceType" to "extract",
                     "timestamp" to timestamp,
                     "llmInputFile" to callFile,
@@ -141,7 +136,7 @@ class InferenceEngine(
         var metadataCallFile: Path? = null
         if (params.logInferenceToFile) {
             metadataCallFile = logModelCall(
-                dirPrefix = "extractSummary",
+                dirPrefix = "extract-summary",
                 kind = "metadataCall",
                 timestamp = timestamp,
                 requestId = params.requestId,
@@ -164,10 +159,7 @@ class InferenceEngine(
         var metadataRespFile: Path
         if (params.logInferenceToFile) {
             metadataRespFile = writeAuxLog(
-                prefix = "extractSummary",
-                kind = "metadataResponse",
-                timestamp = timestamp,
-                payload = mapOf(
+                prefix = "extractSummary", kind = "metadataResponse", suffix = "$timestamp.json", payload = mapOf(
                     "requestId" to params.requestId,
                     "modelResponse" to "metadata",
                     "completed" to completed,
@@ -176,8 +168,7 @@ class InferenceEngine(
             )
 
             appendSummaryToFile(
-                prefix = "extract",
-                entry = mapOf(
+                prefix = "extract", entry = mapOf(
                     "extractInferenceType" to "metadata",
                     "timestamp" to timestamp,
                     "llmInputFile" to metadataCallFile,
@@ -224,7 +215,7 @@ class InferenceEngine(
         val timestamp = AppPaths.fromNow()
         if (params.logInferenceToFile) {
             callFile = logModelCall(
-                dirPrefix = "${prefix}Summary",
+                dirPrefix = "${prefix}-summary",
                 kind = "${prefix}Call",
                 requestId = context.uuid,
                 timestamp = timestamp,
@@ -245,10 +236,7 @@ class InferenceEngine(
         var respFile: Path
         if (params.logInferenceToFile) {
             respFile = writeAuxLog(
-                prefix = "${prefix}Summary",
-                kind = "${prefix}Response",
-                timestamp = timestamp,
-                payload = mapOf(
+                prefix = "${prefix}Summary", kind = "${prefix}Response", suffix = "$timestamp.json", payload = mapOf(
                     "requestId" to context.uuid,
                     "modelResponse" to prefix,
                     "rawResponse" to safeJsonPreview(responseContent)
@@ -256,8 +244,7 @@ class InferenceEngine(
             )
 
             appendSummaryToFile(
-                prefix = prefix,
-                entry = mapOf(
+                prefix = prefix, entry = mapOf(
                     "${prefix}InferenceType" to prefix,
                     "timestamp" to timestamp,
                     "llmInputFile" to callFile,
@@ -296,14 +283,14 @@ class InferenceEngine(
     }
 
     private fun writeAuxLog(
-        prefix: String, kind: String, timestamp: String, payload: Any
+        prefix: String, kind: String, suffix: String, payload: Any
     ): Path {
         val dir = auxLogDir.resolve(prefix)
         Files.createDirectories(dir)
 
-        val path = dir.resolve("${kind}_$timestamp.txt")
-        val content: Any = runCatching { prettyPulsarObjectMapper().writeValueAsString(payload) }
-            .getOrNull() ?: payload.toString()
+        val path = dir.resolve("${kind}.$suffix")
+        val content: Any =
+            runCatching { prettyPulsarObjectMapper().writeValueAsString(payload) }.getOrNull() ?: payload.toString()
         MessageWriter.writeOnce(path, content)
         return path
     }
@@ -312,11 +299,12 @@ class InferenceEngine(
         Files.createDirectories(auxLogDir)
 
         // Use a file lock to avoid concurrent writes corrupting the JSON array.
-        val file = auxLogDir.resolve("${prefix}_summary.json")
+        val summaryDir = auxLogDir.resolve("summary")
+        val file = summaryDir.resolve("${prefix}_summary.json")
         Files.createDirectories(file.parent)
 
-        val lockFile = auxLogDir.resolve("${prefix}_summary.json.lock")
-        val tempFile = Files.createTempFile(auxLogDir, "${prefix}_summary_", ".json")
+        val lockFile = summaryDir.resolve("${prefix}_summary.json.lock")
+        val tempFile = Files.createTempFile(summaryDir, "${prefix}_summary_", ".json")
 
         // Serialize entry using the same mapper as reading.
         val entryNode: JsonNode = mapper.valueToTree(entry)
@@ -339,8 +327,8 @@ class InferenceEngine(
 
         try {
             val current: ArrayNode = if (Files.exists(file)) {
-                runCatching { mapper.readTree(Files.readAllBytes(file)) as? ArrayNode }
-                    .getOrNull() ?: JsonNodeFactory.instance.arrayNode()
+                runCatching { mapper.readTree(Files.readAllBytes(file)) as? ArrayNode }.getOrNull()
+                    ?: JsonNodeFactory.instance.arrayNode()
             } else JsonNodeFactory.instance.arrayNode()
 
             current.add(entryNode)
@@ -370,10 +358,7 @@ class InferenceEngine(
         if (!enabled) return null
 
         return writeAuxLog(
-            prefix = dirPrefix,
-            kind = kind,
-            timestamp = timestamp,
-            payload = mapOf(
+            prefix = dirPrefix, kind = kind, suffix = "$timestamp.json", payload = mapOf(
                 "requestId" to requestId,
                 "modelCall" to modelCall,
                 "messages" to messages,
@@ -385,8 +370,7 @@ class InferenceEngine(
         systemMessage: SimpleMessage, userMessage: SimpleMessage
     ): Pair<ChatResponse, Long> {
         return doLangChainChat(
-            SystemMessage.systemMessage(systemMessage.content),
-            UserMessage.userMessage(userMessage.content)
+            SystemMessage.systemMessage(systemMessage.content), UserMessage.userMessage(userMessage.content)
         )
     }
 
@@ -400,18 +384,13 @@ class InferenceEngine(
     }
 
     private suspend fun doLangChainChat(
-        systemMessage: SystemMessage,
-        userMessage: UserMessage
+        systemMessage: SystemMessage, userMessage: UserMessage
     ): Pair<ChatResponse, Long> {
         val temperature = 0.1
-        val chatRequest = ChatRequest.builder()
-            .messages(systemMessage, userMessage)
+        val chatRequest = ChatRequest.builder().messages(systemMessage, userMessage)
             // use provider default temperature
 //            .temperature(temperature)
-            .topP(1.0)
-            .frequencyPenalty(0.0)
-            .presencePenalty(0.0)
-            .build()
+            .topP(1.0).frequencyPenalty(0.0).presencePenalty(0.0).build()
 
         val t0 = System.currentTimeMillis()
         val resp: ChatResponse = chatModel.langChainChat(chatRequest)
