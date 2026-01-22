@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains end-to-end tests for the MCP (Model Context Protocol) functionality in Pulsar.
+This directory contains end-to-end tests for the MCP (Model Context Protocol) functionality in Browser4.
 
 ## Test Structure
 
