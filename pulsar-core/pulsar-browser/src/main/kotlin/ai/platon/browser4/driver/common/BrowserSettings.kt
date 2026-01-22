@@ -528,9 +528,17 @@ open class BrowserSettings constructor(
      * */
     val confuser = BrowserSettings.SCRIPT_CONFUSER
     /**
-     * The script loader.
+     * The script loader (legacy, single-world).
+     * @deprecated Use dualWorldScriptLoader for dual-world architecture
      * */
+    @Deprecated("Use dualWorldScriptLoader for dual-world architecture")
     val scriptLoader = ScriptLoader(confuser, jsPropertyNames)
+    
+    /**
+     * The dual-world script loader.
+     * Separates Page World scripts (stealth) from Isolated World scripts (runtime).
+     * */
+    val dualWorldScriptLoader = DualWorldScriptLoader(confuser, jsPropertyNames)
 
     open fun formatViewPort(delimiter: String = ","): String {
         return "${VIEWPORT.width}$delimiter${VIEWPORT.height}"
