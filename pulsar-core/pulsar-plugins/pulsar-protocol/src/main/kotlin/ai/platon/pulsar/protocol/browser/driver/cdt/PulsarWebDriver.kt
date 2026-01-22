@@ -1,20 +1,5 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
-import ai.platon.browser4.driver.chrome.ChromeTab
-import ai.platon.browser4.driver.chrome.ClickableDOM
-import ai.platon.browser4.driver.chrome.EmulationHandler
-import ai.platon.browser4.driver.chrome.NetworkResourceResponse
-import ai.platon.browser4.driver.chrome.PageHandler
-import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.ScreenshotHandler
-import ai.platon.cdt.kt.protocol.events.network.RequestWillBeSent
-import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
-import ai.platon.cdt.kt.protocol.events.page.FrameNavigated
-import ai.platon.cdt.kt.protocol.events.page.WindowOpen
-import ai.platon.cdt.kt.protocol.types.fetch.RequestPattern
-import ai.platon.cdt.kt.protocol.types.network.ErrorReason
-import ai.platon.cdt.kt.protocol.types.network.LoadNetworkResourceOptions
-import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.browser4.driver.chrome.*
 import ai.platon.browser4.driver.chrome.dom.ChromeCdpDomService
 import ai.platon.browser4.driver.chrome.dom.DomService
@@ -24,6 +9,14 @@ import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeIOException
+import ai.platon.cdt.kt.protocol.events.network.RequestWillBeSent
+import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
+import ai.platon.cdt.kt.protocol.events.page.FrameNavigated
+import ai.platon.cdt.kt.protocol.events.page.WindowOpen
+import ai.platon.cdt.kt.protocol.types.fetch.RequestPattern
+import ai.platon.cdt.kt.protocol.types.network.ErrorReason
+import ai.platon.cdt.kt.protocol.types.network.LoadNetworkResourceOptions
+import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.math.geometric.OffsetD
@@ -255,6 +248,8 @@ class PulsarWebDriver(
             val channel = Channel<String>()
 
             pageAPI?.onDocumentOpened {
+                // keep oldUrl check for debugging / future use
+                @Suppress("UNUSED_VARIABLE")
                 val navigated = it.frame.url != oldUrl
                 // emit(Navigation)
                 channel.trySend("navigated")
@@ -411,7 +406,7 @@ class PulsarWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun press(selector: String, key: String) {
-        driverHelper.invokeOnElement(selector, "press", focus = true) { node ->
+        driverHelper.invokeOnElement(selector, "press", focus = true) { _ ->
             keyboard?.press(key, randomDelayMillis("press"))
         }
     }
@@ -568,7 +563,7 @@ function() {
     @Throws(WebDriverException::class)
     override suspend fun captureScreenshot(selector: String): String? {
         return try {
-            val node = page.scrollIntoViewIfNeeded(selector) ?: return null
+            page.scrollIntoViewIfNeeded(selector) ?: return null
             // Force the page stop all navigations and pending resource fetches.
             rpc.invokeWithRetry("captureScreenshot") { screenshot.captureScreenshot(selector) }
         } catch (e: ChromeDriverException) {
@@ -671,7 +666,7 @@ function() {
             }
         } catch (e: ChromeIOException) {
             if (!e.isOpen || !devTools.isOpen) {
-                // ignored, since the chrome is closed
+                // intentionally ignored: the chrome is closed
             }
         } catch (e: ChromeDriverException) {
             if (devTools.isOpen) {
@@ -852,7 +847,7 @@ function() {
             ResourceType.SCRIPT,
         )
         if (event.type !in resourceTypes) {
-            // return
+            // intentionally keep non-return for now (was used as filter in the past)
         }
 
         // page url is normalized
