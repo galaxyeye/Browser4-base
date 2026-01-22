@@ -77,6 +77,7 @@ class PulsarWebDriver(
     private val keyboard get() = page.keyboard.takeIf { isActive }
     private val screenshot = ScreenshotHandler(page, devTools)
     private val emulator get() = EmulationHandler(pageAPI, domAPI, keyboard, mouse)
+    private val isolatedWorldManager by lazy { IsolatedWorldManager(devTools) }
 
     private val rpc = RobustRPC(this)
     private val networkManager by lazy { NetworkManager(this, rpc) }
@@ -833,6 +834,9 @@ function() {
         val chromeNavigateEntry = ChromeNavigateEntry(entry)
 
         chromeNavigateEntry.updateStateAfterFrameNavigated(event)
+        
+        // Clear isolated world contexts on navigation
+        isolatedWorldManager.clearContexts()
     }
 
     private suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
@@ -908,6 +912,58 @@ function() {
     }
 
     private suspend fun addScriptToEvaluateOnNewDocument() {
+        // Use dual-world script loader if available, otherwise fall back to legacy loader
+        val useDualWorld = settings.dualWorldScriptLoader != null
+        
+        if (useDualWorld) {
+            addDualWorldScripts()
+        } else {
+            addLegacyScripts()
+        }
+    }
+    
+    /**
+     * Injects scripts using the dual-world architecture.
+     * Page World: stealth patches only
+     * Isolated World: full Browser4 runtime
+     */
+    private suspend fun addDualWorldScripts() {
+        val loader = settings.dualWorldScriptLoader
+        
+        // 1. Inject Page World scripts (stealth patches)
+        val pageWorldJs = loader.getPageWorldJs(false)
+        if (pageWorldJs.isNotBlank()) {
+            pageAPI?.addScriptToEvaluateOnNewDocument("\n;;\n$pageWorldJs\n;;\n")
+            logger.info("Injected Page World scripts (stealth patches)")
+        }
+        
+        // 2. Create isolated world and inject runtime
+        try {
+            // Create isolated world for the main frame
+            val contextId = isolatedWorldManager.createIsolatedWorld()
+            
+            // Inject Browser4 runtime into isolated world
+            val isolatedWorldJs = loader.getIsolatedWorldJs(false)
+            if (isolatedWorldJs.isNotBlank()) {
+                isolatedWorldManager.injectRuntime(isolatedWorldJs, contextId)
+                logger.info("Injected Browser4 runtime into Isolated World (context: {})", contextId)
+            }
+            
+            if (logger.isTraceEnabled) {
+                reportDualWorldJs(pageWorldJs, isolatedWorldJs)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to inject scripts into isolated world, falling back to page world", e)
+            // Fallback to injecting everything in page world
+            addLegacyScripts()
+        }
+    }
+    
+    /**
+     * Legacy script injection (all scripts in page world).
+     * Used for backward compatibility.
+     */
+    private suspend fun addLegacyScripts() {
         val js = settings.scriptLoader.getPreloadJs(false)
         if (js !in initScriptCache) {
             // utils comes first
@@ -928,6 +984,14 @@ function() {
 
         // the cache is used for a single document, so we have to clear it
         initScriptCache.clear()
+    }
+    
+    private fun reportDualWorldJs(pageWorldJs: String, isolatedWorldJs: String) {
+        val dir = AppPaths.REPORT_DIR.resolve("browser/js/injected")
+        Files.createDirectories(dir)
+        Files.writeString(dir.resolve("page-world-injected.js"), pageWorldJs)
+        Files.writeString(dir.resolve("isolated-world-injected.js"), isolatedWorldJs)
+        logger.trace("Dual-world injection report: file://{}", dir)
     }
 
     @Throws(WebDriverException::class)
