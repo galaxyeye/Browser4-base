@@ -54,9 +54,6 @@ class ChatModelLogger : AutoCloseable {
         return requestId
     }
 
-    /**
-     * 记录响应
-     */
     fun logResponse(requestId: Int, response: ModelResponse) {
         val pair = requestResponseMap.getDatum(requestId) ?: return
         pair.response = response
@@ -72,12 +69,8 @@ class ChatModelLogger : AutoCloseable {
             sb.append(";;REQUEST ID: ${pair.id}\n")
             sb.append(";;TIMESTAMP: ${pair.timestamp}\n")
 
-            val logCount = counter.get()
-            if (logCount > 1) {
-                if (enableSystemMessages || logCount == 2) {
-                    // Log system message only if enabled or this is the second log (first pair)
-                    sb.append(";;SYSTEM MESSAGE:\n${pair.systemMessage}\n")
-                }
+            if (enableSystemMessages || pair.id == 1) {
+                sb.append(";;SYSTEM MESSAGE:\n${pair.systemMessage}\n")
             }
 
             sb.append(";;USER MESSAGE:\n${pair.userMessage}\n")
