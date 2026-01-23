@@ -1697,12 +1697,14 @@ __pulsar_utils__.compute = function() {
 
     __pulsar_utils__.data.metadata = this.computeMetadata();
 
-    this.scrollToTop();
+    window.scrollTo(0, 0);
 
     // calling window.stop will pause all resource loading
     window.stop();
 
     this.__updateStat();
+
+    // TODO: do not inject any data into the DOM
     this.writeData();
 
     // remove temporary flags
@@ -1718,6 +1720,7 @@ __pulsar_utils__.compute = function() {
     this.addProjectSpecifiedData();
 
     // if any script error occurs, the flag can NOT be seen
+    // TODO: do not inject any data into the DOM
     document.body.setAttribute(DATA_ERROR, '0');
 
     return this.getActiveDomMessage()
