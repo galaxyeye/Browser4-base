@@ -229,7 +229,7 @@ class MCPToolExecutorE2ETest {
             testMCPServer.callTool(request)
             throw AssertionError("Expected IllegalArgumentException but no exception was thrown")
         } catch (e: IllegalArgumentException) {
-            assertTrue(e.message?.contains("not found") == true)
+            assertEquals(e.message?.contains("not found"), true)
         }
     }
 

@@ -234,15 +234,3 @@ $TASK_COMPLETE_SCHEMA
 ---
 
         """.trimIndent()
-
-/**
- * Backward-compatible access point.
- *
- * Don't cache this value. Always call [buildMainSystemPromptV1] so custom tools registered at runtime are visible.
- */
-@Deprecated(
-    message = "Use buildMainSystemPromptV1() to ensure prompt is generated per-request.",
-    replaceWith = ReplaceWith("buildMainSystemPromptV1()")
-)
-val MAIN_SYSTEM_PROMPT_V1: String
-    get() = buildMainSystemPromptV1()

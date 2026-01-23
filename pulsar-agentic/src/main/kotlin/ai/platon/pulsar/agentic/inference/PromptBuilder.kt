@@ -37,7 +37,7 @@ class PromptBuilder() {
         const val MAX_ACTIONS = 1
 
         fun buildObserveResultSchema(returnAction: Boolean): String {
-            // English is better for LLM to understand json
+            // English is better for LLM to understand JSON
             val schema1 = """
 {
   "elements": [
@@ -244,9 +244,6 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 - 对于坐标和尺寸，若未显式赋值，则视为 `0`。涉及属性：`clientRects`, `scrollRects`, `bounds`。
 
         """.trimIndent()
-
-        // Remove cached prompt constant usage; call buildMainSystemPromptV1() when needed.
-        // val MAIN_SYSTEM_PROMPT = MAIN_SYSTEM_PROMPT_V1
 
         const val SINGLE_ACTION_GENERATION_PROMPT = """
 根据动作描述和网页内容，选择最合适一个或多个工具。
