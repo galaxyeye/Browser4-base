@@ -530,68 +530,10 @@ __pulsar_NodeExt.prototype.adjustDOMRect = function() {
     }
 };
 
-// Bridge instance methods for callers that already have node.__pulsar_nodeExt
-__pulsar_NodeExt.prototype.__pulsar_setAttributeIfNotBlank = function(attrName, attrValue) {
-    return NodeOps.setAttributeIfNotBlank(this.node, attrName, attrValue);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isText = function() {
-    return NodeOps.isText(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isElement = function() {
-    return NodeOps.isElement(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_bestElement = function() {
-    return NodeOps.bestElement(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_cleanText = function() {
-    return NodeOps.cleanText(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isShortText = function() {
-    return NodeOps.isShortText(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isNumberLike = function() {
-    return NodeOps.isNumberLike(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isDiv = function() {
-    return NodeOps.isDiv(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isImage = function() {
-    return NodeOps.isImage(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isSmallImage = function() {
-    return NodeOps.isSmallImage(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isAnchor = function() {
-    return NodeOps.isAnchor(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isIFrame = function() {
-    return NodeOps.isIFrame(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_isTile = function() {
-    return NodeOps.isTile(this.node);
-};
-
 __pulsar_NodeExt.prototype.__pulsar_getRect = function() {
     return NodeOps.getRect(this.node);
-};
-
-__pulsar_NodeExt.prototype.__pulsar_nScreen = function() {
-    return NodeOps.nScreen(this.node);
 };
 
 __pulsar_NodeExt.prototype.__pulsar_maybeClickable = function() {
     return NodeOps.maybeClickable(this.node);
 };
-
