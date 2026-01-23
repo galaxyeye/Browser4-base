@@ -910,7 +910,7 @@
     "type" : "String"
   } ],
   "returnType" : "Any?",
-  "description" : "    /** Detailed evaluation metadata (beta). */\n    @Throws(WebDriverException::class)\n    suspend fun evaluateDetail(expression: String): JsEvaluation?\n\n    /**\n     * Executes JavaScript returning JSON if availiable value if possible (objects serialized), else primitive/string/null.\n     */\n"
+  "description" : "    /** Detailed evaluation metadata (beta). */\n    @Throws(WebDriverException::class)\n    suspend fun evaluateDetail(expression: String): JsEvaluation?\n\n    /**\n     * Executes JavaScript returning JSON if available value if possible (objects serialized), else primitive/string/null.\n     */\n"
 }, {
   "domain" : "driver",
   "method" : "evaluateValueDetail",

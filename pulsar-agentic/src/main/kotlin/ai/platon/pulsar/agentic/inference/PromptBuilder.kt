@@ -5,7 +5,7 @@ import ai.platon.browser4.driver.chrome.dom.model.TabState
 import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
-import ai.platon.pulsar.agentic.prompts.MAIN_SYSTEM_PROMPT_V1
+import ai.platon.pulsar.agentic.prompts.buildMainSystemPromptV1
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.KStrings
 import ai.platon.pulsar.common.Strings
@@ -245,7 +245,8 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 
         """.trimIndent()
 
-        val MAIN_SYSTEM_PROMPT = MAIN_SYSTEM_PROMPT_V1
+        // Remove cached prompt constant usage; call buildMainSystemPromptV1() when needed.
+        // val MAIN_SYSTEM_PROMPT = MAIN_SYSTEM_PROMPT_V1
 
         const val SINGLE_ACTION_GENERATION_PROMPT = """
 根据动作描述和网页内容，选择最合适一个或多个工具。
@@ -408,7 +409,7 @@ $TOOL_CALL_RULE_CONTENT
 
     fun buildOperatorSystemPrompt(): String {
         return """
-$MAIN_SYSTEM_PROMPT
+${buildMainSystemPromptV1()}
         """.trimIndent()
     }
 

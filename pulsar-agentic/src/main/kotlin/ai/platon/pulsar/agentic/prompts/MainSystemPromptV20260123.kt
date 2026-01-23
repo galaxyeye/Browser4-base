@@ -10,7 +10,12 @@ import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveRe
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.language
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
 
-val MAIN_SYSTEM_PROMPT_V1 = """
+/**
+ * Build main system prompt (v20260123).
+ *
+ * Note: Must be generated on demand so newly registered custom tools/skills are reflected in the tool list.
+ */
+fun buildMainSystemPromptV1(): String = """
 你是一个被设计为在迭代循环中运行以自动化浏览器任务的 AI 代理。你的最终目标是完成 <user_request> 中提供的任务。
 
 # 系统指南
@@ -188,43 +193,16 @@ $A11Y_TREE_NOTE_CONTENT
 - 如果 `todolist.md` 为空且任务是多步的，使用文件工具在 `todolist.md` 中生成分步计划。
 - 分析 `todolist.md` 以指导并追踪进展。
 - 如果有任何 `todolist.md` 项已完成，请在文件中将其标记为完成。
-- 分析你是否陷入了重复无进展的状态；若是，考虑替代方法，例如滚动以获取更多上下文、使用发送键（`press`）直接模拟按键，或换用不同页面。
+- 分析你是否陷入了重复无进展的状态；若是，考虑替代方法。
 - 决定应存储在记忆中的简明、可操作的上下文以供后续推理使用。
 - 在准备结束时，按`## 任务完成输出`格式输出。
-- 始终关注 <user_request>。仔细分析所需的具体步骤和信息，例如特定筛选条件、表单字段等，确保当前轨迹与用户请求一致。
+- 始终关注 <user_request>。
 
 ---
 
 ## 容错行为
 
 - 如果上一步工具调用内部出现异常，该异常会在 `## 上步输出` 中显示
-
-## 示例
-
-下面是一些良好输出模式的示例。可参考但不要直接复制。
-
-### 评估示例
-
-- 正面示例：
-"evaluationPreviousGoal": "已成功导航到商品页面并找到了目标信息。结论：成功"
-"evaluationPreviousGoal": "已点击登录按钮并显示了用户认证表单。结论：成功"
-- 负面示例：
-"evaluationPreviousGoal": "无法在图像中看到搜索栏，因此未能在搜索栏输入文本。结论：失败"
-"evaluationPreviousGoal": "点击索引为 15 的提交按钮但表单未成功提交。结论：失败"
-
----
-
-### 记忆示例
-
-"memory": "已访问 5 个目标网站中的 2 个。从 Amazon（$39.99）和 eBay（$42.00）收集了价格数据。仍需检查 Walmart、Target 和 Best Buy。"
-"memory": "在主页面发现许多待处理报告。已成功处理前两个季度销售数据报告，接下来处理库存分析和客户反馈。"
-
----
-
-### 下一目标示例
-
-"nextGoal": "点击 '加入购物车' 按钮以继续购买流程。"
-"nextGoal": "提取页面第一个项目的详细信息。"
 
 ---
 
@@ -256,3 +234,15 @@ $TASK_COMPLETE_SCHEMA
 ---
 
         """.trimIndent()
+
+/**
+ * Backward-compatible access point.
+ *
+ * Don't cache this value. Always call [buildMainSystemPromptV1] so custom tools registered at runtime are visible.
+ */
+@Deprecated(
+    message = "Use buildMainSystemPromptV1() to ensure prompt is generated per-request.",
+    replaceWith = ReplaceWith("buildMainSystemPromptV1()")
+)
+val MAIN_SYSTEM_PROMPT_V1: String
+    get() = buildMainSystemPromptV1()

@@ -1,0 +1,62 @@
+package ai.platon.pulsar.agentic.prompts
+
+import ai.platon.pulsar.agentic.inference.PromptBuilder
+import ai.platon.pulsar.agentic.skills.SkillContext
+import ai.platon.pulsar.agentic.skills.SkillRegistry
+import ai.platon.pulsar.agentic.skills.examples.WebScrapingSkill
+import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
+import ai.platon.pulsar.agentic.tools.CustomToolRegistry
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+class MainSystemPromptCustomSkillInjectionTest {
+
+    private val skillContext = SkillContext(sessionId = "skill-prompt-test")
+
+    private lateinit var customTools: CustomToolRegistry
+    private lateinit var skills: SkillRegistry
+
+    @BeforeEach
+    fun setUp() = runBlocking {
+        customTools = CustomToolRegistry.instance
+        skills = SkillRegistry.instance
+
+        customTools.clear()
+        skills.clear(skillContext)
+    }
+
+    @AfterEach
+    fun tearDown() = runBlocking {
+        customTools.clear()
+        skills.clear(skillContext)
+    }
+
+    @Test
+    fun customSkillToolSpecsShouldAppearInSystemPromptToolList() = runBlocking {
+        // Register a concrete skill so SkillToolExecutor can expose its tool-call specs.
+        skills.register(WebScrapingSkill(), skillContext)
+
+        // Register SkillToolExecutor to CustomToolRegistry under domain `skill`.
+        // This is the condition for making skill tool-call specs prompt-visible.
+        customTools.register(SkillToolExecutor(skills))
+
+        // Main system prompt should contain tool list with custom tools appended.
+        val prompt = buildMainSystemPromptV1()
+
+        val compacted = PromptBuilder.compactPrompt(prompt)
+        assertTrue(prompt.contains("## 工具列表"), compacted)
+        assertTrue(prompt.contains("// CustomTool"), compacted)
+
+        // A concrete method name of WebScrapingSkill should appear in the rendered prompt.
+        // (We assert both domain prefix and method token to avoid accidental matches.)
+        assertTrue(prompt.contains("skill."), compacted)
+        assertTrue(prompt.contains("scraping"), compacted)
+
+        // And registry should hold prompt-visible specs for the skill domain.
+        val skillSpec = customTools.getToolCallSpecifications("skill")
+        assertTrue(skillSpec.isNotEmpty())
+    }
+}

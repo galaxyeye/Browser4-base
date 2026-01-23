@@ -1,10 +1,10 @@
 package ai.platon.pulsar.ql
 
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.sql.ResultSetFormatter
 import ai.platon.pulsar.common.sql.SQLTemplate
 import ai.platon.pulsar.ql.common.ResultSets
 import ai.platon.pulsar.ql.h2.addColumn
-import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
 import org.h2.value.ValueString
 import java.sql.Types
@@ -24,7 +24,7 @@ class TestResultSetPersistUtils {
         rs.addColumn("B")
         val a = arrayOf(0.8056499951626754, 0.5259673975756397, 0.869188405723, 0.4140625)
         val b = arrayOf("a", "b", "c", "d")
-        a.zip(b).map { arrayOf(it.first, it.second) }.forEach { rs.addRow(*it) }
+        a.zip(b).map { arrayOf<Any>(it.first, it.second) }.forEach { rs.addRow(*it) }
         val fmt = ResultSetFormatter(rs)
         printlnPro(fmt.toString())
     }
