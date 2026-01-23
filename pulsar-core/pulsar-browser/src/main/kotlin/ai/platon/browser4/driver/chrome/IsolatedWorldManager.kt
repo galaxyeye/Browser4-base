@@ -1,6 +1,8 @@
 package ai.platon.browser4.driver.chrome
 
+import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.getLogger
+import kotlinx.coroutines.delay
 
 /**
  * Manages isolated worlds for Browser4 runtime injection.
@@ -18,124 +20,179 @@ import ai.platon.pulsar.common.getLogger
  * 6. Runtime is observable, extensible, and evolvable
  */
 class IsolatedWorldManager(
-    private val devTools: RemoteDevTools
+    val devTools: RemoteDevTools,
+    val settings: BrowserSettings
 ) {
     companion object {
         private val logger = getLogger(this)
-        
+
         /**
          * Isolated world name for Browser4 runtime.
          * This name is used to identify and access the isolated world via CDP.
          */
         const val RUNTIME_WORLD_NAME = "__browser4_runtime__"
-        
+
         /**
          * Version of the Browser4 runtime.
          * Increment this when the runtime API changes.
          */
         const val RUNTIME_VERSION = "1.0.0"
+
+        private const val DEFAULT_CREATE_WORLD_RETRIES = 3
+        private val DEFAULT_CREATE_WORLD_RETRY_DELAYS_MS = longArrayOf(50, 150, 400)
     }
-    
+
     private val pageAPI get() = devTools.page
     private val runtimeAPI get() = devTools.runtime
-    
+    private val confuser get() = settings.confuser
+
     /**
      * Stores the frame ID to isolated world context ID mapping.
      * Key: frameId, Value: executionContextId
      */
     private val isolatedWorldContexts = mutableMapOf<String, Int>()
-    
+
     /**
      * Creates an isolated world for the given frame.
-     * 
-     * @param frameId The frame ID to create the isolated world in. 
+     *
+     * @param frameId The frame ID to create the isolated world in.
      *                If null, creates in the main frame.
      * @return The execution context ID of the created isolated world
      */
     suspend fun createIsolatedWorld(frameId: String? = null): Int {
-        logger.info("Creating isolated world '{}' for frame: {}", RUNTIME_WORLD_NAME, frameId ?: "main")
-        
-        // Create isolated world using CDP Page.createIsolatedWorld
-        val params = mutableMapOf<String, Any?>(
-            "worldName" to RUNTIME_WORLD_NAME,
-            "grantUniversalAccess" to true // Allow access to cross-origin frames
+        val resolvedFrameId: String? = frameId ?: runCatching { pageAPI.getFrameTree().frame.id }.getOrNull()
+
+        logger.info(
+            "Creating isolated world '{}' for frame: {}",
+            RUNTIME_WORLD_NAME,
+            resolvedFrameId ?: "main"
         )
-        
-        if (frameId != null) {
-            params["frameId"] = frameId
+
+        var lastError: Exception? = null
+        repeat(DEFAULT_CREATE_WORLD_RETRIES) { attempt ->
+            try {
+                val executionContextId = run {
+                    // Prefer the typed API if we have a frame id.
+                    if (resolvedFrameId != null) {
+                        pageAPI.createIsolatedWorld(
+                            frameId = resolvedFrameId,
+                            worldName = RUNTIME_WORLD_NAME,
+                            grantUniveralAccess = true,
+                        )
+                    } else {
+                        // Fallback to raw invoke (older / partial CDP bindings).
+                        val params = mutableMapOf<String, Any?>(
+                            "worldName" to RUNTIME_WORLD_NAME,
+                            "grantUniversalAccess" to true
+                        )
+
+                        val result = devTools.invoke<Map<String, Any>>(
+                            "Page.createIsolatedWorld",
+                            params,
+                            null
+                        )
+                        (result?.get("executionContextId") as? Number)?.toInt()
+                    }
+                }
+
+                if (executionContextId == null || executionContextId <= 0) {
+                    throw IllegalStateException(
+                        "Failed to create isolated world: invalid executionContextId '$executionContextId' (frameId=$resolvedFrameId, attempt=${attempt + 1})"
+                    )
+                }
+
+                // Always store mapping for the resolved main frame.
+                // Use empty string as fallback key so callers without a frame id can still resolve it.
+                val key = resolvedFrameId?.ifBlank { null } ?: ""
+                isolatedWorldContexts[key] = executionContextId
+                // Also store a default fallback mapping in case frameId cannot be resolved later.
+                isolatedWorldContexts[""] = executionContextId
+
+                logger.info("Created isolated world with execution context ID: {}", executionContextId)
+                return executionContextId
+            } catch (e: Exception) {
+                lastError = e
+                val delayMs = DEFAULT_CREATE_WORLD_RETRY_DELAYS_MS.getOrElse(attempt) { 0 }
+                if (attempt < DEFAULT_CREATE_WORLD_RETRIES - 1) {
+                    logger.debug(
+                        "Failed to create isolated world (attempt {}/{}), retrying in {} ms: {}",
+                        attempt + 1,
+                        DEFAULT_CREATE_WORLD_RETRIES,
+                        delayMs,
+                        e.message
+                    )
+                    if (delayMs > 0) delay(delayMs)
+                }
+            }
         }
-        
-        val result = devTools.invoke<Map<String, Any>>(
-            "Page.createIsolatedWorld",
-            params,
-            null
+
+        throw IllegalStateException(
+            "Failed to create isolated world after $DEFAULT_CREATE_WORLD_RETRIES attempts (frameId=$resolvedFrameId)",
+            lastError
         )
-        
-        val executionContextId = (result?.get("executionContextId") as? Number)?.toInt()
-            ?: throw IllegalStateException("Failed to create isolated world: no executionContextId returned")
-        
-        if (frameId != null) {
-            isolatedWorldContexts[frameId] = executionContextId
-        }
-        
-        logger.info("Created isolated world with execution context ID: {}", executionContextId)
-        return executionContextId
     }
-    
+
     /**
      * Evaluates JavaScript in the isolated world.
-     * 
+     *
      * @param script The JavaScript code to evaluate
      * @param contextId The execution context ID of the isolated world.
      *                  If null, evaluates in the default isolated world.
      * @return The result of the evaluation
      */
-    suspend fun evaluateInIsolatedWorld(
-        script: String,
-        contextId: Int? = null
-    ): Any? {
+    suspend fun evaluateInIsolatedWorld(script: String, contextId: Int? = null): Any? {
         val params = mutableMapOf<String, Any?>(
-            "expression" to script,
+            "expression" to confuser.confuse(script),
             "returnByValue" to true,
             "awaitPromise" to true
         )
-        
+
         if (contextId != null) {
-            params["contextId"] = contextId
+            // CDP expects executionContextId, but some driver code historically used contextId.
+            params["executionContextId"] = contextId
         }
-        
+
         val result = devTools.invoke<Map<String, Any>>(
             "Runtime.evaluate",
             params,
             null
         )
-        
+
         return result?.get("result")
     }
-    
+
     /**
      * Injects the Browser4 runtime into the isolated world.
-     * 
+     *
+     * The Isolated World and the Page World share the same DOM (so you can manipulate the page, click buttons, etc.),
+     * However, the JavaScript global objects on both sides are isolated (each has its own window/ globalThis/ prototype chain),
+     * So when you execute window.__pulsar_utils__ = ...in the Isolated World, it is, by default, attached only to the window of the Isolated World,
+     * The page's own scripts (Page World) access the window of the Page World and cannot see the global variables of the Isolated World.
+     *
      * @param runtimeScript The compiled runtime JavaScript code
      * @param contextId The execution context ID of the isolated world
      */
     suspend fun injectRuntime(runtimeScript: String, contextId: Int) {
-        logger.info("Injecting Browser4 runtime (v{}) into isolated world context {}", 
-            RUNTIME_VERSION, contextId)
-        
+        logger.info(
+            "Injecting Browser4 runtime (v{}) into isolated world context {}",
+            RUNTIME_VERSION,
+            contextId
+        )
+
         // Wrap the runtime with version info
+        // $runtimeScript includes js code in __pulsar_utils__.js and other runtime files
         val versionedScript = """
             // Browser4 Runtime v$RUNTIME_VERSION
             (function() {
                 'use strict';
-                
+
                 const __browser4_runtime__ = {
                     version: '$RUNTIME_VERSION',
                     worldName: '$RUNTIME_WORLD_NAME',
                 };
-                
+
                 $runtimeScript
-                
+
                 // Expose runtime API (but only in isolated world)
                 if (typeof window !== 'undefined') {
                     Object.defineProperty(window, '__browser4_runtime__', {
@@ -145,26 +202,39 @@ class IsolatedWorldManager(
                         configurable: false
                     });
                 }
-                
+
                 return __browser4_runtime__;
             })();
         """.trimIndent()
-        
+
         evaluateInIsolatedWorld(versionedScript, contextId)
-        
+
         logger.info("Browser4 runtime injection completed")
     }
-    
+
+    /**
+     * Ensures an isolated world exists for the target frame and injects runtime if absent.
+     */
+    suspend fun ensureRuntime(frameId: String? = null, runtimeScript: String): Int {
+        val existing = getContextId(frameId)
+        if (existing != null && existing > 0) return existing
+
+        val ctx = createIsolatedWorld(frameId)
+        injectRuntime(runtimeScript, ctx)
+        return ctx
+    }
+
     /**
      * Gets the execution context ID for a frame's isolated world.
-     * 
+     *
      * @param frameId The frame ID
      * @return The execution context ID, or null if not found
      */
-    fun getContextId(frameId: String): Int? {
-        return isolatedWorldContexts[frameId]
+    fun getContextId(frameId: String?): Int? {
+        val key = frameId?.ifBlank { null } ?: ""
+        return isolatedWorldContexts[key] ?: isolatedWorldContexts[""]
     }
-    
+
     /**
      * Clears all isolated world contexts.
      * Called when navigating to a new page or closing the tab.

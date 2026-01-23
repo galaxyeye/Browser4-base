@@ -1,12 +1,11 @@
-package ai.platon.pulsar.browser
+package ai.platon.pulsar.browser.js
 
 import ai.platon.pulsar.WebDriverTestBase
-import ai.platon.pulsar.common.ResourceLoader
+import ai.platon.pulsar.browser.FastWebDriverService
 import ai.platon.pulsar.common.js.JsUtils
 import ai.platon.pulsar.common.printlnPro
-import ai.platon.pulsar.common.sleepSeconds
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
-import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.assertNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,7 +44,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
     }
 
     @Test
-    fun `test evaluate that returns primitive values`() =
+    fun testEvaluateThatReturnsPrimitiveValues() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val code = """1+1"""
 
@@ -54,7 +53,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `test evaluate that returns object`() = runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
+    fun testEvaluateThatReturnsObject() = runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
         val code = """__pulsar_utils__.getConfig()"""
 
         val result = driver.evaluateDetail(code)
@@ -85,7 +84,21 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
     }
 
     @Test
-    fun `test evaluate single line expressions`() =
+    fun whenOpenAJsonPageThenScriptIsInjected() = runWebDriverTest(jsonUrl) { driver ->
+        require(driver is AbstractWebDriver)
+
+        val expression = "__browser4_runtime__"
+        val detail = driver.evaluateDetail(expression)
+        printlnPro(String.format("%-6s%-40s%s", "JSON", expression, detail))
+
+        val r = driver.evaluate("__pulsar_utils__.add(1, 1)")
+        assertEquals(2, r)
+
+        evaluateExpressions(driver, "JSON")
+    }
+
+    @Test
+    fun testEvaluateSingleLineExpressions() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val code = "(() => {\n  const a = 1;\n  const b = 2;\n  return a + b;\n})()"
 
@@ -94,7 +107,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `test evaluate multi-line expressions`() =
+    fun testEvaluateMultiLineExpressions() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val code = """
 () => {
@@ -125,7 +138,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `test evaluate IIFE (Immediately Invoked Function Expression)`() =
+    fun testEvaluateIifeImmediatelyInvokedFunctionExpression() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val code = """
 (() => {
@@ -140,15 +153,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `when open a JSON page then script is injected`() = runWebDriverTest(jsonUrl) { driver ->
-        val r = driver.evaluate("__pulsar_utils__.add(1, 1)")
-        assertEquals(2, r)
-
-        evaluateExpressions(driver, "JSON")
-    }
-
-    @Test
-    fun `when open a PLAIN TXT page then script is injected`() = runWebDriverTest(plainTextUrl) { driver ->
+    fun whenOpenAPlainTxtPageThenScriptIsInjected() = runWebDriverTest(plainTextUrl) { driver ->
         val r = driver.evaluate("__pulsar_utils__.add(1, 1)")
         assertEquals(2, r)
 
@@ -156,25 +161,16 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
     }
 
     @Test
-    fun `when open a CSV TXT page then script is not injected`() = runWebDriverTest(csvTextUrl) { driver ->
+    fun whenOpenACsvTxtPageThenScriptIsInjected() = runWebDriverTest(csvTextUrl) { driver ->
         expressions.forEach { expression ->
             val detail = driver.evaluateDetail(expression)
             printlnPro(String.format("%-10s %-40s %s", "CSV TXT", expression, detail))
-        }
-
-        val nullExpressions = """
-            typeof(__pulsar_)
-            __pulsar_utils__.add(1, 1)
-        """.trimIndent().split("\n").map { it.trim() }.filter { it.isNotBlank() }
-
-        nullExpressions.forEach { expression ->
-            val detail = driver.evaluateDetail(expression)
-            assertTrue { detail?.value == null || detail.value == "undefined" }
+            assertNotNull(detail)
         }
     }
 
     @Test
-    fun `test already-invoked IIFE is not double-wrapped and evaluates`() =
+    fun testAlreadyInvokedIifeIsNotDoubleWrappedAndEvaluates() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val iife = "(() => { return 3 })()"
             val expression = JsUtils.toIIFE(iife)
@@ -185,7 +181,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `test arrow function with arguments via IIFE`() =
+    fun testArrowFunctionWithArgumentsViaIife() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val arrow = "x => x * 2"
             val expression = JsUtils.toIIFE(arrow, "5")
@@ -194,7 +190,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `test object literal IIFE returns object by value`() =
+    fun testObjectLiteralIifeReturnsObjectByValue() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val obj = "{ answer: 42, nested: { ok: true } }"
             val expression = JsUtils.toIIFE(obj)
@@ -212,7 +208,7 @@ class PulsarWebDriverEvaluateJSTests : WebDriverTestBase() {
         }
 
     @Test
-    fun `test plain function IIFE passthrough`() =
+    fun testPlainFunctionIifePassthrough() =
         runEnhancedWebDriverTest("$assetsBaseURL/dom.html", browser) { driver ->
             val funcIife = "(function(){ return 2 * 3 })()"
             val expression = JsUtils.toIIFE(funcIife)

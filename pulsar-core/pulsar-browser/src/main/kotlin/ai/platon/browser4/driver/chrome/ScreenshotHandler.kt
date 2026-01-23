@@ -127,7 +127,7 @@ class ScreenshotHandler(
         }
 
         // must scroll to top to calculate the client rect
-        pageHandler.evaluate("__pulsar_utils__.scrollToTop()")
+        pageHandler.jsHandler.evaluate("__pulsar_utils__.scrollToTop()")
 
         val rect = calculateNodeClip0(node, selector)
 
@@ -154,12 +154,12 @@ class ScreenshotHandler(
         println("\n")
         println("===== $selector ${node.nodeId}")
 
-        var clientRects = pageHandler.evaluate("__pulsar_utils__.queryClientRects('$selector')")
+        var clientRects = pageHandler.jsHandler.evaluate("__pulsar_utils__.queryClientRects('$selector')")
         println(clientRects)
         var contentQuads = dom?.getContentQuads(node.nodeId, null, null)
         println(contentQuads)
 
-        var clientRect = pageHandler.evaluate("__pulsar_utils__.queryClientRect('$selector')")?.toString()
+        var clientRect = pageHandler.jsHandler.evaluate("__pulsar_utils__.queryClientRect('$selector')")?.toString()
 
         println("clientRect: ")
         println(clientRect)
@@ -169,14 +169,14 @@ class ScreenshotHandler(
         println(clickableDOM.clickablePoint())
 
         println("== scrollToTop ==")
-        pageHandler.evaluate("__pulsar_utils__.scrollToTop()")
+        pageHandler.jsHandler.evaluate("__pulsar_utils__.scrollToTop()")
 
-        clientRects = pageHandler.evaluate("__pulsar_utils__.queryClientRects('$selector')")
+        clientRects = pageHandler.jsHandler.evaluate("__pulsar_utils__.queryClientRects('$selector')")
         println(clientRects)
         contentQuads = dom?.getContentQuads(node.nodeId, null, null)
         println(contentQuads)
 
-        clientRect = pageHandler.evaluate("__pulsar_utils__.queryClientRect('$selector')")?.toString()
+        clientRect = pageHandler.jsHandler.evaluate("__pulsar_utils__.queryClientRect('$selector')")?.toString()
 
         println("clientRect: ")
         println(clientRect)

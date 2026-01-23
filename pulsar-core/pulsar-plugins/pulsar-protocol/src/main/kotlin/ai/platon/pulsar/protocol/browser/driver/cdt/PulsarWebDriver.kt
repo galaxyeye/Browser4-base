@@ -65,12 +65,13 @@ class PulsarWebDriver(
     private val runtimeAPI get() = devTools.runtime.takeIf { isActive }
     private val emulationAPI get() = devTools.emulation.takeIf { isActive }
 
-    private val page = PageHandler(devTools, settings.confuser)
+    private val isolatedWorldManager = IsolatedWorldManager(devTools, settings)
+    private val page = PageHandler(devTools, isolatedWorldManager)
+    private val jsHandler get() = page.jsHandler
     private val mouse get() = page.mouse.takeIf { isActive }
     private val keyboard get() = page.keyboard.takeIf { isActive }
     private val screenshot = ScreenshotHandler(page, devTools)
     private val emulator get() = EmulationHandler(pageAPI, domAPI, keyboard, mouse)
-    private val isolatedWorldManager by lazy { IsolatedWorldManager(devTools) }
 
     private val rpc = RobustRPC(this)
     private val networkManager by lazy { NetworkManager(this, rpc) }
@@ -187,23 +188,23 @@ class PulsarWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun evaluate(expression: String): Any? {
-        return driverHelper.invokeOnPage("evaluate") { page.evaluate(expression) }
+        return driverHelper.invokeOnPage("evaluate") { jsHandler.evaluate(expression) }
     }
 
     @Throws(WebDriverException::class)
     override suspend fun evaluateDetail(expression: String): JsEvaluation? {
-        return driverHelper.invokeOnPage("evaluateDetail") { driverHelper.createJsEvaluate(page.evaluateDetail(expression)) }
+        return driverHelper.invokeOnPage("evaluateDetail") { driverHelper.createJsEvaluate(jsHandler.evaluateDetail(expression)) }
     }
 
     @Throws(WebDriverException::class)
     override suspend fun evaluateValue(expression: String): Any? {
-        return driverHelper.invokeOnPage("evaluateValue") { page.evaluateValue(expression) }
+        return driverHelper.invokeOnPage("evaluateValue") { jsHandler.evaluateValue(expression) }
     }
 
     @Throws(WebDriverException::class)
     override suspend fun evaluateValueDetail(expression: String): JsEvaluation? {
         return driverHelper.invokeOnPage("evaluateValueDetail") {
-            val evaluate = page.evaluateValueDetail(expression)
+            val evaluate = jsHandler.evaluateValueDetail(expression)
             driverHelper.createJsEvaluate(evaluate)
         }
     }
@@ -211,7 +212,7 @@ class PulsarWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun evaluateValue(selector: String, functionDeclaration: String): Any? {
         return driverHelper.invokeOnPage("evaluateValue") {
-            val callFunctionOn = page.evaluateValueDetail(selector, functionDeclaration)
+            val callFunctionOn = jsHandler.evaluateValueDetail(selector, functionDeclaration)
             driverHelper.createJsEvaluate(callFunctionOn)
         }
     }
@@ -829,9 +830,21 @@ function() {
         val chromeNavigateEntry = ChromeNavigateEntry(entry)
 
         chromeNavigateEntry.updateStateAfterFrameNavigated(event)
-        
+
         // Clear isolated world contexts on navigation
         isolatedWorldManager.clearContexts()
+
+        // Recreate isolated world and reinject runtime for the navigated frame (main frame prioritized)
+        try {
+            val isolatedWorldJs = settings.dualWorldScriptLoader.getIsolatedWorldJs(false)
+            if (isolatedWorldJs.isNotBlank()) {
+                val targetFrameId = event.frame.id
+                val contextId = isolatedWorldManager.ensureRuntime(targetFrameId, isolatedWorldJs)
+                logger.info("Ensured Browser4 runtime in isolated world after frame navigation | frame={}", targetFrameId)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to re-inject Browser4 runtime after frame navigation", e)
+        }
     }
 
     private suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
@@ -910,7 +923,7 @@ function() {
         // Use dual-world script loader (always available in BrowserSettings)
         addDualWorldScripts()
     }
-    
+
     /**
      * Injects scripts using the dual-world architecture.
      * Page World: stealth patches only
@@ -918,26 +931,26 @@ function() {
      */
     private suspend fun addDualWorldScripts() {
         val loader = settings.dualWorldScriptLoader
-        
+
         // 1. Inject Page World scripts (stealth patches)
         val pageWorldJs = loader.getPageWorldJs(false)
         if (pageWorldJs.isNotBlank()) {
             pageAPI?.addScriptToEvaluateOnNewDocument("\n;;\n$pageWorldJs\n;;\n")
             logger.info("Injected Page World scripts (stealth patches)")
         }
-        
+
         // 2. Create isolated world and inject runtime
         try {
             // Create isolated world for the main frame
             val contextId = isolatedWorldManager.createIsolatedWorld()
-            
+
             // Inject Browser4 runtime into isolated world
             val isolatedWorldJs = loader.getIsolatedWorldJs(false)
             if (isolatedWorldJs.isNotBlank()) {
                 isolatedWorldManager.injectRuntime(isolatedWorldJs, contextId)
                 logger.info("Injected Browser4 runtime into Isolated World (context: {})", contextId)
             }
-            
+
             if (logger.isTraceEnabled) {
                 reportDualWorldJs(pageWorldJs, isolatedWorldJs)
             }
@@ -947,7 +960,7 @@ function() {
             addLegacyScripts()
         }
     }
-    
+
     /**
      * Legacy script injection (all scripts in page world).
      * Used for backward compatibility.
@@ -974,7 +987,7 @@ function() {
         // the cache is used for a single document, so we have to clear it
         initScriptCache.clear()
     }
-    
+
     private fun reportDualWorldJs(pageWorldJs: String, isolatedWorldJs: String) {
         val dir = AppPaths.REPORT_DIR.resolve("browser/js/injected")
         Files.createDirectories(dir)

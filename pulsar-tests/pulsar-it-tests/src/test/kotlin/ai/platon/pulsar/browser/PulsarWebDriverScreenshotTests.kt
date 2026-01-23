@@ -2,8 +2,8 @@ package ai.platon.pulsar.browser
 
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.AppFiles
-import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.AppPaths
+import ai.platon.pulsar.common.printlnPro
 import kotlinx.coroutines.delay
 import java.io.IOException
 import java.nio.file.Path
@@ -59,4 +59,3 @@ class PulsarWebDriverScreenshotTests : WebDriverTestBase() {
         return AppFiles.saveTo(bytes, path, true)
     }
 }
-

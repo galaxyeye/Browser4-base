@@ -1752,7 +1752,14 @@ __pulsar_utils__.typeInfo = function() {
 
 // --- Export API ---
 
+// The Isolated World and the Page World share the same DOM (so you can manipulate the page, click buttons, etc.),
+// However, the JavaScript global objects on both sides are isolated (each has its own window/ globalThis/ prototype chain),
+// So when you execute window.__pulsar_utils__ = ...in the Isolated World, it is, by default, attached only to the window of the Isolated World,
+// The page's own scripts (Page World) access the window of the Page World and cannot see the global variables of the Isolated World.
+
+// window.__pulsar_ is deprecated, since it safe to inject variables in isolate world's window, will remove later
 window.__pulsar_ = window.__pulsar_ || function () {}
 window.__pulsar_.__pulsar_utils__ = __pulsar_utils__
-// window.__pulsar_utils__ is deprecated, will remove later
+
 window.__pulsar_utils__ = __pulsar_utils__
+window.__pulsar_CONFIGS = __pulsar_CONFIGS

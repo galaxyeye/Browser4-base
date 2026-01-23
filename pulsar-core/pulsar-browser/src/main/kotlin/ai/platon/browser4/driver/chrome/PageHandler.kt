@@ -4,7 +4,6 @@ import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.util.CDPReturnError
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException
-import ai.platon.browser4.driver.common.ScriptConfuser
 import ai.platon.cdt.kt.protocol.support.annotations.Experimental
 import ai.platon.cdt.kt.protocol.support.annotations.Optional
 import ai.platon.cdt.kt.protocol.support.annotations.ParamName
@@ -12,13 +11,10 @@ import ai.platon.cdt.kt.protocol.types.dom.Rect
 import ai.platon.cdt.kt.protocol.types.page.Navigate
 import ai.platon.cdt.kt.protocol.types.page.ReferrerPolicy
 import ai.platon.cdt.kt.protocol.types.page.TransitionType
-import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
-import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
-import ai.platon.pulsar.common.js.JsUtils
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 
 /**
@@ -60,7 +56,7 @@ import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 
 class PageHandler(
     private val devTools: RemoteDevTools,
-    private val confuser: ScriptConfuser,
+    private val isolatedWorldManager: IsolatedWorldManager,
 ) {
     companion object {
         // see org.w3c.dom.Node.ELEMENT_NODE
@@ -74,6 +70,8 @@ class PageHandler(
     private val domAPI get() = devTools.dom.takeIf { isActive }
     private val cssAPI get() = devTools.css.takeIf { isActive }
     private val runtimeAPI get() = devTools.runtime.takeIf { isActive }
+
+    val jsHandler = JsHandler(devTools, this, isolatedWorldManager)
 
     val mouse = Mouse(devTools)
     val keyboard = Keyboard(devTools)
@@ -286,7 +284,7 @@ class PageHandler(
             """.trimIndent(), Strings.escapeJsString(selector)
         )
 
-        val result = evaluateValue(expression)
+        val result = jsHandler.evaluateValue(expression)
 
         if (result is Boolean) return result
         // if ("mixed" == result) return null // 可按需返回 tri-state
@@ -342,7 +340,7 @@ class PageHandler(
             )
             // Fallback to legacy helper (CSS-only); safe stringify to avoid quoting issues
             val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
-            evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
+            jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             node
         } catch (e: Exception) {
             logger.warn("scrollIntoViewIfNeeded failed | {} | {}", selector, e.brief())
@@ -383,7 +381,7 @@ class PageHandler(
             // As a last resort, attempt legacy JS utility when a CSS selector is available
             if (!selector.isNullOrBlank()) {
                 val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
-                evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
+                jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             }
             nodeRef
         }
@@ -430,128 +428,6 @@ class PageHandler(
             // swallow and indicate failure; caller will fallback
             false
         }
-    }
-
-    /**
-     * Evaluates expression on global object.
-     *
-     * @param expression Javascript expression to evaluate
-     * @return Remote object value in case of primitive values or JSON values (if it was requested).
-     * */
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluateDetail(expression: String): Evaluate? {
-//        val iife = JsUtils.toIIFE(confuser.confuse(expression))
-
-        val confusedExpr = confuser.confuse(expression)
-
-        return try {
-            runtimeAPI?.evaluate(confusedExpr)
-        } catch (e: Exception) {
-            logger.warn("Failed to evaluate $expression", e)
-            null
-        }
-    }
-
-    /**
-     * Evaluates expression on global object.
-     *
-     * @param expression Javascript expression to evaluate
-     * @return Remote object value in case of primitive values or JSON values (if it was requested).
-     * */
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluate(script: String): Any? {
-        val evaluate = evaluateDetail(script)
-
-        val exception = evaluate?.exceptionDetails?.exception
-        if (exception != null) {
-            logger.warn(exception.description + "\n>>>$script<<<")
-        }
-
-        val result = evaluate?.result
-        return result?.value
-    }
-
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluateValueDetail(script: String): Evaluate? {
-        val expression: String
-        val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
-        // Check if this script is a IIFE
-        if (lines.size > 1) {
-            val firstLine = lines[0]
-            expression = if (!firstLine.startsWith("(")) {
-                JsUtils.toIIFE(confuser.confuse(script))
-            } else {
-                script
-            }
-        } else {
-            expression = script
-        }
-//        val iife = JsUtils.toIIFE(confuser.confuse(expression))
-
-        val confusedExpr = confuser.confuse(expression)
-
-        return try {
-            // returnByValue: Whether the result is expected to be a JSON object that should be sent by value.
-            runtimeAPI?.evaluate(confusedExpr, returnByValue = true)
-        } catch (e: Exception) {
-            logger.warn("Failed to evaluate $expression", e)
-            null
-        }
-    }
-
-    /**
-     * Evaluates expression on global object.
-     *
-     * @param expression Javascript expression to evaluate
-     * @return Remote object value in case of primitive values or JSON values (if it was requested).
-     * */
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluateValue(script: String): Any? {
-        val evaluate = evaluateValueDetail(script)
-
-        val exception = evaluate?.exceptionDetails?.exception
-        if (exception != null) {
-            logger.info(exception.description + "\n>>>$script<<<")
-        }
-
-        return evaluate?.result?.value
-    }
-
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): CallFunctionOn? {
-        val node = resolveSelector(selector) ?: return null
-        // Resolve a fresh objectId and ensure it's released after the call
-        val resolved = try {
-            when {
-                node.nodeId > 0 -> domAPI?.resolveNode(node.nodeId, null, null, null)
-                node.backendNodeId > 0 -> domAPI?.resolveNode(null, node.backendNodeId, null, null)
-                else -> null
-            }
-        } catch (e: Exception) {
-            null
-        } ?: return null
-
-        val oid = resolved.objectId ?: return null
-        return try {
-            runtimeAPI?.callFunctionOn(functionDeclaration, objectId = oid, returnByValue = true)
-        } finally {
-            try {
-                runtimeAPI?.releaseObject(oid)
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluateValue(selector: String, functionDeclaration: String): Any? {
-        val reslut = evaluateValueDetail(selector, functionDeclaration)
-
-        val exception = reslut?.exceptionDetails?.exception
-        if (exception != null) {
-            logger.info(exception.description + "\n>>>$functionDeclaration<<<")
-        }
-
-        return reslut?.result?.value
     }
 
     @Throws(ChromeDriverException::class)

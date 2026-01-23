@@ -1,10 +1,11 @@
-package ai.platon.pulsar.browser
+package ai.platon.pulsar.browser.js
 
 import ai.platon.pulsar.WebDriverTestBase
+import ai.platon.pulsar.browser.FastWebDriverService
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -221,7 +222,10 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
         }
         val m = getScrollMetrics(driver)
         // Concurrent smooth scrolls are not serialized; last-wins behavior sets a final target
-        assertTrue(results.any { abs(it - m.scrollY) <= LARGE_TOL }, "Final scrollY ${m.scrollY} should match one of concurrent targets ${results}")
+        assertTrue(
+            results.any { abs(it - m.scrollY) <= LARGE_TOL },
+            "Final scrollY ${m.scrollY} should match one of concurrent targets ${results}"
+        )
         assertTrue(m.scrollY in 0.0..m.maxScrollY + SMALL_TOL)
     }
 
@@ -265,7 +269,10 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
         assertAlmostEquals(expectedClampedMax, y, LARGE_TOL)
         assertAlmostEquals(expectedClampedMax, m1.scrollY, LARGE_TOL)
         // Ensure raw possible max (rawTotal - viewportH) is greater, proving clamp applied
-        assertTrue((rawTotal - viewportH) - expectedClampedMax > 10.0, "Clamp difference too small: rawTotal=$rawTotal viewport=$viewportH")
+        assertTrue(
+            (rawTotal - viewportH) - expectedClampedMax > 10.0,
+            "Clamp difference too small: rawTotal=$rawTotal viewport=$viewportH"
+        )
     }
 
     @Test
