@@ -1,8 +1,11 @@
 package ai.platon.pulsar.agentic.skills
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for SkillLoader and SkillComposer functionality.
@@ -27,7 +30,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test load single skill`() = runBlocking {
+    fun testLoadSingleSkill() = runBlocking {
         val skill = TestSkill("test-skill")
 
         val success = loader.load(skill, context)
@@ -37,7 +40,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test load skill with invalid metadata fails`() = runBlocking {
+    fun testLoadSkillWithInvalidMetadataFails() = runBlocking {
         val skill = object : AbstractSkill() {
             override val metadata = SkillMetadata(id = "test", name = "Test", version = "1.0.0")
             override suspend fun execute(context: SkillContext, params: Map<String, Any>) =
@@ -52,7 +55,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test load multiple skills with dependencies`() = runBlocking {
+    fun testLoadMultipleSkillsWithDependencies() = runBlocking {
         val dep = TestSkill("dependency")
         val skill1 = TestSkill("skill-1", dependencies = listOf("dependency"))
         val skill2 = TestSkill("skill-2", dependencies = listOf("skill-1"))
@@ -67,7 +70,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test load multiple skills with circular dependencies fails`() = runBlocking {
+    fun testLoadMultipleSkillsWithCircularDependenciesFails() = runBlocking {
         val skill1 = TestSkill("skill-1", dependencies = listOf("skill-2"))
         val skill2 = TestSkill("skill-2", dependencies = listOf("skill-1"))
 
@@ -80,7 +83,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test load multiple skills with missing dependencies fails`() = runBlocking {
+    fun testLoadMultipleSkillsWithMissingDependenciesFails() = runBlocking {
         val skill = TestSkill("test-skill", dependencies = listOf("missing"))
 
         val results = loader.loadAll(listOf(skill), context)
@@ -91,7 +94,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test reload skill`() = runBlocking {
+    fun testReloadSkill() = runBlocking {
         val skill = TestSkill("test-skill")
         loader.load(skill, context)
 
@@ -102,7 +105,7 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test unload skill`() = runBlocking {
+    fun testUnloadSkill() = runBlocking {
         val skill = TestSkill("test-skill")
         loader.load(skill, context)
 
@@ -113,14 +116,14 @@ class SkillLoaderTest {
     }
 
     @Test
-    fun `test unload non-existent skill returns false`() = runBlocking {
+    fun testUnloadNonExistentSkillReturnsFalse() = runBlocking {
         val unloaded = loader.unload("nonexistent", context)
 
         assertFalse(unloaded)
     }
 
     @Test
-    fun `test unload multiple skills`() = runBlocking {
+    fun testUnloadMultipleSkills() = runBlocking {
         loader.load(TestSkill("skill-1"), context)
         loader.load(TestSkill("skill-2"), context)
 
@@ -130,6 +133,37 @@ class SkillLoaderTest {
         assertTrue(results["skill-1"] == true)
         assertTrue(results["skill-2"] == true)
         assertEquals(0, registry.size())
+    }
+
+    @Test
+    fun testLoadAllPartialSuccessWhenSomeMissingDependencies() = runBlocking {
+        val base = TestSkill("base")
+        val needsMissing = TestSkill("needs-missing", dependencies = listOf("missing"))
+
+        val results = loader.loadAll(listOf(needsMissing, base), context)
+
+        assertEquals(setOf("base", "needs-missing"), results.keys)
+        assertTrue(results["base"] == true)
+        assertTrue(results["needs-missing"] == false)
+        assertTrue(registry.contains("base"))
+        assertFalse(registry.contains("needs-missing"))
+    }
+
+    @Test
+    fun testUnloadReturnsFalseWhenSkillHasDependents() = runBlocking {
+        // dependency <- dependent
+        val dependency = TestSkill("dep")
+        val dependent = TestSkill("child", dependencies = listOf("dep"))
+
+        loader.loadAll(listOf(dependent, dependency), context)
+        assertTrue(registry.contains("dep"))
+        assertTrue(registry.contains("child"))
+
+        val unloaded = loader.unload("dep", context)
+
+        assertFalse(unloaded, "Unloading a depended-on skill should return false")
+        assertTrue(registry.contains("dep"), "Dependency should remain registered")
+        assertTrue(registry.contains("child"), "Dependent should remain registered")
     }
 
     // Test helper class
@@ -174,7 +208,7 @@ class SkillComposerTest {
     }
 
     @Test
-    fun `test create sequential composite skill`() = runBlocking {
+    fun testCreateSequentialCompositeSkill() = runBlocking {
         // Register component skills
         registry.register(TestSkill("skill-1"), context)
         registry.register(TestSkill("skill-2"), context)
@@ -188,7 +222,7 @@ class SkillComposerTest {
     }
 
     @Test
-    fun `test sequential composite skill execution`() = runBlocking {
+    fun testSequentialCompositeSkillExecution() = runBlocking {
         // Register component skills
         val skill1 = CountingSkill("skill-1")
         val skill2 = CountingSkill("skill-2")
@@ -211,7 +245,7 @@ class SkillComposerTest {
     }
 
     @Test
-    fun `test sequential composite fails on first failure`() = runBlocking {
+    fun testSequentialCompositeFailsOnFirstFailure() = runBlocking {
         val skill1 = TestSkill("skill-1")
         val skill2 = FailingSkill("skill-2")
         val skill3 = TestSkill("skill-3")
@@ -230,7 +264,7 @@ class SkillComposerTest {
     }
 
     @Test
-    fun `test create parallel composite skill`() = runBlocking {
+    fun testCreateParallelCompositeSkill() = runBlocking {
         registry.register(TestSkill("skill-1"), context)
         registry.register(TestSkill("skill-2"), context)
 
@@ -242,7 +276,7 @@ class SkillComposerTest {
     }
 
     @Test
-    fun `test parallel composite skill execution`() = runBlocking {
+    fun testParallelCompositeSkillExecution() = runBlocking {
         val skill1 = CountingSkill("skill-1")
         val skill2 = CountingSkill("skill-2")
         registry.register(skill1, context)
@@ -264,7 +298,7 @@ class SkillComposerTest {
     }
 
     @Test
-    fun `test parallel composite reports all failures`() = runBlocking {
+    fun testParallelCompositeReportsAllFailures() = runBlocking {
         val skill1 = FailingSkill("skill-1")
         val skill2 = TestSkill("skill-2")
         val skill3 = FailingSkill("skill-3")
@@ -286,6 +320,35 @@ class SkillComposerTest {
         assertEquals(2, failures.size)
         assertTrue(failures.contains("skill-1"))
         assertTrue(failures.contains("skill-3"))
+    }
+
+    @Test
+    fun testConcurrentExecuteSameSkillIsStable() = runBlocking {
+        val skill = CountingSkill("skill-1")
+        registry.register(skill, context)
+
+        val calls = 50
+        val start = java.util.concurrent.CountDownLatch(1)
+        val done = java.util.concurrent.CountDownLatch(calls)
+
+        repeat(calls) {
+            Thread {
+                try {
+                    start.await()
+                    runBlocking {
+                        val result = registry.execute("skill-1", context)
+                        assertTrue(result.success)
+                    }
+                } finally {
+                    done.countDown()
+                }
+            }.start()
+        }
+
+        start.countDown()
+        done.await()
+
+        assertEquals(calls, skill.executionCount)
     }
 
     // Test helper classes

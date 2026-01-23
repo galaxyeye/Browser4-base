@@ -1,8 +1,11 @@
 package ai.platon.pulsar.agentic.skills
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 /**
  * Tests for SkillRegistry functionality.
@@ -25,7 +28,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test register skill`() = runBlocking {
+    fun testRegisterSkill() = runBlocking {
         val skill = TestSkill("test-skill-1")
 
         registry.register(skill, context)
@@ -36,7 +39,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test register duplicate skill throws exception`() = runBlocking {
+    fun testRegisterDuplicateSkillThrowsException() = runBlocking {
         val skill1 = TestSkill("test-skill")
         val skill2 = TestSkill("test-skill")
 
@@ -49,7 +52,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test register skill with missing dependencies fails`() = runBlocking {
+    fun testRegisterSkillWithMissingDependenciesFails() = runBlocking {
         val skill = TestSkill("test-skill", dependencies = listOf("missing-dep"))
 
         val exception = assertThrows<IllegalStateException> {
@@ -59,7 +62,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test register skill with satisfied dependencies succeeds`() = runBlocking {
+    fun testRegisterSkillWithSatisfiedDependenciesSucceeds() = runBlocking {
         val dep = TestSkill("dependency")
         val skill = TestSkill("test-skill", dependencies = listOf("dependency"))
 
@@ -71,7 +74,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test unregister skill`() = runBlocking {
+    fun testUnregisterSkill() = runBlocking {
         val skill = TestSkill("test-skill")
         registry.register(skill, context)
 
@@ -83,14 +86,14 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test unregister non-existent skill returns false`() = runBlocking {
+    fun testUnregisterNonExistentSkillReturnsFalse() = runBlocking {
         val removed = registry.unregister("nonexistent", context)
 
         assertFalse(removed)
     }
 
     @Test
-    fun `test unregister skill with dependents fails`() = runBlocking {
+    fun testUnregisterSkillWithDependentsFails() = runBlocking {
         val dep = TestSkill("dependency")
         val skill = TestSkill("test-skill", dependencies = listOf("dependency"))
 
@@ -98,13 +101,13 @@ class SkillRegistryTest {
         registry.register(skill, context)
 
         val exception = assertThrows<IllegalStateException> {
-            runBlocking { registry.unregister("dependency", context) }
+            registry.unregister("dependency", context)
         }
         assertTrue(exception.message!!.contains("required by"))
     }
 
     @Test
-    fun `test get all skills`() = runBlocking {
+    fun testGetAllSkills() = runBlocking {
         val skill1 = TestSkill("skill-1")
         val skill2 = TestSkill("skill-2")
 
@@ -118,7 +121,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test get all skill IDs`() = runBlocking {
+    fun testGetAllSkillIds() = runBlocking {
         registry.register(TestSkill("skill-1"), context)
         registry.register(TestSkill("skill-2"), context)
 
@@ -129,7 +132,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test find skills by tag`() = runBlocking {
+    fun testFindSkillsByTag() = runBlocking {
         val skill1 = TestSkill("skill-1", tags = setOf("tag1", "tag2"))
         val skill2 = TestSkill("skill-2", tags = setOf("tag2", "tag3"))
         val skill3 = TestSkill("skill-3", tags = setOf("tag3"))
@@ -152,7 +155,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test find skills by author`() = runBlocking {
+    fun testFindSkillsByAuthor() = runBlocking {
         val skill1 = TestSkill("skill-1", author = "Author A")
         val skill2 = TestSkill("skill-2", author = "Author A")
         val skill3 = TestSkill("skill-3", author = "Author B")
@@ -172,7 +175,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test execute skill by ID`() = runBlocking {
+    fun testExecuteSkillById() = runBlocking {
         val skill = TestSkill("test-skill")
         registry.register(skill, context)
 
@@ -183,15 +186,15 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test execute non-existent skill throws exception`() = runBlocking {
+    fun testExecuteNonExistentSkillThrowsException() = runBlocking {
         val exception = assertThrows<IllegalArgumentException> {
-            runBlocking { registry.execute("nonexistent", context) }
+            registry.execute("nonexistent", context)
         }
         assertTrue(exception.message!!.contains("not registered"))
     }
 
     @Test
-    fun `test execute calls lifecycle hooks`() = runBlocking {
+    fun testExecuteCallsLifecycleHooks() = runBlocking {
         val skill = LifecycleTrackingSkill("test-skill")
         registry.register(skill, context)
 
@@ -202,7 +205,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test execute with onBeforeExecute returning false`() = runBlocking {
+    fun testExecuteWithOnBeforeExecuteReturningFalse() = runBlocking {
         val skill = object : AbstractSkill() {
             override val metadata = SkillMetadata(id = "test-skill", name = "Test", version = "1.0.0")
             override suspend fun execute(context: SkillContext, params: Map<String, Any>) =
@@ -218,7 +221,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test clear all skills`() = runBlocking {
+    fun testClearAllSkills() = runBlocking {
         registry.register(TestSkill("skill-1"), context)
         registry.register(TestSkill("skill-2"), context)
 
@@ -228,7 +231,7 @@ class SkillRegistryTest {
     }
 
     @Test
-    fun `test get all metadata`() = runBlocking {
+    fun testGetAllMetadata() = runBlocking {
         val skill1 = TestSkill("skill-1")
         val skill2 = TestSkill("skill-2")
 
@@ -239,6 +242,63 @@ class SkillRegistryTest {
         assertEquals(2, metadata.size)
         assertTrue(metadata.any { it.id == "skill-1" })
         assertTrue(metadata.any { it.id == "skill-2" })
+    }
+
+    @Test
+    fun testExecuteWhenSkillThrowsThenReturnsFailureWithExceptionMetadata() = runBlocking {
+        val throwingSkill = object : AbstractSkill() {
+            override val metadata = SkillMetadata(id = "throwing-skill", name = "Throwing Skill", version = "1.0.0")
+
+            override suspend fun execute(context: SkillContext, params: Map<String, Any>): SkillResult {
+                throw IllegalStateException("boom")
+            }
+        }
+
+        registry.register(throwingSkill, context)
+
+        val result = registry.execute("throwing-skill", context)
+
+        assertFalse(result.success)
+        assertTrue(result.message!!.contains("Skill execution failed"))
+        assertTrue(result.metadata.containsKey("exception"))
+        val ex = result.metadata["exception"]
+        assertTrue(ex is Exception)
+        assertTrue((ex as Exception).message!!.contains("boom"))
+    }
+
+    @Test
+    fun testConcurrentRegisterSameIdOnlyOneSucceeds() = runBlocking {
+        registry.clear(context)
+
+        val attempts = 20
+        val start = java.util.concurrent.CountDownLatch(1)
+        val done = java.util.concurrent.CountDownLatch(attempts)
+        val successes = java.util.concurrent.atomic.AtomicInteger(0)
+        val failures = java.util.concurrent.atomic.AtomicInteger(0)
+
+        repeat(attempts) { idx ->
+            Thread {
+                try {
+                    start.await()
+                    runBlocking {
+                        registry.register(TestSkill("same-skill"), context)
+                        successes.incrementAndGet()
+                    }
+                } catch (_: Exception) {
+                    failures.incrementAndGet()
+                } finally {
+                    done.countDown()
+                }
+            }.apply { name = "skill-registry-register-$idx" }.start()
+        }
+
+        start.countDown()
+        done.await()
+
+        assertEquals(1, successes.get(), "Only one registration should succeed")
+        assertEquals(attempts - 1, failures.get(), "Other registrations should fail")
+        assertEquals(1, registry.size())
+        assertTrue(registry.contains("same-skill"))
     }
 
     // Test helper classes

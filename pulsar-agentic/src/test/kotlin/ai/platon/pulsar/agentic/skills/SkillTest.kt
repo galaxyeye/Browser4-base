@@ -1,8 +1,11 @@
 package ai.platon.pulsar.agentic.skills
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 /**
  * Tests for the Skill interface and related classes.
@@ -17,7 +20,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillMetadata creation with valid data`() {
+    fun testSkillMetadataCreationWithValidData() {
         val metadata = SkillMetadata(
             id = "test-skill",
             name = "Test Skill",
@@ -34,7 +37,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillMetadata fails with blank id`() {
+    fun testSkillMetadataFailsWithBlankId() {
         assertThrows<IllegalArgumentException> {
             SkillMetadata(
                 id = "",
@@ -44,7 +47,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillMetadata fails with blank name`() {
+    fun testSkillMetadataFailsWithBlankName() {
         assertThrows<IllegalArgumentException> {
             SkillMetadata(
                 id = "test-skill",
@@ -54,7 +57,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillMetadata fails with invalid version`() {
+    fun testSkillMetadataFailsWithInvalidVersion() {
         assertThrows<IllegalArgumentException> {
             SkillMetadata(
                 id = "test-skill",
@@ -65,7 +68,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillMetadata with dependencies and tags`() {
+    fun testSkillMetadataWithDependenciesAndTags() {
         val metadata = SkillMetadata(
             id = "test-skill",
             name = "Test Skill",
@@ -80,7 +83,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillContext get and set config`() {
+    fun testSkillContextGetAndSetConfig() {
         val context = SkillContext(
             sessionId = "test-session",
             config = mapOf("key1" to "value1", "key2" to 42)
@@ -92,7 +95,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillContext get and set resource`() {
+    fun testSkillContextGetAndSetResource() {
         val context = SkillContext(sessionId = "test-session")
 
         context.setResource("resource1", "value1")
@@ -104,7 +107,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillResult success creation`() {
+    fun testSkillResultSuccessCreation() {
         val result = SkillResult.success(data = "test data", message = "success")
 
         assertTrue(result.success)
@@ -113,7 +116,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test SkillResult failure creation`() {
+    fun testSkillResultFailureCreation() {
         val result = SkillResult.failure(message = "failure", metadata = mapOf("error" to "test"))
 
         assertFalse(result.success)
@@ -122,7 +125,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test AbstractSkill load state tracking`() = runBlocking {
+    fun testAbstractSkillLoadStateTracking() = runBlocking {
         val skill = TestSkill()
 
         assertFalse(skill.isLoaded())
@@ -135,7 +138,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test AbstractSkill prevents double loading`() = runBlocking {
+    fun testAbstractSkillPreventsDoubleLoading() = runBlocking {
         val skill = TestSkill()
 
         skill.onLoad(context)
@@ -148,7 +151,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test AbstractSkill prevents unload without load`() = runBlocking {
+    fun testAbstractSkillPreventsUnloadWithoutLoad() = runBlocking {
         val skill = TestSkill()
 
         assertThrows<IllegalStateException> {
@@ -159,7 +162,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test Skill lifecycle hooks are called`() = runBlocking {
+    fun testSkillLifecycleHooksAreCalled() = runBlocking {
         val skill = LifecycleTestSkill()
         val params = mapOf("key" to "value")
 
@@ -180,7 +183,7 @@ class SkillTest {
     }
 
     @Test
-    fun `test Skill validation`() = runBlocking {
+    fun testSkillValidation() = runBlocking {
         val skill = TestSkill()
         assertTrue(skill.validate(context))
     }
