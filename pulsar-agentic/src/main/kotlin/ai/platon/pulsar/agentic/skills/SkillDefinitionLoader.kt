@@ -158,11 +158,150 @@ class SkillDefinitionLoader {
 
     /**
      * Parse skill metadata from SKILL.md content.
+     * Supports both YAML frontmatter and traditional markdown format.
      *
      * @param content Content of SKILL.md file
      * @return Parsed skill definition
      */
     private fun parseSkillMetadata(content: String): SkillDefinition {
+        // Check if content starts with YAML frontmatter (---\n...---\n)
+        if (content.trim().startsWith("---")) {
+            val yamlMetadata = parseYamlFrontmatter(content)
+            if (yamlMetadata != null) {
+                return parseFromYamlAndMarkdown(content, yamlMetadata)
+            }
+        }
+        
+        // Fall back to traditional markdown parsing
+        return parseFromMarkdown(content)
+    }
+
+    /**
+     * Extract YAML frontmatter from SKILL.md content.
+     *
+     * @param content Content of SKILL.md file
+     * @return Map of YAML metadata, or null if no frontmatter found
+     */
+    private fun parseYamlFrontmatter(content: String): Map<String, Any>? {
+        val lines = content.lines()
+        if (lines.isEmpty() || lines[0].trim() != "---") {
+            return null
+        }
+        
+        val yamlLines = mutableListOf<String>()
+        var endIndex = -1
+        
+        // Find the closing ---
+        for (i in 1 until lines.size) {
+            if (lines[i].trim() == "---") {
+                endIndex = i
+                break
+            }
+            yamlLines.add(lines[i])
+        }
+        
+        if (endIndex == -1) {
+            return null
+        }
+        
+        // Parse YAML manually (simple key-value pairs and lists)
+        val metadata = mutableMapOf<String, Any>()
+        var currentKey: String? = null
+        val currentList = mutableListOf<String>()
+        
+        for (line in yamlLines) {
+            val trimmed = line.trim()
+            when {
+                trimmed.isEmpty() -> continue
+                trimmed.startsWith("-") -> {
+                    // List item
+                    val value = trimmed.substring(1).trim()
+                    currentList.add(value)
+                }
+                trimmed.contains(":") -> {
+                    // Key-value pair or list start
+                    // Save previous list if any
+                    if (currentKey != null && currentList.isNotEmpty()) {
+                        metadata[currentKey] = currentList.toList()
+                        currentList.clear()
+                    }
+                    
+                    val parts = trimmed.split(":", limit = 2)
+                    val key = parts[0].trim()
+                    val value = if (parts.size > 1) parts[1].trim() else ""
+                    
+                    currentKey = key
+                    if (value.isNotEmpty() && value != "[]") {
+                        metadata[key] = value
+                        currentKey = null
+                    }
+                }
+            }
+        }
+        
+        // Save last list if any
+        if (currentKey != null && currentList.isNotEmpty()) {
+            metadata[currentKey] = currentList.toList()
+        }
+        
+        return metadata
+    }
+
+    /**
+     * Parse skill definition from YAML frontmatter and remaining markdown.
+     *
+     * @param content Full SKILL.md content
+     * @param yamlMetadata Parsed YAML metadata
+     * @return Parsed skill definition
+     */
+    private fun parseFromYamlAndMarkdown(
+        content: String,
+        yamlMetadata: Map<String, Any>
+    ): SkillDefinition {
+        // Extract metadata from YAML
+        val skillId = yamlMetadata["skill_id"] as? String ?: ""
+        val name = yamlMetadata["name"] as? String ?: ""
+        val version = yamlMetadata["version"] as? String ?: "1.0.0"
+        val author = yamlMetadata["author"] as? String ?: ""
+        
+        @Suppress("UNCHECKED_CAST")
+        val tags = when (val tagValue = yamlMetadata["tags"]) {
+            is List<*> -> (tagValue as? List<String>)?.toSet() ?: emptySet()
+            is String -> setOf(tagValue)
+            else -> emptySet()
+        }
+        
+        @Suppress("UNCHECKED_CAST")
+        val dependencies = when (val depValue = yamlMetadata["dependencies"]) {
+            is List<*> -> (depValue as? List<String>) ?: emptyList()
+            is String -> listOf(depValue)
+            else -> emptyList()
+        }
+        
+        // Parse remaining sections from markdown (description, parameters, examples)
+        val markdownSections = parseMarkdownSections(content)
+        
+        return SkillDefinition(
+            skillId = skillId,
+            name = name,
+            version = version,
+            author = author,
+            tags = tags,
+            description = markdownSections["description"] ?: "",
+            dependencies = dependencies,
+            parameters = markdownSections["parameters"] as? Map<String, SkillDefinition.ParameterInfo> ?: emptyMap(),
+            examples = markdownSections["examples"] as? List<String> ?: emptyList()
+        )
+    }
+
+    /**
+     * Parse skill definition from traditional markdown format.
+     * This is the legacy format parser.
+     *
+     * @param content Content of SKILL.md file
+     * @return Parsed skill definition
+     */
+    private fun parseFromMarkdown(content: String): SkillDefinition {
         val lines = content.lines()
 
         // Extract metadata section
@@ -339,6 +478,115 @@ class SkillDefinitionLoader {
             .trim()
             .removePrefix("`")
             .removeSuffix("`")
+    }
+
+    /**
+     * Parse markdown sections (description, parameters, examples) from SKILL.md content.
+     * Used when YAML frontmatter is present for metadata.
+     *
+     * @param content Full SKILL.md content
+     * @return Map of section name to parsed content
+     */
+    private fun parseMarkdownSections(content: String): Map<String, Any> {
+        val result = mutableMapOf<String, Any>()
+        val lines = content.lines()
+        
+        var description = StringBuilder()
+        val parameters = mutableMapOf<String, SkillDefinition.ParameterInfo>()
+        val examples = mutableListOf<String>()
+        
+        var inDescriptionSection = false
+        var inParametersSection = false
+        var inExamplesSection = false
+        var currentExample = StringBuilder()
+        var skipFrontmatter = true
+        
+        for (line in lines) {
+            // Skip YAML frontmatter
+            if (skipFrontmatter) {
+                if (line.trim() == "---") {
+                    skipFrontmatter = false
+                }
+                continue
+            }
+            
+            when {
+                line.trim().startsWith("## Description") -> {
+                    if (inExamplesSection && currentExample.isNotEmpty()) {
+                        examples.add(currentExample.toString().trim())
+                        currentExample = StringBuilder()
+                    }
+                    inDescriptionSection = true
+                    inParametersSection = false
+                    inExamplesSection = false
+                }
+                line.trim().startsWith("## Parameters") -> {
+                    if (inExamplesSection && currentExample.isNotEmpty()) {
+                        examples.add(currentExample.toString().trim())
+                        currentExample = StringBuilder()
+                    }
+                    inDescriptionSection = false
+                    inParametersSection = true
+                    inExamplesSection = false
+                }
+                line.trim().startsWith("## Usage Examples") || 
+                line.trim().startsWith("## Examples") -> {
+                    if (inExamplesSection && currentExample.isNotEmpty()) {
+                        examples.add(currentExample.toString().trim())
+                        currentExample = StringBuilder()
+                    }
+                    inDescriptionSection = false
+                    inParametersSection = false
+                    inExamplesSection = true
+                }
+                line.trim().startsWith("##") -> {
+                    // Another section, stop current parsing
+                    if (inExamplesSection && currentExample.isNotEmpty()) {
+                        examples.add(currentExample.toString().trim())
+                        currentExample = StringBuilder()
+                    }
+                    inDescriptionSection = false
+                    inParametersSection = false
+                    inExamplesSection = false
+                }
+                inDescriptionSection && line.trim().isNotEmpty() -> {
+                    if (description.isNotEmpty()) {
+                        description.append(" ")
+                    }
+                    description.append(line.trim())
+                }
+                inParametersSection && line.trim().startsWith("|") -> {
+                    // Parse parameter table row
+                    val param = parseParameterRow(line)
+                    if (param != null) {
+                        parameters[param.name] = param
+                    }
+                }
+                inExamplesSection -> {
+                    if (line.trim().startsWith("###")) {
+                        // New example
+                        if (currentExample.isNotEmpty()) {
+                            examples.add(currentExample.toString().trim())
+                            currentExample = StringBuilder()
+                        }
+                        currentExample.append(line).append("\n")
+                    } else if (currentExample.isNotEmpty() || line.trim().isNotEmpty()) {
+                        currentExample.append(line).append("\n")
+                    }
+                }
+            }
+        }
+        
+        // Add last example if any
+        if (inExamplesSection && currentExample.isNotEmpty()) {
+            examples.add(currentExample.toString().trim())
+        }
+        
+        result["description"] = description.toString().trim()
+        result["parameters"] = parameters
+        result["examples"] = examples
+        
+        return result
     }
 
     /**

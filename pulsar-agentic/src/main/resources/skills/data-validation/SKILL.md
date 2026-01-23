@@ -1,12 +1,16 @@
+---
+skill_id: data-validation
+name: Data Validation
+version: 1.0.0
+author: Browser4
+tags:
+  - validation
+  - data
+  - quality
+dependencies: []
+---
+
 # Data Validation Skill
-
-## Metadata
-
-- **Skill ID**: `data-validation`
-- **Name**: Data Validation
-- **Version**: 1.0.0
-- **Author**: Browser4
-- **Tags**: `validation`, `data`, `quality`
 
 ## Description
 

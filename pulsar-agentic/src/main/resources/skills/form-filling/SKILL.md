@@ -1,12 +1,17 @@
+---
+skill_id: form-filling
+name: Form Filling
+version: 1.0.0
+author: Browser4
+tags:
+  - forms
+  - automation
+  - input
+dependencies:
+  - web-scraping
+---
+
 # Form Filling Skill
-
-## Metadata
-
-- **Skill ID**: `form-filling`
-- **Name**: Form Filling
-- **Version**: 1.0.0
-- **Author**: Browser4
-- **Tags**: `forms`, `automation`, `input`
 
 ## Description
 
