@@ -48,14 +48,13 @@ class MCPServerStarter : AutoCloseable {
                     configuredPort != null -> configuredPort
                     else -> 18182 // primary fallback for MCP server
                 }
-                val fallbackPorts = listOfNotNull(configuredPort, 18182, 8182).distinct()
-                logger.info("Attempting to auto-start MCPTestApplication on port $desiredPort (candidates=$fallbackPorts) ...")
+                val fallbackPorts = listOfNotNull(configuredPort, 18182, 8182).distinct().filter { it != desiredPort }
+                logger.info("Attempting to auto-start MCPTestApplication on port $desiredPort (fallbacks=$fallbackPorts) ...")
                 MCPServerLauncher.start(port = desiredPort, enforcePort = true)
                 val ready = MCPServerLauncher.awaitReady(Duration.ofSeconds(10))
-                if (!ready && desiredPort != 0 && desiredPort != u.port && configuredPort == null) {
+                if (!ready && desiredPort != 0 && configuredPort == null && fallbackPorts.isNotEmpty()) {
                     // Try next fallback if first failed
                     for (p in fallbackPorts) {
-                        if (p == desiredPort) continue
                         logger.warn("Retry auto-start on fallback port $p ...")
                         MCPServerLauncher.start(port = p, enforcePort = true)
                         if (MCPServerLauncher.awaitReady(Duration.ofSeconds(6))) break

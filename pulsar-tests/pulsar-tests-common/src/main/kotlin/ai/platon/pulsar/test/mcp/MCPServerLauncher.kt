@@ -64,8 +64,14 @@ object MCPServerLauncher : Closeable {
             }
         }
         if (!starting.compareAndSet(false, true)) {
-            // Another thread is starting; spin until available
-            while (!isRunning()) Thread.sleep(50)
+            // Another thread is starting; wait until available with timeout
+            val deadline = Instant.now().plusSeconds(30)
+            while (!isRunning() && Instant.now().isBefore(deadline)) {
+                Thread.sleep(100)
+            }
+            if (!isRunning()) {
+                throw IllegalStateException("Timeout waiting for MCPTestApplication to start")
+            }
             return context!!
         }
         try {
@@ -98,7 +104,7 @@ object MCPServerLauncher : Closeable {
                 ?: ctx.environment.getProperty("server.port")?.toInt()
                 ?: port
             boundPort = resolvedPort
-            if (resolvedPort != port && port != 0) {
+            if (port != 0 && resolvedPort != port) {
                 logger.warn("Requested port $port but server bound to $resolvedPort")
             } else {
                 logger.info("MCPTestApplication started on port $resolvedPort")
