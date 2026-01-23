@@ -91,7 +91,7 @@ import ai.platon.pulsar.test.mcp.MCPServerStarter
  */
 suspend fun connectToMCPServer() {
     println("\n=== Connecting to MCP Server ===\n")
-    
+
     try {
         // Use local test MCP server instead of external server so examples are deterministic.
         val url = "http://localhost:18182/mcp/info"
@@ -151,7 +151,7 @@ suspend fun connectToMCPServer() {
  */
 suspend fun connectToMultipleMCPServers() {
     println("\n=== Connecting to Multiple MCP Servers ===\n")
-    
+
     try {
         // Start the test MCP server
         val url = "http://localhost:18182/mcp/info"
@@ -187,11 +187,11 @@ suspend fun connectToMultipleMCPServers() {
                 enabled = false  // Set to true if you have this server
             )
         )
-        
+
         // Register all enabled servers at once
         println("Registering multiple MCP servers...")
         val errors = MCPBootstrap.registerAll(configs, autoRegisterTools = true)
-        
+
         if (errors.isEmpty()) {
             println("✓ All enabled servers registered successfully!")
         } else {
@@ -200,14 +200,14 @@ suspend fun connectToMultipleMCPServers() {
                 println("  ✗ $name: ${exception.message}")
             }
         }
-        
+
         // List successfully registered servers
         val registeredServers = MCPPluginRegistry.instance.getRegisteredServers()
         println("\n✓ Registered servers (${registeredServers.size}):")
         registeredServers.forEach { serverName ->
             println("  - $serverName")
         }
-        
+
     } catch (e: Exception) {
         println("✗ Failed to register MCP servers: ${e.message}")
         e.printStackTrace()
@@ -223,7 +223,7 @@ suspend fun connectToMultipleMCPServers() {
  */
 suspend fun agentWithMCPTools() {
     println("\n=== Agent Using MCP Tools ===\n")
-    
+
     try {
         // Start the test MCP server
         val url = "http://localhost:18182/mcp/info"
@@ -237,13 +237,13 @@ suspend fun agentWithMCPTools() {
             url = "http://localhost:18182/mcp",
             enabled = true
         )
-        
+
         println("Registering MCP server with agent...")
         MCPBootstrap.register(config, autoRegisterTools = true)
-        
+
         // Create or get the Browser4 agent
         val agent = AgenticContexts.getOrCreateAgent()
-        
+
         // The agent can now use MCP tools in natural language
         // The test MCP server provides: echo, add, multiply tools
         val task = """
@@ -252,11 +252,11 @@ suspend fun agentWithMCPTools() {
             2. Multiply the result by 2
             3. Tell me the final answer
         """.trimIndent()
-        
+
         println("\n--- Agent Task ---")
         println(task)
         println("\n--- Agent Execution ---")
-        
+
         try {
             val history = agent.run(task)
             println("\n--- Agent Result ---")
@@ -270,7 +270,7 @@ suspend fun agentWithMCPTools() {
             println("  llm.provider=openai")
             println("  llm.apiKey=your-api-key-here")
         }
-        
+
     } catch (e: Exception) {
         println("✗ Error: ${e.message}")
         e.printStackTrace()
@@ -289,7 +289,7 @@ suspend fun agentWithMCPTools() {
  */
 suspend fun inspectMCPTools() {
     println("\n=== Inspecting MCP Tools ===\n")
-    
+
     try {
         // Start the test MCP server
         val url = "http://localhost:18182/mcp/info"
@@ -303,10 +303,10 @@ suspend fun inspectMCPTools() {
             url = "http://localhost:18182/mcp",
             enabled = true
         )
-        
+
         println("Connecting to MCP server...")
         MCPPluginRegistry.instance.registerMCPServer(config, autoRegisterTools = false)
-        
+
         // Get the tool executor for this server
         val toolExecutor = MCPPluginRegistry.instance.getToolExecutor("test-mcp-server")
         
@@ -314,12 +314,12 @@ suspend fun inspectMCPTools() {
             // Display available tools and their descriptions
             println("\n--- Available Tools from '${config.serverName}' ---")
             println(toolExecutor.help())
-            
+
             println("\n✓ Tools discovered and ready to use")
         } else {
             println("✗ Tool executor not found for '${config.serverName}'")
         }
-        
+
     } catch (e: Exception) {
         println("✗ Failed to inspect MCP tools: ${e.message}")
     } finally {
@@ -348,15 +348,15 @@ suspend fun main() {
     println("╔════════════════════════════════════════════════════════════════╗")
     println("║         Browser4 MCP (Model Context Protocol) Examples        ║")
     println("╚════════════════════════════════════════════════════════════════╝")
-    
+
     println("""
-        
+
         This example demonstrates MCP integration with Browser4.
-        
+
         MCP (Model Context Protocol) allows you to extend the Browser4 agent
         with external tools and services. Tools from MCP servers become
         available to the agent automatically through natural language.
-        
+
         Examples included:
         1. Connecting to a single MCP server
         2. Connecting to multiple MCP servers
@@ -369,11 +369,11 @@ suspend fun main() {
         - multiply: Multiplies two numbers
         
     """.trimIndent())
-    
+
     println("\n" + "─".repeat(66))
     println("Running examples:")
     println("─".repeat(66))
-    
+
     try {
         // Example 1: Connect to a single MCP server
         connectToMCPServer()
@@ -403,7 +403,7 @@ suspend fun main() {
         println("\n✗ Unexpected error: ${e.message}")
         e.printStackTrace()
     }
-    
+
     println("\n╔════════════════════════════════════════════════════════════════╗")
     println("║                   MCP Examples Guide Completed                 ║")
     println("╚════════════════════════════════════════════════════════════════╝")
