@@ -39,7 +39,7 @@ class PulsarWebDriverMockSiteJsFullTests : WebDriverTestBase() {
     @Test
     fun openAHtmlPageAndUpdateStat() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         driver.evaluate("__pulsar_utils__.scrollToBottom()")
-        val evaluation = driver.evaluateDetail("JSON.stringify(__pulsar_utils__.updateStat())")
+        val evaluation = driver.evaluateValueDetail("__pulsar_utils__.checkStatus()")
         printlnPro(evaluation)
         assertNotNull(evaluation)
         assertNull(evaluation.exception)
@@ -53,5 +53,14 @@ class PulsarWebDriverMockSiteJsFullTests : WebDriverTestBase() {
         assertTrue { data.contains("initStat") }
         assertTrue { data.contains("lastStat") }
         assertTrue { data.contains("metadata") }
+
+        // Regression: lastStat.{w,h,na,ni} should be computed from DOM, not left as 0.
+        val json = pulsarObjectMapper().readTree(data)
+        val lastStat = json.path("trace").path("lastStat")
+//        assertTrue(lastStat.path("w").asInt() > 0, "Expected lastStat.w > 0")
+//        assertTrue(lastStat.path("h").asInt() > 0, "Expected lastStat.h > 0")
+        assertTrue(lastStat.path("na").asInt() > 0, "Expected lastStat.na > 0")
+        assertTrue(lastStat.path("nst").asInt() > 0, "Expected lastStat.na > 0")
+//        assertTrue(lastStat.path("ni").asInt() > 0, "Expected lastStat.ni > 0")
     }
 }

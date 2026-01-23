@@ -40,7 +40,7 @@ __pulsar_utils__.checkStatus = function(scroll = 3) {
     if (!__pulsar_utils__.data) {
         // initialization
         this.createDataIfAbsent();
-        this.updateStat(true);
+        this.__updateStat(true);
     }
 
     let status = __pulsar_utils__.data.trace.status;
@@ -137,7 +137,7 @@ __pulsar_utils__.isActuallyReady = function() {
         return false
     }
 
-    this.updateStat();
+    this.__updateStat();
 
     if (!__pulsar_utils__.data) {
         return false
@@ -175,7 +175,7 @@ __pulsar_utils__.isActuallyReady = function() {
     return ready;
 };
 
-__pulsar_utils__.isIdle = function(init = false) {
+__pulsar_utils__.isIdle = function() {
     let idle = false;
     let trace = __pulsar_utils__.data.trace;
     let status = trace.status;
@@ -194,16 +194,19 @@ __pulsar_utils__.isIdle = function(init = false) {
 /**
  * @return {Object}
  * */
-__pulsar_utils__.updateStat = function(init = false) {
+__pulsar_utils__.__updateStat = function(init = false) {
     if (!document.body) {
         return
     }
 
     const config = this.getConfig();
     const viewPortWidth = config.viewPortWidth;
-    const viewPortHeight = config.viewPortHeight;
-    const maxWidth = 1.2 * viewPortWidth;
-    const fineWidth = 300;
+
+    // Width/height need to reflect the full page, but also must be robust:
+    // some pages can report pathological sizes (infinite/huge due to bad CSS/JS).
+    // We cap sizes to keep stats stable and avoid downstream overflows.
+    const maxWidth = Math.max(1, 1.2 * viewPortWidth);
+    const maxHeight = 150000; // 150k px is far beyond typical pages but prevents runaway values
 
     let width = 0;
     let height = 0;
@@ -215,12 +218,9 @@ __pulsar_utils__.updateStat = function(init = false) {
     if (!this.isBrowserError()) {
         NodeOps.forEach(document.body, (node) => {
             // 2023.08: google sites complains that node.__pulsar_isIFrame is not defined sometimes
-            if (!NodeOps.isIFrame(node)) {
-                return;
-            }
-
+            // We only want to skip iframe subtrees.
             if (NodeOps.isIFrame(node)) {
-                return
+                return;
             }
 
             if (NodeOps.isAnchor(node)) ++na;
@@ -251,9 +251,63 @@ __pulsar_utils__.updateStat = function(init = false) {
                 }
             }
 
-            if (NodeOps.isDiv(node) && node.scrollWidth > width && node.scrollWidth < maxWidth) width = node.scrollWidth;
-            if (NodeOps.isDiv(node) && node.scrollWidth >= fineWidth && node.scrollHeight > height) height = node.scrollHeight;
+            // Requirement: width/height are the maxima across *all* elements on the page.
+            // Use scroll sizes to reflect the full layout; fall back to offset/client.
+            // Add sanity checks to avoid skew from accidental huge/Infinity/NaN values.
+            if (node && node.nodeType === 1) {
+                let w;
+                let h;
+
+                try {
+                    w = Math.max(node.scrollWidth || 0, node.offsetWidth || 0, node.clientWidth || 0);
+                    h = Math.max(node.scrollHeight || 0, node.offsetHeight || 0, node.clientHeight || 0);
+                } catch (e) {
+                    w = 0;
+                    h = 0;
+                }
+
+                if (!Number.isFinite(w) || w < 0) w = 0;
+                if (!Number.isFinite(h) || h < 0) h = 0;
+
+                // cap extreme values
+                if (w > maxWidth) w = maxWidth;
+                if (h > maxHeight) h = maxHeight;
+
+                if (w > width) {
+                    width = w;
+                }
+                if (h > height) {
+                    height = h;
+                }
+            }
         });
+
+        // Fallback: ensure at least the document's own sizes are considered.
+        try {
+            const de = document.documentElement;
+            if (de) {
+                let dw = Math.max(de.scrollWidth || 0, de.clientWidth || 0);
+                let dh = Math.max(de.scrollHeight || 0, de.clientHeight || 0);
+                if (!Number.isFinite(dw) || dw < 0) dw = 0;
+                if (!Number.isFinite(dh) || dh < 0) dh = 0;
+                if (dw > maxWidth) dw = maxWidth;
+                if (dh > maxHeight) dh = maxHeight;
+                width = Math.max(width, dw);
+                height = Math.max(height, dh);
+            }
+            if (document.body) {
+                let bw = Math.max(document.body.scrollWidth || 0, document.body.clientWidth || 0);
+                let bh = Math.max(document.body.scrollHeight || 0, document.body.clientHeight || 0);
+                if (!Number.isFinite(bw) || bw < 0) bw = 0;
+                if (!Number.isFinite(bh) || bh < 0) bh = 0;
+                if (bw > maxWidth) bw = maxWidth;
+                if (bh > maxHeight) bh = maxHeight;
+                width = Math.max(width, bw);
+                height = Math.max(height, bh);
+            }
+        } catch (e) {
+            // ignore
+        }
     }
 
     // unexpected but occurs when do performance test to parallel harvest Websites
@@ -649,10 +703,10 @@ __pulsar_utils__.clickNthAnchor = function(n, rootSelector) {
     let href = null
     let visitor = function () {}
 
-    visitor.head = function (node, depth) {
+    visitor.head = function (node) {
         if (node instanceof HTMLElement
-            && node.__pulsar_isAnchor()
-            && node.__pulsar_maybeClickable()
+            && NodeOps.isAnchor(node)
+            && NodeOps.maybeClickable(node)
         ) {
             ++c;
             if (c === n) {
@@ -1063,7 +1117,6 @@ __pulsar_utils__.__doForAllFramesRecursively = function(rootFrame, depth, select
     for (let i = 0; i < frames.length; i++) {
         // do something with each subframe as frames[i]
         let frame = frames[i]
-        let doc1 = frame.document
 
         this.__doForAllFramesRecursively(frame, depth + 1, selector, attrName)
     }
@@ -1649,7 +1702,7 @@ __pulsar_utils__.compute = function() {
     // calling window.stop will pause all resource loading
     window.stop();
 
-    this.updateStat();
+    this.__updateStat();
     this.writeData();
 
     // remove temporary flags
