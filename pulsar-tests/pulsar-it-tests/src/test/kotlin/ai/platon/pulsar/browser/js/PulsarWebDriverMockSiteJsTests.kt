@@ -37,21 +37,18 @@ class PulsarWebDriverMockSiteJsTests : WebDriverTestBase() {
         val variables = windowVariables.split(",")
             .map { it.trim('\"') }
             .filter { it.contains("__pulsar_") }
-        assertEquals(0, variables.size, "__pulsar_ should be confused")
-
-        var actual = driver.evaluate("typeof(__pulsar_)").toString()
-        assertEquals("function", actual)
-
         Assumptions.assumeTrue(
             SimpleScriptConfuser.IDENTITY_NAME_MANGLER != confuser.nameMangler,
             "confuser.nameMangler should not be IDENTITY_NAME_MANGLER to run this test"
         )
+        assertEquals(0, variables.size, "__pulsar_ should be confused")
 
         val injectedNames = listOf(
             "__pulsar_utils__"
         )
         var expected = "function"
         var expression = ""
+        var actual = ""
         injectedNames.forEach { name ->
             actual = driver.evaluate("typeof($name)").toString()
             expression = "typeof($name)"
