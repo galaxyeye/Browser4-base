@@ -1,12 +1,16 @@
+---
+skill_id: web-scraping
+name: Web Scraping
+version: 1.0.0
+author: Browser4
+tags:
+  - scraping
+  - extraction
+  - web
+dependencies: []
+---
+
 # Web Scraping Skill
-
-## Metadata
-
-- **Skill ID**: `web-scraping`
-- **Name**: Web Scraping
-- **Version**: 1.0.0
-- **Author**: Browser4
-- **Tags**: `scraping`, `extraction`, `web`
 
 ## Description
 
