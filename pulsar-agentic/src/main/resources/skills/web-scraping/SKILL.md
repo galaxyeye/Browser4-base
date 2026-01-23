@@ -74,7 +74,7 @@ val result = registry.execute(
 
 ```kotlin
 ToolSpec(
-    domain = "skill.scraping",
+    domain = "skill.debug.scraping",
     method = "extract",
     arguments = [
         "url: String",

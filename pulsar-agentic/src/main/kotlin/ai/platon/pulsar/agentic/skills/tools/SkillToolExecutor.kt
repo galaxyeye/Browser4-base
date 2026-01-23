@@ -40,7 +40,7 @@ class SkillToolExecutor(
 
     override fun getToolCallSpecifications(): List<ToolSpec> {
         // Expose: (1) the stable skill.run entry point; (2) optional richer specs provided by skills.
-        // Skills may use domains like "skill.scraping"; those should be registered separately if desired.
+        // Skills may use domains like "skill.debug.scraping"; those should be registered separately if desired.
         return buildList {
             addAll(toolSpec.values)
             registry.getAll().flatMapTo(this) { it.toolSpec }

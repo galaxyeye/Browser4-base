@@ -307,7 +307,7 @@ class WebScrapingSkill : AbstractSkill() {
 
     override val toolSpec = listOf(
         ToolSpec(
-            domain = "skill.scraping",
+            domain = "skill.debug.scraping",
             method = "extract",
             arguments = listOf(
                 ToolSpec.Arg("url", "String"),

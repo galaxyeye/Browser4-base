@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic.skills.examples
 
-import ai.platon.pulsar.agentic.skills.*
+import ai.platon.pulsar.agentic.skills.SkillContext
+import ai.platon.pulsar.agentic.skills.SkillRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
@@ -329,7 +330,7 @@ class ExampleSkillsTest {
         val dataValidation = DataValidationSkill()
 
         assertTrue(webScraping.toolSpec.isNotEmpty())
-        assertEquals("skill.scraping", webScraping.toolSpec[0].domain)
+        assertEquals("skill.debug.scraping", webScraping.toolSpec[0].domain)
         assertEquals("extract", webScraping.toolSpec[0].method)
 
         assertTrue(formFilling.toolSpec.isNotEmpty())
