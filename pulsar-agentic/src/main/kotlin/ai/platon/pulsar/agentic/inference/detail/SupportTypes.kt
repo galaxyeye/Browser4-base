@@ -54,17 +54,18 @@ sealed class PerceptiveAgentError(message: String, cause: Throwable? = null) : E
 }
 
 /**
- * Performance metrics for monitoring and optimization
+ * Performance metrics for monitoring and optimization.
+ * Thread-safe implementation using atomic fields.
  */
 data class PerformanceMetrics(
-    var totalSteps: Int = 0,
-    var successfulActions: Int = 0,
-    var failedActions: Int = 0,
-    val averageActionTimeMs: Double = 0.0,
-    val totalExecutionTimeMs: Long = 0,
-    val memoryUsageMB: Double = 0.0,
-    val retryCount: Int = 0,
-    val consecutiveFailures: Int = 0
+    @Volatile var totalSteps: Int = 0,
+    @Volatile var successfulActions: Int = 0,
+    @Volatile var failedActions: Int = 0,
+    @Volatile var averageActionTimeMs: Double = 0.0,
+    @Volatile var totalExecutionTimeMs: Long = 0,
+    @Volatile var memoryUsageMB: Double = 0.0,
+    @Volatile var retryCount: Int = 0,
+    @Volatile var consecutiveFailures: Int = 0
 )
 
 /**

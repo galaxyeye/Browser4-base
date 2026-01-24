@@ -305,6 +305,28 @@ class AgentStateManager(
                     history.addAll(remaining)
                 }
             }
+            
+            // Also cleanup contexts list to prevent unbounded growth
+            val maxContextsSize = 100
+            if (contexts.size > maxContextsSize) {
+                val toRemoveContexts = contexts.size - maxContextsSize / 2
+                val remainingContexts = contexts.drop(toRemoveContexts)
+                contexts.clear()
+                contexts.addAll(remainingContexts)
+                // Update active context reference if it was removed
+                if (_activeContext != null && _activeContext !in contexts) {
+                    _activeContext = contexts.lastOrNull()
+                }
+            }
+            
+            // Also cleanup process trace to prevent unbounded growth
+            val maxTraceSize = 200
+            if (_processTrace.size > maxTraceSize) {
+                val toRemoveTrace = _processTrace.size - maxTraceSize / 2
+                val remainingTrace = _processTrace.drop(toRemoveTrace)
+                _processTrace.clear()
+                _processTrace.addAll(remainingTrace)
+            }
         }
     }
 

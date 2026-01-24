@@ -17,6 +17,8 @@ import ai.platon.pulsar.external.ResponseState
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
@@ -127,6 +129,18 @@ open class BrowserPerceptiveAgent(
     )
     protected val retryCounter = AtomicInteger(0)
     protected val checkpointManager = CheckpointManager(baseDir.resolve("checkpoints"))
+    
+    // Mutex for memory cleanup operations to replace synchronized blocks
+    private val memoryCleanupMutex = Mutex()
+
+    companion object {
+        // Magic numbers extracted as named constants
+        private const val COMPACT_INLINE_SESSION_LENGTH = 160
+        private const val COMPACT_INLINE_INSTRUCTION_LENGTH = 100
+        private const val HISTORY_CLEANUP_BUFFER = 10
+        private const val RECENT_STATE_HISTORY_SIZE = 20
+        private const val MAX_STEP_EXECUTION_TIMES_SIZE = 200
+    }
 
     constructor(
         driver: WebDriver, session: AgenticSession, maxSteps: Int = 100,
@@ -271,7 +285,23 @@ open class BrowserPerceptiveAgent(
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {
-            runCatching { agentJob.cancel(CancellationException("USER interrupted via close()")) }
+            // Record close event before cancelling operations to ensure it's captured
+            runCatching {
+                val last = stateHistory.states.lastOrNull()
+                stateManager.addTrace(last, emptyMap(), event = "userClose", message = "🛑 USER CLOSE")
+            }.onFailure { logger.warn("Failed to record close trace: ${it.message}") }
+            
+            // Cancel agent job and wait for completion with timeout
+            runCatching { 
+                runBlocking {
+                    withTimeout(5000) {
+                        agentJob.cancelAndJoin()
+                    }
+                }
+            }.onFailure { 
+                logger.warn("Agent job cancellation timeout or error: ${it.message}")
+                agentJob.cancel(CancellationException("USER interrupted via close()"))
+            }
             
             // Close bound WebDriver if exists
             runCatching {
@@ -280,12 +310,6 @@ open class BrowserPerceptiveAgent(
                     session.unbindDriver(driver)
                 }
             }.onFailure { logger.warn("Failed to close bound WebDriver: ${it.message}") }
-            
-            // Best-effort trace for visibility; avoid throwing
-            runCatching {
-                val last = stateHistory.states.lastOrNull()
-                stateManager.addTrace(last, emptyMap(), event = "userClose", message = "🛑 USER CLOSE")
-            }
         }
     }
 
@@ -312,7 +336,7 @@ open class BrowserPerceptiveAgent(
             baseContext.agentState,
             mapOf(
                 "session" to baseContext.sid,
-                "goal" to Strings.compactInline(instruction, 160),
+                "goal" to Strings.compactInline(instruction, COMPACT_INLINE_SESSION_LENGTH),
                 "maxSteps" to config.maxSteps,
                 "maxRetries" to config.maxRetries
             ),
@@ -345,7 +369,7 @@ open class BrowserPerceptiveAgent(
                     "retries: ${maxPossibleDelays}ms): $instruction"
             stateManager.addTrace(
                 baseContext.agentState, mapOf(
-                    "timeoutMs" to effectiveTimeout, "instruction" to Strings.compactInline(instruction, 160)
+                    "timeoutMs" to effectiveTimeout, "instruction" to Strings.compactInline(instruction, COMPACT_INLINE_SESSION_LENGTH)
                 ),
                 event = "resolveTimeout",
                 message = "⏳ resolve TIMEOUT"
@@ -380,7 +404,11 @@ open class BrowserPerceptiveAgent(
             }
 
             val actionDescription = cta.generate(messages, context)
-            requireNotNull(context.agentState.actionDescription) { "Filed should be set: context.agentState.actionDescription" }
+            requireNotNull(context.agentState.actionDescription) { 
+                "Field should be set: context.agentState.actionDescription. " +
+                "Step: ${context.step}, Instruction: ${context.instruction.take(50)}. " +
+                "This usually indicates a failure in the LLM response parsing."
+            }
             circuitBreaker.recordSuccess(CircuitBreaker.FailureType.LLM_FAILURE)
 
             actionDescription
@@ -412,7 +440,7 @@ open class BrowserPerceptiveAgent(
         noOpsIn: Int
     ): ExecutionContext {
         val context = ensureReadyForStep(action, "step", ctxIn)
-        // requireNotNull(action.getContext()) { "Filed should be set: action.context" }
+        // Note: action.context check removed as it's redundant with context parameter
 
         val agentState = context.agentState
         val browserUseState = agentState.browserUseState
@@ -548,7 +576,7 @@ open class BrowserPerceptiveAgent(
         val sid = initContext.sid
         logger.info(
             "🚀 agent.start sid={} step={} url={} instr='{}' attempt={} maxSteps={} maxRetries={}",
-            sid, initContext.step, initContext.targetUrl, Strings.compactInline(initContext.instruction, 100),
+            sid, initContext.step, initContext.targetUrl, Strings.compactInline(initContext.instruction, COMPACT_INLINE_INSTRUCTION_LENGTH),
             attempt + 1, config.maxSteps, config.maxRetries
         )
         if (config.enableTodoWrites) {
@@ -732,16 +760,26 @@ open class BrowserPerceptiveAgent(
         }.onFailure { e -> slogger.logError("📝❌ todo.progress.fail", e, sid) }
     }
 
-    protected fun performMemoryCleanup(context: ExecutionContext) {
+    protected suspend fun performMemoryCleanup(context: ExecutionContext) {
         try {
-            synchronized(stateManager) {
+            memoryCleanupMutex.withLock {
+                // Clean up state history
                 if (stateHistory.states.size > config.maxHistorySize) {
-                    val toRemove = stateHistory.states.size - config.maxHistorySize + 10
+                    val toRemove = stateHistory.states.size - config.maxHistorySize + HISTORY_CLEANUP_BUFFER
                     stateManager.clearUpHistory(toRemove)
                 }
+                
+                // Clean up step execution times map to prevent unbounded growth
+                if (stepExecutionTimes.size > MAX_STEP_EXECUTION_TIMES_SIZE) {
+                    val sortedSteps = stepExecutionTimes.keys.sorted()
+                    val toRemoveCount = stepExecutionTimes.size - MAX_STEP_EXECUTION_TIMES_SIZE / 2
+                    sortedSteps.take(toRemoveCount).forEach { stepExecutionTimes.remove(it) }
+                }
             }
+            
             actionValidator.clearCache()
-            logger.info("🧹 mem.cleanup sid={} step={} historySize={}", context.sid, context.step, stateHistory.size)
+            logger.info("🧹 mem.cleanup sid={} step={} historySize={} stepTimesSize={}", 
+                context.sid, context.step, stateHistory.size, stepExecutionTimes.size)
         } catch (e: Exception) {
             logger.error("🧹❌ mem.cleanup.fail sid={} msg={}", context.sid, e.message, e)
         }
@@ -883,7 +921,7 @@ open class BrowserPerceptiveAgent(
             currentStep = context.step,
             instruction = context.instruction,
             targetUrl = context.targetUrl,
-            recentStateHistory = stateHistory.states.takeLast(20).map { AgentStateSnapshot.from(it) },
+            recentStateHistory = stateHistory.states.takeLast(RECENT_STATE_HISTORY_SIZE).map { AgentStateSnapshot.from(it) },
             totalSteps = performanceMetrics.totalSteps,
             successfulActions = performanceMetrics.successfulActions,
             failedActions = performanceMetrics.failedActions,
