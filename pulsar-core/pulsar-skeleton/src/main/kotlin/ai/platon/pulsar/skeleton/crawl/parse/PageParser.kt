@@ -9,7 +9,7 @@ import ai.platon.pulsar.persist.ParseStatus
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
-import ai.platon.pulsar.skeleton.crawl.EventBus
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.common.LazyConfigurable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -117,9 +117,9 @@ class PageParser(
         try {
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onWillParse?.invoke(page)
-            EventBus.pageEventHandlers?.loadEventHandlers?.onWillParse?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillParse?.invoke(page)
             // Forward to server-side event handlers (non-blocking)
-            EventBus.emitLoadEvent("onWillParse", page)
+            PulsarEventBus.emitLoadEvent("onWillParse", page)
         } catch (e: Throwable) {
             logger.warn("[onWillParse]", e)
         }
@@ -127,11 +127,11 @@ class PageParser(
 
     private fun onParsed(page: WebPage) {
         try {
-            EventBus.pageEventHandlers?.loadEventHandlers?.onParsed?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onParsed?.invoke(page)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onParsed?.invoke(page)
             // Forward to server-side event handlers (non-blocking)
-            EventBus.emitLoadEvent("onParsed", page)
+            PulsarEventBus.emitLoadEvent("onParsed", page)
         } catch (e: Throwable) {
             logger.warn("[onParsed]", e)
         }

@@ -1,15 +1,16 @@
 package ai.platon.pulsar.skeleton.crawl
 
 import ai.platon.pulsar.persist.WebPage
-import ai.platon.pulsar.skeleton.crawl.EventBus.serverSideEventHandlers
-import ai.platon.pulsar.skeleton.crawl.EventBus.withServerSideEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus.serverSideEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus.withServerSideEventHandlers
+import ai.platon.pulsar.skeleton.crawl.event.GeneralEventHandler
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
 /**
  * The global EventBus for handling events.
  * */
-object EventBus {
+object PulsarEventBus {
     /**
      * The page event handlers.
      *
@@ -25,6 +26,8 @@ object EventBus {
      * NOTE: kept for backward compatibility as the default handlers.
      */
     var serverSideEventHandlers: ServerSideEventHandlers? = null
+
+    val generalEventHandlers = mutableMapOf<String, GeneralEventHandler>()
 
     /**
      * Per-coroutine override for [serverSideEventHandlers].
@@ -69,6 +72,13 @@ object EventBus {
         }
     }
 
+    fun emitEvent(eventType: String, payload: Any) {
+        generalEventHandlers[eventType]?.let { handlers ->
+            eventScope.launch {
+                handlers.invoke(payload)
+            }
+        }
+    }
     /**
      * Background coroutine scope for non-blocking event emission.
      * Uses Dispatchers.Default for CPU-bound work and SupervisorJob to isolate failures.

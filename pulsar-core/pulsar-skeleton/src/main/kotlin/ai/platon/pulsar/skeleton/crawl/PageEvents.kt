@@ -644,7 +644,7 @@ interface BrowseEventHandlers {
  * @see LoadEventHandlers for load-phase events
  * @see BrowseEventHandlers for browser interaction events
  * @see CrawlEventHandlers for crawl-level events
- * @see EventBus for setting global handlers
+ * @see PulsarEventBus for setting global handlers
  */
 interface PageEventHandlers {
     /**

@@ -148,3 +148,11 @@ abstract class JvmWebPageWebDriverEventHandler : WebPageWebDriverEventHandler() 
 
     abstract suspend fun invoke(page: WebPage, driver: JvmWebDriver): Any?
 }
+
+open class GeneralEventHandler(
+    override val name: String = "GeneralEventHandler"
+) : AbstractChainedFunction1<Any, Any?>() {
+    override fun invoke(payload: Any): Any? {
+        return super.invoke(param = payload)
+    }
+}

@@ -11,7 +11,7 @@ import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
 import ai.platon.pulsar.skeleton.common.persist.ext.options
 import ai.platon.pulsar.skeleton.crawl.CoreMetrics
-import ai.platon.pulsar.skeleton.crawl.EventBus
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.common.FetchEntry
 import ai.platon.pulsar.skeleton.crawl.protocol.ProtocolFactory
 import ai.platon.pulsar.skeleton.crawl.protocol.ProtocolNotFound
@@ -130,11 +130,11 @@ open class FetchComponent(
 
     private fun onWillFetch(page: WebPage) {
         try {
-            EventBus.pageEventHandlers?.loadEventHandlers?.onWillFetch?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillFetch?.invoke(page)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onWillFetch?.invoke(page)
             // Forward to server-side event handlers (non-blocking)
-            EventBus.emitLoadEvent("onWillFetch", page)
+            PulsarEventBus.emitLoadEvent("onWillFetch", page)
         } catch (e: Throwable) {
             logger.warn("Failed to invoke onWillFetch | ${page.configuredUrl}", e)
         }
@@ -142,11 +142,11 @@ open class FetchComponent(
 
     private fun onFetched(page: WebPage) {
         try {
-            EventBus.pageEventHandlers?.loadEventHandlers?.onFetched?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onFetched?.invoke(page)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onFetched?.invoke(page)
             // Forward to server-side event handlers (non-blocking)
-            EventBus.emitLoadEvent("onFetched", page)
+            PulsarEventBus.emitLoadEvent("onFetched", page)
         } catch (e: Throwable) {
             logger.warn("Failed to invoke onFetched | ${page.configuredUrl}", e)
         }

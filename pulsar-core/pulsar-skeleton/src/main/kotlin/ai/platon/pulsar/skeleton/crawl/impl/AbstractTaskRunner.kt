@@ -5,7 +5,7 @@ import ai.platon.pulsar.common.event.AbstractEventEmitter
 import ai.platon.pulsar.common.urls.UrlAware
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.skeleton.common.persist.ext.eventHandlers
-import ai.platon.pulsar.skeleton.crawl.EventBus
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.TaskRunner
 import ai.platon.pulsar.skeleton.crawl.common.url.ListenableUrl
 import ai.platon.pulsar.skeleton.session.PulsarSession
@@ -62,11 +62,11 @@ abstract class AbstractTaskRunner(
 
     override fun onWillLoad(url: UrlAware) {
         if (url is ListenableUrl) {
-            EventBus.pageEventHandlers?.crawlEventHandlers?.onWillLoad?.invoke(url)
+            PulsarEventBus.pageEventHandlers?.crawlEventHandlers?.onWillLoad?.invoke(url)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             url.eventHandlers.crawlEventHandlers.onWillLoad(url)
             // Forward to server-side event handlers (non-blocking)
-            EventBus.emitCrawlEvent("onWillLoad", url.url)
+            PulsarEventBus.emitCrawlEvent("onWillLoad", url.url)
         }
     }
 
@@ -79,7 +79,7 @@ abstract class AbstractTaskRunner(
     }
 
     override fun onLoaded(url: UrlAware, page: WebPage?) {
-        EventBus.pageEventHandlers?.crawlEventHandlers?.onLoaded?.invoke(url, page)
+        PulsarEventBus.pageEventHandlers?.crawlEventHandlers?.onLoaded?.invoke(url, page)
 
         val event = page?.eventHandlers?.crawlEventHandlers
         if (event != null) {
@@ -91,9 +91,9 @@ abstract class AbstractTaskRunner(
 
         // Forward to server-side event handlers (non-blocking)
         if (page != null) {
-            EventBus.emitLoadEvent("onLoaded", page)
+            PulsarEventBus.emitLoadEvent("onLoaded", page)
         } else {
-            EventBus.emitCrawlEvent("onLoaded", url.url)
+            PulsarEventBus.emitCrawlEvent("onLoaded", url.url)
         }
     }
 

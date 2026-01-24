@@ -49,7 +49,7 @@ data class ServerSideEvent(
  * ```
  *
  * @see ServerSideEvent for the event data structure
- * @see EventBus for integration with the global event system
+ * @see PulsarEventBus for integration with the global event system
  */
 interface ServerSideEventHandlers {
     /**

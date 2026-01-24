@@ -20,8 +20,8 @@ import ai.platon.pulsar.dom.UriExtractor
 import ai.platon.pulsar.dom.nodes.node.ext.numChars
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.skeleton.crawl.DefaultServerSideEventHandlers
-import ai.platon.pulsar.skeleton.crawl.EventBus
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -63,7 +63,7 @@ class StatefulPageVisitor(
      * Executes a page-visit command.
      *
      * Each command creates its own [DefaultServerSideEventHandlers] instance and binds it to the current
-     * coroutine via [EventBus.withServerSideEventHandlers], so multiple commands can run concurrently without
+     * coroutine via [PulsarEventBus.withServerSideEventHandlers], so multiple commands can run concurrently without
      * cross-talk between SSE streams.
      */
     suspend fun visit(request: PageVisitRequest, eventHandlers: PageEventHandlers): PageVisitStatus {
@@ -98,7 +98,7 @@ class StatefulPageVisitor(
             status.serverSideEventHandlers = serverSideEventHandlers
 
             // Bind server-side event handlers to THIS coroutine so multiple commands can run concurrently.
-            EventBus.withServerSideEventHandlers(serverSideEventHandlers) {
+            PulsarEventBus.withServerSideEventHandlers(serverSideEventHandlers) {
                 visitPageStepByStep(request, status, eventHandlers)
             }
         } catch (e: CancellationException) {

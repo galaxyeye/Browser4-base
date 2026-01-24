@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class EventBusContextHandlersTest {
+class PulsarEventBusContextHandlersTest {
 
     private class RecordingHandlers(private val id: String) : ServerSideEventHandlers {
         private val events = mutableListOf<String>()
@@ -61,19 +61,19 @@ class EventBusContextHandlersTest {
         val h2 = RecordingHandlers("h2")
 
         val j1 = async {
-            EventBus.withServerSideEventHandlers(h1) {
-                EventBus.emitCrawlEvent("e1")
+            PulsarEventBus.withServerSideEventHandlers(h1) {
+                PulsarEventBus.emitCrawlEvent("e1")
                 delay(50)
-                EventBus.emitCrawlEvent("e2")
+                PulsarEventBus.emitCrawlEvent("e2")
                 delay(50)
             }
         }
 
         val j2 = async {
-            EventBus.withServerSideEventHandlers(h2) {
-                EventBus.emitCrawlEvent("e1")
+            PulsarEventBus.withServerSideEventHandlers(h2) {
+                PulsarEventBus.emitCrawlEvent("e1")
                 delay(50)
-                EventBus.emitCrawlEvent("e2")
+                PulsarEventBus.emitCrawlEvent("e2")
                 delay(50)
             }
         }
