@@ -290,7 +290,7 @@ open class BasicBrowserAgent(
 
         if (observeResults.isEmpty()) {
             val msg = "⚠️ doObserveAct: No observe result"
-            stateManager.addTrace(context.agentState, emptyMap(), event = "observeActNoAction", message = msg)
+            stateManager.addTrace(context.agentState, event = "observeActNoAction", message = msg)
             return ActResultHelper.failed(msg, action = options.action)
         }
 
@@ -339,8 +339,8 @@ open class BasicBrowserAgent(
         val msg = "❌ All ${resultsToTry.size} candidates failed. Last error: $lastError"
         stateManager.addTrace(
             context.agentState,
-            mapOf("candidates" to resultsToTry.size),
             event = "actAllFailed",
+            items = mapOf("candidates" to resultsToTry.size),
             message = msg
         )
 

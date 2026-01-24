@@ -311,7 +311,8 @@ class AgentStateManager(
     }
 
     fun addTrace(
-        state: AgentState?, items: Map<String, Any?> = emptyMap(), event: String? = null, message: String? = null
+        state: AgentState?, event: String, items: Map<String, Any?> = emptyMap(),
+        message: String? = null
     ) {
         val step = state?.step ?: 0
         val msg = message ?: state?.toString()

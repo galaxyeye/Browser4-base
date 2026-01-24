@@ -308,7 +308,7 @@ open class BrowserPerceptiveAgent(
             // Record close event before cancelling operations to ensure it's captured
             runCatching {
                 val last = stateHistory.states.lastOrNull()
-                stateManager.addTrace(last, emptyMap(), event = "userClose", message = "🛑 USER CLOSE")
+                stateManager.addTrace(last, event = "userClose", message = "🛑 USER CLOSE")
             }.onFailure { logger.warn("Failed to record close trace: ${it.message}") }
 
             // Cancel agent job - this will propagate cancellation to all child jobs
@@ -350,13 +350,13 @@ open class BrowserPerceptiveAgent(
         // Add start history for better traceability (meta record only)
         stateManager.addTrace(
             baseContext.agentState,
-            mapOf(
+            event = "resolveStart",
+            items = mapOf(
                 "session" to baseContext.sid,
                 "goal" to Strings.compactInline(instruction, COMPACT_INLINE_SESSION_LENGTH),
                 "maxSteps" to config.maxSteps,
                 "maxRetries" to config.maxRetries
             ),
-            event = "resolveStart",
             message = "🚀 resolve START"
         )
 
@@ -373,10 +373,11 @@ open class BrowserPerceptiveAgent(
             val dur = Duration.between(sessionStartTime, Instant.now()).toMillis()
             // Not a single-step action, keep it out of AgentState history
             stateManager.addTrace(
-                result.context.agentState, mapOf(
+                result.context.agentState, event = "resolveDone",
+                items = mapOf(
                     "session" to baseContext.sid,
                     "success" to result.result.success, "durationMs" to dur
-                ), event = "resolveDone", message = "✅ resolve DONE"
+                ), message = "✅ resolve DONE"
             )
 
             result
@@ -384,10 +385,11 @@ open class BrowserPerceptiveAgent(
             val msg = "⏳ Resolve timed out after ${effectiveTimeout}ms (base: ${config.resolveTimeoutMs}ms + " +
                     "retries: ${maxPossibleDelays}ms): $instruction"
             stateManager.addTrace(
-                baseContext.agentState, mapOf(
+                baseContext.agentState,
+                event = "resolveTimeout",
+                items = mapOf(
                     "timeoutMs" to effectiveTimeout, "instruction" to Strings.compactInline(instruction, COMPACT_INLINE_SESSION_LENGTH)
                 ),
-                event = "resolveTimeout",
                 message = "⏳ resolve TIMEOUT"
             )
             val actResult = ActResult(success = false, message = msg, action = instruction)
@@ -709,8 +711,8 @@ open class BrowserPerceptiveAgent(
             )
             stateManager.addTrace(
                 context.agentState,
-                mapOf("step" to step, "tool" to toolCall.method),
                 event = "validationFailed",
+                items = mapOf("step" to step, "tool" to toolCall.method),
                 message = "🛑 validation-failed"
             )
             return null
@@ -736,8 +738,8 @@ open class BrowserPerceptiveAgent(
 
             stateManager.addTrace(
                 context.agentState,
-                mapOf("tool" to toolCall.method),
                 event = "toolExecOk",
+                items = mapOf("tool" to toolCall.method),
                 message = summary
             )
             DetailedActResult(actionDescription, toolCallResult, success = true, summary)
@@ -757,8 +759,8 @@ open class BrowserPerceptiveAgent(
             )
             stateManager.addTrace(
                 context.agentState,
-                mapOf("tool" to toolCall.method),
                 event = "toolExecUnexpectedFail",
+                items = mapOf("tool" to toolCall.method),
                 message = "💥 unexpected failure"
             )
             null
@@ -852,8 +854,8 @@ open class BrowserPerceptiveAgent(
             val result = summarize(instruction, context)
             stateManager.addTrace(
                 context.agentState,
-                mapOf("summaryPreview" to result.modelResponse.content.take(200)),
                 event = "final",
+                items = mapOf("summaryPreview" to result.modelResponse.content.take(200)),
                 message = "🧾 FINAL"
             )
             persistTranscript(instruction, result.modelResponse, context)
@@ -905,8 +907,8 @@ open class BrowserPerceptiveAgent(
         val step = context.step
         stateManager.addTrace(
             context.agentState,
-            mapOf("step" to step, "consecutive" to consecutiveNoOps),
             event = "noop",
+            items = mapOf("step" to step, "consecutive" to consecutiveNoOps),
             message = "🕒 no-op"
         )
         logger.info("🕒 noop sid={} step={} consecutive={}", context.sid, step, consecutiveNoOps)
