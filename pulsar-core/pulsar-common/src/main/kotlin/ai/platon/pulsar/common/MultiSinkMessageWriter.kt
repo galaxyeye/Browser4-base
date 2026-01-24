@@ -11,7 +11,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * Multiple sink message writer. Messages from different source are write to different files.
  */
-open class MultiSinkMessageWriter : AutoCloseable {
+open class MultiSinkMessageWriter(
+    val baseDir: Path = AppPaths.REPORT_DIR.resolve(DateTimes.formatNow("MMdd"))
+) : AutoCloseable {
     companion object {
         private val _writers = ConcurrentHashMap<Path, MessageWriter>()
     }
@@ -19,7 +21,6 @@ open class MultiSinkMessageWriter : AutoCloseable {
     private val logger = getLogger(MultiSinkMessageWriter::class)
     private val closed = AtomicBoolean()
 
-    val baseDir = AppPaths.REPORT_DIR.resolve(DateTimes.formatNow("MMdd"))
     val writers: Map<Path, MessageWriter> get() = _writers
 
     init {
@@ -38,21 +39,14 @@ open class MultiSinkMessageWriter : AutoCloseable {
         return listOf()
     }
 
-    fun write(message: String, filename: String) {
-        writeTo(message, getPath(filename))
+    fun write(value: Any, filename: String): Path {
+        return writeTo(value, getPath(filename))
     }
 
-    fun writeTo(message: String, file: Path) {
-        _writers.computeIfAbsent(file.toAbsolutePath()) { MessageWriter(it) }.write(message)
+    fun writeTo(value: Any, path: Path): Path {
+        _writers.computeIfAbsent(path.toAbsolutePath()) { MessageWriter(it) }.write(value)
         closeIdleWriters()
-    }
-
-    fun writeLineTo(message: String, file: Path) {
-        val writer = _writers.computeIfAbsent(file.toAbsolutePath()) { MessageWriter(it) }
-        writer.write(message)
-        writer.write("\n")
-
-        closeIdleWriters()
+        return path
     }
 
     fun close(filename: String) {

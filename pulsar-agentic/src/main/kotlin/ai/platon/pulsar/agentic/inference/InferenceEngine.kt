@@ -7,13 +7,15 @@ import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.agentic.model.ExtractionSchema
-import ai.platon.pulsar.common.*
+import ai.platon.pulsar.common.AppPaths
+import ai.platon.pulsar.common.DateTimes
+import ai.platon.pulsar.common.MultiSinkMessageWriter
+import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
-import ai.platon.pulsar.external.BrowserChatModel
+import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
@@ -96,15 +98,11 @@ object InferenceMessageBuilder {
 }
 
 class InferenceEngine(
-    private val session: AgenticSession,
-    private val chatModel: BrowserChatModel,
+    private val session: AgenticSession
 ) {
-    // Reuse a single ObjectMapper for JSON parsing within this class
-    private val mapper = ObjectMapper()
-
     private val cta = ContextToAction(session.sessionConfig)
     private val auxLogDir: Path get() = AppPaths.detectAuxiliaryLogDir().resolve("agent")
-    private val auxLogger = MultiSinkMessageWriter()
+    private val auxLogger by lazy { MultiSinkMessageWriter(auxLogDir) }
 
     val domService: DomService
         get() = (session.getOrCreateBoundDriver() as? AbstractWebDriver)?.domService
@@ -178,7 +176,7 @@ class InferenceEngine(
         val timestamp = AppPaths.fromNow()
         val callFile: Path? = info(
             dirPrefix = "extract-summary",
-            kind = "extractCall",
+            kind = "call",
             timestamp = timestamp,
             requestId = params.requestId,
             modelCall = "extract",
@@ -189,12 +187,12 @@ class InferenceEngine(
         val extractResponse: ModelResponse = cta.generateResponseRaw(messages)
 
         val extractedNode: ObjectNode = runCatching {
-            mapper.readTree(extractResponse.content) as? ObjectNode ?: JsonNodeFactory.instance.objectNode()
+            pulsarObjectMapper().readTree(extractResponse.content) as? ObjectNode ?: JsonNodeFactory.instance.objectNode()
         }.getOrElse { JsonNodeFactory.instance.objectNode() }
 
         val extractRespFile: Path = info(
             prefix = "extract-summary",
-            kind = "extractResponse",
+            kind = "response",
             suffix = "$timestamp.json",
             payload = mapOf(
                 "requestId" to params.requestId,
@@ -233,7 +231,7 @@ class InferenceEngine(
         val metadataResponse = cta.generateResponseRaw(metadataMessages)
 
         val metaNode: ObjectNode = runCatching {
-            mapper.readTree(metadataResponse.content) as? ObjectNode ?: JsonNodeFactory.instance.objectNode()
+            pulsarObjectMapper().readTree(metadataResponse.content) as? ObjectNode ?: JsonNodeFactory.instance.objectNode()
         }.getOrElse { JsonNodeFactory.instance.objectNode() }
         val progress = metaNode.path("progress").asText("")
         val completed = metaNode.path("completed").asBoolean(false)
@@ -302,8 +300,7 @@ class InferenceEngine(
 
     private fun info(prefix: String, kind: String, suffix: String, payload: Any): Path {
         val path = auxLogDir.resolve(prefix).resolve("${kind}.$suffix")
-
-        return MessageWriter.writeOnce(path, payload)
+        return auxLogger.writeTo(payload, path)
     }
 
     private fun appendSummaryToFile(prefix: String, entry: Map<String, Any?>) {
@@ -311,7 +308,7 @@ class InferenceEngine(
 
         val file = summaryDir.resolve("${prefix}_summary.json")
 
-        val entryNode: JsonNode = mapper.valueToTree(normalizeSummaryEntry(entry))
+        val entryNode: JsonNode = pulsarObjectMapper().valueToTree(normalizeSummaryEntry(entry))
 
         val current = readSummaryArrayOrEmpty(file)
         current.add(entryNode)
@@ -348,7 +345,7 @@ class InferenceEngine(
             return JsonNodeFactory.instance.arrayNode()
         }
 
-        return runCatching { mapper.readTree(bytes) as? ArrayNode }
+        return runCatching { pulsarObjectMapper().readTree(bytes) as? ArrayNode }
             .getOrNull()
             ?: JsonNodeFactory.instance.arrayNode()
     }
