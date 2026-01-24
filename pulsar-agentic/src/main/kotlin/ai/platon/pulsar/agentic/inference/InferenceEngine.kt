@@ -289,7 +289,7 @@ class InferenceEngine(
         return result
     }
 
-    suspend fun summary(instruction: String?, textContent: String): String {
+    suspend fun summarize(instruction: String?, textContent: String): String {
         val messages = InferenceMessageBuilder.buildSummaryPrompt(instruction, textContent)
 
         val response = cta.generateResponseRaw(messages)

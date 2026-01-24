@@ -286,7 +286,7 @@ open class BasicBrowserAgent(
 
     override suspend fun summarize(instruction: String?, selector: String?): String {
         val textContent = activeDriver.textContent(selector) ?: return "(no text content)"
-        return inference.summary(instruction, textContent)
+        return inference.summarize(instruction, textContent)
     }
 
     data class ObserveActResult(
