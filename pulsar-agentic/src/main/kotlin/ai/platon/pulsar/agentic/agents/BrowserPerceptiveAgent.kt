@@ -311,16 +311,12 @@ open class BrowserPerceptiveAgent(
                 stateManager.addTrace(last, emptyMap(), event = "userClose", message = "🛑 USER CLOSE")
             }.onFailure { logger.warn("Failed to record close trace: ${it.message}") }
             
-            // Cancel agent job and wait for completion with timeout
+            // Cancel agent job - this will propagate cancellation to all child jobs
+            // Note: We don't wait for completion here to avoid blocking the caller
             runCatching { 
-                runBlocking {
-                    withTimeout(5000) {
-                        agentJob.cancelAndJoin()
-                    }
-                }
-            }.onFailure { 
-                logger.warn("Agent job cancellation timeout or error: ${it.message}")
                 agentJob.cancel(CancellationException("USER interrupted via close()"))
+            }.onFailure { 
+                logger.warn("Agent job cancellation error: ${it.message}")
             }
             
             // Close bound WebDriver if exists
