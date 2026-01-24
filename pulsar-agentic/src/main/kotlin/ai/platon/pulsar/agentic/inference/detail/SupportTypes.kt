@@ -2,6 +2,7 @@ package ai.platon.pulsar.agentic.inference.detail
 
 import ai.platon.pulsar.agentic.ActResult
 import ai.platon.pulsar.agentic.ObserveOptions
+import ai.platon.pulsar.agentic.ExtractionSchema
 import ai.platon.pulsar.agentic.agents.AgentConfig
 import ai.platon.pulsar.agentic.inference.ExtractParams
 import ai.platon.pulsar.agentic.inference.ObserveParams
