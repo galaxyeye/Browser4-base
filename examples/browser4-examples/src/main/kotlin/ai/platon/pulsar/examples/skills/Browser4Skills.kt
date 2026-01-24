@@ -37,7 +37,7 @@ suspend fun main() {
     // Wire skill tools so the LLM can see and call them.
     // BrowserAgentActor already auto-wires the per-agent target object for domain `skill`.
     // We only ensure the executor is registered (prompt-visible tool specs).
-    val skillDomain = "skill.debug.register.scraping"
+    val skillDomain = "skill.debug.scraping"
     val customRegistry = CustomToolRegistry.instance
     if (!customRegistry.contains(skillDomain)) {
         customRegistry.register(SkillToolExecutor(registry))
@@ -45,7 +45,7 @@ suspend fun main() {
 
     // Use agent with a skill-oriented task
     val task = """
-        Use skill.debug.register.scraping to scrape https://news.ycombinator.com/news
+        Use skill.debug.scraping to scrape https://news.ycombinator.com/news
         """.trimIndent()
 
     val history = agent.run(task)
