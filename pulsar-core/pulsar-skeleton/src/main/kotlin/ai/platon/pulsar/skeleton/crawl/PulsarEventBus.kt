@@ -5,12 +5,22 @@ import ai.platon.pulsar.skeleton.crawl.PulsarEventBus.serverSideEventHandlers
 import ai.platon.pulsar.skeleton.crawl.PulsarEventBus.withServerSideEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.GeneralEventHandler
 import kotlinx.coroutines.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
 
 /**
  * The global EventBus for handling events.
  * */
 object PulsarEventBus {
+
+    /**
+     * Background coroutine scope for non-blocking event emission.
+     * Uses Dispatchers.Default for CPU-bound work and SupervisorJob to isolate failures.
+     */
+    private val eventScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    private val generalEventHandlers = ConcurrentHashMap<String, GeneralEventHandler>()
+
     /**
      * The page event handlers.
      *
@@ -26,8 +36,6 @@ object PulsarEventBus {
      * NOTE: kept for backward compatibility as the default handlers.
      */
     var serverSideEventHandlers: ServerSideEventHandlers? = null
-
-    val generalEventHandlers = mutableMapOf<String, GeneralEventHandler>()
 
     /**
      * Per-coroutine override for [serverSideEventHandlers].
@@ -72,18 +80,21 @@ object PulsarEventBus {
         }
     }
 
-    fun emitEvent(eventType: String, payload: Any) {
+    fun emit(eventType: String, payload: Any) {
         generalEventHandlers[eventType]?.let { handlers ->
             eventScope.launch {
                 handlers.invoke(payload)
             }
         }
     }
-    /**
-     * Background coroutine scope for non-blocking event emission.
-     * Uses Dispatchers.Default for CPU-bound work and SupervisorJob to isolate failures.
-     */
-    private val eventScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    fun register(eventType: String, handler: GeneralEventHandler) {
+        generalEventHandlers[eventType] = handler
+    }
+
+    fun unregister(eventType: String) {
+        generalEventHandlers.remove(eventType)
+    }
 
     /**
      * Emits a crawl event to server-side event handlers in a non-blocking manner.
