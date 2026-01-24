@@ -280,7 +280,6 @@ open class BasicBrowserAgent(
             else -> options
         }
 
-        // val context = requireNotNull(options.getContext()) { "Context is required to doObserveAct" }
         val context = stateManager.getActiveContext()
 
         val (observeResults, actionDescription) = doObserveActObserve(options, context, options.fromResolve)
@@ -373,7 +372,7 @@ open class BasicBrowserAgent(
                 domService.addHighlights(interactiveElements)
             }
 
-            context.screenshotB64 = captureScreenshotWithRetry(context)
+            context.screenshotB64 = activeDriver.captureScreenshot()
 
             val actionDescription = withTimeout(config.llmInferenceTimeoutMs) {
                 inference.observe(params, context)
