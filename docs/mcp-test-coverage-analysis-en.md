@@ -131,7 +131,7 @@ This is the most important E2E test file, **including real MCP server startup an
    - `test cross-network communication via HTTP endpoints`
    - Validates HTTP communication across network boundaries
 
-**Total**: 21 test methods covering various scenarios
+**Total**: 13 test methods covering various scenarios
 
 ---
 
@@ -441,7 +441,7 @@ class MCPToolExecutionBenchmark {
 - Real HTTP server running
 - Real network communication
 - Complete request-response cycle
-- 21 test methods covering various scenarios
+- 13 test methods covering various scenarios
 
 **Limitations:**
 - Uses HTTP REST instead of actual MCP transport protocols (STDIO/SSE/WebSocket)

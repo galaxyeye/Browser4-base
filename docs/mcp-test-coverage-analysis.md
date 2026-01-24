@@ -131,7 +131,7 @@ MCP 实现位于 `pulsar-agentic` 模块，包含以下核心组件：
    - `test cross-network communication via HTTP endpoints`
    - 验证跨网络边界的 HTTP 通信
 
-**总计**: 21 个测试方法，覆盖各种场景
+**总计**: 13 个测试方法，覆盖各种场景
 
 ---
 
@@ -441,7 +441,7 @@ class MCPToolExecutionBenchmark {
 - 真实的 HTTP 服务器运行
 - 真实的网络通信
 - 完整的请求-响应周期
-- 21 个测试方法覆盖各种场景
+- 13 个测试方法覆盖各种场景
 
 **限制：**
 - 使用 HTTP REST 而非真正的 MCP 传输协议（STDIO/SSE/WebSocket）

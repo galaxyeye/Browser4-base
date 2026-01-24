@@ -18,7 +18,7 @@
 位置 / Location: `pulsar-tests/pulsar-e2e-tests/src/test/kotlin/ai/platon/pulsar/agentic/mcp/MCPToolExecutorE2ETest.kt`
 
 - **411 行代码 / 411 lines of code**
-- **21 个测试方法 / 21 test methods**
+- **13 个测试方法 / 13 test methods**
 - **真实服务器启动 / Real server startup** via Spring Boot `@SpringBootTest`
 - **真实网络通信 / Real network communication** via HTTP
 - **完整请求-响应周期 / Complete request-response cycle**
