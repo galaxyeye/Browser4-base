@@ -27,11 +27,11 @@ import java.text.MessageFormat
 import java.time.Instant
 import java.util.*
 
-open class BrowserAgentActor(
+open class BasicBrowserAgent(
     override val session: AgenticSession,
     val config: AgentConfig
 ) : PerceptiveAgent {
-    private val logger = getLogger(BrowserAgentActor::class)
+    private val logger = getLogger(BasicBrowserAgent::class)
     private val _startTime: Instant = Instant.now()
     private val _uuid: UUID = UUID.randomUUID()
     private val _baseDir: Path = AppPaths.get("agent")

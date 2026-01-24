@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic.tools
 
 import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.agents.BrowserAgentActor
+import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.TcEvaluate
@@ -18,7 +18,7 @@ import java.nio.file.Path
 
 class AgentToolManager constructor(
     val baseDir: Path,
-    val agent: BrowserAgentActor,
+    val agent: BasicBrowserAgent,
 ) {
     private val logger = getLogger(AgentToolManager::class)
 

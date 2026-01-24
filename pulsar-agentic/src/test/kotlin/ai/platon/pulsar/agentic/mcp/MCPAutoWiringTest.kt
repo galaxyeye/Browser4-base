@@ -2,7 +2,7 @@ package ai.platon.pulsar.agentic.mcp
 
 import ai.platon.pulsar.agentic.BasicAgenticSession
 import ai.platon.pulsar.agentic.agents.AgentConfig
-import ai.platon.pulsar.agentic.agents.BrowserAgentActor
+import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.context.DefaultClassPathXmlAgenticContext
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import org.junit.jupiter.api.AfterEach
@@ -56,7 +56,7 @@ class MCPAutoWiringTest {
         // Act: create an actor and force tool manager init
         val context = DefaultClassPathXmlAgenticContext()
         val session = BasicAgenticSession(context, context.configuration.toVolatileConfig())
-        val actor = object : BrowserAgentActor(session, AgentConfig()) {}
+        val actor = object : BasicBrowserAgent(session, AgentConfig()) {}
 
         // Force tool manager init by invoking the protected getter via reflection
         val getter = actor.javaClass.superclass.getDeclaredMethod("getToolExecutor").apply { isAccessible = true }

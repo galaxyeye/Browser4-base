@@ -5,7 +5,7 @@ import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.model.TabState
 import ai.platon.pulsar.agentic.ActionOptions
 import ai.platon.pulsar.agentic.ObserveOptions
-import ai.platon.pulsar.agentic.agents.BrowserAgentActor
+import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.MessageWriter
@@ -18,32 +18,32 @@ import java.util.*
 
 /**
  * Manages agent state, execution contexts, and history tracking.
- * 
+ *
  * This class is responsible for:
  * - Creating and managing execution contexts for each step
  * - Maintaining state history for all executed actions
  * - Tracking process traces for debugging
  * - Managing the lifecycle of contexts (creation, activation, cleanup)
- * 
+ *
  * **Context Management**:
  * - `_baseContext`: The initial context created when an agent session starts
  * - `_activeContext`: The currently active context being processed
  * - `contexts`: List of all contexts created during the session (cleaned periodically)
- * 
+ *
  * **State History**:
  * - `_stateHistory`: Contains AgentState objects for successfully executed actions
  * - Limited to `config.maxHistorySize` entries to prevent unbounded growth
- * 
+ *
  * **Process Trace**:
  * - `_processTrace`: Detailed trace of all events including failures
  * - Limited to 200 entries to prevent memory leaks
  * - Written to disk for debugging via `writeProcessTrace()`
- * 
+ *
  * @param agent The agent actor using this state manager
  * @param pageStateTracker Tracks page state changes for detecting progress
  */
 class AgentStateManager(
-    val agent: BrowserAgentActor,
+    val agent: BasicBrowserAgent,
     val pageStateTracker: PageStateTracker,
 ) {
     private val logger = getLogger(this)
@@ -69,11 +69,11 @@ class AgentStateManager(
 
     /**
      * Get the currently active context, or create one if it doesn't exist.
-     * 
+     *
      * This method handles two scenarios:
      * 1. First call: Creates base context and sets it as active
      * 2. Multi-act mode: Creates new context based on previous active context
-     * 
+     *
      * @param action The action options
      * @param event The event name for this context
      * @return The active execution context
@@ -106,10 +106,10 @@ class AgentStateManager(
 
     /**
      * Get the currently active context.
-     * 
+     *
      * Note: This method requires the actor to be initialized (i.e., at least one context created).
      * Use `getOrCreateActiveContext()` if you want automatic context creation.
-     * 
+     *
      * @return The active execution context
      * @throws IllegalArgumentException if actor not initialized
      */
@@ -121,7 +121,7 @@ class AgentStateManager(
 
     /**
      * Set the active context and add it to the contexts list.
-     * 
+     *
      * @param context The context to set as active
      */
     fun setActiveContext(context: ExecutionContext) {
@@ -359,7 +359,7 @@ class AgentStateManager(
                     history.addAll(remaining)
                 }
             }
-            
+
             // Also cleanup contexts list to prevent unbounded growth
             val maxContextsSize = 100
             if (contexts.size > maxContextsSize) {
@@ -372,7 +372,7 @@ class AgentStateManager(
                     _activeContext = contexts.lastOrNull()
                 }
             }
-            
+
             // Also cleanup process trace to prevent unbounded growth
             val maxTraceSize = 200
             if (_processTrace.size > maxTraceSize) {

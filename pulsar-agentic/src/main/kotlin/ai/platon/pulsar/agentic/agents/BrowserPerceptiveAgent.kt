@@ -99,7 +99,7 @@ open class BrowserPerceptiveAgent(
     session: AgenticSession,
     val maxSteps: Int = 100,
     config: AgentConfig = AgentConfig(maxSteps = maxSteps)
-) : BrowserAgentActor(session, config) {
+) : BasicBrowserAgent(session, config) {
     private val logger = getLogger(BrowserPerceptiveAgent::class)
     private val slogger = StructuredAgentLogger(logger, config)
 
@@ -129,7 +129,7 @@ open class BrowserPerceptiveAgent(
     )
     protected val retryCounter = AtomicInteger(0)
     protected val checkpointManager = CheckpointManager(baseDir.resolve("checkpoints"))
-    
+
     // Mutex for memory cleanup operations to replace synchronized blocks
     private val memoryCleanupMutex = Mutex()
 
@@ -162,7 +162,7 @@ open class BrowserPerceptiveAgent(
      * Run an autonomous loop (observe -> act -> ...) attempting to fulfill the user goal described
      * in the ActionOptions. Applies retry and timeout strategies; records structured traces but keeps
      * stateHistory focused on executed tool actions only.
-     * 
+     *
      * @param action The action options containing the user's goal and configuration
      * @return Agent history with executed actions
      * @throws CancellationException if the agent is closed or the operation is cancelled
@@ -192,7 +192,7 @@ open class BrowserPerceptiveAgent(
      * Executes a single observe->act cycle for a supplied ActionOptions. Times out after actTimeoutMs
      * to prevent indefinite hangs. Model may produce multiple candidate tool calls internally; only
      * one successful execution is recorded in stateHistory.
-     * 
+     *
      * @param action The action to execute
      * @return Result of the action execution
      */
@@ -215,7 +215,7 @@ open class BrowserPerceptiveAgent(
     /**
      * Executes a tool call derived from a prior observation result. Performs patching (selector/url),
      * validation, and updates AgentState history on success or failure.
-     * 
+     *
      * @param observe The observation result containing the action to execute
      * @return Result of the action execution
      */
@@ -238,7 +238,7 @@ open class BrowserPerceptiveAgent(
     /**
      * Structured extraction: builds a rich prompt with DOM snapshot & optional JSON schema; performs
      * two-stage LLM calls (extract + metadata) and merges results with token/time metrics.
-     * 
+     *
      * @param options Extraction options including schema and target elements
      * @return Extraction result with structured data
      */
@@ -257,9 +257,9 @@ open class BrowserPerceptiveAgent(
                 super.extract(options)
             }
         } catch (e: CancellationException) {
-            logger.info("🛑 extract.cancelled instruction={}", 
+            logger.info("🛑 extract.cancelled instruction={}",
                 options.instruction?.take(50) ?: "")
-            ExtractResult(success = false, message = "USER interrupted: ${e.message}", 
+            ExtractResult(success = false, message = "USER interrupted: ${e.message}",
                 data = JsonNodeFactory.instance.objectNode())
         }
     }
@@ -310,15 +310,15 @@ open class BrowserPerceptiveAgent(
                 val last = stateHistory.states.lastOrNull()
                 stateManager.addTrace(last, emptyMap(), event = "userClose", message = "🛑 USER CLOSE")
             }.onFailure { logger.warn("Failed to record close trace: ${it.message}") }
-            
+
             // Cancel agent job - this will propagate cancellation to all child jobs
             // Note: We don't wait for completion here to avoid blocking the caller
-            runCatching { 
+            runCatching {
                 agentJob.cancel(CancellationException("USER interrupted via close()"))
-            }.onFailure { 
+            }.onFailure {
                 logger.warn("Agent job cancellation error: ${it.message}")
             }
-            
+
             // Close bound WebDriver if exists
             runCatching {
                 session.boundDriver?.let { driver ->
@@ -420,7 +420,7 @@ open class BrowserPerceptiveAgent(
             }
 
             val actionDescription = cta.generate(messages, context)
-            requireNotNull(context.agentState.actionDescription) { 
+            requireNotNull(context.agentState.actionDescription) {
                 "Field should be set: context.agentState.actionDescription. " +
                 "Step: ${context.step}, Instruction: ${context.instruction.take(50)}. " +
                 "This usually indicates a failure in the LLM response parsing."
@@ -543,10 +543,10 @@ open class BrowserPerceptiveAgent(
             return ResolveResult(context, actResult)
         } catch (e: CancellationException) {
             // Log cancellation and return gracefully, allowing cleanup to occur
-            logger.info("🛑 doResolve.cancelled sid={} steps={} reason={}", 
+            logger.info("🛑 doResolve.cancelled sid={} steps={} reason={}",
                 context.sid, context.step, e.message ?: "user interruption")
-            val result = ActResult(success = false, 
-                message = "USER interrupted: ${e.message}", 
+            val result = ActResult(success = false,
+                message = "USER interrupted: ${e.message}",
                 action = initContext.instruction)
             return ResolveResult(context, result)
         } catch (e: Exception) {
@@ -613,13 +613,13 @@ open class BrowserPerceptiveAgent(
 
     /**
      * Execute a single step in the observe-act loop.
-     * 
+     *
      * This method represents one iteration of the autonomous agent cycle:
      * 1. Observe the current page state
      * 2. Generate an action based on the observation
      * 3. Execute the action (tool call)
      * 4. Update state and metrics
-     * 
+     *
      * @param action The action options containing the overall goal
      * @param context The current execution context
      * @param noOpsIn Number of consecutive no-op steps before this one
@@ -802,7 +802,7 @@ open class BrowserPerceptiveAgent(
                     val toRemove = stateHistory.states.size - config.maxHistorySize + HISTORY_CLEANUP_BUFFER
                     stateManager.clearUpHistory(toRemove)
                 }
-                
+
                 // Clean up step execution times map to prevent unbounded growth
                 if (stepExecutionTimes.size > MAX_STEP_EXECUTION_TIMES_SIZE) {
                     val sortedSteps = stepExecutionTimes.keys.sorted()
@@ -810,9 +810,9 @@ open class BrowserPerceptiveAgent(
                     sortedSteps.take(toRemoveCount).forEach { stepExecutionTimes.remove(it) }
                 }
             }
-            
+
             actionValidator.clearCache()
-            logger.info("🧹 mem.cleanup sid={} step={} historySize={} stepTimesSize={}", 
+            logger.info("🧹 mem.cleanup sid={} step={} historySize={} stepTimesSize={}",
                 context.sid, context.step, stateHistory.size, stepExecutionTimes.size)
         } catch (e: Exception) {
             logger.error("🧹❌ mem.cleanup.fail sid={} msg={}", context.sid, e.message, e)
