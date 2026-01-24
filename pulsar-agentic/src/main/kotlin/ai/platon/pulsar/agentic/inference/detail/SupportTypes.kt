@@ -7,7 +7,6 @@ import ai.platon.pulsar.agentic.inference.ExtractParams
 import ai.platon.pulsar.agentic.inference.ObserveParams
 import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.common.Strings
-import java.lang.ref.WeakReference
 import java.time.Instant
 import java.util.*
 
@@ -56,7 +55,7 @@ sealed class PerceptiveAgentError(message: String, cause: Throwable? = null) : E
 /**
  * Performance metrics for monitoring and optimization.
  * Thread-safe implementation using atomic fields for safe concurrent updates.
- * 
+ *
  * Note: Individual fields are updated atomically, but if you need to read
  * multiple fields consistently, external synchronization is required.
  */
@@ -111,9 +110,7 @@ data class ExecutionContext constructor(
 
     val sessionId: String,
     val stepStartTime: Instant = Instant.now(),
-    val additionalContext: Map<String, Any> = emptyMap(),
-
-    var baseContext: WeakReference<ExecutionContext> = WeakReference<ExecutionContext>(null)
+    val additionalContext: Map<String, Any> = emptyMap()
 ) {
     val sid get() = sessionId.take(8)
 
