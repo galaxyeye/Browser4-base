@@ -116,10 +116,10 @@ object InferenceMetrics {
         var success = false
         
         return try {
-            val result = inferenceDurationTimer.recordCallable {
+            val result = inferenceDurationTimer.record {
                 registry.timer("inference.duration.by.model", "model_name", modelName)
-                    .recordCallable(block)
-            }!!
+                    .record(block)
+            }
             success = true
             result
         } catch (e: Exception) {

@@ -154,12 +154,12 @@ object AgentMetrics {
     inline fun <T> recordActionTimed(actionType: String, success: Boolean, block: () -> T): T {
         activeActionsCount.incrementAndGet()
         return try {
-            actionDurationTimer.recordCallable {
+            actionDurationTimer.record {
                 registry.timer("agent.action.duration.by.type", 
                     "action_type", actionType, 
                     "success", success.toString()
-                ).recordCallable(block)
-            }!!
+                ).record(block)
+            }
         } finally {
             activeActionsCount.decrementAndGet()
         }

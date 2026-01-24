@@ -102,11 +102,11 @@ object ToolMetrics {
         var success = false
         
         return try {
-            val result = toolExecutionTimer.recordCallable {
+            val result = toolExecutionTimer.record {
                 registry.timer("tool.execution.duration.by.name", 
                     "tool_name", toolName
-                ).recordCallable(block)
-            }!!
+                ).record(block)
+            }
             success = true
             result
         } catch (e: Exception) {
