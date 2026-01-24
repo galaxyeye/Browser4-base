@@ -148,7 +148,6 @@ data class ExecutionContext constructor(
             agentState = agentState,
             schema = schema,
             requestId = uuid,
-            logInferenceToFile = config.logInferenceToFile,
         )
     }
 }

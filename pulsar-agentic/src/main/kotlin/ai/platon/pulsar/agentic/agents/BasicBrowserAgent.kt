@@ -122,12 +122,24 @@ open class BasicBrowserAgent(
     }
 
     override suspend fun run(action: ActionOptions): AgentHistory {
+        EventBus.emit("PerceptiveAgent.run.willExecute", mapOf(
+            "action" to action,
+            "uuid" to uuid
+        ))
+
         var result = act(action)
 
         var i = 0
         while (!result.isComplete && i++ < config.maxSteps) {
             result = act(action)
         }
+
+        EventBus.emit("PerceptiveAgent.run.didExecute", mapOf(
+            "action" to action,
+            "uuid" to uuid,
+            "result" to result,
+            "stateHistory" to stateHistory
+        ))
 
         return stateHistory
     }
@@ -147,9 +159,21 @@ open class BasicBrowserAgent(
     }
 
     override suspend fun observe(options: ObserveOptions): List<ObserveResult> {
+        EventBus.emit("PerceptiveAgent.observe.willExecute", mapOf(
+            "options" to options,
+            "uuid" to uuid
+        ))
+
         val context = stateManager.getOrCreateActiveContext(options)
 
         val result = doObserveActObserve(options, context, options.fromResolve)
+
+        EventBus.emit("PerceptiveAgent.observe.didExecute", mapOf(
+            "options" to options,
+            "uuid" to uuid,
+            "observeResults" to result.observeResults,
+            "actionDescription" to result.actionDescription
+        ))
 
         return result.observeResults
     }
@@ -168,9 +192,14 @@ open class BasicBrowserAgent(
      * one successful execution is recorded in stateHistory.
      */
     override suspend fun act(action: ActionOptions): ActResult {
+        EventBus.emit("PerceptiveAgent.act.willExecute", mapOf(
+            "action" to action,
+            "uuid" to uuid
+        ))
+
         val context = stateManager.getOrCreateActiveContext(action, "act")
 
-        return try {
+        val result = try {
             withTimeout(config.actTimeoutMs) {
                 doObserveAct(action)
             }
@@ -184,6 +213,14 @@ open class BasicBrowserAgent(
             )
             ActResultHelper.failed(msg, action.action)
         }
+
+        EventBus.emit("PerceptiveAgent.act.didExecute", mapOf(
+            "action" to action,
+            "uuid" to uuid,
+            "result" to result
+        ))
+
+        return result
     }
 
     override suspend fun act(observe: ObserveResult): ActResult {
@@ -243,10 +280,15 @@ open class BasicBrowserAgent(
      * two-stage LLM calls (extract + metadata) and merges results with token/time metrics.
      */
     override suspend fun extract(options: ExtractOptions): ExtractResult {
+        EventBus.emit("PerceptiveAgent.extract.willExecute", mapOf(
+            "options" to options,
+            "uuid" to uuid
+        ))
+
         val instruction = promptBuilder.initExtractUserInstruction(options.instruction)
         val context = stateManager.buildIndependentExecutionContext(instruction, 1, "extract")
 
-        return try {
+        val result = try {
             val params = context.createExtractParams(options.schema)
             val resultNode = inference.extract(params)
 
@@ -258,6 +300,14 @@ open class BasicBrowserAgent(
                 success = false, message = e.message ?: "extract failed", data = JsonNodeFactory.instance.objectNode()
             )
         }
+
+        EventBus.emit("PerceptiveAgent.extract.didExecute", mapOf(
+            "options" to options,
+            "uuid" to uuid,
+            "result" to result
+        ))
+
+        return result
     }
 
     /**
@@ -285,8 +335,23 @@ open class BasicBrowserAgent(
     }
 
     override suspend fun summarize(instruction: String?, selector: String?): String {
+        EventBus.emit("PerceptiveAgent.summarize.willExecute", mapOf(
+            "instruction" to instruction,
+            "selector" to selector,
+            "uuid" to uuid
+        ))
+
         val textContent = activeDriver.textContent(selector) ?: return "(no text content)"
-        return inference.summarize(instruction, textContent)
+        val result = inference.summarize(instruction, textContent)
+
+        EventBus.emit("PerceptiveAgent.summarize.didExecute", mapOf(
+            "instruction" to instruction,
+            "selector" to selector,
+            "uuid" to uuid,
+            "result" to result
+        ))
+
+        return result
     }
 
     data class ObserveActResult(
