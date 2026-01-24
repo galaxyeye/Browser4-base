@@ -206,7 +206,7 @@ open class PulsarSession(
                     shouldStop = { stopFlag.get() }
                 ) { evt ->
                     // Server sends json string as data (we serialize Event DTO as JSON).
-                    val oe = OpenApiEvent.Companion.fromJson(evt.data)
+                    val oe = OpenApiEvent.fromJson(evt.data)
                     if (oe != null) {
                         // Dispatch to SDK-side handlers.
                         eventHandlers.dispatch(oe)

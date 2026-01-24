@@ -25,10 +25,10 @@ object ToolCallSpecificationRenderer {
             return builtIn
         }
 
-        val customSpecs = CustomToolRegistry.Companion.instance.getAllDomains()
+        val customSpecs = CustomToolRegistry.instance.getAllDomains()
             .asSequence()
             .filter { customDomainFilter?.invoke(it) ?: true }
-            .flatMap { CustomToolRegistry.Companion.instance.getToolCallSpecifications(it).asSequence() }
+            .flatMap { CustomToolRegistry.instance.getToolCallSpecifications(it).asSequence() }
             .toList()
 
         if (customSpecs.isEmpty()) {

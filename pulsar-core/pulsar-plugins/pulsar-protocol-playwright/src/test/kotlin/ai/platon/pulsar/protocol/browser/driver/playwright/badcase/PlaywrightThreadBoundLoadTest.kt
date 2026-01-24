@@ -1,9 +1,9 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright.badcase
 
 import ai.platon.pulsar.common.LinkExtractors
-import ai.platon.pulsar.common.sleepSeconds
 import ai.platon.pulsar.common.printlnPro
-import ai.platon.pulsar.protocol.browser.driver.playwright.PlaywrightTestBase.Companion.BAD_PARALLELISM_WARNING
+import ai.platon.pulsar.common.sleepSeconds
+import ai.platon.pulsar.protocol.browser.driver.playwright.PlaywrightTestBase.BAD_PARALLELISM_WARNING
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright

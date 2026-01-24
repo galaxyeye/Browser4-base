@@ -18,18 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ValueDomWritable implements Writable {
 
     public static int CACHE_SIZE = 200;
-    private static FeaturedDocument NIL_DOC = FeaturedDocument.Companion.getNIL();
-    private static String NIL_DOC_HTML = FeaturedDocument.Companion.getNIL_DOC_HTML();
-    private static int NIL_DOC_LENGTH = FeaturedDocument.Companion.getNIL_DOC_LENGTH();
-    private static Duration CACHE_EXPIRES = Duration.ofMinutes(10);
-    private static String CACHED_HINT = "(cached)";
+    private static final FeaturedDocument NIL_DOC = FeaturedDocument.Companion.getNIL();
+    private static final String NIL_DOC_HTML = FeaturedDocument.Companion.getNIL_DOC_HTML();
+    private static final int NIL_DOC_LENGTH = FeaturedDocument.Companion.getNIL_DOC_LENGTH();
+    private static final Duration CACHE_EXPIRES = Duration.ofMinutes(10);
+    private static final String CACHED_HINT = "(cached)";
 
     // server side
     // TODO: check if this is client side or server side, ensure items in client side lives longer than that in server side
-    private static ConcurrentLRUCache<String, String> pageCache = new ConcurrentLRUCache<>(CACHE_EXPIRES, CACHE_SIZE);
+    private static final ConcurrentLRUCache<String, String> pageCache = new ConcurrentLRUCache<>(CACHE_EXPIRES, CACHE_SIZE);
 
     // client side
-    private static Map<String, FeaturedDocument> documentCache = new ConcurrentHashMap<>();
+    private static final Map<String, FeaturedDocument> documentCache = new ConcurrentHashMap<>();
 
     private ValueDom dom;
 

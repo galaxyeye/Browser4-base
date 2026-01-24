@@ -88,8 +88,8 @@ class PulsarClient
                 } else {
                     // Start local driver
                     val driver = Browser4Driver(
-                        jarPath = localDriverOptions.jarPath ?: Browser4Driver.Companion.defaultJarPath(),
-                        downloadUrl = localDriverOptions.downloadUrl ?: Browser4Driver.Companion.DEFAULT_DOWNLOAD_URL,
+                        jarPath = localDriverOptions.jarPath ?: Browser4Driver.defaultJarPath(),
+                        downloadUrl = localDriverOptions.downloadUrl ?: Browser4Driver.DEFAULT_DOWNLOAD_URL,
                         port = targetPort,
                         javaOptions = localDriverOptions.javaOptions
                     )

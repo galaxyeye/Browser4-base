@@ -49,7 +49,7 @@ open class BrowserAgentActor(
             // This ensures that when MCPToolExecutor is registered in CustomToolRegistry under domain
             // "mcp.<serverName>", the AgentToolManager has the corresponding target object.
             runCatching {
-                val registry = MCPPluginRegistry.Companion.instance
+                val registry = MCPPluginRegistry.instance
                 registry.getRegisteredServers().forEach { serverName ->
                     val domain = "mcp.$serverName"
                     registry.getClientManager(serverName)?.let { tm.registerCustomTarget(domain, it) }
@@ -221,7 +221,7 @@ open class BrowserAgentActor(
      * @return The extraction result produced by the model.
      */
     override suspend fun extract(instruction: String): ExtractResult {
-        val opts = ExtractOptions(instruction = instruction, ExtractionSchema.Companion.DEFAULT)
+        val opts = ExtractOptions(instruction = instruction, ExtractionSchema.DEFAULT)
         return extract(opts)
     }
 

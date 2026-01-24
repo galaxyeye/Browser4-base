@@ -13,15 +13,8 @@ import org.junit.jupiter.api.Tag
 import java.io.IOException
 import java.nio.file.Path
 import java.text.MessageFormat
-import java.util.Base64
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Ignore
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import java.util.*
+import kotlin.test.*
 
 @Tag("TimeConsumingTest")
 @Tag("E2ETest")
@@ -116,7 +109,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
         val data = detail?.value?.toString()
         assertNotNull(data)
 
-        val message = ActiveDOMMessage.Companion.fromJson(data)
+        val message = ActiveDOMMessage.fromJson(data)
         val urls = message.urls
         assertNotNull(urls)
         assertEquals(e2eOriginUrl, urls.URL)
