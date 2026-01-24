@@ -871,7 +871,7 @@ function() {
         val pageUrl = entry.pageUrl
         val resourceUrl = event.response.url
         val host = InternalURLUtil.getHost(pageUrl) ?: "unknown"
-        val reportDir = messageWriter.reportDir.resolve("trace").resolve(host)
+        val reportDir = messageWriter.baseDir.resolve("trace").resolve(host)
 
         if (!Files.exists(reportDir)) {
             withContext(Dispatchers.IO) {

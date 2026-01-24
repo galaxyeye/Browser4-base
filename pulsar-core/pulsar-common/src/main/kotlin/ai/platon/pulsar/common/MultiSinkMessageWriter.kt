@@ -19,17 +19,16 @@ open class MultiSinkMessageWriter : AutoCloseable {
     private val logger = getLogger(MultiSinkMessageWriter::class)
     private val closed = AtomicBoolean()
 
-    private val timeIdent get() = DateTimes.formatNow("MMdd")
-    val reportDir = AppPaths.REPORT_DIR.resolve(timeIdent)
+    val baseDir = AppPaths.REPORT_DIR.resolve(DateTimes.formatNow("MMdd"))
     val writers: Map<Path, MessageWriter> get() = _writers
 
     init {
-        Files.createDirectories(reportDir)
+        Files.createDirectories(baseDir)
     }
 
     fun getPath(filename: String) = pathOf(filename)
 
-    fun pathOf(filename: String) = reportDir.resolve(filename)
+    fun pathOf(filename: String) = baseDir.resolve(filename)
 
     fun readAllLines(filename: String): List<String> {
         val path = getPath(filename)
