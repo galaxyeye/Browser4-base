@@ -311,14 +311,15 @@
                 <version>${metrics.version}</version>
             </dependency>
 
-            <!-- OpenTelemetry for distributed tracing -->
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-bom</artifactId>
-                <version>${opentelemetry.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+<!--            &lt;!&ndash; OpenTelemetry for distributed tracing &ndash;&gt;-->
+<!--            <dependency>-->
+<!--                <groupId>io.opentelemetry</groupId>-->
+<!--                <artifactId>opentelemetry-bom</artifactId>-->
+<!--                <version>${opentelemetry.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--            </dependency>-->
+<!--            &lt;!&ndash; Java generated classes for semantic conventions &ndash;&gt;-->
             <!-- Java generated classes for semantic conventions -->
             <dependency>
                 <groupId>io.opentelemetry.semconv</groupId>
@@ -326,14 +327,14 @@
                 <version>${opentelemetry.semconv.version}</version>
             </dependency>
 
-            <!-- Micrometer for metrics with Prometheus support -->
-            <dependency>
-                <groupId>io.micrometer</groupId>
-                <artifactId>micrometer-bom</artifactId>
-                <version>${micrometer.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+<!--            &lt;!&ndash; Micrometer for metrics with Prometheus support &ndash;&gt;-->
+<!--            <dependency>-->
+<!--                <groupId>io.micrometer</groupId>-->
+<!--                <artifactId>micrometer-bom</artifactId>-->
+<!--                <version>${micrometer.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--            </dependency>-->
 
             <dependency>
                 <groupId>org.nibor.autolink</groupId>
@@ -466,14 +467,11 @@
 
         <!--  metrics analyze  -->
         <oshi.version>6.4.13</oshi.version>
+        <!-- Dropwizard Metrics is an older, robust library, best for JVM-specific monitoring,
+        but it lacks the dimensional (tagged) metrics and cloud-native integrations found in Micrometer. -->
         <metrics.version>4.2.12</metrics.version>
 
-        <!--  Observability: OpenTelemetry & Micrometer  -->
-        <opentelemetry.version>1.58.0</opentelemetry.version>
-        <!-- Java generated classes for semantic conventions -->
         <opentelemetry.semconv.version>1.37.0</opentelemetry.semconv.version>
-        <!-- An application observability facade for the most popular observability tools. Think SLF4J, but for observability. -->
-        <micrometer.version>1.16.2</micrometer.version>
 
         <!--  Matchers that can be combined to create flexible expressions of intent  -->
         <hamcrest-all.version>1.3</hamcrest-all.version>
