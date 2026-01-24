@@ -63,8 +63,19 @@ object PulsarEventBus {
         }
     }
 
-    fun register(eventType: String, handler: GeneralEventHandler) {
+    fun register(eventType: String, handler: (Any) -> Any?): GeneralEventHandler {
+        val handler = object: GeneralEventHandler(eventType) {
+            override fun invoke(payload: Any): Any? {
+                return handler.invoke(payload)
+            }
+        }
+
+        return register(eventType, handler)
+    }
+
+    fun register(eventType: String, handler: GeneralEventHandler): GeneralEventHandler {
         generalEventHandlers[eventType] = handler
+        return handler
     }
 
     fun unregister(eventType: String) {

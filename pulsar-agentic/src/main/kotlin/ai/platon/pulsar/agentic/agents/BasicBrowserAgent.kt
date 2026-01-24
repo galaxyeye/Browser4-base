@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic.agents
 
 import ai.platon.pulsar.agentic.*
+import ai.platon.pulsar.agentic.inference.AgentMessageList
 import ai.platon.pulsar.agentic.inference.InferenceEngine
 import ai.platon.pulsar.agentic.inference.PromptBuilder
 import ai.platon.pulsar.agentic.inference.action.ContextToAction
@@ -20,6 +21,8 @@ import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.alwaysTrue
 import ai.platon.pulsar.common.getLogger
+import ai.platon.pulsar.common.serialize.json.Pson
+import ai.platon.pulsar.skeleton.crawl.EventBus
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
@@ -42,7 +45,7 @@ open class BasicBrowserAgent(
         .resolve(_uuid.toString())
 
     protected val cta by lazy { ContextToAction(session.sessionConfig) }
-    protected val inference by lazy { InferenceEngine(session, cta.chatModel) }
+    protected val inference by lazy { InferenceEngine(session) }
     protected val domService get() = inference.domService
     protected val promptBuilder = PromptBuilder()
 
@@ -99,6 +102,23 @@ open class BasicBrowserAgent(
 
     init {
         Files.createDirectories(baseDir)
+        var eventType = "InferenceEngine.observe.willGenerate"
+        EventBus.register(eventType) { payload ->
+            val map = payload as? Map<String, Any?> ?: return@register null
+            val messages = map["messages"] as? AgentMessageList ?: return@register null
+            // DO SOMETHING
+            println(eventType + ">>> " + messages.messages.lastOrNull()?.content?.take(200))
+            return@register messages
+        }
+
+        eventType = "InferenceEngine.observe.didGenerate"
+        EventBus.register(eventType) { payload ->
+            val map = payload as? Map<String, Any?> ?: return@register null
+            val actionDescription = map["actionDescription"] as? ActionDescription ?: return@register null
+            // DO SOMETHING
+            println(Pson.toJson(actionDescription))
+            return@register actionDescription
+        }
     }
 
     override suspend fun run(action: ActionOptions): AgentHistory {
