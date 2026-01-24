@@ -1,5 +1,6 @@
 package ai.platon.pulsar.common
 
+import ai.platon.pulsar.common.serialize.json.Pson
 import org.slf4j.LoggerFactory
 import java.io.PrintWriter
 import java.io.Writer
@@ -49,12 +50,14 @@ class MessageWriter(
 
         private val ID_SUPPLIER = AtomicLong()
 
-        fun writeOnce(path: Path, content: Any, level: Int = DEFAULT_LOG_LEVEL) {
+        fun writeOnce(path: Path, content: Any, level: Int = DEFAULT_LOG_LEVEL): Path {
             MessageWriter(path, level).use { it.write(content) }
+            return path
         }
 
-        fun writeOnce(file: TmpFile, content: Any, level: Int = DEFAULT_LOG_LEVEL) {
+        fun writeOnce(file: TmpFile, content: Any, level: Int = DEFAULT_LOG_LEVEL): Path {
             MessageWriter(file, level).use { it.write(content) }
+            return file.path
         }
     }
 
@@ -82,7 +85,12 @@ class MessageWriter(
 
     constructor(file: TmpFile, level: Int = DEFAULT_LOG_LEVEL): this(file.path, level)
 
-    fun write(s: Any) = write(s.toString())
+    fun write(s: Any) {
+        when (s) {
+            is String -> write(s)
+            else -> write(Pson.toJsonOrString(s))
+        }
+    }
 
     fun write(s: String) {
         // Do not write if the writer has been closed explicitly

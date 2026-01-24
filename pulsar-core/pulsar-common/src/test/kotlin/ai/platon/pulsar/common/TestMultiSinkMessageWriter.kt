@@ -7,9 +7,9 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class TestMultiSinkWriter {
+class TestMultiSinkMessageWriter {
 
-    private val writer = MultiSinkWriter()
+    private val writer = MultiSinkMessageWriter()
 
     @Test
     fun `When writer is idle then close it automatically`() {

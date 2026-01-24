@@ -7,10 +7,7 @@ import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.agentic.model.ExtractionSchema
-import ai.platon.pulsar.common.AppPaths
-import ai.platon.pulsar.common.DateTimes
-import ai.platon.pulsar.common.MessageWriter
-import ai.platon.pulsar.common.Strings
+import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.external.BrowserChatModel
 import ai.platon.pulsar.external.ModelResponse
@@ -107,6 +104,7 @@ class InferenceEngine(
 
     private val cta = ContextToAction(session.sessionConfig)
     private val auxLogDir: Path get() = AppPaths.detectAuxiliaryLogDir().resolve("agent")
+    private val auxLogger = MultiSinkMessageWriter()
 
     val domService: DomService
         get() = (session.getOrCreateBoundDriver() as? AbstractWebDriver)?.domService
@@ -303,30 +301,23 @@ class InferenceEngine(
     }
 
     private fun info(prefix: String, kind: String, suffix: String, payload: Any): Path {
-        val dir = auxLogDir.resolve(prefix)
-        Files.createDirectories(dir)
+        val path = auxLogDir.resolve(prefix).resolve("${kind}.$suffix")
 
-        val path = dir.resolve("${kind}.$suffix")
-        val content: Any =
-            runCatching { prettyPulsarObjectMapper().writeValueAsString(payload) }.getOrNull() ?: payload.toString()
-        MessageWriter.writeOnce(path, content)
-        return path
+        return MessageWriter.writeOnce(path, payload)
     }
 
     private fun appendSummaryToFile(prefix: String, entry: Map<String, Any?>) {
         val summaryDir = auxLogDir.resolve("summary")
-        Files.createDirectories(summaryDir)
 
-        val file = summaryFile(summaryDir, prefix)
+        val file = summaryDir.resolve("${prefix}_summary.json")
 
         val entryNode: JsonNode = mapper.valueToTree(normalizeSummaryEntry(entry))
 
         val current = readSummaryArrayOrEmpty(file)
         current.add(entryNode)
+
         writeSummaryArrayAtomically(summaryDir, prefix, file, current)
     }
-
-    private fun summaryFile(summaryDir: Path, prefix: String): Path = summaryDir.resolve("${prefix}_summary.json")
 
     /**
      * Convert values to stable JSON-friendly shapes.

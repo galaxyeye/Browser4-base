@@ -1,17 +1,17 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
+import ai.platon.browser4.driver.chrome.NodeRef
+import ai.platon.browser4.driver.chrome.PageHandler
+import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.cdt.kt.protocol.commands.Fetch
 import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
 import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
-import ai.platon.browser4.driver.chrome.NodeRef
-import ai.platon.browser4.driver.chrome.PageHandler
-import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.warnInterruptible
-import ai.platon.pulsar.skeleton.common.message.MiscMessageWriter
+import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.crawl.common.InternalURLUtil
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.JsEvaluation
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.JsException
@@ -29,7 +29,7 @@ class WebDriverHelper(
     val rpc: RobustRPC,
     val page: PageHandler,
     val fetchAPI: Fetch?,
-    val messageWriter: MiscMessageWriter
+    val messageWriter: MiscMessageMessageWriter
 ) {
     suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
         runCatching { traceInterestingResources0(entry, event) }.onFailure { warnInterruptible(this, it) }
