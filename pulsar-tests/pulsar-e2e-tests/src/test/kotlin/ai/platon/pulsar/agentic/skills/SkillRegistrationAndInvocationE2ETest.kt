@@ -23,6 +23,11 @@ import java.util.concurrent.ConcurrentHashMap
  * 4. Running a task that invokes the skill
  * 5. Capturing the GENERATE_DID_EXECUTE event to verify the skill was called
  * 6. Validating that the actionDescription.toolCall is skill-related
+ *
+ * The test follows the pattern specified in the problem statement:
+ * - Startup: agent.run(task) with "Use skill.debug.scraping to scrape https://agentskills.io/specification"
+ * - Verification: Inject AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE event listener
+ * - Assertion: Ensure actionDescription.toolCall is skill-related
  */
 @Tag("E2ETest")
 @Tag("skills")
@@ -125,12 +130,21 @@ class SkillRegistrationAndInvocationE2ETest {
         assertTrue(actionDescriptions.isNotEmpty(), "At least one ActionDescription should be present")
         
         // Step 8: Verify that at least one actionDescription contains a skill-related toolCall
-        val hasSkillToolCall = actionDescriptions.any { actionDescription ->
+        val skillRelatedToolCalls = actionDescriptions.mapNotNull { actionDescription ->
             val toolCall = actionDescription.toolCall
-            toolCall != null && isSkillRelatedToolCall(toolCall)
+            if (toolCall != null && isSkillRelatedToolCall(toolCall)) toolCall else null
         }
         
-        assertTrue(hasSkillToolCall, "At least one ActionDescription should have a skill-related toolCall")
+        assertTrue(skillRelatedToolCalls.isNotEmpty(), 
+            "At least one ActionDescription should have a skill-related toolCall. " +
+            "Found ${actionDescriptions.size} ActionDescriptions, " +
+            "but none had skill-related toolCalls.")
+        
+        // Additional verification: ensure the toolCall has the expected domain
+        val hasCorrectDomain = skillRelatedToolCalls.any { it.domain.startsWith("skill") }
+        assertTrue(hasCorrectDomain, 
+            "At least one skill toolCall should have domain starting with 'skill'. " +
+            "Found domains: ${skillRelatedToolCalls.map { it.domain }}")
     }
 
     /**
