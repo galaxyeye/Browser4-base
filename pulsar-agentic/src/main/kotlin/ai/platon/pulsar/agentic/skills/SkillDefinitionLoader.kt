@@ -258,7 +258,10 @@ class SkillDefinitionLoader {
         yamlMetadata: Map<String, Any>
     ): SkillDefinition {
         // Extract metadata from YAML
-        val skillId = yamlMetadata["skill_id"] as? String ?: ""
+        // Support both 'skill_id' and 'name' for skillId (fallback to name if skill_id not present)
+        val skillId = (yamlMetadata["skill_id"] as? String) 
+            ?: (yamlMetadata["name"] as? String) 
+            ?: ""
         val name = yamlMetadata["name"] as? String ?: ""
         val version = yamlMetadata["version"] as? String ?: "1.0.0"
         val author = yamlMetadata["author"] as? String ?: ""
@@ -279,6 +282,11 @@ class SkillDefinitionLoader {
 
         // Parse remaining sections from markdown (description, parameters, examples)
         val markdownSections = parseMarkdownSections(content)
+        
+        // Description can come from YAML frontmatter or markdown section
+        val description = (yamlMetadata["description"] as? String)
+            ?: (markdownSections["description"]?.toString())
+            ?: ""
 
         return SkillDefinition(
             skillId = skillId,
@@ -286,7 +294,7 @@ class SkillDefinitionLoader {
             version = version,
             author = author,
             tags = tags,
-            description = markdownSections["description"]?.toString() ?: "",
+            description = description,
             dependencies = dependencies,
             parameters = markdownSections["parameters"] as? Map<String, SkillDefinition.ParameterInfo> ?: emptyMap(),
             examples = markdownSections["examples"] as? List<String> ?: emptyList()
@@ -641,7 +649,7 @@ class SkillDefinitionLoader {
         val defaultValue = defaultValueRaw
             .removeSurrounding("`")
             .trim()
-            .takeIf { it.isNotBlank() && it.lowercase() != "none" && it != "-" }
+            .takeIf { it.isNotBlank() && it.lowercase() != "none" }
 
         val description = descriptionRaw.removeSurrounding("`").trim()
 
