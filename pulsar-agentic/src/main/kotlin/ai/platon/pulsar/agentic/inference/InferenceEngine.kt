@@ -177,6 +177,10 @@ class InferenceEngine(
      *   - inputTokenCount, outputTokenCount, totalTokenCount, inferenceTimeMillis
      */
     suspend fun extract(params: ExtractParams): ObjectNode {
+        EventBus.emit("InferenceEngine.extract.willExecute", mapOf(
+            "params" to params
+        ))
+
         val messages = InferenceMessageBuilder.buildExtractPrompt(params)
 
         // 1) Extraction call -----------------------------------------------------------------
@@ -286,13 +290,32 @@ class InferenceEngine(
             put("inferenceTimeMillis", totalInferenceTimeMillis)
         }
 
+        EventBus.emit("InferenceEngine.extract.didExecute", mapOf(
+            "params" to params,
+            "result" to result,
+            "extractedNode" to extractedNode,
+            "metaNode" to metaNode
+        ))
+
         return result
     }
 
     suspend fun summarize(instruction: String?, textContent: String): String {
+        EventBus.emit("InferenceEngine.summarize.willExecute", mapOf(
+            "instruction" to instruction,
+            "textContentLength" to textContent.length
+        ))
+
         val messages = InferenceMessageBuilder.buildSummaryPrompt(instruction, textContent)
 
         val response = cta.generateResponseRaw(messages)
+
+        EventBus.emit("InferenceEngine.summarize.didExecute", mapOf(
+            "instruction" to instruction,
+            "textContentLength" to textContent.length,
+            "result" to response.content,
+            "tokenUsage" to response.tokenUsage
+        ))
 
         // TODO: count token usage
 
