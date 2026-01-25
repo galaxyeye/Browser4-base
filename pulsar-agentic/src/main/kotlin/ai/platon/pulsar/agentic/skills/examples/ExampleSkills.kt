@@ -39,6 +39,14 @@ import org.slf4j.LoggerFactory
  */
 class WebScrapingSkill : AbstractSkill() {
     private val logger = LoggerFactory.getLogger(WebScrapingSkill::class.java)
+    
+    companion object {
+        /**
+         * Maximum number of characters to include in the extracted text to avoid overwhelming responses.
+         */
+        private const val MAX_TEXT_LENGTH = 5000
+    }
+    
     override val metadata = SkillMetadata(
         id = "web-scraping",
         name = "Web Scraping",
@@ -115,10 +123,11 @@ class WebScrapingSkill : AbstractSkill() {
         attributes: List<*>
     ): SkillResult {
         return try {
-            // Extract title using JavaScript
+            // Extract title using JavaScript - evaluate() returns the primitive value
             val title = driver.evaluate("document.title")?.toString() ?: ""
             
-            // Extract text content using JavaScript
+            // Extract text content using JavaScript - evaluateValue() serializes complex objects to JSON
+            // Using evaluateValue() for body.textContent ensures proper string serialization
             val text = driver.evaluateValue("document.body.textContent")?.toString() ?: ""
             
             // Build the extracted data map
@@ -127,7 +136,7 @@ class WebScrapingSkill : AbstractSkill() {
                 "selector" to selector,
                 "attributes" to attributes,
                 "title" to title,
-                "text" to text.take(5000) // Limit text length to avoid overwhelming response
+                "text" to text.take(MAX_TEXT_LENGTH)
             )
             
             logger.info("Successfully extracted data from {} using JavaScript", url)
@@ -166,7 +175,7 @@ class WebScrapingSkill : AbstractSkill() {
                 "selector" to selector,
                 "attributes" to attributes,
                 "title" to title,
-                "text" to text.take(5000)
+                "text" to text.take(MAX_TEXT_LENGTH)
             )
             
             logger.info("Successfully extracted data from {} using PulsarSession", url)
