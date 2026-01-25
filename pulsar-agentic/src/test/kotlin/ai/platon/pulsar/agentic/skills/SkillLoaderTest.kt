@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Tests for SkillLoader and SkillComposer functionality.
@@ -360,10 +361,11 @@ class SkillComposerTest {
     }
 
     class CountingSkill(private val skillId: String) : AbstractSkill() {
-        var executionCount = 0
+        private val executionCountAtomic = AtomicInteger(0)
+        val executionCount: Int get() = executionCountAtomic.get()
         override val metadata = SkillMetadata(id = skillId, name = "Counting $skillId", version = "1.0.0")
         override suspend fun execute(context: SkillContext, params: Map<String, Any>): SkillResult {
-            executionCount++
+            executionCountAtomic.incrementAndGet()
             return SkillResult.success(message = "Executed $skillId")
         }
     }
