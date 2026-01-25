@@ -88,7 +88,7 @@ class SkillRegistrationAndInvocationE2ETest {
         assertTrue(registry.contains("web-scraping"), "Skill should be registered")
         
         // Step 2: Wire skill tools to CustomToolRegistry
-        val skillDomain = "skill.debug.scraping"
+        val skillDomain = "skill"
         val customRegistry = CustomToolRegistry.instance
         if (!customRegistry.contains(skillDomain)) {
             customRegistry.register(SkillToolExecutor(registry))
