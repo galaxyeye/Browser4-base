@@ -153,11 +153,6 @@
         </dependency>
 
         <dependency>
-            <groupId>ai.platon.pulsar</groupId>
-            <artifactId>pulsar-it-tests</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
         </dependency>
