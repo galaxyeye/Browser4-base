@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic.observability
 
 import ai.platon.pulsar.agentic.event.AgenticEvents
-import ai.platon.pulsar.common.event.DangerousEventBus
+import ai.platon.pulsar.common.event.EventBus
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import java.util.concurrent.ConcurrentHashMap
@@ -21,7 +21,7 @@ class EventBusObservabilityTest {
         fun setupEventHandlers() {
             // Register event handlers using centralized event definitions
             AgenticEvents.getAllEventTypes().forEach { eventType ->
-                DangerousEventBus.register(eventType) { payload ->
+                EventBus.register(eventType) { payload ->
                     val map = payload as? Map<String, Any?> ?: return@register null
                     capturedEvents.computeIfAbsent(eventType) { mutableListOf() }.add(map)
                     payload
@@ -34,7 +34,7 @@ class EventBusObservabilityTest {
         fun cleanup() {
             // Unregister all event handlers using centralized event definitions
             AgenticEvents.getAllEventTypes().forEach { eventType ->
-                DangerousEventBus.unregister(eventType)
+                EventBus.unregister(eventType)
             }
         }
     }
@@ -50,14 +50,14 @@ class EventBusObservabilityTest {
         var handlerCalled = false
         var receivedPayload: Map<String, Any?>? = null
 
-        DangerousEventBus.register(testEventType) { payload ->
+        EventBus.register(testEventType) { payload ->
             handlerCalled = true
             receivedPayload = payload as? Map<String, Any?>
             payload
         }
 
         val testPayload = mapOf("key" to "value", "number" to 42)
-        DangerousEventBus.emit(testEventType, testPayload)
+        EventBus.emit(testEventType, testPayload)
 
         // Give event bus time to process
         Thread.sleep(100)
@@ -67,7 +67,7 @@ class EventBusObservabilityTest {
         assertEquals("value", receivedPayload?.get("key"))
         assertEquals(42, receivedPayload?.get("number"))
 
-        DangerousEventBus.unregister(testEventType)
+        EventBus.unregister(testEventType)
     }
 
     @Test
@@ -79,7 +79,7 @@ class EventBusObservabilityTest {
             "action" to "test action",
             "uuid" to "test-uuid"
         )
-        DangerousEventBus.emit(eventType, testPayload)
+        EventBus.emit(eventType, testPayload)
 
         // Give event bus time to process
         Thread.sleep(100)
@@ -98,12 +98,12 @@ class EventBusObservabilityTest {
 
         // Simulate observing
         val options = mapOf("instruction" to "find button")
-        DangerousEventBus.emit(willEventType, mapOf("options" to options, "uuid" to "test-uuid"))
+        EventBus.emit(willEventType, mapOf("options" to options, "uuid" to "test-uuid"))
 
         Thread.sleep(100)
 
         val results = listOf(mapOf("locator" to "1,123"))
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "options" to options,
             "uuid" to "test-uuid",
             "observeResults" to results
@@ -126,12 +126,12 @@ class EventBusObservabilityTest {
         val didEventType = AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE
 
         val action = mapOf("action" to "click button")
-        DangerousEventBus.emit(willEventType, mapOf("action" to action, "uuid" to "test-uuid"))
+        EventBus.emit(willEventType, mapOf("action" to action, "uuid" to "test-uuid"))
 
         Thread.sleep(100)
 
         val result = mapOf("success" to true)
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "action" to action,
             "uuid" to "test-uuid",
             "result" to result
@@ -156,12 +156,12 @@ class EventBusObservabilityTest {
         val didEventType = AgenticEvents.PerceptiveAgent.EXTRACT_DID_EXECUTE
 
         val options = mapOf("instruction" to "extract data")
-        DangerousEventBus.emit(willEventType, mapOf("options" to options, "uuid" to "test-uuid"))
+        EventBus.emit(willEventType, mapOf("options" to options, "uuid" to "test-uuid"))
 
         Thread.sleep(100)
 
         val result = mapOf("success" to true, "data" to mapOf("field" to "value"))
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "options" to options,
             "uuid" to "test-uuid",
             "result" to result
@@ -183,7 +183,7 @@ class EventBusObservabilityTest {
         val willEventType = AgenticEvents.PerceptiveAgent.SUMMARIZE_WILL_EXECUTE
         val didEventType = AgenticEvents.PerceptiveAgent.SUMMARIZE_DID_EXECUTE
 
-        DangerousEventBus.emit(willEventType, mapOf(
+        EventBus.emit(willEventType, mapOf(
             "instruction" to "summarize page",
             "selector" to null,
             "uuid" to "test-uuid"
@@ -191,7 +191,7 @@ class EventBusObservabilityTest {
 
         Thread.sleep(100)
 
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "instruction" to "summarize page",
             "selector" to null,
             "uuid" to "test-uuid",
@@ -218,7 +218,7 @@ class EventBusObservabilityTest {
         val context = mapOf("step" to 1)
         val messages = mapOf("content" to "test message")
 
-        DangerousEventBus.emit(willEventType, mapOf(
+        EventBus.emit(willEventType, mapOf(
             "context" to context,
             "messages" to messages
         ))
@@ -226,7 +226,7 @@ class EventBusObservabilityTest {
         Thread.sleep(100)
 
         val actionDescription = mapOf("method" to "click")
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "context" to context,
             "messages" to messages,
             "actionDescription" to actionDescription
@@ -249,12 +249,12 @@ class EventBusObservabilityTest {
         val didEventType = AgenticEvents.InferenceEngine.EXTRACT_DID_EXECUTE
 
         val params = mapOf("instruction" to "extract data", "schema" to emptyMap<String, Any>())
-        DangerousEventBus.emit(willEventType, mapOf("params" to params))
+        EventBus.emit(willEventType, mapOf("params" to params))
 
         Thread.sleep(100)
 
         val result = mapOf("field" to "value")
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "params" to params,
             "result" to result
         ))
@@ -275,14 +275,14 @@ class EventBusObservabilityTest {
         val willEventType = AgenticEvents.InferenceEngine.SUMMARIZE_WILL_EXECUTE
         val didEventType = AgenticEvents.InferenceEngine.SUMMARIZE_DID_EXECUTE
 
-        DangerousEventBus.emit(willEventType, mapOf(
+        EventBus.emit(willEventType, mapOf(
             "instruction" to "summarize",
             "textContentLength" to 1000
         ))
 
         Thread.sleep(100)
 
-        DangerousEventBus.emit(didEventType, mapOf(
+        EventBus.emit(didEventType, mapOf(
             "instruction" to "summarize",
             "textContentLength" to 1000,
             "result" to "Summary text",
@@ -305,7 +305,7 @@ class EventBusObservabilityTest {
     fun testEventHandlerCanModifyPayload() {
         val eventType = "test.modify.event"
 
-        DangerousEventBus.register(eventType) { payload ->
+        EventBus.register(eventType) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             // Handler can modify or enrich the payload
             val modified = map.toMutableMap()
@@ -314,11 +314,11 @@ class EventBusObservabilityTest {
         }
 
         val testPayload = mapOf("original" to "data")
-        DangerousEventBus.emit(eventType, testPayload)
+        EventBus.emit(eventType, testPayload)
 
         Thread.sleep(100)
 
-        DangerousEventBus.unregister(eventType)
+        EventBus.unregister(eventType)
     }
 
     @Test
@@ -327,18 +327,18 @@ class EventBusObservabilityTest {
         var handler1Called = false
         var handler2Called = false
 
-        val handler1 = DangerousEventBus.register(eventType) { payload ->
+        val handler1 = EventBus.register(eventType) { payload ->
             handler1Called = true
             payload
         }
 
         // Register a second handler by overwriting
-        DangerousEventBus.register(eventType) { payload ->
+        EventBus.register(eventType) { payload ->
             handler2Called = true
             payload
         }
 
-        DangerousEventBus.emit(eventType, mapOf("test" to "data"))
+        EventBus.emit(eventType, mapOf("test" to "data"))
 
         Thread.sleep(100)
 
@@ -346,7 +346,7 @@ class EventBusObservabilityTest {
         assertFalse(handler1Called, "First handler should not be called after overwrite")
         assertTrue(handler2Called, "Second handler should be called")
 
-        DangerousEventBus.unregister(eventType)
+        EventBus.unregister(eventType)
     }
 
     @Test
@@ -354,18 +354,18 @@ class EventBusObservabilityTest {
         val eventType = "test.null.payload"
         var handlerCalled = false
 
-        DangerousEventBus.register(eventType) { payload ->
+        EventBus.register(eventType) { payload ->
             handlerCalled = true
             null // Handler can return null
         }
 
-        DangerousEventBus.emit(eventType, mapOf<String, Any?>())
+        EventBus.emit(eventType, mapOf<String, Any?>())
 
         Thread.sleep(100)
 
         assertTrue(handlerCalled, "Handler should be called even with null return")
 
-        DangerousEventBus.unregister(eventType)
+        EventBus.unregister(eventType)
     }
 
     @Test
@@ -373,18 +373,18 @@ class EventBusObservabilityTest {
         val eventType = "test.unregister"
         var callCount = 0
 
-        DangerousEventBus.register(eventType) { payload ->
+        EventBus.register(eventType) { payload ->
             callCount++
             payload
         }
 
-        DangerousEventBus.emit(eventType, mapOf("test" to "1"))
+        EventBus.emit(eventType, mapOf("test" to "1"))
         Thread.sleep(100)
         assertEquals(1, callCount)
 
-        DangerousEventBus.unregister(eventType)
+        EventBus.unregister(eventType)
 
-        DangerousEventBus.emit(eventType, mapOf("test" to "2"))
+        EventBus.emit(eventType, mapOf("test" to "2"))
         Thread.sleep(100)
         // Count should still be 1 since handler was unregistered
         assertEquals(1, callCount)

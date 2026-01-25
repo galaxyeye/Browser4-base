@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  * This event bus allows registration of event handlers for specific event types and
  * emits events to the registered handlers asynchronously using coroutines.
  */
-object DangerousEventBus {
+object EventBus {
 
     private val generalEventHandlers = ConcurrentHashMap<String, GeneralEventHandler>()
 

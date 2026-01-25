@@ -122,6 +122,3 @@ object PulsarEventBus {
         return serverSideEventHandlersTL.get() ?: serverSideEventHandlers
     }
 }
-
-typealias EventBus = PulsarEventBus
-
