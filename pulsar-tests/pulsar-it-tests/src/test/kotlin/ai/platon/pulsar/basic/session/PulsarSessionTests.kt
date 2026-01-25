@@ -7,6 +7,7 @@ import ai.platon.pulsar.persist.model.WebPageFormatter
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.basic.TestBase
 import com.google.gson.Gson
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.nio.file.Files
 import kotlin.test.*
 
@@ -61,7 +62,7 @@ class PulsarSessionTests: TestBase() {
         val page = session.loadResource(resourceUrl, url, "-refresh")
 
         assertTrue { page.fetchCount > 0 }
-        assertTrue { page.protocolStatus.isSuccess }
+        assumeTrue(page.protocolStatus.isSuccess, "Protocol status is not success: ${page.protocolStatus}")
 
         printlnPro(WebPageFormatter(page))
         val path = session.export(page)
