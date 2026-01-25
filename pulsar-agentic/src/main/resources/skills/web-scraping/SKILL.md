@@ -14,7 +14,7 @@ dependencies: []
 
 ## Description
 
-Extract data from web pages using CSS selectors. This skill provides a powerful way to scrape content from websites by targeting specific elements using CSS selector patterns.
+Extract data from web pages using JavaScript and CSS selectors. This skill uses real browser automation to navigate to pages and extract content using JavaScript execution. It can extract webpage titles using `document.title` and body text using `document.body.textContent`, providing actual content from live web pages.
 
 ## Dependencies
 
@@ -109,10 +109,14 @@ Validates skill configuration and environment. Always returns true for this skil
 
 ## Implementation Notes
 
-- The current implementation provides simulated data for demonstration purposes
-- In production, this skill would integrate with a real web scraping engine
+- Uses JavaScript execution via WebDriver.evaluate() to extract real webpage content
+- Extracts document title using `document.title`
+- Extracts page text using `document.body.textContent`
+- Falls back to PulsarSession-based extraction if WebDriver is not directly available
+- Returns simulated data only if neither WebDriver nor PulsarSession is available in the skill context
 - Supports both synchronous and asynchronous execution patterns
 - Thread-safe and can be used in concurrent environments
+- Text content is limited to 5000 characters to avoid overwhelming responses
 
 ## See Also
 

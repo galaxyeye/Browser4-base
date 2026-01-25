@@ -2,6 +2,9 @@ package ai.platon.pulsar.agentic.skills.examples
 
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.skills.*
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
+import ai.platon.pulsar.skeleton.session.PulsarSession
+import org.slf4j.LoggerFactory
 
 /**
  * Example skill for web scraping operations.
@@ -12,6 +15,7 @@ import ai.platon.pulsar.agentic.skills.*
  * - Tool call specifications
  * - Lifecycle hooks
  * - Parameter validation
+ * - JavaScript-based content extraction using WebDriver
  *
  * ## Usage Example:
  * ```kotlin
@@ -34,6 +38,15 @@ import ai.platon.pulsar.agentic.skills.*
  * ```
  */
 class WebScrapingSkill : AbstractSkill() {
+    private val logger = LoggerFactory.getLogger(WebScrapingSkill::class.java)
+    
+    companion object {
+        /**
+         * Maximum number of characters to include in the extracted text to avoid overwhelming responses.
+         */
+        private const val MAX_TEXT_LENGTH = 5000
+    }
+    
     override val metadata = SkillMetadata(
         id = "web-scraping",
         name = "Web Scraping",
@@ -71,18 +84,110 @@ class WebScrapingSkill : AbstractSkill() {
 
         val attributes = params["attributes"] as? List<*> ?: listOf("text")
 
-        // Simulate web scraping operation
+        // Try to get WebDriver and PulsarSession from context for real scraping
+        val driver = context.getResource<WebDriver>("driver")
+        val session = context.getResource<PulsarSession>("session")
+
+        // If driver is available, perform real JavaScript-based extraction
+        if (driver != null) {
+            return executeWithDriver(driver, url, selector, attributes)
+        }
+
+        // If session is available but no driver, try to load page and get driver
+        if (session != null) {
+            return executeWithSession(session, url, selector, attributes)
+        }
+
+        // Fallback to simulated data if neither driver nor session is available
+        logger.warn("WebDriver and PulsarSession not available in context, returning simulated data")
         val extractedData = mapOf(
             "url" to url,
             "selector" to selector,
             "attributes" to attributes,
-            "data" to "Simulated extracted content from $url"
+            "data" to "Simulated extracted content from $url (no driver available)"
         )
 
         return SkillResult.success(
             data = extractedData,
-            message = "Successfully extracted data from $url"
+            message = "Successfully extracted data from $url (simulated)"
         )
+    }
+
+    /**
+     * Execute web scraping using an existing WebDriver with JavaScript.
+     */
+    private suspend fun executeWithDriver(
+        driver: WebDriver,
+        url: String,
+        selector: String,
+        attributes: List<*>
+    ): SkillResult {
+        return try {
+            // Extract title using JavaScript - evaluate() returns the primitive value
+            val title = driver.evaluate("document.title")?.toString() ?: ""
+            
+            // Extract text content using JavaScript - evaluateValue() serializes complex objects to JSON
+            // Using evaluateValue() for body.textContent ensures proper string serialization
+            val text = driver.evaluateValue("document.body.textContent")?.toString() ?: ""
+            
+            // Build the extracted data map
+            val extractedData = mutableMapOf<String, Any>(
+                "url" to url,
+                "selector" to selector,
+                "attributes" to attributes,
+                "title" to title,
+                "text" to text.take(MAX_TEXT_LENGTH)
+            )
+            
+            logger.info("Successfully extracted data from {} using JavaScript", url)
+            
+            SkillResult.success(
+                data = extractedData,
+                message = "Successfully extracted data from $url using JavaScript"
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to extract data from {} using JavaScript: {}", url, e.message)
+            SkillResult.failure("Failed to extract data: ${e.message}")
+        }
+    }
+
+    /**
+     * Execute web scraping by loading a page with PulsarSession and then using the driver.
+     */
+    private suspend fun executeWithSession(
+        session: PulsarSession,
+        url: String,
+        selector: String,
+        attributes: List<*>
+    ): SkillResult {
+        return try {
+            // Load the page
+            logger.info("Loading page {} using PulsarSession", url)
+            val page = session.load(url)
+            
+            // Parse the page to get the document
+            val doc = session.parse(page)
+            val title = doc.title
+            val text = doc.body.text()
+            
+            val extractedData = mapOf(
+                "url" to url,
+                "selector" to selector,
+                "attributes" to attributes,
+                "title" to title,
+                "text" to text.take(MAX_TEXT_LENGTH)
+            )
+            
+            logger.info("Successfully extracted data from {} using PulsarSession", url)
+            
+            SkillResult.success(
+                data = extractedData,
+                message = "Successfully extracted data from $url using PulsarSession"
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to load and extract data from {}: {}", url, e.message)
+            SkillResult.failure("Failed to load page: ${e.message}")
+        }
     }
 
     override suspend fun onBeforeExecute(context: SkillContext, params: Map<String, Any>): Boolean {
