@@ -1,9 +1,6 @@
 package ai.platon.pulsar.agentic.skills
 
 import ai.platon.pulsar.agentic.common.AgentPaths
-import ai.platon.pulsar.agentic.skills.examples.DataValidationSkill
-import ai.platon.pulsar.agentic.skills.examples.FormFillingSkill
-import ai.platon.pulsar.agentic.skills.examples.WebScrapingSkill
 import ai.platon.pulsar.common.getLogger
 import jakarta.annotation.PostConstruct
 import kotlinx.coroutines.runBlocking
@@ -14,8 +11,8 @@ import org.springframework.stereotype.Component
  * Bootstrap component for automatically loading skills on system startup.
  *
  * This component is responsible for:
- * 1. Loading example skills (WebScrapingSkill, FormFillingSkill, DataValidationSkill)
- * 2. Loading skills from AgentPaths.SKILLS_DIR directory
+ * 1. Loading built-in skills from classpath resources under `skills/ * /SKILL.md`
+ * 2. Optionally loading additional/override skills from `AgentPaths.SKILLS_DIR`
  *
  * The component is automatically initialized by Spring on application startup
  * using the @PostConstruct annotation.
@@ -35,44 +32,52 @@ class SkillBootstrap {
     @PostConstruct
     fun initialize() = runBlocking {
         logger.info("Initializing skills system...")
-        
+
         val context = SkillContext(sessionId = "system-bootstrap")
-        
+
         // Clear any existing skills
         registry.clear(context)
-        
-        // Load example skills
-        loadExampleSkills(context)
-        
-        // Load skills from directory
+
+        // Load skills from classpath resources first (built-in skills)
+        loadSkillsFromResources(context)
+
+        // Optionally load skills from directory (user-provided/overrides)
         loadSkillsFromDirectory(context)
-        
+
         logger.info("✓ Skills system initialized successfully. Total skills: {}", registry.size())
     }
 
     /**
-     * Load example skills from code.
+     * Load skills shipped with the application from classpath resources.
      */
-    private suspend fun loadExampleSkills(context: SkillContext) {
-        logger.info("Loading example skills...")
-        
-        val exampleSkills = listOf(
-            WebScrapingSkill(),
-            FormFillingSkill(),
-            DataValidationSkill()
-        )
-        
-        val results = loader.loadAll(exampleSkills, context)
-        
+    private suspend fun loadSkillsFromResources(context: SkillContext) {
+        logger.info("Loading skills from classpath resources: skills/")
+
+        val definitions = definitionLoader.loadFromResources("skills")
+        if (definitions.isEmpty()) {
+            logger.info("No skill definitions found in classpath resources: skills/")
+            return
+        }
+
+        val skills = definitions
+            .sortedBy { it.skillId }
+            .map { DefinitionBackedSkill(it, DefinitionBackedSkill.Origin.Classpath("skills/${it.skillId}")) }
+
+        val results = loader.loadAll(skills, context)
+
         val successCount = results.values.count { it }
         val failureCount = results.size - successCount
-        
-        logger.info("✓ Loaded {} example skills ({} succeeded, {} failed)", 
-            results.size, successCount, failureCount)
-        
+
+        logger.info(
+            "✓ Loaded {} resource skills ({} succeeded, {} failed)",
+            results.size,
+            successCount,
+            failureCount
+        )
+
         if (failureCount > 0) {
             val failed = results.filterValues { !it }.keys
-            logger.warn("Failed to load example skills: {}", failed.joinToString())
+            logger.warn("Failed to load resource skills: {}", failed.joinToString())
         }
     }
 
@@ -83,25 +88,35 @@ class SkillBootstrap {
         try {
             val skillsDir = AgentPaths.SKILLS_DIR
             logger.info("Loading skills from directory: {}", skillsDir)
-            
+
             val definitions = definitionLoader.loadFromDirectory(skillsDir)
-            
+
             if (definitions.isEmpty()) {
                 logger.info("No skill definitions found in directory: {}", skillsDir)
                 return
             }
-            
+
             logger.info("Found {} skill definitions in directory", definitions.size)
-            
-            // For now, we just log the definitions
-            // In a full implementation, we would need to instantiate skills from definitions
-            // This would require a skill factory or dynamic loading mechanism
-            definitions.forEach { definition ->
-                logger.info("  - Skill: {} ({})", definition.name, definition.skillId)
+
+            val skills = definitions
+                .sortedBy { it.skillId }
+                .map { DefinitionBackedSkill(it, DefinitionBackedSkill.Origin.FileSystem(skillsDir.resolve(it.skillId))) }
+
+            val results = loader.loadAll(skills, context)
+            val successCount = results.values.count { it }
+            val failureCount = results.size - successCount
+
+            logger.info(
+                "✓ Loaded {} directory skills ({} succeeded, {} failed)",
+                results.size,
+                successCount,
+                failureCount
+            )
+
+            if (failureCount > 0) {
+                val failed = results.filterValues { !it }.keys
+                logger.warn("Failed to load directory skills: {}", failed.joinToString())
             }
-            
-            logger.info("Note: Directory-based skill loading requires skill factory implementation")
-            
         } catch (e: NoClassDefFoundError) {
             logger.warn("AgentPaths not available: {}", e.message)
         } catch (e: ExceptionInInitializerError) {

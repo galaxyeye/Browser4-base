@@ -47,7 +47,7 @@ class CustomToolRegistry private constructor() {
     private val logger = getLogger(this)
 
     private val executors = ConcurrentHashMap<String, ToolExecutor>()
-    private val toolSpec = ConcurrentHashMap<String, List<ToolSpec>>()
+    private val toolSpec = ConcurrentHashMap<String, MutableList<ToolSpec>>()
 
     companion object {
         /**
@@ -80,7 +80,7 @@ class CustomToolRegistry private constructor() {
 
         val specs = (executor as? ToolCallSpecificationProvider)?.getToolCallSpecifications().orEmpty()
         if (specs.isNotEmpty()) {
-            toolSpec[domain] = specs
+            toolSpec.computeIfAbsent(domain) { mutableListOf() }.addAll(specs)
         }
 
         logger.info("✓ Registered custom tool executor for domain: {}", domain)
@@ -94,7 +94,7 @@ class CustomToolRegistry private constructor() {
     fun register(executor: ToolExecutor, specs: List<ToolSpec>) {
         register(executor)
         if (specs.isNotEmpty()) {
-            toolSpec[executor.domain] = specs
+            toolSpec.computeIfAbsent(executor.domain) { mutableListOf() }.addAll(specs)
         }
     }
 
@@ -156,7 +156,7 @@ class CustomToolRegistry private constructor() {
      * Get prompt-visible tool-call specs for a given domain.
      */
     fun getToolCallSpecifications(domain: String): List<ToolSpec> {
-        return toolSpec[domain].orEmpty()
+        return toolSpec[domain]?.toList().orEmpty()
     }
 
     /**

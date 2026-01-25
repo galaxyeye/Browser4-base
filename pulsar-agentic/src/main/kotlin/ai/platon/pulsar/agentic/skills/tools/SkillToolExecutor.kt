@@ -25,7 +25,29 @@ class SkillToolExecutor(
     override val targetClass: KClass<*> = SkillToolTarget::class
 
     init {
-        // A stable entry point for the LLM.
+        // 1) Discovery surface
+        toolSpec["list"] = ToolSpec(
+            domain = domain,
+            method = "list",
+            arguments = listOf(
+                ToolSpec.Arg("maxDescriptionChars", "Int", "512")
+            ),
+            returnType = "List<SkillSummary>",
+            description = "List registered skills (summary only, for discovery/matching)"
+        )
+
+        // 2) Activation surface
+        toolSpec["activate"] = ToolSpec(
+            domain = domain,
+            method = "activate",
+            arguments = listOf(
+                ToolSpec.Arg("id", "String")
+            ),
+            returnType = "SkillActivation",
+            description = "Load full SKILL.md (and resource pointers) for a skill (activation)"
+        )
+
+        // 3) Stable execution entry point
         toolSpec["run"] = ToolSpec(
             domain = domain,
             method = "run",
@@ -39,7 +61,7 @@ class SkillToolExecutor(
     }
 
     override fun getToolCallSpecifications(): List<ToolSpec> {
-        // Expose: (1) the stable skill.run entry point; (2) optional richer specs provided by skills.
+        // Expose: (1) stable skill.* entry points; (2) optional richer specs provided by skills.
         // Skills may use domains like "skill.debug.scraping"; those should be registered separately if desired.
         return buildList {
             addAll(toolSpec.values)
@@ -58,6 +80,17 @@ class SkillToolExecutor(
         require(target is SkillToolTarget) { "Target must be a SkillToolTarget" }
 
         return when (functionName) {
+            "list" -> {
+                val maxChars = (args["maxDescriptionChars"] as? Number)?.toInt() ?: 512
+                registry.listSkillSummaries(maxDescriptionChars = maxChars)
+            }
+
+            "activate" -> {
+                validateArgs(args, allowed = setOf("id"), required = setOf("id"), functionName)
+                val id = paramString(args, "id", functionName)!!
+                registry.activateSkill(id)
+            }
+
             "run" -> {
                 validateArgs(args, allowed = setOf("id", "params"), required = setOf("id"), functionName)
                 val id = paramString(args, "id", functionName)!!

@@ -1,13 +1,12 @@
 ---
-skill_id: data-validation
-name: Data Validation
-version: 1.0.0
-author: Browser4
-tags:
-  - validation
-  - data
-  - quality
-dependencies: []
+name: data-validation
+description: Validates data against common and custom rules (required fields, formats, ranges). Use when checking data quality, input validation, or enforcing schemas and constraints.
+metadata:
+  displayName: Data Validation
+  version: "1.0.0"
+  author: Browser4
+  tags: "validation, data, quality"
+  dependencies: ""
 ---
 
 # Data Validation Skill
@@ -116,11 +115,11 @@ class ExtendedDataValidationSkill : DataValidationSkill() {
     override suspend fun execute(context: SkillContext, params: Map<String, Any>): SkillResult {
         // Handle custom rules first
         val rules = params["rules"] as? List<String> ?: emptyList()
-        
+
         if (rules.contains("custom-rule")) {
             // Implement custom validation
         }
-        
+
         // Delegate to parent for standard rules
         return super.execute(context, params)
     }

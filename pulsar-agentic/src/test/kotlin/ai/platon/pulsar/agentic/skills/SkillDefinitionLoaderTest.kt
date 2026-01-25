@@ -37,13 +37,13 @@ class SkillDefinitionLoaderTest {
         assertNotNull(webScrapingSkill, "Web scraping skill should be found")
         webScrapingSkill?.let {
             assertEquals("web-scraping", it.skillId)
-            assertEquals("Web Scraping", it.name)
+            assertEquals("web-scraping", it.name)
             assertEquals("1.0.0", it.version)
             assertEquals("Browser4", it.author)
+            assertTrue(it.description.isNotBlank())
             assertTrue(it.tags.contains("scraping"))
             assertTrue(it.tags.contains("extraction"))
             assertTrue(it.tags.contains("web"))
-            assertTrue(it.description.isNotBlank())
             assertTrue(it.dependencies.isEmpty())
         }
     }
@@ -58,7 +58,7 @@ class SkillDefinitionLoaderTest {
         assertNotNull(formFillingSkill, "Form filling skill should be found")
         formFillingSkill?.let {
             assertEquals("form-filling", it.skillId)
-            assertEquals("Form Filling", it.name)
+            assertEquals("form-filling", it.name)
             assertTrue(it.dependencies.contains("web-scraping"), "Should have web-scraping dependency")
         }
     }
@@ -165,24 +165,24 @@ class SkillDefinitionLoaderTest {
         Files.createDirectories(skillDir)
 
         val skillMd = """
+            ---
+            name: test-skill
+            description: This is a test skill for unit testing.
+            license: Apache-2.0
+            compatibility: Designed for unit tests
+            metadata:
+              author: Test Author
+              version: "2.0.0"
+            tags:
+              - test
+              - example
+            dependencies:
+              - web-scraping
+              - data-validation
+            allowed-tools: Bash(git:*) Read
+            ---
+
             # Test Skill
-
-            ## Metadata
-
-            - **Skill ID**: `test-skill`
-            - **Name**: Test Skill
-            - **Version**: 2.0.0
-            - **Author**: Test Author
-            - **Tags**: `test`, `example`
-
-            ## Description
-
-            This is a test skill for unit testing.
-
-            ## Dependencies
-
-            - `web-scraping`
-            - `data-validation`
 
             ## Parameters
 
@@ -213,7 +213,7 @@ class SkillDefinitionLoaderTest {
 
         val testSkill = definitions[0]
         assertEquals("test-skill", testSkill.skillId)
-        assertEquals("Test Skill", testSkill.name)
+        assertEquals("test-skill", testSkill.name)
         assertEquals("2.0.0", testSkill.version)
         assertEquals("Test Author", testSkill.author)
         assertTrue(testSkill.tags.contains("test"))
@@ -221,6 +221,13 @@ class SkillDefinitionLoaderTest {
         assertEquals(2, testSkill.dependencies.size)
         assertTrue(testSkill.dependencies.contains("web-scraping"))
         assertTrue(testSkill.dependencies.contains("data-validation"))
+        assertEquals("Apache-2.0", testSkill.license)
+        assertEquals("Designed for unit tests", testSkill.compatibility)
+        assertEquals("Test Author", testSkill.metadata["author"])
+        assertEquals("2.0.0", testSkill.metadata["version"])
+        assertTrue(testSkill.allowedTools.contains("Bash(git:*)"))
+        assertTrue(testSkill.allowedTools.contains("Read"))
+
         assertEquals(2, testSkill.parameters.size)
         assertTrue(testSkill.parameters.containsKey("testParam"))
         assertTrue(testSkill.parameters.containsKey("optionalParam"))

@@ -1,13 +1,16 @@
 package ai.platon.pulsar.agentic.skills
 
 import ai.platon.pulsar.agentic.context.DefaultClassPathXmlAgenticContext
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Integration test for SkillBootstrap auto-loading in Spring context.
- * 
- * This test verifies that skills are automatically loaded when the AgenticContext is created.
+ *
+ * This test verifies that skills are automatically loaded from classpath resources
+ * (src/main/resources/skills/\*) when the AgenticContext is created.
  */
 class SkillBootstrapIntegrationTest {
 
@@ -25,46 +28,39 @@ class SkillBootstrapIntegrationTest {
     }
 
     @Test
-    fun `test skills are auto-loaded in Spring context`() {
-        // Get the registry (singleton)
+    fun skillsAreAutoLoadedInSpringContext() {
         val registry = SkillRegistry.instance
-        
-        // Verify that example skills are loaded
-        // Note: The actual count may vary if AgentPaths is available and loads more skills
-        assertTrue(registry.size() >= 3, "At least 3 example skills should be auto-loaded")
-        
-        // Verify specific example skills
-        assertTrue(registry.contains("web-scraping"), "WebScrapingSkill should be auto-loaded")
-        assertTrue(registry.contains("form-filling"), "FormFillingSkill should be auto-loaded") 
-        assertTrue(registry.contains("data-validation"), "DataValidationSkill should be auto-loaded")
+
+        // At least the built-in resource skills should be present.
+        assertTrue(registry.size() >= 3, "At least 3 resource skills should be auto-loaded")
+
+        // Verify specific resource skills (defined by resources/skills/*/SKILL.md)
+        assertTrue(registry.contains("web-scraping"), "Skill 'web-scraping' should be auto-loaded")
+        assertTrue(registry.contains("form-filling"), "Skill 'form-filling' should be auto-loaded")
+        assertTrue(registry.contains("data-validation"), "Skill 'data-validation' should be auto-loaded")
     }
 
     @Test
-    fun `test skills are accessible after context creation`() {
+    fun skillsAreAccessibleAfterContextCreation() {
         val registry = SkillRegistry.instance
-        
-        // Get a skill
+
         val webScrapingSkill = registry.get("web-scraping")
-        Assertions.assertNotNull(webScrapingSkill)
-        
-        // Verify metadata
+        assertNotNull(webScrapingSkill)
+
         assertEquals("Web Scraping", webScrapingSkill!!.metadata.name)
         assertEquals("1.0.0", webScrapingSkill.metadata.version)
     }
 
     @Test
-    fun `test skill dependencies are satisfied`() {
+    fun skillDependenciesAreSatisfied() {
         val registry = SkillRegistry.instance
-        
-        // FormFillingSkill depends on WebScrapingSkill
+
         val formFillingSkill = registry.get("form-filling")
-        Assertions.assertNotNull(formFillingSkill)
-        
-        // Verify the dependency is satisfied
+        assertNotNull(formFillingSkill)
+
         val dependencies = formFillingSkill!!.metadata.dependencies
         assertTrue(dependencies.contains("web-scraping"))
-        
-        // Verify the dependency is actually loaded
+
         dependencies.forEach { depId ->
             assertTrue(registry.contains(depId), "Dependency $depId should be loaded")
         }

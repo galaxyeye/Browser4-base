@@ -1,9 +1,11 @@
 package ai.platon.pulsar.agentic.skills
 
 import ai.platon.pulsar.common.getLogger
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Registry for managing skills.
@@ -37,6 +39,31 @@ class SkillRegistry private constructor() {
     private val logger = getLogger(this)
     private val skills = ConcurrentHashMap<String, Skill>()
     private val mutex = Mutex()
+
+    /**
+     * A lightweight discovery payload for skills, intended to be kept small
+     * (~100 tokens) for progressive disclosure.
+     */
+    data class SkillSummary(
+        val id: String,
+        val name: String,
+        val description: String,
+        val version: String,
+        val tags: Set<String> = emptySet()
+    )
+
+    /**
+     * Activation payload containing the full SKILL.md content and resource pointers.
+     */
+    data class SkillActivation(
+        val id: String,
+        val name: String,
+        val version: String,
+        val skillMd: String,
+        val scriptsPath: String? = null,
+        val referencesPath: String? = null,
+        val assetsPath: String? = null
+    )
 
     companion object {
         /**
@@ -253,5 +280,73 @@ class SkillRegistry private constructor() {
      */
     fun getAllMetadata(): List<SkillMetadata> {
         return skills.values.map { it.metadata }
+    }
+
+    /**
+     * List all skills in discovery mode (summary only).
+     *
+     * This is intended for "Discovery" and "Matching" stages: the LLM should use
+     * these short summaries to decide which skill to activate.
+     */
+    fun listSkillSummaries(maxDescriptionChars: Int = 512): List<SkillSummary> {
+        return getAll()
+            .sortedBy { it.metadata.id }
+            .map { skill ->
+                SkillSummary(
+                    id = skill.metadata.id,
+                    name = skill.metadata.name,
+                    description = skill.metadata.description.take(maxDescriptionChars),
+                    version = skill.metadata.version,
+                    tags = skill.metadata.tags
+                )
+            }
+    }
+
+    /**
+     * Activate a skill by returning the full SKILL.md content (and resource pointers) to be injected
+     * into the LLM context.
+     *
+     * For resource-backed skills, this reads `SKILL.md` from the resolved skill directory.
+     */
+    fun activateSkill(skillId: String): SkillActivation {
+        val skill = get(skillId) ?: throw IllegalArgumentException("Skill '$skillId' is not registered")
+
+        val definition = when (skill) {
+            is DefinitionBackedSkill -> skill.definition
+            else -> null
+        }
+
+        val skillMd = definition?.let { loadSkillMdSafely(it) }
+            ?: "" // Non-resource skills may not have SKILL.md
+
+        return SkillActivation(
+            id = skill.metadata.id,
+            name = skill.metadata.name,
+            version = skill.metadata.version,
+            skillMd = skillMd,
+            scriptsPath = definition?.scriptsPath?.toString(),
+            referencesPath = definition?.referencesPath?.toString(),
+            assetsPath = definition?.assetsPath?.toString()
+        )
+    }
+
+    private fun loadSkillMdSafely(definition: SkillDefinition): String {
+        // We store only paths in SkillDefinition; so for filesystem-expanded resources and jar-extracted
+        // temp dirs this is safe to read. If anything goes wrong, we degrade gracefully.
+        return try {
+            val skillDir: Path? = definition.scriptsPath?.parent
+                ?: definition.referencesPath?.parent
+                ?: definition.assetsPath?.parent
+
+            val skillMdPath = skillDir?.resolve("SKILL.md")
+            if (skillMdPath != null && Files.exists(skillMdPath)) {
+                Files.readString(skillMdPath)
+            } else {
+                ""
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to load SKILL.md for {}: {}", definition.skillId, e.message)
+            ""
+        }
     }
 }

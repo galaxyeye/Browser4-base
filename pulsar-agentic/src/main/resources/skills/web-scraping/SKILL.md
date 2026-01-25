@@ -1,13 +1,12 @@
 ---
-skill_id: web-scraping
-name: Web Scraping
-version: 1.0.0
-author: Browser4
-tags:
-  - scraping
-  - extraction
-  - web
-dependencies: []
+name: web-scraping
+description: Extracts data from web pages using browser automation and CSS/JavaScript selectors. Use when you need to scrape titles/text/structured fields from live web pages or when the user mentions scraping, extraction, or selectors.
+metadata:
+  displayName: Web Scraping
+  version: "1.0.0"
+  author: Browser4
+  tags: "scraping, extraction, web"
+  dependencies: ""
 ---
 
 # Web Scraping Skill

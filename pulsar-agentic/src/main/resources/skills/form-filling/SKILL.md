@@ -1,14 +1,12 @@
 ---
-skill_id: form-filling
-name: Form Filling
-version: 1.0.0
-author: Browser4
-tags:
-  - forms
-  - automation
-  - input
-dependencies:
-  - web-scraping
+name: form-filling
+description: Automatically fills web forms using provided field data and can optionally submit the form. Use when automating form input, testing forms, or submitting structured data to websites.
+metadata:
+  displayName: Form Filling
+  version: "1.0.0"
+  author: Browser4
+  tags: "forms, automation, input"
+  dependencies: "web-scraping"
 ---
 
 # Form Filling Skill

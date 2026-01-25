@@ -1,9 +1,9 @@
 package ai.platon.pulsar.agentic.skills
 
 import ai.platon.pulsar.common.getLogger
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import org.yaml.snakeyaml.Yaml
+import java.net.URI
+import java.nio.file.*
 
 /**
  * Metadata parsed from a SKILL.md file.
@@ -30,7 +30,14 @@ data class SkillDefinition(
     val examples: List<String>,
     val scriptsPath: Path? = null,
     val referencesPath: Path? = null,
-    val assetsPath: Path? = null
+    val assetsPath: Path? = null,
+    val allowedTools: Set<String> = emptySet(),
+    /** Optional license identifier or bundled license reference (Agent Skills spec). */
+    val license: String? = null,
+    /** Optional environment requirements / compatibility notes (Agent Skills spec). */
+    val compatibility: String? = null,
+    /** Arbitrary string metadata mapping (Agent Skills spec). */
+    val metadata: Map<String, String> = emptyMap(),
 ) {
     /**
      * Information about a skill parameter.
@@ -113,18 +120,97 @@ class SkillDefinitionLoader {
     /**
      * Load skill definitions from classpath resources.
      *
+     * Supports both:
+     * - exploded resources on filesystem (dev/test)
+     * - resources packaged in a JAR (prod)
+     *
      * @param resourcePath Resource path (e.g., "skills")
      * @return List of skill definitions found
      */
     fun loadFromResources(resourcePath: String): List<SkillDefinition> {
         val resourceUrl = javaClass.classLoader.getResource(resourcePath)
         if (resourceUrl == null) {
-            logger.warn("Resource path not found: $resourcePath")
+            logger.warn("Resource path not found: {}", resourcePath)
             return emptyList()
         }
 
-        val skillsPath = Paths.get(resourceUrl.toURI())
-        return loadFromDirectory(skillsPath)
+        return try {
+            when (resourceUrl.protocol) {
+                "file" -> {
+                    val skillsPath = Paths.get(resourceUrl.toURI())
+                    loadFromDirectory(skillsPath)
+                }
+
+                "jar" -> {
+                    loadFromJarResources(resourcePath, resourceUrl.toURI())
+                }
+
+                else -> {
+                    // Best-effort fallback: try treating as URI path.
+                    logger.warn("Unsupported resource protocol '{}' for '{}', falling back to URI path", resourceUrl.protocol, resourcePath)
+                    val skillsPath = Paths.get(resourceUrl.toURI())
+                    loadFromDirectory(skillsPath)
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to load skills from resources '{}': {}", resourcePath, e.message)
+            emptyList()
+        }
+    }
+
+    private fun loadFromJarResources(resourcePath: String, jarUri: URI): List<SkillDefinition> {
+        // jarUri looks like: jar:file:/path/app.jar!/skills
+        val tmpRoot = Files.createTempDirectory("pulsar-skills-")
+        tmpRoot.toFile().deleteOnExit()
+
+        val fs = try {
+            FileSystems.getFileSystem(jarUri)
+        } catch (_: FileSystemNotFoundException) {
+            FileSystems.newFileSystem(jarUri, emptyMap<String, Any>())
+        }
+
+        fs.use { jarFs ->
+            val rootInJar = jarFs.getPath("/", resourcePath)
+            if (!Files.exists(rootInJar)) {
+                logger.warn("Resource path not found in jar: {}", resourcePath)
+                return emptyList()
+            }
+
+            // Walk for SKILL.md files; each skill is represented by '{}/*/SKILL.md'.
+            val skillMdPaths = Files.walk(rootInJar)
+                .filter { Files.isRegularFile(it) && it.fileName.toString().equals("SKILL.md", ignoreCase = false) }
+                .toList()
+
+            if (skillMdPaths.isEmpty()) {
+                return emptyList()
+            }
+
+            for (skillMd in skillMdPaths) {
+                // skillDir = .../skills/<skill-id>
+                val skillDir = skillMd.parent
+                val skillId = skillDir.fileName.toString()
+                val outDir = tmpRoot.resolve(skillId)
+                copyDirectoryRecursively(skillDir, outDir)
+            }
+        }
+
+        // Parse from extracted temp directory.
+        return loadFromDirectory(tmpRoot)
+    }
+
+    private fun copyDirectoryRecursively(from: Path, to: Path) {
+        Files.walk(from).use { stream ->
+            stream.forEach { src ->
+                val rel = from.relativize(src)
+                val dst = to.resolve(rel.toString())
+                if (Files.isDirectory(src)) {
+                    Files.createDirectories(dst)
+                } else {
+                    Files.createDirectories(dst.parent)
+                    Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING)
+                }
+            }
+        }
     }
 
     /**
@@ -141,7 +227,7 @@ class SkillDefinitionLoader {
         }
 
         val content = Files.readString(skillMdPath)
-        val metadata = parseSkillMetadata(content)
+        val metadata = parseSkillMetadata(content, directoryName = skillDirectory.fileName.toString())
 
         // Check for optional directories
         val scriptsPath = skillDirectory.resolve("scripts")
@@ -162,11 +248,15 @@ class SkillDefinitionLoader {
      * @param content Content of SKILL.md file
      * @return Parsed skill definition
      */
-    private fun parseSkillMetadata(content: String): SkillDefinition {
+    private fun parseSkillMetadata(content: String, directoryName: String? = null): SkillDefinition {
         // Check if content starts with YAML frontmatter (---\n...---\n)
         if (content.trim().startsWith("---")) {
             val yamlMetadata = parseYamlFrontmatter(content)
             if (yamlMetadata != null) {
+                if (!directoryName.isNullOrBlank()) {
+                    // Provide directory name for spec validation
+                    (yamlMetadata as MutableMap<String, Any>)["__directory_name__"] = directoryName
+                }
                 return parseFromYamlAndMarkdown(content, yamlMetadata)
             }
         }
@@ -203,47 +293,20 @@ class SkillDefinitionLoader {
             return null
         }
 
-        // Parse YAML manually (simple key-value pairs and lists)
-        val metadata = mutableMapOf<String, Any>()
-        var currentKey: String? = null
-        val currentList = mutableListOf<String>()
+        val yamlText = yamlLines.joinToString("\n")
+        val yaml = Yaml()
+        val loaded = yaml.load<Any?>(yamlText) ?: return emptyMap()
 
-        for (line in yamlLines) {
-            val trimmed = line.trim()
-            when {
-                trimmed.isEmpty() -> continue
-                trimmed.startsWith("-") -> {
-                    // List item
-                    val value = trimmed.substring(1).trim()
-                    currentList.add(value)
-                }
-                trimmed.contains(":") -> {
-                    // Key-value pair or list start
-                    // Save previous list if any
-                    if (currentKey != null && currentList.isNotEmpty()) {
-                        metadata[currentKey] = currentList.toList()
-                        currentList.clear()
-                    }
+        require(loaded is Map<*, *>) { "Invalid YAML frontmatter: expected mapping" }
 
-                    val parts = trimmed.split(":", limit = 2)
-                    val key = parts[0].trim()
-                    val value = if (parts.size > 1) parts[1].trim() else ""
-
-                    currentKey = key
-                    if (value.isNotEmpty() && value != "[]") {
-                        metadata[key] = value
-                        currentKey = null
-                    }
-                }
+        val result = mutableMapOf<String, Any>()
+        loaded.entries.forEach { (k, v) ->
+            if (k != null) {
+                result[k.toString()] = v as Any
             }
         }
 
-        // Save last list if any
-        if (currentKey != null && currentList.isNotEmpty()) {
-            metadata[currentKey] = currentList.toList()
-        }
-
-        return metadata
+        return result
     }
 
     /**
@@ -258,47 +321,112 @@ class SkillDefinitionLoader {
         yamlMetadata: Map<String, Any>
     ): SkillDefinition {
         // Extract metadata from YAML
-        // Support both 'skill_id' and 'name' for skillId (fallback to name if skill_id not present)
-        val skillId = (yamlMetadata["skill_id"] as? String) 
-            ?: (yamlMetadata["name"] as? String) 
-            ?: ""
-        val name = yamlMetadata["name"] as? String ?: ""
-        val version = yamlMetadata["version"] as? String ?: "1.0.0"
-        val author = yamlMetadata["author"] as? String ?: ""
+        val rawName = (yamlMetadata["name"] as? String).orEmpty().trim()
+        val rawDescription = (yamlMetadata["description"] as? String).orEmpty().trim()
 
-        @Suppress("UNCHECKED_CAST")
-        val tags = when (val tagValue = yamlMetadata["tags"]) {
-            is List<*> -> (tagValue as? List<String>)?.toSet() ?: emptySet()
-            is String -> setOf(tagValue)
+        require(rawName.isNotBlank()) { "Skill name is required in SKILL.md" }
+        require(rawDescription.isNotBlank()) { "Skill description is required in SKILL.md" }
+        require(rawDescription.length in 1..1024) { "Skill description length must be 1..1024, actual=${rawDescription.length}" }
+
+        validateSkillName(rawName)
+
+        // Spec: 'name' is the canonical identifier and must match the directory name.
+        val directoryName = (yamlMetadata["__directory_name__"] as? String)?.trim().orEmpty()
+        if (directoryName.isNotBlank()) {
+            require(rawName == directoryName) {
+                "Skill name must match directory name. name='$rawName', dir='$directoryName'"
+            }
+        }
+
+        val skillId = rawName
+        val name = rawName
+
+        // Optional fields in spec
+        // (Currently parsed but not stored in SkillDefinition model)
+        // val license = (yamlMetadata["license"] as? String)?.trim().orEmpty()
+        // val compatibility = (yamlMetadata["compatibility"] as? String)?.trim().orEmpty()
+
+        val allowedTools: Set<String> = (yamlMetadata["allowed-tools"] as? String)
+            ?.trim()
+            ?.split(Regex("\\s+"))
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.toSet()
+            ?: emptySet()
+
+        // Support tags/dependencies in either top-level keys (legacy) or metadata (spec extension).
+        val tags: Set<String> = when (val t = yamlMetadata["tags"] ?: (yamlMetadata["metadata"] as? Map<*, *>)?.get("tags")) {
+            is List<*> -> t.mapNotNull { it?.toString()?.trim() }.filter { it.isNotEmpty() }.toSet()
+            is String -> t.split(Regex("[,\\s]+"))
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .toSet()
             else -> emptySet()
         }
 
-        @Suppress("UNCHECKED_CAST")
-        val dependencies = when (val depValue = yamlMetadata["dependencies"]) {
-            is List<*> -> (depValue as? List<String>) ?: emptyList()
-            is String -> listOf(depValue)
+        val dependencies: List<String> = when (val d = yamlMetadata["dependencies"] ?: (yamlMetadata["metadata"] as? Map<*, *>)?.get("dependencies")) {
+            is List<*> -> d.mapNotNull { it?.toString()?.trim() }.filter { it.isNotEmpty() }
+            is String -> d.split(Regex("[,\\s]+"))
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
             else -> emptyList()
         }
 
-        // Parse remaining sections from markdown (description, parameters, examples)
+        // Parse remaining sections from markdown (parameters, examples)
         val markdownSections = parseMarkdownSections(content)
-        
-        // Description can come from YAML frontmatter or markdown section
-        val description = (yamlMetadata["description"] as? String)
-            ?: (markdownSections["description"]?.toString())
-            ?: ""
+        val parameters = (markdownSections["parameters"] as? Map<*, *>)
+            ?.entries
+            ?.mapNotNull { (k, v) ->
+                val key = k?.toString() ?: return@mapNotNull null
+                val value = v as? SkillDefinition.ParameterInfo ?: return@mapNotNull null
+                key to value
+            }
+            ?.toMap()
+            ?: emptyMap()
+
+        val examples = (markdownSections["examples"] as? List<*>)
+            ?.mapNotNull { it?.toString() }
+            ?: emptyList()
+
+        // Optional fields in spec
+        val license = (yamlMetadata["license"] as? String)?.trim()?.takeIf { it.isNotBlank() }
+        val compatibility = (yamlMetadata["compatibility"] as? String)?.trim()?.takeIf { it.isNotBlank() }
+        if (compatibility != null) {
+            require(compatibility.length <= 500) { "Skill compatibility length must be <= 500, actual=${compatibility.length}" }
+        }
+
+        // Spec metadata: arbitrary key-value mapping
+        val metadata: Map<String, String> = (yamlMetadata["metadata"] as? Map<*, *>)
+            ?.entries
+            ?.filter { it.key != null && it.value != null }
+            ?.associate { it.key.toString() to it.value.toString() }
+            ?: emptyMap()
 
         return SkillDefinition(
             skillId = skillId,
             name = name,
-            version = version,
-            author = author,
+            version = (yamlMetadata["version"] as? String)?.trim()
+                ?: (metadata["version"] ?: "1.0.0"),
+            author = (yamlMetadata["author"] as? String)?.trim()
+                ?: (metadata["author"] ?: ""),
             tags = tags,
-            description = description,
+            description = rawDescription,
             dependencies = dependencies,
-            parameters = markdownSections["parameters"] as? Map<String, SkillDefinition.ParameterInfo> ?: emptyMap(),
-            examples = markdownSections["examples"] as? List<String> ?: emptyList()
+            parameters = parameters,
+            examples = examples,
+            allowedTools = allowedTools,
+            license = license,
+            compatibility = compatibility,
+            metadata = metadata,
         )
+    }
+
+    private fun validateSkillName(name: String) {
+        require(name.length in 1..64) { "Skill name length must be 1..64, actual=${name.length}" }
+        require(!name.contains("--")) { "Invalid skill name '$name'. Must not contain consecutive hyphens ('--')." }
+        require(name.matches(Regex("[a-z0-9]+(?:-[a-z0-9]+)*"))) {
+            "Invalid skill name '$name'. Only lowercase letters, digits and single hyphens are allowed."
+        }
     }
 
     /**
@@ -498,7 +626,7 @@ class SkillDefinitionLoader {
         val result = mutableMapOf<String, Any>()
         val lines = content.lines()
 
-        var description = StringBuilder()
+        val description = StringBuilder()
         val parameters = mutableMapOf<String, SkillDefinition.ParameterInfo>()
         val examples = mutableListOf<String>()
 
@@ -506,13 +634,14 @@ class SkillDefinitionLoader {
         var inParametersSection = false
         var inExamplesSection = false
         var currentExample = StringBuilder()
-        var skipFrontmatter = true
+
+        // Skip YAML frontmatter (both opening and closing ---). Start parsing after the second delimiter.
+        var frontmatterDelimitersSeen = 0
 
         for (line in lines) {
-            // Skip YAML frontmatter
-            if (skipFrontmatter) {
+            if (frontmatterDelimitersSeen < 2) {
                 if (line.trim() == "---") {
-                    skipFrontmatter = false
+                    frontmatterDelimitersSeen++
                 }
                 continue
             }

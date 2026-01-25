@@ -1,11 +1,10 @@
 ---
 name: pdf
-description: Comprehensive PDF manipulation toolkit for extracting text and tables, creating new PDFs, merging/splitting documents, and handling forms. When Claude needs to fill in a PDF form or programmatically process, generate, or analyze PDF documents at scale.
-tags:
-  - pdf
-  - document
-  - extraction
+description: Extracts text and tables from PDF files, fills PDF forms, and creates/merges/splits PDF documents. Use when users mention PDFs, forms, document extraction, or PDF generation.
 license: Proprietary. LICENSE.txt has complete terms
+allowed-tools: python
+metadata:
+  tags: "pdf, document, extraction"
 ---
 
 # PDF Processing Guide
