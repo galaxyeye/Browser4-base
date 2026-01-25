@@ -28,7 +28,6 @@ import java.util.*
  * @property timeoutMs Optional overall timeout in ms for this action. 动作总超时（毫秒）。
  * @property iframes Reserved: Whether to include iframes when observing/acting. 保留字段：是否包含 iframe。
  * @property fromResolve Internal: true if invoked from resolve loop; excluded from JSON. 内部字段：是否由 resolve 驱动。
- * @property additionalContext Deprecated: no longer used. 废弃字段。
  */
 data class ActionOptions(
     val action: String,
@@ -39,10 +38,7 @@ data class ActionOptions(
     val timeoutMs: Long? = null,
     val iframes: Boolean? = null,
     @get:JsonIgnore
-    val fromResolve: Boolean = true,
-    @Deprecated("no longer used")
-    @get:JsonIgnore
-    val additionalContext: MutableMap<String, Any> = mutableMapOf(),
+    val fromResolve: Boolean = true
 )
 
 /**
@@ -77,7 +73,7 @@ data class ActResult constructor(
     val detail: DetailedActResult? = null
 ) {
     /** Check if the overall task is complete according to the agent. */
-    val isComplete: Boolean = detail?.actionDescription?.isReallyComplete == true
+    val isComplete: Boolean get() = detail?.actionDescription?.isReallyComplete == true
 
     /** Expression with weak parameter types (if provided by the model/tool). */
     @get:JsonIgnore
@@ -106,10 +102,7 @@ data class ExtractOptions(
     // reserved
     val iframes: Boolean? = null,
     // reserved
-    val frameId: String? = null,
-    // Internal
-    @get:JsonIgnore
-    val agentState: AgentState? = null,
+    val frameId: String? = null
 )
 
 data class ExtractResult(
@@ -139,11 +132,7 @@ data class ObserveOptions(
     val frameId: String? = null,
 
     // from `resolve` loop or not
-    val fromResolve: Boolean = false,
-
-    // internal, deprecated
-    @get:JsonIgnore
-    val agentState: AgentState? = null,
+    val fromResolve: Boolean = false
 )
 
 data class ObserveResult constructor(

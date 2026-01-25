@@ -8,9 +8,9 @@ import ai.platon.pulsar.agentic.skills.examples.WebScrapingSkill
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import ai.platon.pulsar.common.event.EventBus
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -35,16 +35,21 @@ class SkillRegistrationAndInvocationE2ETest {
 
     companion object {
         private val capturedEvents = ConcurrentHashMap<String, MutableList<Map<String, Any?>>>()
-        
+
         @BeforeAll
         @JvmStatic
         fun setupEventHandlers() {
             // Register event handler for GENERATE_DID_EXECUTE
             EventBus.register(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
-                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { 
-                    mutableListOf() 
+
+                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) {
+                    mutableListOf()
                 }.add(map)
+
+                val actionDescription = map["actionDescription"] as? ActionDescription ?: return@register payload
+                actionDescription.complete("Completed by test handler")
+
                 payload
             }
         }
@@ -61,88 +66,88 @@ class SkillRegistrationAndInvocationE2ETest {
     private lateinit var context: SkillContext
 
     @BeforeEach
-    fun setup() = runBlocking {
+    suspend fun setup() {
         // Clear captured events
         capturedEvents.clear()
-        
+
         // Initialize skill registry
         registry = SkillRegistry.instance
         context = SkillContext(sessionId = "e2e-test-session-${System.currentTimeMillis()}")
         registry.clear(context)
-        
+
         // Unregister custom tool to ensure clean state
         CustomToolRegistry.instance.unregister("skill")
     }
 
     @AfterEach
-    fun tearDown() = runBlocking {
+    suspend fun tearDown() {
         // Clean up skill registry
         registry.clear(context)
-        
+
         // Unregister custom tool
         CustomToolRegistry.instance.unregister("skill")
     }
 
     @Test
-    fun `test skill registration and invocation through agent`() = runBlocking {
+    suspend fun `test skill registration and invocation through agent`() {
         // Step 1: Register WebScrapingSkill
         val webScrapingSkill = WebScrapingSkill()
         registry.register(webScrapingSkill, context)
-        
+
         // Verify skill is registered
         assertTrue(registry.contains("web-scraping"), "Skill should be registered")
-        
+
         // Step 2: Wire skill tools to CustomToolRegistry
         val skillDomain = "skill"
         val customRegistry = CustomToolRegistry.instance
         if (!customRegistry.contains(skillDomain)) {
             customRegistry.register(SkillToolExecutor(registry))
         }
-        
+
         // Verify custom tool is registered
         assertTrue(customRegistry.contains(skillDomain), "Custom tool should be registered")
-        
+
         // Step 3: Create agent
         val agent = AgenticContexts.getOrCreateAgent()
         assertNotNull(agent, "Agent should be created")
-        
+
         // Step 4: Run agent with a skill-oriented task
         val task = """
             Use skill.debug.scraping to scrape https://agentskills.io/specification
         """.trimIndent()
-        
+
         val history = agent.run(task)
-        
+
         // Allow time for event processing
-        Thread.sleep(500)
-        
+        delay(500)
+
         // Step 5: Verify the agent ran and completed
         assertNotNull(history, "History should not be null")
         assertTrue(history.size > 0, "History should contain at least one execution")
-        
+
         // Step 6: Verify GENERATE_DID_EXECUTE event was captured
         val events = capturedEvents[AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE]
         assertNotNull(events, "GENERATE_DID_EXECUTE events should be captured")
         assertTrue(events!!.isNotEmpty(), "At least one GENERATE_DID_EXECUTE event should be captured")
-        
+
         // Step 7: Extract actionDescription from the captured events
         val actionDescriptions = events.mapNotNull { it["actionDescription"] as? ActionDescription }
         assertTrue(actionDescriptions.isNotEmpty(), "At least one ActionDescription should be present")
-        
+
         // Step 8: Verify that at least one actionDescription contains a skill-related toolCall
         val skillRelatedToolCalls = actionDescriptions.mapNotNull { actionDescription ->
             val toolCall = actionDescription.toolCall
             if (toolCall != null && isSkillRelatedToolCall(toolCall)) toolCall else null
         }
-        
-        assertTrue(skillRelatedToolCalls.isNotEmpty(), 
+
+        assertTrue(skillRelatedToolCalls.isNotEmpty(),
             "At least one ActionDescription should have a skill-related toolCall. " +
             "Found ${actionDescriptions.size} ActionDescriptions, " +
             "but none had skill-related toolCalls.")
-        
+
         // Additional verification: ensure the toolCall has the expected domain
         val hasCorrectDomain = skillRelatedToolCalls.any { it.domain.startsWith("skill") }
-        assertTrue(hasCorrectDomain, 
+        assertTrue(hasCorrectDomain,
             "At least one skill toolCall should have domain starting with 'skill'. " +
             "Found domains: ${skillRelatedToolCalls.map { it.domain }}")
     }

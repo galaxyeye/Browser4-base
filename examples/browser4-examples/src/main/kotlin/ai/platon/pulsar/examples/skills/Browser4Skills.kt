@@ -45,7 +45,7 @@ suspend fun main() {
 
     // Use agent with a skill-oriented task
     val task = """
-        Use skill.debug.scraping to scrape https://news.ycombinator.com/news
+        Use skill.debug.scraping to scrape https://agentskills.io/specification
         """.trimIndent()
 
     val history = agent.run(task)

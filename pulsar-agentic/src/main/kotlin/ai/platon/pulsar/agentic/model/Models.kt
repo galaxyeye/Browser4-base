@@ -313,15 +313,15 @@ data class ActionDescription constructor(
     /**
      * AI: whether the task is complete
      * */
-    val isComplete: Boolean = false,
+    var isComplete: Boolean = false,
     /**
      * AI: the error cause for the task
      * */
-    val errorCause: String? = null,
+    var errorCause: String? = null,
     /**
      * AI: a summary about this task
      * */
-    val summary: String? = null,
+    var summary: String? = null,
     /**
      * AI: a summary about this task
      * */
@@ -360,6 +360,14 @@ data class ActionDescription constructor(
     val pseudoExpression: String? get() = observeElement?.pseudoExpression
 
     val isReallyComplete get() = isComplete || expression?.contains("agent.done") == true
+
+
+    fun complete(summary: String? = null) {
+        isComplete = true
+        if (summary != null) {
+            this.summary = summary
+        }
+    }
 
     fun toActionDescriptions(): List<ActionDescription> {
         val elements = observeElements ?: return emptyList()
