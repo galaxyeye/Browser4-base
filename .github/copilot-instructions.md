@@ -87,7 +87,7 @@
 
 ## 3) 项目要点
 
-- 核心 API：`WebDriver`, `PulsarSession` -> `AgenticSession`
+- 核心 API：`ai/platon/pulsar/core/api/API.kt`，重点：`WebDriver`, `PulsarSession` -> `AgenticSession`
 - 模块：
   - `pulsar-core`：核心引擎（会话、调度、DOM、浏览器控制）
   - `pulsar-agentic`：智能体实现，MCP，技能注册
@@ -99,6 +99,9 @@
 - 加载参数：使用 `LoadOptions` 解析 URL 中的 CLI 风格参数
 - 浏览器自动化：查看 `ai.platon.pulsar.browser`，API 看 `WebDriver`；实现细节关注 `PageHandler`、`ClickableDOM`
 - 智能体：接口看 `AgenticSession`，实现看 `BrowserPerceptiveAgent`
+- MCP 工具：看 `MCPTool` 接口与 `MCPToolExecutor`
+- SKILL 注册：看 `MCPPluginRegistry`
+- 事件总线：`EventBus`，用于解耦监控与扩展，`PulsarEventBus`，用于网页全生命周期事件通知
 - 异常重试：Chrome CDP RPC 相关使用现有重试工具，避免日志风暴
 
 ## 4) 运行与配置
