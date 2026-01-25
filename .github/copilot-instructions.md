@@ -113,9 +113,8 @@
 ## 5) 日志与性能
 
 - 日志占位符：`logger.info("Task {} finished in {} ms", taskId, cost)`（避免字符串拼接）
-- 性能基准：`pulsar-benchmarks` 模块（JMH），按需运行与对比
 
-## 6) Kotlin 风格
+## 6) 代码和文档
 
 - Kotlin：不可变 `data class`、显式返回类型、空安全（`require/check`/`?:`）
 - 公共 API 要有 KDoc：摘要/参数/返回/异常
