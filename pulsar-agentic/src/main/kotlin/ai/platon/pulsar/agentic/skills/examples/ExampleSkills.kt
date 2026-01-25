@@ -101,7 +101,7 @@ class WebScrapingSkill : AbstractSkill() {
 
         return SkillResult.success(
             data = extractedData,
-            message = "Simulated data returned - WebDriver not available"
+            message = "Successfully extracted data from $url (simulated)"
         )
     }
 
