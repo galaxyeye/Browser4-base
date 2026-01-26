@@ -1,9 +1,12 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -120,7 +123,7 @@ class MCPServersConfigLoaderTest {
 
         assertEquals(1, config.mcpServers.size)
         val serverConfig = config.mcpServers["server-with-env"]!!
-        org.junit.jupiter.api.Assertions.assertNotNull(serverConfig.env)
+        assertNotNull(serverConfig.env)
         assertEquals("secret123", serverConfig.env!!["API_KEY"])
         assertEquals("true", serverConfig.env!!["DEBUG"])
     }

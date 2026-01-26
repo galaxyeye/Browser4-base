@@ -389,6 +389,8 @@ class MCPServersConfigLoader(
  */
 object MCPPaths {
 
+    private val logger = org.slf4j.LoggerFactory.getLogger(MCPPaths::class.java)
+
     /**
      * Directory for MCP server configuration files.
      */
@@ -401,8 +403,13 @@ object MCPPaths {
 
     init {
         // Create the MCP config directory if it doesn't exist
-        if (!Files.exists(MCP_CONFIG_DIR)) {
-            Files.createDirectories(MCP_CONFIG_DIR)
+        try {
+            if (!Files.exists(MCP_CONFIG_DIR)) {
+                Files.createDirectories(MCP_CONFIG_DIR)
+                logger.debug("Created MCP config directory: {}", MCP_CONFIG_DIR)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to create MCP config directory: {}", MCP_CONFIG_DIR, e)
         }
     }
 }
