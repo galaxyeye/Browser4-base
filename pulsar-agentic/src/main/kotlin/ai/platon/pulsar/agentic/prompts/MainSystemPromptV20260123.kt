@@ -8,7 +8,74 @@ import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.TOOL_CALL_RULE
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveResultSchema
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.language
 import ai.platon.pulsar.agentic.inference.action.TASK_COMPLETE_SCHEMA_PROMPT
+import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
+
+/**
+ * Skill tool type definitions for the system prompt.
+ *
+ * These type definitions help the LLM understand the data structures returned by skill-related tool calls.
+ */
+val SKILL_TOOL_TYPE_DEFINITIONS = """
+### Skill 工具类型定义
+
+```kotlin
+// 技能摘要，用于发现和匹配阶段
+data class SkillSummary(
+    val id: String,          // 技能唯一标识符
+    val name: String,        // 技能显示名称
+    val description: String, // 技能功能描述
+    val version: String,     // 语义化版本号
+    val tags: Set<String>    // 分类标签
+)
+
+// 技能激活信息，包含完整的 SKILL.md 内容和资源路径
+data class SkillActivation(
+    val id: String,             // 技能唯一标识符
+    val name: String,           // 技能显示名称
+    val version: String,        // 语义化版本号
+    val skillMd: String,        // 完整的 SKILL.md 文档内容
+    val scriptsPath: String?,   // 脚本目录路径（可选）
+    val referencesPath: String?, // 参考文档目录路径（可选）
+    val assetsPath: String?     // 资源目录路径（可选）
+)
+
+// 技能执行结果
+data class SkillResult(
+    val success: Boolean,            // 执行是否成功
+    val data: Any?,                  // 执行结果数据
+    val message: String?,            // 结果描述信息
+    val metadata: Map<String, Any>   // 附加元数据
+)
+```
+""".trimIndent()
+
+/**
+ * Build skill summaries section for the system prompt.
+ *
+ * Returns a formatted string containing all registered skill summaries,
+ * or an empty string if no skills are registered.
+ */
+fun buildSkillSummariesSection(): String {
+    val summaries = SkillRegistry.instance.listSkillSummaries()
+    if (summaries.isEmpty()) {
+        return ""
+    }
+
+    val summaryLines = summaries.joinToString("\n") { skill ->
+        "- **${skill.name}** (`${skill.id}` v${skill.version}): ${skill.description}"
+    }
+
+    return """
+## 可用技能概要
+
+以下是当前已注册的技能列表。使用 `skill.list()` 获取完整列表，使用 `skill.activate(id)` 激活特定技能以获取完整文档，使用 `skill.run(id, params)` 执行技能。
+
+$summaryLines
+
+---
+""".trimIndent()
+}
 
 /**
  * Build main system prompt (v20260123).
@@ -86,6 +153,10 @@ fun buildMainSystemPromptV1(): String = """
 
 ---
 
+---
+
+${buildSkillSummariesSection()}
+
 ## 工具列表
 
 ```
@@ -93,6 +164,8 @@ ${ToolCallSpecificationRenderer.render(includeCustomDomains = true)}
 ```
 
 $TOOL_CALL_RULE_CONTENT
+
+$SKILL_TOOL_TYPE_DEFINITIONS
 
 ### 数据提取工具说明
 

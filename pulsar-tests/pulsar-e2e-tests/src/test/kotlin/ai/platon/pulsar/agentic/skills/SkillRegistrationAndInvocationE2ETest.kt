@@ -4,7 +4,6 @@ import ai.platon.pulsar.agentic.context.AgenticContexts
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.skills.examples.WebScrapingSkill
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import ai.platon.pulsar.common.event.EventBus
@@ -17,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
  * End-to-end test for skill registration and invocation.
  *
  * This test validates the complete skill integration by:
- * 1. Registering a skill to SkillRegistry
+ * 1. Verifying skill.debug.scraping is preloaded at system startup via SkillBootstrap
  * 2. Wiring the skill to CustomToolRegistry via SkillToolExecutor
  * 3. Creating an agent that can use the skill
  * 4. Running a task that invokes the skill
@@ -25,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 6. Validating that the actionDescription.toolCall is skill-related
  *
  * The test follows the pattern specified in the problem statement:
- * - Startup: agent.run(task) with "Use skill.debug.scraping to scrape https://agentskills.io/specification"
+ * - Startup: skill.debug.scraping should be preloaded at system startup (no manual registration)
  * - Verification: Inject AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE event listener
  * - Assertion: Ensure actionDescription.toolCall is skill-related
  */
@@ -70,32 +69,27 @@ class SkillRegistrationAndInvocationE2ETest {
         // Clear captured events
         capturedEvents.clear()
 
-        // Initialize skill registry
+        // Initialize skill registry (do NOT clear - skills are preloaded by SkillBootstrap)
         registry = SkillRegistry.instance
         context = SkillContext(sessionId = "e2e-test-session-${System.currentTimeMillis()}")
-        registry.clear(context)
 
-        // Unregister custom tool to ensure clean state
+        // Unregister custom tool to ensure clean state for the SkillToolExecutor
         CustomToolRegistry.instance.unregister("skill")
     }
 
     @AfterEach
     suspend fun tearDown() {
-        // Clean up skill registry
-        registry.clear(context)
-
-        // Unregister custom tool
+        // Unregister custom tool (do NOT clear skill registry - preserve preloaded skills)
         CustomToolRegistry.instance.unregister("skill")
     }
 
     @Test
     suspend fun `test skill registration and invocation through agent`() {
-        // Step 1: Register WebScrapingSkill
-        val webScrapingSkill = WebScrapingSkill()
-        registry.register(webScrapingSkill, context)
-
-        // Verify skill is registered
-        assertTrue(registry.contains("web-scraping"), "Skill should be registered")
+        // Step 1: Verify WebScrapingSkill is preloaded by SkillBootstrap
+        // skill.debug.scraping should be available without manual registration
+        assertTrue(registry.contains("web-scraping"),
+            "WebScrapingSkill should be preloaded by SkillBootstrap. " +
+            "Available skills: ${registry.getAllIds()}")
 
         // Step 2: Wire skill tools to CustomToolRegistry
         val skillDomain = "skill"

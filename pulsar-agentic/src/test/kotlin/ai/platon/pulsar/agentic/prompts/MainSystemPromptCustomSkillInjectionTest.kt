@@ -9,6 +9,7 @@ import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -58,5 +59,56 @@ class MainSystemPromptCustomSkillInjectionTest {
         // And registry should hold prompt-visible specs for the skill domain.
         val skillSpec = customTools.getToolCallSpecifications("skill")
         assertTrue(skillSpec.isNotEmpty())
+    }
+
+    @Test
+    fun skillSummariesShouldAppearInSystemPromptWhenSkillsRegistered() = runBlocking {
+        // Register a skill
+        skills.register(WebScrapingSkill(), skillContext)
+
+        // Build the system prompt
+        val prompt = buildMainSystemPromptV1()
+
+        // The prompt should contain the skill summaries section
+        assertTrue(prompt.contains("## 可用技能概要"),
+            "System prompt should contain skill summaries section when skills are registered")
+
+        // The prompt should list the registered skill
+        assertTrue(prompt.contains("Web Scraping"),
+            "System prompt should list the Web Scraping skill")
+        assertTrue(prompt.contains("web-scraping"),
+            "System prompt should contain the skill ID")
+    }
+
+    @Test
+    fun skillSummariesSectionShouldBeEmptyWhenNoSkillsRegistered() = runBlocking {
+        // No skills registered
+        val prompt = buildMainSystemPromptV1()
+
+        // The skill summaries section should be empty (no header shown)
+        assertFalse(prompt.contains("## 可用技能概要"),
+            "System prompt should NOT contain skill summaries section when no skills are registered")
+    }
+
+    @Test
+    fun skillToolTypeDefinitionsShouldAppearInSystemPrompt() = runBlocking {
+        // Build the system prompt (no skills needed for type definitions)
+        val prompt = buildMainSystemPromptV1()
+
+        // The prompt should contain skill tool type definitions
+        assertTrue(prompt.contains("### Skill 工具类型定义"),
+            "System prompt should contain skill tool type definitions header")
+
+        // Check for SkillSummary type definition
+        assertTrue(prompt.contains("data class SkillSummary"),
+            "System prompt should contain SkillSummary type definition")
+
+        // Check for SkillActivation type definition
+        assertTrue(prompt.contains("data class SkillActivation"),
+            "System prompt should contain SkillActivation type definition")
+
+        // Check for SkillResult type definition
+        assertTrue(prompt.contains("data class SkillResult"),
+            "System prompt should contain SkillResult type definition")
     }
 }
