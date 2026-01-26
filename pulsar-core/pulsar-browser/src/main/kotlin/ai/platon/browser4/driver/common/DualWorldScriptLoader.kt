@@ -27,9 +27,9 @@ open class DualWorldScriptLoader(
 ) {
     companion object {
         private val logger = getLogger(this)
-        
+
         private val jsInitParameters: MutableMap<String, Any> = mutableMapOf()
-        
+
         /**
          * Scripts that should be injected into the Page World.
          * These are minimal stealth patches and fingerprint patches only.
@@ -37,7 +37,7 @@ open class DualWorldScriptLoader(
         val PAGE_WORLD_RESOURCES = listOf(
             "js/stealth.js"
         )
-        
+
         /**
          * Scripts that should be injected into the Isolated World.
          * These contain the full Browser4 runtime and utilities.
@@ -50,10 +50,10 @@ open class DualWorldScriptLoader(
             "js/feature_calculator.js",
             "js/__pulsar_utils__.js"
         )
-        
+
         /**
          * Add initialization parameters that will be available to JavaScript.
-         * 
+         *
          * @param name The parameter name
          * @param value The parameter value
          */
@@ -61,27 +61,27 @@ open class DualWorldScriptLoader(
             jsInitParameters[name] = value
         }
     }
-    
+
     private val pageWorldCache: MutableMap<String, String> = LinkedHashMap()
     private val isolatedWorldCache: MutableMap<String, String> = LinkedHashMap()
-    
+
     /**
      * The javascript code to inject into the Page World (anti-detection patches only).
      */
     private var pageWorldJs = ""
-    
+
     /**
      * The javascript code to inject into the Isolated World (full runtime).
      */
     private var isolatedWorldJs = ""
-    
+
     init {
         initDefaultJsParameters()
     }
-    
+
     /**
      * Gets the Page World JavaScript (stealth patches only).
-     * 
+     *
      * @param reload Whether to reload the scripts from disk
      * @return The compiled Page World JavaScript
      */
@@ -90,17 +90,17 @@ open class DualWorldScriptLoader(
         if (reload) {
             pageWorldJs = ""
         }
-        
+
         if (pageWorldJs.isEmpty()) {
             loadPageWorldScripts()
         }
-        
+
         return pageWorldJs
     }
-    
+
     /**
      * Gets the Isolated World JavaScript (full Browser4 runtime).
-     * 
+     *
      * @param reload Whether to reload the scripts from disk
      * @return The compiled Isolated World JavaScript
      */
@@ -109,14 +109,14 @@ open class DualWorldScriptLoader(
         if (reload) {
             isolatedWorldJs = ""
         }
-        
+
         if (isolatedWorldJs.isEmpty()) {
             loadIsolatedWorldScripts()
         }
-        
+
         return isolatedWorldJs
     }
-    
+
     /**
      * Reloads all scripts from disk.
      */
@@ -125,60 +125,60 @@ open class DualWorldScriptLoader(
         loadPageWorldScripts()
         loadIsolatedWorldScripts()
     }
-    
+
     /**
      * Loads Page World scripts (stealth patches).
      */
     private fun loadPageWorldScripts() {
         pageWorldCache.clear()
-        
+
         val sb = StringBuilder()
-        
+
         // Page World scripts should be minimal and not expose any configuration
         sb.appendLine("// Browser4 Page World - Stealth Patches Only")
         sb.appendLine("// These scripts run in the page context for anti-detection")
         sb.appendLine()
-        
+
         loadDefaultResource(PAGE_WORLD_RESOURCES, pageWorldCache)
         loadExternalResource("page-world", pageWorldCache)
-        
+
         pageWorldCache.values.joinTo(sb, ";\n")
-        
+
         pageWorldJs = sb.toString()
-        
+
         reportScript("page-world.gen.js", pageWorldJs)
     }
-    
+
     /**
      * Loads Isolated World scripts (full runtime).
      */
     private fun loadIsolatedWorldScripts() {
         isolatedWorldCache.clear()
-        
+
         val sb = StringBuilder()
-        
+
         // Isolated World gets full configuration
         val jsVariables = generatePredefinedJsConfig()
         sb.appendLine(jsVariables).appendLine("\n\n")
-        
+
         sb.appendLine("// Browser4 Isolated World Runtime")
         sb.appendLine("// This code runs in an isolated world and is invisible to page JS")
         sb.appendLine()
-        
+
         loadDefaultResource(ISOLATED_WORLD_RESOURCES, isolatedWorldCache)
         loadExternalResource("isolated-world", isolatedWorldCache)
-        
+
         isolatedWorldCache.values.joinTo(sb, ";\n")
-        
+
         isolatedWorldJs = sb.toString()
-        
+
         reportScript("isolated-world.gen.js", isolatedWorldJs)
     }
-    
+
     private fun generatePredefinedJsConfig(): String {
         // Note: Json-2.6.2 does not recognize MutableMap, but knows Map
         val configs = GsonBuilder().create().toJson(jsInitParameters.toMap())
-        
+
         // Set predefined variables shared between javascript and jvm program
         val configVar = confuser.confuse("__pulsar_CONFIGS")
         return """
@@ -186,13 +186,13 @@ open class DualWorldScriptLoader(
             let $configVar = $configs;
         """.trimIndent()
     }
-    
+
     private fun loadDefaultResource(resources: List<String>, cache: MutableMap<String, String>) {
         resources.filter { !it.startsWith("#") }.distinct().associateWithTo(cache) {
             ResourceLoader.readAllLines(it).joinToString("\n") { line -> confuser.confuse(line) }
         }
     }
-    
+
     private fun loadExternalResource(subdirectory: String, cache: MutableMap<String, String>) {
         val dir = AppPaths.BROWSER_DATA_DIR.resolve("browser/js/preload/$subdirectory")
         if (Files.isDirectory(dir)) {
@@ -202,20 +202,20 @@ open class DualWorldScriptLoader(
                 .associateTo(cache) { it.toString() to Files.readString(it) }
         }
     }
-    
+
     private fun reportScript(filename: String, script: String) {
         val dir = AppPaths.REPORT_DIR.resolve("browser/js")
         Files.createDirectories(dir)
         val report = Files.writeString(dir.resolve(filename), script)
         logger.info("Generated js: file://$report")
     }
-    
+
     private fun initDefaultJsParameters() {
         mapOf(
             "propertyNames" to jsPropertyNames,
             "viewPortWidth" to BrowserSettings.VIEWPORT.width,
             "viewPortHeight" to BrowserSettings.VIEWPORT.height,
-            
+
             "META_INFORMATION_ID" to AppConstants.PULSAR_META_INFORMATION_ID,
             "SCRIPT_SECTION_ID" to AppConstants.PULSAR_SCRIPT_SECTION_ID,
             "ATTR_HIDDEN" to AppConstants.PULSAR_ATTR_HIDDEN,

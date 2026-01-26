@@ -12,6 +12,7 @@ import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.MultiSinkMessageWriter
 import ai.platon.pulsar.common.event.EventBus
+import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
@@ -45,13 +46,12 @@ object InferenceMessageBuilder {
 
     private val promptBuilder = PromptBuilder()
 
-    fun buildObserveMessages(
-        params: ObserveParams
-    ): AgentMessageList {
+    fun buildObserveMessages(params: ObserveParams): AgentMessageList {
         return if (params.multistep) {
             // Multistep agents uses start with agent.run()
             promptBuilder.buildMultistepAgentMessageListAll(params.context)
         } else {
+            // Single step agents uses observe() -> act()
             promptBuilder.buildObserveMessageListAll(params, params.context)
         }
     }
@@ -111,12 +111,12 @@ class InferenceEngine(
         val messages = InferenceMessageBuilder.buildObserveMessages(params)
 
         val startTime = Instant.now()
-        val prefix = if (params.fromAct) "act" else "observe"
+        val actionType = if (params.fromAct) "act" else "observe"
         val timestamp = AppPaths.fromNow()
 
         val llmInputFile = log(
-            dirPrefix = prefix,
-            pathSuffix = "$timestamp.request.json",
+            subdirectory = actionType,
+            filename = "$timestamp.request.json",
             requestId = context.uuid,
             messages = messages.messages
         )
@@ -145,8 +145,8 @@ class InferenceEngine(
         )
 
         val llmOutputFile = log(
-            dirPrefix = prefix,
-            pathSuffix = "$timestamp.response.json",
+            subdirectory = actionType,
+            filename = "$timestamp.response.json",
             payload = mapOf(
                 "requestId" to context.uuid,
                 "modelResponse" to modelResponse
@@ -154,9 +154,9 @@ class InferenceEngine(
         )
 
         logSummary(
-            prefix = prefix,
+            filename = "$actionType.jsonl",
             payload = mapOf(
-                "${prefix}InferenceType" to prefix,
+                "${actionType}InferenceType" to actionType,
                 "timestamp" to timestamp,
                 "llmInputFile" to llmInputFile,
                 "llmOutputFile" to llmOutputFile,
@@ -186,9 +186,10 @@ class InferenceEngine(
 
         // 1) Extraction call -----------------------------------------------------------------
         val timestamp = AppPaths.fromNow()
+        val filename = "extract.jsonl"
         val llmInputFile: Path? = log(
-            dirPrefix = "extract",
-            pathSuffix = "$timestamp.request.json",
+            subdirectory = "extract",
+            filename = filename,
             requestId = params.requestId,
             messages = messages.messages
         )
@@ -202,8 +203,8 @@ class InferenceEngine(
         }.getOrElse { JsonNodeFactory.instance.objectNode() }
 
         val extractOutputFile: Path = log(
-            dirPrefix = "extract",
-            pathSuffix = "$timestamp.response.json",
+            subdirectory = "extract",
+            filename = filename,
             payload = mapOf(
                 "requestId" to params.requestId,
                 "response" to extractedNode
@@ -211,7 +212,7 @@ class InferenceEngine(
         )
 
         logSummary(
-            prefix = "extract",
+            filename = filename,
             payload = mapOf(
                 "extractInferenceType" to "extract",
                 "timestamp" to timestamp,
@@ -228,8 +229,8 @@ class InferenceEngine(
         val metadataMessages = InferenceMessageBuilder.buildMetadataPrompt(params, extractedNode)
 
         val metadataInputFile = log(
-            dirPrefix = "extract",
-            pathSuffix = "$timestamp.metadata.request.json",
+            subdirectory = "extract",
+            filename = filename,
             requestId = params.requestId,
             messages = metadataMessages.messages
         )
@@ -245,23 +246,21 @@ class InferenceEngine(
         val completed = metaNode.path("completed").asBoolean(false)
 
         val metadataOutputFile: Path = log(
-            dirPrefix = "extract",
-            pathSuffix = "$timestamp.metadata.response.json",
+            subdirectory = "extract",
+            filename = filename,
             payload = mapOf(
                 "requestId" to params.requestId,
-                "modelResponse" to pulsarObjectMapper().readTree(metadataResponse.content),
+                "modelResponse" to Pson.toJsonOrNull(metadataResponse.content),
                 "completed" to completed,
                 "progress" to progress,
             )
         )
 
         logSummary(
-            prefix = "extract",
+            filename = "extract.jsonl",
             payload = mapOf(
                 "extractInferenceType" to "metadata",
                 "timestamp" to timestamp,
-                "llmInputFile" to metadataInputFile,
-                "llmOutputFile" to metadataOutputFile,
                 "inputTokenCount" to metadataResponse.tokenUsage.inputTokenCount,
                 "outputTokenCount" to metadataResponse.tokenUsage.outputTokenCount,
                 "totalTokenCount" to metadataResponse.tokenUsage.totalTokenCount,
@@ -327,28 +326,26 @@ class InferenceEngine(
         return response.content
     }
 
-    private fun log(dirPrefix: String, pathSuffix: String, payload: Any): Path {
-        val path = auxLogDir.resolve(dirPrefix).resolve(pathSuffix)
-        return auxLogger.writeTo(payload, path)
-    }
-
-    private fun logSummary(prefix: String, payload: Map<String, Any?>): Path {
-        val path = auxLogDir.resolve("summary").resolve("${prefix}.jsonl")
-        return auxLogger.writeTo(payload, path)
-    }
-
     // ------------------------------ Small utilities --------------------------------
+
+    private fun logSummary(filename: String, payload: Map<String, Any?>): Path {
+        val path = auxLogDir.resolve("summary").resolve(filename)
+        return auxLogger.writeTo(payload, path)
+    }
+
+    private fun log(subdirectory: String, filename: String, payload: Map<String, Any?>): Path {
+        val path = auxLogDir.resolve(subdirectory).resolve(filename)
+        return auxLogger.writeTo(payload, path)
+    }
+
     private fun log(
-        dirPrefix: String, requestId: String, pathSuffix: String,
+        subdirectory: String, requestId: String, filename: String,
         messages: List<Any>, enabled: Boolean = true
     ): Path? {
         if (!enabled) return null
 
-        return log(
-            dirPrefix = dirPrefix, pathSuffix = pathSuffix, payload = mapOf(
-                "requestId" to requestId,
-                "messages" to messages,
-            )
-        )
+        val payload = mapOf("requestId" to requestId, "messages" to messages)
+        val path = auxLogDir.resolve(subdirectory).resolve(filename)
+        return auxLogger.writeTo(payload, path)
     }
 }

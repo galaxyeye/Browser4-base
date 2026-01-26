@@ -1,6 +1,5 @@
 package ai.platon.pulsar.common.code
 
-import ai.platon.pulsar.common.printlnPro
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -23,10 +22,10 @@ class ProjectUtilsTest {
         val versionFile = tempDir.resolve("VERSION")
         Files.createFile(versionFile)
 
-        val subDir = tempDir.resolve("subDir")
-        Files.createDirectory(subDir)
+        val subdirectory = tempDir.resolve("subdirectory")
+        Files.createDirectory(subdirectory)
 
-        val projectRootDir = ProjectUtils.findProjectRootDir(subDir)
+        val projectRootDir = ProjectUtils.findProjectRootDir(subdirectory)
         assertNotNull(projectRootDir)
         assertEquals(tempDir, projectRootDir)
     }
