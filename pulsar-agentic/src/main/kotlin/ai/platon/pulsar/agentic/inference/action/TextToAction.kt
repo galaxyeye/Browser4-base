@@ -11,7 +11,6 @@ import ai.platon.pulsar.agentic.model.ObserveElement
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.AppPaths
-import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
 import ai.platon.pulsar.common.config.ImmutableConfig
@@ -41,7 +40,6 @@ open class TextToAction(
      * @param driver The driver to use to collect the context, such as interactive elements
      * @return The action description
      * */
-    @ExperimentalApi
     open suspend fun generateActions(
         actionDescriptions: String, driver: WebDriver, screenshotB64: String? = null
     ): List<ActionDescription> {
@@ -83,9 +81,7 @@ open class TextToAction(
     }
 
     fun modelResponseToActionDescription(
-        instruction: String,
-        agentState: AgentState,
-        modelResponse: ModelResponse
+        instruction: String, agentState: AgentState, modelResponse: ModelResponse
     ): ActionDescription {
         try {
             val actionDescription = modelResponseToActionDescription0(instruction, agentState, modelResponse)
@@ -102,9 +98,7 @@ open class TextToAction(
     }
 
     private fun modelResponseToActionDescription0(
-        instruction: String,
-        agentState: AgentState,
-        modelResponse: ModelResponse
+        instruction: String, agentState: AgentState, modelResponse: ModelResponse
     ): ActionDescription {
         val modelResponse = reviseModelResponse(modelResponse)
         val content = modelResponse.content.trim()
@@ -282,21 +276,6 @@ open class TextToAction(
             response: ModelResponse
         ): ActionDescription {
             val observeElements = elements.elements?.map { toObserveElement(it, response) } ?: emptyList()
-            return ActionDescription(
-                instruction,
-                observeElements = observeElements,
-                agentState = agentState,
-                modelResponse = response
-            )
-        }
-
-        fun toActionDescription(
-            instruction: String,
-            elements: ToolCallElements,
-            agentState: AgentState,
-            response: ModelResponse
-        ): ActionDescription {
-            val observeElements = elements.toolCalls.map { toObserveElement(it, response) } ?: emptyList()
             return ActionDescription(
                 instruction,
                 observeElements = observeElements,

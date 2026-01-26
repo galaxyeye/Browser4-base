@@ -301,7 +301,7 @@ $A11Y_TREE_NOTE_CONTENT
 - arguments 必须按工具方法声明顺序排列
 
 输出格式：
-${buildResponseSchema(true)}
+${buildResponseSchema(legacy = true)}
 
 2. 任务完成输出
 

@@ -39,9 +39,9 @@ class PromptBuilder() {
 
         const val MAX_ACTIONS = 1
 
-        fun buildResponseSchema(returnAction: Boolean = true, legacy: Boolean = true): String {
+        fun buildResponseSchema(legacy: Boolean = true): String {
             return when {
-                legacy -> buildObserveResultSchema(returnAction)
+                legacy -> buildObserveResultSchema(returnAction = true)
                 else -> GENERAL_TOOL_CALL_RESULT_PROMPT
             }
         }
