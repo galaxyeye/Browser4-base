@@ -5,6 +5,7 @@ allowed-tools: python
 metadata:
   version: "1.0.0"
   author: Browser4
+  tags: "testing, validation, script-execution"
 ---
 
 # Script Runner

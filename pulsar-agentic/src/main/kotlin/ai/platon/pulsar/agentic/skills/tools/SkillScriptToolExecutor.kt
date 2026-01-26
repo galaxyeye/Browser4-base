@@ -118,7 +118,7 @@ class SkillScriptToolExecutor(
         require(definition.allowedTools.any { it.equals("Python", true) || it.startsWith("Python", true) || it.equals("python", true) }) {
             "Script execution is not allowed for '$skillId'. Configure 'allowed-tools' in SKILL.md to enable it."
         }
-        val command = mutableListOf("python", scriptPath.toString())
+        val command = mutableListOf("python", normalizedRel)
         command.addAll(args)
         logger.info("Running skill script: {} {}", skillId, normalizedRel)
         val pb = ProcessBuilder(command)

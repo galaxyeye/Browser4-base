@@ -30,7 +30,7 @@ class SkillExecutionToolsTest {
     @Test
     fun runScriptIsDeniedWithoutAllowedTools() {
         runBlocking {
-            // Most built-in skills currently do not set allowed-tools; ensure execution is denied.
+            // mcp-builder skill does not set allowed-tools; ensure execution is denied.
             SkillBootstrap().initialize()
             val executor = SkillScriptToolExecutor(SkillRegistry.instance)
             val target = SkillToolTarget(SkillContext(sessionId = "ut"))
@@ -40,9 +40,9 @@ class SkillExecutionToolsTest {
                     domain = "skill",
                     functionName = "runScript",
                     args = mapOf(
-                        "id" to "pdf",
-                        "path" to "scripts/check_fillable_fields.py",
-                        "args" to listOf("missing.pdf")
+                        "id" to "mcp-builder",
+                        "path" to "scripts/connections.py",
+                        "args" to emptyList<String>()
                     ),
                     target = target
                 )
