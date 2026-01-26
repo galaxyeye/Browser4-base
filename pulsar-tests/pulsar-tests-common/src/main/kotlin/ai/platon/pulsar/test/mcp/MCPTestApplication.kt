@@ -27,8 +27,8 @@ class MCPTestApplication {
      * @return A TestMCPServer instance with default configuration.
      */
     @Bean
-    fun testMCPServer(): TestMCPServer {
-        return TestMCPServer(
+    fun testMCPServer(): MockMCPServer {
+        return MockMCPServer(
             serverName = "test-mcp-server",
             serverVersion = "1.0.0"
         )

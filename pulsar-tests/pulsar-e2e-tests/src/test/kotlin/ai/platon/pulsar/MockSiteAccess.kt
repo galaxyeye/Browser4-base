@@ -14,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest
     classes = [EnableMockServerApplication::class],
     webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT
 )
-class TestWebSiteAccess {
+class MockSiteAccess {
 
     @Autowired
     lateinit var conf: ImmutableConfig

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.test.mcp.TestMCPServer
+import ai.platon.pulsar.test.mcp.MockMCPServer
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
@@ -45,7 +45,7 @@ class MCPToolExecutorE2ETest {
     private var port: Int = 0
 
     @Autowired
-    private lateinit var testMCPServer: TestMCPServer
+    private lateinit var mockMCPServer: MockMCPServer
 
     private lateinit var clientManager: MCPClientManager
     private lateinit var toolExecutor: MCPToolExecutor
@@ -53,7 +53,7 @@ class MCPToolExecutorE2ETest {
     @BeforeEach
     fun setUp() = runBlocking {
         // Verify server is running
-        assertTrue(testMCPServer.isRunning(), "TestMCPServer should be running")
+        assertTrue(mockMCPServer.isRunning(), "TestMCPServer should be running")
 
         // Create configuration for connecting to the test server
         // Using HTTP endpoint instead of SSE/WebSocket for simplicity
@@ -83,7 +83,7 @@ class MCPToolExecutorE2ETest {
 
     @Test
     fun `test server is accessible via HTTP`() {
-        val info = testMCPServer.getInfo()
+        val info = mockMCPServer.getInfo()
         assertNotNull(info)
         assertEquals("test-mcp-server", info["name"])
         assertEquals("1.0.0", info["version"])
@@ -91,7 +91,7 @@ class MCPToolExecutorE2ETest {
 
     @Test
     fun `test server lists available tools`() {
-        val result = testMCPServer.listTools()
+        val result = mockMCPServer.listTools()
         assertNotNull(result)
 
         @Suppress("UNCHECKED_CAST")
@@ -106,7 +106,7 @@ class MCPToolExecutorE2ETest {
 
     @Test
     fun `test tool discovery returns all available tools`() {
-        val result = testMCPServer.listTools()
+        val result = mockMCPServer.listTools()
 
         @Suppress("UNCHECKED_CAST")
         val tools = result["tools"] as List<Map<String, Any>>
@@ -127,7 +127,7 @@ class MCPToolExecutorE2ETest {
 
     @Test
     fun `test echo tool schema is correct`() {
-        val result = testMCPServer.listTools()
+        val result = mockMCPServer.listTools()
 
         @Suppress("UNCHECKED_CAST")
         val tools = result["tools"] as List<Map<String, Any>>
@@ -160,7 +160,7 @@ class MCPToolExecutorE2ETest {
             )
         }
 
-        val result = testMCPServer.callTool(request)
+        val result = mockMCPServer.callTool(request)
         assertNotNull(result)
         assertFalse(result.containsKey("isError"))
 
@@ -184,7 +184,7 @@ class MCPToolExecutorE2ETest {
             )
         }
 
-        val result = testMCPServer.callTool(request)
+        val result = mockMCPServer.callTool(request)
         assertNotNull(result)
 
         @Suppress("UNCHECKED_CAST")
@@ -205,7 +205,7 @@ class MCPToolExecutorE2ETest {
             )
         }
 
-        val result = testMCPServer.callTool(request)
+        val result = mockMCPServer.callTool(request)
         assertNotNull(result)
 
         @Suppress("UNCHECKED_CAST")
@@ -226,7 +226,7 @@ class MCPToolExecutorE2ETest {
         }
 
         try {
-            testMCPServer.callTool(request)
+            mockMCPServer.callTool(request)
             throw AssertionError("Expected IllegalArgumentException but no exception was thrown")
         } catch (e: IllegalArgumentException) {
             assertEquals(e.message?.contains("not found"), true)
@@ -244,7 +244,7 @@ class MCPToolExecutorE2ETest {
             )
         }
 
-        val result = testMCPServer.callTool(request)
+        val result = mockMCPServer.callTool(request)
         assertNotNull(result)
         assertTrue(result.containsKey("isError"))
         assertEquals(true, result["isError"])
@@ -263,7 +263,7 @@ class MCPToolExecutorE2ETest {
             )
         }
 
-        val result = testMCPServer.callTool(request)
+        val result = mockMCPServer.callTool(request)
         assertNotNull(result)
         assertTrue(result.containsKey("isError"))
         assertEquals(true, result["isError"])
@@ -283,7 +283,7 @@ class MCPToolExecutorE2ETest {
                 }
             )
         }
-        var result = testMCPServer.callTool(request)
+        var result = mockMCPServer.callTool(request)
         assertFalse(result.containsKey("isError"))
 
         // Second call: add
@@ -297,7 +297,7 @@ class MCPToolExecutorE2ETest {
                 }
             )
         }
-        result = testMCPServer.callTool(request)
+        result = mockMCPServer.callTool(request)
         assertFalse(result.containsKey("isError"))
         @Suppress("UNCHECKED_CAST")
         var content = result["content"] as List<Map<String, Any>>
@@ -314,14 +314,14 @@ class MCPToolExecutorE2ETest {
                 }
             )
         }
-        result = testMCPServer.callTool(request)
+        result = mockMCPServer.callTool(request)
         assertFalse(result.containsKey("isError"))
         @Suppress("UNCHECKED_CAST")
         content = result["content"] as List<Map<String, Any>>
         assertEquals("21.0", content[0]["text"])
 
         // Verify server is still running
-        assertTrue(testMCPServer.isRunning())
+        assertTrue(mockMCPServer.isRunning())
     }
 
     @Test
@@ -336,7 +336,7 @@ class MCPToolExecutorE2ETest {
                 }
             )
         }
-        var result = testMCPServer.callTool(request)
+        var result = mockMCPServer.callTool(request)
         assertFalse(result.containsKey("isError"))
 
         // Failed call
@@ -350,7 +350,7 @@ class MCPToolExecutorE2ETest {
                 }
             )
         }
-        result = testMCPServer.callTool(request)
+        result = mockMCPServer.callTool(request)
         assertTrue(result.containsKey("isError"))
 
         // Another successful call
@@ -364,14 +364,14 @@ class MCPToolExecutorE2ETest {
                 }
             )
         }
-        result = testMCPServer.callTool(request)
+        result = mockMCPServer.callTool(request)
         assertFalse(result.containsKey("isError"))
         @Suppress("UNCHECKED_CAST")
         val content = result["content"] as List<Map<String, Any>>
         assertEquals("20.0", content[0]["text"])
 
         // Verify server is still running
-        assertTrue(testMCPServer.isRunning())
+        assertTrue(mockMCPServer.isRunning())
     }
 
     // ========== Network Communication Tests ==========
@@ -382,11 +382,11 @@ class MCPToolExecutorE2ETest {
         // and can handle requests across network boundaries
 
         // Get server info via HTTP
-        val info = testMCPServer.getInfo()
+        val info = mockMCPServer.getInfo()
         assertEquals("test-mcp-server", info["name"])
 
         // List tools via HTTP
-        val toolsList = testMCPServer.listTools()
+        val toolsList = mockMCPServer.listTools()
         @Suppress("UNCHECKED_CAST")
         val tools = toolsList["tools"] as List<Map<String, Any>>
         assertTrue(tools.isNotEmpty())
@@ -402,7 +402,7 @@ class MCPToolExecutorE2ETest {
             )
         }
 
-        val result = testMCPServer.callTool(request)
+        val result = mockMCPServer.callTool(request)
         assertNotNull(result)
         @Suppress("UNCHECKED_CAST")
         val content = result["content"] as List<Map<String, Any>>

@@ -67,14 +67,14 @@ import org.junit.jupiter.api.Assertions.*
  */
 @Tag("mcp")
 @Tag("unit")
-class TestMCPServerForPluginTest {
+class TestMCPServerForPluginMock {
 
-    private lateinit var server: TestMCPServer
+    private lateinit var server: MockMCPServer
     private val objectMapper = jacksonObjectMapper()
 
     @BeforeEach
     fun setUp() {
-        server = TestMCPServer(
+        server = MockMCPServer(
             serverName = "plugin-test-server",
             serverVersion = "1.0.0"
         )

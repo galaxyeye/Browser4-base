@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(PulsarContextConfiguration::class)
-class IntegrationTestBase {
+class E2ETestBase {
 
     @LocalServerPort
     val serverPort: Int = 0

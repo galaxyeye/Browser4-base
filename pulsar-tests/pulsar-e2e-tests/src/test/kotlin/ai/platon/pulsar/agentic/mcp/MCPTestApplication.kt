@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.test.mcp.TestMCPServer
+import ai.platon.pulsar.test.mcp.MockMCPServer
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
@@ -27,8 +27,8 @@ class MCPTestApplication {
      * @return A TestMCPServer instance with default configuration.
      */
     @Bean
-    fun testMCPServer(): TestMCPServer {
-        return TestMCPServer(
+    fun testMCPServer(): MockMCPServer {
+        return MockMCPServer(
             serverName = "test-mcp-server",
             serverVersion = "1.0.0"
         )
