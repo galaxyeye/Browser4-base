@@ -3,7 +3,6 @@ package ai.platon.pulsar.agentic.mcp
 import ai.platon.pulsar.agentic.context.AgenticContexts
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.model.ActionDescription
-import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
