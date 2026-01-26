@@ -60,4 +60,4 @@ The test runner will automatically discover and execute new use cases.
 
 ## Reference
 
-These use cases are derived from `devdocs/agentic/use-cases.md`.
+These use cases are derived from `docs-dev/agentic/use-cases.md`.

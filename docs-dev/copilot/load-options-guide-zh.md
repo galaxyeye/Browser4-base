@@ -32,7 +32,7 @@ session.load(url, "-parse -storeContent")
 session.loadOutPages(url, "-outLink a[href~=item] -topLinks 20")
 
 // 完整的门户+详情模式
-session.loadOutPages(url, 
+session.loadOutPages(url,
     "-expires 1d -outLink a.product -topLinks 10 " +
     "-itemExpires 7d -itemRequireImages 5"
 )
@@ -89,7 +89,7 @@ session.loadOutPages(url,
 | requireNotBlank | `-rnb`, `-requireNotBlank` | String | CSS 选择器，指定元素必须有非空文本 | `-requireNotBlank .product-title` |
 | waitNonBlank | `-wnb`, `-waitNonBlank` | String | 等待指定元素出现非空文本后再继续 | `-waitNonBlank .dynamic-content` |
 
-**AI 提示**: 
+**AI 提示**:
 - 质量要求用于验证页面完整性
 - `requireNotBlank` 验证完整性，不满足则重新抓取
 - `waitNonBlank` 等待内容加载，不是验证
@@ -106,7 +106,7 @@ session.loadOutPages(url,
 | pageLoadTimeout | `-plt`, `-pageLoadTimeout` | Duration | 页面加载超时 | `-pageLoadTimeout 60s` |
 | interactLevel | `-ilv`, `-interactLevel` | Enum | 交互级别（高=更好的内容，低=更快） | `-interactLevel HIGH` |
 
-**AI 提示**: 
+**AI 提示**:
 - 更多滚动 = 更多懒加载内容
 - 更长间隔 = 内容加载更完整，但速度更慢
 - `interactLevel` 是预设，单独设置可覆盖
@@ -121,10 +121,10 @@ session.loadOutPages(url,
 | outLinkPattern | `-olp`, `-outLinkPattern` | String | 正则表达式，过滤提取的链接 | `-outLinkPattern .*/product/.*` |
 | topLinks | `-tl`, `-topLinks` | Int | 最多提取的链接数量 | `-topLinks 20` |
 
-**使用场景**: 
+**使用场景**:
 ```kotlin
 // 从列表页提取商品详情页链接
-session.loadOutPages(portalUrl, 
+session.loadOutPages(portalUrl,
     "-outLink a.product-link " +
     "-outLinkPattern .*/dp/.* " +
     "-topLinks 50"
@@ -172,7 +172,7 @@ session.loadOutPages(url,
 | dropContent | `-dropContent` | Boolean | 明确不存储 HTML 内容（优先级高） | `-dropContent` |
 | lazyFlush | `-lazyFlush` | Boolean | 批量写入（true）vs 立即写入（false） | `-lazyFlush true` |
 
-**AI 提示**: 
+**AI 提示**:
 - HTML 内容通常是最大的部分
 - 仅需元数据时使用 `-dropContent` 节省存储
 - `dropContent` 优先级高于 `storeContent`
@@ -189,7 +189,7 @@ session.loadOutPages(url,
 | noNorm | `-noNorm` | Boolean | 禁用 URL 标准化 | `-noNorm` |
 | noFilter | `-noFilter` | Boolean | 禁用 URL 过滤 | `-noFilter` |
 
-**使用建议**: 
+**使用建议**:
 - `-parse` 启用解析子系统，用于大规模爬虫
 - `-reparseLinks` 在链接提取规则变化时使用
 
@@ -203,7 +203,7 @@ session.loadOutPages(url,
 | nMaxRetry | `-nmr`, `-nMaxRetry` | Int | 3 | 标记为"gone"前的最大重试次数 | `-nMaxRetry 5` |
 | nJitRetry | `-njr`, `-nJitRetry` | Int | 系统默认 | RETRY(1601) 状态时立即重试次数 | `-nJitRetry 2` |
 
-**AI 提示**: 
+**AI 提示**:
 - `nMaxRetry`: 跨爬虫循环的重试
 - `nJitRetry`: 单次抓取操作中的立即重试
 - 优先级遵循 Java PriorityBlockingQueue 规则
@@ -231,7 +231,7 @@ val page = session.load(url, "-expires 1d")
 val page = session.load(url, "-refresh")
 
 // 带质量要求的抓取
-val page = session.load(url, 
+val page = session.load(url,
     "-expires 1d -requireSize 300000 -requireImages 5"
 )
 ```
@@ -265,7 +265,7 @@ val page = session.load(url, "-parse -dropContent")
 
 ```kotlin
 // 允许最多5次重试，忽略之前的失败
-val page = session.load(url, 
+val page = session.load(url,
     "-ignoreFailure -nMaxRetry 5 -nJitRetry 2"
 )
 ```
@@ -440,7 +440,7 @@ val 自定义交互 = "-scrollCount 10 -scrollInterval 2s -pageLoadTimeout 120s"
 - 缓存: `expires`, `expireAt`, `refresh`, `ignoreFailure`
 - 出链: `outLinkSelector`, `outLinkPattern`, `topLinks`
 - 质量: `requireSize`, `requireImages`, `requireAnchors`, `requireNotBlank`, `waitNonBlank`
-- 详情页: `itemExpires`, `itemExpireAt`, `itemScrollCount`, `itemWaitNonBlank`, `itemRequireNotBlank`, 
+- 详情页: `itemExpires`, `itemExpireAt`, `itemScrollCount`, `itemWaitNonBlank`, `itemRequireNotBlank`,
   `itemRequireSize`, `itemRequireImages`, `itemRequireAnchors`
 
 完整列表: `LoadOptions.apiPublicOptionNames`
@@ -453,10 +453,10 @@ val 自定义交互 = "-scrollCount 10 -scrollInterval 2s -pageLoadTimeout 120s"
 - REST API 示例: `/docs/rest-api-examples.md`
 - 概念文档: `/docs/concepts.md`
 - 源代码: `/pulsar-core/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/common/options/LoadOptions.kt`
-- 英文版本: `/devdocs/copilot/load-options-guide.md`
+- 英文版本: `/docs-dev/copilot/load-options-guide.md`
 
 ---
 
-**版本**: 2024-01-05  
-**维护者**: Browser4 团队  
+**版本**: 2024-01-05
+**维护者**: Browser4 团队
 **状态**: 活文档 - 随 LoadOptions 演进而更新

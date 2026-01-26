@@ -19,7 +19,7 @@
 - **说明**: AI-first 代码编辑器，基于 VSCode
 - **特点**: 自动读取项目根目录的 `.cursorrules` 文件
 
-### 3. Windsurf  
+### 3. Windsurf
 - **文件位置**: `.windsurfrules`
 - **状态**: ✓ 新增
 - **说明**: Codeium 推出的 AI 编程编辑器
@@ -163,7 +163,7 @@
 ## 相关文档
 
 - **完整指南**: `README-AI.md` - AI Coder Guide (英文版，最详细)
-- **快速参考**: `devdocs/copilot/README-nano.md` - 精简版中文指南
+- **快速参考**: `docs-dev/copilot/README-nano.md` - 精简版中文指南
 - **产品概览**: `docs/ai-products-guidance.md` - 所有支持的 AI 产品列表
 - **项目概念**: `docs/concepts.md` - 核心概念说明
 - **高级指南**: `docs/advanced-guides.md` - 高级开发指南
@@ -182,6 +182,6 @@
 
 ---
 
-**版本**: v2025-10-14  
-**维护者**: Browser4 团队  
+**版本**: v2025-10-14
+**维护者**: Browser4 团队
 **最后更新**: 2026-01-05

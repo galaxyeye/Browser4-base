@@ -131,7 +131,7 @@ All guidance files contain the following core content:
 For more detailed information, please refer to:
 
 - **完整 AI 编程指南** / **Complete AI Programming Guide:** `README-AI.md`
-- **快速参考指南** / **Quick Reference Guide:** `devdocs/copilot/README-nano.md`
+- **快速参考指南** / **Quick Reference Guide:** `docs-dev/copilot/README-nano.md`
 - **项目概念** / **Project Concepts:** `docs/concepts.md`
 - **高级指南** / **Advanced Guide:** `docs/advanced-guides.md`
 

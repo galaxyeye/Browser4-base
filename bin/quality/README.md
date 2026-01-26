@@ -41,7 +41,7 @@ Or on Windows:
 
 Check specific directories or files:
 ```bash
-./bin/quality/check-links.sh docs README.md devdocs
+./bin/quality/check-links.sh docs README.md docs-dev
 ```
 
 Skip external links (faster for local development):
@@ -85,7 +85,7 @@ python3 bin/quality/check-links.py --help
 ./bin/quality/check-links.sh --skip-external
 
 # Check specific directories
-./bin/quality/check-links.sh docs devdocs
+./bin/quality/check-links.sh docs docs-dev
 
 # Exclude build artifacts and use 20 workers
 ./bin/quality/check-links.sh --exclude target --exclude build --workers 20
