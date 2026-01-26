@@ -24,7 +24,7 @@ All examples are expressed as executable step-based workflows.
 ---
 
 ### 2. Job Listing Extraction (Single-site)
-1. go to https://www.linkedin.com/jobs
+1. go to https://wellfound.com/jobs
 2. search for “Kotlin backend engineer”
 3. open the first 5 job postings
 4. extract company, location, and skills
@@ -72,7 +72,7 @@ All examples are expressed as executable step-based workflows.
 ---
 
 ### 7. Job Market Skill Demand Analysis
-1. go to https://www.linkedin.com/jobs
+1. go to https://wellfound.com/jobs
 2. search for “Senior Backend Engineer”
 3. apply “Remote” filter
 4. paginate through 3 pages
@@ -126,10 +126,10 @@ All examples are expressed as executable step-based workflows.
 ---
 
 ### 11. Hiring Market Cross-Platform Comparison
-1. go to https://www.indeed.com/
+1. go to https://remoteok.com/jobs
 2. search for “QA automation engineer”
 3. record salary ranges
-4. go to https://www.linkedin.com/jobs
+4. go to https://wellfound.com/jobs
 5. search for the same role
 6. compare skill requirements
 7. assess demand differences

@@ -3,7 +3,7 @@
 # Type: Agentic reasoning, loops, aggregation
 # Description: Analyze job market for Senior Backend Engineer roles with skill frequency analysis
 
-1. go to https://www.linkedin.com/jobs
+1. go to https://wellfound.com/jobs
 2. search for "Senior Backend Engineer"
 3. apply "Remote" filter
 4. paginate through 3 pages
