@@ -18,8 +18,6 @@ import ai.platon.pulsar.agentic.tools.specs.ToolSpecFormat
  * These type definitions help the LLM understand the data structures returned by skill-related tool calls.
  */
 val SKILL_TOOL_TYPE_DEFINITIONS = """
-### Skill 工具类型定义
-
 ```kotlin
 // 技能摘要，用于发现和匹配阶段
 data class SkillSummary(
@@ -316,7 +314,11 @@ $TASK_COMPLETE_SCHEMA_PROMPT
 
 $TOOL_CALL_RULE_CONTENT
 
+### Skill 工具类型定义
+
 $SKILL_TOOL_TYPE_DEFINITIONS
+
+### `agent.extract` 数据提取工具类型定义
 
 $EXTRACTION_TOOL_NOTE_CONTENT
 

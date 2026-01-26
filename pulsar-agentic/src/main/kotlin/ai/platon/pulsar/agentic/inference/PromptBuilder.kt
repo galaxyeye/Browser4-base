@@ -141,7 +141,7 @@ Follow the rules below when using the browser and browsing web pages:
 
         """.trimIndent()
 
-        val EXTRACTION_TOOL_NOTE_CONTENT_2 = """
+        val EXTRACTION_TOOL_NOTE_CONTENT = """
 使用 `agent.extract` 满足高级数据提取要求，仅当 `textContent`, `selectFirstTextOrNull` 不能满足要求时使用。
 
 参数说明：
@@ -199,8 +199,6 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 ```
 
 """
-
-        val EXTRACTION_TOOL_NOTE_CONTENT = EXTRACTION_TOOL_NOTE_CONTENT_2
 
         val INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT = """
 (Interactive Elements)
