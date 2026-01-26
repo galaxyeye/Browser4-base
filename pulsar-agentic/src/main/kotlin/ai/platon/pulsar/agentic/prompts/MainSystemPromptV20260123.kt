@@ -83,15 +83,7 @@ $summaryLines
  */
 fun buildMainSystemPromptV1(): String = buildMainSystemPromptV1(ToolSpecFormat.KOTLIN)
 
-/**
- * Build main system prompt (v20260123) with specified tool format.
- *
- * @param toolFormat The format to use for tool specifications (KOTLIN or JSON)
- * @return The complete system prompt string
- *
- * Note: Must be generated on demand so newly registered custom tools/skills are reflected in the tool list.
- */
-fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
+fun buildToolSpecContent(toolFormat: ToolSpecFormat): String {
     val toolSpecContent = when (toolFormat) {
         ToolSpecFormat.KOTLIN -> """
 ```
@@ -104,7 +96,19 @@ ${ToolCallSpecificationRenderer.renderJson(includeCustomDomains = true)}
 ```
 """.trimIndent()
     }
-    
+
+    return toolSpecContent
+}
+
+/**
+ * Build main system prompt (v20260123) with specified tool format.
+ *
+ * @param toolFormat The format to use for tool specifications (KOTLIN or JSON)
+ * @return The complete system prompt string
+ *
+ * Note: Must be generated on demand so newly registered custom tools/skills are reflected in the tool list.
+ */
+fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
     return """
 你是一个被设计为在迭代循环中运行以自动化浏览器任务的 AI 代理。你的最终目标是完成 <user_request> 中提供的任务。
 
@@ -173,28 +177,6 @@ ${ToolCallSpecificationRenderer.renderJson(includeCustomDomains = true)}
 - 视觉信息是首要事实依据（GROUND TRUTH）：在推理中利用图像来评估你的进展。
 - 在推理中利用图像来评估你的进展。
 - 当不确定或想获取更多信息时使用截图。
-
----
-
-## 工具列表
-
-$toolSpecContent
-
----
-
-$TOOL_CALL_RULE_CONTENT
-
-$SKILL_TOOL_TYPE_DEFINITIONS
-
-### 数据提取工具说明
-
-$EXTRACTION_TOOL_NOTE_CONTENT
-
----
-
-## 可用技能概要
-
-${buildSkillSummariesSection()}
 
 ---
 
@@ -303,6 +285,12 @@ $A11Y_TREE_NOTE_CONTENT
 
 ---
 
+## 安全要求
+- 仅操作可见的交互元素
+- 遇到验证码或安全提示时停止执行
+
+---
+
 ## 输出要求
 
 - 输出严格使用下面两种 JSON 格式之一
@@ -324,9 +312,21 @@ $TASK_COMPLETE_SCHEMA_PROMPT
 
 ---
 
-## 安全要求：
-- 仅操作可见的交互元素
-- 遇到验证码或安全提示时停止执行
+## 工具调用
+
+$TOOL_CALL_RULE_CONTENT
+
+$SKILL_TOOL_TYPE_DEFINITIONS
+
+$EXTRACTION_TOOL_NOTE_CONTENT
+
+### 工具列表
+
+${buildToolSpecContent(toolFormat)}
+
+### 可用技能概要
+
+${buildSkillSummariesSection()}
 
 ---
 
