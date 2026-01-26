@@ -1,9 +1,14 @@
 package ai.platon.pulsar.agentic.skills
 
 import ai.platon.pulsar.common.getLogger
+import org.springframework.core.io.Resource
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver
+import org.springframework.core.io.support.ResourcePatternResolver
+import org.springframework.util.ResourceUtils
 import org.yaml.snakeyaml.Yaml
-import java.net.URI
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 /**
  * Metadata parsed from a SKILL.md file.
@@ -120,97 +125,189 @@ class SkillDefinitionLoader {
     /**
      * Load skill definitions from classpath resources.
      *
-     * Supports both:
+     * This method loads *all* matching resources from the classpath (across multiple jars/directories).
+     *
+     * Supports:
      * - exploded resources on filesystem (dev/test)
      * - resources packaged in a JAR (prod)
+     * - Spring Boot fat-jar layout (best-effort via Spring Resource abstraction)
      *
-     * @param resourcePath Resource path (e.g., "skills")
+     * @param resourcePath Resource path (e.g., "skills", "/skills", "classpath:skills")
      * @return List of skill definitions found
      */
     fun loadFromResources(resourcePath: String): List<SkillDefinition> {
-        val resourceUrl = javaClass.classLoader.getResource(resourcePath)
-        if (resourceUrl == null) {
-            logger.warn("Resource path not found: {}", resourcePath)
+        val normalized = normalizeClasspathResourcePath(resourcePath)
+        if (normalized.isBlank()) {
+            logger.warn("Resource path is blank")
             return emptyList()
         }
 
-        return try {
-            when (resourceUrl.protocol) {
-                "file" -> {
-                    val skillsPath = Paths.get(resourceUrl.toURI())
-                    loadFromDirectory(skillsPath)
-                }
+        // Scan for all SKILL.md files under the given resourcePath.
+        val resolver: ResourcePatternResolver = PathMatchingResourcePatternResolver(javaClass.classLoader)
+        val pattern = "classpath*:$normalized/**/SKILL.md"
 
-                "jar" -> {
-                    loadFromJarResources(resourcePath, resourceUrl.toURI())
-                }
+        val resources = try {
+            resolver.getResources(pattern)
+        } catch (e: Exception) {
+            logger.warn("Failed to scan resources '{}' with pattern '{}': {}", resourcePath, pattern, e.message)
+            emptyArray()
+        }
 
-                else -> {
-                    // Best-effort fallback: try treating as URI path.
-                    logger.warn("Unsupported resource protocol '{}' for '{}', falling back to URI path", resourceUrl.protocol, resourcePath)
-                    val skillsPath = Paths.get(resourceUrl.toURI())
-                    loadFromDirectory(skillsPath)
+        if (resources.isEmpty()) {
+            logger.warn("No skill resources found for '{}' (pattern='{}')", resourcePath, pattern)
+            return emptyList()
+        }
+
+        val skillRootDirs = resources
+            .mapNotNull { r -> resolveSkillRootDir(r) }
+            .distinct()
+
+        val loaded = mutableListOf<SkillDefinition>()
+        for (skillRoot in skillRootDirs) {
+            try {
+                val definition = loadSkillDefinition(skillRoot)
+                if (definition != null) {
+                    loaded.add(definition)
+                }
+            } catch (e: Exception) {
+                logger.warn("Failed to load skill from resource root '{}': {}", skillRoot, e.message)
+            }
+        }
+
+        // Deduplicate by skillId. Keep deterministic ordering.
+        // Current rule: first one wins (typically classpath order; in tests this stays stable).
+        val byId = LinkedHashMap<String, SkillDefinition>()
+        val conflicts = mutableListOf<String>()
+        loaded
+            .sortedBy { it.skillId }
+            .forEach { def ->
+                val prev = byId.putIfAbsent(def.skillId, def)
+                if (prev != null) {
+                    conflicts.add(def.skillId)
                 }
             }
+
+        if (conflicts.isNotEmpty()) {
+            logger.warn("Duplicate skill definitions found on classpath for ids={}, first wins", conflicts.distinct().sorted())
+        }
+
+        return byId.values.toList().sortedBy { it.skillId }
+    }
+
+    private fun normalizeClasspathResourcePath(resourcePath: String): String {
+        var p = resourcePath.trim()
+        if (p.startsWith("classpath:", ignoreCase = true)) {
+            p = p.substringAfter(':')
+        }
+        while (p.startsWith("/")) {
+            p = p.removePrefix("/")
+        }
+        return p
+    }
+
+    private fun resolveSkillRootDir(skillMdResource: Resource): Path? {
+        // If this resource is backed by a real file, we can get its parent directory directly.
+        try {
+            if (ResourceUtils.isFileURL(skillMdResource.url)) {
+                return skillMdResource.file.toPath().parent
+            }
+        } catch (_: Exception) {
+            // Fall through
+        }
+
+        // Otherwise, extract the whole skill directory to temp based on the SKILL.md stream.
+        return try {
+            extractSkillDirectoryFromResource(skillMdResource)
         } catch (e: Exception) {
-            logger.warn("Failed to load skills from resources '{}': {}", resourcePath, e.message)
-            emptyList()
+            logger.warn("Failed to extract skill directory from resource '{}': {}", safeResourceId(skillMdResource), e.message)
+            null
         }
     }
 
-    private fun loadFromJarResources(resourcePath: String, jarUri: URI): List<SkillDefinition> {
-        // jarUri looks like: jar:file:/path/app.jar!/skills
-        val tmpRoot = Files.createTempDirectory("pulsar-skills-")
+    private fun extractSkillDirectoryFromResource(skillMdResource: Resource): Path {
+        // Derive skillId from URL path (best-effort): .../<skillId>/SKILL.md
+        val urlPath = runCatching { skillMdResource.url.toExternalForm() }.getOrDefault("")
+        val skillId = urlPath.substringBeforeLast("/SKILL.md").substringAfterLast('/').ifBlank { "skill" }
+
+        val tmpRoot = Files.createTempDirectory("pulsar-skill-")
         tmpRoot.toFile().deleteOnExit()
 
-        val fs = try {
-            FileSystems.getFileSystem(jarUri)
-        } catch (_: FileSystemNotFoundException) {
-            FileSystems.newFileSystem(jarUri, emptyMap<String, Any>())
+        val skillOutDir = tmpRoot.resolve(skillId)
+        Files.createDirectories(skillOutDir)
+
+        // Always write SKILL.md
+        skillMdResource.inputStream.use { input ->
+            Files.copy(input, skillOutDir.resolve("SKILL.md"), StandardCopyOption.REPLACE_EXISTING)
         }
 
-        fs.use { jarFs ->
-            val rootInJar = jarFs.getPath("/", resourcePath)
-            if (!Files.exists(rootInJar)) {
-                logger.warn("Resource path not found in jar: {}", resourcePath)
-                return emptyList()
-            }
+        // Best-effort: try to copy known optional directories by scanning for any resources under the same skill root.
+        // This works well for filesystem resources and many jar layouts.
+        val resolver: ResourcePatternResolver = PathMatchingResourcePatternResolver(javaClass.classLoader)
+        val base = urlPath.substringBeforeLast("/SKILL.md")
+        val classpathRelative = base.substringAfter(normalizeToClasspathMarker(base))
+            .trimStart('/')
 
-            // Walk for SKILL.md files; each skill is represented by '{}/*/SKILL.md'.
-            val skillMdPaths = Files.walk(rootInJar)
-                .filter { Files.isRegularFile(it) && it.fileName.toString().equals("SKILL.md", ignoreCase = false) }
-                .toList()
-
-            if (skillMdPaths.isEmpty()) {
-                return emptyList()
-            }
-
-            for (skillMd in skillMdPaths) {
-                // skillDir = .../skills/<skill-id>
-                val skillDir = skillMd.parent
-                val skillId = skillDir.fileName.toString()
-                val outDir = tmpRoot.resolve(skillId)
-                copyDirectoryRecursively(skillDir, outDir)
-            }
+        if (classpathRelative.isNotBlank()) {
+            copyResourceTree(resolver, "classpath*:$classpathRelative/scripts/**", skillOutDir.resolve("scripts"))
+            copyResourceTree(resolver, "classpath*:$classpathRelative/references/**", skillOutDir.resolve("references"))
+            copyResourceTree(resolver, "classpath*:$classpathRelative/assets/**", skillOutDir.resolve("assets"))
         }
 
-        // Parse from extracted temp directory.
-        return loadFromDirectory(tmpRoot)
+        return skillOutDir
     }
 
-    private fun copyDirectoryRecursively(from: Path, to: Path) {
-        Files.walk(from).use { stream ->
-            stream.forEach { src ->
-                val rel = from.relativize(src)
-                val dst = to.resolve(rel.toString())
-                if (Files.isDirectory(src)) {
-                    Files.createDirectories(dst)
-                } else {
-                    Files.createDirectories(dst.parent)
-                    Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING)
+    private fun copyResourceTree(resolver: ResourcePatternResolver, pattern: String, outDir: Path) {
+        val resources = try {
+            resolver.getResources(pattern)
+        } catch (_: Exception) {
+            emptyArray<Resource>()
+        }
+
+        if (resources.isEmpty()) {
+            return
+        }
+
+        for (r in resources) {
+            try {
+                // Ignore directories / non-readable resources
+                if (!r.isReadable) continue
+
+                // Try resolve relative file name from URL; fallback to last segment.
+                val url = runCatching { r.url.toExternalForm() }.getOrDefault("")
+                val fileName = url.substringAfterLast('/').ifBlank { r.filename ?: continue }
+                val dst = outDir.resolve(fileName)
+
+                Files.createDirectories(dst.parent)
+                r.inputStream.use { input ->
+                    Files.copy(input, dst, StandardCopyOption.REPLACE_EXISTING)
                 }
+            } catch (_: Exception) {
+                // Degrade silently; scripts/references/assets are optional.
             }
         }
+    }
+
+    private fun normalizeToClasspathMarker(url: String): String {
+        // For Spring's common URL forms, try to find a stable marker.
+        // - jar:file:...!/BOOT-INF/classes!/skills/... -> after '!/' or '!'
+        // - jar:file:...!/skills/... -> after '!/'
+        // - file:/.../classes/skills/... -> after last '/classes/'
+        val idxBang = url.lastIndexOf("!/")
+        if (idxBang >= 0) {
+            return url.substring(0, idxBang + 2)
+        }
+
+        val idxClasses = url.lastIndexOf("/classes/")
+        if (idxClasses >= 0) {
+            return url.substring(0, idxClasses + "/classes/".length)
+        }
+
+        // Fallback: leave it as-is, caller will likely produce blank classpathRelative.
+        return url
+    }
+
+    private fun safeResourceId(resource: Resource): String {
+        return runCatching { resource.description }.getOrElse { resource.toString() }
     }
 
     /**

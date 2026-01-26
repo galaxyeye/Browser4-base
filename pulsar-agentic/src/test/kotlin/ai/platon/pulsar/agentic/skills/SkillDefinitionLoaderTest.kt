@@ -341,4 +341,17 @@ class SkillDefinitionLoaderTest {
 
         assertTrue(definitions.isEmpty(), "Malformed SKILL.md should be skipped by loadFromDirectory")
     }
+
+    @Test
+    fun shouldSupportClasspathResourcePathVariants() {
+        val loader = SkillDefinitionLoader()
+
+        val defs1 = loader.loadFromResources("skills")
+        val defs2 = loader.loadFromResources("/skills")
+        val defs3 = loader.loadFromResources("classpath:skills")
+
+        assertTrue(defs1.isNotEmpty())
+        assertEquals(defs1.map { it.skillId }.toSet(), defs2.map { it.skillId }.toSet())
+        assertEquals(defs1.map { it.skillId }.toSet(), defs3.map { it.skillId }.toSet())
+    }
 }
