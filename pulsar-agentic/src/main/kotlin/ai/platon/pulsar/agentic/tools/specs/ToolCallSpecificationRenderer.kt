@@ -2,7 +2,6 @@ package ai.platon.pulsar.agentic.tools.specs
 
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
-import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 
 /**
  * Supported formats for rendering tool-call specifications.
