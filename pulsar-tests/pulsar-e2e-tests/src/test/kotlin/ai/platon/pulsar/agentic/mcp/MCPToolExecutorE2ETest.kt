@@ -83,6 +83,7 @@ class MCPToolExecutorE2ETest {
 
     @Test
     fun `test server is accessible via HTTP`() {
+        TODO("Use RestTestClient to test connectivity")
         val info = mockMCPServer.getInfo()
         assertNotNull(info)
         assertEquals("test-mcp-server", info["name"])
@@ -380,6 +381,9 @@ class MCPToolExecutorE2ETest {
     fun `test cross-network communication via HTTP endpoints`() {
         // This test validates that the TestMCPServer is accessible over HTTP
         // and can handle requests across network boundaries
+
+
+        TODO("Use RestTestClient to test connectivity")
 
         // Get server info via HTTP
         val info = mockMCPServer.getInfo()

@@ -111,9 +111,12 @@ class SkillRegistrationAndInvocationE2ETest {
         val agent = AgenticContexts.getOrCreateAgent()
         assertNotNull(agent, "Agent should be created")
 
+        val url = "https://agentskills.io/specification"
+        agent.session.open(url)
+
         // Step 4: Run agent with a skill-oriented task
         val task = """
-            Use skill.debug.scraping to scrape https://agentskills.io/specification
+            Use skill.debug.scraping to scrape $url
         """.trimIndent()
 
         val history = agent.run(task)
