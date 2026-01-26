@@ -2,6 +2,7 @@ package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
+import ai.platon.pulsar.agentic.inference.action.GENERAL_TOOL_CALL_RESULT_PROMPT
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT
 import ai.platon.pulsar.agentic.inference.action.TASK_COMPLETE_SCHEMA_PROMPT
 import ai.platon.pulsar.agentic.inference.detail.ExecutionContext
@@ -37,6 +38,10 @@ class PromptBuilder() {
         val language = if (isZH) "中文" else "English"
 
         const val MAX_ACTIONS = 1
+
+        fun buildGeneralResultSchema(): String {
+            return GENERAL_TOOL_CALL_RESULT_PROMPT
+        }
 
         /**
          * Build the JSON schema for observing results.

@@ -69,6 +69,9 @@ data class ToolSpec constructor(
 }
 
 data class ToolCall constructor(
+    /**
+     * Tool domain (aka namespace), e.g. "driver", "fs", "mcp.weather", "skill.blog", or a custom domain.
+     */
     val domain: String,
     val method: String,
     val arguments: MutableMap<String, Any?> = mutableMapOf(),

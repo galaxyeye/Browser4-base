@@ -126,6 +126,18 @@ open class TextToAction(
                 )
             }
 
+            contentStart.contains("\"toolCalls\"") -> {
+                val toolCallElements: GeneralToolCallElements = mapper.readValue(content)
+                val observeElements =
+                    toolCallElements.actions.map { toObserveElement(it, modelResponse) } ?: emptyList()
+                ActionDescription(
+                    instruction,
+                    observeElements = observeElements,
+                    agentState = agentState,
+                    modelResponse = modelResponse
+                )
+            }
+
             contentStart.contains("\"elements\"") -> {
                 val elements: ObserveResponseElements = mapper.readValue(content)
                 toActionDescription(instruction, elements, agentState, modelResponse)
@@ -138,7 +150,8 @@ open class TextToAction(
     private fun reviseModelResponse(modelResponse: ModelResponse): ModelResponse {
         var content = modelResponse.content.trim()
 
-        val errorMessage = "不合格响应，必须按照`## 输出格式`要求输出合法 JSON 格式。客户端已经修正，但以后务必严格遵循格式要求输出。"
+        val errorMessage =
+            "不合格响应，必须按照`## 输出格式`要求输出合法 JSON 格式。客户端已经修正，但以后务必严格遵循格式要求输出。"
         val heading20 = content.take(30)
         val tailing20 = content.takeLast(30)
 
@@ -255,9 +268,7 @@ open class TextToAction(
         else -> null
     }
 
-
     companion object {
-
         val baseDir = AppPaths.get("tta")
 
         init {
@@ -277,6 +288,44 @@ open class TextToAction(
                 agentState = agentState,
                 modelResponse = response
             )
+        }
+
+        fun toActionDescription(
+            instruction: String,
+            elements: GeneralToolCallElements,
+            agentState: AgentState,
+            response: ModelResponse
+        ): ActionDescription {
+            val observeElements = elements.actions.map { toObserveElement(it, response) } ?: emptyList()
+            return ActionDescription(
+                instruction,
+                observeElements = observeElements,
+                agentState = agentState,
+                modelResponse = response
+            )
+        }
+
+        fun toObserveElement(ele: GeneralToolCallElement, response: ModelResponse): ObserveElement {
+            val arguments = ele.arguments
+                ?.mapNotNull { arg -> arg?.get("name") to arg?.get("value") }
+                ?.filter { it.first != null }
+                ?.associate { it.first.toString() to it.second }
+
+            val observeElement = ObserveElement(
+                evaluationPreviousGoal = ele.evaluationPreviousGoal,
+                nextGoal = ele.nextGoal,
+                thinking = ele.thinking,
+
+                toolCall = ToolCall(
+                    domain = ele.domain ?: "",
+                    method = ele.method ?: "",
+                    arguments = arguments?.toMutableMap() ?: mutableMapOf(),
+                ),
+
+                modelResponse = response.content,
+            )
+
+            return observeElement
         }
 
         fun toObserveElement(ele: ObserveResponseElement, response: ModelResponse): ObserveElement {
@@ -306,5 +355,4 @@ open class TextToAction(
             return observeElement
         }
     }
-
 }

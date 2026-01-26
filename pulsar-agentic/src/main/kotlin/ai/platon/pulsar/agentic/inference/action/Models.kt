@@ -16,16 +16,16 @@ import ai.platon.pulsar.agentic.model.DetailedActResult
  * - All properties are nullable and have defaults so that missing fields in model output can be tolerated.
  * - The exact semantics of [domain]/[method] are defined by the tool-call specification rendered in prompts.
  */
-data class AgentResponseAction(
+data class GeneralToolCallElement(
     /**
-     * Tool domain (aka namespace), e.g. "browser", "page", or a custom domain.
+     * Tool domain (aka namespace), e.g. "fs", "mcp.weather", "skill.blog", or a custom domain.
      *
      * When absent, the caller usually treats this action as invalid or falls back to a default domain.
      */
     val domain: String? = null,
 
     /**
-     * Tool method (aka function name) inside [domain], e.g. "click", "type", "scroll".
+     * Tool method (aka function name) inside [domain], e.g. "readString", "getWeather", "writeBlog".
      */
     val method: String? = null,
 
@@ -37,32 +37,12 @@ data class AgentResponseAction(
      *
      * The list form is used because some prompts return arguments as an array of `{name,value}` objects.
      */
-    val arguments: List<Map<String, String>?>? = null,
-
-    /**
-     * A locator expression referencing an element on the page.
-     *
-     * The model might wrap it with brackets (e.g. "[FBN:..."]); downstream code may normalize it.
-     */
-    val locator: String? = null,
+    val arguments: List<Map<String, Any>?>? = null,
 
     /**
      * Natural language description for explainability/debugging.
      */
     val description: String? = null,
-)
-
-/**
- * A model response that contains one or more [AgentResponseAction] plus optional reasoning/memory.
- *
- * This type is intended to be deserialized from LLM output. Keep it permissive: nullable fields and defaults
- * help tolerate partially malformed responses.
- */
-data class AgentResponse(
-    /**
-     * Actions suggested by the model.
-     */
-    val actions: List<AgentResponseAction>,
 
     /**
      * Long-term memory that the agent wants to persist.
@@ -77,16 +57,6 @@ data class AgentResponse(
     val thinking: String? = null,
 
     /**
-     * A short summary of the screenshot content, if the prompt included an image.
-     */
-    val screenshotContentSummary: String? = null,
-
-    /**
-     * A short summary of the current page's content as perceived by the model.
-     */
-    val currentPageContentSummary: String? = null,
-
-    /**
      * Model's evaluation of whether the previous goal was achieved.
      */
     val evaluationPreviousGoal: String? = null,
@@ -96,6 +66,42 @@ data class AgentResponse(
      */
     val nextGoal: String? = null,
 )
+
+/**
+ * A model response that contains one or more [GeneralToolCallElement] plus optional reasoning/memory.
+ *
+ * This type is intended to be deserialized from LLM output. Keep it permissive: nullable fields and defaults
+ * help tolerate partially malformed responses.
+ */
+data class GeneralToolCallElements(
+    /**
+     * Actions suggested by the model.
+     */
+    val actions: List<GeneralToolCallElement>,
+
+)
+
+const val GENERAL_TOOL_CALL_RESULT_PROMPT = """
+{
+  "toolCalls": [
+     {
+      "domain": "Tool domain, such as `fs`, `mcp.weather`, `skill.blog`",
+      "method": "Method name, such as `readString`",
+      "description": "Description of the current tool selection",
+      "arguments": [
+        {
+          "name": "Parameter name, such as `filename`",
+          "value": "Parameter value, such as `test.txt`"
+        }
+      ],
+      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+      "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`.",
+      "evaluationPreviousGoal": "A concise one-sentence analysis of the previous action, clearly stating success, failure, or uncertainty.",
+      "nextGoal": "A clear one-sentence statement of the next direct goal and action to take."
+    }
+  ]
+}
+"""
 
 /**
  * A terminal response indicating whether the overall task is complete.
