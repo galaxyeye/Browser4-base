@@ -36,7 +36,7 @@ data class ObserveParams(
      * */
     val userProvidedInstructions: String? = null,
     val returnAction: Boolean = false,
-    val multiStep: Boolean = false,
+    val multistep: Boolean = false,
     val logInferenceToFile: Boolean = false,
     val fromAct: Boolean = false,
 )
@@ -48,8 +48,9 @@ object InferenceMessageBuilder {
     fun buildObserveMessages(
         params: ObserveParams
     ): AgentMessageList {
-        return if (params.multiStep) {
-            promptBuilder.buildMultiStepAgentMessageListAll(params.context)
+        return if (params.multistep) {
+            // Multistep agents uses start with agent.run()
+            promptBuilder.buildMultistepAgentMessageListAll(params.context)
         } else {
             promptBuilder.buildObserveMessageListAll(params, params.context)
         }

@@ -294,8 +294,7 @@ $A11Y_TREE_NOTE_CONTENT
 - 输出严格使用下面两种 JSON 格式之一
 - 仅输出 JSON 内容，无多余文字
 
-1. 动作输出
-## 输出要求
+### 动作输出
 
 - 最多一个元素
 - arguments 必须按工具方法声明顺序排列
@@ -303,7 +302,7 @@ $A11Y_TREE_NOTE_CONTENT
 输出格式：
 ${buildResponseSchema(legacy = true)}
 
-2. 任务完成输出
+### 任务完成输出
 
 输出格式：
 $TASK_COMPLETE_SCHEMA_PROMPT

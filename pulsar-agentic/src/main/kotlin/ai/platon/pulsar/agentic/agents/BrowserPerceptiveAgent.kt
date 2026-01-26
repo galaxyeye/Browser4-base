@@ -414,7 +414,7 @@ open class BrowserPerceptiveAgent(
         } else null
 
         // Prepare messages for model
-        val messages = promptBuilder.buildMultiStepAgentMessageListAll(context)
+        val messages = promptBuilder.buildMultistepAgentMessageListAll(context)
 
         return try {
             if (isClosed) {

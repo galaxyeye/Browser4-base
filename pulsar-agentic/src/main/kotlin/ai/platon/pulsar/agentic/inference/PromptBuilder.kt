@@ -441,7 +441,7 @@ ${buildMainSystemPromptV1()}
         }
     }
 
-    fun buildMultiStepAgentMessageListAll(context: ExecutionContext): AgentMessageList {
+    fun buildMultistepAgentMessageListAll(context: ExecutionContext): AgentMessageList {
         // Prepare messages for model
         val messages = AgentMessageList()
 
