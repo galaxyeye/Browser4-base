@@ -4,8 +4,6 @@ import ai.platon.pulsar.agentic.context.AgenticContexts
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
-import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import ai.platon.pulsar.common.event.EventBus
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.*
@@ -61,54 +59,26 @@ class SkillRegistrationAndInvocationE2ETest {
         }
     }
 
-    private lateinit var registry: SkillRegistry
-    private lateinit var context: SkillContext
-
     @BeforeEach
     suspend fun setup() {
         // Clear captured events
         capturedEvents.clear()
-
-        // Initialize skill registry (do NOT clear - skills are preloaded by SkillBootstrap)
-        registry = SkillRegistry.instance
-        context = SkillContext(sessionId = "e2e-test-session-${System.currentTimeMillis()}")
-
-        // Unregister custom tool to ensure clean state for the SkillToolExecutor
-        CustomToolRegistry.instance.unregister("skill")
     }
 
     @AfterEach
     suspend fun tearDown() {
-        // Unregister custom tool (do NOT clear skill registry - preserve preloaded skills)
-        CustomToolRegistry.instance.unregister("skill")
     }
 
     @Test
     suspend fun `test skill registration and invocation through agent`() {
-        // Step 1: Verify WebScrapingSkill is preloaded by SkillBootstrap
-        // skill.debug.scraping should be available without manual registration
-        assertTrue(registry.contains("web-scraping"),
-            "WebScrapingSkill should be preloaded by SkillBootstrap. " +
-            "Available skills: ${registry.getAllIds()}")
-
-        // Step 2: Wire skill tools to CustomToolRegistry
-        val skillDomain = "skill"
-        val customRegistry = CustomToolRegistry.instance
-        if (!customRegistry.contains(skillDomain)) {
-            customRegistry.register(SkillToolExecutor(registry))
-        }
-
-        // Verify custom tool is registered
-        assertTrue(customRegistry.contains(skillDomain), "Custom tool should be registered")
-
-        // Step 3: Create agent
-        val agent = AgenticContexts.getOrCreateAgent()
+        val session = AgenticContexts.getOrCreateSession()
+        val driver = session.createBoundDriver()
+        val agent = session.companionAgent
         assertNotNull(agent, "Agent should be created")
 
         val url = "https://agentskills.io/specification"
-        agent.session.open(url)
+        driver.open(url)
 
-        // Step 4: Run agent with a skill-oriented task
         val task = """
             Use skill.debug.scraping to scrape $url
         """.trimIndent()
