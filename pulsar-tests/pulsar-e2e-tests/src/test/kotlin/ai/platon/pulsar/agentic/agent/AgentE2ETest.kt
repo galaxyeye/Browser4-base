@@ -58,6 +58,8 @@ class AgentE2ETest {
 
     companion object {
         private const val USE_CASE_RESOURCE_PATH = "e2e/scenarios/happy_path/use-cases/01-ecommerce-product-comparison.txt"
+        private const val MAX_TEST_STEPS = 5  // Maximum steps before auto-completing for test scenarios
+        private const val EVENT_PROCESSING_DELAY_MS = 500L  // Time to allow for async event processing
         private val capturedEvents = ConcurrentHashMap<String, MutableList<Map<String, Any?>>>()
         private val runStepCount = AtomicInteger(0)
         private val observeCount = AtomicInteger(0)
@@ -150,7 +152,7 @@ class AgentE2ETest {
 
                 // Complete the action if it's a test run to allow test progression
                 // This prevents infinite loops in test scenarios
-                if (runStepCount.get() >= 5) {
+                if (runStepCount.get() >= MAX_TEST_STEPS) {
                     actionDescription?.complete("Test step limit reached - completing for test")
                     eventLogger.info("⚠️ Test step limit reached, completing action")
                 }
@@ -264,7 +266,7 @@ class AgentE2ETest {
         val history = agent.run(task)
 
         // Allow time for event processing
-        delay(500)
+        delay(EVENT_PROCESSING_DELAY_MS)
 
         // Step 5: Verify the agent ran and progress events were captured
         assertNotNull(history, "History should not be null")
@@ -338,7 +340,7 @@ class AgentE2ETest {
         val history = agent.run(simpleTask)
 
         // Allow time for event processing
-        delay(500)
+        delay(EVENT_PROCESSING_DELAY_MS)
 
         // Verify history exists
         assertNotNull(history, "History should not be null")
