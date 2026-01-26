@@ -16,7 +16,7 @@ import ai.platon.pulsar.agentic.model.DetailedActResult
  * - All properties are nullable and have defaults so that missing fields in model output can be tolerated.
  * - The exact semantics of [domain]/[method] are defined by the tool-call specification rendered in prompts.
  */
-data class GeneralToolCallElement(
+data class ToolCallElement(
     /**
      * Tool domain (aka namespace), e.g. "fs", "mcp.weather", "skill.blog", or a custom domain.
      *
@@ -30,6 +30,11 @@ data class GeneralToolCallElement(
     val method: String? = null,
 
     /**
+     * Natural language description for explainability/debugging.
+     */
+    val description: String? = null,
+
+    /**
      * Arguments passed to the tool method.
      *
      * Historical note: this model uses `Map<String, String>` which implies values are strings.
@@ -40,9 +45,9 @@ data class GeneralToolCallElement(
     val arguments: List<Map<String, Any>?>? = null,
 
     /**
-     * Natural language description for explainability/debugging.
-     */
-    val description: String? = null,
+     * Locator string for the target element, if applicable.
+     * */
+    val locator: String? = null,
 
     /**
      * Long-term memory that the agent wants to persist.
@@ -68,17 +73,16 @@ data class GeneralToolCallElement(
 )
 
 /**
- * A model response that contains one or more [GeneralToolCallElement] plus optional reasoning/memory.
+ * A model response that contains one or more [ToolCallElement] plus optional reasoning/memory.
  *
  * This type is intended to be deserialized from LLM output. Keep it permissive: nullable fields and defaults
  * help tolerate partially malformed responses.
  */
-data class GeneralToolCallElements(
+data class ToolCallElements(
     /**
      * Actions suggested by the model.
      */
-    val actions: List<GeneralToolCallElement>,
-
+    val toolCalls: List<ToolCallElement>,
 )
 
 const val GENERAL_TOOL_CALL_RESULT_PROMPT = """
@@ -94,6 +98,7 @@ const val GENERAL_TOOL_CALL_RESULT_PROMPT = """
           "value": "Parameter value, such as `test.txt`"
         }
       ],
+      "locator": "Web page node locator, composed of two numbers, such as `0,4`, only if applicable",
       "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
       "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`.",
       "evaluationPreviousGoal": "A concise one-sentence analysis of the previous action, clearly stating success, failure, or uncertainty.",

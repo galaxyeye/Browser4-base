@@ -127,9 +127,9 @@ open class TextToAction(
             }
 
             contentStart.contains("\"toolCalls\"") -> {
-                val toolCallElements: GeneralToolCallElements = mapper.readValue(content)
+                val toolCallElements: ToolCallElements = mapper.readValue(content)
                 val observeElements =
-                    toolCallElements.actions.map { toObserveElement(it, modelResponse) } ?: emptyList()
+                    toolCallElements.toolCalls.map { toObserveElement(it, modelResponse) } ?: emptyList()
                 ActionDescription(
                     instruction,
                     observeElements = observeElements,
@@ -292,11 +292,11 @@ open class TextToAction(
 
         fun toActionDescription(
             instruction: String,
-            elements: GeneralToolCallElements,
+            elements: ToolCallElements,
             agentState: AgentState,
             response: ModelResponse
         ): ActionDescription {
-            val observeElements = elements.actions.map { toObserveElement(it, response) } ?: emptyList()
+            val observeElements = elements.toolCalls.map { toObserveElement(it, response) } ?: emptyList()
             return ActionDescription(
                 instruction,
                 observeElements = observeElements,
@@ -305,7 +305,7 @@ open class TextToAction(
             )
         }
 
-        fun toObserveElement(ele: GeneralToolCallElement, response: ModelResponse): ObserveElement {
+        fun toObserveElement(ele: ToolCallElement, response: ModelResponse): ObserveElement {
             val arguments = ele.arguments
                 ?.mapNotNull { arg -> arg?.get("name") to arg?.get("value") }
                 ?.filter { it.first != null }

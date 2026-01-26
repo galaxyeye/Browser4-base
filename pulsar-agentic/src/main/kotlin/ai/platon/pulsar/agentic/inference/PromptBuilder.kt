@@ -39,7 +39,7 @@ class PromptBuilder() {
 
         const val MAX_ACTIONS = 1
 
-        fun buildGeneralResultSchema(): String {
+        fun buildResultSchema(): String {
             return GENERAL_TOOL_CALL_RESULT_PROMPT
         }
 
