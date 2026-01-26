@@ -5,7 +5,7 @@ import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.EXTRACTION_TOO
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.MAX_ACTIONS
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.TOOL_CALL_RULE_CONTENT
-import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveResultSchema
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildResponseSchema
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.language
 import ai.platon.pulsar.agentic.inference.action.TASK_COMPLETE_SCHEMA_PROMPT
 import ai.platon.pulsar.agentic.skills.SkillRegistry
@@ -301,7 +301,7 @@ $A11Y_TREE_NOTE_CONTENT
 - arguments 必须按工具方法声明顺序排列
 
 输出格式：
-${buildObserveResultSchema(true)}
+${buildResponseSchema(true)}
 
 2. 任务完成输出
 
