@@ -80,7 +80,7 @@ class SkillBootstrap { ... }
 
 ### Documentation
 
-**User Guide**: `dev-docs/skills-auto-loading.md`
+**User Guide**: `docs-dev/skills-auto-loading.md`
 - Architecture overview
 - Usage examples
 - Configuration guide
@@ -131,7 +131,7 @@ class SkillBootstrap { ... }
 - `pulsar-agentic/src/main/kotlin/ai/platon/pulsar/agentic/skills/SkillBootstrap.kt`
 - `pulsar-agentic/src/test/kotlin/ai/platon/pulsar/agentic/skills/SkillBootstrapTest.kt`
 - `pulsar-agentic/src/test/kotlin/ai/platon/pulsar/agentic/skills/SkillBootstrapIntegrationTest.kt`
-- `dev-docs/skills-auto-loading.md`
+- `docs-dev/skills-auto-loading.md`
 
 ### Modified Files
 - `pulsar-agentic/src/main/resources/agentic-beans/app-context.xml`

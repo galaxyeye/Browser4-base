@@ -11,7 +11,7 @@
 3. 在 `test skill registration and invocation through agent` 测试中，`skill.debug.scraping` 应该在系统启动时预加载，不需要在测试中注册。
 
 Reference:
-* dev-docs/data/system-message.log
+* docs-dev/data/system-message.log
 
 ## Features
 

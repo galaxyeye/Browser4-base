@@ -6,7 +6,7 @@ on:
     paths:
       - 'docs/**'
       - '*.md'
-      - '../../dev-docs/**'
+      - '../../docs-dev/**'
 
   # Run on push to main branches
   push:
@@ -16,7 +16,7 @@ on:
     paths:
       - 'docs/**'
       - '*.md'
-      - '../../dev-docs/**'
+      - '../../docs-dev/**'
 
   # Allow manual trigger
   workflow_dispatch:

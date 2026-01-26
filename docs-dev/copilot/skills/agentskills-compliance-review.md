@@ -229,7 +229,7 @@ class SkillSchemaValidator {
         val errors: List<String> = emptyList(),
         val warnings: List<String> = emptyList()
     )
-    
+
     fun validate(skillDefinition: SkillDefinition): ValidationResult
     fun validateYamlFrontmatter(content: String): ValidationResult
     fun validateRequiredSections(content: String): ValidationResult
@@ -293,7 +293,7 @@ The current Browser4 skill framework is **substantially compliant** with the Age
 4. ✅ **Metadata**: Complete metadata with ID, version, author, tags, dependencies
 5. ✅ **Dynamic Loading**: SkillDefinitionLoader supports specification requirements
 
-**Recommended Actions**: 
+**Recommended Actions**:
 1. 🎯 **Add YAML frontmatter** to SKILL.md files for better machine readability
 2. 🎯 **Implement schema validation** to ensure consistent structure
 3. 🎯 **Add automatic discovery** for improved usability
@@ -315,6 +315,6 @@ The framework goes **beyond the specification** by also providing executable imp
 
 - **Agent Skills Specification**: https://agentskills.io/specification
 - **Agent Skills Overview**: https://agentskills.io/what-are-skills
-- **Current Implementation Summary**: `/dev-docs/copilot/skills/SKILLS_IMPLEMENTATION_SUMMARY.md`
-- **Skills Framework Docs**: `/dev-docs/copilot/skills-framework.md`
+- **Current Implementation Summary**: `/docs-dev/copilot/skills/SKILLS_IMPLEMENTATION_SUMMARY.md`
+- **Skills Framework Docs**: `/docs-dev/copilot/skills-framework.md`
 - **Skills Directory**: `/pulsar-agentic/src/main/resources/skills/`

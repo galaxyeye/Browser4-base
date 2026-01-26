@@ -8,22 +8,22 @@ import java.io.File
 
 /**
  * Tests for comparing JSON vs Kotlin format for Agent Tool descriptions.
- * 
+ *
  * This test generates sample output files that can be used to compare the two formats.
- * Output files are saved to the project root's dev-docs/data/tool-format-comparison directory.
- * 
+ * Output files are saved to the project root's docs-dev/data/tool-format-comparison directory.
+ *
  * The output directory can be overridden via the `tool.format.comparison.output.dir` system property.
  */
 class ToolFormatComparisonTest {
-    
+
     companion object {
         private const val OUTPUT_DIR_PROPERTY = "tool.format.comparison.output.dir"
-        private const val DEFAULT_OUTPUT_SUBDIR = "dev-docs/data/tool-format-comparison"
+        private const val DEFAULT_OUTPUT_SUBDIR = "docs-dev/data/tool-format-comparison"
     }
-    
+
     /**
      * Resolves the output directory for generated files.
-     * 
+     *
      * Uses the following resolution order:
      * 1. System property `tool.format.comparison.output.dir` if set
      * 2. Searches up from current working directory for project root (contains pom.xml)
@@ -31,10 +31,10 @@ class ToolFormatComparisonTest {
      */
     private val outputDir: File by lazy {
         // Check system property first
-        System.getProperty(OUTPUT_DIR_PROPERTY)?.let { 
+        System.getProperty(OUTPUT_DIR_PROPERTY)?.let {
             return@lazy File(it).also { it.mkdirs() }
         }
-        
+
         // Try to find project root by searching for pom.xml
         var current = File(System.getProperty("user.dir"))
         while (current.parentFile != null) {
@@ -49,11 +49,11 @@ class ToolFormatComparisonTest {
             }
             current = current.parentFile
         }
-        
+
         // Fallback to relative path
         File(DEFAULT_OUTPUT_SUBDIR).also { it.mkdirs() }
     }
-    
+
     @Test
     @DisplayName("Generate Kotlin format tool specification")
     fun testGenerateKotlinFormat() {
@@ -61,14 +61,14 @@ class ToolFormatComparisonTest {
             format = ToolSpecFormat.KOTLIN,
             includeCustomDomains = false
         )
-        
+
         File(outputDir, "kotlin-format-tools.txt").writeText(kotlinFormat)
         println("=== Kotlin Format Sample ===")
         println(kotlinFormat)
         println("\nKotlin format lines: ${kotlinFormat.lines().size}")
         println("Kotlin format chars: ${kotlinFormat.length}")
     }
-    
+
     @Test
     @DisplayName("Generate JSON format tool specification")
     fun testGenerateJsonFormat() {
@@ -76,14 +76,14 @@ class ToolFormatComparisonTest {
             format = ToolSpecFormat.JSON,
             includeCustomDomains = false
         )
-        
+
         File(outputDir, "json-format-tools.json").writeText(jsonFormat)
         println("=== JSON Format Sample ===")
         println(jsonFormat)
         println("\nJSON format lines: ${jsonFormat.lines().size}")
         println("JSON format chars: ${jsonFormat.length}")
     }
-    
+
     @Test
     @DisplayName("Generate system prompt with Kotlin format")
     fun testGenerateSystemPromptWithKotlinFormat() {
@@ -93,7 +93,7 @@ class ToolFormatComparisonTest {
         println("Kotlin system prompt lines: ${kotlinPrompt.lines().size}")
         println("Kotlin system prompt chars: ${kotlinPrompt.length}")
     }
-    
+
     @Test
     @DisplayName("Generate system prompt with JSON format")
     fun testGenerateSystemPromptWithJsonFormat() {
@@ -103,7 +103,7 @@ class ToolFormatComparisonTest {
         println("JSON system prompt lines: ${jsonPrompt.lines().size}")
         println("JSON system prompt chars: ${jsonPrompt.length}")
     }
-    
+
     @Test
     @DisplayName("Compare Kotlin and JSON formats")
     fun testCompareFormats() {
@@ -115,10 +115,10 @@ class ToolFormatComparisonTest {
             format = ToolSpecFormat.JSON,
             includeCustomDomains = false
         )
-        
+
         val kotlinPrompt = buildMainSystemPromptV1(ToolSpecFormat.KOTLIN)
         val jsonPrompt = buildMainSystemPromptV1(ToolSpecFormat.JSON)
-        
+
         println("=== Format Comparison ===")
         println("Tool Specification:")
         println("  Kotlin format: ${kotlinFormat.lines().size} lines, ${kotlinFormat.length} chars")
@@ -127,7 +127,7 @@ class ToolFormatComparisonTest {
         println("Full System Prompt:")
         println("  Kotlin format: ${kotlinPrompt.lines().size} lines, ${kotlinPrompt.length} chars")
         println("  JSON format: ${jsonPrompt.lines().size} lines, ${jsonPrompt.length} chars")
-        
+
         // Write comparison summary
         val summary = buildString {
             appendLine("# Tool Format Comparison")
@@ -192,7 +192,7 @@ class ToolFormatComparisonTest {
             appendLine("For tool/function calling APIs that require JSON schemas, the **JSON format**")
             appendLine("provides better compatibility with OpenAI, Anthropic, and other providers' APIs.")
         }
-        
+
         File(outputDir, "comparison-summary.md").writeText(summary)
         println("\nComparison summary written to ${File(outputDir, "comparison-summary.md").absolutePath}")
     }

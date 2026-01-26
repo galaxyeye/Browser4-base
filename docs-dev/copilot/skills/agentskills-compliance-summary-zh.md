@@ -248,7 +248,7 @@ class SkillSchemaValidator {
         val errors: List<String> = emptyList(),
         val warnings: List<String> = emptyList()
     )
-    
+
     fun validate(skillDefinition: SkillDefinition): ValidationResult
     fun validateYamlFrontmatter(content: String): ValidationResult
     fun validateRequiredSections(content: String): ValidationResult
@@ -293,7 +293,7 @@ data class SkillVersion(
 ) : Comparable<SkillVersion> {
     fun isCompatibleWith(other: SkillVersion): Boolean
     fun requiresMinVersion(minVersion: SkillVersion): Boolean
-    
+
     companion object {
         fun parse(version: String): SkillVersion
     }
@@ -310,7 +310,7 @@ data class SkillMetadata(
 
 ### 优先级 4: 增强文档 📝
 **建议**:
-1. 更新 `/dev-docs/copilot/skills-framework.md` 添加 YAML frontmatter 示例
+1. 更新 `/docs-dev/copilot/skills-framework.md` 添加 YAML frontmatter 示例
 2. 创建 SKILL.md 模板
 3. 添加创建新技能的分步指南
 4. 文档化验证规则
@@ -325,19 +325,19 @@ data class SkillMetadata(
 class SkillDefinitionLoaderTest {
     @Test
     fun `should parse YAML frontmatter`() { }
-    
+
     @Test
     fun `should parse traditional markdown format`() { }
-    
+
     @Test
     fun `should be backward compatible`() { }
-    
+
     @Test
     fun `should extract parameters from markdown table`() { }
-    
+
     @Test
     fun `should handle missing optional sections`() { }
-    
+
     @Test
     fun `should validate version format`() { }
 }
@@ -345,10 +345,10 @@ class SkillDefinitionLoaderTest {
 class SkillSchemaValidatorTest {
     @Test
     fun `should validate required fields`() { }
-    
+
     @Test
     fun `should detect invalid version format`() { }
-    
+
     @Test
     fun `should validate dependencies exist`() { }
 }
@@ -359,10 +359,10 @@ class SkillSchemaValidatorTest {
 class SkillIntegrationTest {
     @Test
     fun `should load all example skills`() { }
-    
+
     @Test
     fun `should resolve dependencies correctly`() { }
-    
+
     @Test
     fun `should register and execute skills`() { }
 }
@@ -465,8 +465,8 @@ Browser4 不仅符合 Agent Skills 规范，还通过提供实际可执行的实
 
 ## 相关文档
 
-- **合规性审查**: `/dev-docs/agentskills-compliance-review.md`
-- **实现总结**: `/dev-docs/copilot/skills/SKILLS_IMPLEMENTATION_SUMMARY.md`
-- **框架文档**: `/dev-docs/copilot/skills-framework.md`
+- **合规性审查**: `/docs-dev/agentskills-compliance-review.md`
+- **实现总结**: `/docs-dev/copilot/skills/SKILLS_IMPLEMENTATION_SUMMARY.md`
+- **框架文档**: `/docs-dev/copilot/skills-framework.md`
 - **技能目录**: `/pulsar-agentic/src/main/resources/skills/`
 - **Agent Skills 规范**: https://agentskills.io/specification

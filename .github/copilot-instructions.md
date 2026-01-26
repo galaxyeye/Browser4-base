@@ -118,7 +118,7 @@
 
 - Kotlin：不可变 `data class`、显式返回类型、空安全（`require/check`/`?:`）
 - 公共 API 要有 KDoc：摘要/参数/返回/异常
-- AI 做任务后，任务文档放到 dev-docs 目录，供后续参考
+- AI 做任务后，任务文档放到 docs-dev 目录，供后续参考
 
 > KDoc 模板示例：
 ```kotlin

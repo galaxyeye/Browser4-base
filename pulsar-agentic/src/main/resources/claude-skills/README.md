@@ -55,5 +55,5 @@ Claude Skills are provided as context when making API calls to guide the AI agen
 
 - **Claude Skills Documentation**: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
 - **Browser4 Programmatic Skills**: `/skills/`
-- **Compliance Review**: `/dev-docs/claude-skills-compliance.md`
-- **Skills Framework**: `/dev-docs/copilot/skills-framework.md`
+- **Compliance Review**: `/docs-dev/claude-skills-compliance.md`
+- **Skills Framework**: `/docs-dev/copilot/skills-framework.md`
