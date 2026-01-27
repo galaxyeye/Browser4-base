@@ -43,6 +43,22 @@ data class ObserveParams(
     val fromAct: Boolean = false,
 )
 
+/**
+ * Data class to encapsulate the results of an extraction inference operation.
+ * Used internally for event handling to avoid passing too many parameters.
+ */
+private data class ExtractInferenceResult(
+    val result: ObjectNode,
+    val extractedNode: ObjectNode,
+    val metaNode: ObjectNode,
+    val completed: Boolean,
+    val progress: String,
+    val totalInferenceTimeMillis: Long,
+    val inputTokenCount: Int,
+    val outputTokenCount: Int,
+    val totalTokenCount: Int
+)
+
 class InferenceEngine(
     private val session: AgenticSession
 ) {
@@ -221,8 +237,18 @@ class InferenceEngine(
             put("inferenceTimeMillis", totalInferenceTimeMillis)
         }
 
-        onDidExtractInfer(params, result, extractedNode, metaNode, completed, progress, totalInferenceTimeMillis,
-            inputTokenCount, outputTokenCount, totalTokenCount)
+        val inferenceResult = ExtractInferenceResult(
+            result = result,
+            extractedNode = extractedNode,
+            metaNode = metaNode,
+            completed = completed,
+            progress = progress,
+            totalInferenceTimeMillis = totalInferenceTimeMillis,
+            inputTokenCount = inputTokenCount,
+            outputTokenCount = outputTokenCount,
+            totalTokenCount = totalTokenCount
+        )
+        onDidExtractInfer(params, inferenceResult)
 
         return result
     }
@@ -321,18 +347,7 @@ class InferenceEngine(
         )
     }
 
-    private fun onDidExtractInfer(
-        params: ExtractParams,
-        result: ObjectNode,
-        extractedNode: ObjectNode,
-        metaNode: ObjectNode,
-        completed: Boolean,
-        progress: String,
-        totalInferenceTimeMillis: Long,
-        inputTokenCount: Int,
-        outputTokenCount: Int,
-        totalTokenCount: Int
-    ) {
+    private fun onDidExtractInfer(params: ExtractParams, inferenceResult: ExtractInferenceResult) {
         // Emit AgentEventBus inference event
         AgentEventBus.emitInferenceEvent(
             eventType = AgenticEvents.InferenceEventTypes.ON_DID_EXTRACT_INFER,
@@ -340,21 +355,21 @@ class InferenceEngine(
             message = "Extraction inference completed",
             metadata = mapOf(
                 "requestId" to params.requestId,
-                "completed" to completed,
-                "progress" to progress,
-                "duration" to totalInferenceTimeMillis,
-                "inputTokenCount" to inputTokenCount,
-                "outputTokenCount" to outputTokenCount,
-                "totalTokenCount" to totalTokenCount
+                "completed" to inferenceResult.completed,
+                "progress" to inferenceResult.progress,
+                "duration" to inferenceResult.totalInferenceTimeMillis,
+                "inputTokenCount" to inferenceResult.inputTokenCount,
+                "outputTokenCount" to inferenceResult.outputTokenCount,
+                "totalTokenCount" to inferenceResult.totalTokenCount
             )
         )
 
         EventBus.emit(
             AgenticEvents.InferenceEngine.EXTRACT_DID_EXECUTE, mapOf(
                 "params" to params,
-                "result" to result,
-                "extractedNode" to extractedNode,
-                "metaNode" to metaNode
+                "result" to inferenceResult.result,
+                "extractedNode" to inferenceResult.extractedNode,
+                "metaNode" to inferenceResult.metaNode
             )
         )
     }
