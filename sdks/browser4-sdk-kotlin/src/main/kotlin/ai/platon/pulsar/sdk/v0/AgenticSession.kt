@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor
@@ -620,7 +621,7 @@ class AgenticSession(
      * @return The result of the block
      */
     private suspend fun <T> withAgentEventStreaming(block: suspend () -> T): T {
-        val stopFlag = java.util.concurrent.atomic.AtomicBoolean(false)
+        val stopFlag = AtomicBoolean(false)
 
         // Subscribe to agent events
         val subscription = try {
