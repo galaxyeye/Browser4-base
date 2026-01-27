@@ -157,13 +157,19 @@ open class BasicBrowserAgent(
     override suspend fun observe(options: ObserveOptions): List<ObserveResult> {
         onWillObserve(options)
 
-        val context = stateManager.getOrCreateActiveContext(options)
-
-        val result = doObserveActObserve(options, context, options.fromResolve)
+        val result = doObserve(options)
 
         onDidObserve(options, result)
 
         return result.observeResults
+    }
+
+    protected suspend fun doObserve(options: ObserveOptions): ObserveActResult {
+        val context = stateManager.getOrCreateActiveContext(options)
+
+        val result = doObserveActObserve(options, context, options.fromResolve)
+
+        return result
     }
 
     /**

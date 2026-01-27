@@ -286,20 +286,21 @@ open class BrowserPerceptiveAgent(
 
         if (!options.fromResolve) {
             return withContext(ctx) {
-                if (isClosed) throw CancellationException("closed")
                 super.observe(options)
             }
         }
 
         try {
-            val results = withContext(ctx) {
-                if (isClosed) throw CancellationException("closed")
-                super.observe(options)
+            val result = withContext(ctx) {
+                onWillObserve(options)
+                doObserve(options)
             }
 
             circuitBreaker.recordSuccess(CircuitBreaker.FailureType.LLM_FAILURE)
 
-            return results
+            onDidObserve(options, result)
+
+            return result.observeResults
         } catch (e: Exception) {
             handleObserveException(e, context)
             return emptyList()
