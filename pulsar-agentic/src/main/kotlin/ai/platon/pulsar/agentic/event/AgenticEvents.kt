@@ -138,70 +138,6 @@ object AgenticEvents {
          *          "uuid" (UUID), "result" (String)
          */
         const val ON_DID_SUMMARIZE = "PerceptiveAgent.onDidSummarize"
-
-        // --------------------------------------------------------------------
-        // Backward-compatible aliases (to be removed in a future major version)
-        // --------------------------------------------------------------------
-
-        @Deprecated(
-            message = "Use ON_WILL_RUN instead",
-            replaceWith = ReplaceWith("ON_WILL_RUN")
-        )
-        const val RUN_WILL_EXECUTE = ON_WILL_RUN
-
-        @Deprecated(
-            message = "Use ON_DID_RUN instead",
-            replaceWith = ReplaceWith("ON_DID_RUN")
-        )
-        const val RUN_DID_EXECUTE = ON_DID_RUN
-
-        @Deprecated(
-            message = "Use ON_WILL_OBSERVE instead",
-            replaceWith = ReplaceWith("ON_WILL_OBSERVE")
-        )
-        const val OBSERVE_WILL_EXECUTE = ON_WILL_OBSERVE
-
-        @Deprecated(
-            message = "Use ON_DID_OBSERVE instead",
-            replaceWith = ReplaceWith("ON_DID_OBSERVE")
-        )
-        const val OBSERVE_DID_EXECUTE = ON_DID_OBSERVE
-
-        @Deprecated(
-            message = "Use ON_WILL_ACT instead",
-            replaceWith = ReplaceWith("ON_WILL_ACT")
-        )
-        const val ACT_WILL_EXECUTE = ON_WILL_ACT
-
-        @Deprecated(
-            message = "Use ON_DID_ACT instead",
-            replaceWith = ReplaceWith("ON_DID_ACT")
-        )
-        const val ACT_DID_EXECUTE = ON_DID_ACT
-
-        @Deprecated(
-            message = "Use ON_WILL_EXTRACT instead",
-            replaceWith = ReplaceWith("ON_WILL_EXTRACT")
-        )
-        const val EXTRACT_WILL_EXECUTE = ON_WILL_EXTRACT
-
-        @Deprecated(
-            message = "Use ON_DID_EXTRACT instead",
-            replaceWith = ReplaceWith("ON_DID_EXTRACT")
-        )
-        const val EXTRACT_DID_EXECUTE = ON_DID_EXTRACT
-
-        @Deprecated(
-            message = "Use ON_WILL_SUMMARIZE instead",
-            replaceWith = ReplaceWith("ON_WILL_SUMMARIZE")
-        )
-        const val SUMMARIZE_WILL_EXECUTE = ON_WILL_SUMMARIZE
-
-        @Deprecated(
-            message = "Use ON_DID_SUMMARIZE instead",
-            replaceWith = ReplaceWith("ON_DID_SUMMARIZE")
-        )
-        const val SUMMARIZE_DID_EXECUTE = ON_DID_SUMMARIZE
     }
 
     /**
@@ -246,46 +182,6 @@ object AgenticEvents {
          *          "result" (String), "tokenUsage" (TokenUsage)
          */
         const val ON_DID_SUMMARIZE = "InferenceEngine.onDidSummarize"
-
-        // --------------------------------------------------------------------
-        // Backward-compatible aliases (to be removed in a future major version)
-        // --------------------------------------------------------------------
-
-        @Deprecated(
-            message = "Use ON_WILL_OBSERVE instead",
-            replaceWith = ReplaceWith("ON_WILL_OBSERVE")
-        )
-        const val OBSERVE_WILL_EXECUTE = ON_WILL_OBSERVE
-
-        @Deprecated(
-            message = "Use ON_DID_OBSERVE instead",
-            replaceWith = ReplaceWith("ON_DID_OBSERVE")
-        )
-        const val OBSERVE_DID_EXECUTE = ON_DID_OBSERVE
-
-        @Deprecated(
-            message = "Use ON_WILL_EXTRACT instead",
-            replaceWith = ReplaceWith("ON_WILL_EXTRACT")
-        )
-        const val EXTRACT_WILL_EXECUTE = ON_WILL_EXTRACT
-
-        @Deprecated(
-            message = "Use ON_DID_EXTRACT instead",
-            replaceWith = ReplaceWith("ON_DID_EXTRACT")
-        )
-        const val EXTRACT_DID_EXECUTE = ON_DID_EXTRACT
-
-        @Deprecated(
-            message = "Use ON_WILL_SUMMARIZE instead",
-            replaceWith = ReplaceWith("ON_WILL_SUMMARIZE")
-        )
-        const val SUMMARIZE_WILL_EXECUTE = ON_WILL_SUMMARIZE
-
-        @Deprecated(
-            message = "Use ON_DID_SUMMARIZE instead",
-            replaceWith = ReplaceWith("ON_DID_SUMMARIZE")
-        )
-        const val SUMMARIZE_DID_EXECUTE = ON_DID_SUMMARIZE
     }
 
     /**
@@ -304,22 +200,6 @@ object AgenticEvents {
          *          "actionDescription" (ActionDescription)
          */
         const val ON_DID_GENERATE = "ContextToAction.onDidGenerate"
-
-        // --------------------------------------------------------------------
-        // Backward-compatible aliases (to be removed in a future major version)
-        // --------------------------------------------------------------------
-
-        @Deprecated(
-            message = "Use ON_WILL_GENERATE instead",
-            replaceWith = ReplaceWith("ON_WILL_GENERATE")
-        )
-        const val GENERATE_WILL_EXECUTE = ON_WILL_GENERATE
-
-        @Deprecated(
-            message = "Use ON_DID_GENERATE instead",
-            replaceWith = ReplaceWith("ON_DID_GENERATE")
-        )
-        const val GENERATE_DID_EXECUTE = ON_DID_GENERATE
     }
 
     /**
