@@ -12,7 +12,8 @@ import ai.platon.pulsar.common.event.EventBus
 import ai.platon.pulsar.external.ChatModelFactory
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -27,19 +28,19 @@ import kotlin.reflect.KClass
  * 3. Creating an agent that can use MCP tools
  * 4. Running a task that invokes MCP tools via natural language
  * 5. Actually calling the LLM to process the task
- * 6. Capturing the GENERATE_DID_EXECUTE event to verify the MCP tool was called
+ * 6. Capturing the ON_DID_GENERATE event to verify the MCP tool was called
  * 7. Validating that the actionDescription.toolCall is MCP-related
  *
  * This test pattern is based on SkillRegistrationAndInvocationE2ETest but adapted for MCP tools.
  *
  * ## Prerequisites
- * 
+ *
  * Agent-based tests require LLM configuration. Set the following in application.properties:
  * ```
  * llm.provider=openai
  * llm.apiKey=your-api-key
  * ```
- * 
+ *
  * Tests that require LLM will be automatically skipped if not configured.
  *
  * Test coverage:
@@ -65,11 +66,11 @@ class MCPAgentE2ETest {
         @BeforeAll
         @JvmStatic
         fun setupEventHandlers() {
-            // Register event handler for GENERATE_DID_EXECUTE to capture tool calls
-            EventBus.register(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { payload ->
+            // Register event handler for ON_DID_GENERATE to capture tool calls
+            EventBus.register(AgenticEvents.ContextToAction.ON_DID_GENERATE) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
 
-                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.ON_DID_GENERATE) {
                     mutableListOf()
                 }.add(map)
 
@@ -85,7 +86,7 @@ class MCPAgentE2ETest {
         @JvmStatic
         fun cleanup() {
             // Unregister event handler
-            EventBus.unregister(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE)
+            EventBus.unregister(AgenticEvents.ContextToAction.ON_DID_GENERATE)
             // Unregister the MCP tool executor
             CustomToolRegistry.instance.unregister(MCP_DOMAIN)
         }
@@ -137,7 +138,7 @@ class MCPAgentE2ETest {
             target: Any
         ): Any? {
             toolExecutionCount.incrementAndGet()
-            
+
             return when (functionName) {
                 "echo" -> {
                     echoToolCalled.set(true)
@@ -205,12 +206,12 @@ class MCPAgentE2ETest {
 
         // Create agent session
         val session = AgenticContexts.getOrCreateSession()
-        
+
         // Check if LLM is configured, skip test if not
         val isLLMConfigured = ChatModelFactory.isModelConfigured(session.sessionConfig)
-        Assumptions.assumeTrue(isLLMConfigured, 
+        Assumptions.assumeTrue(isLLMConfigured,
             "Skipping test: LLM not configured. See docs/config/llm/llm-config.md")
-        
+
         val driver = session.createBoundDriver()
         val agent = session.companionAgent
         assertNotNull(agent, "Agent should be created")
@@ -235,10 +236,10 @@ class MCPAgentE2ETest {
         assertNotNull(history, "History should not be null")
         assertTrue(history.size > 0, "History should contain at least one execution")
 
-        // Verify GENERATE_DID_EXECUTE event was captured
-        val events = capturedEvents[AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE]
-        assertNotNull(events, "GENERATE_DID_EXECUTE events should be captured")
-        assertTrue(events!!.isNotEmpty(), "At least one GENERATE_DID_EXECUTE event should be captured")
+        // Verify ON_DID_GENERATE event was captured
+        val events = capturedEvents[AgenticEvents.ContextToAction.ON_DID_GENERATE]
+        assertNotNull(events, "ON_DID_GENERATE events should be captured")
+        assertTrue(events.isNotEmpty(), "At least one ON_DID_GENERATE event should be captured")
 
         // Extract actionDescription from the captured events
         val actionDescriptions = events.mapNotNull { it["actionDescription"] as? ActionDescription }
@@ -265,7 +266,7 @@ class MCPAgentE2ETest {
 
     /**
      * Test that the agent can call the MCP add tool through natural language.
-     * 
+     *
      * Note: This test requires LLM configuration and will be skipped if not configured.
      */
     @Test
@@ -276,10 +277,10 @@ class MCPAgentE2ETest {
 
         // Create agent session
         val session = AgenticContexts.getOrCreateSession()
-        
+
         // Check if LLM is configured, skip test if not
         val isLLMConfigured = ChatModelFactory.isModelConfigured(session.sessionConfig)
-        Assumptions.assumeTrue(isLLMConfigured, 
+        Assumptions.assumeTrue(isLLMConfigured,
             "Skipping test: LLM not configured. See docs/config/llm/llm-config.md")
 
         val driver = session.createBoundDriver()
@@ -305,9 +306,9 @@ class MCPAgentE2ETest {
         assertTrue(history.size > 0, "History should contain at least one execution")
 
         // Verify events were captured
-        val events = capturedEvents[AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE]
-        assertNotNull(events, "GENERATE_DID_EXECUTE events should be captured")
-        assertTrue(events!!.isNotEmpty(), "At least one GENERATE_DID_EXECUTE event should be captured")
+        val events = capturedEvents[AgenticEvents.ContextToAction.ON_DID_GENERATE]
+        assertNotNull(events, "ON_DID_GENERATE events should be captured")
+        assertTrue(events.isNotEmpty(), "At least one ON_DID_GENERATE event should be captured")
 
         // Verify MCP tool calls
         val actionDescriptions = events.mapNotNull { it["actionDescription"] as? ActionDescription }
@@ -322,7 +323,7 @@ class MCPAgentE2ETest {
 
     /**
      * Test that the agent can call the MCP multiply tool through natural language.
-     * 
+     *
      * Note: This test requires LLM configuration and will be skipped if not configured.
      */
     @Test
@@ -333,10 +334,10 @@ class MCPAgentE2ETest {
 
         // Create agent session
         val session = AgenticContexts.getOrCreateSession()
-        
+
         // Check if LLM is configured, skip test if not
         val isLLMConfigured = ChatModelFactory.isModelConfigured(session.sessionConfig)
-        Assumptions.assumeTrue(isLLMConfigured, 
+        Assumptions.assumeTrue(isLLMConfigured,
             "Skipping test: LLM not configured. See docs/config/llm/llm-config.md")
 
         val driver = session.createBoundDriver()
@@ -362,9 +363,9 @@ class MCPAgentE2ETest {
         assertTrue(history.size > 0, "History should contain at least one execution")
 
         // Verify events were captured
-        val events = capturedEvents[AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE]
-        assertNotNull(events, "GENERATE_DID_EXECUTE events should be captured")
-        assertTrue(events!!.isNotEmpty(), "At least one GENERATE_DID_EXECUTE event should be captured")
+        val events = capturedEvents[AgenticEvents.ContextToAction.ON_DID_GENERATE]
+        assertNotNull(events, "ON_DID_GENERATE events should be captured")
+        assertTrue(events.isNotEmpty(), "At least one ON_DID_GENERATE event should be captured")
 
         // Verify MCP tool calls
         val actionDescriptions = events.mapNotNull { it["actionDescription"] as? ActionDescription }
@@ -391,7 +392,7 @@ class MCPAgentE2ETest {
         assertNotNull(toolExecutor, "Tool executor should be available")
 
         // Verify tools are registered via help text
-        val helpText = toolExecutor!!.help()
+        val helpText = toolExecutor.help()
         assertTrue(helpText.contains("echo") || helpText.contains("Echoes"),
             "Help text should mention echo tool")
         assertTrue(helpText.contains("add") || helpText.contains("Adds"),
@@ -406,7 +407,7 @@ class MCPAgentE2ETest {
         // Verify tool specs are available
         val specs = CustomToolRegistry.instance.getToolCallSpecifications(MCP_DOMAIN)
         assertEquals(3, specs.size, "Should have 3 tool specs registered")
-        
+
         val specNames = specs.map { it.method }.toSet()
         assertTrue(specNames.containsAll(setOf("echo", "add", "multiply")),
             "All expected tools should be registered as specs")
@@ -427,7 +428,7 @@ class MCPAgentE2ETest {
             method = "echo",
             arguments = mutableMapOf("message" to "Hello Test")
         )
-        val echoResult = toolExecutor!!.callFunctionOn(echoCall, Any())
+        val echoResult = toolExecutor.callFunctionOn(echoCall, Any())
         assertNotNull(echoResult.value, "Echo result should not be null")
         assertEquals("Hello Test", echoResult.value, "Echo should return the input message")
         assertTrue(echoToolCalled.get(), "Echo tool should have been called")

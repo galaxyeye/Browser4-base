@@ -3,6 +3,7 @@
 package ai.platon.pulsar.agentic.agent
 
 import ai.platon.pulsar.agentic.context.AgenticContexts
+import ai.platon.pulsar.agentic.event.AgentEventBus
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentHistory
@@ -77,81 +78,87 @@ class AgentE2ETest {
         fun setupEventHandlers() {
             // Register event handlers for progress logging
 
+            AgentEventBus.agentEventHandlers?.agentFlowHandlers?.onWillObserve?.addLast { options ->
+                println(options.instruction)
+            }
+
             // Log when run starts
-            EventBus.register(AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.PerceptiveAgent.ON_WILL_RUN) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 val action = map["action"]
                 eventLogger.info("🚀 Agent run starting - action: {}", action)
-                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_WILL_RUN) {
                     mutableListOf()
                 }.add(map)
                 payload
             }
 
+            AgentEventBus.agentEventHandlers?.agentFlowHandlers?.onWillObserve?.addLast { payload -> }
+
             // Log when run completes
-            EventBus.register(AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_RUN) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 val stateHistory = map["stateHistory"] as? AgentHistory
                 eventLogger.info("✅ Agent run completed - steps: {}, isDone: {}",
                     stateHistory?.totalSteps, stateHistory?.isDone)
-                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_DID_RUN) {
                     mutableListOf()
                 }.add(map)
                 payload
             }
 
             // Log observe events
-            EventBus.register(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 observeCount.incrementAndGet()
                 eventLogger.debug("👀 Observing... (count: {})", observeCount.get())
-                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE) {
                     mutableListOf()
                 }.add(map)
                 payload
             }
 
-            EventBus.register(AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 val observeResults = map["observeResults"] as? List<Any>
                 eventLogger.debug("👀 Observed {} results", observeResults?.size ?: 0)
-                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE) {
                     mutableListOf()
                 }.add(map)
                 payload
             }
 
             // Log act events
-            EventBus.register(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.PerceptiveAgent.ON_WILL_ACT) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 actCount.incrementAndGet()
                 val action = map["action"]
                 eventLogger.info("🎬 Acting... (count: {}) - action: {}", actCount.get(), action)
-                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_WILL_ACT) {
                     mutableListOf()
                 }.add(map)
                 payload
             }
 
-            EventBus.register(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_ACT) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 val result = map["result"]
                 eventLogger.info("🎬 Act completed - result: {}", result)
-                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_DID_ACT) {
                     mutableListOf()
                 }.add(map)
                 payload
             }
 
             // Log tool generation events
-            EventBus.register(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { payload ->
+            EventBus.register(AgenticEvents.ContextToAction.ON_DID_GENERATE) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 runStepCount.incrementAndGet()
                 val actionDescription = map["actionDescription"] as? ActionDescription
                 eventLogger.info("🔧 Step {} - Generated action: {}",
                     runStepCount.get(), actionDescription?.pseudoExpression)
 
-                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.ON_DID_GENERATE) {
                     mutableListOf()
                 }.add(map)
 
@@ -170,13 +177,13 @@ class AgentE2ETest {
         @JvmStatic
         fun cleanup() {
             // Unregister all event handlers
-            EventBus.unregister(AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE)
-            EventBus.unregister(AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE)
-            EventBus.unregister(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE)
-            EventBus.unregister(AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE)
-            EventBus.unregister(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE)
-            EventBus.unregister(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE)
-            EventBus.unregister(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE)
+            EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_WILL_RUN)
+            EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_DID_RUN)
+            EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE)
+            EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE)
+            EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_WILL_ACT)
+            EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_DID_ACT)
+            EventBus.unregister(AgenticEvents.ContextToAction.ON_DID_GENERATE)
         }
     }
 
@@ -278,20 +285,20 @@ class AgentE2ETest {
         logger.info("Agent history - Total steps: {}, isDone: {}, isSuccess: {}",
             history.totalSteps, history.isDone, history.isSuccess)
 
-        // Verify RUN_WILL_EXECUTE event was captured
-        val runWillEvents = capturedEvents[AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE]
-        assertNotNull(runWillEvents, "RUN_WILL_EXECUTE events should be captured")
-        assertTrue(runWillEvents.isNotEmpty(), "At least one RUN_WILL_EXECUTE event should be captured")
+        // Verify ON_WILL_RUN event was captured
+        val runWillEvents = capturedEvents[AgenticEvents.PerceptiveAgent.ON_WILL_RUN]
+        assertNotNull(runWillEvents, "ON_WILL_RUN events should be captured")
+        assertTrue(runWillEvents.isNotEmpty(), "At least one ON_WILL_RUN event should be captured")
 
-        // Verify RUN_DID_EXECUTE event was captured
-        val runDidEvents = capturedEvents[AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE]
-        assertNotNull(runDidEvents, "RUN_DID_EXECUTE events should be captured")
-        assertTrue(runDidEvents!!.isNotEmpty(), "At least one RUN_DID_EXECUTE event should be captured")
+        // Verify ON_DID_RUN event was captured
+        val runDidEvents = capturedEvents[AgenticEvents.PerceptiveAgent.ON_DID_RUN]
+        assertNotNull(runDidEvents, "ON_DID_RUN events should be captured")
+        assertTrue(runDidEvents.isNotEmpty(), "At least one ON_DID_RUN event should be captured")
 
-        // Verify GENERATE_DID_EXECUTE events were captured (progress tracking)
-        val generateEvents = capturedEvents[AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE]
-        assertNotNull(generateEvents, "GENERATE_DID_EXECUTE events should be captured")
-        assertTrue(generateEvents!!.isNotEmpty(), "At least one GENERATE_DID_EXECUTE event should be captured")
+        // Verify ON_DID_GENERATE events were captured (progress tracking)
+        val generateEvents = capturedEvents[AgenticEvents.ContextToAction.ON_DID_GENERATE]
+        assertNotNull(generateEvents, "ON_DID_GENERATE events should be captured")
+        assertTrue(generateEvents.isNotEmpty(), "At least one ON_DID_GENERATE event should be captured")
 
         // Verify that the history contains valid state information
         assertTrue(history.states.isNotEmpty(), "History should contain at least one state")
@@ -308,9 +315,9 @@ class AgentE2ETest {
 
         // Log summary of captured events
         logger.info("Event summary:")
-        logger.info("  - RUN_WILL_EXECUTE: {} events", runWillEvents.size)
-        logger.info("  - RUN_DID_EXECUTE: {} events", runDidEvents.size)
-        logger.info("  - GENERATE_DID_EXECUTE: {} events", generateEvents.size)
+        logger.info("  - ON_WILL_RUN: {} events", runWillEvents.size)
+        logger.info("  - ON_DID_RUN: {} events", runDidEvents.size)
+        logger.info("  - ON_DID_GENERATE: {} events", generateEvents.size)
         logger.info("  - OBSERVE events: {}", observeCount.get())
         logger.info("  - ACT events: {}", actCount.get())
     }
@@ -354,10 +361,10 @@ class AgentE2ETest {
         assertTrue(runStepCount.get() > 0, "At least one step should have been executed")
 
         // Verify RUN events were captured
-        assertTrue(capturedEvents.containsKey(AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE),
-            "RUN_WILL_EXECUTE events should be captured")
-        assertTrue(capturedEvents.containsKey(AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE),
-            "RUN_DID_EXECUTE events should be captured")
+        assertTrue(capturedEvents.containsKey(AgenticEvents.PerceptiveAgent.ON_WILL_RUN),
+            "ON_WILL_RUN events should be captured")
+        assertTrue(capturedEvents.containsKey(AgenticEvents.PerceptiveAgent.ON_DID_RUN),
+            "ON_DID_RUN events should be captured")
 
         // Log final counts
         logger.info("Final event counts - Steps: {}, Observe: {}, Act: {}",

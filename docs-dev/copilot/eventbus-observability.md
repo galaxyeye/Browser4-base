@@ -11,24 +11,24 @@ The EventBus mechanism has been added to provide better observability and testab
 The following events are emitted by PerceptiveAgent methods:
 
 - **run**
-  - `PerceptiveAgent.run.willExecute` - Before execution starts
-  - `PerceptiveAgent.run.didExecute` - After execution completes
+  - `PerceptiveAgent.onWillRun` - Before execution starts
+  - `PerceptiveAgent.onDidRun` - After execution completes
 
 - **observe**
-  - `PerceptiveAgent.observe.willExecute` - Before observation starts
-  - `PerceptiveAgent.observe.didExecute` - After observation completes
+  - `PerceptiveAgent.onWillObserve` - Before observation starts
+  - `PerceptiveAgent.onDidObserve` - After observation completes
 
 - **act**
-  - `PerceptiveAgent.act.willExecute` - Before action execution
-  - `PerceptiveAgent.act.didExecute` - After action execution
+  - `PerceptiveAgent.onWillAct` - Before action execution
+  - `PerceptiveAgent.onDidAct` - After action execution
 
 - **extract**
-  - `PerceptiveAgent.extract.willExecute` - Before extraction starts
-  - `PerceptiveAgent.extract.didExecute` - After extraction completes
+  - `PerceptiveAgent.onWillExtract` - Before extraction starts
+  - `PerceptiveAgent.onDidExtract` - After extraction completes
 
 - **summarize**
-  - `PerceptiveAgent.summarize.willExecute` - Before summarization starts
-  - `PerceptiveAgent.summarize.didExecute` - After summarization completes
+  - `PerceptiveAgent.onWillSummarize` - Before summarization starts
+  - `PerceptiveAgent.onDidSummarize` - After summarization completes
 
 ### InferenceEngine Events
 
@@ -39,12 +39,12 @@ The following events are emitted by InferenceEngine methods:
   - `InferenceEngine.observe.didGenerate` - After LLM generation
 
 - **extract**
-  - `InferenceEngine.extract.willExecute` - Before extraction starts
-  - `InferenceEngine.extract.didExecute` - After extraction completes
+  - `InferenceEngine.onWillExtract` - Before extraction starts
+  - `InferenceEngine.onDidExtract` - After extraction completes
 
 - **summarize**
-  - `InferenceEngine.summarize.willExecute` - Before summarization starts
-  - `InferenceEngine.summarize.didExecute` - After summarization completes
+  - `InferenceEngine.onWillSummarize` - Before summarization starts
+  - `InferenceEngine.onDidSummarize` - After summarization completes
 
 ## Usage Examples
 
@@ -54,19 +54,23 @@ The following events are emitted by InferenceEngine methods:
 import ai.platon.pulsar.skeleton.crawl.EventBus
 
 // Register a handler to monitor action execution
-DangerousEventBus.register("PerceptiveAgent.act.willExecute") { payload ->
+DangerousEventBus.register("PerceptiveAgent.onWillAct") { payload ->
     val map = payload as? Map<String, Any?> ?: return@register null
     val action = map["action"]
     println("Starting action: $action")
     payload
 }
 
-DangerousEventBus.register("PerceptiveAgent.act.didExecute") { payload ->
+DangerousEventBus.register("PerceptiveAgent.onDidAct") { payload ->
     val map = payload as? Map<String, Any?> ?: return@register null
     val result = map["result"]
-    println("Action completed with result: $result")
+    println("Action completed: $result")
     payload
 }
+
+// Clean up when done
+EventBus.unregister("PerceptiveAgent.onWillAct")
+EventBus.unregister("PerceptiveAgent.onDidAct")
 ```
 
 ### Example 2: Collecting Metrics
@@ -78,7 +82,7 @@ import java.time.Instant
 val metrics = mutableMapOf<String, MutableList<Long>>()
 
 // Track execution times
-DangerousEventBus.register("PerceptiveAgent.observe.willExecute") { payload ->
+DangerousEventBus.register("PerceptiveAgent.onWillObserve") { payload ->
     val map = payload as? Map<String, Any?> ?: return@register null
     val uuid = map["uuid"] as? String
     if (uuid != null) {
@@ -88,7 +92,7 @@ DangerousEventBus.register("PerceptiveAgent.observe.willExecute") { payload ->
     payload
 }
 
-DangerousEventBus.register("PerceptiveAgent.observe.didExecute") { payload ->
+DangerousEventBus.register("PerceptiveAgent.onDidObserve") { payload ->
     val map = payload as? Map<String, Any?> ?: return@register null
     val uuid = map["uuid"] as? String
     if (uuid != null) {
@@ -144,7 +148,7 @@ class MyAgentTest {
         val capturedEvents = mutableListOf<Map<String, Any?>>()
 
         // Register handler to capture events
-        DangerousEventBus.register("PerceptiveAgent.run.willExecute") { payload ->
+        DangerousEventBus.register("PerceptiveAgent.onWillRun") { payload ->
             capturedEvents.add(payload as Map<String, Any?>)
             payload
         }
@@ -154,7 +158,7 @@ class MyAgentTest {
             "action" to "test action",
             "uuid" to "test-uuid"
         )
-        DangerousEventBus.emit("PerceptiveAgent.run.willExecute", testPayload)
+        DangerousEventBus.emit("PerceptiveAgent.onWillRun", testPayload)
 
         // Give EventBus time to process
         Thread.sleep(100)
@@ -164,7 +168,7 @@ class MyAgentTest {
         assertEquals("test action", capturedEvents[0]["action"])
 
         // Clean up
-        EventBus.unregister("PerceptiveAgent.run.willExecute")
+        EventBus.unregister("PerceptiveAgent.onWillRun")
     }
 }
 ```
@@ -179,16 +183,16 @@ val logger = LoggerFactory.getLogger("EventBusLogger")
 
 // Register a generic logger for all agent events
 listOf(
-    "PerceptiveAgent.run.willExecute",
-    "PerceptiveAgent.run.didExecute",
-    "PerceptiveAgent.observe.willExecute",
-    "PerceptiveAgent.observe.didExecute",
-    "PerceptiveAgent.act.willExecute",
-    "PerceptiveAgent.act.didExecute",
-    "PerceptiveAgent.extract.willExecute",
-    "PerceptiveAgent.extract.didExecute",
-    "PerceptiveAgent.summarize.willExecute",
-    "PerceptiveAgent.summarize.didExecute"
+    "PerceptiveAgent.onWillRun",
+    "PerceptiveAgent.onDidRun",
+    "PerceptiveAgent.onWillObserve",
+    "PerceptiveAgent.onDidObserve",
+    "PerceptiveAgent.onWillAct",
+    "PerceptiveAgent.onDidAct",
+    "PerceptiveAgent.onWillExtract",
+    "PerceptiveAgent.onDidExtract",
+    "PerceptiveAgent.onWillSummarize",
+    "PerceptiveAgent.onDidSummarize"
 ).forEach { eventType ->
     DangerousEventBus.register(eventType) { payload ->
         logger.info("Event: $eventType, Payload: $payload")

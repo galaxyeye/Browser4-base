@@ -10,11 +10,11 @@ This implementation adds EventBus mechanism to PerceptiveAgent and InferenceEngi
 
 Added EventBus events to all main methods:
 
-- **run()**: `PerceptiveAgent.run.willExecute` / `didExecute`
-- **observe()**: `PerceptiveAgent.observe.willExecute` / `didExecute`
-- **act()**: `PerceptiveAgent.act.willExecute` / `didExecute`
-- **extract()**: `PerceptiveAgent.extract.willExecute` / `didExecute`
-- **summarize()**: `PerceptiveAgent.summarize.willExecute` / `didExecute`
+- **run()**: `PerceptiveAgent.onWillRun` / `onDidRun`
+- **observe()**: `PerceptiveAgent.onWillObserve` / `onDidObserve`
+- **act()**: `PerceptiveAgent.onWillAct` / `onDidAct`
+- **extract()**: `PerceptiveAgent.onWillExtract` / `onDidExtract`
+- **summarize()**: `PerceptiveAgent.onWillSummarize` / `onDidSummarize`
 
 Each event emits a payload containing:
 - The operation parameters (options, action, instruction, etc.)
@@ -26,8 +26,8 @@ Each event emits a payload containing:
 Added EventBus events to:
 
 - **observe()**: Already had `willGenerate` / `didGenerate` events
-- **extract()**: Added `InferenceEngine.extract.willExecute` / `didExecute`
-- **summarize()**: Added `InferenceEngine.summarize.willExecute` / `didExecute`
+- **extract()**: Added `InferenceEngine.onWillExtract` / `onDidExtract`
+- **summarize()**: Added `InferenceEngine.onWillSummarize` / `onDidSummarize`
 
 ### 3. Bug Fix (SupportTypes.kt)
 
@@ -61,16 +61,16 @@ Fixed a compilation error by removing the deprecated `logInferenceToFile` parame
 
 | Event Type | When Emitted | Payload |
 |------------|--------------|---------|
-| `PerceptiveAgent.run.willExecute` | Before run starts | action, uuid |
-| `PerceptiveAgent.run.didExecute` | After run completes | action, uuid, result, stateHistory |
-| `PerceptiveAgent.observe.willExecute` | Before observation | options, uuid |
-| `PerceptiveAgent.observe.didExecute` | After observation | options, uuid, observeResults, actionDescription |
-| `PerceptiveAgent.act.willExecute` | Before action execution | action, uuid |
-| `PerceptiveAgent.act.didExecute` | After action execution | action, uuid, result |
-| `PerceptiveAgent.extract.willExecute` | Before extraction | options, uuid |
-| `PerceptiveAgent.extract.didExecute` | After extraction | options, uuid, result |
-| `PerceptiveAgent.summarize.willExecute` | Before summarization | instruction, selector, uuid |
-| `PerceptiveAgent.summarize.didExecute` | After summarization | instruction, selector, uuid, result |
+| `PerceptiveAgent.onWillRun` | Before run starts | action, uuid |
+| `PerceptiveAgent.onDidRun` | After run completes | action, uuid, result, stateHistory |
+| `PerceptiveAgent.onWillObserve` | Before observation | options, uuid |
+| `PerceptiveAgent.onDidObserve` | After observation | options, uuid, observeResults, actionDescription |
+| `PerceptiveAgent.onWillAct` | Before action execution | action, uuid |
+| `PerceptiveAgent.onDidAct` | After action execution | action, uuid, result |
+| `PerceptiveAgent.onWillExtract` | Before extraction | options, uuid |
+| `PerceptiveAgent.onDidExtract` | After extraction | options, uuid, result |
+| `PerceptiveAgent.onWillSummarize` | Before summarization | instruction, selector, uuid |
+| `PerceptiveAgent.onDidSummarize` | After summarization | instruction, selector, uuid, result |
 
 ### InferenceEngine Events
 
@@ -78,10 +78,10 @@ Fixed a compilation error by removing the deprecated `logInferenceToFile` parame
 |------------|--------------|---------|
 | `InferenceEngine.observe.willGenerate` | Before LLM generation | context, messages |
 | `InferenceEngine.observe.didGenerate` | After LLM generation | context, messages, actionDescription |
-| `InferenceEngine.extract.willExecute` | Before extraction | params |
-| `InferenceEngine.extract.didExecute` | After extraction | params, result, extractedNode, metaNode |
-| `InferenceEngine.summarize.willExecute` | Before summarization | instruction, textContentLength |
-| `InferenceEngine.summarize.didExecute` | After summarization | instruction, textContentLength, result, tokenUsage |
+| `InferenceEngine.onWillExtract` | Before extraction | params |
+| `InferenceEngine.onDidExtract` | After extraction | params, result, extractedNode, metaNode |
+| `InferenceEngine.onWillSummarize` | Before summarization | instruction, textContentLength |
+| `InferenceEngine.onDidSummarize` | After summarization | instruction, textContentLength, result, tokenUsage |
 
 ## Quick Usage Example
 
@@ -89,14 +89,14 @@ Fixed a compilation error by removing the deprecated `logInferenceToFile` parame
 import ai.platon.pulsar.skeleton.crawl.EventBus
 
 // Register a handler to monitor action execution
-DangerousEventBus.register("PerceptiveAgent.act.willExecute") { payload ->
+DangerousEventBus.register("PerceptiveAgent.onWillAct") { payload ->
     val map = payload as? Map<String, Any?> ?: return@register null
     val action = map["action"]
     println("Starting action: $action")
     payload
 }
 
-DangerousEventBus.register("PerceptiveAgent.act.didExecute") { payload ->
+DangerousEventBus.register("PerceptiveAgent.onDidAct") { payload ->
     val map = payload as? Map<String, Any?> ?: return@register null
     val result = map["result"]
     println("Action completed: $result")
@@ -104,8 +104,8 @@ DangerousEventBus.register("PerceptiveAgent.act.didExecute") { payload ->
 }
 
 // Clean up when done
-EventBus.unregister("PerceptiveAgent.act.willExecute")
-EventBus.unregister("PerceptiveAgent.act.didExecute")
+EventBus.unregister("PerceptiveAgent.onWillAct")
+EventBus.unregister("PerceptiveAgent.onDidAct")
 ```
 
 ## Use Cases

@@ -55,14 +55,14 @@ class EventBusObservabilityExample {
         println("--- Example 1: Simple Event Monitoring ---")
 
         // Register handlers for agent events
-        EventBus.register(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.PerceptiveAgent.ON_WILL_ACT) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val action = map["action"]
             println("🚀 Starting action execution: $action")
             payload
         }
 
-        EventBus.register(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_ACT) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val result = map["result"]
             println("✅ Action completed with result: $result")
@@ -71,7 +71,7 @@ class EventBusObservabilityExample {
 
         // Simulate emitting events
         EventBus.emit(
-            AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE, mapOf(
+            AgenticEvents.PerceptiveAgent.ON_WILL_ACT, mapOf(
                 "action" to mapOf("action" to "click button"),
                 "uuid" to "example-uuid"
             )
@@ -80,7 +80,7 @@ class EventBusObservabilityExample {
         Thread.sleep(100)
 
         EventBus.emit(
-            AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE, mapOf(
+            AgenticEvents.PerceptiveAgent.ON_DID_ACT, mapOf(
                 "action" to mapOf("action" to "click button"),
                 "uuid" to "example-uuid",
                 "result" to mapOf("success" to true, "message" to "Button clicked")
@@ -100,7 +100,7 @@ class EventBusObservabilityExample {
         val executionTimes = ConcurrentHashMap<String, Long>()
 
         // Track start time
-        EventBus.register(AgenticEvents.ContextToAction.GENERATE_WILL_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.ContextToAction.ON_WILL_GENERATE) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val context = map["context"] as? Map<String, Any?>
             val uuid = context?.get("uuid") as? String
@@ -112,7 +112,7 @@ class EventBusObservabilityExample {
         }
 
         // Calculate duration
-        EventBus.register(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.ContextToAction.ON_DID_GENERATE) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val context = map["context"] as? Map<String, Any?>
             val uuid = context?.get("uuid") as? String
@@ -129,7 +129,7 @@ class EventBusObservabilityExample {
         // Simulate inference events
         val testContext = mapOf("uuid" to "inference-123", "step" to 1)
         EventBus.emit(
-            AgenticEvents.ContextToAction.GENERATE_WILL_EXECUTE, mapOf(
+            AgenticEvents.ContextToAction.ON_WILL_GENERATE, mapOf(
                 "context" to testContext,
                 "messages" to emptyList<Any>()
             )
@@ -138,7 +138,7 @@ class EventBusObservabilityExample {
         Thread.sleep(150) // Simulate LLM processing
 
         EventBus.emit(
-            AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE, mapOf(
+            AgenticEvents.ContextToAction.ON_DID_GENERATE, mapOf(
                 "context" to testContext,
                 "messages" to emptyList<Any>(),
                 "actionDescription" to mapOf("method" to "click")
@@ -155,7 +155,7 @@ class EventBusObservabilityExample {
     private fun actionValidation() {
         println("--- Example 3: Action Validation ---")
 
-        EventBus.register(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.ContextToAction.ON_DID_GENERATE) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val actionDescription = map["actionDescription"]
 
@@ -184,7 +184,7 @@ class EventBusObservabilityExample {
 
         // Simulate action generation
         EventBus.emit(
-            AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE, mapOf(
+            AgenticEvents.ContextToAction.ON_DID_GENERATE, mapOf(
                 "context" to mapOf("uuid" to "validation-test"),
                 "messages" to emptyList<Any>(),
                 "actionDescription" to mapOf("method" to "type", "arguments" to mapOf("text" to "hello"))
@@ -205,9 +205,9 @@ class EventBusObservabilityExample {
 
         // Register counters for multiple event types
         listOf(
-            AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE
+            AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE,
+            AgenticEvents.PerceptiveAgent.ON_WILL_ACT,
+            AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT
         ).forEach { eventType ->
             EventBus.register(eventType) { payload ->
                 eventCounts.computeIfAbsent(eventType) { AtomicInteger(0) }.incrementAndGet()
@@ -217,13 +217,13 @@ class EventBusObservabilityExample {
         }
 
         // Simulate various events
-        EventBus.emit(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE, mapOf("options" to "test"))
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE, mapOf("options" to "test"))
         Thread.sleep(50)
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE, mapOf("action" to "test"))
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_ACT, mapOf("action" to "test"))
         Thread.sleep(50)
-        EventBus.emit(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE, mapOf("options" to "test2"))
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE, mapOf("options" to "test2"))
         Thread.sleep(50)
-        EventBus.emit(AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE, mapOf("options" to "test"))
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT, mapOf("options" to "test"))
         Thread.sleep(100)
 
         println("\n📈 Final event counts:")
@@ -239,12 +239,12 @@ class EventBusObservabilityExample {
     private fun cleanup() {
         println("--- Cleanup ---")
         listOf(
-            AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE,
-            AgenticEvents.ContextToAction.GENERATE_WILL_EXECUTE,
-            AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE
+            AgenticEvents.PerceptiveAgent.ON_WILL_ACT,
+            AgenticEvents.PerceptiveAgent.ON_DID_ACT,
+            AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE,
+            AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT,
+            AgenticEvents.ContextToAction.ON_WILL_GENERATE,
+            AgenticEvents.ContextToAction.ON_DID_GENERATE
         ).forEach { eventType ->
             EventBus.unregister(eventType)
         }
@@ -261,16 +261,16 @@ class EventLogger {
     fun startLogging() {
         // Log all agent events
         listOf(
-            AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.EXTRACT_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.SUMMARIZE_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.SUMMARIZE_DID_EXECUTE
+            AgenticEvents.PerceptiveAgent.ON_WILL_RUN,
+            AgenticEvents.PerceptiveAgent.ON_DID_RUN,
+            AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE,
+            AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE,
+            AgenticEvents.PerceptiveAgent.ON_WILL_ACT,
+            AgenticEvents.PerceptiveAgent.ON_DID_ACT,
+            AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT,
+            AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT,
+            AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE,
+            AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE
         ).forEach { eventType ->
             EventBus.register(eventType) { payload ->
                 logger.info(
@@ -284,16 +284,16 @@ class EventLogger {
 
     fun stopLogging() {
         listOf(
-            AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.EXTRACT_DID_EXECUTE,
-            AgenticEvents.PerceptiveAgent.SUMMARIZE_WILL_EXECUTE,
-            AgenticEvents.PerceptiveAgent.SUMMARIZE_DID_EXECUTE
+            AgenticEvents.PerceptiveAgent.ON_WILL_RUN,
+            AgenticEvents.PerceptiveAgent.ON_DID_RUN,
+            AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE,
+            AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE,
+            AgenticEvents.PerceptiveAgent.ON_WILL_ACT,
+            AgenticEvents.PerceptiveAgent.ON_DID_ACT,
+            AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT,
+            AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT,
+            AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE,
+            AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE
         ).forEach { eventType ->
             EventBus.unregister(eventType)
         }
@@ -310,7 +310,7 @@ class MetricsCollector {
 
     fun startCollecting() {
         // Track observations
-        EventBus.register(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val uuid = map["uuid"] as? String
             if (uuid != null) {
@@ -320,7 +320,7 @@ class MetricsCollector {
             payload
         }
 
-        EventBus.register(AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val uuid = map["uuid"] as? String
             if (uuid != null) {
@@ -334,7 +334,7 @@ class MetricsCollector {
         }
 
         // Track actions
-        EventBus.register(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.PerceptiveAgent.ON_WILL_ACT) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val uuid = map["uuid"] as? String
             if (uuid != null) {
@@ -344,7 +344,7 @@ class MetricsCollector {
             payload
         }
 
-        EventBus.register(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE) { payload ->
+        EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_ACT) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val uuid = map["uuid"] as? String
             if (uuid != null) {
@@ -373,9 +373,9 @@ class MetricsCollector {
     }
 
     fun stopCollecting() {
-        EventBus.unregister(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE)
-        EventBus.unregister(AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE)
-        EventBus.unregister(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE)
-        EventBus.unregister(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE)
+        EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE)
+        EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE)
+        EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_WILL_ACT)
+        EventBus.unregister(AgenticEvents.PerceptiveAgent.ON_DID_ACT)
     }
 }

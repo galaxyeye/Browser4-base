@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap
  * 2. Wiring the skill to CustomToolRegistry via SkillToolExecutor
  * 3. Creating an agent that can use the skill
  * 4. Running a task that invokes the skill
- * 5. Capturing the GENERATE_DID_EXECUTE event to verify the skill was called
+ * 5. Capturing the ON_DID_GENERATE event to verify the skill was called
  * 6. Validating that the actionDescription.toolCall is skill-related
  *
  * The test follows the pattern specified in the problem statement:
  * - Startup: skill.debug.scraping should be preloaded at system startup (no manual registration)
- * - Verification: Inject AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE event listener
+ * - Verification: Inject AgenticEvents.ContextToAction.ON_DID_GENERATE event listener
  * - Assertion: Ensure actionDescription.toolCall is skill-related
  */
 @Tag("E2ETest")
@@ -36,11 +36,11 @@ class SkillRegistrationAndInvocationE2ETest {
         @BeforeAll
         @JvmStatic
         fun setupEventHandlers() {
-            // Register event handler for GENERATE_DID_EXECUTE
-            EventBus.register(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) { payload ->
+            // Register event handler for ON_DID_GENERATE
+            EventBus.register(AgenticEvents.ContextToAction.ON_DID_GENERATE) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
 
-                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE) {
+                capturedEvents.computeIfAbsent(AgenticEvents.ContextToAction.ON_DID_GENERATE) {
                     mutableListOf()
                 }.add(map)
 
@@ -55,18 +55,18 @@ class SkillRegistrationAndInvocationE2ETest {
         @JvmStatic
         fun cleanup() {
             // Unregister event handler
-            EventBus.unregister(AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE)
+            EventBus.unregister(AgenticEvents.ContextToAction.ON_DID_GENERATE)
         }
     }
 
     @BeforeEach
-    suspend fun setup() {
+    fun setup() {
         // Clear captured events
         capturedEvents.clear()
     }
 
     @AfterEach
-    suspend fun tearDown() {
+    fun tearDown() {
     }
 
     @Test
@@ -92,10 +92,10 @@ class SkillRegistrationAndInvocationE2ETest {
         assertNotNull(history, "History should not be null")
         assertTrue(history.size > 0, "History should contain at least one execution")
 
-        // Step 6: Verify GENERATE_DID_EXECUTE event was captured
-        val events = capturedEvents[AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE]
-        assertNotNull(events, "GENERATE_DID_EXECUTE events should be captured")
-        assertTrue(events!!.isNotEmpty(), "At least one GENERATE_DID_EXECUTE event should be captured")
+        // Step 6: Verify ON_DID_GENERATE event was captured
+        val events = capturedEvents[AgenticEvents.ContextToAction.ON_DID_GENERATE]
+        assertNotNull(events, "ON_DID_GENERATE events should be captured")
+        assertTrue(events.isNotEmpty(), "At least one ON_DID_GENERATE event should be captured")
 
         // Step 7: Extract actionDescription from the captured events
         val actionDescriptions = events.mapNotNull { it["actionDescription"] as? ActionDescription }

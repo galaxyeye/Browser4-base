@@ -106,7 +106,7 @@ open class BasicBrowserAgent(
         Files.createDirectories(baseDir)
 
         // Register event listeners for debugging
-        var eventType = AgenticEvents.InferenceEngine.OBSERVE_WILL_EXECUTE
+        var eventType = AgenticEvents.InferenceEngine.ON_WILL_OBSERVE
         EventBus.register(eventType) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val messages = map["messages"] as? AgentMessageList ?: return@register null
@@ -115,7 +115,7 @@ open class BasicBrowserAgent(
             return@register messages
         }
 
-        eventType = AgenticEvents.InferenceEngine.OBSERVE_DID_EXECUTE
+        eventType = AgenticEvents.InferenceEngine.ON_DID_OBSERVE
         EventBus.register(eventType) { payload ->
             val map = payload as? Map<String, Any?> ?: return@register null
             val actionDescription = map["actionDescription"] as? ActionDescription ?: return@register null
@@ -334,7 +334,7 @@ open class BasicBrowserAgent(
             metadata = mapOf("instruction" to options.instruction?.take(100))
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE, mapOf(
             "options" to options,
             "uuid" to uuid
         ))
@@ -354,7 +354,7 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE, mapOf(
             "options" to options,
             "uuid" to uuid,
             "observeResults" to result.observeResults,
@@ -374,7 +374,7 @@ open class BasicBrowserAgent(
         )
 
         // Keep existing EventBus for backward compatibility
-        EventBus.emit(AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_RUN, mapOf(
             "action" to action,
             "uuid" to uuid
         ))
@@ -395,7 +395,7 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.RUN_DID_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_RUN, mapOf(
             "action" to action,
             "uuid" to uuid,
             "result" to result,
@@ -413,7 +413,7 @@ open class BasicBrowserAgent(
             metadata = mapOf("action" to action.action)
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_ACT, mapOf(
             "action" to action,
             "uuid" to uuid
         ))
@@ -434,7 +434,7 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_ACT, mapOf(
             "action" to action,
             "uuid" to uuid,
             "result" to result
@@ -451,7 +451,7 @@ open class BasicBrowserAgent(
             metadata = mapOf("instruction" to options.instruction)
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT, mapOf(
             "options" to options,
             "uuid" to uuid
         ))
@@ -471,7 +471,7 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.EXTRACT_DID_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT, mapOf(
             "options" to options,
             "uuid" to uuid,
             "result" to result
@@ -491,7 +491,7 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.SUMMARIZE_WILL_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE, mapOf(
             "instruction" to instruction,
             "selector" to selector,
             "uuid" to uuid
@@ -512,7 +512,7 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.SUMMARIZE_DID_EXECUTE, mapOf(
+        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE, mapOf(
             "instruction" to instruction,
             "selector" to selector,
             "uuid" to uuid,

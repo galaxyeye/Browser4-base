@@ -255,13 +255,13 @@ class InferenceEngine(
 
     suspend fun summarize(instruction: String?, textContent: String): String {
         val messages = InferencePromptBuilder.buildSummaryPrompt(instruction, textContent)
-        
+
         val startTime = Instant.now()
 
         onWillSummarizeInfer(instruction, messages, textContent)
 
         val response = cta.generateResponseRaw(messages)
-        
+
         val inferenceTimeMillis = DateTimes.elapsedTime(startTime).toMillis()
 
         onDidSummarizeInfer(instruction, textContent, response, inferenceTimeMillis)
@@ -287,7 +287,7 @@ class InferenceEngine(
         )
 
         EventBus.emit(
-            AgenticEvents.ContextToAction.GENERATE_WILL_EXECUTE, mapOf(
+            AgenticEvents.ContextToAction.ON_WILL_GENERATE, mapOf(
                 "context" to context,
                 "messages" to messages
             )
@@ -320,7 +320,7 @@ class InferenceEngine(
         )
 
         EventBus.emit(
-            AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE, mapOf(
+            AgenticEvents.ContextToAction.ON_DID_GENERATE, mapOf(
                 "context" to context,
                 "messages" to messages,
                 "actionDescription" to actionDescription
@@ -341,7 +341,7 @@ class InferenceEngine(
         )
 
         EventBus.emit(
-            AgenticEvents.InferenceEngine.EXTRACT_WILL_EXECUTE, mapOf(
+            AgenticEvents.InferenceEngine.ON_WILL_EXTRACT, mapOf(
                 "params" to params
             )
         )
@@ -365,7 +365,7 @@ class InferenceEngine(
         )
 
         EventBus.emit(
-            AgenticEvents.InferenceEngine.EXTRACT_DID_EXECUTE, mapOf(
+            AgenticEvents.InferenceEngine.ON_DID_EXTRACT, mapOf(
                 "params" to params,
                 "result" to inferenceResult.result,
                 "extractedNode" to inferenceResult.extractedNode,
@@ -387,7 +387,7 @@ class InferenceEngine(
         )
 
         EventBus.emit(
-            AgenticEvents.InferenceEngine.SUMMARIZE_WILL_EXECUTE, mapOf(
+            AgenticEvents.InferenceEngine.ON_WILL_SUMMARIZE, mapOf(
                 "instruction" to instruction,
                 "messages" to messages,
                 "textContent" to textContent,
@@ -412,7 +412,7 @@ class InferenceEngine(
         )
 
         EventBus.emit(
-            AgenticEvents.InferenceEngine.SUMMARIZE_DID_EXECUTE, mapOf(
+            AgenticEvents.InferenceEngine.ON_DID_SUMMARIZE, mapOf(
                 "instruction" to instruction,
                 "textContentLength" to textContent.length,
                 "result" to response.content,

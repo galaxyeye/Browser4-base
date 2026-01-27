@@ -9,163 +9,6 @@ package ai.platon.pulsar.agentic.event
 object AgenticEvents {
 
     /**
-     * Events emitted by PerceptiveAgent implementations.
-     */
-    object PerceptiveAgent {
-        /**
-         * Emitted before executing the run method.
-         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID)
-         */
-        const val RUN_WILL_EXECUTE = "PerceptiveAgent.run.willExecute"
-
-        /**
-         * Emitted after executing the run method.
-         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID),
-         *          "result" (ActResult), "stateHistory" (AgentHistory)
-         */
-        const val RUN_DID_EXECUTE = "PerceptiveAgent.run.didExecute"
-
-        /**
-         * Emitted before executing the observe method.
-         * Payload: Map containing "options" (ObserveOptions), "uuid" (UUID)
-         */
-        const val OBSERVE_WILL_EXECUTE = "PerceptiveAgent.observe.willExecute"
-
-        /**
-         * Emitted after executing the observe method.
-         * Payload: Map containing "options" (ObserveOptions), "uuid" (UUID),
-         *          "observeResults" (List<ObserveResult>), "actionDescription" (ActionDescription)
-         */
-        const val OBSERVE_DID_EXECUTE = "PerceptiveAgent.observe.didExecute"
-
-        /**
-         * Emitted before executing the act method.
-         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID)
-         */
-        const val ACT_WILL_EXECUTE = "PerceptiveAgent.act.willExecute"
-
-        /**
-         * Emitted after executing the act method.
-         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID), "result" (ActResult)
-         */
-        const val ACT_DID_EXECUTE = "PerceptiveAgent.act.didExecute"
-
-        /**
-         * Emitted before executing the extract method.
-         * Payload: Map containing "options" (ExtractOptions), "uuid" (UUID)
-         */
-        const val EXTRACT_WILL_EXECUTE = "PerceptiveAgent.extract.willExecute"
-
-        /**
-         * Emitted after executing the extract method.
-         * Payload: Map containing "options" (ExtractOptions), "uuid" (UUID), "result" (ExtractResult)
-         */
-        const val EXTRACT_DID_EXECUTE = "PerceptiveAgent.extract.didExecute"
-
-        /**
-         * Emitted before executing the summarize method.
-         * Payload: Map containing "instruction" (String?), "selector" (String?), "uuid" (UUID)
-         */
-        const val SUMMARIZE_WILL_EXECUTE = "PerceptiveAgent.summarize.willExecute"
-
-        /**
-         * Emitted after executing the summarize method.
-         * Payload: Map containing "instruction" (String?), "selector" (String?),
-         *          "uuid" (UUID), "result" (String)
-         */
-        const val SUMMARIZE_DID_EXECUTE = "PerceptiveAgent.summarize.didExecute"
-    }
-
-    /**
-     * Events emitted by InferenceEngine.
-     */
-    object InferenceEngine {
-        /**
-         * Emitted before observe inference in BasicBrowserAgent init block.
-         * Payload: Map containing "messages" (AgentMessageList)
-         */
-        const val OBSERVE_WILL_EXECUTE = "InferenceEngine.observe.willExecute"
-
-        /**
-         * Emitted after observe inference in BasicBrowserAgent init block.
-         * Payload: Map containing "actionDescription" (ActionDescription)
-         */
-        const val OBSERVE_DID_EXECUTE = "InferenceEngine.observe.didExecute"
-
-        /**
-         * Emitted before extract inference.
-         * Payload: Map containing "params" (ExtractParams)
-         */
-        const val EXTRACT_WILL_EXECUTE = "InferenceEngine.extract.willExecute"
-
-        /**
-         * Emitted after extract inference.
-         * Payload: Map containing "params" (ExtractParams), "result" (ObjectNode),
-         *          "extractedNode" (ObjectNode), "metaNode" (ObjectNode)
-         */
-        const val EXTRACT_DID_EXECUTE = "InferenceEngine.extract.didExecute"
-
-        /**
-         * Emitted before summarize inference.
-         * Payload: Map containing "instruction" (String?), "messages" (AgentMessageList),
-         *          "textContent" (String)
-         */
-        const val SUMMARIZE_WILL_EXECUTE = "InferenceEngine.summarize.willExecute"
-
-        /**
-         * Emitted after summarize inference.
-         * Payload: Map containing "instruction" (String?), "textContentLength" (Int),
-         *          "result" (String), "tokenUsage" (TokenUsage)
-         */
-        const val SUMMARIZE_DID_EXECUTE = "InferenceEngine.summarize.didExecute"
-    }
-
-    /**
-     * Events emitted by ContextToAction during action generation.
-     */
-    object ContextToAction {
-        /**
-         * Emitted before generating action from context.
-         * Payload: Map containing "context" (ExecutionContext), "messages" (AgentMessageList)
-         */
-        const val GENERATE_WILL_EXECUTE = "ContextToAction.generate.willExecute"
-
-        /**
-         * Emitted after generating action from context.
-         * Payload: Map containing "context" (ExecutionContext), "messages" (AgentMessageList),
-         *          "actionDescription" (ActionDescription)
-         */
-        const val GENERATE_DID_EXECUTE = "ContextToAction.generate.didExecute"
-    }
-
-    /**
-     * Returns all event types as a list for easy iteration.
-     */
-    fun getAllEventTypes(): List<String> = listOf(
-        // PerceptiveAgent events
-        PerceptiveAgent.RUN_WILL_EXECUTE,
-        PerceptiveAgent.RUN_DID_EXECUTE,
-        PerceptiveAgent.OBSERVE_WILL_EXECUTE,
-        PerceptiveAgent.OBSERVE_DID_EXECUTE,
-        PerceptiveAgent.ACT_WILL_EXECUTE,
-        PerceptiveAgent.ACT_DID_EXECUTE,
-        PerceptiveAgent.EXTRACT_WILL_EXECUTE,
-        PerceptiveAgent.EXTRACT_DID_EXECUTE,
-        PerceptiveAgent.SUMMARIZE_WILL_EXECUTE,
-        PerceptiveAgent.SUMMARIZE_DID_EXECUTE,
-        // InferenceEngine events
-        InferenceEngine.OBSERVE_WILL_EXECUTE,
-        InferenceEngine.OBSERVE_DID_EXECUTE,
-        InferenceEngine.EXTRACT_WILL_EXECUTE,
-        InferenceEngine.EXTRACT_DID_EXECUTE,
-        InferenceEngine.SUMMARIZE_WILL_EXECUTE,
-        InferenceEngine.SUMMARIZE_DID_EXECUTE,
-        // ContextToAction events
-        ContextToAction.GENERATE_WILL_EXECUTE,
-        ContextToAction.GENERATE_DID_EXECUTE
-    )
-
-    /**
      * AgentEventBus event type constants for agent lifecycle events.
      * Used with AgentEventBus.emitAgentEvent().
      */
@@ -228,4 +71,282 @@ object AgenticEvents {
         const val ON_SKILLS_LISTED = "onSkillsListed"
         const val ON_SKILL_ERROR = "onSkillError"
     }
+
+    /**
+     * Events emitted by PerceptiveAgent implementations.
+     */
+    object PerceptiveAgent {
+        /**
+         * Emitted before executing the run method.
+         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID)
+         */
+        const val ON_WILL_RUN = "PerceptiveAgent.onWillRun"
+
+        /**
+         * Emitted after executing the run method.
+         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID),
+         *          "result" (ActResult), "stateHistory" (AgentHistory)
+         */
+        const val ON_DID_RUN = "PerceptiveAgent.onDidRun"
+
+        /**
+         * Emitted before executing the observe method.
+         * Payload: Map containing "options" (ObserveOptions), "uuid" (UUID)
+         */
+        const val ON_WILL_OBSERVE = "PerceptiveAgent.onWillObserve"
+
+        /**
+         * Emitted after executing the observe method.
+         * Payload: Map containing "options" (ObserveOptions), "uuid" (UUID),
+         *          "observeResults" (List<ObserveResult>), "actionDescription" (ActionDescription)
+         */
+        const val ON_DID_OBSERVE = "PerceptiveAgent.onDidObserve"
+
+        /**
+         * Emitted before executing the act method.
+         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID)
+         */
+        const val ON_WILL_ACT = "PerceptiveAgent.onWillAct"
+
+        /**
+         * Emitted after executing the act method.
+         * Payload: Map containing "action" (ActionOptions), "uuid" (UUID), "result" (ActResult)
+         */
+        const val ON_DID_ACT = "PerceptiveAgent.onDidAct"
+
+        /**
+         * Emitted before executing the extract method.
+         * Payload: Map containing "options" (ExtractOptions), "uuid" (UUID)
+         */
+        const val ON_WILL_EXTRACT = "PerceptiveAgent.onWillExtract"
+
+        /**
+         * Emitted after executing the extract method.
+         * Payload: Map containing "options" (ExtractOptions), "uuid" (UUID), "result" (ExtractResult)
+         */
+        const val ON_DID_EXTRACT = "PerceptiveAgent.onDidExtract"
+
+        /**
+         * Emitted before executing the summarize method.
+         * Payload: Map containing "instruction" (String?), "selector" (String?), "uuid" (UUID)
+         */
+        const val ON_WILL_SUMMARIZE = "PerceptiveAgent.onWillSummarize"
+
+        /**
+         * Emitted after executing the summarize method.
+         * Payload: Map containing "instruction" (String?), "selector" (String?),
+         *          "uuid" (UUID), "result" (String)
+         */
+        const val ON_DID_SUMMARIZE = "PerceptiveAgent.onDidSummarize"
+
+        // --------------------------------------------------------------------
+        // Backward-compatible aliases (to be removed in a future major version)
+        // --------------------------------------------------------------------
+
+        @Deprecated(
+            message = "Use ON_WILL_RUN instead",
+            replaceWith = ReplaceWith("ON_WILL_RUN")
+        )
+        const val RUN_WILL_EXECUTE = ON_WILL_RUN
+
+        @Deprecated(
+            message = "Use ON_DID_RUN instead",
+            replaceWith = ReplaceWith("ON_DID_RUN")
+        )
+        const val RUN_DID_EXECUTE = ON_DID_RUN
+
+        @Deprecated(
+            message = "Use ON_WILL_OBSERVE instead",
+            replaceWith = ReplaceWith("ON_WILL_OBSERVE")
+        )
+        const val OBSERVE_WILL_EXECUTE = ON_WILL_OBSERVE
+
+        @Deprecated(
+            message = "Use ON_DID_OBSERVE instead",
+            replaceWith = ReplaceWith("ON_DID_OBSERVE")
+        )
+        const val OBSERVE_DID_EXECUTE = ON_DID_OBSERVE
+
+        @Deprecated(
+            message = "Use ON_WILL_ACT instead",
+            replaceWith = ReplaceWith("ON_WILL_ACT")
+        )
+        const val ACT_WILL_EXECUTE = ON_WILL_ACT
+
+        @Deprecated(
+            message = "Use ON_DID_ACT instead",
+            replaceWith = ReplaceWith("ON_DID_ACT")
+        )
+        const val ACT_DID_EXECUTE = ON_DID_ACT
+
+        @Deprecated(
+            message = "Use ON_WILL_EXTRACT instead",
+            replaceWith = ReplaceWith("ON_WILL_EXTRACT")
+        )
+        const val EXTRACT_WILL_EXECUTE = ON_WILL_EXTRACT
+
+        @Deprecated(
+            message = "Use ON_DID_EXTRACT instead",
+            replaceWith = ReplaceWith("ON_DID_EXTRACT")
+        )
+        const val EXTRACT_DID_EXECUTE = ON_DID_EXTRACT
+
+        @Deprecated(
+            message = "Use ON_WILL_SUMMARIZE instead",
+            replaceWith = ReplaceWith("ON_WILL_SUMMARIZE")
+        )
+        const val SUMMARIZE_WILL_EXECUTE = ON_WILL_SUMMARIZE
+
+        @Deprecated(
+            message = "Use ON_DID_SUMMARIZE instead",
+            replaceWith = ReplaceWith("ON_DID_SUMMARIZE")
+        )
+        const val SUMMARIZE_DID_EXECUTE = ON_DID_SUMMARIZE
+    }
+
+    /**
+     * Events emitted by InferenceEngine.
+     */
+    object InferenceEngine {
+        /**
+         * Emitted before observe inference in BasicBrowserAgent init block.
+         * Payload: Map containing "messages" (AgentMessageList)
+         */
+        const val ON_WILL_OBSERVE = "InferenceEngine.onWillObserve"
+
+        /**
+         * Emitted after observe inference in BasicBrowserAgent init block.
+         * Payload: Map containing "actionDescription" (ActionDescription)
+         */
+        const val ON_DID_OBSERVE = "InferenceEngine.onDidObserve"
+
+        /**
+         * Emitted before extract inference.
+         * Payload: Map containing "params" (ExtractParams)
+         */
+        const val ON_WILL_EXTRACT = "InferenceEngine.onWillExtract"
+
+        /**
+         * Emitted after extract inference.
+         * Payload: Map containing "params" (ExtractParams), "result" (ObjectNode),
+         *          "extractedNode" (ObjectNode), "metaNode" (ObjectNode)
+         */
+        const val ON_DID_EXTRACT = "InferenceEngine.onDidExtract"
+
+        /**
+         * Emitted before summarize inference.
+         * Payload: Map containing "instruction" (String?), "messages" (AgentMessageList),
+         *          "textContent" (String)
+         */
+        const val ON_WILL_SUMMARIZE = "InferenceEngine.onWillSummarize"
+
+        /**
+         * Emitted after summarize inference.
+         * Payload: Map containing "instruction" (String?), "textContentLength" (Int),
+         *          "result" (String), "tokenUsage" (TokenUsage)
+         */
+        const val ON_DID_SUMMARIZE = "InferenceEngine.onDidSummarize"
+
+        // --------------------------------------------------------------------
+        // Backward-compatible aliases (to be removed in a future major version)
+        // --------------------------------------------------------------------
+
+        @Deprecated(
+            message = "Use ON_WILL_OBSERVE instead",
+            replaceWith = ReplaceWith("ON_WILL_OBSERVE")
+        )
+        const val OBSERVE_WILL_EXECUTE = ON_WILL_OBSERVE
+
+        @Deprecated(
+            message = "Use ON_DID_OBSERVE instead",
+            replaceWith = ReplaceWith("ON_DID_OBSERVE")
+        )
+        const val OBSERVE_DID_EXECUTE = ON_DID_OBSERVE
+
+        @Deprecated(
+            message = "Use ON_WILL_EXTRACT instead",
+            replaceWith = ReplaceWith("ON_WILL_EXTRACT")
+        )
+        const val EXTRACT_WILL_EXECUTE = ON_WILL_EXTRACT
+
+        @Deprecated(
+            message = "Use ON_DID_EXTRACT instead",
+            replaceWith = ReplaceWith("ON_DID_EXTRACT")
+        )
+        const val EXTRACT_DID_EXECUTE = ON_DID_EXTRACT
+
+        @Deprecated(
+            message = "Use ON_WILL_SUMMARIZE instead",
+            replaceWith = ReplaceWith("ON_WILL_SUMMARIZE")
+        )
+        const val SUMMARIZE_WILL_EXECUTE = ON_WILL_SUMMARIZE
+
+        @Deprecated(
+            message = "Use ON_DID_SUMMARIZE instead",
+            replaceWith = ReplaceWith("ON_DID_SUMMARIZE")
+        )
+        const val SUMMARIZE_DID_EXECUTE = ON_DID_SUMMARIZE
+    }
+
+    /**
+     * Events emitted by ContextToAction during action generation.
+     */
+    object ContextToAction {
+        /**
+         * Emitted before generating action from context.
+         * Payload: Map containing "context" (ExecutionContext), "messages" (AgentMessageList)
+         */
+        const val ON_WILL_GENERATE = "ContextToAction.onWillGenerate"
+
+        /**
+         * Emitted after generating action from context.
+         * Payload: Map containing "context" (ExecutionContext), "messages" (AgentMessageList),
+         *          "actionDescription" (ActionDescription)
+         */
+        const val ON_DID_GENERATE = "ContextToAction.onDidGenerate"
+
+        // --------------------------------------------------------------------
+        // Backward-compatible aliases (to be removed in a future major version)
+        // --------------------------------------------------------------------
+
+        @Deprecated(
+            message = "Use ON_WILL_GENERATE instead",
+            replaceWith = ReplaceWith("ON_WILL_GENERATE")
+        )
+        const val GENERATE_WILL_EXECUTE = ON_WILL_GENERATE
+
+        @Deprecated(
+            message = "Use ON_DID_GENERATE instead",
+            replaceWith = ReplaceWith("ON_DID_GENERATE")
+        )
+        const val GENERATE_DID_EXECUTE = ON_DID_GENERATE
+    }
+
+    /**
+     * Returns all event types as a list for easy iteration.
+     */
+    fun getAllEventTypes(): List<String> = listOf(
+        // PerceptiveAgent events
+        PerceptiveAgent.ON_WILL_RUN,
+        PerceptiveAgent.ON_DID_RUN,
+        PerceptiveAgent.ON_WILL_OBSERVE,
+        PerceptiveAgent.ON_DID_OBSERVE,
+        PerceptiveAgent.ON_WILL_ACT,
+        PerceptiveAgent.ON_DID_ACT,
+        PerceptiveAgent.ON_WILL_EXTRACT,
+        PerceptiveAgent.ON_DID_EXTRACT,
+        PerceptiveAgent.ON_WILL_SUMMARIZE,
+        PerceptiveAgent.ON_DID_SUMMARIZE,
+        // InferenceEngine events
+        InferenceEngine.ON_WILL_OBSERVE,
+        InferenceEngine.ON_DID_OBSERVE,
+        InferenceEngine.ON_WILL_EXTRACT,
+        InferenceEngine.ON_DID_EXTRACT,
+        InferenceEngine.ON_WILL_SUMMARIZE,
+        InferenceEngine.ON_DID_SUMMARIZE,
+        // ContextToAction events
+        ContextToAction.ON_WILL_GENERATE,
+        ContextToAction.ON_DID_GENERATE
+    )
+
 }

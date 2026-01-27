@@ -72,7 +72,7 @@ class EventBusObservabilityTest {
 
     @Test
     fun testPerceptiveAgentRunEvents() {
-        val eventType = AgenticEvents.PerceptiveAgent.RUN_WILL_EXECUTE
+        val eventType = AgenticEvents.PerceptiveAgent.ON_WILL_RUN
 
         // Simulate emitting the event
         val testPayload = mapOf(
@@ -93,8 +93,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testPerceptiveAgentObserveEvents() {
-        val willEventType = AgenticEvents.PerceptiveAgent.OBSERVE_WILL_EXECUTE
-        val didEventType = AgenticEvents.PerceptiveAgent.OBSERVE_DID_EXECUTE
+        val willEventType = AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE
+        val didEventType = AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE
 
         // Simulate observing
         val options = mapOf("instruction" to "find button")
@@ -122,8 +122,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testPerceptiveAgentActEvents() {
-        val willEventType = AgenticEvents.PerceptiveAgent.ACT_WILL_EXECUTE
-        val didEventType = AgenticEvents.PerceptiveAgent.ACT_DID_EXECUTE
+        val willEventType = AgenticEvents.PerceptiveAgent.ON_WILL_ACT
+        val didEventType = AgenticEvents.PerceptiveAgent.ON_DID_ACT
 
         val action = mapOf("action" to "click button")
         EventBus.emit(willEventType, mapOf("action" to action, "uuid" to "test-uuid"))
@@ -152,8 +152,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testPerceptiveAgentExtractEvents() {
-        val willEventType = AgenticEvents.PerceptiveAgent.EXTRACT_WILL_EXECUTE
-        val didEventType = AgenticEvents.PerceptiveAgent.EXTRACT_DID_EXECUTE
+        val willEventType = AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT
+        val didEventType = AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT
 
         val options = mapOf("instruction" to "extract data")
         EventBus.emit(willEventType, mapOf("options" to options, "uuid" to "test-uuid"))
@@ -180,8 +180,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testPerceptiveAgentSummarizeEvents() {
-        val willEventType = AgenticEvents.PerceptiveAgent.SUMMARIZE_WILL_EXECUTE
-        val didEventType = AgenticEvents.PerceptiveAgent.SUMMARIZE_DID_EXECUTE
+        val willEventType = AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE
+        val didEventType = AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE
 
         EventBus.emit(willEventType, mapOf(
             "instruction" to "summarize page",
@@ -212,8 +212,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testInferenceEngineObserveEvents() {
-        val willEventType = AgenticEvents.ContextToAction.GENERATE_WILL_EXECUTE
-        val didEventType = AgenticEvents.ContextToAction.GENERATE_DID_EXECUTE
+        val willEventType = AgenticEvents.ContextToAction.ON_WILL_GENERATE
+        val didEventType = AgenticEvents.ContextToAction.ON_DID_GENERATE
 
         val context = mapOf("step" to 1)
         val messages = mapOf("content" to "test message")
@@ -245,8 +245,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testInferenceEngineExtractEvents() {
-        val willEventType = AgenticEvents.InferenceEngine.EXTRACT_WILL_EXECUTE
-        val didEventType = AgenticEvents.InferenceEngine.EXTRACT_DID_EXECUTE
+        val willEventType = AgenticEvents.InferenceEngine.ON_WILL_EXTRACT
+        val didEventType = AgenticEvents.InferenceEngine.ON_DID_EXTRACT
 
         val params = mapOf("instruction" to "extract data", "schema" to emptyMap<String, Any>())
         EventBus.emit(willEventType, mapOf("params" to params))
@@ -272,8 +272,8 @@ class EventBusObservabilityTest {
 
     @Test
     fun testInferenceEngineSummarizeEvents() {
-        val willEventType = AgenticEvents.InferenceEngine.SUMMARIZE_WILL_EXECUTE
-        val didEventType = AgenticEvents.InferenceEngine.SUMMARIZE_DID_EXECUTE
+        val willEventType = AgenticEvents.InferenceEngine.ON_WILL_SUMMARIZE
+        val didEventType = AgenticEvents.InferenceEngine.ON_DID_SUMMARIZE
 
         EventBus.emit(willEventType, mapOf(
             "instruction" to "summarize",
