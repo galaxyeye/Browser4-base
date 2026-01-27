@@ -1,15 +1,13 @@
 package ai.platon.pulsar.external.logging
 
 import ai.platon.pulsar.common.AppPaths
-import ai.platon.pulsar.common.MessageWriter
+import ai.platon.pulsar.common.MultiSinkMessageWriter
 import ai.platon.pulsar.common.concurrent.ConcurrentExpiringLRUCache
 import ai.platon.pulsar.external.ModelResponse
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 
 class ChatModelLogger : AutoCloseable {
     companion object {
@@ -19,55 +17,51 @@ class ChatModelLogger : AutoCloseable {
     private val logger = LoggerFactory.getLogger(ChatModelLogger::class.java)
     private val counter = AtomicInteger(0)
     private val requestResponseMap =
-        ConcurrentExpiringLRUCache<Int, RequestResponsePair>(ttl = Duration.ofMinutes(10))
+        ConcurrentExpiringLRUCache<Int, ConversationRecord>(ttl = Duration.ofMinutes(10))
 
     private var logBaseDir = LOG_BASE_DIR
     private val dataTimeStr = AppPaths.fromNow()
-    private val systemMessageFileName = "chat-$dataTimeStr.system.log"
-    private val userMessageFileName = "chat-$dataTimeStr.user.log"
-    private var systemMessagePath = logBaseDir.resolve(systemMessageFileName)
-    private var userMessagePath = logBaseDir.resolve(userMessageFileName)
-    private val writer: MessageWriter
+    private val writer = MultiSinkMessageWriter(logBaseDir)
 
-    init {
-        userMessagePath.parent.createDirectories()
-        writer = MessageWriter(userMessagePath)
-    }
+    fun logRequest(systemMessage: String, userMessage: String, category: String? = null) =
+        logRequestSmUm(systemMessage, userMessage, category)
 
-    fun logRequest(systemMessage: String, userMessage: String) = logRequestSmUm(systemMessage, userMessage)
-
-    fun logRequestSmUm(systemMessage: String, userMessage: String) = logRequestUmSm(userMessage, systemMessage)
+    fun logRequestSmUm(systemMessage: String, userMessage: String, category: String? = null) =
+        logRequestUmSm(userMessage, systemMessage, category)
 
     /**
      * 记录请求
      * @return 请求ID
      */
-    fun logRequestUmSm(userMessage: String, systemMessage: String): Int {
+    fun logRequestUmSm(userMessage: String, systemMessage: String, category: String? = null): Int {
         val requestId = counter.incrementAndGet()
         val timestamp = LocalDateTime.now()
-        val request = RequestResponsePair(requestId, timestamp, userMessage, systemMessage)
+        val request = ConversationRecord(requestId, timestamp, userMessage, systemMessage, category = category)
         requestResponseMap.putDatum(requestId, request)
 
         return requestId
     }
 
-    fun logResponse(requestId: Int, response: ModelResponse) {
+    fun logResponse(requestId: Int, response: ModelResponse, category: String? = null) {
         val pair = requestResponseMap.getDatum(requestId) ?: return
         pair.response = response
         pair.responseTimestamp = LocalDateTime.now()
+        pair.category = category
 
         writeToFile(pair)
     }
 
-    private fun writeToFile(pair: RequestResponsePair) {
+    private fun writeToFile(pair: ConversationRecord) {
         try {
             val sb = StringBuilder()
             sb.appendLine("--------------------------------------------------------------------")
             sb.append(";;REQUEST ID: ${pair.id}\n")
             sb.append(";;TIMESTAMP: ${pair.timestamp}\n")
 
+            val category1 = pair.category ?: "chat"
             if (pair.id <= 2) {
-                systemMessagePath.writeText(pair.systemMessage)
+                val path = logBaseDir.resolve("chat-$dataTimeStr.$category1.sys.log")
+                writer.writeTo(pair.systemMessage, path = path)
             }
 
             sb.append(";;USER MESSAGE:\n${pair.userMessage}\n")
@@ -76,7 +70,8 @@ class ChatModelLogger : AutoCloseable {
             sb.append(";;TOKEN USAGE: ${pair.response?.tokenUsage?.totalTokenCount ?: "N/A"}\n")
             sb.append(";;RESPONSE CONTENT:\n${pair.response?.content ?: "No response"}")
 
-            writer.write(sb.toString())
+            val path = logBaseDir.resolve("chat-$dataTimeStr.$category1.user.log")
+            writer.writeTo(sb.toString(), path = path)
 
             // Mark persisted only after successful write
             pair.persistedToFile = true
@@ -100,23 +95,23 @@ class ChatModelLogger : AutoCloseable {
         } finally {
             try {
                 writer.flush()
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
             try {
                 writer.close()
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 
-    /**
-     * 请求响应对象，用于存储一次对话的请求和响应
-     */
-    data class RequestResponsePair constructor(
+    data class ConversationRecord constructor(
         val id: Int,
         val timestamp: LocalDateTime,
         val userMessage: String,
         val systemMessage: String,
         var response: ModelResponse? = null,
         var responseTimestamp: LocalDateTime? = null,
-        var persistedToFile: Boolean = false
+        var persistedToFile: Boolean = false,
+        var category: String? = null
     )
 }

@@ -62,10 +62,15 @@ open class ContextToAction(
         val systemMessage = messages.systemMessages().joinToString("\n")
         val userMessage = messages.userMessages().joinToString("\n")
 
+        val category = "cta"
         val response = if (screenshotB64 != null) {
-            chatModel.call(systemMessage, userMessage, null, screenshotB64, "image/jpeg")
+            chatModel.call(systemMessage,
+                userMessage,
+                imageUrl = null,
+                b64Image = screenshotB64,
+                mediaType = "image/jpeg", category = category)
         } else {
-            chatModel.call(systemMessage, userMessage)
+            chatModel.call(systemMessage, userMessage, category = category)
         }
 
         return response
