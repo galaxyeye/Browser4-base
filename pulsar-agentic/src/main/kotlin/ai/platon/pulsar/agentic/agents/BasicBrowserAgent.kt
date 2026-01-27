@@ -135,7 +135,7 @@ open class BasicBrowserAgent(
             result = act(action)
         }
 
-        onDidRun(action, result, i)
+        onDidRun(action, result)
 
         return stateHistory
     }
@@ -334,10 +334,12 @@ open class BasicBrowserAgent(
             metadata = mapOf("instruction" to options.instruction?.take(100))
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE, mapOf(
-            "options" to options,
-            "uuid" to uuid
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE, mapOf(
+                "options" to options,
+                "uuid" to uuid
+            )
+        )
     }
 
     protected fun onDidObserve(options: ObserveOptions, result: ObserveActResult) {
@@ -354,12 +356,14 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE, mapOf(
-            "options" to options,
-            "uuid" to uuid,
-            "observeResults" to result.observeResults,
-            "actionDescription" to result.actionDescription
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE, mapOf(
+                "options" to options,
+                "uuid" to uuid,
+                "observeResults" to result.observeResults,
+                "actionDescription" to result.actionDescription
+            )
+        )
 
     }
 
@@ -374,13 +378,15 @@ open class BasicBrowserAgent(
         )
 
         // Keep existing EventBus for backward compatibility
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_RUN, mapOf(
-            "action" to action,
-            "uuid" to uuid
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_WILL_RUN, mapOf(
+                "action" to action,
+                "uuid" to uuid
+            )
+        )
     }
 
-    protected fun onDidRun(action: ActionOptions, result: ActResult, steps: Int) {
+    protected fun onDidRun(action: ActionOptions, result: ActResult) {
         val agentId = this.uuid.toString()
 
         // Emit AgentEventBus event for SSE streaming
@@ -390,17 +396,18 @@ open class BasicBrowserAgent(
             message = "Run completed",
             metadata = mapOf(
                 "action" to action.action,
-                "isComplete" to result.isComplete,
-                "steps" to steps
+                "isComplete" to result.isComplete
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_RUN, mapOf(
-            "action" to action,
-            "uuid" to uuid,
-            "result" to result,
-            "stateHistory" to stateHistory
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_DID_RUN, mapOf(
+                "action" to action,
+                "uuid" to uuid,
+                "result" to result,
+                "stateHistory" to stateHistory
+            )
+        )
     }
 
     protected fun onWillAct(action: ActionOptions) {
@@ -413,10 +420,12 @@ open class BasicBrowserAgent(
             metadata = mapOf("action" to action.action)
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_ACT, mapOf(
-            "action" to action,
-            "uuid" to uuid
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_WILL_ACT, mapOf(
+                "action" to action,
+                "uuid" to uuid
+            )
+        )
     }
 
     protected fun onDidAct(action: ActionOptions, result: ActResult) {
@@ -434,11 +443,13 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_ACT, mapOf(
-            "action" to action,
-            "uuid" to uuid,
-            "result" to result
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_DID_ACT, mapOf(
+                "action" to action,
+                "uuid" to uuid,
+                "result" to result
+            )
+        )
     }
 
     protected fun onWillExtract(options: ExtractOptions) {
@@ -451,10 +462,12 @@ open class BasicBrowserAgent(
             metadata = mapOf("instruction" to options.instruction)
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT, mapOf(
-            "options" to options,
-            "uuid" to uuid
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT, mapOf(
+                "options" to options,
+                "uuid" to uuid
+            )
+        )
     }
 
     protected fun onDidExtract(options: ExtractOptions, result: ExtractResult) {
@@ -464,18 +477,24 @@ open class BasicBrowserAgent(
         AgentEventBus.emitAgentEvent(
             eventType = AgenticEvents.AgentEventTypes.ON_DID_EXTRACT,
             agentId = agentId,
-            message = if (result.success) "Extraction completed successfully" else "Extraction failed: ${result.message.take(100)}",
+            message = if (result.success) "Extraction completed successfully" else "Extraction failed: ${
+                result.message.take(
+                    100
+                )
+            }",
             metadata = mapOf(
                 "instruction" to options.instruction,
                 "success" to result.success
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT, mapOf(
-            "options" to options,
-            "uuid" to uuid,
-            "result" to result
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT, mapOf(
+                "options" to options,
+                "uuid" to uuid,
+                "result" to result
+            )
+        )
     }
 
     protected fun onWillSummarize(instruction: String?, selector: String?) {
@@ -491,11 +510,13 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE, mapOf(
-            "instruction" to instruction,
-            "selector" to selector,
-            "uuid" to uuid
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE, mapOf(
+                "instruction" to instruction,
+                "selector" to selector,
+                "uuid" to uuid
+            )
+        )
     }
 
     protected fun onDidSummarize(instruction: String?, selector: String?, result: String) {
@@ -512,12 +533,14 @@ open class BasicBrowserAgent(
             )
         )
 
-        EventBus.emit(AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE, mapOf(
-            "instruction" to instruction,
-            "selector" to selector,
-            "uuid" to uuid,
-            "result" to result
-        ))
+        EventBus.emit(
+            AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE, mapOf(
+                "instruction" to instruction,
+                "selector" to selector,
+                "uuid" to uuid,
+                "result" to result
+            )
+        )
     }
 
     private suspend fun doObserveAct(options: ActionOptions): ActResult {

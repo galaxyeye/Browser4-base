@@ -90,7 +90,7 @@ data class BrowserProfile(
         }
 
         fun createDefault(browserType: BrowserType): BrowserProfile {
-            throttlingLogger.info("You are creating a DEFAULT browser context, force set max browser number to be 1")
+            throttlingLogger.info("You are creating a DEFAULT browser context, force set max browser number to 1")
 
             BrowserSettings.withBrowserContextMode(BrowserProfileMode.DEFAULT, browserType)
             require(System.getProperty(BROWSER_CONTEXT_NUMBER).toIntOrNull() == 1)
