@@ -26,26 +26,6 @@
         <defaultGoal>package</defaultGoal>
     </build>
 
-    <profiles>
-        <!--
-          Default behavior for the whole pulsar-core tree:
-          - skip unit tests unless explicitly enabled.
-
-          How to enable tests:
-          - `mvnw.cmd -pl pulsar-core -am test -DskipTests=false`
-          - or use repo CI profile which sets <skipTests>false</skipTests>
-        -->
-        <profile>
-            <id>pulsar-core-skip-tests</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-        </profile>
-    </profiles>
-
     <modules>
         <module>pulsar-resources</module>
         <module>pulsar-common</module>

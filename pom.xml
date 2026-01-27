@@ -128,7 +128,7 @@
         </profile>
 
         <profile>
-            <id>tests</id>
+            <id>pulsar-tests</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
@@ -157,6 +157,7 @@
             <properties>
                 <skipTests>false</skipTests>
                 <maven.test.failure.ignore>false</maven.test.failure.ignore>
+                <surfire.skipStableModuleTests>false</surfire.skipStableModuleTests>
             </properties>
             <build>
                 <plugins>
@@ -190,6 +191,9 @@
             <id>deploy</id>
             <properties>
                 <deploy-active>true</deploy-active>
+                <skipTests>false</skipTests>
+                <maven.test.failure.ignore>false</maven.test.failure.ignore>
+                <surfire.skipStableModuleTests>false</surfire.skipStableModuleTests>
             </properties>
             <modules>
                 <module>pulsar-dependencies</module>
@@ -669,6 +673,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+        <surefire.skipStableModuleTests>true</surefire.skipStableModuleTests>
         <surefire.excludedGroups>
             TimeConsumingTest,ExternalResourceDependent,IntegrationTest,E2ETest,HeavyTest,
             SkippableLowerLevelTest,TestInfraCheck,MustManuallyRun,OptionalTest
