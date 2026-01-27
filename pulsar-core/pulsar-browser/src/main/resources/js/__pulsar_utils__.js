@@ -1652,6 +1652,7 @@ __pulsar_utils__.computeMetadata = function() {
 
 /**
  * Generate meta data
+ * TODO: do not modify the DOM
  * */
 __pulsar_utils__.generateMetadata = function() {
     const config = this.getConfig();
