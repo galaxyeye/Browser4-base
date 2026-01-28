@@ -13,8 +13,8 @@
 package ai.platon.pulsar.sdk.integration
 
 import ai.platon.pulsar.boot.autoconfigure.PulsarContextConfiguration
+import ai.platon.pulsar.sdk.integration.server.MockServerConfiguration
 import ai.platon.pulsar.sdk.integration.server.PulsarRestServerApplication
-import ai.platon.pulsar.sdk.integration.server.TestServerConfiguration
 import ai.platon.pulsar.sdk.v0.detail.PulsarClient
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
@@ -40,7 +40,7 @@ import kotlin.test.assertTrue
     classes = [PulsarRestServerApplication::class],
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-@Import(PulsarContextConfiguration::class, TestServerConfiguration::class)
+@Import(PulsarContextConfiguration::class, MockServerConfiguration::class)
 @Tag("IntegrationTest")
 @Tag("RequiresServer")
 @TestPropertySource(locations = ["classpath:application-sdk-integration-test.properties"])

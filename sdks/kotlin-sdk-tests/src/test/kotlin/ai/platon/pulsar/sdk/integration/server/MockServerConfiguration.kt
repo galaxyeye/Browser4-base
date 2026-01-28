@@ -29,7 +29,7 @@ import java.net.ServerSocket
  * The mock server runs on port 18080 and provides test pages.
  */
 @TestConfiguration
-class TestServerConfiguration : InitializingBean, DisposableBean {
+class MockServerConfiguration : InitializingBean, DisposableBean {
 
     private val log = LoggerFactory.getLogger(javaClass)
     private var mockServerContext: ConfigurableApplicationContext? = null

@@ -707,6 +707,7 @@ function() {
                 fetchAPI?.enable(patterns, true)
             }
         } catch (e: Exception) {
+            logger.warn("Failed to enable CDT agents", e)
             throw ChromeIOException("Failed to enable CDT agents", e)
         }
     }

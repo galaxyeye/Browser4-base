@@ -28,10 +28,8 @@ import org.springframework.test.context.ContextConfiguration
 @ComponentScan(
     basePackages = [
         "ai.platon.pulsar.boot.autoconfigure",
-        "ai.platon.pulsar.rest.api",
-        "ai.platon.pulsar.rest.openapi",  // OpenAPI controllers including SessionController
-        "ai.platon.pulsar.test.server"  // Mock site server
+        "ai.platon.pulsar.rest"
     ]
 )
-@ImportResource("rest-beans/app-context.xml")
+@ImportResource("classpath:rest-beans/app-context.xml")
 class PulsarRestServerApplication
