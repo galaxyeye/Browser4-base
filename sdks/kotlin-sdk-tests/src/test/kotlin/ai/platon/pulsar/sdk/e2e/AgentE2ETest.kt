@@ -1,3 +1,16 @@
+package ai.platon.pulsar.sdk.e2e
+
+import ai.platon.pulsar.sdk.integration.KotlinSdkIntegrationTestBase
+import ai.platon.pulsar.sdk.integration.util.TestUrls
+import ai.platon.pulsar.sdk.v0.AgentEvent
+import ai.platon.pulsar.sdk.v0.AgentEventHandlers
+import ai.platon.pulsar.sdk.v0.AgenticSession
+import kotlinx.coroutines.delay
+import org.junit.jupiter.api.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor
  * license agreements. See the NOTICE file distributed with this work for additional
@@ -10,19 +23,6 @@
  * OF ANY KIND, either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-package ai.platon.pulsar.sdk.integration
-
-import ai.platon.pulsar.sdk.integration.util.TestUrls
-import ai.platon.pulsar.sdk.v0.AgentEvent
-import ai.platon.pulsar.sdk.v0.AgentEventHandlers
-import ai.platon.pulsar.sdk.v0.AgenticSession
-import kotlinx.coroutines.delay
-import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicInteger
-
 /**
  * End-to-end test for Browser4 Agent using the Kotlin SDK.
  *
@@ -207,7 +207,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
         logEventSummary()
 
         // Verify basic operation worked
-        assertTrue(result.message.isNotBlank(), "Result message should not be blank")
+        Assertions.assertTrue(result.message.isNotBlank(), "Result message should not be blank")
     }
 
     /**
@@ -280,7 +280,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
 
         // Verify we can get registered event types
         val registeredTypes = handlers.registeredEventTypes()
-        assertTrue(registeredTypes.isNotEmpty(), "Should have registered event types from setup")
+        Assertions.assertTrue(registeredTypes.isNotEmpty(), "Should have registered event types from setup")
 
         println("Registered event types: $registeredTypes")
     }
@@ -323,7 +323,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
 
         // Manual element check
         val bodyExists = session.driver.exists("body")
-        assertTrue(bodyExists, "Body element should exist")
+        Assertions.assertTrue(bodyExists, "Body element should exist")
 
         // AI observation with events
         val observation = session.observeWithEvents("analyze the page structure")
@@ -356,12 +356,12 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
             metadata = mapOf("step" to 1, "instruction" to "test")
         )
 
-        assertEquals("onWillObserve", event.eventType)
-        assertEquals("agent", event.eventPhase)
-        assertEquals("test-agent-123", event.agentId)
-        assertEquals("Starting observation", event.message)
-        assertEquals(1, event.metadata["step"])
-        assertEquals("test", event.metadata["instruction"])
+        Assertions.assertEquals("onWillObserve", event.eventType)
+        Assertions.assertEquals("agent", event.eventPhase)
+        Assertions.assertEquals("test-agent-123", event.agentId)
+        Assertions.assertEquals("Starting observation", event.message)
+        Assertions.assertEquals(1, event.metadata["step"])
+        Assertions.assertEquals("test", event.metadata["instruction"])
     }
 
     /**
@@ -371,20 +371,20 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
     @DisplayName("test event type constants")
     fun testEventTypeConstants() {
         // Agent lifecycle events
-        assertEquals("onWillRun", AgentEventHandlers.EventTypes.ON_WILL_RUN)
-        assertEquals("onDidRun", AgentEventHandlers.EventTypes.ON_DID_RUN)
-        assertEquals("onWillObserve", AgentEventHandlers.EventTypes.ON_WILL_OBSERVE)
-        assertEquals("onDidObserve", AgentEventHandlers.EventTypes.ON_DID_OBSERVE)
-        assertEquals("onWillAct", AgentEventHandlers.EventTypes.ON_WILL_ACT)
-        assertEquals("onDidAct", AgentEventHandlers.EventTypes.ON_DID_ACT)
+        Assertions.assertEquals("onWillRun", AgentEventHandlers.EventTypes.ON_WILL_RUN)
+        Assertions.assertEquals("onDidRun", AgentEventHandlers.EventTypes.ON_DID_RUN)
+        Assertions.assertEquals("onWillObserve", AgentEventHandlers.EventTypes.ON_WILL_OBSERVE)
+        Assertions.assertEquals("onDidObserve", AgentEventHandlers.EventTypes.ON_DID_OBSERVE)
+        Assertions.assertEquals("onWillAct", AgentEventHandlers.EventTypes.ON_WILL_ACT)
+        Assertions.assertEquals("onDidAct", AgentEventHandlers.EventTypes.ON_DID_ACT)
 
         // Inference events
-        assertEquals("onWillInfer", AgentEventHandlers.EventTypes.ON_WILL_INFER)
-        assertEquals("onDidInfer", AgentEventHandlers.EventTypes.ON_DID_INFER)
+        Assertions.assertEquals("onWillInfer", AgentEventHandlers.EventTypes.ON_WILL_INFER)
+        Assertions.assertEquals("onDidInfer", AgentEventHandlers.EventTypes.ON_DID_INFER)
 
         // Tool events
-        assertEquals("onWillExecuteTool", AgentEventHandlers.EventTypes.ON_WILL_EXECUTE_TOOL)
-        assertEquals("onDidExecuteTool", AgentEventHandlers.EventTypes.ON_DID_EXECUTE_TOOL)
+        Assertions.assertEquals("onWillExecuteTool", AgentEventHandlers.EventTypes.ON_WILL_EXECUTE_TOOL)
+        Assertions.assertEquals("onDidExecuteTool", AgentEventHandlers.EventTypes.ON_DID_EXECUTE_TOOL)
     }
 
     /**
