@@ -6,7 +6,7 @@ import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.common.sleepSeconds
 import ai.platon.pulsar.ql.h2.udfs.LLMFunctions
-import org.assertj.core.api.Assumptions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertNotNull
@@ -102,15 +102,15 @@ open class ScrapeAPITests : RestAPITestBase() {
                 printlnPro(prettyPulsarObjectMapper().writeValueAsString(response))
 
                 // If the page content bytes is less than 20KB, it means the page is not loaded
-                Assumptions.assumeThat(response.pageContentBytes).isGreaterThan(1_000) // 2KB
-                Assumptions.assumeThat(response.pageStatusCode).isEqualTo(200)
+                assertThat(response.pageContentBytes).isGreaterThan(1_000) // 2KB
+                assertThat(response.pageStatusCode).isEqualTo(200)
 
                 records = response.resultSet
                 assertNotNull(records)
 
                 printlnPro("records: $records")
 
-                Assumptions.assumeThat(records).isNotEmpty
+                assertThat(records).isNotEmpty
             }
         }
 
@@ -128,6 +128,6 @@ open class ScrapeAPITests : RestAPITestBase() {
         printlnPro("Final scrape task status: ")
         printlnPro(pulsarObjectMapper().writeValueAsString(response))
 
-        Assumptions.assumeThat(tick).isLessThanOrEqualTo(timeout)
+        assertThat(tick).isLessThanOrEqualTo(timeout)
     }
 }

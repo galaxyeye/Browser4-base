@@ -3,14 +3,12 @@ package ai.platon.pulsar.rest.api.controller
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertNotNull
 
-@Disabled("TimeConsumingTest")
 @Tag("TimeConsumingTest")
 class CommandControllerSSETest : RestAPITestBase() {
 
