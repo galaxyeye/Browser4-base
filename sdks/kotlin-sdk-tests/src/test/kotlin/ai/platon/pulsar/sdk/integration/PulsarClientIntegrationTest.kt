@@ -13,6 +13,7 @@
 package ai.platon.pulsar.sdk.integration
 
 import ai.platon.pulsar.sdk.v0.detail.PulsarClient
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -25,7 +26,8 @@ import kotlin.test.*
 class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
-    suspend fun `should create and delete session`() {
+    @DisplayName("should create and delete session")
+    suspend fun testShouldCreateAndDeleteSession() {
         // Create session
         val sessionId = client.createSession()
         assertNotNull(sessionId, "Session ID should not be null")
@@ -44,7 +46,8 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should create session with capabilities`() {
+    @DisplayName("should create session with capabilities")
+    suspend fun testShouldCreateSessionWithCapabilities() {
         val capabilities = mapOf(
             "browserName" to "chrome",
             "pageLoadStrategy" to "normal"
@@ -59,7 +62,8 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should make GET request`() {
+    @DisplayName("should make GET request")
+    suspend fun testShouldMakeGETRequest() {
         val sessionId = createSession()
 
         // GET current URL (should return empty or default value)
@@ -68,7 +72,8 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should make POST request`() {
+    @DisplayName("should make POST request")
+    suspend fun testShouldMakePOSTRequest() {
         val sessionId = createSession()
 
         // POST navigate to URL
@@ -83,7 +88,8 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should handle errors gracefully`() {
+    @DisplayName("should handle errors gracefully")
+    suspend fun testShouldHandleErrorsGracefully() {
         // Don't create session, try to access directly
         assertFailsWith<IllegalStateException> {
             client.post("/session/{sessionId}/url", mapOf("url" to "https://example.com"))
@@ -91,7 +97,8 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should handle session not found`() {
+    @DisplayName("should handle session not found")
+    suspend fun testShouldHandleSessionNotFound() {
         // Try to delete non-existent session
         client.sessionId = "non-existent-session-id"
 
@@ -102,7 +109,8 @@ class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should support multiple sessions`() {
+    @DisplayName("should support multiple sessions")
+    suspend fun testShouldSupportMultipleSessions() {
         // Create first session
         val sessionId1 = client.createSession()
         assertNotNull(sessionId1)

@@ -19,6 +19,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import kotlin.test.*
@@ -51,8 +52,9 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Null and Empty Input Tests ==========
 
     @Test
+    @DisplayName("should handle empty selector gracefully")
     @Tag("Fast")
-    suspend fun `should handle empty selector gracefully`() {
+    suspend fun testShouldHandleEmptySelectorGracefully() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         // Empty selector should not crash
@@ -62,22 +64,25 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @DisplayName("should handle blank URL in normalize")
     @Tag("Fast")
-    suspend fun `should handle blank URL in normalize`() {
+    suspend fun testShouldHandleBlankURLInNormalize() {
         val result = session.normalizeOrNull("   ", "-expire 1d")
         assertNull(result, "Blank URL should return null")
     }
 
     @Test
+    @DisplayName("should handle null URL in normalizeOrNull")
     @Tag("Fast")
-    suspend fun `should handle null URL in normalizeOrNull`() {
+    suspend fun testShouldHandleNullURLInNormalizeOrNull() {
         val result = session.normalizeOrNull(null, "-expire 1d")
         assertNull(result, "Null URL should return null")
     }
 
     @Test
+    @DisplayName("should handle empty string URL")
     @Tag("Fast")
-    suspend fun `should handle empty string URL`() {
+    suspend fun testShouldHandleEmptyStringURL() {
         val result = session.normalizeOrNull("", "-expire 1d")
         assertNull(result, "Empty URL should return null")
     }
@@ -85,7 +90,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Invalid Selector Tests ==========
 
     @Test
-    suspend fun `should handle invalid CSS selector`() {
+    @DisplayName("should handle invalid CSS selector")
+    suspend fun testShouldHandleInvalidCSSSelector() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         // Invalid CSS selector
@@ -99,7 +105,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should handle non-existent selector`() {
+    @DisplayName("should handle non-existent selector")
+    suspend fun testShouldHandleNonExistentSelector() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         val result = driver.selectFirstTextOrNull("#thisElementDoesNotExist")
@@ -107,7 +114,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should return empty list for non-existent elements in selectTextAll`() {
+    @DisplayName("should return empty list for non-existent elements in selectTextAll")
+    suspend fun testShouldReturnEmptyListForNonExistentElementsInSelectTextAll() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         val results = driver.selectTextAll("#nonExistentElements")
@@ -117,12 +125,13 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Invalid URL Tests ==========
 
     @Test
+    @DisplayName("should handle malformed URL")
     @Tag("Fast")
-    suspend fun `should handle malformed URL`() {
+    suspend fun testShouldHandleMalformedURL() {
         try {
             val page = session.open("not-a-valid-url", "-parse")
             // Check if it's a nil page
-            assertTrue(page.isNil || page.url.contains("not-a-valid-url"), 
+            assertTrue(page.isNil || page.url.contains("not-a-valid-url"),
                 "Malformed URL should result in nil page or preserved URL")
         } catch (e: Exception) {
             // Expected behavior - URL validation failure
@@ -131,8 +140,9 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @DisplayName("should handle URL with invalid protocol")
     @Tag("Fast")
-    suspend fun `should handle URL with invalid protocol`() {
+    suspend fun testShouldHandleURLWithInvalidProtocol() {
         try {
             session.normalize("ftp://invalid-protocol.com")
             // If it doesn't throw, check the result
@@ -143,11 +153,12 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @DisplayName("should handle URL with special characters")
     @Tag("Fast")
-    suspend fun `should handle URL with special characters`() {
+    suspend fun testShouldHandleURLWithSpecialCharacters() {
         val url = "http://localhost:18080/test?param=<script>alert('xss')</script>"
         val normalized = session.normalize(url)
-        
+
         assertNotNull(normalized, "URL with special characters should be normalized")
         // URL should be encoded or handled safely
         assertFalse(normalized.isNil, "Should not result in nil page")
@@ -156,9 +167,9 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Concurrent Operations Tests ==========
 
     @Test
+    @DisplayName("should handle concurrent page loads")
     @Tag("Slow")
-    suspend fun `should handle concurrent page loads`() = coroutineScope {
-        val urls = listOf(
+    suspend fun testShouldHandleConcurrentPageLoads() = coroutineScope {        val urls = listOf(
             TestUrls.SIMPLE_PAGE,
             TestUrls.PRODUCT_LIST,
             TestUrls.PRODUCT_DETAIL
@@ -180,9 +191,9 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @DisplayName("should handle concurrent driver navigations")
     @Tag("Slow")
-    suspend fun `should handle concurrent driver navigations`() = coroutineScope {
-        // Note: This might fail if driver doesn't support concurrent access
+    suspend fun testShouldHandleConcurrentDriverNavigations() = coroutineScope {        // Note: This might fail if driver doesn't support concurrent access
         // But it should fail gracefully, not crash
         try {
             val navigations = (1..3).map {
@@ -191,7 +202,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
                 }
             }
             navigations.awaitAll()
-            
+
             // If we get here, concurrent operations are supported
             assertTrue(true, "Concurrent navigations handled")
         } catch (e: Exception) {
@@ -203,26 +214,29 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Empty and Nil Results Tests ==========
 
     @Test
-    suspend fun `should handle empty text content`() {
+    @DisplayName("should handle empty text content")
+    suspend fun testShouldHandleEmptyTextContent() {
         driver.navigateTo(TestUrls.ERROR_PAGE)
 
         val emptyText = driver.selectFirstTextOrNull("#emptyDiv")
         // Should return null or empty string for empty element
-        assertTrue(emptyText == null || emptyText.isEmpty(), 
+        assertTrue(emptyText == null || emptyText.isEmpty(),
             "Empty element should return null or empty text")
     }
 
     @Test
-    suspend fun `should detect nil pages`() {
+    @DisplayName("should detect nil pages")
+    suspend fun testShouldDetectNilPages() {
         // Try to load an invalid URL that should result in a nil page
         val page = session.normalizeOrNull("invalid://bad-url")
-        
+
         // Should return null for completely invalid URL
         assertNull(page, "Invalid URL should result in null")
     }
 
     @Test
-    suspend fun `should handle nil page in parse`() {
+    @DisplayName("should handle nil page in parse")
+    suspend fun testShouldHandleNilPageInParse() {
         // Create a nil page scenario
         val page = session.normalizeOrNull("")
         assertNull(page, "Empty URL should result in null normalization")
@@ -231,21 +245,23 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Timeout and Delay Tests ==========
 
     @Test
-    suspend fun `should handle delayed content loading`() {
+    @DisplayName("should handle delayed content loading")
+    suspend fun testShouldHandleDelayedContentLoading() {
         driver.navigateTo(TestUrls.ERROR_PAGE)
 
         // Try to get content that appears after delay
         val delayedContent = driver.selectFirstTextOrNull("#delayedDiv")
-        
+
         // Without waiting, might be empty
         // This tests that the system handles not-yet-loaded content
         assertNotNull(delayedContent, "Should return result for delayed div (might be empty initially)")
     }
 
     @Test
-    suspend fun `should handle very long URLs`() {
+    @DisplayName("should handle very long URLs")
+    suspend fun testShouldHandleVeryLongURLs() {
         val longUrl = "http://localhost:18080/test?" + "param=value&".repeat(100)
-        
+
         try {
             val normalized = session.normalize(longUrl)
             assertNotNull(normalized, "Very long URL should be normalized")
@@ -258,8 +274,9 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Multiple Session Operations ==========
 
     @Test
+    @DisplayName("should handle rapid session state checks")
     @Tag("Fast")
-    suspend fun `should handle rapid session state checks`() {
+    suspend fun testShouldHandleRapidSessionStateChecks() {
         // Rapidly check session state multiple times
         repeat(5) {
             val isActive = session.isActive
@@ -268,10 +285,11 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @DisplayName("should handle rapid driver property access")
     @Tag("Fast")
-    suspend fun `should handle rapid driver property access`() {
+    suspend fun testShouldHandleRapidDriverPropertyAccess() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         // Rapidly access driver properties
         repeat(5) {
             val url = driver.currentUrl()
@@ -282,7 +300,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Hidden and Special Elements ==========
 
     @Test
-    suspend fun `should handle hidden elements`() {
+    @DisplayName("should handle hidden elements")
+    suspend fun testShouldHandleHiddenElements() {
         driver.navigateTo(TestUrls.ERROR_PAGE)
 
         val hiddenText = driver.selectFirstTextOrNull("#hiddenDiv")
@@ -291,7 +310,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should handle script tags and special elements`() {
+    @DisplayName("should handle script tags and special elements")
+    suspend fun testShouldHandleScriptTagsAndSpecialElements() {
         driver.navigateTo(TestUrls.ERROR_PAGE)
 
         // Query for script tag
@@ -303,7 +323,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     // ========== Error Recovery Tests ==========
 
     @Test
-    suspend fun `should recover from navigation to invalid URL`() {
+    @DisplayName("should recover from navigation to invalid URL")
+    suspend fun testShouldRecoverFromNavigationToInvalidURL() {
         try {
             driver.navigateTo("http://invalid-domain-that-does-not-exist-12345.com")
         } catch (e: Exception) {
@@ -317,17 +338,18 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @DisplayName("should maintain session after failed operations")
     @Tag("Fast")
-    suspend fun `should maintain session after failed operations`() {
+    suspend fun testShouldMaintainSessionAfterFailedOperations() {
         val initialActive = session.isActive
-        
+
         // Attempt failed operation
         try {
             session.normalizeOrNull(null)
         } catch (e: Exception) {
             // Ignore
         }
-        
+
         // Session should still be active
         val stillActive = session.isActive
         assertEquals(initialActive, stillActive, "Session state should be maintained after failed operation")

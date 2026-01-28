@@ -12,9 +12,10 @@
  */
 package ai.platon.pulsar.sdk.integration
 
-import ai.platon.pulsar.sdk.v0.PulsarSession
 import ai.platon.pulsar.sdk.integration.util.TestUrls
+import ai.platon.pulsar.sdk.v0.PulsarSession
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.net.URI
@@ -22,7 +23,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
-import kotlin.test.*
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Integration tests for event mechanism via SSE (Server-Sent Events).
@@ -170,7 +173,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should receive SSE events from simple load`() {
+    @DisplayName("should receive SSE events from simple load")
+    suspend fun testShouldReceiveSSEEventsFromSimpleLoad() {
         val url = TestUrls.SIMPLE_PAGE
         val commandId = submitAsyncCommand(url, "-parse")
 
@@ -192,7 +196,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should receive LoadEventHandlers events`() {
+    @DisplayName("should receive LoadEventHandlers events")
+    suspend fun testShouldReceiveLoadEventHandlersEvents() {
         val url = TestUrls.SIMPLE_PAGE
         val commandId = submitAsyncCommand(url, "-parse")
 
@@ -230,7 +235,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should receive events in correct order`() {
+    @DisplayName("should receive events in correct order")
+    suspend fun testShouldReceiveEventsInCorrectOrder() {
         val url = TestUrls.SIMPLE_PAGE
         val commandId = submitAsyncCommand(url, "-parse")
 
@@ -262,7 +268,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should receive status updates via SSE`() {
+    @DisplayName("should receive status updates via SSE")
+    suspend fun testShouldReceiveStatusUpdatesViaSSE() {
         val url = TestUrls.SIMPLE_PAGE
         val commandId = submitAsyncCommand(url)
 
@@ -279,7 +286,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should handle multiple concurrent SSE streams`() {
+    @DisplayName("should handle multiple concurrent SSE streams")
+    suspend fun testShouldHandleMultipleConcurrentSSEStreams() {
         val url1 = TestUrls.SIMPLE_PAGE
         val url2 = TestUrls.PRODUCT_LIST
 
@@ -308,7 +316,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should include event metadata in SSE data`() {
+    @DisplayName("should include event metadata in SSE data")
+    suspend fun testShouldIncludeEventMetadataInSSEData() {
         val url = TestUrls.PRODUCT_DETAIL
         val commandId = submitAsyncCommand(url, "-parse")
 
@@ -328,7 +337,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should receive event when page load fails`() {
+    @DisplayName("should receive event when page load fails")
+    suspend fun testShouldReceiveEventWhenPageLoadFails() {
         // Use a non-existent URL
         val url = TestUrls.MOCK_SERVER_BASE + "/nonexistent-page-404"
         val commandId = submitAsyncCommand(url)
@@ -354,7 +364,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should complete SSE stream when command finishes`() {
+    @DisplayName("should complete SSE stream when command finishes")
+    suspend fun testShouldCompleteSSEStreamWhenCommandFinishes() {
         val url = TestUrls.SIMPLE_PAGE
         val commandId = submitAsyncCommand(url)
 
@@ -374,7 +385,8 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should trigger comprehensive LoadEventHandlers and BrowseEventHandlers events`() {
+    @DisplayName("should trigger comprehensive LoadEventHandlers and BrowseEventHandlers events")
+    suspend fun testShouldTriggerComprehensiveLoadEventHandlersAndBrowseEventHandlersEvents() {
         val url = TestUrls.SIMPLE_PAGE
         // Submit command with parse to ensure HTML processing events
         val commandId = submitAsyncCommand(url, "-parse")

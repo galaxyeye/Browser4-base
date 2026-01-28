@@ -15,6 +15,7 @@ package ai.platon.pulsar.sdk.integration
 import ai.platon.pulsar.sdk.integration.util.TestUrls
 import ai.platon.pulsar.sdk.v0.WebDriver
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -40,7 +41,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should navigate to URL`() {
+    @DisplayName("should navigate to URL")
+    suspend fun testShouldNavigateToURL() {
         val url = TestUrls.SIMPLE_PAGE
         driver.navigateTo(url)
 
@@ -50,7 +52,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should get page title`() {
+    @DisplayName("should get page title")
+    suspend fun testShouldGETPageTitle() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         val title = driver.title()
@@ -59,7 +62,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should check element exists`() {
+    @DisplayName("should check element exists")
+    suspend fun testShouldCheckElementExists() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         // Check common elements
@@ -68,7 +72,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should extract text content`() {
+    @DisplayName("should extract text content")
+    suspend fun testShouldExtractTextContent() {
         driver.navigateTo(TestUrls.PRODUCT_DETAIL)
 
         val title = driver.selectFirstTextOrNull("#productTitle")
@@ -77,7 +82,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should scroll page`() {
+    @DisplayName("should scroll page")
+    suspend fun testShouldScrollPage() {
         driver.navigateTo(TestUrls.PRODUCT_LIST)
 
         // Scroll to bottom
@@ -88,7 +94,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should capture screenshot`() {
+    @DisplayName("should capture screenshot")
+    suspend fun testShouldCaptureScreenshot() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         val screenshot = driver.captureScreenshot()
@@ -97,7 +104,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should execute script`() {
+    @DisplayName("should execute script")
+    suspend fun testShouldExecuteScript() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         val result = driver.executeScript("return document.title")
@@ -105,7 +113,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should wait for selector`() {
+    @DisplayName("should wait for selector")
+    suspend fun testShouldWaitForSelector() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         // Wait for body element
@@ -114,7 +123,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should extract multiple fields`() {
+    @DisplayName("should extract multiple fields")
+    suspend fun testShouldExtractMultipleFields() {
         driver.navigateTo(TestUrls.PRODUCT_DETAIL)
 
         val fields = driver.extract(mapOf(
@@ -127,7 +137,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should get page source`() {
+    @DisplayName("should get page source")
+    suspend fun testShouldGETPageSource() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
         val source = driver.pageSource()
@@ -136,7 +147,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should navigate back and forward`() {
+    @DisplayName("should navigate back and forward")
+    suspend fun testShouldNavigateBackAndForward() {
         // Navigate to first page
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
         val url1 = driver.currentUrl()
@@ -155,7 +167,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should reload page`() {
+    @DisplayName("should reload page")
+    suspend fun testShouldReloadPage() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
         val url1 = driver.currentUrl()
 
@@ -168,7 +181,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     // ========== Form Interaction Tests ==========
 
     @Test
-    suspend fun `should fill input field`() {
+    @DisplayName("should fill input field")
+    suspend fun testShouldFillInputField() {
         val testText = "awesome AI enabled Browser4!"
         driver.navigateTo(TestUrls.SIMPLE_DOM)
 
@@ -181,7 +195,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should type into input field`() {
+    @DisplayName("should type into input field")
+    suspend fun testShouldTypeIntoInputField() {
         val testText = "Testing type functionality"
         driver.navigateTo(TestUrls.SIMPLE_DOM)
 
@@ -194,7 +209,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should fill textarea`() {
+    @DisplayName("should fill textarea")
+    suspend fun testShouldFillTextarea() {
         val testText = "Multi-line\ntext content\nfor testing"
         driver.navigateTo(TestUrls.SIMPLE_DOM)
 
@@ -209,7 +225,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     // ========== Scrolling Tests ==========
 
     @Test
-    suspend fun `should scroll by pixels`() {
+    @DisplayName("should scroll by pixels")
+    suspend fun testShouldScrollByPixels() {
         driver.navigateTo(TestUrls.MULTI_SCREENS)
 
         // Scroll down by 200 pixels
@@ -225,7 +242,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should scroll to top`() {
+    @DisplayName("should scroll to top")
+    suspend fun testShouldScrollToTop() {
         driver.navigateTo(TestUrls.MULTI_SCREENS)
 
         // First scroll down
@@ -244,7 +262,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should scroll to bottom`() {
+    @DisplayName("should scroll to bottom")
+    suspend fun testShouldScrollToBottom() {
         driver.navigateTo(TestUrls.MULTI_SCREENS)
 
         // Scroll to bottom
@@ -265,7 +284,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should scroll to middle`() {
+    @DisplayName("should scroll to middle")
+    suspend fun testShouldScrollToMiddle() {
         driver.navigateTo(TestUrls.MULTI_SCREENS)
 
         // Scroll to middle (50%)
@@ -290,7 +310,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     // ========== Hover Tests ==========
 
     @Test
-    suspend fun `should hover over element`() {
+    @DisplayName("should hover over element")
+    suspend fun testShouldHoverOverElement() {
         driver.navigateTo(TestUrls.INTERACTIVE_2)
         driver.delay(500)
 
@@ -319,7 +340,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     // ========== Property Tests ==========
 
     @Test
-    suspend fun `should check element visibility`() {
+    @DisplayName("should check element visibility")
+    suspend fun testShouldCheckElementVisibility() {
         driver.navigateTo(TestUrls.SIMPLE_DOM)
 
         // Check visible element
@@ -327,7 +349,8 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should extract text content from simple DOM`() {
+    @DisplayName("should extract text content from simple DOM")
+    suspend fun testShouldExtractTextContentFromSimpleDOM() {
         driver.navigateTo(TestUrls.SIMPLE_DOM)
 
         // Get text content

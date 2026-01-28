@@ -12,12 +12,16 @@
  */
 package ai.platon.pulsar.sdk.integration
 
-import ai.platon.pulsar.sdk.v0.PulsarSession
 import ai.platon.pulsar.sdk.integration.util.TestUrls
+import ai.platon.pulsar.sdk.v0.PulsarSession
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * PulsarSession integration tests.
@@ -37,14 +41,16 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    fun `should verify session is active`() {
+    @DisplayName("should verify session is active")
+    fun testShouldVerifySessionIsActive() {
         assertTrue(session.isActive, "Session should be active")
         assertNotNull(session.uuid, "Session UUID should not be null")
         assertTrue(session.uuid.isNotBlank(), "Session UUID should not be blank")
     }
 
     @Test
-    suspend fun `should normalize URL`() {
+    @DisplayName("should normalize URL")
+    suspend fun testShouldNormalizeURL() {
         val url = "https://example.com"
         val normalized = session.normalize(url)
 
@@ -54,7 +60,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should normalize URL with arguments`() {
+    @DisplayName("should normalize URL with arguments")
+    suspend fun testShouldNormalizeURLWithArguments() {
         val url = "https://example.com"
         val args = "-expire 1d"
         val normalized = session.normalize(url, args)
@@ -64,7 +71,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should load page`() {
+    @DisplayName("should load page")
+    suspend fun testShouldLoadPage() {
         val url = TestUrls.SIMPLE_PAGE
         val page = session.load(url)
 
@@ -74,7 +82,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should load page with arguments`() {
+    @DisplayName("should load page with arguments")
+    suspend fun testShouldLoadPageWithArguments() {
         val url = TestUrls.SIMPLE_PAGE
         val args = "-expire 1d"
         val page = session.load(url, args)
@@ -84,7 +93,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should open page immediately`() {
+    @DisplayName("should open page immediately")
+    suspend fun testShouldOpenPageImmediately() {
         val url = TestUrls.SIMPLE_PAGE
         val page = session.open(url)
 
@@ -94,7 +104,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should parse page`() {
+    @DisplayName("should parse page")
+    suspend fun testShouldParsePage() {
         val url = TestUrls.SIMPLE_PAGE
         val page = session.load(url)
 
@@ -103,7 +114,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should extract fields from page with selectors`() {
+    @DisplayName("should extract fields from page with selectors")
+    suspend fun testShouldExtractFieldsFromPageWithSelectors() {
         val url = TestUrls.PRODUCT_DETAIL
         val page = session.load(url)
         val document = session.parse(page)
@@ -123,7 +135,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should scrape page with selectors`() {
+    @DisplayName("should scrape page with selectors")
+    suspend fun testShouldScrapePageWithSelectors() {
         val url = TestUrls.PRODUCT_DETAIL
         val selectors = mapOf(
             "title" to "#productTitle",
@@ -138,7 +151,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should scrape page with arguments and selectors`() {
+    @DisplayName("should scrape page with arguments and selectors")
+    suspend fun testShouldScrapePageWithArgumentsAndSelectors() {
         val url = TestUrls.PRODUCT_DETAIL
         val args = "-expire 1d"
         val selectors = mapOf(
@@ -152,7 +166,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should load multiple pages`() {
+    @DisplayName("should load multiple pages")
+    suspend fun testShouldLoadMultiplePages() {
         val urls = listOf(
             TestUrls.SIMPLE_PAGE,
             TestUrls.PRODUCT_DETAIL
@@ -169,7 +184,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should load multiple pages with arguments`() {
+    @DisplayName("should load multiple pages with arguments")
+    suspend fun testShouldLoadMultiplePagesWithArguments() {
         val urls = listOf(
             TestUrls.SIMPLE_PAGE,
             TestUrls.PRODUCT_LIST
@@ -183,7 +199,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should submit URL for async processing`() {
+    @DisplayName("should submit URL for async processing")
+    suspend fun testShouldSubmitURLForAsyncProcessing() {
         val url = TestUrls.SIMPLE_PAGE
 
         val result = session.submit(url)
@@ -193,7 +210,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should submit multiple URLs`() {
+    @DisplayName("should submit multiple URLs")
+    suspend fun testShouldSubmitMultipleURLs() {
         val urls = listOf(
             TestUrls.SIMPLE_PAGE,
             TestUrls.PRODUCT_LIST
@@ -205,7 +223,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should access bound driver`() {
+    @DisplayName("should access bound driver")
+    suspend fun testShouldAccessBoundDriver() {
         // Access driver through session
         val driver = session.driver
 
@@ -214,7 +233,8 @@ class PulsarSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
-    suspend fun `should handle page with nil status`() {
+    @DisplayName("should handle page with nil status")
+    suspend fun testShouldHandlePageWithNilStatus() {
         // Try to load a page that might not exist
         val url = TestUrls.MOCK_SERVER_BASE + "/nonexistent"
         val page = session.load(url)
