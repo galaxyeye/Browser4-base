@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*
 class NavigationController(
     private val sessionManager: SessionManager,
     @param:Value($$"${pulsar.stub.mode:false}")
-    private val testMode: Boolean = false
+    private val stubMode: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(NavigationController::class.java)
 
@@ -43,7 +43,7 @@ class NavigationController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
-        if (testMode) {
+        if (stubMode) {
             sessionManager.setSessionUrl(sessionId, request.url)
             return ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         }

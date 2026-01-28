@@ -27,11 +27,11 @@ class AgentController(
     private val sessionManager: SessionManager,
     private val pulsarContext: PulsarContext,
     @param:Value($$"${pulsar.stub.mode:false}")
-    private val testMode: Boolean = false
+    private val stubMode: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(AgentController::class.java)
 
-    private fun shouldStub(): Boolean = testMode || !ChatModelFactory.isModelConfigured(pulsarContext.configuration)
+    private fun shouldStub(): Boolean = stubMode || !ChatModelFactory.isModelConfigured(pulsarContext.configuration)
 
     /**
      * Runs an autonomous agent task.

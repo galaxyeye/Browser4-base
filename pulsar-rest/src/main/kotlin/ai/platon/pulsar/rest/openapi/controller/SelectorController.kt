@@ -29,11 +29,11 @@ class SelectorController(
     private val pulsarContext: PulsarContext,
     private val store: InMemoryStore,
     @param:Value($$"${pulsar.stub.mode:false}")
-    private val testMode: Boolean = false
+    private val stubMode: Boolean = false
 ) {
     private val logger = LoggerFactory.getLogger(SelectorController::class.java)
 
-    private fun shouldStub(): Boolean = testMode || !ChatModelFactory.isModelConfigured(pulsarContext.configuration)
+    private fun shouldStub(): Boolean = stubMode || !ChatModelFactory.isModelConfigured(pulsarContext.configuration)
 
     /**
      * Checks if an element matching the selector exists.
