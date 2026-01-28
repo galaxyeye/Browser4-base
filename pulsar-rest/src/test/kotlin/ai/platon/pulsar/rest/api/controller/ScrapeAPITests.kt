@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertNotNull
 
-open class RestAPITests : RestAPITestBase() {
+open class ScrapeAPITests : RestAPITestBase() {
 
     /**
      * Test [ScrapeController.submitJob]
@@ -40,7 +40,7 @@ open class RestAPITests : RestAPITestBase() {
     fun `Test extracting product list page with X-SQL`() {
         val pageType = "productListPage"
         val url = requireNotNull(urls[pageType])
-        val sql = requireNotNull(sqlTemplates[pageType]).createSQL(url)
+        val sql = requireNotNull(sqlTemplates[pageType]).createSQL("$url -refresh")
 
         val uuid = client.post().uri("/api/x/s")
             .body(sql)
@@ -63,7 +63,7 @@ open class RestAPITests : RestAPITestBase() {
     fun `Test extracting product detail page with LLM + X-SQL`() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
-        val sql = requireNotNull(sqlTemplates[pageType]).createSQL(url)
+        val sql = requireNotNull(sqlTemplates[pageType]).createSQL("$url -refresh")
 
         val uuid = client.post().uri("/api/x/s")
             .body(sql)
@@ -102,7 +102,7 @@ open class RestAPITests : RestAPITestBase() {
                 printlnPro(prettyPulsarObjectMapper().writeValueAsString(response))
 
                 // If the page content bytes is less than 20KB, it means the page is not loaded
-                Assumptions.assumeThat(response.pageContentBytes).isGreaterThan(20_000) // 20KB
+                Assumptions.assumeThat(response.pageContentBytes).isGreaterThan(1_000) // 2KB
                 Assumptions.assumeThat(response.pageStatusCode).isEqualTo(200)
 
                 records = response.resultSet

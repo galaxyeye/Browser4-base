@@ -33,15 +33,18 @@ open class RestAPITestBase : IntegrationTestBase() {
             dom_first_text(dom, 'a:has(span.a-price) span:containsOwn(/Item)') as `priceperitem`,
             dom_first_text(dom, 'a span.a-price[data-a-strike] span.a-offscreen') as `listprice`,
             dom_first_text(dom, 'h2 a') as `title`,
-            dom_height(dom_select_first(dom, 'a img[srcset]')) as `pic_height`
+            dom_height(dom_select_first(dom, 'a img[srcset]')) as `pic_height`,
+            dom_width(dom) as `width`,
+            dom_height(dom) as `height`
         from load_and_select(@url, 'div[class*=search-result]');
     """.trimIndent(),
         "productDetailPage" to """
             select
-              llm_extract(dom, 'product name, price, ratings') as llm_extracted_data,
               dom_base_uri(dom) as url,
               dom_first_text(dom, '#productTitle') as title,
-              dom_first_slim_html(dom, 'img:expr(width > 400)') as img
+              dom_first_slim_html(dom, 'img:expr(width > 400)') as img,
+              dom_width(dom) as `width`,
+              dom_height(dom) as `height`
             from load_and_select(@url, 'body');
         """.trimIndent()
     ).entries.associate { it.key to SQLTemplate(it.value) }

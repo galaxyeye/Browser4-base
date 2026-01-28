@@ -24,7 +24,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.TestPropertySource
-import java.time.Duration
 import kotlin.test.assertTrue
 
 /**
@@ -74,7 +73,7 @@ abstract class KotlinSdkIntegrationTestBase {
         // On cold starts the REST layer may accept connections while browser/CDP is still warming up.
         waitForServerReadiness()
 
-        client = PulsarClient(baseUrl = baseUrl, timeout = Duration.ofSeconds(60))
+        client = PulsarClient(baseUrl = baseUrl)
     }
 
     /**

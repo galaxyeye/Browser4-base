@@ -2,7 +2,6 @@ package ai.platon.browser4.driver.chrome
 
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.getLogger
-import kotlinx.coroutines.delay
 
 /**
  * Manages isolated worlds for Browser4 runtime injection.
@@ -39,7 +38,6 @@ class IsolatedWorldManager(
         const val RUNTIME_VERSION = "1.0.0"
 
         private const val DEFAULT_CREATE_WORLD_RETRIES = 3
-        private val DEFAULT_CREATE_WORLD_RETRY_DELAYS_MS = longArrayOf(50, 150, 400)
     }
 
     private val pageAPI get() = devTools.page
@@ -59,75 +57,50 @@ class IsolatedWorldManager(
      * @return The execution context ID of the created isolated world
      */
     suspend fun createIsolatedWorld(frameId: String? = null): Int {
-        logger.debug(
+        val resolvedFrameId: String? = frameId ?: runCatching { pageAPI.getFrameTree().frame.id }.getOrNull()
+
+        logger.info(
             "Creating isolated world '{}' for frame: {}",
             RUNTIME_WORLD_NAME,
-            frameId ?: "main"
+            resolvedFrameId ?: "main"
         )
 
         var lastError: Exception? = null
         repeat(DEFAULT_CREATE_WORLD_RETRIES) { attempt ->
-            val resolvedFrameId: String? = frameId ?: resolveMainFrameId()
-
             try {
-                // If we have a frame id, validate it; navigation can detach the old frame between attempts.
-                if (resolvedFrameId != null && !isFramePresent(resolvedFrameId)) {
-                    invalidateFrame(resolvedFrameId)
-                    throw IllegalStateException("Frame not present in frame tree (frameId=$resolvedFrameId)")
-                }
+                val executionContextId = pageAPI.createIsolatedWorld(
+                        frameId = resolvedFrameId ?: "main",
+                        worldName = RUNTIME_WORLD_NAME,
+                        grantUniveralAccess = true,
+                    )
 
-                val executionContextId = run {
-                    if (resolvedFrameId != null) {
-                        pageAPI.createIsolatedWorld(
-                            frameId = resolvedFrameId,
-                            worldName = RUNTIME_WORLD_NAME,
-                            grantUniveralAccess = true,
-                        )
-                    } else {
-                        val params = mutableMapOf<String, Any?>(
-                            "worldName" to RUNTIME_WORLD_NAME,
-                            "grantUniversalAccess" to true
-                        )
-
-                        val result = devTools.invoke<Map<String, Any>>(
-                            "Page.createIsolatedWorld",
-                            params,
-                            null
-                        )
-                        (result?.get("executionContextId") as? Number)?.toInt()
-                    }
-                }
-
-                if (executionContextId == null || executionContextId <= 0) {
+                if (executionContextId <= 0) {
                     throw IllegalStateException(
                         "Failed to create isolated world: invalid executionContextId '$executionContextId' (frameId=$resolvedFrameId, attempt=${attempt + 1})"
                     )
                 }
 
+                // Always store mapping for the resolved main frame.
+                // Use empty string as fallback key so callers without a frame id can still resolve it.
                 val key = resolvedFrameId?.ifBlank { null } ?: ""
                 isolatedWorldContexts[key] = executionContextId
+                // Also store a default fallback mapping in case frameId cannot be resolved later.
                 isolatedWorldContexts[""] = executionContextId
 
-                logger.debug("Created isolated world with execution context ID: {}", executionContextId)
+                logger.info("Created isolated world with execution context ID: {}", executionContextId)
                 return executionContextId
             } catch (e: Exception) {
                 lastError = e
-                val delayMs = DEFAULT_CREATE_WORLD_RETRY_DELAYS_MS.getOrElse(attempt) { 0 }
-                if (attempt < DEFAULT_CREATE_WORLD_RETRIES - 1) {
-                    logger.debug(
-                        "Failed to create isolated world (attempt {}/{}), retrying in {} ms: {}",
-                        attempt + 1,
-                        DEFAULT_CREATE_WORLD_RETRIES,
-                        delayMs,
-                        e.message
-                    )
-                    if (delayMs > 0) delay(delayMs)
+                if (attempt > 1) {
+                    logger.warn("Failed to create isolated world | frameId=$resolvedFrameId, attempt=${attempt + 1}", e)
+                } else {
+                    logger.warn("Failed to create isolated world | frameId=$resolvedFrameId, attempt=${attempt + 1}: {}", e.message)
                 }
             }
         }
 
         throw IllegalStateException(
-            "Failed to create isolated world after $DEFAULT_CREATE_WORLD_RETRIES attempts (frameId=${frameId ?: "<main>"})",
+            "Failed to create isolated world after $DEFAULT_CREATE_WORLD_RETRIES attempts (frameId=$resolvedFrameId)",
             lastError
         )
     }
@@ -173,7 +146,7 @@ class IsolatedWorldManager(
      * @param contextId The execution context ID of the isolated world
      */
     suspend fun injectRuntime(runtimeScript: String, contextId: Int) {
-        logger.debug(
+        logger.info(
             "Injecting Browser4 runtime (v{}) into isolated world context {}",
             RUNTIME_VERSION,
             contextId
@@ -209,7 +182,7 @@ class IsolatedWorldManager(
 
         evaluateInIsolatedWorld(versionedScript, contextId)
 
-        logger.debug("Browser4 runtime injection completed")
+        logger.info("Browser4 runtime injection completed")
     }
 
     /**
@@ -236,40 +209,11 @@ class IsolatedWorldManager(
     }
 
     /**
-     * Removes cached isolated-world context mapping for a frame.
-     *
-     * Call this when a frame gets detached or swapped so future operations will recreate the world.
-     */
-    fun invalidateFrame(frameId: String?) {
-        val key = frameId?.ifBlank { null } ?: return
-        isolatedWorldContexts.remove(key)
-    }
-
-    /**
      * Clears all isolated world contexts.
      * Called when navigating to a new page or closing the tab.
      */
     fun clearContexts() {
         isolatedWorldContexts.clear()
         logger.debug("Cleared all isolated world contexts")
-    }
-
-    /**
-     * Best-effort resolve main frame id.
-     */
-    private suspend fun resolveMainFrameId(): String? {
-        return runCatching { pageAPI.getFrameTree().frame.id }.getOrNull()
-    }
-
-    private fun containsFrame(frameTree: ai.platon.cdt.kt.protocol.types.page.FrameTree, frameId: String): Boolean {
-        if (frameTree.frame.id == frameId) return true
-        val children = frameTree.childFrames ?: return false
-        return children.any { containsFrame(it, frameId) }
-    }
-
-    private suspend fun isFramePresent(frameId: String): Boolean {
-        // Best-effort: if we can't fetch frame tree (transient during navigation), don't block world creation.
-        val root = runCatching { pageAPI.getFrameTree() }.getOrNull() ?: return true
-        return containsFrame(root, frameId)
     }
 }

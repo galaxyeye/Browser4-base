@@ -16,13 +16,13 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import kotlinx.coroutines.runBlocking
-import java.time.Duration
 
 /**
  * Thin HTTP client over the Browser4 OpenAPI.
@@ -63,12 +63,17 @@ import java.time.Duration
 class PulsarClient
 @JvmOverloads constructor(
     baseUrl: String? = null,
-    private val timeout: Duration = Duration.ofSeconds(30),
     var sessionId: String? = null,
     private val defaultHeaders: Map<String, String> = emptyMap(),
     private val useLocalDriver: Boolean = false,
     private val localDriverOptions: LocalDriverOptions = LocalDriverOptions()
 ) : AutoCloseable {
+    companion object {
+        private const val DEFAULT_CONNECT_TIMEOUT_MS: Long = 10_000
+        private const val DEFAULT_REQUEST_TIMEOUT_MS: Long = 120_000
+        private const val DEFAULT_SOCKET_TIMEOUT_MS: Long = 120_000
+        private const val DEFAULT_KEEP_ALIVE_TIME_MS: Long = 5_000
+    }
 
     private var localDriver: Browser4Driver? = null
     private val baseUrl: String
@@ -98,6 +103,7 @@ class PulsarClient
                     driver.baseUrl
                 }
             }
+
             else -> "http://localhost:8182"
         }
 
@@ -105,8 +111,17 @@ class PulsarClient
             install(ContentNegotiation) {
                 gson()
             }
+            install(HttpTimeout) {
+                connectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MS
+                requestTimeoutMillis = DEFAULT_REQUEST_TIMEOUT_MS
+                socketTimeoutMillis = DEFAULT_SOCKET_TIMEOUT_MS
+            }
             engine {
-                requestTimeout = timeout.toMillis()
+                endpoint {
+                    connectAttempts = 1
+                    connectTimeout = DEFAULT_CONNECT_TIMEOUT_MS
+                    keepAliveTime = DEFAULT_KEEP_ALIVE_TIME_MS
+                }
             }
         }
     }
@@ -115,11 +130,6 @@ class PulsarClient
      * Exposes the configured base URL for building absolute request URIs.
      */
     internal val resolvedBaseUrl: String get() = baseUrl
-
-    /**
-     * Exposes the configured request timeout.
-     */
-    internal val resolvedTimeout: Duration get() = timeout
 
     /**
      * Exposes the underlying HttpClient for streaming operations (e.g., SSE).
@@ -161,7 +171,8 @@ class PulsarClient
 
     private fun requireSession(sessionId: String? = null): String {
         val sid = sessionId ?: this.sessionId
-        return sid ?: throw IllegalStateException("session_id is required; call createSession() first or pass sessionId explicitly")
+        return sid
+            ?: throw IllegalStateException("session_id is required; call createSession() first or pass sessionId explicitly")
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -229,7 +240,8 @@ class PulsarClient
      */
     @Suppress("UNCHECKED_CAST")
     suspend fun createSession(capabilities: Map<String, Any?>? = null): String {
-        val response = request("POST", "/session", body = mapOf("capabilities" to (capabilities ?: emptyMap<String, Any?>())))
+        val response =
+            request("POST", "/session", body = mapOf("capabilities" to (capabilities ?: emptyMap<String, Any?>())))
         val value = response as? Map<String, Any?>
         val newSessionId = value?.get("sessionId") as? String
             ?: throw RuntimeException("createSession response missing sessionId")

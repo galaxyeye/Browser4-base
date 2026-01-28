@@ -58,7 +58,7 @@ class DevToolsConfig(
 ) {
     companion object {
         private const val READ_TIMEOUT_PROPERTY = "browser.driver.chrome.readTimeout"
-        private val READ_TIMEOUT_SECONDS = System.getProperty(READ_TIMEOUT_PROPERTY, "20").toLong()
+        private val READ_TIMEOUT_SECONDS = System.getProperty(READ_TIMEOUT_PROPERTY, "30").toLong()
     }
 }
 

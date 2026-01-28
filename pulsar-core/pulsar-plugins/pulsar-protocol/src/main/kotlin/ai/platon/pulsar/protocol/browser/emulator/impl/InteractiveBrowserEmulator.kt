@@ -662,7 +662,7 @@ open class InteractiveBrowserEmulator(
      * */
     protected suspend fun isScriptInjected(driver: WebDriver): Boolean {
         // Ensure __pulsar_utils__ is defined. For some type of pages, the script can not be injected.
-        val utils = driver.evaluate("typeof(__pulsar_)")
+        val utils = driver.evaluate("typeof(__pulsar_utils__)")
         return utils == "function"
     }
 

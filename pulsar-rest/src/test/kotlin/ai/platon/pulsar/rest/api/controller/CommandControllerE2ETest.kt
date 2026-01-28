@@ -1,18 +1,20 @@
 package ai.platon.pulsar.rest.api.controller
 
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class CommandControllerTest : RestAPITestBase() {
+@Tag("E2ETest")
+class CommandControllerE2ETest : RestAPITestBase() {
 
     /**
      * Test [CommandController.submitCommand]

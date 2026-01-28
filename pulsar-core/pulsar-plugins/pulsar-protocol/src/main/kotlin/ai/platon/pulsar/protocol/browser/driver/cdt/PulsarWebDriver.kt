@@ -966,38 +966,9 @@ function() {
             if (logger.isTraceEnabled) {
                 reportDualWorldJs(pageWorldJs, isolatedWorldJs)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             logger.warn("Failed to inject scripts into isolated world, falling back to page world", e)
-            // Fallback to injecting everything in page world
-            addLegacyScripts()
         }
-    }
-
-    /**
-     * Legacy script injection (all scripts in page world).
-     * Used for backward compatibility.
-     */
-    private suspend fun addLegacyScripts() {
-        val js = settings.scriptLoader.getPreloadJs(false)
-        if (js !in initScriptCache) {
-            // utils comes first
-            initScriptCache.add(0, js)
-        }
-
-        if (initScriptCache.isEmpty()) {
-            logger.warn("No initScriptCache found")
-            return
-        }
-
-        val scripts = initScriptCache.joinToString("\n;\n\n\n;\n")
-        injectedScriptIdentifier = pageAPI?.addScriptToEvaluateOnNewDocument("\n;;\n$scripts\n;;\n")
-
-        if (logger.isTraceEnabled) {
-            reportInjectedJs(scripts)
-        }
-
-        // the cache is used for a single document, so we have to clear it
-        initScriptCache.clear()
     }
 
     private fun reportDualWorldJs(pageWorldJs: String, isolatedWorldJs: String) {
