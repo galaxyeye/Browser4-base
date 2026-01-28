@@ -672,7 +672,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <surefire.skipStableModuleTests>true</surefire.skipStableModuleTests>
         <surefire.excludedGroups>
             TimeConsumingTest,ExternalResourceDependent,IntegrationTest,E2ETest,HeavyTest,
             SkippableLowerLevelTest,TestInfraCheck,MustManuallyRun,OptionalTest

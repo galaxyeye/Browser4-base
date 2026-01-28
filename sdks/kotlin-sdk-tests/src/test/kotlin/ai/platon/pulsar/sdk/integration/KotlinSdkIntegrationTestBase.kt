@@ -13,13 +13,13 @@
 package ai.platon.pulsar.sdk.integration
 
 import ai.platon.pulsar.boot.autoconfigure.PulsarContextConfiguration
-import ai.platon.pulsar.sdk.v0.detail.PulsarClient
 import ai.platon.pulsar.sdk.integration.server.PulsarRestServerApplication
 import ai.platon.pulsar.sdk.integration.server.TestServerConfiguration
+import ai.platon.pulsar.sdk.v0.detail.PulsarClient
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
-import kotlinx.coroutines.runBlocking
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
@@ -69,6 +69,11 @@ abstract class KotlinSdkIntegrationTestBase {
     @BeforeEach
     fun setupClient() {
         assertTrue(serverPort > 0, "Server port should be assigned")
+
+        // Wait for server to be ready before issuing session/webdriver operations.
+        // On cold starts the REST layer may accept connections while browser/CDP is still warming up.
+        waitForServerReadiness()
+
         client = PulsarClient(baseUrl = baseUrl, timeout = Duration.ofSeconds(60))
     }
 
@@ -82,7 +87,7 @@ abstract class KotlinSdkIntegrationTestBase {
             if (client.sessionId != null) {
                 client.deleteSession()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Ignore cleanup errors
         } finally {
             client.close()
@@ -101,6 +106,7 @@ abstract class KotlinSdkIntegrationTestBase {
     /**
      * Wait until condition is met or timeout
      */
+    @Suppress("SameParameterValue")
     protected fun waitUntil(
         timeoutSeconds: Int = 10,
         intervalMillis: Long = 500,
@@ -114,5 +120,60 @@ abstract class KotlinSdkIntegrationTestBase {
             Thread.sleep(intervalMillis)
         }
         return false
+    }
+
+    /**
+     * Waits until the REST server reports READY.
+     */
+    protected fun waitForServerReadiness(timeoutSeconds: Int = 30) {
+        val ready = waitUntil(timeoutSeconds = timeoutSeconds, intervalMillis = 500) {
+            isEndpointHealthy("/health") && isEndpointHealthy("/health/ready")
+        }
+        assertTrue(ready, "Server did not become ready in ${timeoutSeconds}s | baseUrl=$baseUrl")
+    }
+
+    private fun isEndpointHealthy(path: String): Boolean {
+        val url = java.net.URL(baseUrl + path)
+        return try {
+            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 1000
+                readTimeout = 1000
+            }
+            conn.inputStream.use { /* drain */ }
+            conn.responseCode in 200..299
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Retries a transient operation with simple exponential backoff.
+     */
+    @Suppress("unused")
+    protected suspend fun <T> retry(
+        maxAttempts: Int = 3,
+        initialDelayMillis: Long = 500,
+        factor: Double = 2.0,
+        isRetryable: (Throwable) -> Boolean = { false },
+        block: suspend () -> T
+    ): T {
+        require(maxAttempts >= 1) { "maxAttempts must be >= 1" }
+
+        var delayMillis = initialDelayMillis
+
+        repeat(maxAttempts - 1) {
+            try {
+                return block()
+            } catch (t: Throwable) {
+                if (!isRetryable(t)) {
+                    throw t
+                }
+                kotlinx.coroutines.delay(delayMillis)
+                delayMillis = (delayMillis * factor).toLong().coerceAtMost(5_000)
+            }
+        }
+
+        return block()
     }
 }

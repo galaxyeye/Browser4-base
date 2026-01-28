@@ -34,13 +34,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skipTests>${surefire.skipStableModuleTests}</skipTests>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 </project>

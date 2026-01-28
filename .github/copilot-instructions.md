@@ -177,6 +177,11 @@ fun load(url: String, options: LoadOptions): PageSnapshot {
     - Windows (cmd): `mvnw.cmd -pl pulsar-core -am test -D\"surefire.failIfNoSpecifiedTests=false\"`
     - Linux/macOS: `./mvnw -pl pulsar-core -am test -Dsurefire.failIfNoSpecifiedTests=false`
 
+- SDKs module tests (skip dependencies)
+    - Windows (PowerShell): `.\mvnw.cmd -Psdk -pl sdks\kotlin-sdk-tests test`
+    - Windows (cmd): `mvnw.cmd -Psdk -pl sdks\kotlin-sdk-tests test`
+    - Linux/macOS: `./mvnw -Psdk -pl sdks\kotlin-sdk-tests test`
+
 - Recommended scripts
     - Windows: `bin/build.ps1 [-test]`
     - Linux/macOS: `bin/build.sh [-test]`
