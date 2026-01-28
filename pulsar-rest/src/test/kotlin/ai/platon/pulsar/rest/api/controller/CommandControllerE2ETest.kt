@@ -5,10 +5,10 @@ import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.client.expectBody
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -40,10 +40,9 @@ class CommandControllerE2ETest : RestAPITestBase() {
             .responseBody
         assertNotNull(status)
 
-        printlnPro(status)
-        Assumptions.assumeTrue(status.pageStatusCode == 200)
-        Assumptions.assumeTrue(status.isDone)
-        Assumptions.assumeTrue(status.statusCode == 200)
+        assertEquals(200, status.pageStatusCode)
+        assertTrue(status.isDone)
+        assertEquals(200, status.statusCode)
 
         assertNotNull(status.commandResult)
         assertNotNull(status.commandResult?.pageSummary)
@@ -79,10 +78,9 @@ class CommandControllerE2ETest : RestAPITestBase() {
             .responseBody
         assertNotNull(status)
 
-        printlnPro(status)
-        Assumptions.assumeTrue(status.pageStatusCode == 200)
-        Assumptions.assumeTrue(status.isDone)
-        Assumptions.assumeTrue(status.statusCode == 200)
+        assertEquals(200, status.pageStatusCode)
+        assertTrue(status.isDone)
+        assertEquals(200, status.statusCode)
 
         assertNotNull(status.commandResult)
         assertNotNull(status.commandResult?.pageSummary)
@@ -113,9 +111,9 @@ class CommandControllerE2ETest : RestAPITestBase() {
         printlnPro(prettyPulsarObjectMapper().writeValueAsString(status))
         val result = status.commandResult
 
-        Assumptions.assumeTrue(status.pageStatusCode == 200)
-        Assumptions.assumeTrue(status.isDone)
-        Assumptions.assumeTrue(status.statusCode == 200)
+        assertEquals(200, status.pageStatusCode)
+        assertTrue(status.isDone)
+        assertEquals(200, status.statusCode)
 
         assertNotNull(result)
         assertTrue { status.isDone }
