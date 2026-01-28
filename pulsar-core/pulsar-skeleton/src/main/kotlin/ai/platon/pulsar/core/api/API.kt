@@ -4,6 +4,7 @@ typealias ImmutableConfig = ai.platon.pulsar.common.config.ImmutableConfig
 typealias MutableConfig = ai.platon.pulsar.common.config.MutableConfig
 typealias VolatileConfig = ai.platon.pulsar.common.config.VolatileConfig
 
+typealias PulsarSettings = ai.platon.pulsar.skeleton.PulsarSettings
 typealias LoadOptions = ai.platon.pulsar.skeleton.common.options.LoadOptions
 
 typealias PageEventHandlers = ai.platon.pulsar.skeleton.crawl.PageEventHandlers
