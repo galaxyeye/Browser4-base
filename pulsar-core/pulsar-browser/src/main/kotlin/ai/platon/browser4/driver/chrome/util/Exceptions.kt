@@ -51,6 +51,7 @@ open class ChromeServiceException : ChromeProtocolException {
 
 open class ChromeRPCException : ChromeProtocolException {
     var code = -1L
+    var url: String? = null
 
     constructor(message: String) : super(message)
 

@@ -100,9 +100,14 @@ class WebDriverHelper(
         return mapper.readValue(mapper.writeValueAsString(cookie))
     }
 
-    suspend fun <T> invokeOnPage(name: String, message: String? = null, action: suspend () -> T): T? {
+    suspend fun <T> invokeOnPage(
+        name: String,
+        url: String? = null,
+        message: String? = null,
+        action: suspend () -> T
+    ): T? {
         try {
-            return rpc.invokeWithRetry(name) {
+            return rpc.invokeWithRetry(name, url = url) {
                 action()
             }
         } catch (e: ChromeDriverException) {

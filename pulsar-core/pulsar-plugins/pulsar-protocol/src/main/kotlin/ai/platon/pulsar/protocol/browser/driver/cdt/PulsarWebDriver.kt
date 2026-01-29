@@ -726,6 +726,8 @@ function() {
             networkAPI?.setBlockedURLs(blockedURLs)
         }
 
+        networkManager.enable()
+
         networkManager.on1(NetworkEvents.RequestWillBeSent) { event: RequestWillBeSent ->
             onRequestWillBeSent(entry, event)
         }

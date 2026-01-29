@@ -13,8 +13,6 @@ open class ScrapeControllerTestBase : IntegrationTestBase() {
         @JvmStatic
         @BeforeAll
         fun `Ensure resources are prepared`() {
-            // BasicTestHelper.ensurePages()
-            // TODO: Implement proper resource preparation for integration tests
         }
     }
 
