@@ -4,6 +4,7 @@ import ai.platon.pulsar.rest.openapi.dto.SetUrlRequest
 import ai.platon.pulsar.rest.openapi.dto.WebDriverResponse
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -49,9 +50,11 @@ class NavigationController(
         }
 
         try {
-            // Get or create bound driver and navigate to URL
-            val driver = session.pulsarSession.getOrCreateBoundDriver()
-            driver.navigateTo(request.url)
+            // Serialize WebDriver operations using mutex to prevent parallel execution
+            session.driverMutex.withLock {
+                val driver = session.pulsarSession.getOrCreateBoundDriver()
+                driver.navigateTo(request.url)
+            }
             sessionManager.setSessionUrl(sessionId, request.url)
         } catch (e: Exception) {
             logger.error("Error navigating to URL: {}", e.message, e)
@@ -143,8 +146,10 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.reload()
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.reload()
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
             logger.error("Reload failed | sessionId={} | {}", sessionId, e.message)
@@ -167,8 +172,10 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.goBack()
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.goBack()
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
             logger.error("Go back failed | sessionId={} | {}", sessionId, e.message)
@@ -191,8 +198,10 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.goForward()
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.goForward()
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
             logger.error("Go forward failed | sessionId={} | {}", sessionId, e.message)
@@ -215,8 +224,10 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val title = driver.title()
+            val title = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.title()
+            }
             ResponseEntity.ok(WebDriverResponse(value = title))
         } catch (e: Exception) {
             logger.error("Get title failed | sessionId={} | {}", sessionId, e.message)
@@ -239,8 +250,10 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.bringToFront()
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.bringToFront()
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
             logger.error("Bring to front failed | sessionId={} | {}", sessionId, e.message)

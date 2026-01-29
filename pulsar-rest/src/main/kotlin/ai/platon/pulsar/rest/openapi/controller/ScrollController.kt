@@ -4,6 +4,7 @@ import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriverException
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
@@ -41,8 +42,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollDown(request.count)
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollDown(request.count)
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll down failed | sessionId={} | {}", sessionId, e.message)
@@ -69,8 +72,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollUp(request.count)
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollUp(request.count)
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll up failed | sessionId={} | {}", sessionId, e.message)
@@ -97,8 +102,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollTo(request.selector)
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollTo(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll to failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -124,8 +131,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollToTop()
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollToTop()
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll to top failed | sessionId={} | {}", sessionId, e.message)
@@ -151,8 +160,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollToBottom()
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollToBottom()
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll to bottom failed | sessionId={} | {}", sessionId, e.message)
@@ -179,8 +190,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollToMiddle(request.ratio)
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollToMiddle(request.ratio)
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll to middle failed | sessionId={} | {}", sessionId, e.message)
@@ -207,8 +220,10 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val scrollY = driver.scrollBy(request.pixels, request.smooth)
+            val scrollY = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.scrollBy(request.pixels, request.smooth)
+            }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
             logger.error("Scroll by failed | sessionId={} | {}", sessionId, e.message)

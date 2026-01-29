@@ -5,6 +5,7 @@ import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.context.AgenticContext
 import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.skeleton.context.PulsarContext
+import kotlinx.coroutines.sync.Mutex
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.stereotype.Service
@@ -27,6 +28,9 @@ class SessionManager(
 
     /**
      * Container for session-related objects.
+     * 
+     * The driverMutex ensures that WebDriver operations are executed serially, not in parallel.
+     * This is critical because WebDriver methods must not be called concurrently.
      */
     data class ManagedSession(
         val sessionId: String,
@@ -36,7 +40,8 @@ class SessionManager(
         var url: String? = null,
         var status: String = "active", // active, paused, stopped
         val createdAt: Long = System.currentTimeMillis(),
-        var lastAccessedAt: Long = System.currentTimeMillis()
+        var lastAccessedAt: Long = System.currentTimeMillis(),
+        val driverMutex: Mutex = Mutex()
     )
 
     private val sessions = ConcurrentHashMap<String, ManagedSession>()
