@@ -28,36 +28,23 @@ class JsHandler(
     /**
      * Evaluates expression on global object.
      *
-     * @param expression Javascript expression to evaluate
+     * @param script Javascript expression to evaluate
      * @return Remote object value in case of primitive values or JSON values (if it was requested).
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateDetail(script: String): Evaluate? {
-        val expression: String
-        val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
-        // Check if this script is a IIFE
-        if (lines.size > 1) {
-            val firstLine = lines[0]
-            expression = if (!firstLine.startsWith("(")) {
-                JsUtils.toIIFE(script)
-            } else {
-                script
-            }
-        } else {
-            expression = script
-        }
+        val expression: String = JsUtils.toCDPCompatibleExpression(script)
 
         val confusedExpr = confuser.confuse(expression)
 
-//        val isolatedContextId = isolatedWorldManager
-//            .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
-//        if (isolatedContextId != null && isolatedContextId > 0) {
-//            val isolatedResult = runCatching { evaluateInContext(confusedExpr, isolatedContextId, returnByValue = false) }
-//                .getOrNull()
-//            if (isolatedResult != null) {
-//                return isolatedResult
-//            }
-//        }
+        val isolatedContextId = isolatedWorldManager
+            .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
+        if (isolatedContextId != null && isolatedContextId > 0) {
+            val isolatedResult = evaluateInContext(confusedExpr, isolatedContextId, returnByValue = false)
+            if (isolatedResult != null) {
+                return isolatedResult
+            }
+        }
 
         return try {
             runtimeAPI?.evaluate(confusedExpr)
@@ -67,10 +54,35 @@ class JsHandler(
         }
     }
 
+    @Throws(ChromeDriverException::class)
+    suspend fun callFunctionOn(selector: String, functionDeclaration: String): CallFunctionOn? {
+        val node = pageHandler.resolveSelector(selector) ?: return null
+        // Resolve a fresh objectId and ensure it's released after the call
+        val resolved = try {
+            when {
+                node.nodeId > 0 -> domAPI?.resolveNode(node.nodeId, null, null, null)
+                node.backendNodeId > 0 -> domAPI?.resolveNode(null, node.backendNodeId, null, null)
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        } ?: return null
+
+        val oid = resolved.objectId ?: return null
+        return try {
+            runtimeAPI?.callFunctionOn(functionDeclaration, objectId = oid, returnByValue = true)
+        } finally {
+            try {
+                runtimeAPI?.releaseObject(oid)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     /**
      * Evaluates expression on global object.
      *
-     * @param expression Javascript expression to evaluate
+     * @param script Javascript expression to evaluate
      * @return Remote object value in case of primitive values or JSON values (if it was requested).
      * */
     @Throws(ChromeDriverException::class)
@@ -94,27 +106,14 @@ class JsHandler(
 
     @Throws(ChromeDriverException::class)
     suspend fun evaluateValueDetail(script: String): Evaluate? {
-        val expression: String
-        val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
-        // Check if this script is a IIFE
-        if (lines.size > 1) {
-            val firstLine = lines[0]
-            expression = if (!firstLine.startsWith("(")) {
-                JsUtils.toIIFE(confuser.confuse(script))
-            } else {
-                script
-            }
-        } else {
-            expression = script
-        }
+        val expression: String = JsUtils.toCDPCompatibleExpression(script)
 
         val confusedExpr = confuser.confuse(expression)
 
         val isolatedContextId = isolatedWorldManager
-            ?.getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
+            .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
         if (isolatedContextId != null && isolatedContextId > 0) {
-            val isolatedResult = runCatching {
-                evaluateInContext(confusedExpr, isolatedContextId, returnByValue = true) }.getOrNull()
+            val isolatedResult = evaluateInContext(confusedExpr, isolatedContextId, returnByValue = true)
             if (isolatedResult != null) {
                 return isolatedResult
             }
@@ -147,40 +146,15 @@ class JsHandler(
     }
 
     @Throws(ChromeDriverException::class)
-    suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): CallFunctionOn? {
-        val node = pageHandler.resolveSelector(selector) ?: return null
-        // Resolve a fresh objectId and ensure it's released after the call
-        val resolved = try {
-            when {
-                node.nodeId > 0 -> domAPI?.resolveNode(node.nodeId, null, null, null)
-                node.backendNodeId > 0 -> domAPI?.resolveNode(null, node.backendNodeId, null, null)
-                else -> null
-            }
-        } catch (e: Exception) {
-            null
-        } ?: return null
-
-        val oid = resolved.objectId ?: return null
-        return try {
-            runtimeAPI?.callFunctionOn(functionDeclaration, objectId = oid, returnByValue = true)
-        } finally {
-            try {
-                runtimeAPI?.releaseObject(oid)
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    @Throws(ChromeDriverException::class)
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any? {
-        val reslut = evaluateValueDetail(selector, functionDeclaration)
+        val result = callFunctionOn(selector, functionDeclaration)
 
-        val exception = reslut?.exceptionDetails?.exception
+        val exception = result?.exceptionDetails?.exception
         if (exception != null) {
             logger.info(exception.description + "\n>>>$functionDeclaration<<<")
         }
 
-        return reslut?.result?.value
+        return result?.result?.value
     }
 
     private suspend fun evaluateInContext(expression: String, contextId: Int, returnByValue: Boolean): Evaluate? {
