@@ -7,6 +7,7 @@ import ai.platon.pulsar.rest.openapi.store.InMemoryStore
 import ai.platon.pulsar.skeleton.context.PulsarContext
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriverException
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -55,8 +56,10 @@ class SelectorController(
         }
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val exists = driver.exists(request.selector)
+            val exists = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.exists(request.selector)
+            }
             ResponseEntity.ok(ExistsResponse(value = ExistsResponse.ExistsValue(exists = exists)))
         } catch (e: WebDriverException) {
             logger.error("Selector exists check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -89,8 +92,10 @@ class SelectorController(
         }
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val remainingMillis = driver.waitForSelector(request.selector, timeoutMillis)
+            val remainingMillis = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.waitForSelector(request.selector, timeoutMillis)
+            }
 
             if (remainingMillis <= 0L) {
                 // OpenAPI defines 408 for waitFor timeout.
@@ -172,8 +177,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.click(request.selector)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.click(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Click failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -200,8 +207,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.fill(request.selector, request.value)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.fill(request.selector, request.value)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Fill failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -228,8 +237,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.press(request.selector, request.key)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.press(request.selector, request.key)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Press failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -256,8 +267,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val html = driver.outerHTML(request.selector)
+            val html = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.outerHTML(request.selector)
+            }
             ResponseEntity.ok(HtmlResponse(value = html))
         } catch (e: WebDriverException) {
             logger.error("Get outerHtml failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -284,8 +297,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val base64 = driver.captureScreenshot(request.selector)
+            val base64 = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.captureScreenshot(request.selector)
+            }
             ResponseEntity.ok(ScreenshotResponse(value = base64))
         } catch (e: WebDriverException) {
             logger.error("Screenshot failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -312,8 +327,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val visible = driver.isVisible(request.selector)
+            val visible = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.isVisible(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse(value = visible))
         } catch (e: WebDriverException) {
             logger.error("isVisible check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -340,8 +357,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val checked = driver.isChecked(request.selector)
+            val checked = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.isChecked(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse(value = checked))
         } catch (e: WebDriverException) {
             logger.error("isChecked check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -368,8 +387,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.hover(request.selector)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.hover(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Hover failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -396,8 +417,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.focus(request.selector)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.focus(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Focus failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -424,8 +447,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.check(request.selector)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.check(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Check failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -452,8 +477,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            driver.uncheck(request.selector)
+            managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.uncheck(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
             logger.error("Uncheck failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -480,8 +507,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val text = driver.selectFirstTextOrNull(request.selector)
+            val text = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.selectFirstTextOrNull(request.selector)
+            }
             ResponseEntity.ok(TextResponse(value = text))
         } catch (e: WebDriverException) {
             logger.error("Get text content failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -508,8 +537,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val texts = driver.selectTextAll(request.selector)
+            val texts = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.selectTextAll(request.selector)
+            }
             ResponseEntity.ok(WebDriverResponse(value = texts))
         } catch (e: WebDriverException) {
             logger.error("Get text content all failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -536,8 +567,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val value = driver.selectFirstAttributeOrNull(request.selector, request.attrName)
+            val value = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.selectFirstAttributeOrNull(request.selector, request.attrName)
+            }
             ResponseEntity.ok(AttributeResponse(value = value))
         } catch (e: WebDriverException) {
             logger.error("Get attribute failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
@@ -564,8 +597,10 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val values = driver.selectAttributeAll(request.selector, request.attrName)
+            val values = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.selectAttributeAll(request.selector, request.attrName)
+            }
             ResponseEntity.ok(WebDriverResponse(value = values))
         } catch (e: WebDriverException) {
             logger.error("Get attribute all failed | sessionId={} selector={} | {}", sessionId, request.selector, e.message)
