@@ -74,11 +74,10 @@ class PulsarSessionController(
 
         val result = WebPageResult(
             url = page.url,
-            location = page.location ?: page.url,
-            contentType = page.contentType ?: "text/html",
+            location = page.location,
+            contentType = page.contentType,
             contentLength = page.contentLength.toInt(),
-            protocolStatus = page.protocolStatus?.toString() ?: "200 OK",
-            isNil = page.isNil,
+            protocolStatus = page.protocolStatus.toString(),
             html = page.contentAsString
         )
 

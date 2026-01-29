@@ -31,9 +31,10 @@ data class WebPage(
     val contentType: String? = null,
     val contentLength: Int = 0,
     val protocolStatus: String? = null,
-    val isNil: Boolean = false,
     val html: String? = null
 ) {
+    val isNil get() = url == NormURL.NIL_SPEC
+
     companion object {
         /**
          * Creates a WebPage from an API response map.
@@ -45,7 +46,6 @@ data class WebPage(
                 contentType = data["contentType"] as? String,
                 contentLength = (data["contentLength"] as? Number)?.toInt() ?: 0,
                 protocolStatus = data["protocolStatus"] as? String,
-                isNil = data["isNil"] as? Boolean ?: false,
                 html = data["html"] as? String
             )
         }
@@ -61,9 +61,10 @@ data class NormURL(
     val url: String,
     val args: String? = null
 ) {
-    val isNil: Boolean get() = spec == "http://internal.platon.ai/nil"
+    val isNil: Boolean get() = spec == NIL_SPEC
 
     companion object {
+        const val NIL_SPEC = "http://internal.platon.ai/nil"
         /**
          * Creates a NormURL from an API response map.
          */
