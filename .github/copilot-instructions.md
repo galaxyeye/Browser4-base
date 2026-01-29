@@ -210,6 +210,23 @@ fun load(url: String, options: LoadOptions): PageSnapshot {
 
 —
 
-Appendix: see also
-- `README-AI.md` (same directory as this file)
-- `docs/concepts.md`, `advanced-guides.md`, `rest-api-examples.md`
+## Minimal Test Policy (default)
+
+To keep iteration fast, **don’t run full test suites by default**.
+
+- Default: **compile / validate dependencies (skip tests)**
+- Then: run the **smallest relevant** test scope (single module/class) when logic changes
+- Upgrade scope only when risk increases (cross-module, public API/DTO/serialization, Spring wiring, dependency bumps,
+  concurrency/I/O, browser/CDP lifecycle)
+
+Details and rationale: `docs-dev/copilot/minimal-test-policy.md`.
+
+**Windows (PowerShell) quick commands**
+
+```powershell
+# Minimal compile (default)
+.\mvnw.cmd -q -D"skipTests" test
+
+# Fast regression (recommended)
+.\mvnw.cmd -pl pulsar-core -am test -D"surefire.failIfNoSpecifiedTests=false"
+```

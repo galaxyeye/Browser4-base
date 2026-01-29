@@ -126,6 +126,17 @@ logger.info("Task {} finished in {} ms", taskId, cost)
 
 ## Testing Guidelines
 
+### Minimal Test Policy (default)
+
+To keep iteration fast, **don’t run full test suites by default**.
+
+- Default: `mvnw` compile with tests skipped
+- Then: run the **smallest relevant** test scope (module/class) when logic changes
+- Upgrade scope when risk increases (cross-module, public API/DTO/serialization, Spring wiring, dependency bumps,
+  concurrency/I/O, browser/CDP lifecycle)
+
+See `docs-dev/copilot/minimal-test-policy.md` for details and trade-offs.
+
 ### Test Location
 - Module unit tests: `src/test/kotlin/...`
 - Centralized integration/E2E: `pulsar-tests/`
