@@ -3,7 +3,6 @@ package ai.platon.pulsar.rest.openapi.service
 import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.context.AgenticContext
-import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.skeleton.context.PulsarContext
 import kotlinx.coroutines.sync.Mutex
 import org.slf4j.LoggerFactory
@@ -28,21 +27,23 @@ class SessionManager(
 
     /**
      * Container for session-related objects.
-     * 
+     *
      * The driverMutex ensures that WebDriver operations are executed serially, not in parallel.
      * This is critical because WebDriver methods must not be called concurrently.
      */
     data class ManagedSession(
         val sessionId: String,
         val pulsarSession: AgenticSession,
-        val agent: PerceptiveAgent,
         val capabilities: Map<String, Any?>?,
         var url: String? = null,
         var status: String = "active", // active, paused, stopped
         val createdAt: Long = System.currentTimeMillis(),
         var lastAccessedAt: Long = System.currentTimeMillis(),
         val driverMutex: Mutex = Mutex()
-    )
+    ) {
+        val driver get() = pulsarSession.getOrCreateBoundDriver()
+        val agent: PerceptiveAgent get() = pulsarSession.companionAgent
+    }
 
     private val sessions = ConcurrentHashMap<String, ManagedSession>()
 
@@ -71,13 +72,9 @@ class SessionManager(
         val context = pulsarContext as AgenticContext
         val agenticSession = context.createSession()
 
-        // Get the companion agent
-        val agent = agenticSession.companionAgent
-
         val session = ManagedSession(
             sessionId = sessionId,
             pulsarSession = agenticSession,
-            agent = agent,
             capabilities = capabilities
         )
 
