@@ -3,9 +3,13 @@ package ai.platon.pulsar.rest.openapi.service
 import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.context.AgenticContext
+import ai.platon.pulsar.external.ChatModelFactory
+import ai.platon.pulsar.skeleton.context.PulsarContext
+import kotlinx.coroutines.sync.Mutex
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.stereotype.Service
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -13,31 +17,32 @@ import java.util.concurrent.TimeUnit
 /**
  * Manages WebDriver sessions with real PulsarSession and AgenticSession instances.
  * Handles session lifecycle, cleanup, and browser integration.
- * Only active when AgenticContext is available (production mode).
+ * Only active when PulsarContext is available (production mode).
  */
 @Service
-@ConditionalOnBean(AgenticContext::class)
+@ConditionalOnBean(PulsarContext::class)
 class SessionManager(
-    val agenticContext: AgenticContext
+    val pulsarContext: PulsarContext
 ) {
     private val logger = LoggerFactory.getLogger(SessionManager::class.java)
 
     /**
      * Container for session-related objects.
+     * 
+     * The driverMutex ensures that WebDriver operations are executed serially, not in parallel.
+     * This is critical because WebDriver methods must not be called concurrently.
      */
     data class ManagedSession(
+        val sessionId: String,
         val pulsarSession: AgenticSession,
+        val agent: PerceptiveAgent,
         val capabilities: Map<String, Any?>?,
         var url: String? = null,
         var status: String = "active", // active, paused, stopped
         val createdAt: Long = System.currentTimeMillis(),
-        var lastAccessedAt: Long = System.currentTimeMillis()
-    ) {
-        val sid get() = pulsarSession.id
-        val sessionId: String get() = pulsarSession.uuid
-        val idStr get() = "$sid/$sessionId"
-        val agent: PerceptiveAgent get() = pulsarSession.companionAgent
-    }
+        var lastAccessedAt: Long = System.currentTimeMillis(),
+        val driverMutex: Mutex = Mutex()
+    )
 
     private val sessions = ConcurrentHashMap<String, ManagedSession>()
 
@@ -61,16 +66,23 @@ class SessionManager(
      * @return The created managed session.
      */
     fun createSession(capabilities: Map<String, Any?>? = null): ManagedSession {
-        val agenticSession = agenticContext.createSession()
-        val sessionId = agenticSession.uuid
+        val sessionId = UUID.randomUUID().toString()
+
+        val context = pulsarContext as AgenticContext
+        val agenticSession = context.createSession()
+
+        // Get the companion agent
+        val agent = agenticSession.companionAgent
 
         val session = ManagedSession(
+            sessionId = sessionId,
             pulsarSession = agenticSession,
+            agent = agent,
             capabilities = capabilities
         )
 
         sessions[sessionId] = session
-        logger.info("Created session {} with capabilities: {}", session.idStr, capabilities)
+        logger.info("Created session {} with capabilities: {}", sessionId, capabilities)
 
         return session
     }
@@ -103,9 +115,9 @@ class SessionManager(
             // Close sessions
             session.pulsarSession.close()
 
-            logger.info("Deleted session {} and released resources", session.idStr)
+            logger.info("Deleted session {} and released resources", sessionId)
         } catch (e: Exception) {
-            logger.error("Error closing session {}: {}", session.idStr, e.message, e)
+            logger.error("Error closing session {}: {}", sessionId, e.message, e)
         }
 
         return true
@@ -122,7 +134,7 @@ class SessionManager(
         val session = sessions[sessionId] ?: return false
         session.url = url
         session.lastAccessedAt = System.currentTimeMillis()
-        logger.debug("Session {} navigated to: {}", session.idStr, url)
+        logger.debug("Session {} navigated to: {}", sessionId, url)
         return true
     }
 
@@ -137,7 +149,7 @@ class SessionManager(
         val session = sessions[sessionId] ?: return false
         session.status = status
         session.lastAccessedAt = System.currentTimeMillis()
-        logger.debug("Session {} status changed to: {}", session.idStr, status)
+        logger.debug("Session {} status changed to: {}", sessionId, status)
         return true
     }
 

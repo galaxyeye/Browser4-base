@@ -4,6 +4,7 @@ import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriverException
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
@@ -41,8 +42,10 @@ class ScriptController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            val result = driver.evaluate(request.script)
+            val result = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                driver.evaluate(request.script)
+            }
             ResponseEntity.ok(ScriptResponse(value = result))
         } catch (e: WebDriverException) {
             logger.error("Script execution failed | sessionId={} | {}", sessionId, e.message)
@@ -69,10 +72,12 @@ class ScriptController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val driver = managed.pulsarSession.getOrCreateBoundDriver()
-            // For async scripts, we use the same evaluate method
-            // The caller is responsible for proper async handling in the script
-            val result = driver.evaluate(request.script)
+            val result = managed.driverMutex.withLock {
+                val driver = managed.pulsarSession.getOrCreateBoundDriver()
+                // For async scripts, we use the same evaluate method
+                // The caller is responsible for proper async handling in the script
+                driver.evaluate(request.script)
+            }
             ResponseEntity.ok(ScriptResponse(value = result))
         } catch (e: WebDriverException) {
             logger.error("Async script execution failed | sessionId={} | {}", sessionId, e.message)
