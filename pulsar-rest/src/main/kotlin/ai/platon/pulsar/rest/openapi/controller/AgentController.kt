@@ -5,6 +5,7 @@ import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.skeleton.context.PulsarContext
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -60,15 +61,17 @@ class AgentController(
         }
 
         val result = try {
-            // Use real PerceptiveAgent.run
-            val history = session.agent.run(request.task)
+            // Use real PerceptiveAgent.run, protected by mutex for serial execution
+            session.mutex.withLock {
+                val history = session.agent.run(request.task)
 
-            AgentRunResult(
-                success = !history.hasErrors,
-                message = if (history.hasErrors) "Agent task has errors" else "Agent task completed",
-                historySize = history.size,
-                processTraceSize = history.size
-            )
+                AgentRunResult(
+                    success = !history.hasErrors,
+                    message = if (history.hasErrors) "Agent task has errors" else "Agent task completed",
+                    historySize = history.size,
+                    processTraceSize = history.size
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error running agent task: {}", e.message, e)
             AgentRunResult(
@@ -110,18 +113,20 @@ class AgentController(
         }
 
         val result = try {
-            // Use real PerceptiveAgent.observe
-            val observeResults = session.agent.observe(request.instruction ?: "")
+            // Use real PerceptiveAgent.observe, protected by mutex for serial execution
+            session.mutex.withLock {
+                val observeResults = session.agent.observe(request.instruction ?: "")
 
-            // Convert to DTOs
-            observeResults.map { observeResult ->
-                ObserveResultDto(
-                    locator = observeResult.locator,
-                    domain = observeResult.domain,
-                    method = observeResult.method,
-                    arguments = observeResult.arguments,
-                    description = observeResult.description
-                )
+                // Convert to DTOs
+                observeResults.map { observeResult ->
+                    ObserveResultDto(
+                        locator = observeResult.locator,
+                        domain = observeResult.domain,
+                        method = observeResult.method,
+                        arguments = observeResult.arguments,
+                        description = observeResult.description
+                    )
+                }
             }
         } catch (e: Exception) {
             logger.error("Error observing page: {}", e.message, e)
@@ -157,16 +162,18 @@ class AgentController(
         }
 
         val result = try {
-            // Use real PerceptiveAgent.act
-            val actResult = session.agent.act(request.action)
+            // Use real PerceptiveAgent.act, protected by mutex for serial execution
+            session.mutex.withLock {
+                val actResult = session.agent.act(request.action)
 
-            ActResultDto(
-                success = actResult.success,
-                message = actResult.message
-                    ?: (if (actResult.success) "Action executed successfully" else "Action failed"),
-                action = request.action,
-                isComplete = actResult.isComplete
-            )
+                ActResultDto(
+                    success = actResult.success,
+                    message = actResult.message
+                        ?: (if (actResult.success) "Action executed successfully" else "Action failed"),
+                    action = request.action,
+                    isComplete = actResult.isComplete
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error executing action: {}", e.message, e)
             ActResultDto(
@@ -205,14 +212,16 @@ class AgentController(
         }
 
         val result = try {
-            // Use real PerceptiveAgent.extract
-            val extractResult = session.agent.extract(request.instruction)
+            // Use real PerceptiveAgent.extract, protected by mutex for serial execution
+            session.mutex.withLock {
+                val extractResult = session.agent.extract(request.instruction)
 
-            ExtractResultDto(
-                success = extractResult.success,
-                data = extractResult.data,
-                message = extractResult.message
-            )
+                ExtractResultDto(
+                    success = extractResult.success,
+                    data = extractResult.data,
+                    message = extractResult.message
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error extracting data: {}", e.message, e)
             ExtractResultDto(
@@ -246,11 +255,13 @@ class AgentController(
         }
 
         val summary = try {
-            // Use real PerceptiveAgent.summarize
-            session.agent.summarize(
-                instruction = request.instruction,
-                selector = request.selector
-            )
+            // Use real PerceptiveAgent.summarize, protected by mutex for serial execution
+            session.mutex.withLock {
+                session.agent.summarize(
+                    instruction = request.instruction,
+                    selector = request.selector
+                )
+            }
         } catch (e: Exception) {
             logger.error("Error summarizing page: {}", e.message, e)
             "Error: ${e.message}"
@@ -278,9 +289,11 @@ class AgentController(
         }
 
         val success = try {
-            // Use real PerceptiveAgent.clearHistory
-            session.agent.clearHistory()
-            true
+            // Use real PerceptiveAgent.clearHistory, protected by mutex for serial execution
+            session.mutex.withLock {
+                session.agent.clearHistory()
+                true
+            }
         } catch (e: Exception) {
             logger.error("Error clearing agent history: {}", e.message, e)
             false

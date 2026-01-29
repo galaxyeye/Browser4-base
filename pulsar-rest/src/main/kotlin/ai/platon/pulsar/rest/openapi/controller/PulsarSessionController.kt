@@ -3,6 +3,7 @@ package ai.platon.pulsar.rest.openapi.controller
 import ai.platon.pulsar.rest.openapi.dto.*
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import jakarta.servlet.http.HttpServletResponse
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
@@ -29,7 +30,7 @@ class PulsarSessionController(
      * Normalizes a URL with optional load arguments.
      */
     @PostMapping("/normalize", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun normalize(
+    suspend fun normalize(
         @PathVariable sessionId: String,
         @RequestBody request: NormalizeRequest,
         response: HttpServletResponse
@@ -40,8 +41,10 @@ class PulsarSessionController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
-        // Use real PulsarSession.normalize
-        val normUrl = session.pulsarSession.normalize(request.url, request.args ?: "")
+        // Use real PulsarSession.normalize, protected by mutex for serial execution
+        val normUrl = session.mutex.withLock {
+            session.pulsarSession.normalize(request.url, request.args ?: "")
+        }
         val result = NormUrlResult(
             spec = normUrl.spec,
             url = normUrl.url.toString(),
@@ -67,8 +70,10 @@ class PulsarSessionController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
-        // Use real PulsarSession.open (which fetches fresh from internet)
-        val page = session.pulsarSession.open(request.url)
+        // Use real PulsarSession.open (which fetches fresh from internet), protected by mutex for serial execution
+        val page = session.mutex.withLock {
+            session.pulsarSession.open(request.url)
+        }
 
         sessionManager.setSessionUrl(sessionId, request.url)
 
@@ -90,7 +95,7 @@ class PulsarSessionController(
      * Otherwise, fetches from the internet.
      */
     @PostMapping("/load", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun load(
+    suspend fun load(
         @PathVariable sessionId: String,
         @RequestBody request: LoadRequest,
         response: HttpServletResponse
@@ -101,11 +106,13 @@ class PulsarSessionController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
-        // Use real PulsarSession.load (checks cache first)
-        val page = if (request.args != null) {
-            session.pulsarSession.load(request.url, request.args)
-        } else {
-            session.pulsarSession.load(request.url)
+        // Use real PulsarSession.load (checks cache first), protected by mutex for serial execution
+        val page = session.mutex.withLock {
+            if (request.args != null) {
+                session.pulsarSession.load(request.url, request.args)
+            } else {
+                session.pulsarSession.load(request.url)
+            }
         }
 
         sessionManager.setSessionUrl(sessionId, request.url)
@@ -128,7 +135,7 @@ class PulsarSessionController(
      * This is a non-blocking operation that returns immediately.
      */
     @PostMapping("/submit", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun submit(
+    suspend fun submit(
         @PathVariable sessionId: String,
         @RequestBody request: SubmitRequest,
         response: HttpServletResponse
@@ -139,11 +146,13 @@ class PulsarSessionController(
         val session = sessionManager.getSession(sessionId)
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
-        // Use real PulsarSession.submit
-        if (request.args != null) {
-            session.pulsarSession.submit(request.url, request.args)
-        } else {
-            session.pulsarSession.submit(request.url)
+        // Use real PulsarSession.submit, protected by mutex for serial execution
+        session.mutex.withLock {
+            if (request.args != null) {
+                session.pulsarSession.submit(request.url, request.args)
+            } else {
+                session.pulsarSession.submit(request.url)
+            }
         }
 
         return ResponseEntity.ok(SubmitResponse(value = true))
