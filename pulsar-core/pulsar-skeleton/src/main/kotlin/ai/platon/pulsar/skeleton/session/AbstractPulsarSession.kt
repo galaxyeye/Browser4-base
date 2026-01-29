@@ -1,13 +1,16 @@
 package ai.platon.pulsar.skeleton.session
 
-import ai.platon.pulsar.common.*
+import ai.platon.pulsar.common.AppFiles
+import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.AppPaths.WEB_CACHE_DIR
+import ai.platon.pulsar.common.IllegalApplicationStateException
 import ai.platon.pulsar.common.browser.BrowserProfileMode
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_MODE
 import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.common.urls.PlainUrl
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.common.urls.UrlAware
+import ai.platon.pulsar.common.warnForClose
 import ai.platon.pulsar.dom.FeaturedDocument
 import ai.platon.pulsar.dom.select.firstTextOrNull
 import ai.platon.pulsar.dom.select.selectFirstOrNull
@@ -53,9 +56,8 @@ abstract class AbstractPulsarSession(
 ) : PulsarSession {
 
     companion object {
-        private val inProcessIdGenerator = InProcessIdGenerator(AppContext.nodeId)
-
-        fun generateNextInProcessId() = inProcessIdGenerator.nextId()
+        private val SEQUENCER = AtomicLong()
+        fun nextId() = SEQUENCER.incrementAndGet()
 
         // Keep existing page/document cache counters
         val pageCacheHits = AtomicLong()

@@ -38,13 +38,13 @@ interface AgenticSession : PulsarSession {
 abstract class AbstractAgenticSession(
     context: AbstractPulsarContext,
     sessionConfig: VolatileConfig,
-    id: Long = generateNextInProcessId()
+    id: Long = nextId()
 ) : AbstractPulsarSession(context, sessionConfig, id = id), AgenticSession
 
 open class BasicAgenticSession(
     context: AbstractAgenticContext,
     sessionConfig: VolatileConfig,
-    id: Long = generateNextInProcessId()
+    id: Long = nextId()
 ) : AbstractAgenticSession(context, sessionConfig, id) {
 
     override val companionAgent: PerceptiveAgent by lazy { createCompanionAgent() }

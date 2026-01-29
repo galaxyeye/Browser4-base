@@ -1,6 +1,5 @@
 package ai.platon.pulsar.skeleton.session
 
-import ai.platon.pulsar.common.Runtimes
 import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.skeleton.context.support.AbstractPulsarContext
 
@@ -11,5 +10,5 @@ import ai.platon.pulsar.skeleton.context.support.AbstractPulsarContext
 open class BasicPulsarSession(
     context: AbstractPulsarContext,
     sessionConfig: VolatileConfig,
-    id: Long = generateNextInProcessId()
+    id: Long = nextId()
 ) : AbstractPulsarSession(context, sessionConfig, id)
