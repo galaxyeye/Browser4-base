@@ -36,6 +36,9 @@ import kotlin.test.*
  * - Timeout scenarios
  * - Empty results
  * - Malformed responses
+ *
+ * Elements are ordered based on priority where a lower value has greater priority than a higher value.
+ * For example, Integer.MAX_VALUE has the lowest priority.
  */
 @Tag("IntegrationTest")
 @Order(Integer.MAX_VALUE)
