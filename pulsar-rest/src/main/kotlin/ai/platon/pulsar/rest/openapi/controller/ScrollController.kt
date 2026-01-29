@@ -42,7 +42,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollDown(request.count)
             }
@@ -72,7 +72,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollUp(request.count)
             }
@@ -102,7 +102,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollTo(request.selector)
             }
@@ -131,7 +131,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollToTop()
             }
@@ -160,7 +160,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollToBottom()
             }
@@ -190,7 +190,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollToMiddle(request.ratio)
             }
@@ -220,7 +220,7 @@ class ScrollController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val scrollY = managed.driverMutex.withLock {
+            val scrollY = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.scrollBy(request.pixels, request.smooth)
             }

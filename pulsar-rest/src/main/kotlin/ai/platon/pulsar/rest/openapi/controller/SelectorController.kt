@@ -56,7 +56,7 @@ class SelectorController(
         }
 
         return try {
-            val exists = managed.driverMutex.withLock {
+            val exists = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.exists(request.selector)
             }
@@ -92,7 +92,7 @@ class SelectorController(
         }
 
         return try {
-            val remainingMillis = managed.driverMutex.withLock {
+            val remainingMillis = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.waitForSelector(request.selector, timeoutMillis)
             }
@@ -177,7 +177,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.click(request.selector)
             }
@@ -207,7 +207,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.fill(request.selector, request.value)
             }
@@ -237,7 +237,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.press(request.selector, request.key)
             }
@@ -267,7 +267,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val html = managed.driverMutex.withLock {
+            val html = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.outerHTML(request.selector)
             }
@@ -297,7 +297,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val base64 = managed.driverMutex.withLock {
+            val base64 = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.captureScreenshot(request.selector)
             }
@@ -327,7 +327,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val visible = managed.driverMutex.withLock {
+            val visible = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.isVisible(request.selector)
             }
@@ -357,7 +357,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val checked = managed.driverMutex.withLock {
+            val checked = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.isChecked(request.selector)
             }
@@ -387,7 +387,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.hover(request.selector)
             }
@@ -417,7 +417,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.focus(request.selector)
             }
@@ -447,7 +447,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.check(request.selector)
             }
@@ -477,7 +477,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.uncheck(request.selector)
             }
@@ -507,7 +507,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val text = managed.driverMutex.withLock {
+            val text = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.selectFirstTextOrNull(request.selector)
             }
@@ -537,7 +537,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val texts = managed.driverMutex.withLock {
+            val texts = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.selectTextAll(request.selector)
             }
@@ -567,7 +567,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val value = managed.driverMutex.withLock {
+            val value = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.selectFirstAttributeOrNull(request.selector, request.attrName)
             }
@@ -597,7 +597,7 @@ class SelectorController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val values = managed.driverMutex.withLock {
+            val values = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.selectAttributeAll(request.selector, request.attrName)
             }

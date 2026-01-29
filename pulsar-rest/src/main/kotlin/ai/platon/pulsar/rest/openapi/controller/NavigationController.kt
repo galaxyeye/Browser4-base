@@ -51,7 +51,7 @@ class NavigationController(
 
         try {
             // Serialize WebDriver operations using mutex to prevent parallel execution
-            session.driverMutex.withLock {
+            session.mutex.withLock {
                 val driver = session.pulsarSession.getOrCreateBoundDriver()
                 driver.navigateTo(request.url)
             }
@@ -146,7 +146,7 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.reload()
             }
@@ -172,7 +172,7 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.goBack()
             }
@@ -198,7 +198,7 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.goForward()
             }
@@ -224,7 +224,7 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val title = managed.driverMutex.withLock {
+            val title = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.title()
             }
@@ -250,7 +250,7 @@ class NavigationController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.bringToFront()
             }

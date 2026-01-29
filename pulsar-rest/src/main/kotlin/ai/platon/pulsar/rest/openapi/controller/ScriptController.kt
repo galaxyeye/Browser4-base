@@ -42,7 +42,7 @@ class ScriptController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val result = managed.driverMutex.withLock {
+            val result = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.evaluate(request.script)
             }
@@ -72,7 +72,7 @@ class ScriptController(
             ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
 
         return try {
-            val result = managed.driverMutex.withLock {
+            val result = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 // For async scripts, we use the same evaluate method
                 // The caller is responsible for proper async handling in the script

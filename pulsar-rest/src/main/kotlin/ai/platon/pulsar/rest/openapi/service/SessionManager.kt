@@ -39,8 +39,9 @@ class SessionManager(
         var status: String = "active", // active, paused, stopped
         val createdAt: Long = System.currentTimeMillis(),
         var lastAccessedAt: Long = System.currentTimeMillis(),
-        val driverMutex: Mutex = Mutex()
     ) {
+        val mutex: Mutex = Mutex()
+
         val driver get() = pulsarSession.getOrCreateBoundDriver()
         val agent: PerceptiveAgent get() = pulsarSession.companionAgent
     }

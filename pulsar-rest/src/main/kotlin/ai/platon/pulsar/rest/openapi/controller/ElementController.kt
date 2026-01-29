@@ -92,7 +92,7 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.click(element.selector)
             }
@@ -126,7 +126,7 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            managed.driverMutex.withLock {
+            managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.fill(element.selector, request.text)
             }
@@ -160,7 +160,7 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            val value = managed.driverMutex.withLock {
+            val value = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.selectFirstAttributeOrNull(element.selector, name)
             }
@@ -193,7 +193,7 @@ class ElementController(
             ?: return ControllerUtils.notFound("no such element", "Element with id $elementId not found")
 
         return try {
-            val text = managed.driverMutex.withLock {
+            val text = managed.mutex.withLock {
                 val driver = managed.pulsarSession.getOrCreateBoundDriver()
                 driver.selectFirstTextOrNull(element.selector) ?: ""
             }
