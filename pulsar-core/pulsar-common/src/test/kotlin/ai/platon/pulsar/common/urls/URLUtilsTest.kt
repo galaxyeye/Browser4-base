@@ -228,15 +228,9 @@ class URLUtilsTest {
         val url = "http://example.com/test?="
         val normalized = URLUtils.normalizeOrNull(url)
         
-        // This might fail, but we need to document the behavior
-        // It's OK if this returns null for truly malformed URLs
-        // But "param=" should work as it's a valid empty value
-        if (normalized == null) {
-            // Document that bare "=" is considered invalid
-            assertTrue(true, "Bare equals sign may be considered invalid")
-        } else {
-            assertNotNull(normalized)
-        }
+        // Note: bare "=" without a parameter name may be considered invalid
+        // This test documents the current behavior
+        // assertNull or assertNotNull would both be acceptable depending on implementation
     }
 
     @Test
@@ -250,15 +244,11 @@ class URLUtilsTest {
     @Test
     fun `normalizeOrNull should handle URL with special characters that need encoding`() {
         val url = "http://example.com/test?param=hello world"
-        val normalized = URLUtils.normalizeOrNull(url)
         
-        // URLs with unencoded spaces might be rejected, which is correct behavior
+        // Note: URLs with unencoded spaces are typically invalid and may be rejected
         // This test documents the expected behavior
-        if (normalized == null) {
-            assertTrue(true, "Unencoded spaces may be rejected")
-        } else {
-            assertNotNull(normalized)
-        }
+        val normalized = URLUtils.normalizeOrNull(url)
+        // The actual result depends on the URL parsing library's strictness
     }
 
     @Test

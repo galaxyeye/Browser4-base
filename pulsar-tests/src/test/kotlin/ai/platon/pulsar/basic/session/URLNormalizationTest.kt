@@ -14,7 +14,7 @@ class URLNormalizationTest : TestBase() {
         val url = "http://localhost:18080/test?param="
         val normalized = session.normalize(url)
 
-        assertNotNull(normalized, "URL with special characters should be normalized")
+        assertNotNull(normalized, "URL with empty query parameter value should be normalized")
         assertFalse(normalized.isNil, "Should not result in nil page")
         assertTrue(normalized.spec.contains("param="), "Query parameter should be preserved")
     }
