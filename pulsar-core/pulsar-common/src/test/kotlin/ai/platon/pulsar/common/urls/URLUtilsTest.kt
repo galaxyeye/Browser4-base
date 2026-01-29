@@ -202,10 +202,6 @@ class URLUtilsTest {
         val url = "http://localhost:18080/test?param="
         val normalized = URLUtils.normalizeOrNull(url)
         
-        // Debug output
-        printlnPro("Testing URL: $url")
-        printlnPro("Normalized result: $normalized")
-        
         assertNotNull(normalized, "URL with empty query parameter value should be normalized")
         assertTrue(normalized!!.contains("param="), "Query parameter should be preserved")
     }
