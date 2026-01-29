@@ -5,6 +5,7 @@ import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.context.AgenticContext
 import ai.platon.pulsar.skeleton.context.PulsarContext
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.stereotype.Service
@@ -44,6 +45,12 @@ class SessionManager(
 
         val driver get() = pulsarSession.getOrCreateBoundDriver()
         val agent: PerceptiveAgent get() = pulsarSession.companionAgent
+
+        suspend inline fun <R> withLock(block: ManagedSession.() -> R): R {
+            return mutex.withLock(null) {
+                this.block()
+            }
+        }
     }
 
     private val sessions = ConcurrentHashMap<String, ManagedSession>()

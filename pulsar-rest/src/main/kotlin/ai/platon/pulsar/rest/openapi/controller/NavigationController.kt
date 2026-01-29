@@ -51,10 +51,7 @@ class NavigationController(
 
         try {
             // Serialize WebDriver operations using mutex to prevent parallel execution
-            session.mutex.withLock {
-                val driver = session.pulsarSession.getOrCreateBoundDriver()
-                driver.navigateTo(request.url)
-            }
+            session.withLock { driver.navigateTo(request.url) }
             sessionManager.setSessionUrl(sessionId, request.url)
         } catch (e: Exception) {
             logger.error("Error navigating to URL: {}", e.message, e)
