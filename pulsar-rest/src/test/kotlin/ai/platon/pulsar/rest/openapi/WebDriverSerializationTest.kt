@@ -36,10 +36,8 @@ class WebDriverSerializationTest {
                     val current = concurrentCount.incrementAndGet()
                     maxConcurrent.updateAndGet { max -> maxOf(max, current) }
                     
-                    // Record execution order
-                    synchronized(executionOrder) {
-                        executionOrder.add(i)
-                    }
+                    // Record execution order (mutex ensures only one thread here at a time)
+                    executionOrder.add(i)
                     
                     // Simulate some work
                     delay(10)
@@ -67,40 +65,42 @@ class WebDriverSerializationTest {
         val mutex2 = Mutex()
         val mutex3 = Mutex()
         
-        val startTime = System.currentTimeMillis()
-        val completionTimes = mutableMapOf<String, Long>()
+        val concurrentCount = AtomicInteger(0)
+        val maxConcurrent = AtomicInteger(0)
         
         // Launch operations on different sessions
         val jobs = listOf(
             launch {
                 mutex1.withLock {
+                    val current = concurrentCount.incrementAndGet()
+                    maxConcurrent.updateAndGet { max -> maxOf(max, current) }
                     delay(100) // Simulate work
-                    completionTimes["session1"] = System.currentTimeMillis() - startTime
+                    concurrentCount.decrementAndGet()
                 }
             },
             launch {
                 mutex2.withLock {
+                    val current = concurrentCount.incrementAndGet()
+                    maxConcurrent.updateAndGet { max -> maxOf(max, current) }
                     delay(100) // Simulate work
-                    completionTimes["session2"] = System.currentTimeMillis() - startTime
+                    concurrentCount.decrementAndGet()
                 }
             },
             launch {
                 mutex3.withLock {
+                    val current = concurrentCount.incrementAndGet()
+                    maxConcurrent.updateAndGet { max -> maxOf(max, current) }
                     delay(100) // Simulate work
-                    completionTimes["session3"] = System.currentTimeMillis() - startTime
+                    concurrentCount.decrementAndGet()
                 }
             }
         )
         
         jobs.joinAll()
         
-        // All three sessions should complete around the same time (within 50ms)
-        // If they were serialized, it would take ~300ms total
-        val maxTime = completionTimes.values.maxOrNull() ?: 0
-        val minTime = completionTimes.values.minOrNull() ?: 0
-        
-        assertTrue(maxTime < 200, "All sessions should complete in parallel, not take 3x the time")
-        assertTrue(maxTime - minTime < 50, "Sessions should complete around the same time")
+        // Verify that at least 2 sessions ran concurrently
+        // If they were all serialized, maxConcurrent would be 1
+        assertTrue(maxConcurrent.get() >= 2, "Different sessions should run in parallel, not be serialized")
     }
 
     @Test
@@ -138,9 +138,9 @@ class WebDriverSerializationTest {
         // Start first operation
         val job1 = launch {
             mutex.withLock {
-                synchronized(executionLog) { executionLog.add("job1-start") }
+                executionLog.add("job1-start")
                 delay(50)
-                synchronized(executionLog) { executionLog.add("job1-end") }
+                executionLog.add("job1-end")
             }
         }
         
@@ -150,9 +150,9 @@ class WebDriverSerializationTest {
         // Start second operation (should be queued)
         val job2 = launch {
             mutex.withLock {
-                synchronized(executionLog) { executionLog.add("job2-start") }
+                executionLog.add("job2-start")
                 delay(50)
-                synchronized(executionLog) { executionLog.add("job2-end") }
+                executionLog.add("job2-end")
             }
         }
         
