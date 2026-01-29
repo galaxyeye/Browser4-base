@@ -57,8 +57,7 @@ class SelectorController(
 
         return try {
             val exists = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.exists(request.selector)
+                managed.driver.exists(request.selector)
             }
             ResponseEntity.ok(ExistsResponse(value = ExistsResponse.ExistsValue(exists = exists)))
         } catch (e: WebDriverException) {
@@ -93,8 +92,7 @@ class SelectorController(
 
         return try {
             val remainingMillis = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.waitForSelector(request.selector, timeoutMillis)
+                managed.driver.waitForSelector(request.selector, timeoutMillis)
             }
 
             if (remainingMillis <= 0L) {
@@ -178,8 +176,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.click(request.selector)
+                managed.driver.click(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -208,8 +205,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.fill(request.selector, request.value)
+                managed.driver.fill(request.selector, request.value)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -238,8 +234,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.press(request.selector, request.key)
+                managed.driver.press(request.selector, request.key)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -268,8 +263,7 @@ class SelectorController(
 
         return try {
             val html = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.outerHTML(request.selector)
+                managed.driver.outerHTML(request.selector)
             }
             ResponseEntity.ok(HtmlResponse(value = html))
         } catch (e: WebDriverException) {
@@ -298,8 +292,7 @@ class SelectorController(
 
         return try {
             val base64 = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.captureScreenshot(request.selector)
+                managed.driver.captureScreenshot(request.selector)
             }
             ResponseEntity.ok(ScreenshotResponse(value = base64))
         } catch (e: WebDriverException) {
@@ -328,8 +321,7 @@ class SelectorController(
 
         return try {
             val visible = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.isVisible(request.selector)
+                managed.driver.isVisible(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse(value = visible))
         } catch (e: WebDriverException) {
@@ -358,8 +350,7 @@ class SelectorController(
 
         return try {
             val checked = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.isChecked(request.selector)
+                managed.driver.isChecked(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse(value = checked))
         } catch (e: WebDriverException) {
@@ -388,8 +379,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.hover(request.selector)
+                managed.driver.hover(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -418,8 +408,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.focus(request.selector)
+                managed.driver.focus(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -448,8 +437,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.check(request.selector)
+                managed.driver.check(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -478,8 +466,7 @@ class SelectorController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.uncheck(request.selector)
+                managed.driver.uncheck(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -508,8 +495,7 @@ class SelectorController(
 
         return try {
             val text = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.selectFirstTextOrNull(request.selector)
+                managed.driver.selectFirstTextOrNull(request.selector)
             }
             ResponseEntity.ok(TextResponse(value = text))
         } catch (e: WebDriverException) {
@@ -538,8 +524,7 @@ class SelectorController(
 
         return try {
             val texts = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.selectTextAll(request.selector)
+                managed.driver.selectTextAll(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse(value = texts))
         } catch (e: WebDriverException) {
@@ -568,8 +553,7 @@ class SelectorController(
 
         return try {
             val value = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.selectFirstAttributeOrNull(request.selector, request.attrName)
+                managed.driver.selectFirstAttributeOrNull(request.selector, request.attrName)
             }
             ResponseEntity.ok(AttributeResponse(value = value))
         } catch (e: WebDriverException) {
@@ -598,8 +582,7 @@ class SelectorController(
 
         return try {
             val values = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.selectAttributeAll(request.selector, request.attrName)
+                managed.driver.selectAttributeAll(request.selector, request.attrName)
             }
             ResponseEntity.ok(WebDriverResponse(value = values))
         } catch (e: WebDriverException) {

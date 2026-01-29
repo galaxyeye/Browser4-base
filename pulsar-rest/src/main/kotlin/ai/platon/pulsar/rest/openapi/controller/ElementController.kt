@@ -93,8 +93,7 @@ class ElementController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.click(element.selector)
+                managed.driver.click(element.selector)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -127,8 +126,7 @@ class ElementController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.fill(element.selector, request.text)
+                managed.driver.fill(element.selector, request.text)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: WebDriverException) {
@@ -161,15 +159,27 @@ class ElementController(
 
         return try {
             val value = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.selectFirstAttributeOrNull(element.selector, name)
+                managed.driver.selectFirstAttributeOrNull(element.selector, name)
             }
             ResponseEntity.ok(AttributeResponse(value = value ?: ""))
         } catch (e: WebDriverException) {
-            logger.error("Get attribute failed | sessionId={} elementId={} name={} | {}", sessionId, elementId, name, e.message)
+            logger.error(
+                "Get attribute failed | sessionId={} elementId={} name={} | {}",
+                sessionId,
+                elementId,
+                name,
+                e.message
+            )
             ControllerUtils.errorResponse("webdriver error", e.message ?: "WebDriver error")
         } catch (e: Exception) {
-            logger.error("Get attribute failed | sessionId={} elementId={} name={} | {}", sessionId, elementId, name, e.message, e)
+            logger.error(
+                "Get attribute failed | sessionId={} elementId={} name={} | {}",
+                sessionId,
+                elementId,
+                name,
+                e.message,
+                e
+            )
             ControllerUtils.errorResponse("internal error", e.message ?: "Internal error")
         }
     }
@@ -194,8 +204,7 @@ class ElementController(
 
         return try {
             val text = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.selectFirstTextOrNull(element.selector) ?: ""
+                managed.driver.selectFirstTextOrNull(element.selector) ?: ""
             }
             ResponseEntity.ok(TextResponse(value = text))
         } catch (e: WebDriverException) {

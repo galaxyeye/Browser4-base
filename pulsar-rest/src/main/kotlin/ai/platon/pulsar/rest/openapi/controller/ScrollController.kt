@@ -43,8 +43,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollDown(request.count)
+                managed.driver.scrollDown(request.count)
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
@@ -73,8 +72,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollUp(request.count)
+                managed.driver.scrollUp(request.count)
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
@@ -103,8 +101,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollTo(request.selector)
+                managed.driver.scrollTo(request.selector)
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
@@ -132,8 +129,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollToTop()
+                managed.driver.scrollToTop()
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
@@ -161,8 +157,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollToBottom()
+                managed.driver.scrollToBottom()
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
@@ -191,8 +186,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollToMiddle(request.ratio)
+                managed.driver.scrollToMiddle(request.ratio)
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {
@@ -221,8 +215,7 @@ class ScrollController(
 
         return try {
             val scrollY = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.scrollBy(request.pixels, request.smooth)
+                managed.driver.scrollBy(request.pixels, request.smooth)
             }
             ResponseEntity.ok(WebDriverResponse(value = scrollY))
         } catch (e: WebDriverException) {

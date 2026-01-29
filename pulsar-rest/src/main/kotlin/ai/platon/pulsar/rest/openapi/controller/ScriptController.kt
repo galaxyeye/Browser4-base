@@ -44,8 +44,7 @@ class ScriptController(
 
         return try {
             val result = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.evaluate(request.script)
+                managed.driver.evaluate(request.script)
             }
             ResponseEntity.ok(ScriptResponse(value = result))
         } catch (e: WebDriverException) {
@@ -74,10 +73,9 @@ class ScriptController(
 
         return try {
             val result = managed.mutex.withLock {
-                val driver = managed.driver
                 // For async scripts, we use the same evaluate method
                 // The caller is responsible for proper async handling in the script
-                driver.evaluate(request.script)
+                managed.driver.evaluate(request.script)
             }
             ResponseEntity.ok(ScriptResponse(value = result))
         } catch (e: WebDriverException) {

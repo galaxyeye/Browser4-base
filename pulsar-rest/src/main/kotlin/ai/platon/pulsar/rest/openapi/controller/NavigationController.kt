@@ -147,8 +147,7 @@ class NavigationController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.reload()
+                managed.driver.reload()
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -173,8 +172,7 @@ class NavigationController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.goBack()
+                managed.driver.goBack()
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -199,8 +197,7 @@ class NavigationController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.goForward()
+                managed.driver.goForward()
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -225,8 +222,7 @@ class NavigationController(
 
         return try {
             val title = managed.mutex.withLock {
-                val driver = managed.driver
-                driver.title()
+                managed.driver.title()
             }
             ResponseEntity.ok(WebDriverResponse(value = title))
         } catch (e: Exception) {
@@ -251,8 +247,7 @@ class NavigationController(
 
         return try {
             managed.mutex.withLock {
-                val driver = managed.driver
-                driver.bringToFront()
+                managed.driver.bringToFront()
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
