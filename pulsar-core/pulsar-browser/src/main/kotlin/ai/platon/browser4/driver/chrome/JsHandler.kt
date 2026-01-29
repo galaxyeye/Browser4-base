@@ -26,38 +26,30 @@ class JsHandler(
     private val confuser get() = isolatedWorldManager.settings.confuser
 
     /**
-     * Evaluates expression on global object.
+     * Evaluates expression on global object and returns detailed evaluation result.
      *
-     * @param expression Javascript expression to evaluate
-     * @return Remote object value in case of primitive values or JSON values (if it was requested).
+     * @param script Javascript expression to evaluate
+     * @return Detailed evaluation result including remote object and exception details, or null if evaluation fails
+     * @throws ChromeDriverException if the script fails to execute
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateDetail(script: String): Evaluate? {
-        val expression: String
+        require(script.isNotBlank()) { "Script must not be blank" }
+        
         val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
         // Check if this script is a IIFE
-        if (lines.size > 1) {
+        val expression = if (lines.size > 1) {
             val firstLine = lines[0]
-            expression = if (!firstLine.startsWith("(")) {
+            if (!firstLine.startsWith("(")) {
                 JsUtils.toIIFE(script)
             } else {
                 script
             }
         } else {
-            expression = script
+            script
         }
 
         val confusedExpr = confuser.confuse(expression)
-
-//        val isolatedContextId = isolatedWorldManager
-//            .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
-//        if (isolatedContextId != null && isolatedContextId > 0) {
-//            val isolatedResult = runCatching { evaluateInContext(confusedExpr, isolatedContextId, returnByValue = false) }
-//                .getOrNull()
-//            if (isolatedResult != null) {
-//                return isolatedResult
-//            }
-//        }
 
         return try {
             runtimeAPI?.evaluate(confusedExpr)
@@ -68,13 +60,15 @@ class JsHandler(
     }
 
     /**
-     * Evaluates expression on global object.
+     * Evaluates expression on global object and returns the result value.
      *
-     * @param expression Javascript expression to evaluate
-     * @return Remote object value in case of primitive values or JSON values (if it was requested).
+     * @param script Javascript expression to evaluate
+     * @return Remote object value in case of primitive values or JSON values, or null if evaluation fails
+     * @throws RuntimeException if the script execution results in an exception
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluate(script: String): Any? {
+        require(script.isNotBlank()) { "Script must not be blank" }
         val evaluate = if (script.contains("__pulsar_utils__")) {
             // Just for debugging purpose
             evaluateDetail(script)
@@ -84,34 +78,43 @@ class JsHandler(
 
         val exception = evaluate?.exceptionDetails?.exception
         if (exception != null) {
-            logger.warn(exception.description + "\n>>>$script<<<")
-            throw RuntimeException(prettyPulsarObjectMapper().writeValueAsString(exception))
+            val errorMsg = "${exception.description}\n>>>$script<<<"
+            logger.warn(errorMsg)
+            throw ChromeDriverException(errorMsg)
         }
 
         val result = evaluate?.result
         return result?.value
     }
 
+    /**
+     * Evaluates expression on global object with return by value and returns detailed evaluation result.
+     * Supports execution in isolated world contexts for better security isolation.
+     *
+     * @param script Javascript expression to evaluate
+     * @return Detailed evaluation result with value returned, or null if evaluation fails
+     * @throws ChromeDriverException if the script fails to execute
+     * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateValueDetail(script: String): Evaluate? {
-        val expression: String
+        require(script.isNotBlank()) { "Script must not be blank" }
         val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
         // Check if this script is a IIFE
-        if (lines.size > 1) {
+        val expression = if (lines.size > 1) {
             val firstLine = lines[0]
-            expression = if (!firstLine.startsWith("(")) {
-                JsUtils.toIIFE(confuser.confuse(script))
+            if (!firstLine.startsWith("(")) {
+                JsUtils.toIIFE(script)
             } else {
                 script
             }
         } else {
-            expression = script
+            script
         }
 
         val confusedExpr = confuser.confuse(expression)
 
         val isolatedContextId = isolatedWorldManager
-            ?.getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
+            .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
         if (isolatedContextId != null && isolatedContextId > 0) {
             val isolatedResult = runCatching {
                 evaluateInContext(confusedExpr, isolatedContextId, returnByValue = true) }.getOrNull()
@@ -129,25 +132,37 @@ class JsHandler(
     }
 
     /**
-     * Evaluates expression on global object.
+     * Evaluates expression on global object with return by value.
+     * Returns the actual value rather than a remote object reference.
      *
-     * @param expression Javascript expression to evaluate
-     * @return Remote object value in case of primitive values or JSON values (if it was requested).
+     * @param script Javascript expression to evaluate
+     * @return The evaluated value, or null if evaluation fails or returns null
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateValue(script: String): Any? {
+        require(script.isNotBlank()) { "Script must not be blank" }
         val evaluate = evaluateValueDetail(script)
 
         val exception = evaluate?.exceptionDetails?.exception
         if (exception != null) {
-            logger.info(exception.description + "\n>>>$script<<<")
+            logger.warn(exception.description + "\n>>>$script<<<")
         }
 
         return evaluate?.result?.value
     }
 
+    /**
+     * Evaluates a function on a DOM element and returns detailed evaluation result.
+     * Resolves the element by selector, calls the function, and properly releases resources.
+     *
+     * @param selector CSS selector to locate the element
+     * @param functionDeclaration JavaScript function declaration to execute on the element
+     * @return Detailed evaluation result, or null if the element cannot be found or resolved
+     * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): CallFunctionOn? {
+        require(selector.isNotBlank()) { "Selector must not be blank" }
+        require(functionDeclaration.isNotBlank()) { "Function declaration must not be blank" }
         val node = pageHandler.resolveSelector(selector) ?: return null
         // Resolve a fresh objectId and ensure it's released after the call
         val resolved = try {
@@ -166,23 +181,43 @@ class JsHandler(
         } finally {
             try {
                 runtimeAPI?.releaseObject(oid)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                logger.warn("Failed to release object $oid", e)
             }
         }
     }
 
+    /**
+     * Evaluates a function on a DOM element and returns the result value.
+     * Resolves the element by selector, calls the function, and properly releases resources.
+     *
+     * @param selector CSS selector to locate the element
+     * @param functionDeclaration JavaScript function declaration to execute on the element
+     * @return The evaluated value, or null if the element cannot be found or evaluation fails
+     * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any? {
-        val reslut = evaluateValueDetail(selector, functionDeclaration)
+        require(selector.isNotBlank()) { "Selector must not be blank" }
+        require(functionDeclaration.isNotBlank()) { "Function declaration must not be blank" }
+        val result = evaluateValueDetail(selector, functionDeclaration)
 
-        val exception = reslut?.exceptionDetails?.exception
+        val exception = result?.exceptionDetails?.exception
         if (exception != null) {
-            logger.info(exception.description + "\n>>>$functionDeclaration<<<")
+            logger.warn(exception.description + "\n>>>$functionDeclaration<<<")
         }
 
-        return reslut?.result?.value
+        return result?.result?.value
     }
 
+    /**
+     * Evaluates JavaScript in a specific execution context.
+     * Used internally to support isolated world execution.
+     *
+     * @param expression JavaScript expression to evaluate
+     * @param contextId Execution context ID
+     * @param returnByValue Whether to return the value or a remote object reference
+     * @return Detailed evaluation result, or null if evaluation fails
+     * */
     private suspend fun evaluateInContext(expression: String, contextId: Int, returnByValue: Boolean): Evaluate? {
         val params = mutableMapOf<String, Any?>(
             "expression" to expression,
@@ -193,6 +228,10 @@ class JsHandler(
 
         // runtimeAPI.evaluate()
         val raw = devTools.invoke<Map<String, Any?>>("Runtime.evaluate", params, null) ?: return null
-        return runCatching { pulsarObjectMapper().convertValue(raw) as Evaluate }.getOrNull()
+        return runCatching { 
+            pulsarObjectMapper().convertValue<Evaluate>(raw)
+        }.onFailure { e ->
+            logger.warn("Failed to convert evaluation result to Evaluate type", e)
+        }.getOrNull()
     }
 }
