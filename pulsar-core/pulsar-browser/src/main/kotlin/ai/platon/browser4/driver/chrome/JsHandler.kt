@@ -59,6 +59,31 @@ class JsHandler(
         }
     }
 
+    @Throws(ChromeDriverException::class)
+    suspend fun callFunctionOn(selector: String, functionDeclaration: String): CallFunctionOn? {
+        val node = pageHandler.resolveSelector(selector) ?: return null
+        // Resolve a fresh objectId and ensure it's released after the call
+        val resolved = try {
+            when {
+                node.nodeId > 0 -> domAPI?.resolveNode(node.nodeId, null, null, null)
+                node.backendNodeId > 0 -> domAPI?.resolveNode(null, node.backendNodeId, null, null)
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        } ?: return null
+
+        val oid = resolved.objectId ?: return null
+        return try {
+            runtimeAPI?.callFunctionOn(functionDeclaration, objectId = oid, returnByValue = true)
+        } finally {
+            try {
+                runtimeAPI?.releaseObject(oid)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
     /**
      * Evaluates expression on global object and returns the result value.
      *
@@ -116,8 +141,7 @@ class JsHandler(
         val isolatedContextId = isolatedWorldManager
             .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
         if (isolatedContextId != null && isolatedContextId > 0) {
-            val isolatedResult = runCatching {
-                evaluateInContext(confusedExpr, isolatedContextId, returnByValue = true) }.getOrNull()
+            val isolatedResult = evaluateInContext(confusedExpr, isolatedContextId, returnByValue = true)
             if (isolatedResult != null) {
                 return isolatedResult
             }

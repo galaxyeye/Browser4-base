@@ -4,17 +4,14 @@ import ai.platon.pulsar.agentic.tools.agent.AgentTaskStatus
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
-import ai.platon.pulsar.rest.api.entities.CommandStatus
 import ai.platon.pulsar.rest.api.entities.toCommandStatus
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 /**
  * Test status conversion logic to ensure proper field transfer between different status types.
- * 
+ *
  * This test verifies:
  * 1. PageVisitStatus -> CommandStatus conversion
  * 2. AgentTaskStatus -> CommandStatus conversion
@@ -37,10 +34,10 @@ class CommandStatusConversionTest {
         )
         pageVisitStatus.lastModifiedTime = now
         pageVisitStatus.finishTime = now.plusSeconds(10)
-        
+
         // Convert using extension function
         val commandStatus = pageVisitStatus.toCommandStatus()
-        
+
         // Verify all fields are transferred
         assertEquals("test-id-123", commandStatus.id)
         assertEquals(ResourceStatus.SC_OK, commandStatus.statusCode)
@@ -60,10 +57,10 @@ class CommandStatusConversionTest {
             statusCode = ResourceStatus.SC_OK,
             processState = "done"
         )
-        
+
         // Convert using extension function
         val commandStatus = pageVisitStatus.toCommandStatus()
-        
+
         // Verify processState is preserved
         assertEquals("done", commandStatus.processState)
         assertEquals(true, commandStatus.isDone)
@@ -82,10 +79,10 @@ class CommandStatusConversionTest {
         )
         agentTaskStatus.lastModifiedTime = now
         agentTaskStatus.finishTime = now.plusSeconds(5)
-        
+
         // Convert using extension function
         val commandStatus = agentTaskStatus.toCommandStatus()
-        
+
         // Verify all fields are transferred
         assertEquals("agent-id-456", commandStatus.id)
         assertEquals(ResourceStatus.SC_OK, commandStatus.statusCode)
@@ -94,7 +91,7 @@ class CommandStatusConversionTest {
         assertEquals("agent message", commandStatus.message)
         assertEquals(now, commandStatus.lastModifiedTime)
         assertEquals(now.plusSeconds(5), commandStatus.finishTime)
-        
+
         // Verify that pageStatusCode and pageContentBytes are at default values
         // since AgentTaskStatus doesn't have these fields
         assertEquals(ProtocolStatusCodes.SC_CREATED, commandStatus.pageStatusCode)
@@ -108,10 +105,10 @@ class CommandStatusConversionTest {
             statusCode = ResourceStatus.SC_CREATED,
             processState = "created"
         )
-        
+
         // Convert using extension function
         val commandStatus = agentTaskStatus.toCommandStatus()
-        
+
         // Verify processState is preserved and not forced to "done"
         assertEquals("created", commandStatus.processState)
         assertEquals(false, commandStatus.isDone)
@@ -124,10 +121,10 @@ class CommandStatusConversionTest {
             statusCode = ResourceStatus.SC_OK,
             processState = "done"
         )
-        
+
         // Convert using extension function
         val commandStatus = agentTaskStatus.toCommandStatus()
-        
+
         // Verify processState is preserved
         assertEquals("done", commandStatus.processState)
         assertEquals(true, commandStatus.isDone)

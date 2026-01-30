@@ -105,7 +105,7 @@ open class PulsarSession(
         return if (value is Map<*, *>) {
             NormURL.fromMap(value as Map<String, Any?>)
         } else {
-            NormURL(spec = url, url = url)
+            NormURL(spec = url, args = args)
         }
     }
 
