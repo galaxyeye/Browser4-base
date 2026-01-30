@@ -28,6 +28,27 @@ class WebPage:
     is_nil: bool = False
     html: Optional[str] = None
 
+    # Kotlin-style aliases for compatibility
+    @property
+    def contentType(self) -> Optional[str]:
+        """Alias for content_type (Kotlin-style naming)."""
+        return self.content_type
+    
+    @property
+    def contentLength(self) -> int:
+        """Alias for content_length (Kotlin-style naming)."""
+        return self.content_length
+    
+    @property
+    def protocolStatus(self) -> Optional[str]:
+        """Alias for protocol_status (Kotlin-style naming)."""
+        return self.protocol_status
+    
+    @property
+    def isNil(self) -> bool:
+        """Alias for is_nil (Kotlin-style naming)."""
+        return self.is_nil
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "WebPage":
         """Create WebPage from API response dict."""
@@ -53,6 +74,12 @@ class NormURL:
     args: Optional[str] = None
     is_nil: bool = False
 
+    # Kotlin-style alias for compatibility
+    @property
+    def isNil(self) -> bool:
+        """Alias for is_nil (Kotlin-style naming)."""
+        return self.is_nil
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "NormURL":
         """Create NormURL from API response dict."""
@@ -74,10 +101,21 @@ class AgentRunResult:
     final_result: Any = None
     trace: Optional[List[str]] = None
 
-    # Kotlin-style alias
+    # Kotlin-style aliases for compatibility
     @property
     def finalResult(self) -> Any:
+        """Alias for final_result (Kotlin-style naming)."""
         return self.final_result
+    
+    @property
+    def historySize(self) -> int:
+        """Alias for history_size (Kotlin-style naming)."""
+        return self.history_size
+    
+    @property
+    def processTraceSize(self) -> int:
+        """Alias for process_trace_size (Kotlin-style naming)."""
+        return self.process_trace_size
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AgentRunResult":
@@ -102,6 +140,12 @@ class AgentActResult:
     expression: Optional[str] = None
     result: Any = None
     trace: Optional[List[str]] = None
+
+    # Kotlin-style alias for compatibility
+    @property
+    def isComplete(self) -> bool:
+        """Alias for is_complete (Kotlin-style naming)."""
+        return self.is_complete
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AgentActResult":

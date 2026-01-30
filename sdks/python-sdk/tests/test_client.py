@@ -556,3 +556,179 @@ def test_full_workflow(stub_client):
     # Clear and verify
     session.clear_history()
     assert len(session.process_trace) == 0
+
+
+def test_delete_session_clears_session_id(stub_client):
+    """Test that delete_session clears session_id when deleting current session."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    
+    # Delete current session (no explicit session_id)
+    client.delete_session()
+    
+    # Verify session_id is cleared
+    assert client.session_id is None
+
+
+def test_delete_session_preserves_session_id_for_other_sessions(stub_client):
+    """Test that delete_session preserves session_id when deleting a different session."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    
+    # Delete a different session
+    client.delete_session("other-session-456")
+    
+    # Verify current session_id is preserved
+    assert client.session_id == "test-session-123"
+
+
+def test_observe_with_explicit_parameters(stub_client):
+    """Test observe with explicit parameters matching Kotlin SDK."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    # Call with explicit parameters
+    observations = session.observe(
+        instruction="find buttons",
+        model_name="gpt-4",
+        dom_settle_timeout_ms=5000,
+        return_action=True,
+        draw_overlay=False
+    )
+    
+    # Verify parameters were sent correctly
+    request_body = json.loads(stub.calls[-1]["data"])
+    assert request_body["instruction"] == "find buttons"
+    assert request_body["modelName"] == "gpt-4"
+    assert request_body["domSettleTimeoutMs"] == 5000
+    assert request_body["returnAction"] is True
+    assert request_body["drawOverlay"] is False
+
+
+def test_agent_extract_with_explicit_parameters(stub_client):
+    """Test agent_extract with explicit parameters."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    result = session.agent_extract(
+        instruction="extract products",
+        schema={"type": "array"},
+        selector=".products",
+        model_name="gpt-4",
+        dom_settle_timeout_ms=3000
+    )
+    
+    # Verify parameters were sent
+    request_body = json.loads(stub.calls[-1]["data"])
+    assert request_body["instruction"] == "extract products"
+    assert request_body["schema"] == {"type": "array"}
+    assert request_body["selector"] == ".products"
+    assert request_body["modelName"] == "gpt-4"
+    assert request_body["domSettleTimeoutMs"] == 3000
+
+
+def test_act_with_explicit_parameters(stub_client):
+    """Test act with explicit parameters matching Kotlin SDK."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    result = session.act(
+        action="click button",
+        multi_act=True,
+        model_name="gpt-4",
+        variables={"key": "value"},
+        dom_settle_timeout_ms=5000,
+        timeout_ms=30000
+    )
+    
+    # Verify parameters were sent
+    request_body = json.loads(stub.calls[-1]["data"])
+    assert request_body["action"] == "click button"
+    assert request_body["multiAct"] is True
+    assert request_body["modelName"] == "gpt-4"
+    assert request_body["variables"] == {"key": "value"}
+    assert request_body["domSettleTimeoutMs"] == 5000
+    assert request_body["timeoutMs"] == 30000
+
+
+def test_run_with_explicit_parameters(stub_client):
+    """Test run with explicit parameters matching Kotlin SDK."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    session = AgenticSession(client)
+    
+    result = session.run(
+        task="complete task",
+        multi_act=True,
+        model_name="gpt-4",
+        variables={"var": "val"},
+        dom_settle_timeout_ms=4000,
+        timeout_ms=60000
+    )
+    
+    # Verify parameters were sent
+    request_body = json.loads(stub.calls[-1]["data"])
+    assert request_body["task"] == "complete task"
+    assert request_body["multiAct"] is True
+    assert request_body["modelName"] == "gpt-4"
+    assert request_body["variables"] == {"var": "val"}
+    assert request_body["domSettleTimeoutMs"] == 4000
+    assert request_body["timeoutMs"] == 60000
+
+
+def test_webdriver_url_methods_return_strings(stub_client):
+    """Test that WebDriver URL methods return strings consistently."""
+    client, stub = stub_client
+    client.session_id = "test-session-123"
+    driver = WebDriver(client)
+    
+    # Test current_url returns string
+    url = driver.current_url()
+    assert isinstance(url, str)
+    assert url == "https://example.com"
+    
+    # Test document_uri returns string
+    uri = driver.document_uri()
+    assert isinstance(uri, str)
+    
+    # Test base_uri returns string
+    base = driver.base_uri()
+    assert isinstance(base, str)
+
+
+def test_model_kotlin_style_aliases():
+    """Test that models provide Kotlin-style property aliases for compatibility."""
+    # Test WebPage aliases
+    page = WebPage(
+        url="https://example.com",
+        content_type="text/html",
+        content_length=1024,
+        protocol_status="200 OK",
+        is_nil=False
+    )
+    assert page.contentType == "text/html"
+    assert page.contentLength == 1024
+    assert page.protocolStatus == "200 OK"
+    assert page.isNil is False
+    
+    # Test NormURL alias
+    norm = NormURL(spec="https://example.com", url="https://example.com", is_nil=False)
+    assert norm.isNil is False
+    
+    # Test AgentRunResult aliases
+    run_result = AgentRunResult(
+        success=True,
+        history_size=5,
+        process_trace_size=3,
+        final_result="done"
+    )
+    assert run_result.historySize == 5
+    assert run_result.processTraceSize == 3
+    assert run_result.finalResult == "done"
+    
+    # Test AgentActResult alias
+    act_result = AgentActResult(success=True, is_complete=True)
+    assert act_result.isComplete is True
