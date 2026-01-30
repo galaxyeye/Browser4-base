@@ -52,7 +52,12 @@ open class NormURL constructor(
     /**
      * The url specification in string format.
      */
+    @Deprecated("Use urlString instead", ReplaceWith("urlString"))
     val spec get() = url.toString()
+    /**
+     * The url specification in string format.
+     */
+    val urlString get() = url.toString()
     /**
      * The href specification in string format.
      */
@@ -64,7 +69,11 @@ open class NormURL constructor(
     /**
      * The configured url specification in string format.
      */
-    val configuredUrl get() = "$spec $args".trim()
+    val configuredUrl get() = "$urlString $args".trim()
+    /**
+     * The String to parse as a NormURL.
+     * */
+    val urlSpec get() = "$urlString $args".trim()
     /**
      * The referrer url specification in string format.
      */

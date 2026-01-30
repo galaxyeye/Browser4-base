@@ -78,7 +78,7 @@ class ModelsTest {
     @Test
     fun `NormURL fromMap creates instance correctly`() {
         val data = mapOf(
-            "spec" to "https://example.com -expire 1d",
+            "urlSpec" to "https://example.com -expire 1d",
             "url" to "https://example.com",
             "args" to "-expire 1d",
             "isNil" to false
@@ -86,7 +86,7 @@ class ModelsTest {
 
         val normUrl = NormURL.fromMap(data)
 
-        assertEquals("https://example.com -expire 1d", normUrl.spec)
+        assertEquals("https://example.com -expire 1d", normUrl.urlSpec)
         assertEquals("https://example.com", normUrl.url)
         assertEquals("-expire 1d", normUrl.args)
         assertFalse(normUrl.isNil)

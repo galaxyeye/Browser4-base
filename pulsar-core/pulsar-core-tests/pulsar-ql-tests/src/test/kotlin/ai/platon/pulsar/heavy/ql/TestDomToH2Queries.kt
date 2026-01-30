@@ -89,4 +89,3 @@ class TestDomToH2Queries: TestBase() {
         }
     }
 }
-

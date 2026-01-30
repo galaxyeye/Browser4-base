@@ -46,10 +46,8 @@ class PulsarSessionController(
             session.pulsarSession.normalize(request.url, request.args ?: "")
         }
         val result = NormUrlResult(
-            spec = normUrl.spec,
             url = normUrl.url.toString(),
             args = normUrl.args,
-            isNil = normUrl.isNil
         )
 
         return ResponseEntity.ok(NormalizeResponse(value = result))

@@ -33,7 +33,7 @@ data class WebPage(
     val protocolStatus: String? = null,
     val html: String? = null
 ) {
-    val isNil get() = url == NormURL.NIL_SPEC
+    val isNil get() = url == NormURL.NIL_URL
 
     companion object {
         /**
@@ -57,20 +57,20 @@ data class WebPage(
  * Corresponds to the OpenAPI NormalizeResponse schema.
  */
 data class NormURL(
-    val spec: String,
+    val url: String,
     val args: String? = null
 ) {
-    val isNil: Boolean get() = spec == NIL_SPEC
-    val url: String get() = spec + (args?.takeIf { it.isNotBlank() } ?: "")
+    val isNil: Boolean get() = url == NIL_URL
+    val urlSpec: String get() = url + (args?.let { " $it" } ?: "")
 
     companion object {
-        const val NIL_SPEC = "http://internal.platon.ai/nil"
+        const val NIL_URL = "http://internal.platon.ai/nil"
         /**
          * Creates a NormURL from an API response map.
          */
         fun fromMap(data: Map<String, Any?>): NormURL {
             return NormURL(
-                spec = data["spec"] as? String ?: "",
+                url = data["url"] as? String ?: "",
                 args = data["args"] as? String?: ""
             )
         }

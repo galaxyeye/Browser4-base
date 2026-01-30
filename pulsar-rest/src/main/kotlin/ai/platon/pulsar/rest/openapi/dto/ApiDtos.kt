@@ -486,10 +486,8 @@ data class NormalizeRequest(
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class NormUrlResult(
-    @param:JsonProperty("spec") val spec: String,
     @param:JsonProperty("url") val url: String,
-    @param:JsonProperty("args") val args: String? = null,
-    @param:JsonProperty("isNil") val isNil: Boolean = false
+    @param:JsonProperty("args") val args: String? = null
 )
 
 /**
