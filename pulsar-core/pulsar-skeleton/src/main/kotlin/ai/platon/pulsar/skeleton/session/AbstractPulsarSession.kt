@@ -663,7 +663,8 @@ abstract class AbstractPulsarSession(
     }
 
     private fun getCachedPageOrNull(normURL: NormURL): WebPage? {
-        val (url, options) = normURL
+        val url = normURL.urlString
+        val options = normURL.options
         if (options.refresh) {
             // refresh the page, do not take cached version
             return null
@@ -682,7 +683,7 @@ abstract class AbstractPulsarSession(
     private fun parseNormalizedLink(ele: Element, normalize: Boolean = false, ignoreQuery: Boolean = false): String? {
         var link = ele.attr("abs:href").takeIf { it.startsWith("http") } ?: return null
         if (normalize) {
-            link = normalizeOrNull(link)?.spec ?: return null
+            link = normalizeOrNull(link)?.urlString ?: return null
         }
 
         link = link.takeUnless { ignoreQuery } ?: URLUtils.getUrlWithoutParameters(link)

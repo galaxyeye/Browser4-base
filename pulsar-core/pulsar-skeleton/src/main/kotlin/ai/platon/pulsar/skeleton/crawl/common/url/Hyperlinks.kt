@@ -22,7 +22,7 @@ internal class CompleteWebPageHyperlinkHandler(val link: CompletableListenableHy
  * Create a completable listenable hyperlink
  * */
 fun NormURL.toCompletableListenableHyperlink(): CompletableListenableHyperlink<WebPage> {
-    val link = CompletableListenableHyperlink<WebPage>(spec, args = args, href = hrefSpec)
+    val link = CompletableListenableHyperlink<WebPage>(urlString, args = args, href = hrefSpec)
 
     link.eventHandlers.loadEventHandlers.onLoaded.addLast(CompleteWebPageHyperlinkHandler(link))
     options.rawEvent?.let { link.eventHandlers.chain(it) }

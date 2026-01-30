@@ -67,13 +67,13 @@ open class NormURL constructor(
      */
     val args get() = options.toString()
     /**
-     * The configured url specification in string format.
-     */
-    val configuredUrl get() = "$urlString $args".trim()
-    /**
      * The String to parse as a NormURL.
      * */
     val urlSpec get() = "$urlString $args".trim()
+    /**
+     * The String to parse as a NormURL, the same as [urlSpec].
+     */
+    val configuredUrl get() = urlSpec
     /**
      * The referrer url specification in string format.
      */
@@ -81,7 +81,7 @@ open class NormURL constructor(
     /**
      * Whether the url is nil.
      */
-    val isNil get() = this.spec == AppConstants.NIL_PAGE_URL
+    val isNil get() = urlString == AppConstants.NIL_PAGE_URL
     /**
      * Whether the url is not nil.
      */
@@ -89,7 +89,7 @@ open class NormURL constructor(
     /**
      * The 1st-component, which is the url specification.
      */
-    operator fun component1() = spec
+    operator fun component1() = url
     /**
      * The 2nd-component, which is the load options.
      */

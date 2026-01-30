@@ -203,7 +203,7 @@ class LoadComponent(
     fun loadWithRetry(normURL: NormURL): WebPage {
         var page = loadWithEventHandlers(normURL)
 
-        if (URLUtils.isInternal(normURL.spec)) {
+        if (URLUtils.isInternal(normURL.urlString)) {
             normURL.options.nJitRetry = 1
         }
 
@@ -218,7 +218,7 @@ class LoadComponent(
     suspend fun loadWithRetryDeferred(normURL: NormURL): WebPage {
         var page = loadWithEventHandlersDeferred(normURL)
 
-        if (URLUtils.isInternal(normURL.spec)) {
+        if (URLUtils.isInternal(normURL.urlString)) {
             normURL.options.nJitRetry = 1
         }
 
@@ -272,7 +272,7 @@ class LoadComponent(
             return listOf()
         }
 
-        val linkFutures = normUrls.asSequence().filter { !it.isNil }.distinctBy { it.spec }
+        val linkFutures = normUrls.asSequence().filter { !it.isNil }.distinctBy { it.urlString }
             .map { it.toCompletableListenableHyperlink() }
             .toList()
         globalCache.urlPool.addAll(linkFutures)
@@ -418,7 +418,7 @@ class LoadComponent(
             // get the metadata of the page from the database, this is very fast for a crawler
             // load page content and page model lazily, if we load page content and page model every time,
             // the underlying storage may crash due to the stress.
-            val loadedPage = webDb.getOrNull(normURL.spec)
+            val loadedPage = webDb.getOrNull(normURL.urlString)
             dbGetCount.incrementAndGet()
             if (loadedPage != null) {
                 // override the old variables: args, href, etc
@@ -516,7 +516,7 @@ class LoadComponent(
     }
 
     private fun doHandleOnWillLoadEvent(normURL: NormURL, page: WebPage? = null) {
-        val url = normURL.spec
+        val url = normURL.urlString
         try {
             PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillLoad?.invoke(url)
             // The more specific handlers has the opportunity to override the result of more general handlers.
@@ -530,7 +530,7 @@ class LoadComponent(
     }
 
     private fun doHandleOnLoadedEvent(normURL: NormURL, page: WebPage? = null) {
-        val url = normURL.spec
+        val url = normURL.urlString
         val detail = normURL.detail
         val page0 = page ?: GoraWebPage.NIL
 
@@ -603,7 +603,8 @@ class LoadComponent(
      * @return The page, or null
      * */
     private fun getCachedPageOrNull(normURL: NormURL): WebPage? {
-        val (url, options) = normURL
+        val url = normURL.urlString
+        val options = normURL.options
         if (options.refresh) {
             // refresh the page, do not take cached version
             return null

@@ -110,8 +110,8 @@ class LoadComponentTests: TestBase() {
             .collect()
 
         assertEquals(normUrls.size, resultUrls.size)
-        assertEquals(resultUrls[0], normUrls[0].spec)
-        assertEquals(resultUrls[1], normUrls[1].spec)
+        assertEquals(resultUrls[0], normUrls[0].urlString)
+        assertEquals(resultUrls[1], normUrls[1].urlString)
     }
 
     @Test
