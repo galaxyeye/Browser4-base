@@ -265,96 +265,17 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 | Module            | Description                                             |
 |-------------------|---------------------------------------------------------|
 | `pulsar-core`     | Core engine: sessions, scheduling, DOM, browser control |
+| `pulsar-agentic`  | Agent implementation, MCP, and skill registration       |
 | `pulsar-rest`     | Spring Boot REST layer & command endpoints              |
-| `pulsar-sdk`      | Multi-language SDK                                      |
+| `pulsar-tools`    | CLI tools and operational utilities                     |
 | `browser4-spa`    | Single Page Application for browser agents              |
 | `browser4-agents` | Agent & crawler orchestration with product packaging    |
+| `sdks`            | Kotlin/Python SDKs plus tests and examples              |
+| `examples`        | Runnable examples and demos                             |
 | `pulsar-tests`    | E2E & heavy integration & scenario tests                |
 
 ---
 
 ## 📜 SDK
 
-Python/Node.js SDKs are on the way.
-
-## 📜 Documentation
-
-* 🛠️ [Configuration Guide](docs/config.md)
-* 📚 [Build from Source](docs/build.md)
-* 🧠 [Expert Guide](docs/advanced-guides.md)
-* 🤖 [AI Programming Products Guidance](docs/ai-products-guidance.md) - Support for Cursor, Windsurf, Cline, Aider, GitHub Copilot
-
----
-
-## 🔧 Proxies - Unblock Websites
-
-<details>
-
-Set the environment variable PROXY_ROTATION_URL to the URL provided by your proxy service:
-
-```shell
-export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
-```
-
-Each time the rotation URL is accessed, it should return a response containing one or more fresh proxy IPs.
-Ask your proxy provider for such a URL.
-
-</details>
-
----
-
-## ✨ Features
-
-### AI & Agents
-- Problem-solving autonomous browser agents
-- Parallel agent sessions
-- LLM-assisted page understanding & extraction
-
-### Browser Automation & RPA
-- Workflow-based browser actions
-- Precise coroutine-safe control (scroll, click, extract)
-- Flexible event handlers & lifecycle management
-
-### Data Extraction & Query
-- One-line data extraction commands
-- X-SQL extended query language for DOM/content
-- Structured + unstructured hybrid extraction (LLM & ML & selectors)
-
-### Performance & Scalability
-- High-efficiency parallel page rendering
-- Block-resistant design & smart retries
-- 100,000+ complex pages/day on modest hardware (indicative)
-
-### Stealth & Reliability
-- Advanced anti-bot techniques
-- IP & profile rotation
-- Resilient scheduling & quality assurance
-
-### Developer Experience
-- Simple API integration (REST, native, text commands)
-- Rich configuration layering
-- Clear structured logging & metrics
-
-### Storage & Monitoring
-- Local FS & MongoDB support (extensible)
-- Comprehensive logs & transparency
-- Detailed metrics & lifecycle visibility
-
----
-
-## 🤝 Support & Community
-
-- 💬 WeChat: galaxyeye
-- 🌐 Weibo: [galaxyeye](https://weibo.com/galaxyeye)
-- 📧 Email: galaxyeye@live.cn, ivincent.zhang@gmail.com
-- 🐦 Twitter: [galaxyeye8](https://x.com/galaxyeye8)
-- 🌍 Website: [browser4.io](https://browser4.io)
-
-<div style="display: flex;">
-  <img src="docs/images/wechat-author.png" width="300" height="365" alt="WeChat QR Code" />
-</div>
-
----
-
-> For Chinese documentation, refer to [简体中文 README](README.zh.md).
-
+Kotlin and Python SDKs are available under `sdks/`; Node.js SDK is planned.
