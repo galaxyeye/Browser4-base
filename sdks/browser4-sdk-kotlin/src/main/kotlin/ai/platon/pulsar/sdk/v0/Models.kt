@@ -58,10 +58,10 @@ data class WebPage(
  */
 data class NormURL(
     val spec: String,
-    val url: String,
     val args: String? = null
 ) {
     val isNil: Boolean get() = spec == NIL_SPEC
+    val url: String get() = spec + (args?.takeIf { it.isNotBlank() } ?: "")
 
     companion object {
         const val NIL_SPEC = "http://internal.platon.ai/nil"
@@ -71,7 +71,6 @@ data class NormURL(
         fun fromMap(data: Map<String, Any?>): NormURL {
             return NormURL(
                 spec = data["spec"] as? String ?: "",
-                url = data["url"] as? String ?: "",
                 args = data["args"] as? String?: ""
             )
         }
