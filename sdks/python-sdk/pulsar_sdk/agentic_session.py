@@ -250,7 +250,7 @@ class PulsarSession:
 
     # ========== Parsing and Extraction ==========
 
-    def parse(self, page: WebPage) -> Any:
+    def parse(self, page: WebPage) -> Optional[str]:
         """
         Parse a WebPage into a document.
         
@@ -261,7 +261,7 @@ class PulsarSession:
             page: The WebPage to parse.
             
         Returns:
-            HTML content for local parsing.
+            HTML content for local parsing, or None if not available.
         """
         return page.html
 
@@ -432,7 +432,15 @@ class AgenticSession(PulsarSession):
 
     # ========== Agentic Operations ==========
 
-    def act(self, action: str, **kwargs: Any) -> AgentActResult:
+    def act(
+        self,
+        action: str,
+        multi_act: bool = False,
+        model_name: Optional[str] = None,
+        variables: Optional[Dict[str, str]] = None,
+        dom_settle_timeout_ms: Optional[int] = None,
+        timeout_ms: Optional[int] = None
+    ) -> AgentActResult:
         """
         Execute a single action described in natural language.
         
@@ -441,31 +449,51 @@ class AgenticSession(PulsarSession):
         
         Args:
             action: Natural language description of the action to perform.
-            **kwargs: Additional parameters (multiAct, modelName, etc.).
+            multi_act: Whether each act forms a new chained context.
+            model_name: Optional LLM model name.
+            variables: Extra variables for prompt/tool.
+            dom_settle_timeout_ms: Timeout for DOM settling.
+            timeout_ms: Overall timeout.
             
         Returns:
             AgentActResult with the action result.
         """
-        return self.agent_act(action, **kwargs)
+        return self.agent_act(action, multi_act, model_name, variables, dom_settle_timeout_ms, timeout_ms)
 
-    def agent_act(self, action: str, **kwargs: Any) -> AgentActResult:
+    def agent_act(
+        self,
+        action: str,
+        multi_act: bool = False,
+        model_name: Optional[str] = None,
+        variables: Optional[Dict[str, str]] = None,
+        dom_settle_timeout_ms: Optional[int] = None,
+        timeout_ms: Optional[int] = None
+    ) -> AgentActResult:
         """
         Execute a single action described in natural language.
         
         Args:
             action: Natural language description of the action.
-            **kwargs: Additional parameters:
-                - multiAct: Whether each act forms a new chained context.
-                - modelName: Optional LLM model name.
-                - variables: Extra variables for prompt/tool.
-                - domSettleTimeoutMs: Timeout for DOM settling.
-                - timeoutMs: Overall timeout.
+            multi_act: Whether each act forms a new chained context.
+            model_name: Optional LLM model name.
+            variables: Extra variables for prompt/tool.
+            dom_settle_timeout_ms: Timeout for DOM settling.
+            timeout_ms: Overall timeout.
                 
         Returns:
             AgentActResult with the action result.
         """
         payload: Dict[str, Any] = {"action": action}
-        payload.update(kwargs)
+        if multi_act:
+            payload["multiAct"] = multi_act
+        if model_name is not None:
+            payload["modelName"] = model_name
+        if variables is not None:
+            payload["variables"] = variables
+        if dom_settle_timeout_ms is not None:
+            payload["domSettleTimeoutMs"] = dom_settle_timeout_ms
+        if timeout_ms is not None:
+            payload["timeoutMs"] = timeout_ms
         
         value = self.client.post("/session/{sessionId}/agent/act", payload)
         
@@ -475,7 +503,15 @@ class AgenticSession(PulsarSession):
         
         return AgentActResult.from_dict(value) if isinstance(value, dict) else AgentActResult()
 
-    def run(self, task: str, **kwargs: Any) -> AgentRunResult:
+    def run(
+        self,
+        task: str,
+        multi_act: bool = False,
+        model_name: Optional[str] = None,
+        variables: Optional[Dict[str, str]] = None,
+        dom_settle_timeout_ms: Optional[int] = None,
+        timeout_ms: Optional[int] = None
+    ) -> AgentRunResult:
         """
         Run an autonomous agent task.
         
@@ -484,31 +520,51 @@ class AgenticSession(PulsarSession):
         
         Args:
             task: Natural language description of the task to accomplish.
-            **kwargs: Additional parameters.
+            multi_act: Whether each act forms a new chained context.
+            model_name: Optional LLM model name.
+            variables: Extra variables for prompt/tool.
+            dom_settle_timeout_ms: Timeout for DOM settling.
+            timeout_ms: Overall timeout.
             
         Returns:
             AgentRunResult with the task result.
         """
-        return self.agent_run(task, **kwargs)
+        return self.agent_run(task, multi_act, model_name, variables, dom_settle_timeout_ms, timeout_ms)
 
-    def agent_run(self, task: str, **kwargs: Any) -> AgentRunResult:
+    def agent_run(
+        self,
+        task: str,
+        multi_act: bool = False,
+        model_name: Optional[str] = None,
+        variables: Optional[Dict[str, str]] = None,
+        dom_settle_timeout_ms: Optional[int] = None,
+        timeout_ms: Optional[int] = None
+    ) -> AgentRunResult:
         """
         Run an autonomous agent task.
         
         Args:
             task: Natural language description of the task.
-            **kwargs: Additional parameters:
-                - multiAct: Whether each act forms a new chained context.
-                - modelName: Optional LLM model name.
-                - variables: Extra variables for prompt/tool.
-                - domSettleTimeoutMs: Timeout for DOM settling.
-                - timeoutMs: Overall timeout.
+            multi_act: Whether each act forms a new chained context.
+            model_name: Optional LLM model name.
+            variables: Extra variables for prompt/tool.
+            dom_settle_timeout_ms: Timeout for DOM settling.
+            timeout_ms: Overall timeout.
                 
         Returns:
             AgentRunResult with the task result.
         """
         payload: Dict[str, Any] = {"task": task}
-        payload.update(kwargs)
+        if multi_act:
+            payload["multiAct"] = multi_act
+        if model_name is not None:
+            payload["modelName"] = model_name
+        if variables is not None:
+            payload["variables"] = variables
+        if dom_settle_timeout_ms is not None:
+            payload["domSettleTimeoutMs"] = dom_settle_timeout_ms
+        if timeout_ms is not None:
+            payload["timeoutMs"] = timeout_ms
         
         value = self.client.post("/session/{sessionId}/agent/run", payload)
         
@@ -518,38 +574,60 @@ class AgenticSession(PulsarSession):
         
         return AgentRunResult.from_dict(value) if isinstance(value, dict) else AgentRunResult()
 
-    def observe(self, instruction: Optional[str] = None, **kwargs: Any) -> AgentObservation:
+    def observe(
+        self,
+        instruction: Optional[str] = None,
+        model_name: Optional[str] = None,
+        dom_settle_timeout_ms: Optional[int] = None,
+        return_action: Optional[bool] = None,
+        draw_overlay: bool = True
+    ) -> AgentObservation:
         """
         Observe the page and return potential actions.
         
         Args:
             instruction: Optional observation instruction.
-            **kwargs: Additional parameters.
+            model_name: Optional LLM model name.
+            dom_settle_timeout_ms: Timeout for DOM settling.
+            return_action: Whether to return actionable tool calls.
+            draw_overlay: Whether to highlight interactive elements.
             
         Returns:
             AgentObservation with observation results.
         """
-        return self.agent_observe(instruction, **kwargs)
+        return self.agent_observe(instruction, model_name, dom_settle_timeout_ms, return_action, draw_overlay)
 
-    def agent_observe(self, instruction: Optional[str] = None, **kwargs: Any) -> AgentObservation:
+    def agent_observe(
+        self,
+        instruction: Optional[str] = None,
+        model_name: Optional[str] = None,
+        dom_settle_timeout_ms: Optional[int] = None,
+        return_action: Optional[bool] = None,
+        draw_overlay: bool = True
+    ) -> AgentObservation:
         """
         Observe the page and return potential actions.
         
         Args:
             instruction: Optional observation instruction.
-            **kwargs: Additional parameters:
-                - modelName: Optional LLM model name.
-                - domSettleTimeoutMs: Timeout for DOM settling.
-                - returnAction: Whether to return actionable tool calls.
-                - drawOverlay: Whether to highlight interactive elements.
-                
+            model_name: Optional LLM model name.
+            dom_settle_timeout_ms: Timeout for DOM settling.
+            return_action: Whether to return actionable tool calls.
+            draw_overlay: Whether to highlight interactive elements.
+            
         Returns:
             AgentObservation with observation results.
         """
         payload: Dict[str, Any] = {}
-        if instruction:
+        if instruction is not None:
             payload["instruction"] = instruction
-        payload.update(kwargs)
+        if model_name is not None:
+            payload["modelName"] = model_name
+        if dom_settle_timeout_ms is not None:
+            payload["domSettleTimeoutMs"] = dom_settle_timeout_ms
+        if return_action is not None:
+            payload["returnAction"] = return_action
+        payload["drawOverlay"] = draw_overlay
         
         value = self.client.post("/session/{sessionId}/agent/observe", payload)
         return AgentObservation.from_dict(value)
@@ -559,7 +637,8 @@ class AgenticSession(PulsarSession):
         instruction: str,
         schema: Optional[Dict[str, Any]] = None,
         selector: Optional[str] = None,
-        **kwargs: Any
+        model_name: Optional[str] = None,
+        dom_settle_timeout_ms: Optional[int] = None
     ) -> ExtractionResult:
         """
         Extract structured data from the page using AI.
@@ -568,17 +647,21 @@ class AgenticSession(PulsarSession):
             instruction: Extraction instruction describing what to extract.
             schema: Optional JSON schema for the extraction result.
             selector: Optional CSS selector to scope extraction.
-            **kwargs: Additional parameters.
+            model_name: Optional LLM model name.
+            dom_settle_timeout_ms: Timeout for DOM settling.
             
         Returns:
             ExtractionResult with extracted data.
         """
         payload: Dict[str, Any] = {"instruction": instruction}
-        if schema:
+        if schema is not None:
             payload["schema"] = schema
-        if selector:
+        if selector is not None:
             payload["selector"] = selector
-        payload.update(kwargs)
+        if model_name is not None:
+            payload["modelName"] = model_name
+        if dom_settle_timeout_ms is not None:
+            payload["domSettleTimeoutMs"] = dom_settle_timeout_ms
         
         value = self.client.post("/session/{sessionId}/agent/extract", payload)
         return ExtractionResult.from_dict(value) if isinstance(value, dict) else ExtractionResult()
