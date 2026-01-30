@@ -9,43 +9,25 @@
 	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
 	OF ANY KIND, either express or implied. See the License for the specific
 	language governing permissions and limitations under the License. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>ai.platon.pulsar</groupId>
-        <artifactId>pulsar</artifactId>
+        <artifactId>pulsar-core</artifactId>
         <version>4.5.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>pulsar-core</artifactId>
+    <artifactId>pulsar-core-tests</artifactId>
     <packaging>pom</packaging>
 
-    <name>Pulsar Core</name>
+    <name>Pulsar Core Tests</name>
 
     <build>
         <defaultGoal>package</defaultGoal>
     </build>
 
     <modules>
-        <module>pulsar-resources</module>
-        <module>pulsar-common</module>
-        <module>pulsar-dom</module>
-        <module>pulsar-persist</module>
-        <module>pulsar-plugins</module>
-        <module>pulsar-third</module>
-        <module>pulsar-skeleton</module>
-        <module>pulsar-browser</module>
-        <module>pulsar-spring-support</module>
-        <module>pulsar-ql-common</module>
-        <module>pulsar-ql</module>
+        <module>pulsar-ql-tests</module>
     </modules>
-
-    <profiles>
-        <profile>
-            <id>pulsar-core-tests</id>
-            <modules>
-                <module>pulsar-core-tests</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>
