@@ -20,7 +20,6 @@
 
     <groupId>io.browser4</groupId>
     <artifactId>browser4-sdk-kotlin</artifactId>
-    <!-- Version start with 4.5.0, only increase version number when there are patches -->
     <version>4.5.0-SNAPSHOT</version>
 
     <name>Browser4 Kotlin SDK</name>

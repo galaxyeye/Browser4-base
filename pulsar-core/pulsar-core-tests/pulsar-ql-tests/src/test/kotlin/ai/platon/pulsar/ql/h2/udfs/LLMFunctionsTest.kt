@@ -1,8 +1,8 @@
 package ai.platon.pulsar.ql.h2.udfs
 
-import ai.platon.pulsar.external.ChatModelFactory
-import ai.platon.pulsar.ql.TestBase
 import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.external.ChatModelFactory
+import ai.platon.pulsar.heavy.ql.TestBase
 import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
 import ai.platon.pulsar.test.TestUrls
 import org.junit.jupiter.api.Assumptions
@@ -27,7 +27,7 @@ class LLMFunctionsTest : TestBase() {
     }
 
     /**
-     * Test [LLMFunctions.extract]
+     * Test [ai.platon.pulsar.ql.h2.udfs.LLMFunctions.extract]
      * */
     @Test
     fun `Test extract with field descriptions`() {
@@ -35,7 +35,7 @@ class LLMFunctionsTest : TestBase() {
     }
 
     /**
-     * Test [LLMFunctions.extractInternal]
+     * Test [ai.platon.pulsar.ql.h2.udfs.LLMFunctions.extractInternal]
      * */
     @Ignore("Test failed and ignore it temporary")
     @Test
@@ -66,4 +66,3 @@ class LLMFunctionsTest : TestBase() {
         }
     }
 }
-
