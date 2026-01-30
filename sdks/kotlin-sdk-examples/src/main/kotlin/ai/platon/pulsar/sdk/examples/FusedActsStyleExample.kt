@@ -115,6 +115,5 @@ class FusedActsStyleExample {
 
 /**
  * Main function to run the example.
- * Note: Requires a running Browser4 server at http://localhost:8182
  */
 suspend fun main() = FusedActsStyleExample().run()
