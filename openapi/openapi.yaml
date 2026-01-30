@@ -33,8 +33,83 @@ tags:
     description: AI-powered browser automation (PerceptiveAgent)
   - name: pulsar
     description: PulsarSession operations (normalize, open, load, submit)
+  - name: scroll
+    description: Page scrolling operations
+  - name: health
+    description: Health check endpoints
 
 paths:
+  /openapi.yaml:
+    get:
+      tags:
+        - health
+      summary: Get OpenAPI specification
+      operationId: getOpenApiSpec
+      responses:
+        '200':
+          description: OpenAPI specification
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /health:
+    get:
+      tags:
+        - health
+      summary: Basic health check
+      operationId: health
+      responses:
+        '200':
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  activeSessions:
+                    type: integer
+                    example: 0
+
+  /health/ready:
+    get:
+      tags:
+        - health
+      summary: Readiness check
+      operationId: healthReady
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                    example: true
+
+  /health/live:
+    get:
+      tags:
+        - health
+      summary: Liveness check
+      operationId: healthLive
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  live:
+                    type: boolean
+                    example: true
+
   /session:
     post:
       tags:
@@ -188,6 +263,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UrlResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/reload:
+    post:
+      tags:
+        - navigation
+      summary: Reload current page
+      operationId: reload
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Page reloaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/back:
+    post:
+      tags:
+        - navigation
+      summary: Go back in browser history
+      operationId: back
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Navigated back
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/forward:
+    post:
+      tags:
+        - navigation
+      summary: Go forward in browser history
+      operationId: forward
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Navigated forward
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/title:
+    get:
+      tags:
+        - navigation
+      summary: Get page title
+      operationId: getTitle
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Page title
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/bringToFront:
+    post:
+      tags:
+        - navigation
+      summary: Bring window to front
+      operationId: bringToFront
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Window brought to front
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
         '404':
           description: Session not found
           content:
@@ -442,6 +627,286 @@ paths:
                 $ref: '#/components/schemas/ScreenshotResponse'
         '404':
           description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/isVisible:
+    post:
+      tags:
+        - selectors
+      summary: Check if element is visible
+      operationId: isVisibleBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Visibility check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/isChecked:
+    post:
+      tags:
+        - selectors
+      summary: Check if checkbox is checked
+      operationId: isCheckedBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Checked status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BooleanResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/hover:
+    post:
+      tags:
+        - selectors
+      summary: Hover over element by selector
+      operationId: hoverBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Hover completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/focus:
+    post:
+      tags:
+        - selectors
+      summary: Focus element by selector
+      operationId: focusBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Element focused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/check:
+    post:
+      tags:
+        - selectors
+      summary: Check checkbox by selector
+      operationId: checkBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Checkbox checked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/uncheck:
+    post:
+      tags:
+        - selectors
+      summary: Uncheck checkbox by selector
+      operationId: uncheckBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Checkbox unchecked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/textContent:
+    post:
+      tags:
+        - selectors
+      summary: Get text content of element by selector
+      operationId: getTextContentBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Text content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/textContentAll:
+    post:
+      tags:
+        - selectors
+      summary: Get text content of all matching elements
+      operationId: getTextContentAllBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: List of text contents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringListResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/attribute:
+    post:
+      tags:
+        - selectors
+      summary: Get attribute value of element by selector
+      operationId: getAttributeBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeRequest'
+      responses:
+        '200':
+          description: Attribute value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributeResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/attributeAll:
+    post:
+      tags:
+        - selectors
+      summary: Get attribute values of all matching elements
+      operationId: getAttributeAllBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeRequest'
+      responses:
+        '200':
+          description: List of attribute values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StringListResponse'
+        '404':
+          description: Session not found
           content:
             application/json:
               schema:
@@ -735,6 +1200,190 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /session/{sessionId}/scroll/down:
+    post:
+      tags:
+        - scroll
+      summary: Scroll down by count
+      operationId: scrollDown
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrollCountRequest'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/scroll/up:
+    post:
+      tags:
+        - scroll
+      summary: Scroll up by count
+      operationId: scrollUp
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrollCountRequest'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/scroll/to:
+    post:
+      tags:
+        - scroll
+      summary: Scroll to element by selector
+      operationId: scrollTo
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Element or session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/scroll/top:
+    post:
+      tags:
+        - scroll
+      summary: Scroll to top of page
+      operationId: scrollTop
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/scroll/bottom:
+    post:
+      tags:
+        - scroll
+      summary: Scroll to bottom of page
+      operationId: scrollBottom
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/scroll/middle:
+    post:
+      tags:
+        - scroll
+      summary: Scroll to middle of page (or custom ratio)
+      operationId: scrollMiddle
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrollRatioRequest'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/scroll/by:
+    post:
+      tags:
+        - scroll
+      summary: Scroll by specific number of pixels
+      operationId: scrollBy
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrollByRequest'
+      responses:
+        '200':
+          description: Number of pixels scrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /session/{sessionId}/event-configs:
     post:
       tags:
@@ -837,39 +1486,27 @@ paths:
     get:
       tags:
         - events
-      summary: Stream session events (Server-Sent Events)
+      summary: Stream events via Server-Sent Events (SSE)
       operationId: streamEvents
       parameters:
         - $ref: '#/components/parameters/sessionId'
-        - name: subscriptionId
-          in: query
-          required: false
-          description: If provided, stream only event types included in the subscription.
-          schema:
-            type: string
         - name: eventTypes
           in: query
           required: false
-          description: Optional event type filter (repeatable query param).
           schema:
             type: array
             items:
               type: string
-          style: form
-          explode: true
+          description: Filter by specific event types
       responses:
         '200':
-          description: SSE event stream
+          description: Event stream
           content:
             text/event-stream:
               schema:
                 type: string
         '404':
           description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
 
   # ========== PerceptiveAgent Endpoints ==========
   /session/{sessionId}/agent/run:
@@ -1410,6 +2047,79 @@ components:
         value:
           type: string
           description: Element text content
+
+    AttributeRequest:
+      type: object
+      required:
+        - selector
+        - attributeName
+      properties:
+        selector:
+          type: string
+          description: CSS selector or XPath expression
+        strategy:
+          type: string
+          enum: [css, xpath]
+          default: css
+          description: Selector strategy
+        attributeName:
+          type: string
+          description: Name of the attribute to retrieve
+
+    BooleanResponse:
+      type: object
+      properties:
+        value:
+          type: boolean
+          description: Boolean result
+
+    IntResponse:
+      type: object
+      properties:
+        value:
+          type: integer
+          description: Integer result
+
+    StringListResponse:
+      type: object
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+          description: List of string values
+
+    ScrollCountRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          default: 1
+          description: Number of scroll actions to perform
+
+    ScrollRatioRequest:
+      type: object
+      properties:
+        ratio:
+          type: number
+          format: double
+          default: 0.5
+          minimum: 0.0
+          maximum: 1.0
+          description: Scroll ratio (0.0 = top, 0.5 = middle, 1.0 = bottom)
+
+    ScrollByRequest:
+      type: object
+      properties:
+        pixels:
+          type: number
+          format: double
+          default: 200.0
+          description: Number of pixels to scroll
+        smooth:
+          type: boolean
+          default: true
+          description: Whether to use smooth scrolling
 
     ScriptRequest:
       type: object
