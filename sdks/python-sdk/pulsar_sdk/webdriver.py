@@ -108,7 +108,8 @@ class WebDriver:
         Returns:
             The current URL as a string.
         """
-        return self.client.get("/session/{sessionId}/url")
+        result = self.client.get("/session/{sessionId}/url")
+        return result if isinstance(result, str) else str(result) if result else ""
 
     # Alias for Kotlin compatibility
     def get_current_url(self) -> str:
@@ -131,7 +132,8 @@ class WebDriver:
         Returns:
             The document URI.
         """
-        return self.client.get("/session/{sessionId}/documentUri")
+        result = self.client.get("/session/{sessionId}/documentUri")
+        return result if isinstance(result, str) else str(result) if result else ""
 
     # Alias for snake_case consistency
     def get_document_uri(self) -> str:
@@ -145,7 +147,8 @@ class WebDriver:
         Returns:
             The base URI.
         """
-        return self.client.get("/session/{sessionId}/baseUri")
+        result = self.client.get("/session/{sessionId}/baseUri")
+        return result if isinstance(result, str) else str(result) if result else ""
 
     # Alias for snake_case consistency
     def get_base_uri(self) -> str:
