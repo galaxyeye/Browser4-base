@@ -6,7 +6,6 @@ import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.js.JsUtils
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import com.fasterxml.jackson.module.kotlin.convertValue
 
@@ -34,22 +33,18 @@ class JsHandler(
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateDetail(script: String): Evaluate? {
-        require(script.isNotBlank()) { "Script must not be blank" }
-        
-        val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
-        // Check if this script is a IIFE
-        val expression = if (lines.size > 1) {
-            val firstLine = lines[0]
-            if (!firstLine.startsWith("(")) {
-                JsUtils.toIIFE(script)
-            } else {
-                script
-            }
-        } else {
-            script
-        }
+        val expression: String = JsUtils.toCDPCompatibleExpression(script)
 
         val confusedExpr = confuser.confuse(expression)
+
+        val isolatedContextId = isolatedWorldManager
+            .getContextId(runCatching { pageAPI?.getFrameTree()?.frame?.id }.getOrNull())
+        if (isolatedContextId != null && isolatedContextId > 0) {
+            val isolatedResult = evaluateInContext(confusedExpr, isolatedContextId, returnByValue = false)
+            if (isolatedResult != null) {
+                return isolatedResult
+            }
+        }
 
         return try {
             runtimeAPI?.evaluate(confusedExpr)
@@ -122,19 +117,7 @@ class JsHandler(
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateValueDetail(script: String): Evaluate? {
-        require(script.isNotBlank()) { "Script must not be blank" }
-        val lines = script.split('\n').map { it.trim() }.filter { it.isNotBlank() }
-        // Check if this script is a IIFE
-        val expression = if (lines.size > 1) {
-            val firstLine = lines[0]
-            if (!firstLine.startsWith("(")) {
-                JsUtils.toIIFE(script)
-            } else {
-                script
-            }
-        } else {
-            script
-        }
+        val expression: String = JsUtils.toCDPCompatibleExpression(script)
 
         val confusedExpr = confuser.confuse(expression)
 
@@ -176,42 +159,6 @@ class JsHandler(
     }
 
     /**
-     * Evaluates a function on a DOM element and returns detailed evaluation result.
-     * Resolves the element by selector, calls the function, and properly releases resources.
-     *
-     * @param selector CSS selector to locate the element
-     * @param functionDeclaration JavaScript function declaration to execute on the element
-     * @return Detailed evaluation result, or null if the element cannot be found or resolved
-     * */
-    @Throws(ChromeDriverException::class)
-    suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): CallFunctionOn? {
-        require(selector.isNotBlank()) { "Selector must not be blank" }
-        require(functionDeclaration.isNotBlank()) { "Function declaration must not be blank" }
-        val node = pageHandler.resolveSelector(selector) ?: return null
-        // Resolve a fresh objectId and ensure it's released after the call
-        val resolved = try {
-            when {
-                node.nodeId > 0 -> domAPI?.resolveNode(node.nodeId, null, null, null)
-                node.backendNodeId > 0 -> domAPI?.resolveNode(null, node.backendNodeId, null, null)
-                else -> null
-            }
-        } catch (e: Exception) {
-            null
-        } ?: return null
-
-        val oid = resolved.objectId ?: return null
-        return try {
-            runtimeAPI?.callFunctionOn(functionDeclaration, objectId = oid, returnByValue = true)
-        } finally {
-            try {
-                runtimeAPI?.releaseObject(oid)
-            } catch (e: Exception) {
-                logger.warn("Failed to release object $oid", e)
-            }
-        }
-    }
-
-    /**
      * Evaluates a function on a DOM element and returns the result value.
      * Resolves the element by selector, calls the function, and properly releases resources.
      *
@@ -223,7 +170,8 @@ class JsHandler(
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any? {
         require(selector.isNotBlank()) { "Selector must not be blank" }
         require(functionDeclaration.isNotBlank()) { "Function declaration must not be blank" }
-        val result = evaluateValueDetail(selector, functionDeclaration)
+
+        val result = callFunctionOn(selector, functionDeclaration)
 
         val exception = result?.exceptionDetails?.exception
         if (exception != null) {
@@ -252,7 +200,7 @@ class JsHandler(
 
         // runtimeAPI.evaluate()
         val raw = devTools.invoke<Map<String, Any?>>("Runtime.evaluate", params, null) ?: return null
-        return runCatching { 
+        return runCatching {
             pulsarObjectMapper().convertValue<Evaluate>(raw)
         }.onFailure { e ->
             logger.warn("Failed to convert evaluation result to Evaluate type", e)
