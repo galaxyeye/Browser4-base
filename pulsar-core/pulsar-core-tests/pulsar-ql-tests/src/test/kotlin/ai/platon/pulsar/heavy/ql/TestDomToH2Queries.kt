@@ -22,6 +22,14 @@ class TestDomToH2Queries: TestBase() {
     private val url = "$portalUrl $args"
     private val restrictCss = "a[href~=/dp/]"
 
+    @Test
+    fun testLoadOutPages() {
+        val limit = 20
+        val pages = DomToH2Queries.loadOutPages(session, url, restrictCss, 1, limit)
+        pages.map { it.url }.distinct().forEachIndexed { i, url -> printlnPro("$i.\t$url") }
+        assertTrue("Page size: " + pages.size) { pages.size <= limit }
+    }
+
     @Ignore("BufferUnderflowException on Ubuntu (maybe caused by hardware limit)")
     @Test
     fun testLoadOutPagesInParallel() {

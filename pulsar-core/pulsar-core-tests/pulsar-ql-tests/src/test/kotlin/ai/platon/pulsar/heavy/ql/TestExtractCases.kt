@@ -39,12 +39,4 @@ class TestExtractCases : TestBase() {
         val expr = "a[href~=item]"
         execute("SELECT * FROM LOAD_AND_GET_ANCHORS('$productIndexUrl -expires 1d', '$expr')")
     }
-
-    @Test
-    fun testLoadOutPages() {
-        val limit = 20
-        val pages = DomToH2Queries.loadOutPages(ai.platon.pulsar.ql.TestBase.Companion.session, url, restrictCss, 1, limit)
-        pages.map { it.url }.distinct().forEachIndexed { i, url -> printlnPro("$i.\t$url") }
-        assertTrue("Page size: " + pages.size) { pages.size <= limit }
-    }
 }
