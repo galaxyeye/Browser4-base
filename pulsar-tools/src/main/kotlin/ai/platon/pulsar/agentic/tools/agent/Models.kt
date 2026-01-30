@@ -17,11 +17,8 @@ import java.util.*
  * @property statusCode The HTTP status code representing the command status.
  * @property event The last event associated with the command status.
  * @property isDone Indicates whether the command has been completed.
- * @property pageStatusCode The HTTP status code representing the page status.
- * @property pageContentBytes The size of the page content in bytes.
  * @property message An optional message providing additional information about the command status.
  * @property request The original command request associated with this status.
- * @property pageVisitResult The result of the command execution.
  * @property instructResults A list of results from the instructions executed during the command.
  * */
 data class AgentTaskStatus(

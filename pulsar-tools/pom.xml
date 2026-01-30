@@ -20,6 +20,7 @@
 
     <artifactId>pulsar-tools</artifactId>
     <name>Pulsar Tools</name>
+    <description>High level tools based on Browser4 core functionality in pulsar-core module</description>
 
     <dependencies>
         <dependency>
