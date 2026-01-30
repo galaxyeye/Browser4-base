@@ -2,6 +2,8 @@
 package ai.platon.pulsar.sdk.v0
 
 import ai.platon.pulsar.sdk.v0.detail.PulsarClient
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.*
 
 /**
@@ -46,6 +48,13 @@ class WebDriver(
 ) {
     private var _id: Int = 0
     private val _navigateHistory: MutableList<String> = Collections.synchronizedList(ArrayList())
+
+    /**
+     * URL-encodes a string for safe use in URL paths.
+     */
+    private fun encodePathSegment(value: String): String {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8)
+    }
 
     /**
      * Gets the driver ID.
@@ -372,7 +381,7 @@ class WebDriver(
      * @return Click result
      */
     suspend fun clickElement(elementId: String): Any? {
-        return client.post("/session/{sessionId}/element/$elementId/click", emptyMap())
+        return client.post("/session/{sessionId}/element/${encodePathSegment(elementId)}/click", emptyMap())
     }
 
     /**
@@ -445,15 +454,13 @@ class WebDriver(
     /**
      * Sends keys to an element.
      *
-     * @param elementId WebDriver element ID
+     * @param selector CSS selector or XPath expression
      * @param text Text to send
+     * @param strategy Selector strategy
      * @return Send keys result
      */
-    suspend fun sendKeys(elementId: String, text: String): Any? {
-        return client.post(
-            "/session/{sessionId}/element/$elementId/value",
-            mapOf("text" to text)
-        )
+    suspend fun sendKeys(selector: String, text: String, strategy: String = "css"): Any? {
+        return fill(selector, text, strategy)
     }
 
     /**
@@ -744,7 +751,7 @@ class WebDriver(
      * @return Attribute value
      */
     suspend fun getAttribute(elementId: String, name: String): Any? {
-        return client.get("/session/{sessionId}/element/$elementId/attribute/$name")
+        return client.get("/session/{sessionId}/element/${encodePathSegment(elementId)}/attribute/${encodePathSegment(name)}")
     }
 
     /**
@@ -754,7 +761,7 @@ class WebDriver(
      * @return Text content
      */
     suspend fun getText(elementId: String): String {
-        return client.get("/session/{sessionId}/element/$elementId/text") as? String ?: ""
+        return client.get("/session/{sessionId}/element/${encodePathSegment(elementId)}/text") as? String ?: ""
     }
 
     /**

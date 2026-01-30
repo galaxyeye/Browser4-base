@@ -23,6 +23,7 @@ Usage example:
     >>> title = driver.select_first_text_or_null("h1")
 """
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import quote
 
 from .client import PulsarClient
 
@@ -51,6 +52,11 @@ class WebDriver:
         self.client = client
         self._id: int = 0
         self._navigate_history: List[str] = []
+
+    @staticmethod
+    def _encode_path_segment(value: str) -> str:
+        """URL-encode a string for safe use in URL paths."""
+        return quote(value, safe='')
 
     @property
     def id(self) -> int:
@@ -377,7 +383,7 @@ class WebDriver:
         Returns:
             Click result.
         """
-        return self.client.post(f"/session/{{sessionId}}/element/{element_id}/click", {})
+        return self.client.post(f"/session/{{sessionId}}/element/{self._encode_path_segment(element_id)}/click", {})
 
     def hover(self, selector: str) -> Any:
         """
@@ -460,21 +466,19 @@ class WebDriver:
             {"selector": selector, "strategy": strategy, "key": key},
         )
 
-    def send_keys(self, element_id: str, text: str) -> Any:
+    def send_keys(self, selector: str, text: str, strategy: str = "css") -> Any:
         """
         Send keys to an element.
 
         Args:
-            element_id: WebDriver element ID.
+            selector: CSS selector or XPath expression.
             text: Text to send.
+            strategy: Selector strategy.
 
         Returns:
             Send keys result.
         """
-        return self.client.post(
-            f"/session/{{sessionId}}/element/{element_id}/value",
-            {"text": text}
-        )
+        return self.fill(selector, text, strategy)
 
     def check(self, selector: str) -> Any:
         """
@@ -736,7 +740,7 @@ class WebDriver:
         Returns:
             Attribute value.
         """
-        return self.client.get(f"/session/{{sessionId}}/element/{element_id}/attribute/{name}")
+        return self.client.get(f"/session/{{sessionId}}/element/{self._encode_path_segment(element_id)}/attribute/{self._encode_path_segment(name)}")
 
     def get_text(self, element_id: str) -> str:
         """
@@ -748,7 +752,7 @@ class WebDriver:
         Returns:
             Text content.
         """
-        return self.client.get(f"/session/{{sessionId}}/element/{element_id}/text")
+        return self.client.get(f"/session/{{sessionId}}/element/{self._encode_path_segment(element_id)}/text")
 
     def extract(self, fields: Dict[str, str]) -> Dict[str, Optional[str]]:
         """
