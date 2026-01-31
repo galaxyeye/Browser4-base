@@ -430,26 +430,52 @@ class PulsarWebDriver(
         try {
             val node = rpc.invokeWithRetry("scrollIntoViewIfNeeded") {
                 page.scrollIntoViewIfNeeded(selector)
-            } ?: return
+            }
+            
+            if (node == null) {
+                throw WebDriverException(
+                    "Failed to scroll element into view: $selector",
+                    driver = this
+                )
+            }
 
             // Use randomized offset like in click() for better anti-detection
             val deltaOffsetX = 4.0 + Random.nextInt(4)
-            val deltaOffsetY = 4.0
+            val deltaOffsetY = 4.0 + Random.nextInt(4)  // Add randomization to Y offset
             val offset = OffsetD(deltaOffsetX, deltaOffsetY)
 
-            val p = pageAPI ?: return
-            val d = domAPI ?: return
+            val p = pageAPI ?: throw IllegalWebDriverStateException("Page API not available", driver = this)
+            val d = domAPI ?: throw IllegalWebDriverStateException("DOM API not available", driver = this)
+            val m = mouse ?: throw IllegalWebDriverStateException("Mouse not available", driver = this)
 
             rpc.invokeWithRetry("dragAndDrop") {
                 val clickableDOM = ClickableDOM(p, d, node, offset)
-                val startPoint = clickableDOM.clickablePoint().value
-                if (startPoint != null) {
-                    // Calculate target point relative to start point
-                    val targetPoint = PointD(startPoint.x + deltaX, startPoint.y + deltaY)
-                    tracer?.trace("dragAndDrop | from: {} to: {} | delta: {}, {}", startPoint, targetPoint, deltaX, deltaY)
-                    // Use mouse to perform drag-and-drop via CDP drag events
-                    mouse?.dragAndDrop(startPoint, targetPoint, randomDelayMillis("dragAndDrop"))
+                val clickableResult = clickableDOM.clickablePoint()
+                val startPoint = clickableResult.value
+                
+                if (startPoint == null) {
+                    throw WebDriverException(
+                        "Element is not clickable/draggable: $selector | ${clickableResult.status}",
+                        driver = this
+                    )
                 }
+                
+                // Calculate target point relative to start point
+                val targetPoint = PointD(startPoint.x + deltaX, startPoint.y + deltaY)
+                
+                // Validate target point coordinates
+                if (targetPoint.x < 0 || targetPoint.y < 0) {
+                    throw WebDriverException(
+                        "Target point has negative coordinates: $targetPoint (from: $startPoint, delta: $deltaX, $deltaY)",
+                        driver = this
+                    )
+                }
+                
+                tracer?.trace("dragAndDrop | from: {} to: {} | delta: {}, {}", startPoint, targetPoint, deltaX, deltaY)
+                
+                // Use mouse to perform drag-and-drop via CDP drag events
+                m.dragAndDrop(startPoint, targetPoint, randomDelayMillis("dragAndDrop"))
+                
                 gap()
             }
         } catch (e: ChromeDriverException) {

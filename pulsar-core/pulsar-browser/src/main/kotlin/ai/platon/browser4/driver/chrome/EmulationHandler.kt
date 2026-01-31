@@ -412,6 +412,7 @@ class Mouse(private val devTools: ChromeDevTools) {
      * Dispatches a `drag` event.
      * @param start - starting point for drag
      * @param target - point to drag to
+     * @return DragData if the drag event was intercepted, null otherwise
      */
     suspend fun drag(start: PointD, target: PointD): DragData? {
         var dragData: DragData? = null
@@ -425,6 +426,13 @@ class Mouse(private val devTools: ChromeDevTools) {
             moveTo(start, 5, 100)
             down(currentX, currentY)
             moveTo(target, 3, 500)
+            
+            // Wait a bit for the drag event to be intercepted
+            // The event should fire during the moveTo operations, but add a small buffer
+            // to account for CDP event delivery latency
+            if (dragData == null) {
+                delay(100)
+            }
         } finally {
             // Always release button and disable interception
             runCatching { up() }
@@ -476,14 +484,24 @@ class Mouse(private val devTools: ChromeDevTools) {
      * @param target - point to drop on
      */
     suspend fun dragAndDrop(start: PointD, target: PointD, delayMillis: Long = 500) {
-        val data = drag(start, target) ?: return
-        dragEnter(target, data)
-        dragOver(target, data)
-        if (delayMillis > 0) {
-            delay(delayMillis)
+        val data = drag(start, target)
+        if (data == null) {
+            // drag() already called up() in its finally block, but ensure consistent state
+            runCatching { up() }
+            return
         }
-        drop(target, data)
-        up()
+        
+        try {
+            dragEnter(target, data)
+            dragOver(target, data)
+            if (delayMillis > 0) {
+                delay(delayMillis)
+            }
+            drop(target, data)
+        } finally {
+            // Always release mouse button to prevent stuck state
+            runCatching { up() }
+        }
     }
 }
 
