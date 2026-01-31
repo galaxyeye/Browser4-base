@@ -1,11 +1,14 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
 import ai.platon.cdt.kt.protocol.events.network.RequestWillBeSent
+import ai.platon.cdt.kt.protocol.events.network.RequestWillBeSentExtraInfo
 import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.events.page.FrameNavigated
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.NavigateEntry
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 class ChromeNavigateEntry(
     private val navigateEntry: NavigateEntry
@@ -14,8 +17,8 @@ class ChromeNavigateEntry(
 
     private val tracer = logger.takeIf { it.isTraceEnabled }
 
-    fun updateStateBeforeRequestSent(event: RequestWillBeSent) {
-        updateStateBeforeRequestSent0(event)
+    fun updateStateBeforeRequestSent(event: RequestWillBeSent, extraInfo: RequestWillBeSentExtraInfo? = null) {
+        updateStateBeforeRequestSent0(event, extraInfo)
     }
 
     fun updateStateAfterResponseReceived(event: ResponseReceived) {
@@ -39,7 +42,7 @@ class ChromeNavigateEntry(
         return navigateEntry.mainFrameReceived && isMinorResource(type)
     }
 
-    private fun updateStateBeforeRequestSent0(event: RequestWillBeSent) {
+    private fun updateStateBeforeRequestSent0(event: RequestWillBeSent, extraInfo: RequestWillBeSentExtraInfo?) {
         val count = navigateEntry.networkRequestCount.incrementAndGet()
 
         // TODO: handle redirection
@@ -61,7 +64,37 @@ class ChromeNavigateEntry(
             val headers = mutableMapOf<String, Any>()
             event.request.headers.forEach { (key, value) -> if (value != null) headers[key] = value }
             navigateEntry.updateMainRequest(event.requestId, headers)
+            
+            // Extract cookies from extraInfo if available
+            extraInfo?.let { info ->
+                val cookies = extractCookies(info)
+                if (cookies.isNotEmpty()) {
+                    navigateEntry.updateMainRequestCookies(cookies)
+                }
+            }
         }
+    }
+    
+    private fun extractCookies(extraInfo: RequestWillBeSentExtraInfo): List<Map<String, String>> {
+        val cookies = mutableListOf<Map<String, String>>()
+        
+        // RequestWillBeSentExtraInfo contains associatedCookies which includes blocked cookies
+        // For now, we extract cookies that were actually sent (not blocked)
+        extraInfo.associatedCookies?.forEach { blockedCookie ->
+            // Only include cookies that were not blocked
+            if (blockedCookie.blockedReasons.isNullOrEmpty()) {
+                blockedCookie.cookie?.let { cookie ->
+                    cookies.add(serializeCookie(cookie))
+                }
+            }
+        }
+        
+        return cookies
+    }
+    
+    private fun serializeCookie(cookie: ai.platon.cdt.kt.protocol.types.network.Cookie): Map<String, String> {
+        val mapper = jacksonObjectMapper().setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
+        return mapper.readValue(mapper.writeValueAsString(cookie))
     }
 
     private fun updateStateAfterResponseReceived0(event: ResponseReceived) {

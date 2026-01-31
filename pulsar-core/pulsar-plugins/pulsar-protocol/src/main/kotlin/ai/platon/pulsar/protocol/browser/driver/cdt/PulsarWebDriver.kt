@@ -820,8 +820,11 @@ function() {
 
         tracer?.trace("onRequestWillBeSent | driver | requestId: {}", event.requestId)
 
+        // Try to get the RequestWillBeSentExtraInfo which contains cookies
+        val extraInfo = networkManager.getRequestWillBeSentExtraInfo(event.requestId)
+        
         val chromeNavigateEntry = ChromeNavigateEntry(navigateEntry)
-        chromeNavigateEntry.updateStateBeforeRequestSent(event)
+        chromeNavigateEntry.updateStateBeforeRequestSent(event, extraInfo)
 
         // simulate blocking logic
         val isMinor = chromeNavigateEntry.isMinorResource(event)
