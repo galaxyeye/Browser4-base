@@ -10,6 +10,25 @@
 
 ---
 
+## 1. Browser4 SDK Design
+
+1. **Core Objective**: Build an agent system with human-level browser operation capabilities, supporting comprehensive browser automation tasks
+2. **API Consistency**: SDK interface design maintains complete consistency with Browser4 local API, ensuring unified user experience
+   1. FusedActsStyleExample must work: `ai.platon.pulsar.sdk.examples.FusedActsStyleExample`
+3. **Architecture Design**: Adopt a three-layer service architecture model, comprising three core components: PulsarSession, WebDriver, and Agent
+4. **PulsarSession**: Provides full-lifecycle web page management capabilities, covering link processing, URL normalization, page loading, element location and manipulation, interaction behaviors, page navigation, state synchronization, state tracking, data extraction, and persistence
+5. **WebDriver**: Provides standardized low-level browser control interfaces
+6. **Agent**: Provides agent decision-making and execution control capabilities
+7. **Session Model**: Each SDK Session contains a unique PulsarSession, Browser instance, and Agent instance, where Browser can manage multiple WebDriver instances
+8. **Network Communication**: SDK is designed as a cross-network service invocation client for remote access to Browser4 services
+9. **Protocol Positioning**: Browser4 SDK does not follow W3C WebDriver specifications and does not pursue standard compatibility
+10. **Capability Boundary**: Browser4 SDK does not adopt BiDi protocol, eliminating the need to support all low-level browser operation capabilities, which are uniformly implemented by the Browser4 service side
+11. **Multi-language Support**: SDK plans to support Kotlin, Java, Python, and JavaScript, providing unified interface specifications
+12. **Layered API Design**:
+    - **WebDriver API**: Provides element-level operation capabilities, including exists, waitFor, click, fill, press, screenshot, outerHtml, element(s), etc.
+    - **Agent API**: Provides agent-level operation capabilities, including act, observe, extract, summarize, run, etc.
+    - **Pulsar API**: Provides session-level operation capabilities, including open, load, submit, extract, chat, scrape, normalize, close, etc.
+
 ## 1. OpenAPI Overview (Extracted from `openapi.yaml`)
 
 - OpenAPI: `3.1.0`
@@ -38,92 +57,175 @@
 ## 2. Endpoint Overview (By Tag)
 
 > Tip: this is a “skeleton index”. For detailed request/response schemas and status codes, refer to `openapi.yaml`.
+> W3C standard endpoints are marked with a checkmark in the W3C column.
 
 ### 2.1 session
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session` | `createSession` |
-| GET | `/session/{sessionId}` | `getSession` |
-| DELETE | `/session/{sessionId}` | `deleteSession` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session` | `createSession` | ✓ | ✓ | ✓ |
+| GET | `/session/{sessionId}` | `getSession` | ✓ | ✓ | ✓ |
+| DELETE | `/session/{sessionId}` | `deleteSession` | ✓ | ✓ | ✓ |
 
 ### 2.2 navigation
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/url` | `navigateTo` |
-| GET | `/session/{sessionId}/url` | `getCurrentUrl` |
-| GET | `/session/{sessionId}/documentUri` | `getDocumentUri` |
-| GET | `/session/{sessionId}/baseUri` | `getBaseUri` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/url` | `navigateTo` | ✓ | ✓ | ✓ |
+| GET | `/session/{sessionId}/url` | `getCurrentUrl` | ✓ | ✓ | ✓ |
+| GET | `/session/{sessionId}/documentUri` | `getDocumentUri` | ✗ | ✓ | ✓ |
+| GET | `/session/{sessionId}/baseUri` | `getBaseUri` | ✗ | ✓ | ✓ |
 
 ### 2.3 selectors (selector-first extension)
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/selectors/exists` | `selectorExists` |
-| POST | `/session/{sessionId}/selectors/waitFor` | `waitForSelector` |
-| POST | `/session/{sessionId}/selectors/element` | `findElementBySelector` |
-| POST | `/session/{sessionId}/selectors/elements` | `findElementsBySelector` |
-| POST | `/session/{sessionId}/selectors/click` | `clickBySelector` |
-| POST | `/session/{sessionId}/selectors/fill` | `fillBySelector` |
-| POST | `/session/{sessionId}/selectors/press` | `pressBySelector` |
-| POST | `/session/{sessionId}/selectors/outerHtml` | `getOuterHtmlBySelector` |
-| POST | `/session/{sessionId}/selectors/screenshot` | `screenshotBySelector` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/selectors/exists` | `selectorExists` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/waitFor` | `waitForSelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/element` | `findElementBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/elements` | `findElementsBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/click` | `clickBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/fill` | `fillBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/press` | `pressBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/outerHtml` | `getOuterHtmlBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/screenshot` | `screenshotBySelector` | ✗ | ✓ | ✓ |
 
 ### 2.4 element (standard WebDriver element)
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/element` | `findElement` |
-| POST | `/session/{sessionId}/elements` | `findElements` |
-| POST | `/session/{sessionId}/element/{elementId}/click` | `clickElement` |
-| POST | `/session/{sessionId}/element/{elementId}/value` | `sendKeysToElement` |
-| GET | `/session/{sessionId}/element/{elementId}/attribute/{name}` | `getElementAttribute` |
-| GET | `/session/{sessionId}/element/{elementId}/text` | `getElementText` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/element` | `findElement` | ✓ | ✓ | ✓ |
+| POST | `/session/{sessionId}/elements` | `findElements` | ✓ | ✓ | ✓ |
+| POST | `/session/{sessionId}/element/{elementId}/click` | `clickElement` | ✓ | ✓ | ✓ |
+| POST | `/session/{sessionId}/element/{elementId}/value` | `sendKeysToElement` | ✓ | ✓ | ✓ |
+| GET | `/session/{sessionId}/element/{elementId}/attribute/{name}` | `getElementAttribute` | ✓ | ✓ | ✓ |
+| GET | `/session/{sessionId}/element/{elementId}/text` | `getElementText` | ✓ | ✓ | ✓ |
 
 ### 2.5 script
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/execute/sync` | `executeSync` |
-| POST | `/session/{sessionId}/execute/async` | `executeAsync` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/execute/sync` | `executeSync` | ✓ | ✓ | ✓ |
+| POST | `/session/{sessionId}/execute/async` | `executeAsync` | ✓ | ✓ | ✓ |
 
 ### 2.6 control
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/control/delay` | `delay` |
-| POST | `/session/{sessionId}/control/pause` | `pause` |
-| POST | `/session/{sessionId}/control/stop` | `stop` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/control/delay` | `delay` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/control/pause` | `pause` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/control/stop` | `stop` | ✗ | ✓ | ✓ |
 
 ### 2.7 events
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/event-configs` | `createEventConfig` |
-| GET | `/session/{sessionId}/event-configs` | `getEventConfigs` |
-| GET | `/session/{sessionId}/events` | `getEvents` |
-| POST | `/session/{sessionId}/events/subscribe` | `subscribeToEvents` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/event-configs` | `createEventConfig` | ✗ | ✓ | ✓ |
+| GET | `/session/{sessionId}/event-configs` | `getEventConfigs` | ✗ | ✓ | ✓ |
+| GET | `/session/{sessionId}/events` | `getEvents` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/events/subscribe` | `subscribeToEvents` | ✗ | ✓ | ✓ |
 
 ### 2.8 agent
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/agent/run` | `run` |
-| POST | `/session/{sessionId}/agent/observe` | `observe` |
-| POST | `/session/{sessionId}/agent/act` | `act` |
-| POST | `/session/{sessionId}/agent/extract` | `extract` |
-| POST | `/session/{sessionId}/agent/summarize` | `summarize` |
-| POST | `/session/{sessionId}/agent/clearHistory` | `clearHistory` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/agent/run` | `run` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/agent/observe` | `observe` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/agent/act` | `act` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/agent/extract` | `extract` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/agent/summarize` | `summarize` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/agent/clearHistory` | `clearHistory` | ✗ | ✓ | ✓ |
 
 ### 2.9 pulsar
 
-| Method | Path | operationId |
-|---|---|---|
-| POST | `/session/{sessionId}/normalize` | `normalize` |
-| POST | `/session/{sessionId}/open` | `open` |
-| POST | `/session/{sessionId}/load` | `load` |
-| POST | `/session/{sessionId}/submit` | `submit` |
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/normalize` | `normalize` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/open` | `open` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/load` | `load` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/submit` | `submit` | ✗ | ✓ | ✓ |
+
+### 2.10 W3C Standard Endpoints Missing From `openapi.yaml`
+
+> These endpoints are part of the W3C WebDriver standard but are not listed in `openapi.yaml` yet.
+
+#### 2.10.1 status / timeouts
+
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| GET | `/status` | `getStatus` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/timeouts` | `getTimeouts` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/timeouts` | `setTimeouts` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/file` | `uploadFile` | ✓ | ✗ | |
+
+#### 2.10.2 navigation extras
+
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/back` | `goBack` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/forward` | `goForward` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/refresh` | `refresh` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/title` | `getTitle` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/source` | `getPageSource` | ✓ | ✗ | |
+
+#### 2.10.3 window / frame
+
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| GET | `/session/{sessionId}/window` | `getWindowHandle` | ✓ | ✗ | |
+| DELETE | `/session/{sessionId}/window` | `closeWindow` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/window` | `switchToWindow` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/window/handles` | `getWindowHandles` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/window/new` | `newWindow` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/window/rect` | `getWindowRect` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/window/rect` | `setWindowRect` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/window/maximize` | `maximizeWindow` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/window/minimize` | `minimizeWindow` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/window/fullscreen` | `fullscreenWindow` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/frame` | `switchToFrame` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/frame/parent` | `switchToParentFrame` | ✓ | ✗ | |
+
+#### 2.10.4 element extras
+
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/element/active` | `getActiveElement` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/element/{elementId}/element` | `findElementFromElement` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/element/{elementId}/elements` | `findElementsFromElement` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/element/{elementId}/clear` | `clearElement` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/selected` | `isElementSelected` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/enabled` | `isElementEnabled` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/displayed` | `isElementDisplayed` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/name` | `getElementTagName` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/rect` | `getElementRect` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/property/{name}` | `getElementProperty` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/css/{propertyName}` | `getElementCssValue` | ✓ | ✗ | |
+
+#### 2.10.5 actions / alerts / cookies / screenshots / print
+
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| POST | `/session/{sessionId}/actions` | `performActions` | ✓ | ✗ | |
+| DELETE | `/session/{sessionId}/actions` | `releaseActions` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/alert/text` | `getAlertText` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/alert/text` | `sendAlertText` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/alert/accept` | `acceptAlert` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/alert/dismiss` | `dismissAlert` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/cookie` | `getAllCookies` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/cookie` | `addCookie` | ✓ | ✗ | |
+| DELETE | `/session/{sessionId}/cookie` | `deleteAllCookies` | ✓ | ✗ | |
+| DELETE | `/session/{sessionId}/cookie/{name}` | `deleteCookie` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/screenshot` | `takeScreenshot` | ✓ | ✗ | |
+| GET | `/session/{sessionId}/element/{elementId}/screenshot` | `takeElementScreenshot` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/print` | `printPage` | ✓ | ✗ | |
+
+#### 2.10.6 shadow root
+
+| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|---|---|---|---|---|
+| GET | `/session/{sessionId}/element/{elementId}/shadow` | `getShadowRoot` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/shadow/{shadowId}/element` | `findElementFromShadowRoot` | ✓ | ✗ | |
+| POST | `/session/{sessionId}/shadow/{shadowId}/elements` | `findElementsFromShadowRoot` | ✓ | ✗ | |
 
 ---
 
@@ -234,4 +336,3 @@ Key dependencies (used to differentiate real vs mock):
 ## Appendix A: Other REST surfaces
 
 There are also REST controllers outside `/session...` in this repo (for example, `/api/*` commands, chat, extraction, etc.). Whether those endpoints are included in OpenAPI (and whether they belong to the same contract surface as this doc) should be described in a separate document to avoid mixing them with the WebDriver-Compatible API.
-
