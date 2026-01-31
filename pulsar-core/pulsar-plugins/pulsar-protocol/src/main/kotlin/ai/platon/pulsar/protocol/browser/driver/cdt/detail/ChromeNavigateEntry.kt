@@ -9,6 +9,7 @@ import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.NavigateEntry
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 
 class ChromeNavigateEntry(
     private val navigateEntry: NavigateEntry
@@ -16,6 +17,11 @@ class ChromeNavigateEntry(
     private val logger = getLogger(this)
 
     private val tracer = logger.takeIf { it.isTraceEnabled }
+    
+    companion object {
+        private val cookieMapper = jacksonObjectMapper()
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
+    }
 
     fun updateStateBeforeRequestSent(event: RequestWillBeSent, extraInfo: RequestWillBeSentExtraInfo? = null) {
         updateStateBeforeRequestSent0(event, extraInfo)
@@ -93,8 +99,7 @@ class ChromeNavigateEntry(
     }
     
     private fun serializeCookie(cookie: ai.platon.cdt.kt.protocol.types.network.Cookie): Map<String, String> {
-        val mapper = jacksonObjectMapper().setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
-        return mapper.readValue(mapper.writeValueAsString(cookie))
+        return cookieMapper.readValue(cookieMapper.writeValueAsString(cookie))
     }
 
     private fun updateStateAfterResponseReceived0(event: ResponseReceived) {

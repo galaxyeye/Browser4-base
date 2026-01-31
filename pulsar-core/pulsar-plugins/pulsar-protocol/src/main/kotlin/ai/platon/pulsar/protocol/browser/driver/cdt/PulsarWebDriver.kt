@@ -455,7 +455,7 @@ class PulsarWebDriver(
                 
                 if (startPoint == null) {
                     throw WebDriverException(
-                        "Element is not clickable/draggable: $selector | ${clickableResult.status}",
+                        "Element is not clickable/draggable: $selector | ${clickableResult.message}",
                         driver = this
                     )
                 }
