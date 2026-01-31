@@ -431,12 +431,9 @@ class PulsarWebDriver(
             val node = rpc.invokeWithRetry("scrollIntoViewIfNeeded") {
                 page.scrollIntoViewIfNeeded(selector)
             }
-            
+
             if (node == null) {
-                throw WebDriverException(
-                    "Failed to scroll element into view: $selector",
-                    driver = this
-                )
+                throw WebDriverException("Failed to scroll element into view: $selector", driver = this)
             }
 
             // Use randomized offset like in click() for better anti-detection
@@ -462,7 +459,7 @@ class PulsarWebDriver(
                 
                 // Calculate target point relative to start point
                 val targetPoint = PointD(startPoint.x + deltaX, startPoint.y + deltaY)
-                
+
                 // Validate target point coordinates
                 if (targetPoint.x < 0 || targetPoint.y < 0) {
                     throw WebDriverException(
@@ -470,12 +467,12 @@ class PulsarWebDriver(
                         driver = this
                     )
                 }
-                
+
                 tracer?.trace("dragAndDrop | from: {} to: {} | delta: {}, {}", startPoint, targetPoint, deltaX, deltaY)
-                
+
                 // Use mouse to perform drag-and-drop via CDP drag events
                 m.dragAndDrop(startPoint, targetPoint, randomDelayMillis("dragAndDrop"))
-                
+
                 gap()
             }
         } catch (e: ChromeDriverException) {
@@ -620,9 +617,10 @@ function() {
     @Throws(WebDriverException::class)
     override suspend fun pageSource(): String? {
         return driverHelper.invokeOnPage("pageSource") {
-            // TODO: use pageAPI?.getResourceContent for better performance
+            // TODO: use pageAPI?.getResourceContent instead 1. semantic consistency 2. performance
             // pageAPI?.getResourceContent(mainFrameAPI?.id, currentUrl())
             val document = domAPI?.getDocument() ?: return@invokeOnPage null
+            // TODO: pass only one of nodeId and backendNodeId
             domAPI?.getOuterHTML(document.nodeId, document.backendNodeId)
         }
     }
