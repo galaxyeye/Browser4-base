@@ -44,6 +44,9 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
+          # Ensure the SDK root is on the import path when building from docs/
+          paths:
+            - ..
           options:
             show_source: true
             show_root_heading: true

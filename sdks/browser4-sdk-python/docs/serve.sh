@@ -8,11 +8,16 @@ cd "$(dirname "$0")"
 
 echo "Serving Browser4 Python SDK documentation..."
 
-# Install dependencies if needed
+# Install documentation toolchain if needed
 if ! command -v mkdocs &> /dev/null; then
     echo "Installing mkdocs dependencies..."
     pip install -r requirements.txt
 fi
+
+# Ensure the local SDK is importable for mkdocstrings (editable install)
+# This is safe to run repeatedly.
+echo "Ensuring local SDK is installed (editable)..."
+pip install -e ..
 
 # Serve the site
 echo "Starting local server..."
