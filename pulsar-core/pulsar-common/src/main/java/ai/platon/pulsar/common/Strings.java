@@ -20,8 +20,8 @@ package ai.platon.pulsar.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.awt.event.KeyEvent;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -127,7 +127,7 @@ public final class Strings {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    @Nonnull
+    @NotNull
     public static String escapeJsString(String s) {
         // Null-safe: keep returning empty string for null input (legacy behavior)
         if (s == null) return "";
@@ -963,13 +963,13 @@ public final class Strings {
      * full-width spaces, and HTML non-breaking spaces — with a single regular space " ".
      *
      */
-    @Nonnull
+    @NotNull
     public static String compactInline(String s, int maxWidth) {
         if (s == null) return "";
         return StringUtils.abbreviate(compactWhitespaces(s), maxWidth);
     }
 
-    @Nonnull
+    @NotNull
     public static String compactInline(String s) {
         return compactInline(s, 200);
     }

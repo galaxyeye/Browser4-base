@@ -1,6 +1,6 @@
 package ai.platon.pulsar.common.http
 
-import javax.annotation.Nullable
+import org.jetbrains.annotations.Nullable
 
 /*
  * Copyright 2002-2023 the original author or authors.

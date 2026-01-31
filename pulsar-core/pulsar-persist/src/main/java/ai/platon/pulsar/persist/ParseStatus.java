@@ -8,8 +8,8 @@ package ai.platon.pulsar.persist;
 import ai.platon.pulsar.persist.gora.generated.GParseStatus;
 import ai.platon.pulsar.persist.metadata.ParseStatusCodes;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -59,7 +59,7 @@ public class ParseStatus implements ParseStatusCodes {
         this.parseStatus = parseStatus;
     }
 
-    @Nonnull
+    @NotNull
     public static ParseStatus box(GParseStatus parseStatus) {
         Objects.requireNonNull(parseStatus);
         return new ParseStatus(parseStatus);

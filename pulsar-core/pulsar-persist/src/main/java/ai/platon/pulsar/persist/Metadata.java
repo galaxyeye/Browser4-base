@@ -4,9 +4,9 @@ import ai.platon.pulsar.common.DateTimes;
 import ai.platon.pulsar.persist.metadata.Name;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.gora.util.ByteUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.Enumeration;
@@ -34,8 +34,8 @@ public class Metadata {
         this.data = data;
     }
 
-    @Nonnull
-    public static Metadata box(@Nonnull Map<CharSequence, ByteBuffer> data) {
+    @NotNull
+    public static Metadata box(@NotNull Map<CharSequence, ByteBuffer> data) {
         return new Metadata(data);
     }
 
@@ -100,23 +100,23 @@ public class Metadata {
         return bvalue == null ? null : ByteUtils.toString(bvalue.array());
     }
 
-    @Nonnull
+    @NotNull
     public Optional<String> getOptional(String name) {
         return Optional.ofNullable(get(name));
     }
 
-    @Nonnull
+    @NotNull
     public Optional<String> getOptional(Name name) {
         return Optional.ofNullable(get(name));
     }
 
-    @Nonnull
+    @NotNull
     public String getOrDefault(Name name, String defaultValue) {
         String value = get(name);
         return value == null ? defaultValue : value;
     }
 
-    @Nonnull
+    @NotNull
     public String getOrDefault(String name, String defaultValue) {
         String value = get(name);
         return value == null ? defaultValue : value;
@@ -145,7 +145,7 @@ public class Metadata {
         return Boolean.parseBoolean(s);
     }
 
-    @Nonnull
+    @NotNull
     public Instant getInstant(Name name, Instant defaultValue) {
         String value = get(name);
         return value == null ? defaultValue : DateTimes.parseInstant(value, defaultValue);
