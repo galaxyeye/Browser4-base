@@ -94,18 +94,41 @@ class Browser4Driver:
         self._log_file_path: Optional[str] = None
 
     @staticmethod
-    def _default_jar_path() -> str:
-        """Returns the default jar path in the user's home directory."""
+    def _default_app_home() -> Path:
+        """Return the OS-appropriate app data dir for Browser4.
+
+        Precedence:
+        1) BROWSER4_HOME env var (explicit override)
+        2) Windows: %LOCALAPPDATA%\\Browser4 (fallback to ~/.browser4)
+        3) Others: ~/.browser4
+        """
+        override = os.environ.get("BROWSER4_HOME")
+        if override:
+            return Path(override).expanduser()
+
         home = Path.home()
-        browser4_dir = home / ".browser4" / "lib"
+
+        # On Windows, prefer LocalAppData to avoid writing under the user profile root.
+        if os.name == "nt":
+            local_app_data = os.environ.get("LOCALAPPDATA")
+            if local_app_data:
+                return Path(local_app_data) / "Browser4"
+
+        return home / ".browser4"
+
+    @staticmethod
+    def _default_jar_path() -> str:
+        """Returns the default jar path in the user's app data directory."""
+        app_home = Browser4Driver._default_app_home()
+        browser4_dir = app_home / "lib"
         browser4_dir.mkdir(parents=True, exist_ok=True)
         return str(browser4_dir / Browser4Driver.JAR_FILENAME)
 
     @staticmethod
     def _default_log_dir() -> Path:
-        """Returns the default log directory in the user's home directory."""
-        home = Path.home()
-        log_dir = home / ".browser4" / "logs"
+        """Returns the default log directory in the user's app data directory."""
+        app_home = Browser4Driver._default_app_home()
+        log_dir = app_home / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         return log_dir
 
