@@ -123,7 +123,7 @@ def mock_server(maven_build):
         # Use fully-qualified goal so Maven doesn't need prefix/pluginGroup mapping.
         "org.springframework.boot:spring-boot-maven-plugin:run",
         f"-Dspring-boot.run.arguments=--server.port={MOCK_SERVER_PORT}",
-        "-Dspring-boot.run.mainClass=ai.platon.pulsar.test.server.MockSiteApplicationKt",
+        "-Dspring-boot.run.main-class=ai.platon.pulsar.test.server.MockSiteApplicationKt",
     ]
 
     process = None
@@ -179,6 +179,7 @@ def browser4_server(maven_build, mock_server):
         # Use fully-qualified goal so Maven doesn't need prefix/pluginGroup mapping.
         "org.springframework.boot:spring-boot-maven-plugin:run",
         f"-Dspring-boot.run.arguments=--server.port={BROWSER4_SERVER_PORT}",
+        "-Dspring-boot.run.main-class=ai.platon.pulsar.rest.ApiApplicationKt",
         "-Dspring-boot.run.profiles=test",
     ]
 
