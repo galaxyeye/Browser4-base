@@ -118,7 +118,7 @@
 
 - Kotlin: immutable `data class`, explicit return types, null-safety (`require`/`check`/`?:`)
 - Public APIs must have KDoc: summary / params / returns / exceptions
-- After AI completes tasks, put task docs under `docs-dev` for future reference
+- Store AI generated task docs in `docs-dev`
 
 > KDoc template example:
 ```kotlin
