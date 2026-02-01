@@ -10,26 +10,27 @@
 
 ---
 
-## 1. Browser4 SDK Design
+## 0. Browser4 SDK Design (Background)
 
-1. **Core Objective**: Build an agent system with human-level browser operation capabilities, supporting comprehensive browser automation tasks
-2. **API Consistency**: SDK interface design maintains complete consistency with Browser4 local API, ensuring unified user experience
-   1. FusedActsStyleExample must work: `ai.platon.pulsar.sdk.examples.FusedActsStyleExample`
-3. **Architecture Design**: Adopt a three-layer service architecture model, comprising three core components: PulsarSession, WebDriver, and Agent
-4. **PulsarSession**: Provides full-lifecycle web page management capabilities, covering link processing, URL normalization, page loading, element location and manipulation, interaction behaviors, page navigation, state synchronization, state tracking, data extraction, and persistence
-5. **WebDriver**: Provides standardized low-level browser control interfaces
-6. **Agent**: Provides agent decision-making and execution control capabilities
-7. **Session Model**: Each SDK Session contains a unique PulsarSession, Browser instance, and Agent instance, where Browser can manage multiple WebDriver instances
-8. **Network Communication**: SDK is designed as a cross-network service invocation client for remote access to Browser4 services
-9. **Protocol Positioning**: Browser4 SDK does not follow W3C WebDriver specifications and does not pursue standard compatibility
-10. **Capability Boundary**: Browser4 SDK does not adopt BiDi protocol, eliminating the need to support all low-level browser operation capabilities, which are uniformly implemented by the Browser4 service side
-11. **Multi-language Support**: SDK plans to support Kotlin, Java, Python, and JavaScript, providing unified interface specifications
-12. **Layered API Design**:
-    - **WebDriver API**: Provides element-level operation capabilities, including exists, waitFor, click, fill, press, screenshot, outerHtml, element(s), etc.
-    - **Agent API**: Provides agent-level operation capabilities, including act, observe, extract, summarize, run, etc.
-    - **Pulsar API**: Provides session-level operation capabilities, including open, load, submit, extract, chat, scrape, normalize, close, etc.
+1. **核心目标**：构建具备人类级浏览器操作能力的智能体（Agent）系统，支持全面的浏览器自动化任务。
+2. **API 一致性**：SDK 接口设计与 Browser4 本地 API 保持完全一致，确保统一的用户体验。
+   1. 确保 `ai.platon.pulsar.sdk.examples.FusedActsStyleExample` 示例可以正常运行，各个不同语言均需实现该案例。
+   2. API 一致性是首要原则，其他设计均需围绕此目标展开。
+3. **架构设计**：采用三层服务架构模型，由三个核心组件组成：PulsarSession、WebDriver 和 Agent。
+4. **PulsarSession**：提供全生命周期的网页管理能力，涵盖链接处理、URL 规范化、页面加载、导航、交互、元素定位与操作、状态同步、状态追踪、数据提取及持久化。
+5. **WebDriver**：提供标准化的底层浏览器控制接口
+    1. 接口同服务器端 `ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver` 接口保持一致，可分步骤实现
+    2. 制定通讯协议时，向 W3C WebDriver 协议对齐，不追求完全一致，以 openapi.yaml 中定义的接口为准。
+6. **Agent**：提供智能体决策与执行控制能力。
+7. **会话模型（Session Model）**：每个 SDK Session 包含唯一的 PulsarSession、Browser 实例和 Agent 实例
+   1. Browser 可管理多个 WebDriver 实例，同一会话中，可能会在多个 WebDriver 实例间切换。
+8. **网络通信**：SDK 被设计为跨网络服务调用的客户端，用于远程访问 Browser4 服务。
+9. **协议定位**：Browser4 SDK 不遵循 W3C WebDriver 规范，也不追求标准兼容性。不采用 BiDi 协议，无需支持所有底层浏览器操作功能。
+10. **多语言支持**：SDK 计划支持 Kotlin、Java、Python 和 JavaScript，提供统一的接口规范。
 
 ## 1. OpenAPI Overview (Extracted from `openapi.yaml`)
+
+This section summarizes spec metadata. Endpoint lists are in Section 2, and implementation mapping is in Section 3.
 
 - OpenAPI: `3.1.0`
 - Title: **Browser4 WebDriver-Compatible API**
@@ -50,7 +51,7 @@
 - `control`: delay/pause/stop
 - `events`: event config, subscription, query
 - `agent`: AI agent (run/observe/act/extract/summarize/clearHistory)
-- `pulsar`: PulsarSession capabilities (normalize/open/load/submit)
+- `pulsar`: PulsarSession capabilities (normalize/open/load/submit/scrape)
 
 ---
 
@@ -63,91 +64,92 @@
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session` | `createSession` | ✓ | ✓ | ✓ |
-| GET | `/session/{sessionId}` | `getSession` | ✓ | ✓ | ✓ |
-| DELETE | `/session/{sessionId}` | `deleteSession` | ✓ | ✓ | ✓ |
+| POST | `/session` | `createSession` | ✓ | ✓ | - |
+| GET | `/session/{sessionId}` | `getSession` | ✓ | ✓ | - |
+| DELETE | `/session/{sessionId}` | `deleteSession` | ✓ | ✓ | - |
 
 ### 2.2 navigation
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/url` | `navigateTo` | ✓ | ✓ | ✓ |
-| GET | `/session/{sessionId}/url` | `getCurrentUrl` | ✓ | ✓ | ✓ |
-| GET | `/session/{sessionId}/documentUri` | `getDocumentUri` | ✗ | ✓ | ✓ |
-| GET | `/session/{sessionId}/baseUri` | `getBaseUri` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/url` | `navigateTo` | ✓ | ✓ | - |
+| GET | `/session/{sessionId}/url` | `getCurrentUrl` | ✓ | ✓ | - |
+| GET | `/session/{sessionId}/documentUri` | `getDocumentUri` | ✗ | ✓ | - |
+| GET | `/session/{sessionId}/baseUri` | `getBaseUri` | ✗ | ✓ | - |
 
 ### 2.3 selectors (selector-first extension)
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/selectors/exists` | `selectorExists` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/waitFor` | `waitForSelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/element` | `findElementBySelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/elements` | `findElementsBySelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/click` | `clickBySelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/fill` | `fillBySelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/press` | `pressBySelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/outerHtml` | `getOuterHtmlBySelector` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/selectors/screenshot` | `screenshotBySelector` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/selectors/exists` | `selectorExists` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/waitFor` | `waitForSelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/element` | `findElementBySelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/elements` | `findElementsBySelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/click` | `clickBySelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/fill` | `fillBySelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/press` | `pressBySelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/outerHtml` | `getOuterHtmlBySelector` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/selectors/screenshot` | `screenshotBySelector` | ✗ | ✓ | - |
 
 ### 2.4 element (standard WebDriver element)
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/element` | `findElement` | ✓ | ✓ | ✓ |
-| POST | `/session/{sessionId}/elements` | `findElements` | ✓ | ✓ | ✓ |
-| POST | `/session/{sessionId}/element/{elementId}/click` | `clickElement` | ✓ | ✓ | ✓ |
-| POST | `/session/{sessionId}/element/{elementId}/value` | `sendKeysToElement` | ✓ | ✓ | ✓ |
-| GET | `/session/{sessionId}/element/{elementId}/attribute/{name}` | `getElementAttribute` | ✓ | ✓ | ✓ |
-| GET | `/session/{sessionId}/element/{elementId}/text` | `getElementText` | ✓ | ✓ | ✓ |
+| POST | `/session/{sessionId}/element` | `findElement` | ✓ | ✓ | - |
+| POST | `/session/{sessionId}/elements` | `findElements` | ✓ | ✓ | - |
+| POST | `/session/{sessionId}/element/{elementId}/click` | `clickElement` | ✓ | ✓ | - |
+| POST | `/session/{sessionId}/element/{elementId}/value` | `sendKeysToElement` | ✓ | ✓ | - |
+| GET | `/session/{sessionId}/element/{elementId}/attribute/{name}` | `getElementAttribute` | ✓ | ✓ | - |
+| GET | `/session/{sessionId}/element/{elementId}/text` | `getElementText` | ✓ | ✓ | - |
 
 ### 2.5 script
 
-| Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
-|---|---|---|---|---|---|
-| POST | `/session/{sessionId}/execute/sync` | `executeSync` | ✓ | ✓ | ✓ |
-| POST | `/session/{sessionId}/execute/async` | `executeAsync` | ✓ | ✓ | ✓ |
+| Method | Path                                 | operationId | W3C | In openapi.yaml | Next Step (human) |
+|---|--------------------------------------|---|---|---|---|
+| POST | `/session/{sessionId}/execute/sync`  | `executeSync` | ✓ | ✓ | - |
+| POST | `/session/{sessionId}/execute/async` | `executeAsync` | ✓ | ✓ | - |
 
 ### 2.6 control
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/control/delay` | `delay` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/control/pause` | `pause` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/control/stop` | `stop` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/control/delay` | `delay` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/control/pause` | `pause` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/control/stop` | `stop` | ✗ | ✓ | - |
 
 ### 2.7 events
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/event-configs` | `createEventConfig` | ✗ | ✓ | ✓ |
-| GET | `/session/{sessionId}/event-configs` | `getEventConfigs` | ✗ | ✓ | ✓ |
-| GET | `/session/{sessionId}/events` | `getEvents` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/events/subscribe` | `subscribeToEvents` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/event-configs` | `createEventConfig` | ✗ | ✓ | - |
+| GET | `/session/{sessionId}/event-configs` | `getEventConfigs` | ✗ | ✓ | - |
+| GET | `/session/{sessionId}/events` | `getEvents` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/events/subscribe` | `subscribeToEvents` | ✗ | ✓ | - |
 
 ### 2.8 agent
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/agent/run` | `run` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/agent/observe` | `observe` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/agent/act` | `act` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/agent/extract` | `extract` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/agent/summarize` | `summarize` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/agent/clearHistory` | `clearHistory` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/agent/run` | `run` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/agent/observe` | `observe` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/agent/act` | `act` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/agent/extract` | `extract` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/agent/summarize` | `summarize` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/agent/clearHistory` | `clearHistory` | ✗ | ✓ | - |
 
 ### 2.9 pulsar
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/normalize` | `normalize` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/open` | `open` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/load` | `load` | ✗ | ✓ | ✓ |
-| POST | `/session/{sessionId}/submit` | `submit` | ✗ | ✓ | ✓ |
+| POST | `/session/{sessionId}/normalize` | `normalize` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/open` | `open` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/load` | `load` | ✗ | ✓ | - |
+| POST | `/session/{sessionId}/submit` | `submit` | ✗ | ✓ | - |
 
 ### 2.10 W3C Standard Endpoints Missing From `openapi.yaml`
 
 > These endpoints are part of the W3C WebDriver standard but are not listed in `openapi.yaml` yet.
+> For real/mock implementation coverage, see Section 4.
 
 #### 2.10.1 status / timeouts
 
