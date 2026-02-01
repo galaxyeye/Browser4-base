@@ -440,7 +440,8 @@ class PageHandler(
             // code: -3200 message: "Could not find node with given id"
             // This exception is expected, will change this log to debug
             if (e.errorCode != -3200L) {
-                logger.warn("Exception from domAPI?.querySelector | {} {} | {}", e.errorCode, e.errorMessage, e.brief())
+                logger.warn("Exception from domAPI?.querySelector | selector={}, errorCode={}, errorMessage={} | {}",
+                    selector, e.errorCode, e.errorMessage, e.brief())
             }
             null
         } catch (e: Exception) {
@@ -455,7 +456,7 @@ class PageHandler(
         val node = try {
             domAPI?.describeNode(nodeId, null, null, null, null)
         } catch (e: Exception) {
-            logger.warn("Exception from domAPI?.describeNode ", e)
+            logger.warn("Exception from domAPI?.describeNode | selector=$selector, nodeId=$nodeId", e)
             null
         }
 
@@ -523,7 +524,9 @@ class PageHandler(
             // code: -32000 message: "Invalid search result range" (when toIndex > resultCount)
             // These exceptions are expected when element not found
             if (e.errorCode != -3200L && e.errorCode != -32000L) {
-                logger.warn("Exception from domAPI?.performSearch/getSearchResults | {} {} | {}", e.errorCode, e.errorMessage, e.brief())
+                logger.warn("Exception from domAPI?.performSearch/getSearchResults" +
+                        " | xpath={}, errorCode={}, errorMessage={} | {}",
+                    xpath, e.errorCode, e.errorMessage, e.brief())
             }
             null
         } catch (e: Exception) {
@@ -538,7 +541,7 @@ class PageHandler(
         val node = try {
             domAPI?.describeNode(nodeId, null, null, null, null)
         } catch (e: Exception) {
-            logger.warn("Exception from domAPI?.describeNode ", e)
+            logger.warn("Exception from domAPI?.describeNode | nodeId=$nodeId", e)
             null
         }
 
