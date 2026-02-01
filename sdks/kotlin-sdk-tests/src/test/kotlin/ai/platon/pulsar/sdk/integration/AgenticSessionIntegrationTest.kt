@@ -16,6 +16,7 @@ import ai.platon.pulsar.sdk.integration.util.TestUrls
 import ai.platon.pulsar.sdk.v0.AgenticSession
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -73,6 +74,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @Disabled("MustManuallyRun")
     @DisplayName("should run task with multiple steps")
     suspend fun testShouldRunTaskWithMultipleSteps() {
         val task = """

@@ -27,6 +27,8 @@ import kotlin.test.assertTrue
  * migrate code or follow internal examples.
  */
 @Tag("Slow")
+@Tag("MustManuallyRun")
+@Disabled("MustManuallyRun")
 class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
 
     private lateinit var session: AgenticSession

@@ -15,6 +15,7 @@ package ai.platon.pulsar.sdk.integration
 import ai.platon.pulsar.sdk.integration.util.TestUrls
 import ai.platon.pulsar.sdk.v0.AgenticSession
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -43,14 +44,14 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should register and receive agent event handlers")
     suspend fun testShouldRegisterAndReceiveAgentEventHandlers() {
         var eventReceived = false
-        
+
         // Register handlers for different event types
         session.agentEventHandlers.agent.on("onWillAct") { event ->
             eventReceived = true
         }
 
         session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         // Trigger an agent action
         val result = session.act("scroll down")
 
@@ -62,7 +63,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle multiple event types")
     suspend fun testShouldHandleMultipleEventTypes() {
         val events = mutableListOf<String>()
-        
+
         session.agentEventHandlers.agent.on("onWillObserve") { event ->
             events.add("willObserve")
         }
@@ -71,7 +72,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
         }
 
         session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
-        
+
         val observation = session.observe("find clickable elements")
 
         assertNotNull(observation, "Observation should not be null")
@@ -101,6 +102,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @Disabled("MustManuallyRun")
     @DisplayName("should execute run with default parameters")
     suspend fun testShouldExecuteRunWithDefaultParameters() {
         val result = session.run("visit ${TestUrls.SIMPLE_PAGE} and check if it loads")
@@ -110,6 +112,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     }
 
     @Test
+    @Disabled("MustManuallyRun")
     @DisplayName("should execute run with custom timeout")
     suspend fun testShouldExecuteRunWithCustomTimeout() {
         val result = session.run(
@@ -178,7 +181,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should track state history")
     suspend fun testShouldTrackStateHistory() {
         session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         session.act("scroll down")
         session.act("scroll up")
 
@@ -192,7 +195,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should track process trace")
     suspend fun testShouldTrackProcessTrace() {
         session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         session.act("scroll to bottom")
 
         val trace = session.processTrace
@@ -204,14 +207,14 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should clear state history")
     suspend fun testShouldClearStateHistory() {
         session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
-        
+
         session.act("scroll down")
-        
+
         // Clear history
         session.clearHistory()
 
         val history = session.stateHistory
-        
+
         assertNotNull(history, "State history should not be null")
         assertTrue(history.states.isEmpty(), "State history should be empty after clear")
     }
