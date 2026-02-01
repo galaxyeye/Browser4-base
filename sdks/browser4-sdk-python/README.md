@@ -412,13 +412,34 @@ session.close()
 
 ## Testing
 
+The SDK includes both unit tests and integration tests:
+
+### Unit Tests (Fast)
+Unit tests use mocked HTTP responses and don't require a running server:
 ```bash
-# Run tests
-uv run pytest
+# Run unit tests only
+uv run pytest -m "not integration"
 
 # Run with coverage
-uv run pytest --cov=browser4
+uv run pytest --cov=browser4 -m "not integration"
 ```
+
+### Integration Tests (With Real Servers)
+Integration tests start real Browser4 and Mock servers, matching the Kotlin SDK test infrastructure:
+```bash
+# Run integration tests
+uv run pytest -m integration -v -s
+```
+
+Integration tests use:
+- **Browser4 REST Server** on port 8182 (started automatically)
+- **Mock Site Server** on port 18080 (provides test pages)
+- Same test data and endpoints as Kotlin SDK tests
+
+**Note:** First run may take 5-10 minutes to build the Browser4 project.
+
+For more details, see [tests/README.md](tests/README.md).
+
 
 ## Configuration
 
