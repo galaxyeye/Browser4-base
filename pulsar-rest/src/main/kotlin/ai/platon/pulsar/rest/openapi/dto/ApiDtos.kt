@@ -554,3 +554,31 @@ data class SubmitRequest(
 data class SubmitResponse(
     @param:JsonProperty("value") val value: Boolean
 )
+
+/**
+ * Cookie data structure.
+ */
+data class Cookie(
+    @param:JsonProperty("name") val name: String,
+    @param:JsonProperty("value") val value: String,
+    @param:JsonProperty("domain") val domain: String? = null,
+    @param:JsonProperty("path") val path: String? = null,
+    @param:JsonProperty("expires") val expires: Long? = null,
+    @param:JsonProperty("httpOnly") val httpOnly: Boolean? = null,
+    @param:JsonProperty("secure") val secure: Boolean? = null,
+    @param:JsonProperty("sameSite") val sameSite: String? = null
+)
+
+/**
+ * Request to add a cookie.
+ */
+data class AddCookieRequest(
+    @param:JsonProperty("cookie") val cookie: Cookie
+)
+
+/**
+ * Response containing cookies.
+ */
+data class CookiesResponse(
+    @param:JsonProperty("value") val value: List<Cookie>
+)

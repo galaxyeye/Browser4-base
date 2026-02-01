@@ -251,4 +251,29 @@ class NavigationController(
             ControllerUtils.errorResponse("webdriver error", e.message ?: "Failed to bring to front")
         }
     }
+
+    /**
+     * Gets the page source (HTML).
+     */
+    @GetMapping("/source")
+    suspend fun getPageSource(
+        @PathVariable sessionId: String,
+        response: HttpServletResponse
+    ): ResponseEntity<Any> {
+        logger.debug("Session {} getting page source", sessionId)
+        ControllerUtils.addRequestId(response)
+
+        val managed = sessionManager.getSession(sessionId)
+            ?: return ControllerUtils.notFound("session not found", "No active session with id $sessionId")
+
+        return try {
+            val source = managed.withLock {
+                driver.pageSource() ?: ""
+            }
+            ResponseEntity.ok(WebDriverResponse(value = source))
+        } catch (e: Exception) {
+            logger.error("Get page source failed | sessionId={} | {}", sessionId, e.message)
+            ControllerUtils.errorResponse("webdriver error", e.message ?: "Failed to get page source")
+        }
+    }
 }
