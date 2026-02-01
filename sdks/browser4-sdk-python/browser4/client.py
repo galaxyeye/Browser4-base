@@ -42,7 +42,24 @@ class PulsarClient:
             data=json.dumps(body) if body is not None else None,
             timeout=self.timeout,
         )
-        res.raise_for_status()
+        try:
+            res.raise_for_status()
+        except requests.HTTPError as e:
+            # Surface helpful server error details (often returned as JSON).
+            content_type = res.headers.get("content-type", "")
+            details: str
+            if "application/json" in content_type.lower():
+                try:
+                    details = json.dumps(res.json(), ensure_ascii=False)
+                except Exception:
+                    details = res.text
+            else:
+                details = res.text
+            raise requests.HTTPError(
+                f"{e} (status={res.status_code}, url={res.url}, body={details})",
+                response=res,
+            ) from None
+
         if not res.content:
             return None
         try:
