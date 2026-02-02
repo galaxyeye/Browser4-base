@@ -22,7 +22,6 @@ import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.detail.*
 import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
@@ -195,7 +194,13 @@ class PulsarWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun evaluateDetail(expression: String): JsEvaluation? {
-        return driverHelper.invokeOnPage("evaluateDetail") { driverHelper.createJsEvaluate(jsHandler.evaluateDetail(expression)) }
+        return driverHelper.invokeOnPage("evaluateDetail") {
+            driverHelper.createJsEvaluate(
+                jsHandler.evaluateDetail(
+                    expression
+                )
+            )
+        }
     }
 
     @Throws(WebDriverException::class)
@@ -548,7 +553,11 @@ function() {
                     """.trimIndent()
                     val nd = domAPI?.resolveNode(null, node.backendNodeId)
                     if (nd?.objectId != null) {
-                        val remoteObject = runtimeAPI?.callFunctionOn(functionDeclaration, objectId = nd.objectId, returnByValue = true)
+                        val remoteObject = runtimeAPI?.callFunctionOn(
+                            functionDeclaration,
+                            objectId = nd.objectId,
+                            returnByValue = true
+                        )
                         // TODO: performance issue for large text
                         remoteObject?.result?.value?.toString()
                     } else null
@@ -898,7 +907,10 @@ function() {
             if (isolatedWorldJs.isNotBlank()) {
                 val targetFrameId = pageAPI?.getFrameTree()?.frame?.id ?: event.frame.id
                 val contextId = isolatedWorldManager.ensureRuntime(targetFrameId, isolatedWorldJs)
-                logger.debug("Ensured Browser4 runtime in isolated world after main-frame navigation | frame={}", targetFrameId)
+                logger.debug(
+                    "Ensured Browser4 runtime in isolated world after main-frame navigation | frame={}",
+                    targetFrameId
+                )
             } else {
                 logger.warn("No isolated world JS found to re-inject after frame navigation")
             }
@@ -1008,12 +1020,16 @@ function() {
             val isolatedWorldJs = loader.getIsolatedWorldJs(false)
             if (isolatedWorldJs.isNotBlank()) {
                 isolatedWorldManager.injectRuntime(isolatedWorldJs, contextId)
-                logger.debug("Injected Browser4 runtime into Isolated World (context: {}) | {}",
-                    contextId, StringUtils.abbreviateMiddle(userTypedUrl, "...", 200))
+                logger.debug(
+                    "Injected Browser4 runtime into Isolated World (context: {}) | {}",
+                    contextId, StringUtils.abbreviateMiddle(userTypedUrl, "...", 200)
+                )
                 val evaluate = runtimeAPI?.evaluate("typeof(__pulsar_utils__)", contextId = contextId)
                 if (evaluate?.result?.value != "function") {
-                    logger.warn("Failed to verify isolated world injection: typeof(__pulsar_utils__) should be 'function' but got: {}",
-                        evaluate?.result?.value)
+                    logger.warn(
+                        "Failed to verify isolated world injection: typeof(__pulsar_utils__) should be 'function' but got: {}",
+                        evaluate?.result?.value
+                    )
                 }
             }
 
@@ -1052,32 +1068,39 @@ function() {
 
     private suspend fun waitForScrollSettled(selector: String, timeout: Duration = Duration.ofMillis(5_000)) {
         val safeSelector = Strings.escapeJsString(selector)
-        waitUntil(500, timeout) {
-            val settled = evaluateDetail(
-                """
+        val expression = """
 (() => {
   const sel = "$safeSelector";
   const el = document.querySelector(sel);
   if (!el) return true;
   const r = el.getBoundingClientRect();
   const s = document.scrollingElement || document.documentElement;
-  const prev = window.__pulsar_scroll_prev || {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
-  window.__pulsar_scroll_prev = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
-  return Math.abs(prev.t - r.top) < 1 &&
+  const isFirst = (typeof el.__pulsar_scroll_prev === 'undefined');
+  const prev = el.__pulsar_scroll_prev || {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  el.__pulsar_scroll_prev = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  return !isFirst &&
+         Math.abs(prev.t - r.top) < 1 &&
          Math.abs(prev.l - r.left) < 1 &&
          Math.abs(prev.st - s.scrollTop) < 1 &&
          Math.abs(prev.sl - s.scrollLeft) < 1;
 })()
-                    """.trimIndent()
-            )
+"""
 
-            // println(settled)
-
+        waitUntil(200, timeout) {
+            val settled = evaluateDetail(expression)
             settled?.value as? Boolean ?: false
         }
 
-        // still delay for a while to ensure scroll settled
-        delay(500)
+        evaluateDetail(
+            """
+(() => {
+  const sel = "$safeSelector";
+  const el = document.querySelector(sel);
+  if (!el) return true;
+  delete el.__pulsar_scroll_prev;
+})()
+                    """
+        )
     }
 }
 
