@@ -123,6 +123,7 @@ class IsolatedWorldManager(
         if (contextId != null) {
             // CDP expects executionContextId, but some driver code historically used contextId.
             params["executionContextId"] = contextId
+            params["contextId"] = contextId
         }
 
         val result = devTools.invoke<Map<String, Any>>(
@@ -130,6 +131,11 @@ class IsolatedWorldManager(
             params,
             null
         )
+
+        val exception = result?.get("exceptionDetails")
+        if (exception != null) {
+            logger.warn("Exception during isolated world evaluation: {} \n>>>$script<<<", exception)
+        }
 
         return result?.get("result")
     }
@@ -164,8 +170,6 @@ class IsolatedWorldManager(
                     worldName: '$RUNTIME_WORLD_NAME',
                 };
 
-                $runtimeScript
-
                 // Expose runtime API (but only in isolated world)
                 if (typeof window !== 'undefined') {
                     Object.defineProperty(window, '__browser4_runtime__', {
@@ -175,6 +179,10 @@ class IsolatedWorldManager(
                         configurable: false
                     });
                 }
+
+
+                $runtimeScript
+
 
                 return __browser4_runtime__;
             })();

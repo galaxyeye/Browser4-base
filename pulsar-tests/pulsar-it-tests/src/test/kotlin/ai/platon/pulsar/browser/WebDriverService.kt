@@ -8,6 +8,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 open class WebDriverService(
     val browserFactory: BrowserFactory,
@@ -97,6 +99,12 @@ open class WebDriverService(
 
     open suspend fun open(url: String, driver: WebDriver, scrollCount: Int = 3) {
         driver.navigateTo(url)
+
+        // Has to wait for a while to let the scripts be injected
+        delay(1000)
+        val result = driver.evaluateValue("typeof(__pulsar_utils__)")
+        assertEquals("function", result?.toString(), "__pulsar_utils__ is not injected properly")
+
         driver.waitForNavigation()
         var n = scrollCount
         while (n-- > 0) {
@@ -108,6 +116,12 @@ open class WebDriverService(
 
     open suspend fun openEnhanced(url: String, driver: WebDriver, scrollCount: Int = 3) {
         driver.navigateTo(url)
+
+        // Has to wait for a while to let the scripts be injected
+        delay(1000)
+        val result = driver.evaluateValue("typeof(__pulsar_utils__)")
+        assertEquals("function", result?.toString(), "__pulsar_utils__ is not injected properly")
+
         driver.waitForSelector("body")
 //        driver.waitForSelector("input[id]")
 
@@ -136,7 +150,11 @@ open class FastWebDriverService(
 ) : WebDriverService(browserFactory, requiredPageSize) {
     override suspend fun openEnhanced(url: String, driver: WebDriver, scrollCount: Int) {
         driver.navigateTo(url)
+
+        // Has to wait for a while to let the scripts be injected
         driver.delay(1000)
+        val result = driver.evaluateValue("typeof(__pulsar_utils__)")
+        assertEquals("function", result?.toString(), "__pulsar_utils__ is not injected properly")
 
         // make sure all metadata are available
         driver.evaluateDetail("__pulsar_utils__.waitForReady()")

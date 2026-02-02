@@ -993,6 +993,11 @@ function() {
                 isolatedWorldManager.injectRuntime(isolatedWorldJs, contextId)
                 logger.debug("Injected Browser4 runtime into Isolated World (context: {}) | {}",
                     contextId, StringUtils.abbreviateMiddle(userTypedUrl, "...", 200))
+                val evaluate = runtimeAPI?.evaluate("typeof(__pulsar_utils__)", contextId = contextId)
+                if (evaluate?.result?.value != "function") {
+                    logger.warn("Failed to verify isolated world injection: typeof(__pulsar_utils__) should be 'function' but got: {}",
+                        evaluate?.result?.value)
+                }
             }
 
             if (logger.isTraceEnabled) {

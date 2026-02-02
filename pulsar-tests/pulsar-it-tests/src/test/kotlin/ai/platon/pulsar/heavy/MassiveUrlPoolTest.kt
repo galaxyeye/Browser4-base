@@ -1,8 +1,10 @@
 package ai.platon.pulsar.heavy
 
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.skeleton.PulsarSettings
 import ai.platon.pulsar.skeleton.crawl.common.url.ListenableHyperlink
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
 
@@ -18,6 +20,8 @@ class MassiveUrlPoolTest: MassiveTestBase() {
 
     @Test
     fun test() {
+        Assumptions.assumeTrue { testFileCount > 0 }
+
         PulsarSettings.maxBrowserContexts(4).maxOpenTabs(8)
 
         val links = testPaths.asSequence().map { URLUtils.pathToLocalURL(it) }.map { createHyperlink(it) }

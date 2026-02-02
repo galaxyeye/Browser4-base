@@ -12,6 +12,7 @@ import ai.platon.pulsar.skeleton.crawl.common.url.ListenableHyperlink
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Tag
 import kotlin.io.path.ExperimentalPathApi
@@ -47,17 +48,25 @@ class BrowserRotationTest : MassiveTestBase() {
 
     @Test
     fun testWithSequentialBrowser() {
+        Assumptions.assumeTrue { testFileCount > 0 }
         PulsarSettings.withSequentialBrowsers()
         runAndAwait()
     }
 
     @Test
     fun testWithTemporaryBrowser() {
+        Assumptions.assumeTrue { testFileCount > 0 }
         PulsarSettings.withTemporaryBrowser()
         runAndAwait()
     }
 
     private fun runAndAwait() {
+        if (testFileCount == 0) {
+            printlnPro("Skip the test since testFileCount is 0")
+            return
+        }
+
+        Assumptions.assumeTrue { testFileCount > 0 }
         val links = testPaths.asSequence().map { URLUtils.pathToLocalURL(it) }.map { createHyperlink(it) }.toList()
 
         links.forEach {

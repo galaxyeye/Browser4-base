@@ -24,7 +24,7 @@ class LoadingWebDriverPoolTest {
     private lateinit var browserId: BrowserId
     private val poolManager = DefaultWebDriverPoolManager(config)
     private lateinit var pool: LoadingWebDriverPool
-    private val seeds = LinkExtractors.fromResource("seeds/seeds.txt")
+    private val seeds = LinkExtractors.fromResource("seeds100.txt")
 
     fun checkPlaywrightAvailable(): Boolean {
         if (!config.getBoolean("pulsar.test.playwright", false)) {

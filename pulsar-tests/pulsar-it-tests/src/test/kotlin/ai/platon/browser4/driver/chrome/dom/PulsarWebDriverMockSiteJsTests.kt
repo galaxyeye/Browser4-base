@@ -37,10 +37,11 @@ class PulsarWebDriverMockSiteJsTests : WebDriverTestBase() {
         val variables = windowVariables.split(",")
             .map { it.trim('\"') }
             .filter { it.contains("__pulsar_") }
-        Assumptions.assumeTrue(
-            SimpleScriptConfuser.IDENTITY_NAME_MANGLER != confuser.nameMangler,
-            "confuser.nameMangler should not be IDENTITY_NAME_MANGLER to run this test"
-        )
+//        Assumptions.assumeTrue(
+//            SimpleScriptConfuser.IDENTITY_NAME_MANGLER != confuser.nameMangler,
+//            "confuser.nameMangler should not be IDENTITY_NAME_MANGLER to run this test." +
+//                    "Since we have injected scripts in an isolated world, there is no need to mangle names anymore."
+//        )
         assertEquals(0, variables.size, "__pulsar_ should be confused")
 
         val injectedNames = listOf(

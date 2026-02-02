@@ -1620,7 +1620,7 @@ __pulsar_utils__.showInfoBox = function(selector) {
  * Compute the final metadata, the metadata is stored in the __pulsar_utils__.data.metadata
  * */
 __pulsar_utils__.computeMetadata = function() {
-    let config = this.getConfig();
+    let config = __pulsar_utils__.getConfig();
     console.assert(config != null, "config is null")
 
     let dateTime = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString()

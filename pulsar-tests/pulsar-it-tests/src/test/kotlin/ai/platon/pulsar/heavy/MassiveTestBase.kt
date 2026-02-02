@@ -1,13 +1,20 @@
 package ai.platon.pulsar.heavy
 
+import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.ql.context.SQLContexts
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentSkipListSet
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.assertTrue
 
 open class MassiveTestBase {
     protected val session = SQLContexts.createSession()
@@ -32,29 +39,28 @@ open class MassiveTestBase {
     /**
      * Generate [testFileCount] temporary files in the local file system before all the tests.
      * */
-    @BeforeTest
+    @BeforeEach
     fun generateTestFiles() {
-        if (testFileCount > 0) {
-            TestResourceHelper.generateTestFiles(testFileCount).toCollection(testPaths)
-        }
+        Assumptions.assumeTrue { testFileCount > 0 }
+        TestResourceHelper.generateTestFiles(testFileCount).toCollection(testPaths)
     }
 
-    @BeforeTest
+    @BeforeEach
     fun prepareContextDirs() {
 //        Files.createDirectories(contextBaseDir)
 //        assertTrue { Files.exists(contextBaseDir) }
-//
-//        Files.createDirectories(tempContextBaseDir)
-//        assertTrue { Files.exists(tempContextBaseDir) }
+
+        val tempContextBaseDir = AppPaths.CONTEXT_TMP_DIR
+        Files.createDirectories(tempContextBaseDir)
+        assertTrue { Files.exists(tempContextBaseDir) }
     }
 
+    @OptIn(ExperimentalPathApi::class)
     @AfterTest
     fun clearContextDirs() {
-//        FileUtils.deleteDirectory(groupBaseDir.toFile())
-//        assertTrue { !Files.exists(groupBaseDir) }
-//
-//        FileUtils.deleteDirectory(tempContextGroupDir.toFile())
-//        assertTrue { !Files.exists(tempContextGroupDir) }
+        val tempContextBaseDir = AppPaths.CONTEXT_TMP_DIR
+        tempContextBaseDir.deleteRecursively()
+        assertTrue { !Files.exists(tempContextBaseDir) }
     }
 
     /**
@@ -72,4 +78,3 @@ open class MassiveTestBase {
         printlnPro("Test finished, duration: $duration")
     }
 }
-

@@ -191,6 +191,10 @@ class JsHandler(
      * @return Detailed evaluation result, or null if evaluation fails
      * */
     private suspend fun evaluateInContext(expression: String, contextId: Int, returnByValue: Boolean): Evaluate? {
+        return runtimeAPI?.evaluate(expression = expression, contextId = contextId, returnByValue = returnByValue)
+    }
+
+    private suspend fun evaluateInContext2(expression: String, contextId: Int, returnByValue: Boolean): Evaluate? {
         val params = mutableMapOf<String, Any?>(
             "expression" to expression,
             "contextId" to contextId,

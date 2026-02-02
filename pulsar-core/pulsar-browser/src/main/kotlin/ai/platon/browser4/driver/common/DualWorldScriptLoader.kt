@@ -43,7 +43,6 @@ open class DualWorldScriptLoader(
          * These contain the full Browser4 runtime and utilities.
          */
         val ISOLATED_WORLD_RESOURCES = listOf(
-            "js/runtime_bridge.js",
             "js/configs.js",
             "js/node_ext.js",
             "js/node_traversor.js",

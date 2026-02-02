@@ -25,9 +25,9 @@ open class SimpleScriptConfuser: ScriptConfuser {
         val IDENTITY_NAME_MANGLER: (String) -> String = { script -> script }
     }
 
-    // TODO: temporary switch for testing
-//    var nameMangler: (String) -> String = IDENTITY_NAME_MANGLER
-    var nameMangler: (String) -> String = SIMPLE_NAME_MANGLER
+    // Since we have injected scripts in an isolated world, there is no need to mangle names anymore.
+    var nameMangler: (String) -> String = IDENTITY_NAME_MANGLER
+//    var nameMangler: (String) -> String = SIMPLE_NAME_MANGLER
 
     override fun confuse(script: String): String {
         return nameMangler(script)
