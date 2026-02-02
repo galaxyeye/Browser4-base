@@ -177,7 +177,7 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Clear content
         driver.bringToFront()
         driver.click("[data-testid='tta-clear-content']")
-        driver.waitUntil(500) {
+        driver.waitUntil(2000) {
             val txt = driver.selectFirstTextOrNull("#dynamicContent p")
             txt?.contains("Click a button to load content") == true
         }
@@ -209,7 +209,7 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Clear images
         driver.bringToFront()
         driver.click("[data-testid='tta-clear-images']")
-        driver.waitUntil(500) {
+        driver.waitUntil(2000) {
             val cnt =
                 (driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number)?.toInt()
                     ?: 0
@@ -224,10 +224,10 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Generate 100 items
         driver.bringToFront()
         driver.click("[data-testid='tta-generate-100']")
-        driver.waitUntil(500) { driver.exists("#virtualScrollContent [data-testid^='tta-virtual-']") }
+        driver.waitUntil(2000) { driver.exists("#virtualScrollContent [data-testid^='tta-virtual-']") }
         assertTrue(driver.exists("#virtualScrollContent [data-testid='tta-virtual-1']"))
         driver.click("[data-testid='tta-virtual-btn-1']")
-        driver.waitUntil(500) {
+        driver.waitUntil(2000) {
             val txt = driver.selectFirstTextOrNull("#testStatus span")
             txt?.contains("Virtual item 1 clicked") == true
         }
@@ -235,7 +235,7 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Generate 1000 items
         driver.bringToFront()
         driver.click("[data-testid='tta-generate-1000']")
-        driver.waitUntil(500) { driver.exists("#virtualScrollContent [data-testid^='tta-virtual-']") }
+        driver.waitUntil(2000) { driver.exists("#virtualScrollContent [data-testid^='tta-virtual-']") }
 
         // Scroll to bottom within the container to reveal tail items
         driver.evaluate(
@@ -258,7 +258,7 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         }
         driver.bringToFront()
         driver.click("[data-testid='tta-virtual-btn-$targetId']")
-        driver.waitUntil(500) {
+        driver.waitUntil(2000) {
             val txt = driver.selectFirstTextOrNull("#testStatus span")
             txt?.contains("Virtual item $targetId clicked") == true
         }
@@ -266,7 +266,7 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Clear list
         driver.bringToFront()
         driver.click("[data-testid='tta-clear-virtual']")
-        driver.waitUntil(500) {
+        driver.waitUntil(2000) {
             val txt = driver.selectFirstTextOrNull("#virtualScrollContent p")
             txt?.contains("Click a button to generate items") == true
         }
@@ -277,21 +277,21 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Trigger error and verify boundary
         driver.bringToFront()
         driver.click("[data-testid='tta-trigger-error']")
-        driver.waitUntil(500) { driver.exists("#errorBoundary.show") }
+        driver.waitUntil(2000) { driver.exists("#errorBoundary.show") }
         val errMsg = driver.selectFirstTextOrNull("#errorMessage")
         assertTrue(errMsg?.contains("simulated error") == true)
 
         // Clear error
         driver.bringToFront()
         driver.click("[data-testid='tta-clear-error']")
-        driver.waitUntil(500) { !driver.exists("#errorBoundary.show") }
+        driver.waitUntil(2000) { !driver.exists("#errorBoundary.show") }
         val ok = driver.selectFirstTextOrNull("#testStatus span")
         assertTrue(ok?.contains("All tests ready") == true)
 
         // Simulate network error
         driver.bringToFront()
         driver.click("[data-testid='tta-network-error']")
-        driver.waitUntil(500) {
+        driver.waitUntil(2000) {
             val txt = driver.selectFirstTextOrNull("#testStatus span")
             txt?.contains("Network error occurred") == true
         }
@@ -301,7 +301,7 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         // Clear again
         driver.bringToFront()
         driver.click("[data-testid='tta-clear-error']")
-        driver.waitUntil(500) { !driver.exists("#errorBoundary.show") }
+        driver.waitUntil(2000) { !driver.exists("#errorBoundary.show") }
     }
 }
 

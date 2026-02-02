@@ -789,6 +789,7 @@ class EmulationHandler(
         val deltaY = 1.0
         val offset = OffsetD(deltaX, deltaY)
         val minDeltaX = 1.0
+        val minDeltaY = 1.0
 
         val p = pageAPI
         val d = domAPI
@@ -812,13 +813,14 @@ class EmulationHandler(
                 "right" -> width - deltaX
                 else -> width / 2 + deltaX
             }
-            offsetX = offsetX.coerceAtMost((width - minDeltaX).coerceAtLeast(0.0)).coerceAtLeast(minDeltaX)
+            offsetX = offsetX.coerceAtMost((width - minDeltaX).coerceAtLeast(0.0))
+                .coerceAtLeast(minDeltaX)
             // Base X on the element's left edge to avoid overshooting from a center-based point
             point.x = box.x + offsetX
 
             // Also keep Y inside the element bounds with a small margin
-            val minY = box.y + minDeltaX
-            val maxY = (box.y + box.height - minDeltaX).coerceAtLeast(minY)
+            val minY = box.y + minDeltaY
+            val maxY = (box.y + box.height - minDeltaY).coerceAtLeast(minY)
             point.y = point.y.coerceIn(minY, maxY)
         }
 
