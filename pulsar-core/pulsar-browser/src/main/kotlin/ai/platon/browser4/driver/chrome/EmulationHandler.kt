@@ -14,6 +14,8 @@ import ai.platon.pulsar.common.math.geometric.DimD
 import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
+import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import kotlinx.coroutines.delay
 import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.math3.util.Precision
@@ -711,7 +713,8 @@ class EmulationHandler(
     private val pageAPI: Page?,
     private val domAPI: DOM?,
     private val keyboard: Keyboard?,
-    private val mouse: Mouse?
+    private val mouse: Mouse?,
+    private val devTools: RemoteDevTools? = null
 ) {
     private val logger = getLogger(this)
 
@@ -720,11 +723,18 @@ class EmulationHandler(
     ) {
         val point = getInteractPoint(node, position, useRandomOffset = true) ?: return
 
+        // debugElementOnPoint(point.x, point.y)
+
         if (modifier != null) {
             clickWithModifiers(point, modifier, count, delayMillis = delayMillis)
         } else {
             mouse?.click(point.x, point.y, count, delayMillis = delayMillis)
         }
+    }
+
+    private suspend fun debugElementOnPoint(x: Double, y: Double) {
+        val result = devTools?.runtime?.evaluate("elementFromPointDeep($x, $y)")
+        printlnPro(prettyPulsarObjectMapper().writeValueAsString(result))
     }
 
     /**
@@ -779,10 +789,11 @@ class EmulationHandler(
 
     private suspend fun getInteractPoint(node: NodeRef, position: String = "center", useRandomOffset: Boolean = true): PointD? {
         val deltaX = if (useRandomOffset) 1.0 + Random.nextInt(2) else 0.0
-        val deltaY = 1.0
+        val deltaY = if (useRandomOffset) 1.0 + Random.nextInt(2) else 0.0
         val offset = OffsetD(deltaX, deltaY)
         val minDeltaX = 1.0
         val minDeltaY = 1.0
+        val normalizedPosition = position.trim().lowercase()
 
         val p = pageAPI
         val d = domAPI
@@ -798,23 +809,41 @@ class EmulationHandler(
             .getOrNull() ?: return point
 
         val width = box.width
+        val height = box.height
+        if (!width.isFinite() || !height.isFinite() || width <= 0.0 || height <= 0.0) {
+            return point
+        }
+
         // if it's an input element, we should click on the right side of the element to activate the input box,
         // so the cursor is at the tail of the text
-        if (width > 0.0) {
-            var offsetX = when (position) {
+        run {
+            // Handle very small elements gracefully
+            val safeMinDeltaX = minDeltaX.coerceAtMost(width / 2)
+
+            val offsetX = when (normalizedPosition) {
                 "left" -> 0.0 + deltaX
                 "right" -> width - deltaX
-                else -> width / 2 + deltaX
+                "center" -> width / 2 + deltaX
+                else -> {
+                    logger.debug("Unknown interact position '{}', fallback to center", position)
+                    width / 2 + deltaX
+                }
             }
-            offsetX = offsetX.coerceAtMost((width - minDeltaX).coerceAtLeast(0.0))
-                .coerceAtLeast(minDeltaX)
-            // Base X on the element's left edge to avoid overshooting from a center-based point
-            point.x = box.x + offsetX
 
-            // Also keep Y inside the element bounds with a small margin
-            val minY = box.y + minDeltaY
-            val maxY = (box.y + box.height - minDeltaY).coerceAtLeast(minY)
-            point.y = point.y.coerceIn(minY, maxY)
+            // Clamp X inside the element bounds (keep a small margin when possible)
+            val minX = box.x + safeMinDeltaX
+            val maxX = (box.x + width - safeMinDeltaX).coerceAtLeast(minX)
+            point.x = (box.x + offsetX).coerceIn(minX, maxX)
+        }
+
+        run {
+            val safeMinDeltaY = minDeltaY.coerceAtMost(height / 2)
+            val minY = box.y + safeMinDeltaY
+            val maxY = (box.y + height - safeMinDeltaY).coerceAtLeast(minY)
+
+            // Keep Y inside the element bounds with a small margin; add small jitter when enabled
+            val targetY = point.y + if (useRandomOffset) (deltaY - 1.0) else 0.0
+            point.y = targetY.coerceIn(minY, maxY)
         }
 
         return point

@@ -15,32 +15,30 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
 
     @Test
     @DisplayName("test loading dynamic content")
-    fun testLoadingDynamicContent() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            driver.waitForSelector("h1")
-            val title = driver.selectFirstTextOrNull("h1")
-            assertTrue(title?.contains("Dynamic Content Test Page") == true)
-            // Load users
-            driver.bringToFront()
-            driver.click("[data-testid='tta-load-users']")
-            val remainingTime = driver.waitForSelector("#dynamicContent.loaded")
-            assertTrue { remainingTime.toMillis() > 0 }
-            // Verify users list
-            assertTrue(driver.exists("#dynamicContent [data-testid^='tta-user-']"))
-        }
+    fun testLoadingDynamicContent() = runEnhancedWebDriverTest(testURL) { driver ->
+        driver.waitForSelector("h1")
+        val title = driver.selectFirstTextOrNull("h1")
+        assertTrue(title?.contains("Dynamic Content Test Page") == true)
+        // Load users
+        driver.bringToFront()
+        driver.click("[data-testid='tta-load-users']")
+        val remainingTime = driver.waitForSelector("#dynamicContent.loaded")
+        assertTrue { remainingTime.toMillis() > 0 }
+        // Verify users list
+        assertTrue(driver.exists("#dynamicContent [data-testid^='tta-user-']"))
+    }
 
     @Test
     @DisplayName("test interactions on dynamic content")
-    fun testExerciseAsyncLoading() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            // Basic smoke: title and hero content present
-            driver.waitForSelector("h1")
-            val title = driver.selectFirstTextOrNull("h1")
-            assertTrue(title?.contains("Dynamic Content Test Page") == true)
+    fun testExerciseAsyncLoading() = runEnhancedWebDriverTest(testURL) { driver ->
+        // Basic smoke: title and hero content present
+        driver.waitForSelector("h1")
+        val title = driver.selectFirstTextOrNull("h1")
+        assertTrue(title?.contains("Dynamic Content Test Page") == true)
 
-            // 1) Async loading: users -> products -> error -> clear
-            exerciseAsyncLoading(driver)
-        }
+        // 1) Async loading: users -> products -> error -> clear
+        exerciseAsyncLoading(driver)
+    }
 
     @Test
     @DisplayName("test interactions on dynamic content")
@@ -104,41 +102,40 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
 
     @Test
     @DisplayName("test exercise layz images on dynamic content")
-    fun testExerciseLazyImages() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            // Basic smoke: title and hero content present
-            driver.waitForSelector("h1")
-            val title = driver.selectFirstTextOrNull("h1")
-            assertTrue(title?.contains("Dynamic Content Test Page") == true)
+    fun testExerciseLazyImages() = runEnhancedWebDriverTest(testURL) { driver ->
+        // Basic smoke: title and hero content present
+        driver.waitForSelector("h1")
+        val title = driver.selectFirstTextOrNull("h1")
+        assertTrue(title?.contains("Dynamic Content Test Page") == true)
 
-            // 3) Lazy images: add more, verify count, clear
-            // Add 6 more images
-            driver.bringToFront()
-            driver.click("[data-testid='tta-add-images']")
-            driver.waitUntil(2000) {
-                val cnt =
-                    (driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number)?.toInt()
-                        ?: 0
-                cnt >= 9 // initial 3 + 6 added
-            }
-            val total = driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number
-            assertTrue((total?.toInt() ?: 0) >= 9)
-
-            // Scroll images into view to trigger IO (no-op if already visible)
-            driver.evaluate("window.scrollTo({ top: document.getElementById('imageGrid').offsetTop, behavior: 'instant' })")
-
-            // Clear images
-            driver.bringToFront()
-            driver.click("[data-testid='tta-clear-images']")
-            driver.waitUntil(2000) {
-                val cnt =
-                    (driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number)?.toInt()
-                        ?: 0
-                cnt == 0
-            }
-            val cleared = driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number
-            assertEquals(0, cleared?.toInt() ?: -1)
+        // 3) Lazy images: add more, verify count, clear
+        // Add 6 more images
+        driver.bringToFront()
+        driver.click("[data-testid='tta-add-images']")
+        driver.waitUntil(2000) {
+            val cnt =
+                (driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number)?.toInt()
+                    ?: 0
+            cnt >= 9 // initial 3 + 6 added
         }
+        val total = driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number
+        assertTrue((total?.toInt() ?: 0) >= 9)
+
+        // Scroll images into view to trigger IO (no-op if already visible)
+        driver.evaluate("window.scrollTo({ top: document.getElementById('imageGrid').offsetTop, behavior: 'instant' })")
+
+        // Clear images
+        driver.bringToFront()
+        driver.click("[data-testid='tta-clear-images']")
+        driver.waitUntil(2000) {
+            val cnt =
+                (driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number)?.toInt()
+                    ?: 0
+            cnt == 0
+        }
+        val cleared = driver.evaluateValue("document.querySelectorAll('#imageGrid .lazy-image').length") as? Number
+        assertEquals(0, cleared?.toInt() ?: -1)
+    }
 
     @Test
     @DisplayName("test exercise virtual scrolling on dynamic content")
@@ -179,9 +176,9 @@ class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
         )
         // Wait for any tail item to appear
         driver.waitUntil(2000) {
-            driver.exists("#virtualScrollContent [data-testid='tta-virtual-1000']") ||
-                    driver.exists("#virtualScrollContent [data-testid='tta-virtual-999']") ||
-                    driver.exists("#virtualScrollContent [data-testid='tta-virtual-998']")
+            driver.exists("#virtualScrollContent [data-testid='tta-virtual-1000']") || driver.exists("#virtualScrollContent [data-testid='tta-virtual-999']") || driver.exists(
+                "#virtualScrollContent [data-testid='tta-virtual-998']"
+            )
         }
         // Click whichever is visible
         val targetId = when {
