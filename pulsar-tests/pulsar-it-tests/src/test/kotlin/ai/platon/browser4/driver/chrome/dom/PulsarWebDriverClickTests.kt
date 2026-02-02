@@ -378,6 +378,10 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
     fun testClickWithMetaModifier() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         driver.waitForSelector("h1")
         
+        // Fill input first
+        driver.bringToFront()
+        driver.fill("#newItemInput", "Meta Test Item")
+        
         // Click with Meta modifier (Command on Mac, Windows key on Windows)
         driver.bringToFront()
         driver.click("[data-testid='tta-add-item']", "Meta")
@@ -508,6 +512,14 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
     fun testClickDisabledButton() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         driver.waitForSelector("h1")
         
+        // Clear content first
+        driver.bringToFront()
+        driver.click("[data-testid='tta-clear-content']")
+        driver.waitUntil(MEDIUM_TIMEOUT) {
+            val txt = driver.selectFirstTextOrNull("#dynamicContent p")
+            txt?.contains("Click a button to load content") == true
+        }
+        
         // Disable a button via JavaScript
         driver.evaluate("document.querySelector('[data-testid=\"tta-load-users\"]').disabled = true")
         
@@ -515,8 +527,12 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
         driver.bringToFront()
         driver.click("[data-testid='tta-load-users']", 1)
         
-        // Disabled button typically won't trigger its action, but click completes
-        Thread.sleep(500)
+        // Wait and verify that disabled button doesn't trigger action
+        driver.waitUntil(MEDIUM_TIMEOUT) {
+            // Content should remain in initial state since button is disabled
+            val txt = driver.selectFirstTextOrNull("#dynamicContent p")
+            txt?.contains("Click a button to load content") == true
+        }
     }
 
     @Test
@@ -559,9 +575,11 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
         // Try to click inside a non-existent iframe (should fail gracefully)
         try {
             driver.click("iframe button", 1)
+            // If no exception, that's acceptable too
         } catch (e: Exception) {
             // Expected to fail as there's no iframe in the test page
-            assertTrue(true, "Expected failure for iframe selector")
+            // Verify exception message is meaningful
+            assertFalse(e.message.isNullOrBlank(), "Exception should have a message")
         }
     }
 
@@ -597,12 +615,16 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
         driver.waitForSelector("#dynamicContent.loaded")
         
         // Invalid selector should be handled
+        var exceptionThrown = false
         try {
             driver.click("", 1)
         } catch (e: Exception) {
             // Empty selector should fail
-            assertTrue(true)
+            exceptionThrown = true
+            assertFalse(e.message.isNullOrBlank(), "Exception should have a meaningful message")
         }
+        assertTrue(exceptionThrown || driver.exists("#dynamicContent [data-testid^='tta-user-']"), 
+            "Either exception thrown or valid state exists")
     }
 
     @Test
