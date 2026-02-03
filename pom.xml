@@ -156,7 +156,6 @@
             <properties>
                 <skipTests>false</skipTests>
                 <maven.test.failure.ignore>false</maven.test.failure.ignore>
-                <surfire.skipStableModuleTests>false</surfire.skipStableModuleTests>
             </properties>
             <build>
                 <plugins>
@@ -192,7 +191,6 @@
                 <deploy-active>true</deploy-active>
                 <skipTests>false</skipTests>
                 <maven.test.failure.ignore>false</maven.test.failure.ignore>
-                <surfire.skipStableModuleTests>false</surfire.skipStableModuleTests>
             </properties>
             <modules>
                 <module>pulsar-dependencies</module>
@@ -466,6 +464,7 @@
 
                     -->
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+
                     <!-- All tests are in the same JVM process -->
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
@@ -672,14 +671,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <surefire.excludedGroups>
-            Slow,RequiresServer,IntegrationTest,E2ETest,HeavyTest,
-            SkippableLowerLevelTest,TestInfraCheck,MustManuallyRun,OptionalTest
-        </surefire.excludedGroups>
+        <dokka.version>1.9.10</dokka.version>
 
         <surefire.version>3.5.4</surefire.version>
-
-        <dokka.version>1.9.10</dokka.version>
 
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
@@ -725,6 +719,11 @@
         <kotlin.version>${kotlinVersion}</kotlin.version>
         <maven.compiler.release>${javaVersion}</maven.compiler.release>
         <kotlin.compiler.jvmTarget>${javaVersion}</kotlin.compiler.jvmTarget>
+
+        <surefire.excludedGroups>
+            Slow,RequiresServer,IntegrationTest,E2ETest,HeavyTest,
+            SkippableLowerLevelTest,TestInfraCheck,MustManuallyRun,OptionalTest
+        </surefire.excludedGroups>
 
         <pulsar.modules.version>4.5.0-SNAPSHOT</pulsar.modules.version>
     </properties>
