@@ -42,6 +42,7 @@ import kotlin.test.*
  */
 @Tag("IntegrationTest")
 @Order(Integer.MAX_VALUE)
+@Tag("TestedOn20260203")
 class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
 
     private lateinit var session: PulsarSession
@@ -157,9 +158,10 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
         }
     }
 
+    @Tag("Fast")
+    @Tag("TestedOn20260203-Failed")
     @Test
     @DisplayName("should handle URL with special characters")
-    @Tag("Fast")
     suspend fun testShouldHandleURLWithSpecialCharacters() {
         val url = "http://localhost:18080/test?param=<script>alert('xss')</script>"
         val normalized = session.normalize(url)

@@ -230,7 +230,7 @@ class PulsarWebDriver(
     }
 
     override suspend fun currentUrl(): String {
-        // TODO: find out why mainFrameAPI?.url fails because of timing issue
+        // TODO: find out why mainFrameAPI?.url fails because of timing issue when run agent.observe() via SDK, a possible reason is about multithreading problem
 //        val mainFrameUrl = runCatching { driverHelper.invokeOnPage("currentUrl") { mainFrameAPI?.url } }
 //            .onFailure { logger.warn("Failed to retrieve the mainFrameUrl", it) }
 //            .getOrNull()

@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * Note: When `pulsar.stub.mode=true` the server returns lightweight
  * stubbed responses so the suite can run without a real LLM/backend.
  */
-@Tag("IntegrationTest")
+@Tag("E2ETest")
 @Tag("RequiresServer")
 @Tag("Slow")
 @Tag("MustManuallyRun")
