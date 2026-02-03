@@ -45,7 +45,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should focus on input element")
     suspend fun testShouldFocusOnInputElement() {
-        driver.navigateTo(TestUrls.KEYBOARD_PAGE)
+        driver.open(TestUrls.KEYBOARD_PAGE)
 
         // Focus on the focus input
         driver.focus("#focusInput")
@@ -57,7 +57,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should focus on multiple elements sequentially")
     suspend fun testShouldFocusOnMultipleElementsSequentially() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Focus on different inputs
         driver.focus("#username")
@@ -74,7 +74,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle focus on non-focusable element gracefully")
     @Tag("Fast")
     suspend fun testShouldHandleFocusOnNonFocusableElementGracefully() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         // Try to focus on a div (not normally focusable)
         try {
@@ -92,7 +92,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should press Enter key")
     suspend fun testShouldPressEnterKey() {
-        driver.navigateTo(TestUrls.KEYBOARD_PAGE)
+        driver.open(TestUrls.KEYBOARD_PAGE)
 
         driver.focus("#keyInput")
         driver.press("#keyInput", "Enter")
@@ -104,7 +104,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should press Tab key")
     suspend fun testShouldPressTabKey() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.focus("#username")
         driver.press("#username", "Tab")
@@ -116,7 +116,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should press Escape key")
     suspend fun testShouldPressEscapeKey() {
-        driver.navigateTo(TestUrls.KEYBOARD_PAGE)
+        driver.open(TestUrls.KEYBOARD_PAGE)
 
         driver.focus("#keyInput")
         driver.press("#keyInput", "Escape")
@@ -128,7 +128,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should press Arrow keys")
     suspend fun testShouldPressArrowKeys() {
-        driver.navigateTo(TestUrls.KEYBOARD_PAGE)
+        driver.open(TestUrls.KEYBOARD_PAGE)
 
         driver.focus("#keyInput")
         driver.press("#keyInput", "ArrowDown")
@@ -145,7 +145,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type text in input field")
     suspend fun testShouldTypeTextInInputField() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.type("#username", "testuser")
 
@@ -156,7 +156,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type in multiple input fields")
     suspend fun testShouldTypeInMultipleInputFields() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.type("#username", "testuser")
         driver.type("#email", "test@example.com")
@@ -171,7 +171,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type empty string")
     suspend fun testShouldTypeEmptyString() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.type("#username", "")
 
@@ -182,7 +182,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type special characters")
     suspend fun testShouldTypeSpecialCharacters() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.type("#username", "user@#$%&*()")
 
@@ -193,7 +193,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type long text")
     suspend fun testShouldTypeLongText() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         val longText = "a".repeat(1000)
         driver.type("#username", longText)
@@ -205,7 +205,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should use sendKeys for text input")
     suspend fun testShouldUseSendKeysForTextInput() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.sendKeys("#email", "user@test.com")
 
@@ -216,7 +216,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should use sendKeys with special keys")
     suspend fun testShouldUseSendKeysWithSpecialKeys() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.focus("#username")
         driver.sendKeys("#username", "Hello")
@@ -230,7 +230,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should complete form filling workflow")
     suspend fun testShouldCompleteFormFillingWorkflow() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Fill form using keyboard operations
         driver.type("#username", "testuser")
@@ -248,7 +248,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle focus and type together")
     suspend fun testShouldHandleFocusAndTypeTogether() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.focus("#username")
         driver.type("#username", "focused_user")
@@ -260,7 +260,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type and submit with Enter")
     suspend fun testShouldTypeAndSubmitWithEnter() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         driver.type("#username", "submituser")
         driver.focus("#username")
@@ -275,7 +275,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should type then clear with selections")
     suspend fun testShouldTypeThenClearWithSelections() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Type text
         driver.type("#username", "initial")
@@ -293,7 +293,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle rapid typing")
     @Tag("Fast")
     suspend fun testShouldHandleRapidTyping() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Rapid typing operations
         repeat(5) {
@@ -310,7 +310,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle focus on non-existent element")
     @Tag("Fast")
     suspend fun testShouldHandleFocusOnNonExistentElement() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         try {
             driver.focus("#nonExistentInput")
@@ -325,7 +325,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle type on non-existent element")
     @Tag("Fast")
     suspend fun testShouldHandleTypeOnNonExistentElement() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         try {
             driver.type("#nonExistentInput", "text")
@@ -339,7 +339,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle Unicode characters in type")
     suspend fun testShouldHandleUnicodeCharactersInType() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Type Unicode characters
         driver.type("#username", "用户名测试")
@@ -351,7 +351,7 @@ class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle newlines in type")
     suspend fun testShouldHandleNewlinesInType() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Type text with newline (might be treated differently in single-line input)
         driver.type("#username", "line1\nline2")

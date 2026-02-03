@@ -44,7 +44,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get current URL using getCurrentUrl alias")
     suspend fun testShouldGetCurrentUrlUsingGetCurrentUrlAlias() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val currentUrl = driver.getCurrentUrl()
         assertNotNull(currentUrl, "Current URL should not be null")
@@ -54,7 +54,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get URL using url method")
     suspend fun testShouldGetUrlUsingUrlMethod() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val url = driver.url()
         assertNotNull(url, "URL should not be null")
@@ -64,7 +64,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get document URI")
     suspend fun testShouldGetDocumentUri() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val documentUri = driver.documentUri()
         assertNotNull(documentUri, "Document URI should not be null")
@@ -74,7 +74,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get base URI")
     suspend fun testShouldGetBaseUri() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val baseUri = driver.baseUri()
         assertNotNull(baseUri, "Base URI should not be null")
@@ -86,7 +86,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should check if element is visible")
     suspend fun testShouldCheckIfElementIsVisible() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // Check visible element
         val isVisible = driver.isVisible("body")
@@ -96,7 +96,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should check if element is hidden")
     suspend fun testShouldCheckIfElementIsHidden() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // Check a visible element (should not be hidden)
         val isHidden = driver.isHidden("body")
@@ -106,7 +106,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should check if checkbox is checked")
     suspend fun testShouldCheckIfCheckboxIsChecked() {
-        driver.navigateTo(TestUrls.FORM_PAGE)
+        driver.open(TestUrls.FORM_PAGE)
 
         // Initially unchecked
         val isChecked = driver.isChecked("input[type=checkbox]")
@@ -119,7 +119,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should wait for selector using waitFor alias")
     suspend fun testShouldWaitForSelectorUsingWaitForAlias() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val result = driver.waitFor("body", timeout = 5000)
         assertTrue(result, "Should successfully wait for body element")
@@ -130,7 +130,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should find element by selector")
     suspend fun testShouldFindElementBySelector() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         val element = driver.findElementBySelector("body", "css")
         assertNotNull(element, "Should find body element")
@@ -139,7 +139,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should find elements by selector")
     suspend fun testShouldFindElementsBySelector() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         val elements = driver.findElementsBySelector("div", "css")
         assertNotNull(elements, "Should return list of elements")
@@ -149,7 +149,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should find element using WebDriver locator")
     suspend fun testShouldFindElementUsingWebDriverLocator() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         val element = driver.findElement("css selector", "body")
         assertNotNull(element, "Should find body element")
@@ -158,7 +158,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should find elements using WebDriver locator")
     suspend fun testShouldFindElementsUsingWebDriverLocator() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         val elements = driver.findElements("css selector", "div")
         assertNotNull(elements, "Should return list of elements")
@@ -167,7 +167,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should find element using XPath")
     suspend fun testShouldFindElementUsingXPath() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         val element = driver.findElement("xpath", "//body")
         assertNotNull(element, "Should find body element using XPath")
@@ -178,7 +178,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should click element by ID")
     suspend fun testShouldClickElementById() {
-        driver.navigateTo(TestUrls.INTERACTIVE_1)
+        driver.open(TestUrls.INTERACTIVE_1)
         driver.delay(500)
 
         // First find the element
@@ -202,7 +202,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get element attribute by element ID")
     suspend fun testShouldGetElementAttributeByElementId() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // First find the element
         val element = driver.findElementBySelector("input[id=input]", "css")
@@ -223,7 +223,7 @@ class WebDriverAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get outer HTML")
     suspend fun testShouldGetOuterHtml() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val html = driver.outerHtml()
         assertNotNull(html, "Outer HTML should not be null")

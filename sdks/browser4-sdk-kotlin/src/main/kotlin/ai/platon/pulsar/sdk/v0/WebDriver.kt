@@ -51,8 +51,8 @@ class WebDriver(
 
     /**
      * URL-encodes a string for safe use in URL paths.
-     * 
-     * Note: Uses URLEncoder for form encoding, then converts '+' to '%20' 
+     *
+     * Note: Uses URLEncoder for form encoding, then converts '+' to '%20'
      * for proper path encoding.
      */
     private fun encodePathSegment(value: String): String {
@@ -78,6 +78,7 @@ class WebDriver(
      */
     suspend fun open(url: String) {
         navigateTo(url)
+        waitForSelector("body")
     }
 
     /**
@@ -456,9 +457,9 @@ class WebDriver(
 
     /**
      * Sends keys to an element.
-     * 
+     *
      * This method now delegates to [fill] for consistency with the selector-based API.
-     * It provides a familiar WebDriver-compatible method name while using the 
+     * It provides a familiar WebDriver-compatible method name while using the
      * selector-based endpoint internally.
      *
      * @param selector CSS selector or XPath expression
@@ -1077,7 +1078,7 @@ class WebDriver(
     suspend fun setAttributeAll(selector: String, attrName: String, attrValue: String) {
         executeScript(
             """
-            document.querySelectorAll('$selector').forEach(el => 
+            document.querySelectorAll('$selector').forEach(el =>
                 el.setAttribute('$attrName', '$attrValue')
             )
             """.trimIndent()

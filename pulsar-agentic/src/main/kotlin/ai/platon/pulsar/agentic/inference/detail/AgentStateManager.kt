@@ -11,6 +11,7 @@ import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.MessageWriter
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import kotlinx.coroutines.withTimeout
 import java.nio.file.Path
 import java.time.Instant
@@ -47,6 +48,7 @@ class AgentStateManager(
     val pageStateTracker: PageStateTracker,
 ) {
     private val logger = getLogger(this)
+
     // for non-logback logs
     val auxLogDir: Path get() = AppPaths.detectAuxiliaryLogDir().resolve("agent")
 
@@ -57,8 +59,10 @@ class AgentStateManager(
     // Context management - see class KDoc for detailed explanation
     // _baseContext: The initial context (first in contexts list)
     private lateinit var _baseContext: ExecutionContext
+
     // _activeContext: The currently active context (last in contexts list)
     private var _activeContext: ExecutionContext? = null
+
     // contexts: All execution contexts created during this session
     // Cleaned periodically to max 100 entries to prevent memory leaks
     private val contexts: MutableList<ExecutionContext> = mutableListOf()
@@ -86,8 +90,10 @@ class AgentStateManager(
             require(!action.fromResolve)
             val lastActiveContext = getActiveContext()
             val step = lastActiveContext.step + 1
-            val context = buildExecutionContext(action.action, step, event = "act-$step",
-                baseContext = lastActiveContext)
+            val context = buildExecutionContext(
+                action.action, step, event = "act-$step",
+                baseContext = lastActiveContext
+            )
             setActiveContext(context)
         }
 
@@ -424,21 +430,22 @@ class AgentStateManager(
 
         // fetch all drivers
         browser.listDrivers()
-        val tabs = browser.drivers.map { (tabId, driver) ->
-            val url = try {
-                driver.currentUrl()
-            } catch (_: Exception) {
-                "about:blank"
+        val tabs = browser.drivers
+            .filter { it.value is AbstractWebDriver && (it.value as AbstractWebDriver).isConnectable }
+            .map { (tabId, driver) ->
+                require(driver is AbstractWebDriver)
+                require(tabId == driver.guid) { "Tab ID mismatch: tabId=$tabId vs driver.id=${driver.guid}" }
+
+                val url = runCatching { driver.currentUrl() }
+                    .onFailure { logger.warn("Failed to open web driver $driver", it) }
+                    .getOrNull() ?: "about:blank"
+
+                val title = runCatching { driver.evaluate("document.title", "") }.getOrNull() ?: ""
+
+                TabState(
+                    id = tabId, driverId = driver.id, url = url, title = title, active = (driver == currentDriver)
+                )
             }
-            val title = try {
-                driver.evaluate("document.title").toString().takeIf { it.isNotBlank() }
-            } catch (_: Exception) {
-                null
-            }
-            TabState(
-                id = tabId, driverId = driver.id, url = url, title = title, active = (driver == currentDriver)
-            )
-        }
 
         val activeTabId = browser.drivers.entries.find { it.value == currentDriver }?.key
 

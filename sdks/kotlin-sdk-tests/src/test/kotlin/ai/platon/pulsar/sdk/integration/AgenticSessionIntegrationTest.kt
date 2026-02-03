@@ -91,7 +91,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should observe page")
     suspend fun testShouldObservePage() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.open(TestUrls.PRODUCT_DETAIL)
 
         val observation = session.observe("find interactive elements")
 

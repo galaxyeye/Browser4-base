@@ -44,7 +44,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should navigate to URL")
     suspend fun testShouldNavigateToURL() {
         val url = TestUrls.SIMPLE_PAGE
-        driver.navigateTo(url)
+        driver.open(url)
 
         val currentUrl = driver.currentUrl()
         assertNotNull(currentUrl, "Current URL should not be null")
@@ -54,7 +54,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get page title")
     suspend fun testShouldGETPageTitle() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val title = driver.title()
         assertNotNull(title, "Title should not be null")
@@ -64,7 +64,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should check element exists")
     suspend fun testShouldCheckElementExists() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         // Check common elements
         assertTrue(driver.exists("body"), "Body element should exist")
@@ -74,7 +74,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should extract text content")
     suspend fun testShouldExtractTextContent() {
-        driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        driver.open(TestUrls.PRODUCT_DETAIL)
 
         val title = driver.selectFirstTextOrNull("#productTitle")
         assertNotNull(title, "Product title should not be null")
@@ -84,7 +84,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should scroll page")
     suspend fun testShouldScrollPage() {
-        driver.navigateTo(TestUrls.PRODUCT_LIST)
+        driver.open(TestUrls.PRODUCT_LIST)
 
         // Scroll to bottom
         driver.scrollToBottom()
@@ -96,7 +96,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should capture screenshot")
     suspend fun testShouldCaptureScreenshot() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val screenshot = driver.captureScreenshot()
         assertNotNull(screenshot, "Screenshot should not be null")
@@ -106,7 +106,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute script")
     suspend fun testShouldExecuteScript() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val result = driver.executeScript("return document.title")
         assertNotNull(result, "Script result should not be null")
@@ -115,7 +115,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should wait for selector")
     suspend fun testShouldWaitForSelector() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         // Wait for body element
         driver.waitForSelector("body", timeout = 5000)
@@ -125,7 +125,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should extract multiple fields")
     suspend fun testShouldExtractMultipleFields() {
-        driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        driver.open(TestUrls.PRODUCT_DETAIL)
 
         val fields = driver.extract(mapOf(
             "title" to "#productTitle",
@@ -139,7 +139,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should get page source")
     suspend fun testShouldGETPageSource() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
 
         val source = driver.pageSource()
         assertNotNull(source, "Page source should not be null")
@@ -150,11 +150,11 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should navigate back and forward")
     suspend fun testShouldNavigateBackAndForward() {
         // Navigate to first page
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
         val url1 = driver.currentUrl()
 
         // Navigate to second page
-        driver.navigateTo(TestUrls.PRODUCT_LIST)
+        driver.open(TestUrls.PRODUCT_LIST)
         val url2 = driver.currentUrl()
 
         assertNotEquals(url1, url2, "URLs should be different")
@@ -169,7 +169,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should reload page")
     suspend fun testShouldReloadPage() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.open(TestUrls.SIMPLE_PAGE)
         val url1 = driver.currentUrl()
 
         driver.reload()
@@ -184,7 +184,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should fill input field")
     suspend fun testShouldFillInputField() {
         val testText = "awesome AI enabled Browser4!"
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // Fill input field
         driver.fill("input[id=input]", testText)
@@ -198,7 +198,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should type into input field")
     suspend fun testShouldTypeIntoInputField() {
         val testText = "Testing type functionality"
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         driver.waitForNavigation()
 
@@ -214,7 +214,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should fill textarea")
     suspend fun testShouldFillTextarea() {
         val testText = "Multi-line\ntext content\nfor testing"
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // Fill textarea
         driver.fill("textarea[id=textarea]", testText)
@@ -231,7 +231,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should scroll by pixels")
     suspend fun testShouldScrollByPixels() {
-        driver.navigateTo(TestUrls.MULTI_SCREENS)
+        driver.open(TestUrls.MULTI_SCREENS)
 
         // Scroll down by 200 pixels
         val scrollY = driver.scrollBy(200.0, smooth = true)
@@ -248,7 +248,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should scroll to top")
     suspend fun testShouldScrollToTop() {
-        driver.navigateTo(TestUrls.MULTI_SCREENS)
+        driver.open(TestUrls.MULTI_SCREENS)
 
         // First scroll down
         driver.scrollToBottom()
@@ -268,7 +268,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should scroll to bottom")
     suspend fun testShouldScrollToBottom() {
-        driver.navigateTo(TestUrls.MULTI_SCREENS)
+        driver.open(TestUrls.MULTI_SCREENS)
 
         // Scroll to bottom
         val bottomY = driver.scrollToBottom()
@@ -290,7 +290,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should scroll to middle")
     suspend fun testShouldScrollToMiddle() {
-        driver.navigateTo(TestUrls.MULTI_SCREENS)
+        driver.open(TestUrls.MULTI_SCREENS)
 
         // Scroll to middle (50%)
         val ratio = 0.5
@@ -316,7 +316,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should hover over element")
     suspend fun testShouldHoverOverElement() {
-        driver.navigateTo(TestUrls.INTERACTIVE_2)
+        driver.open(TestUrls.INTERACTIVE_2)
         driver.delay(500)
 
         // Scroll to top to ensure page is in stable state
@@ -346,7 +346,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should check element visibility")
     suspend fun testShouldCheckElementVisibility() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // Check visible element
         assertTrue(driver.exists("input[id=input]"), "Input element should exist")
@@ -355,7 +355,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should extract text content from simple DOM")
     suspend fun testShouldExtractTextContentFromSimpleDOM() {
-        driver.navigateTo(TestUrls.SIMPLE_DOM)
+        driver.open(TestUrls.SIMPLE_DOM)
 
         // Get text content
         val text = driver.selectFirstTextOrNull("#inner")
