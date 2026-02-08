@@ -105,8 +105,11 @@ class StatefulPageVisitor(
                         status.refresh(event.eventType)
                         logger.info("Collected event {} for command {}", event.eventType, status.id)
                     }
+                } catch (e: CancellationException) {
+                    logger.debug("Event collector cancelled for command {}", status.id)
+                    throw e
                 } catch (e: Exception) {
-                    logger.error("Error collecting events for command {}", status.id, e)
+                    logger.error("Error collecting events for command ${status.id}", e)
                 }
             }
 

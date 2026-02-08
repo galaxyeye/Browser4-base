@@ -166,13 +166,15 @@ class IsolatedWorldManager(
             (function() {
                 'use strict';
 
-                const __browser4_runtime__ = {
+                const runtimeMetadata = {
                     version: '$RUNTIME_VERSION',
                     worldName: '$RUNTIME_WORLD_NAME',
                 };
 
-                // Expose runtime API (but only in isolated world)
-                if (typeof window !== 'undefined') {
+                const existingRuntime = (typeof window !== 'undefined' && window.__browser4_runtime__) || null;
+                const __browser4_runtime__ = existingRuntime ? Object.assign(existingRuntime, runtimeMetadata) : runtimeMetadata;
+
+                if (typeof window !== 'undefined' && !existingRuntime) {
                     Object.defineProperty(window, '__browser4_runtime__', {
                         value: __browser4_runtime__,
                         writable: false,

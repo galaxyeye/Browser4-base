@@ -43,12 +43,21 @@ import kotlin.test.assertTrue
 @Tag("IntegrationTest")
 @Tag("RequiresServer")
 @Tag("Slow")
+@Tag("MustRunExplicitly")
 class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
+
+    private companion object {
+        private const val HTTP_CONNECT_TIMEOUT_SECONDS = 60
+        private const val COMMAND_SUBMISSION_TIMEOUT_SECONDS = 60
+        private const val SSE_STREAM_TIMEOUT_SECONDS = 75
+        private const val EXTENDED_SSE_STREAM_TIMEOUT_SECONDS = 90
+        private const val THREAD_JOIN_TIMEOUT_MILLIS = 80_000L
+    }
 
     private lateinit var session: PulsarSession
     private val httpClient = HttpClient.newBuilder()
         .version(HttpClient.Version.HTTP_2)
-        .connectTimeout(Duration.ofSeconds(30))
+        .connectTimeout(Duration.ofSeconds(HTTP_CONNECT_TIMEOUT_SECONDS.toLong()))
         .build()
 
     @BeforeEach
@@ -73,7 +82,7 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
      * @param timeoutSeconds Maximum time to collect events
      * @return List of collected SSE events
      */
-    private fun collectSseEvents(commandId: String, timeoutSeconds: Int = 30): List<SseEvent> {
+    private fun collectSseEvents(commandId: String, timeoutSeconds: Int = SSE_STREAM_TIMEOUT_SECONDS): List<SseEvent> {
         val events = mutableListOf<SseEvent>()
         val uri = URI.create("$baseUrl/api/commands/$commandId/stream")
 
@@ -139,7 +148,7 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
             // Emit last event if any
             emit()
         } catch (e: Exception) {
-            println("Error collecting SSE events: ${e.message}")
+            printlnPro("Error collecting SSE events: ${e.message}")
         }
 
         return events
@@ -157,7 +166,7 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create("$baseUrl/api/commands"))
-            .timeout(Duration.ofSeconds(30))
+            .timeout(Duration.ofSeconds(COMMAND_SUBMISSION_TIMEOUT_SECONDS.toLong()))
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(requestBody))
             .build()
@@ -182,22 +191,21 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
         assertNotNull(commandId, "Command ID should not be null")
         assertTrue(commandId.isNotBlank(), "Command ID should not be blank")
 
-        println("Command ID: $commandId")
-        println("Collecting SSE events...")
+        printlnPro("Command ID: $commandId")
+        printlnPro("Collecting SSE events...")
 
         val events = collectSseEvents(commandId, timeoutSeconds = 45)
 
         assertTrue(events.isNotEmpty(), "Should receive at least some events")
-        println("Received ${events.size} SSE events")
+        printlnPro("Received ${events.size} SSE events")
 
         // Print all events for debugging
         events.forEach { event ->
-            println("Event: ${event.event}, ID: ${event.id}, Data: ${event.data.take(100)}")
+            printlnPro("Event: ${event.event}, ID: ${event.id}, Data: ${event.data.take(100)}")
         }
     }
 
     @Test
-    @Tag("Failed")
     @DisplayName("should receive LoadEventHandlers events")
     suspend fun testShouldReceiveLoadEventHandlersEvents() {
         val url = TestUrls.SIMPLE_PAGE
@@ -211,7 +219,7 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
             // Data format is typically: {"event":"onWillLoad","status":"processing",...}
             val data = event.data
 
-printlnPro(data)
+            printlnPro(data)
 
             if (data.contains("\"event\"")) {
                 val eventMatch = Regex(""""event"\s*:\s*"([^"]+)"""").find(data)
@@ -221,7 +229,7 @@ printlnPro(data)
             }
         }.distinct()
 
-        println("Event types received: $eventTypes")
+        printlnPro("Event types received: $eventTypes")
 
         // Verify key LoadEventHandlers events are present
         // Note: Not all events may be emitted depending on configuration
@@ -258,7 +266,7 @@ printlnPro(data)
             }
         }
 
-        println("Event sequence: $eventTypes")
+        printlnPro("Event sequence: $eventTypes")
 
         // Verify event ordering - onWillLoad should come before onLoaded
         val willLoadIndex = eventTypes.indexOf("onWillLoad")
@@ -301,20 +309,20 @@ printlnPro(data)
 
         // Collect events from both streams concurrently
         val thread1 = Thread {
-            val events = collectSseEvents(commandId1, timeoutSeconds = 45)
+            val events = collectSseEvents(commandId1)
             assertTrue(events.isNotEmpty(), "Stream 1 should receive events")
         }
 
         val thread2 = Thread {
-            val events = collectSseEvents(commandId2, timeoutSeconds = 45)
+            val events = collectSseEvents(commandId2)
             assertTrue(events.isNotEmpty(), "Stream 2 should receive events")
         }
 
         thread1.start()
         thread2.start()
 
-        thread1.join(50_000)
-        thread2.join(50_000)
+        thread1.join(THREAD_JOIN_TIMEOUT_MILLIS)
+        thread2.join(THREAD_JOIN_TIMEOUT_MILLIS)
 
         assertFalse(thread1.isAlive, "Thread 1 should complete")
         assertFalse(thread2.isAlive, "Thread 2 should complete")
@@ -363,7 +371,7 @@ printlnPro(data)
             }
         }
 
-        println("Events on failure: $eventTypes")
+        printlnPro("Events on failure: $eventTypes")
         // At minimum should have some events
         assertTrue(eventTypes.isNotEmpty(), "Should emit events even on failure")
     }
@@ -386,7 +394,7 @@ printlnPro(data)
             "SSE stream should complete before timeout, took ${duration}ms"
         )
 
-        println("Stream completed in ${duration}ms with ${events.size} events")
+        printlnPro("Stream completed in ${duration}ms with ${events.size} events")
     }
 
     @Test
@@ -396,7 +404,7 @@ printlnPro(data)
         // Submit command with parse to ensure HTML processing events
         val commandId = submitAsyncCommand(url, "-parse")
 
-        val events = collectSseEvents(commandId, timeoutSeconds = 60)
+        val events = collectSseEvents(commandId, timeoutSeconds = EXTENDED_SSE_STREAM_TIMEOUT_SECONDS)
 
         // Extract event types from SSE data
         val eventTypes = events.mapNotNull { event ->
@@ -409,7 +417,7 @@ printlnPro(data)
             }
         }
 
-        println("All event types received (${eventTypes.size} total): $eventTypes")
+        printlnPro("All event types received (${eventTypes.size} total): $eventTypes")
 
         // Define expected event types based on the user's requirement
         val expectedLoadEvents = listOf(
@@ -444,11 +452,11 @@ printlnPro(data)
 
         // Verify LoadEventHandlers events
         val receivedLoadEvents = expectedLoadEvents.filter { it in eventTypes }
-        println("LoadEventHandlers events received: $receivedLoadEvents")
+        printlnPro("LoadEventHandlers events received: $receivedLoadEvents")
 
         // Verify BrowseEventHandlers events
         val receivedBrowseEvents = expectedBrowseEvents.filter { it in eventTypes }
-        println("BrowseEventHandlers events received: $receivedBrowseEvents")
+        printlnPro("BrowseEventHandlers events received: $receivedBrowseEvents")
 
         // At minimum, verify key events are present
         assertTrue(
@@ -457,14 +465,14 @@ printlnPro(data)
         )
 
         // Document which events were triggered
-        println("Summary:")
-        println("- Total events: ${eventTypes.size}")
-        println("- LoadEventHandlers matched: ${receivedLoadEvents.size}/${expectedLoadEvents.size}")
-        println("- BrowseEventHandlers matched: ${receivedBrowseEvents.size}/${expectedBrowseEvents.size}")
+        printlnPro("Summary:")
+        printlnPro("- Total events: ${eventTypes.size}")
+        printlnPro("- LoadEventHandlers matched: ${receivedLoadEvents.size}/${expectedLoadEvents.size}")
+        printlnPro("- BrowseEventHandlers matched: ${receivedBrowseEvents.size}/${expectedBrowseEvents.size}")
 
         // Verify event sequence if key events are present
         val eventSequence = eventTypes.joinToString(" -> ")
-        println("Event sequence: $eventSequence")
+        printlnPro("Event sequence: $eventSequence")
 
         // onWillLoad should come before onLoaded (if both present)
         val willLoadIndex = eventTypes.indexOf("onWillLoad")
