@@ -98,9 +98,9 @@ class PageHandler(
             // Executes `querySelector` on a given node.
             domAPI?.querySelector(rootId, selector)
         } catch (e: CDPReturnError) {
-            // code: -3200 message: "Could not find node with given id"
+            // code: -32000 message: "Could not find node with given id"
             // This exception is expected, will change this log to debug
-            if (e.errorCode != -3200L) {
+            if (e.errorCode != -32000L) {
                 logger.warn("Exception from domAPI?.querySelector | {} {} | {}", e.errorCode, e.errorMessage, e.brief())
             }
             null
@@ -132,10 +132,10 @@ class PageHandler(
         return try {
             resolveSelector0(selector)
         } catch (e: CDPReturnError) {
-            // code: -3200 message: "Could not find node with given id"
+            // code: -32000 message: "Could not find node with given id"
             // This exception is expected, will change this log to debug
-            if (e.errorCode != -3200L) {
-                // -3200L is expected, no log needed
+            if (e.errorCode != -32000L) {
+                // -32000L is expected, no log needed
                 logger.warn("Exception resolveSelector | {} {} | {}", e.errorCode, e.errorMessage, e.brief())
             }
             null
@@ -437,9 +437,9 @@ class PageHandler(
         val nodeId = try {
             domAPI?.querySelector(rootId, selector)
         } catch (e: CDPReturnError) {
-            // code: -3200 message: "Could not find node with given id"
+            // code: -32000 message: "Could not find node with given id"
             // This exception is expected, will change this log to debug
-            if (e.errorCode != -3200L) {
+            if (e.errorCode != -32000L) {
                 logger.warn("Exception from domAPI?.querySelector | selector={}, errorCode={}, errorMessage={} | {}",
                     selector, e.errorCode, e.errorMessage, e.brief())
             }
@@ -520,10 +520,10 @@ class PageHandler(
             }
             nodeId
         } catch (e: CDPReturnError) {
-            // code: -3200 message: "Could not find node with given id"
+            // code: -32000 message: "Could not find node with given id"
             // code: -32000 message: "Invalid search result range" (when toIndex > resultCount)
             // These exceptions are expected when element not found
-            if (e.errorCode != -3200L && e.errorCode != -32000L) {
+            if (e.errorCode != -32000L) {
                 logger.warn("Exception from domAPI?.performSearch/getSearchResults" +
                         " | xpath={}, errorCode={}, errorMessage={} | {}",
                     xpath, e.errorCode, e.errorMessage, e.brief())

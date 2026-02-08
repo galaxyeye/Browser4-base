@@ -25,7 +25,7 @@ open class ChromeProtocolException(
 /**
  * The return message itself is an error message, for example:
  *
- * - code: -3200 message: "Could not find node with given id"
+ * - code: -32000 message: "Could not find node with given id"
  * */
 open class CDPReturnError(
     val errorCode: Long = 0,
