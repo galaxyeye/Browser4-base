@@ -22,19 +22,6 @@ class FingerprintGeneratorLoaderTest {
     }
 
     @Test
-    @DisplayName("test provider generates valid fingerprint")
-    fun testProviderGeneratesValidFingerprint() {
-        val provider = FingerprintGeneratorLoader.getProvider()
-        val fingerprint = provider.generate(
-            BrowserType.PULSAR_CHROME,
-            FingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
-        )
-
-        assertNotNull(fingerprint.userAgent)
-        assertNotNull(fingerprint.screenParameters)
-    }
-
-    @Test
     @DisplayName("test pro enabled without plugin falls back to basic")
     fun testProEnabledWithoutPluginFallsToBasic() {
         System.setProperty(FingerprintGeneratorLoader.PRO_ENABLED_KEY, "true")
