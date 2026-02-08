@@ -12,6 +12,7 @@
  */
 package ai.platon.pulsar.sdk.integration
 
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.sdk.integration.util.TestUrls
 import ai.platon.pulsar.sdk.v0.PulsarSession
 import org.junit.jupiter.api.BeforeEach
@@ -209,6 +210,9 @@ class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
             // Parse JSON to extract event type
             // Data format is typically: {"event":"onWillLoad","status":"processing",...}
             val data = event.data
+
+printlnPro(data)
+
             if (data.contains("\"event\"")) {
                 val eventMatch = Regex(""""event"\s*:\s*"([^"]+)"""").find(data)
                 eventMatch?.groupValues?.get(1)

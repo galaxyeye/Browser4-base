@@ -30,7 +30,6 @@ import kotlin.test.assertTrue
  */
 @Tag("IntegrationTest")
 @Tag("RequiresBrowser")
-
 class WebDriverKeyboardAndFocusTest : KotlinSdkIntegrationTestBase() {
 
     private lateinit var driver: WebDriver

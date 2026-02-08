@@ -24,7 +24,6 @@ import kotlin.test.*
  * Tests basic client functionality including session management,
  * HTTP operations, and error handling.
  */
-
 class PulsarClientIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test

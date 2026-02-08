@@ -50,16 +50,6 @@ class WebDriver(
     private val _navigateHistory: MutableList<String> = Collections.synchronizedList(ArrayList())
 
     /**
-     * URL-encodes a string for safe use in URL paths.
-     *
-     * Note: Uses URLEncoder for form encoding, then converts '+' to '%20'
-     * for proper path encoding.
-     */
-    private fun encodePathSegment(value: String): String {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
-    }
-
-    /**
      * Gets the driver ID.
      */
     val id: Int get() = _id
@@ -1401,5 +1391,15 @@ class WebDriver(
      */
     fun close() {
         // No specific cleanup needed for REST-based driver
+    }
+
+    /**
+     * URL-encodes a string for safe use in URL paths.
+     *
+     * Note: Uses URLEncoder for form encoding, then converts '+' to '%20'
+     * for proper path encoding.
+     */
+    private fun encodePathSegment(value: String): String {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
     }
 }

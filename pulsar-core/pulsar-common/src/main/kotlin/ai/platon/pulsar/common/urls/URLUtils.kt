@@ -9,6 +9,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.apache.commons.lang3.StringUtils
 import org.apache.hc.core5.net.URIBuilder
 import java.net.*
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.*
 
@@ -475,6 +476,16 @@ object URLUtils {
         val url = if (norm) (normalizeOrNull(originalUrl) ?: "") else originalUrl
         val key = reverseUrlOrEmpty(url)
         return url to key
+    }
+
+    /**
+     * URL-encodes a string for safe use in URL paths.
+     *
+     * Note: Uses URLEncoder for form encoding, then converts '+' to '%20'
+     * for proper path encoding.
+     */
+    fun encodePathSegment(value: String): String {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
     }
 
     /**
