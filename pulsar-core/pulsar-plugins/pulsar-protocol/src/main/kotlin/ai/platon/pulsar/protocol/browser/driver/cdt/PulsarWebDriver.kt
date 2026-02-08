@@ -103,7 +103,7 @@ class PulsarWebDriver(
         // Apply fingerprint parameters from the browser profile
         runBlocking { applyFingerprint() }
     }
-    
+
     /**
      * Apply fingerprint parameters from the browser profile using CDP (Chrome DevTools Protocol).
      *
@@ -120,7 +120,7 @@ class PulsarWebDriver(
     private suspend fun applyFingerprint() {
         val fingerprint = browser.id.fingerprint
         val emulation = emulationAPI ?: return
-        
+
         // 1. Apply user agent (existing behavior)
         val userAgent = browser.userAgentOverride ?: fingerprint.userAgent
         if (!userAgent.isNullOrEmpty()) {
@@ -130,7 +130,7 @@ class PulsarWebDriver(
                 logger.warn("Failed to set user agent override", it)
             }
         }
-        
+
         // 2. Apply timezone (if supported by CDP)
         fingerprint.geoTimeParameters?.let { geo ->
             kotlin.runCatching {
@@ -142,7 +142,7 @@ class PulsarWebDriver(
                 logger.debug("Timezone override not supported or failed: ${geo.timezone}", it)
             }
         }
-        
+
         // 3. Apply geolocation (if supported by CDP)
         fingerprint.geoTimeParameters?.let { geo ->
             if (geo.latitude != null && geo.longitude != null) {
@@ -155,7 +155,7 @@ class PulsarWebDriver(
                 }
             }
         }
-        
+
         // 4. Apply locale (if supported by CDP)
         fingerprint.geoTimeParameters?.let { geo ->
             kotlin.runCatching {
@@ -166,7 +166,7 @@ class PulsarWebDriver(
                 logger.debug("Locale override not supported or failed: ${geo.locale}", it)
             }
         }
-        
+
         // 5. Apply device metrics (if supported by CDP)
         fingerprint.viewportParameters?.let { viewport ->
             kotlin.runCatching {
@@ -177,11 +177,11 @@ class PulsarWebDriver(
                 logger.debug("Device metrics override not supported or failed", it)
             }
         }
-        
+
         // 6. Inject JavaScript overrides for client-side fingerprint parameters
         injectFingerprintScript()
     }
-    
+
     /**
      * Inject JavaScript to override client-side fingerprint parameters.
      *
@@ -195,7 +195,7 @@ class PulsarWebDriver(
     private suspend fun injectFingerprintScript() {
         val fingerprint = browser.id.fingerprint
         val page = pageAPI ?: return
-        
+
         val script = buildFingerprintInjectionScript(fingerprint)
         if (script.isNotEmpty()) {
             kotlin.runCatching {
@@ -205,13 +205,13 @@ class PulsarWebDriver(
             }
         }
     }
-    
+
     /**
      * Build the JavaScript injection script for fingerprint parameters.
      */
     private fun buildFingerprintInjectionScript(fingerprint: ai.platon.pulsar.common.browser.Fingerprint): String {
         val scriptParts = mutableListOf<String>()
-        
+
         // Screen parameters injection
         fingerprint.screenParameters?.let { screen ->
             scriptParts.add("""
@@ -225,11 +225,11 @@ class PulsarWebDriver(
                 Object.defineProperty(window, 'devicePixelRatio', { value: ${screen.devicePixelRatio}, configurable: false });
             """.trimIndent())
         }
-        
+
         // Hardware parameters injection
         fingerprint.hardwareParameters?.let { hardware ->
-            val deviceMemoryLine = if (hardware.deviceMemory != null) 
-                "Object.defineProperty(navigator, 'deviceMemory', { value: ${hardware.deviceMemory}, configurable: false });" 
+            val deviceMemoryLine = if (hardware.deviceMemory != null)
+                "Object.defineProperty(navigator, 'deviceMemory', { value: ${hardware.deviceMemory}, configurable: false });"
               else ""
             scriptParts.add("""
                 // Override navigator hardware properties
@@ -242,7 +242,7 @@ class PulsarWebDriver(
                 Object.defineProperty(navigator, 'productSub', { value: '${hardware.productSub}', configurable: false });
             """.trimIndent())
         }
-        
+
         // WebGL parameters injection
         fingerprint.webGLParameters?.let { webgl ->
             scriptParts.add("""
@@ -254,13 +254,13 @@ class PulsarWebDriver(
                         if (parameter === 37445) {
                             return '${webgl.unmaskedVendor ?: webgl.vendor}';
                         }
-                        // UNMASKED_RENDERER_WEBGL  
+                        // UNMASKED_RENDERER_WEBGL
                         if (parameter === 37446) {
                             return '${webgl.unmaskedRenderer ?: webgl.renderer}';
                         }
                         return getParameter.call(this, parameter);
                     };
-                    
+
                     if (typeof WebGL2RenderingContext !== 'undefined') {
                         const getParameter2 = WebGL2RenderingContext.prototype.getParameter;
                         WebGL2RenderingContext.prototype.getParameter = function(parameter) {
@@ -276,7 +276,7 @@ class PulsarWebDriver(
                 })();
             """.trimIndent())
         }
-        
+
         // Canvas fingerprinting defense
         fingerprint.canvasParameters?.let { canvas ->
             canvas.fingerprintSeed?.let { seed ->
@@ -289,14 +289,14 @@ class PulsarWebDriver(
                         const toDataURL = HTMLCanvasElement.prototype.toDataURL;
                         const toBlob = HTMLCanvasElement.prototype.toBlob;
                         const getImageData = CanvasRenderingContext2D.prototype.getImageData;
-                        
+
                         // Minimal noise injection to make fingerprint consistent with seed
                         // Production implementation should add deterministic noise based on seed
                     })();
                 """.trimIndent())
             }
         }
-        
+
         // Wrap all script parts in an immediately invoked function expression (IIFE)
         return if (scriptParts.isNotEmpty()) {
             """
