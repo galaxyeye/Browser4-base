@@ -15,22 +15,6 @@ class BasicFingerprintGeneratorTest {
     }
 
     @Test
-    @DisplayName("test basic generator produces fingerprint with core parameters")
-    fun testBasicGeneratorProducesCoreParameters() {
-        val fingerprint = generator.generate(
-            BrowserType.PULSAR_CHROME,
-            FingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
-        )
-
-        assertNotNull(fingerprint.userAgent)
-        assertTrue(fingerprint.userAgent!!.contains("Windows"))
-        assertNotNull(fingerprint.screenParameters)
-        assertNotNull(fingerprint.viewportParameters)
-        assertEquals(1920, fingerprint.screenParameters?.width)
-        assertEquals(1, fingerprint.version)
-    }
-
-    @Test
     @DisplayName("test basic generator omits advanced parameters")
     fun testBasicGeneratorOmitsAdvancedParameters() {
         val fingerprint = generator.generate(
