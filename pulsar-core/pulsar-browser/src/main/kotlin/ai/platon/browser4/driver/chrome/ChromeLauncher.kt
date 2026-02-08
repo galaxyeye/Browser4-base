@@ -73,20 +73,7 @@ class ChromeLauncher constructor(
     }
 
     private fun clearProcessMarkers() {
-        runCatching {
-            fun backupIfExists(path: Path) {
-                if (Files.exists(path)) {
-                    val backup = path.resolveSibling("${path.fileName}.bak")
-                    Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING)
-                }
-            }
-
-            backupIfExists(portPath)
-            backupIfExists(pidPath)
-
-            Files.deleteIfExists(portPath)
-            Files.deleteIfExists(pidPath)
-        }.onFailure { logger.warn("Failed to delete process marker files | {}", it.message) }
+        BrowserFiles.clearProcessMarkers(userDataDir)
     }
 
     /**

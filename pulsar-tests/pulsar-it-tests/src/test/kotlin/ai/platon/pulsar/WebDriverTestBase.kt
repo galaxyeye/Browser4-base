@@ -1,5 +1,6 @@
 package ai.platon.pulsar
 
+import ai.platon.browser4.driver.chrome.ChromeLauncher
 import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
@@ -8,7 +9,11 @@ import ai.platon.browser4.driver.chrome.dom.util.DomDebug
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.browser4.driver.common.SimpleScriptConfuser
 import ai.platon.pulsar.browser.FastWebDriverService
+import ai.platon.pulsar.common.browser.BrowserFiles
+import ai.platon.pulsar.common.browser.BrowserFiles.cleanOldestContextTmpDirs
+import ai.platon.pulsar.common.browser.BrowserFiles.cleanUpContextTmpDir
 import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.common.warnForClose
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFactory
@@ -18,6 +23,7 @@ import ai.platon.pulsar.util.server.EnableMockServerApplication
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.boot.test.context.SpringBootTest
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
 @SpringBootTest(
