@@ -128,14 +128,14 @@ interface ServerSideEventHandlers {
  * Events are emitted asynchronously and will not block the event producer.
  *
  * The shared flow is configured with:
- * - replay = 0: No replay for new subscribers (only receive new events)
- * - extraBufferCapacity = 64: Buffer up to 64 events if consumers are slow
+ * - replay = 100: New subscribers receive the last 100 events (to handle late subscriptions)
+ * - extraBufferCapacity = 64: Buffer up to 64 additional events if consumers are slow
  *
  * @see ServerSideEventHandlers for interface documentation
  */
 class DefaultServerSideEventHandlers : ServerSideEventHandlers {
     private val _eventFlow = MutableSharedFlow<ServerSideEvent>(
-        replay = 0,
+        replay = 100,
         extraBufferCapacity = 64
     )
 

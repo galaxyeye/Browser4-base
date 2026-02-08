@@ -289,6 +289,7 @@ fun PageVisitStatus.failed(statusCode: Int): PageVisitStatus {
 fun PageVisitStatus.refresh(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
+    lastModifiedTime = Instant.now()
 }
 
 fun PageVisitStatus.failed(statusCode: Int, pageStatusCode: Int): PageVisitStatus {

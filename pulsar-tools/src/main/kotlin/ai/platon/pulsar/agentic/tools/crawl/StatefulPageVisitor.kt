@@ -101,9 +101,26 @@ class StatefulPageVisitor(
             val serverSideEventHandlers = DefaultServerSideEventHandlers()
             status.serverSideEventHandlers = serverSideEventHandlers
 
-            // Bind server-side event handlers to THIS coroutine so multiple commands can run concurrently.
-            PulsarEventBus.withServerSideEventHandlers(serverSideEventHandlers) {
-                visitPageStepByStep(request, status, eventHandlers)
+            // Start a background job to collect events and update status
+            val eventCollectorJob = CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+                try {
+                    serverSideEventHandlers.eventFlow.collect { event ->
+                        status.refresh(event.eventType)
+                        logger.info("Collected event {} for command {}", event.eventType, status.id)
+                    }
+                } catch (e: Exception) {
+                    logger.error("Error collecting events for command {}", status.id, e)
+                }
+            }
+
+            try {
+                // Bind server-side event handlers to THIS coroutine so multiple commands can run concurrently.
+                PulsarEventBus.withServerSideEventHandlers(serverSideEventHandlers) {
+                    visitPageStepByStep(request, status, eventHandlers)
+                }
+            } finally {
+                // Cancel event collector when command completes
+                eventCollectorJob.cancel()
             }
         } catch (e: CancellationException) {
             throw e

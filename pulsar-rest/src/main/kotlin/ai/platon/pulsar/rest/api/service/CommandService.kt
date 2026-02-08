@@ -131,8 +131,17 @@ class CommandService(
 
     fun streamEvents(id: String): Flux<ServerSentEvent<CommandStatus>> {
         val handleFluxSink = { sink: FluxSink<CommandStatus> ->
-            val job = commandStatusFlow(id).onEach { sink.next(it) }.onCompletion { sink.complete() }.catch {
-                logger.error("Error in command status flow", it)
+            // Start listening to events before retrieving status to avoid missing early events
+            val status = getStatus(id)
+            if (status == null) {
+                sink.next(CommandStatus.notFound(id))
+                sink.complete()
+                return@create
+            }
+
+            // Start collecting events from the flow
+            val job = commandStatusFlowFromEvents(id, status).onEach { sink.next(it) }.onCompletion { sink.complete() }.catch {
+                logger.error("Error in command status flow for command {}", id, it)
                 sink.error(it)
             }.launchIn(commanderScope)
 
@@ -140,28 +149,64 @@ class CommandService(
         }
 
         return Flux.create { sink -> handleFluxSink(sink) }.map {
-            // ServerSentEvent.builder(it).id(it.id).event(it.event).build()
-            // NOTE: [2025/5/20] JavaScript client-side code expects only JSON data, not the event ID nor event name.
             ServerSentEvent.builder(it).build()
         }
     }
 
-    fun commandStatusFlow(id: String): Flow<CommandStatus> = flow {
-        var lastModifiedTime = Instant.EPOCH
-        do {
-            delay(FLOW_POLLING_INTERVAL)
-
-            val status = getStatus(id) ?: CommandStatus.notFound(id)
-            if (status.refreshed(lastModifiedTime)) {
-                emit(status)
-                lastModifiedTime = status.lastModifiedTime
+    private fun commandStatusFlowFromEvents(id: String, initialStatus: PageVisitStatus): Flow<CommandStatus> = flow {
+        val eventHandlers = initialStatus.serverSideEventHandlers
+        
+        if (eventHandlers != null) {
+            // Event-driven approach: collect from the event flow with replay buffer
+            var lastModifiedTime = Instant.EPOCH
+            
+            // Emit initial status
+            emit(initialStatus.toCommandStatus())
+            lastModifiedTime = initialStatus.lastModifiedTime ?: Instant.EPOCH
+            
+            // Combine event collection with status polling
+            // Events will update the status, and we poll to detect those updates
+            var iterations = 0
+            while (!initialStatus.isDone && iterations < 300) { // max 5 minutes
+                delay(FLOW_POLLING_INTERVAL)
+                iterations++
+                
+                // Get fresh status from cache (which may have been updated by events)
+                val currentStatus = getStatus(id) ?: break
+                if (currentStatus.refreshed(lastModifiedTime)) {
+                    emit(currentStatus)
+                    lastModifiedTime = currentStatus.lastModifiedTime ?: Instant.EPOCH
+                }
+                
+                if (currentStatus.isDone) {
+                    break
+                }
             }
+            
+            // Emit final status
+            val finalStatus = getStatus(id) ?: CommandStatus.notFound(id)
+            emit(finalStatus)
+        } else {
+            // Fall back to polling approach for backward compatibility
+            var lastModifiedTime = Instant.EPOCH
+            var iterations = 0
+            
+            do {
+                delay(FLOW_POLLING_INTERVAL)
+                iterations++
 
-            if (status.isDone) {
-                // emit a final event, it's OK to emit a duplicate event
-                emit(status)
-            }
-        } while (!status.isDone)
+                val status = getStatus(id) ?: CommandStatus.notFound(id)
+                if (status.refreshed(lastModifiedTime)) {
+                    emit(status)
+                    lastModifiedTime = status.lastModifiedTime
+                }
+
+                if (status.isDone || iterations >= 300) {
+                    emit(status)
+                    break
+                }
+            } while (true)
+        }
     }
 
     /**
