@@ -88,6 +88,6 @@ ls -lh browser4/browser4-agents/target/Browser4.jar
 
 ## 📚 相关文档
 
-- [Docker 开发指南](./docker/README.md)
-- [主 Dockerfile](./Dockerfile)
-- [项目构建说明](./README.md)
+- [Docker 开发指南](../docker/README.md)
+- [主 Dockerfile](../Dockerfile)
+- [项目构建说明](../README.md)
