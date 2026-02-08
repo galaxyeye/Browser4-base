@@ -1,15 +1,16 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
+import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import java.nio.file.Files
@@ -23,53 +24,52 @@ class ChromeDomServiceFullCoverageTest : WebDriverTestBase() {
 //    private val testURL = "https://news.ycombinator.com/news"
 
     @Test
-    fun `Get trees, build and serialize end-to-end with assertions`() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            assertIs<PulsarWebDriver>(driver)
-            val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
+    fun `Get trees, build and serialize end-to-end with assertions`() = runEnhancedWebDriverTest(testURL) { driver ->
+        assertIs<PulsarWebDriver>(driver)
+        val devTools = driver.implementation as RemoteDevTools
+        val service = ChromeCdpDomService(devTools)
 
-            val options = SnapshotOptions(
-                maxDepth = 100,
-                includeAX = true,
-                includeSnapshot = true,
-                includeStyles = true,
-                includePaintOrder = true,
-                includeDOMRects = true,
-                includeScrollAnalysis = true,
-                includeVisibility = true,
-                includeInteractivity = true
-            )
+        val options = SnapshotOptions(
+            maxDepth = 100,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
 
-            // Prepare a deterministic dynamic state (virtual list -> scrollable container, images are added on DOMContentLoaded)
-            runCatching { devTools.runtime.evaluate("generateLargeList(100)") }
+        // Prepare a deterministic dynamic state (virtual list -> scrollable container, images are added on DOMContentLoaded)
+        runCatching { devTools.runtime.evaluate("generateLargeList(100)") }
 
-            val enhancedRoot = collectEnhancedRoot(service, options)
-            // Print enhanced DOMTreeNodeEx summary and basic tree stats
-            printlnPro(DomDebug.summarize(enhancedRoot))
-            assertTrue(enhancedRoot.children.isNotEmpty())
+        val enhancedRoot = collectEnhancedRoot(service, options)
+        // Print enhanced DOMTreeNodeEx summary and basic tree stats
+        printlnPro(DomDebug.summarize(enhancedRoot))
+        assertTrue(enhancedRoot.children.isNotEmpty())
 
-            val tinyTree = service.buildTinyTree(enhancedRoot)
-            // Print tinyTree summary and basic tree stats
-            printlnPro(DomDebug.summarize(tinyTree))
-            assertTrue(tinyTree.children.isNotEmpty())
+        val tinyTree = service.buildTinyTree(enhancedRoot)
+        // Print tinyTree summary and basic tree stats
+        printlnPro(DomDebug.summarize(tinyTree))
+        assertTrue(tinyTree.children.isNotEmpty())
 
-            val domState = service.buildDOMState(tinyTree)
-            assertTrue(domState.nanoTreeLazyJson.length > 100)
-            assertTrue(domState.selectorMap.isNotEmpty())
+        val domState = service.buildDOMState(tinyTree)
+        assertTrue(domState.nanoTreeLazyJson.length > 100)
+        assertTrue(domState.selectorMap.isNotEmpty())
 
-            val nanoTree = domState.microTree.toNanoTree()
-            val nanoTreeSummary = DomDebug.summarize(nanoTree)
-            printlnPro(nanoTreeSummary)
+        val nanoTree = domState.microTree.toNanoTree()
+        val nanoTreeSummary = DomDebug.summarize(nanoTree)
+        printlnPro(nanoTreeSummary)
 
-            val path = Paths.get("logs").resolve("nano.tree.json")
-            path.parent.createDirectories()
-            Files.writeString(path, domState.microTree.toNanoTreeInRange().lazyJson)
+        val path = Paths.get("logs").resolve("nano.tree.json")
+        path.parent.createDirectories()
+        Files.writeString(path, domState.microTree.toNanoTreeInRange().lazyJson)
 
-            // Selector map should include at least node: and possibly xpath: keys for some nodes
-            val anySelectorKey = domState.selectorMap.keys.any { it.startsWith("node:") || it.startsWith("xpath:") }
-            assertTrue(anySelectorKey, "Selector map should contain node:/xpath: keys")
-        }
+        // Selector map should include at least node: and possibly xpath: keys for some nodes
+        val anySelectorKey = domState.selectorMap.keys.any { it.startsWith("node:") || it.startsWith("xpath:") }
+        assertTrue(anySelectorKey, "Selector map should contain node:/xpath: keys")
+    }
 
     @Test
     fun `Find element using css, xpath, backend id, element hash and convert to interacted element`() =
@@ -192,220 +192,217 @@ class ChromeDomServiceFullCoverageTest : WebDriverTestBase() {
         }
 
     @Test
-    fun `Scrollability and interactivity analysis on dynamic content`() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            assertIs<PulsarWebDriver>(driver)
-            val devTools = driver.implementation as RemoteDevTools
-            val service = driver.domService
+    fun `Scrollability and interactivity analysis on dynamic content`() = runEnhancedWebDriverTest(testURL) { driver ->
+        assertIs<PulsarWebDriver>(driver)
+        val devTools = driver.implementation as RemoteDevTools
+        val service = driver.domService
 
-            // Create a clearly scrollable container and interactive buttons
-            runCatching { devTools.runtime.evaluate("generateLargeList(1000)") }
+        // Create a clearly scrollable container and interactive buttons
+        runCatching { devTools.runtime.evaluate("generateLargeList(1000)") }
 
-            val options = SnapshotOptions(
-                maxDepth = 100,
-                includeAX = true,
-                includeSnapshot = true,
-                includeStyles = true,
-                includePaintOrder = true,
-                includeDOMRects = true,
-                includeScrollAnalysis = true,
-                includeVisibility = true,
-                includeInteractivity = true
-            )
+        val options = SnapshotOptions(
+            maxDepth = 100,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
 
-            // Wait deterministically for the container to exist in the DOM and have scrollable content
-            var hasScrollableContainer = false
-            repeat(50) { // up to ~10s
-                val containerExists = runCatching {
-                    devTools.runtime.evaluate("document.getElementById('virtualScrollContainer') != null")
-                }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
+        // Wait deterministically for the container to exist in the DOM and have scrollable content
+        var hasScrollableContainer = false
+        repeat(50) { // up to ~10s
+            val containerExists = runCatching {
+                devTools.runtime.evaluate("document.getElementById('virtualScrollContainer') != null")
+            }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
 
-                if (containerExists) {
-                    // Also check if the content has been rendered with sufficient height
-                    val hasContent = runCatching {
-                        devTools.runtime.evaluate(
-                            """
+            if (containerExists) {
+                // Also check if the content has been rendered with sufficient height
+                val hasContent = runCatching {
+                    devTools.runtime.evaluate(
+                        """
                         var container = document.getElementById('virtualScrollContainer');
                         var content = document.getElementById('virtualScrollContent');
                         container && content && content.scrollHeight > container.clientHeight
                     """.trimIndent()
-                        )
-                    }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
-
-                    if (hasContent) {
-                        hasScrollableContainer = true
-                        return@repeat
-                    }
-                }
-                Thread.sleep(200)
-            }
-            assertTrue(
-                hasScrollableContainer,
-                "Expected #virtualScrollContainer to be present with scrollable content after generateLargeList(1000)"
-            )
-
-            val root = collectEnhancedRoot(service, options)
-            printlnPro(DomDebug.summarize(root))
-            assertNotNull(root)
-
-            // Locate scroll container by CSS, fallback to DFS by id
-            var scrollContainer = service.findElement(ElementRefCriteria(cssSelector = "#virtualScrollContainer"))
-            assertNotNull(scrollContainer, "Expected scroll container to be found and resolved")
-            requireNotNull(scrollContainer)
-            printlnPro(DomDebug.summarize(scrollContainer))
-
-            // Debug: print snapshot details to understand why scrollability might be false
-            val containerSnapshot = scrollContainer.snapshotNode
-            if (containerSnapshot != null) {
-                printlnPro("Container snapshot - clientRects: ${containerSnapshot.clientRects}, scrollRects: ${containerSnapshot.scrollRects}")
-                printlnPro(
-                    "Container styles - overflow-y: ${containerSnapshot.computedStyles?.get("overflow-y")}, overflow: ${
-                        containerSnapshot.computedStyles?.get(
-                            "overflow"
-                        )
-                    }"
-                )
-            }
-
-            // TODO: fix me - feature postponed
-            // assertEquals(true, scrollContainer.isScrollable, "Expected #virtualScrollContainer to be marked scrollable")
-
-            val direct = findNodeById(root, "virtualScrollContainer")
-            assertNotNull(direct)
-            requireNotNull(direct)
-
-            val xPath = direct.xpath
-            assertNotNull(xPath)
-
-            scrollContainer = service.findElement(ElementRefCriteria(xPath = xPath))
-            assertNotNull(scrollContainer)
-
-            assertNotNull(direct.elementHash)
-            scrollContainer = service.findElement(ElementRefCriteria(elementHash = direct.elementHash))
-            assertNotNull(scrollContainer)
-
-            assertNotNull(scrollContainer, "Expected scroll container to be found and resolved")
-
-            // Always verify interactivity by tag-based path
-            val anyVirtualBtn = service.findElement(ElementRefCriteria(cssSelector = "button"))
-            assertNotNull(anyVirtualBtn)
-            printlnPro(anyVirtualBtn.let { DomDebug.summarize(it) })
-            assertEquals(true, anyVirtualBtn.isInteractable)
-        }
-
-    @Test
-    fun `Dynamic content load is reflected in enhanced DOM tree`() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            assertIs<PulsarWebDriver>(driver)
-            val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
-
-            // Trigger async load of users (2s delay per page script)
-            runCatching { devTools.runtime.evaluate("loadContent('users')") }
-
-            // Deterministically wait for #dynamicContent to get 'loaded' class, then assert
-            var loadedObserved = false
-            repeat(40) { // up to ~20s
-                val ok = runCatching {
-                    devTools.runtime.evaluate("document.getElementById('dynamicContent')?.classList?.contains('loaded')")
+                    )
                 }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
-                if (ok) {
-                    loadedObserved = true; return@repeat
+
+                if (hasContent) {
+                    hasScrollableContainer = true
+                    return@repeat
                 }
-                Thread.sleep(500)
             }
-            assertTrue(loadedObserved, "Expected #dynamicContent to have class 'loaded' within timeout")
+            Thread.sleep(200)
+        }
+        assertTrue(
+            hasScrollableContainer,
+            "Expected #virtualScrollContainer to be present with scrollable content after generateLargeList(1000)"
+        )
 
-            val options = SnapshotOptions(
-                maxDepth = 100,
-                includeAX = true,
-                includeSnapshot = true,
-                includeStyles = true,
-                includePaintOrder = true,
-                includeDOMRects = true,
-                includeScrollAnalysis = true,
-                includeVisibility = true,
-                includeInteractivity = true
-            )
+        val root = collectEnhancedRoot(service, options)
+        printlnPro(DomDebug.summarize(root))
+        assertNotNull(root)
 
-            val root = collectEnhancedRoot(service, options)
-            printlnPro(DomDebug.summarize(root))
+        // Locate scroll container by CSS, fallback to DFS by id
+        var scrollContainer = service.findElement(ElementRefCriteria(cssSelector = "#virtualScrollContainer"))
+        assertNotNull(scrollContainer, "Expected scroll container to be found and resolved")
+        requireNotNull(scrollContainer)
+        printlnPro(DomDebug.summarize(scrollContainer))
 
-            val dynamic = service.findElement(ElementRefCriteria(cssSelector = "#dynamicContent"))
-                ?: findNodeById(root, "dynamicContent")
-            assertNotNull(dynamic, "Expected #dynamicContent to exist in DOM")
-            val klass = dynamic.attributes["class"] ?: ""
-            printlnPro(DomDebug.summarize(dynamic))
-
-            // Hard assertion: ensure 'loaded' class is present in the enhanced DOM snapshot as well
-            assertTrue(
-                klass.split(" ").contains("loaded"),
-                "Expected #dynamicContent to have 'loaded' class in enhanced DOM snapshot"
+        // Debug: print snapshot details to understand why scrollability might be false
+        val containerSnapshot = scrollContainer.snapshotNode
+        if (containerSnapshot != null) {
+            printlnPro("Container snapshot - clientRects: ${containerSnapshot.clientRects}, scrollRects: ${containerSnapshot.scrollRects}")
+            printlnPro(
+                "Container styles - overflow-y: ${containerSnapshot.computedStyles?.get("overflow-y")}, overflow: ${
+                    containerSnapshot.computedStyles?.get(
+                        "overflow"
+                    )
+                }"
             )
         }
+
+        // TODO: fix me - feature postponed
+        // assertEquals(true, scrollContainer.isScrollable, "Expected #virtualScrollContainer to be marked scrollable")
+
+        val direct = findNodeById(root, "virtualScrollContainer")
+        assertNotNull(direct)
+        requireNotNull(direct)
+
+        val xPath = direct.xpath
+        assertNotNull(xPath)
+
+        scrollContainer = service.findElement(ElementRefCriteria(xPath = xPath))
+        assertNotNull(scrollContainer)
+
+        assertNotNull(direct.elementHash)
+        scrollContainer = service.findElement(ElementRefCriteria(elementHash = direct.elementHash))
+        assertNotNull(scrollContainer)
+
+        assertNotNull(scrollContainer, "Expected scroll container to be found and resolved")
+
+        // Always verify interactivity by tag-based path
+        val anyVirtualBtn = service.findElement(ElementRefCriteria(cssSelector = "button"))
+        assertNotNull(anyVirtualBtn)
+        printlnPro(anyVirtualBtn.let { DomDebug.summarize(it) })
+        assertEquals(true, anyVirtualBtn.isInteractable)
+    }
 
     @Test
-    fun `SnapshotNodeEx bounds and rects are populated correctly`() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            assertIs<PulsarWebDriver>(driver)
-            val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
+    fun `Dynamic content load is reflected in enhanced DOM tree`() = runEnhancedWebDriverTest(testURL) { driver ->
+        assertIs<PulsarWebDriver>(driver)
+        val devTools = driver.implementation as RemoteDevTools
+        val service = ChromeCdpDomService(devTools)
 
-            val options = SnapshotOptions(
-                maxDepth = 100,
-                includeAX = true,
-                includeSnapshot = true,
-                includeStyles = true,
-                includePaintOrder = true,
-                includeDOMRects = true,
-                includeScrollAnalysis = true,
-                includeVisibility = true,
-                includeInteractivity = true
-            )
+        // Trigger async load of users (2s delay per page script)
+        runCatching { devTools.runtime.evaluate("loadContent('users')") }
 
-            val root = collectEnhancedRoot(service, options)
-            printlnPro(DomDebug.summarize(root))
-            assertNotNull(root)
-
-            // Test bounds on body element
-            val bodyNode = service.findElement(ElementRefCriteria(cssSelector = "body"))
-            assertNotNull(bodyNode, "Expected body element to be found")
-            val bodySnapshot = bodyNode.snapshotNode
-            assertNotNull(bodySnapshot, "Expected body to have snapshot data")
-
-            // Test clientRects property (CDP may not populate bounds for body/html, but clientRects should be available)
-            val bounds = bodySnapshot.bounds ?: bodySnapshot.clientRects
-            assertNotNull(bounds, "Expected body snapshot to have bounds or clientRects")
-            assertTrue(bounds.width > 0, "Expected bounds width to be positive")
-            assertTrue(bounds.height > 0, "Expected bounds height to be positive")
-            printlnPro("Body bounds: x=${bounds.x}, y=${bounds.y}, width=${bounds.width}, height=${bounds.height}")
-
-            // Test absoluteBounds property (may be null for body/html elements if CDP doesn't provide bounds)
-            if (bodySnapshot.absoluteBounds != null) {
-                val absoluteBounds = bodySnapshot.absoluteBounds!!
-                assertTrue(absoluteBounds.width > 0, "Expected absoluteBounds width to be positive")
-                assertTrue(absoluteBounds.height > 0, "Expected absoluteBounds height to be positive")
-                printlnPro("Body absoluteBounds: x=${absoluteBounds.x}, y=${absoluteBounds.y}, width=${absoluteBounds.width}, height=${absoluteBounds.height}")
-            } else {
-                printlnPro("Body absoluteBounds not available (this is expected for body/html elements)")
+        // Deterministically wait for #dynamicContent to get 'loaded' class, then assert
+        var loadedObserved = false
+        repeat(40) { // up to ~20s
+            val ok = runCatching {
+                devTools.runtime.evaluate("document.getElementById('dynamicContent')?.classList?.contains('loaded')")
+            }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
+            if (ok) {
+                loadedObserved = true; return@repeat
             }
-
-            // Test clientRects property
-            val clientRects = bodySnapshot.clientRects
-            if (clientRects != null) {
-                assertTrue(clientRects.width >= 0, "Expected clientRects width to be non-negative")
-                assertTrue(clientRects.height >= 0, "Expected clientRects height to be non-negative")
-                printlnPro("Body clientRects: x=${clientRects.x}, y=${clientRects.y}, width=${clientRects.width}, height=${clientRects.height}")
-            }
-
-            // Test scrollRects property
-            val scrollRects = bodySnapshot.scrollRects
-            if (scrollRects != null) {
-                assertTrue(scrollRects.width >= 0, "Expected scrollRects width to be non-negative")
-                assertTrue(scrollRects.height >= 0, "Expected scrollRects height to be non-negative")
-                printlnPro("Body scrollRects: x=${scrollRects.x}, y=${scrollRects.y}, width=${scrollRects.width}, height=${scrollRects.height}")
-            }
+            Thread.sleep(500)
         }
+        assertTrue(loadedObserved, "Expected #dynamicContent to have class 'loaded' within timeout")
+
+        val options = SnapshotOptions(
+            maxDepth = 100,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
+
+        val root = collectEnhancedRoot(service, options)
+        printlnPro(DomDebug.summarize(root))
+
+        val dynamic = service.findElement(ElementRefCriteria(cssSelector = "#dynamicContent"))
+            ?: findNodeById(root, "dynamicContent")
+        assertNotNull(dynamic, "Expected #dynamicContent to exist in DOM")
+        val klass = dynamic.attributes["class"] ?: ""
+        printlnPro(DomDebug.summarize(dynamic))
+
+        // Hard assertion: ensure 'loaded' class is present in the enhanced DOM snapshot as well
+        assertTrue(
+            klass.split(" ").contains("loaded"),
+            "Expected #dynamicContent to have 'loaded' class in enhanced DOM snapshot"
+        )
+    }
+
+    @Test
+    fun `SnapshotNodeEx bounds and rects are populated correctly`() = runEnhancedWebDriverTest(testURL) { driver ->
+        assertIs<PulsarWebDriver>(driver)
+        val devTools = driver.implementation as RemoteDevTools
+        val service = ChromeCdpDomService(devTools)
+
+        val options = SnapshotOptions(
+            maxDepth = 100,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
+
+        val root = collectEnhancedRoot(service, options)
+        printlnPro(DomDebug.summarize(root))
+        assertNotNull(root)
+
+        // Test bounds on body element
+        val bodyNode = service.findElement(ElementRefCriteria(cssSelector = "body"))
+        assertNotNull(bodyNode, "Expected body element to be found")
+        val bodySnapshot = bodyNode.snapshotNode
+        assertNotNull(bodySnapshot, "Expected body to have snapshot data")
+
+        // Test clientRects property (CDP may not populate bounds for body/html, but clientRects should be available)
+        val bounds = bodySnapshot.bounds ?: bodySnapshot.clientRects
+        assertNotNull(bounds, "Expected body snapshot to have bounds or clientRects")
+        assertTrue(bounds.width > 0, "Expected bounds width to be positive")
+        assertTrue(bounds.height > 0, "Expected bounds height to be positive")
+        printlnPro("Body bounds: x=${bounds.x}, y=${bounds.y}, width=${bounds.width}, height=${bounds.height}")
+
+        // Test absoluteBounds property (may be null for body/html elements if CDP doesn't provide bounds)
+        if (bodySnapshot.absoluteBounds != null) {
+            val absoluteBounds = bodySnapshot.absoluteBounds!!
+            assertTrue(absoluteBounds.width > 0, "Expected absoluteBounds width to be positive")
+            assertTrue(absoluteBounds.height > 0, "Expected absoluteBounds height to be positive")
+            printlnPro("Body absoluteBounds: x=${absoluteBounds.x}, y=${absoluteBounds.y}, width=${absoluteBounds.width}, height=${absoluteBounds.height}")
+        } else {
+            printlnPro("Body absoluteBounds not available (this is expected for body/html elements)")
+        }
+
+        // Test clientRects property
+        val clientRects = bodySnapshot.clientRects
+        if (clientRects != null) {
+            assertTrue(clientRects.width >= 0, "Expected clientRects width to be non-negative")
+            assertTrue(clientRects.height >= 0, "Expected clientRects height to be non-negative")
+            printlnPro("Body clientRects: x=${clientRects.x}, y=${clientRects.y}, width=${clientRects.width}, height=${clientRects.height}")
+        }
+
+        // Test scrollRects property
+        val scrollRects = bodySnapshot.scrollRects
+        if (scrollRects != null) {
+            assertTrue(scrollRects.width >= 0, "Expected scrollRects width to be non-negative")
+            assertTrue(scrollRects.height >= 0, "Expected scrollRects height to be non-negative")
+            printlnPro("Body scrollRects: x=${scrollRects.x}, y=${scrollRects.y}, width=${scrollRects.width}, height=${scrollRects.height}")
+        }
+    }
 
     @Test
     fun `SnapshotNodeEx bounds on interactive elements`() = runEnhancedWebDriverTest(testURL) { driver ->
@@ -435,7 +432,9 @@ class ChromeDomServiceFullCoverageTest : WebDriverTestBase() {
 
         // Avoid relying on returning JS object by value; fetch each field as a primitive number
         suspend fun getBcr(selector: String): Map<String, Double> {
-            fun expr(prop: String) = "(function(){var el=document.querySelector(\"$selector\"); if(!el){return -1;} var r=el.getBoundingClientRect(); return r.$prop; })();"
+            fun expr(prop: String) =
+                "(function(){var el=document.querySelector(\"$selector\"); if(!el){return -1;} var r=el.getBoundingClientRect(); return r.$prop; })();"
+
             val x = jsNumber(expr("x")) ?: 0.0
             val y = jsNumber(expr("y")) ?: 0.0
             val w = jsNumber(expr("width")) ?: 0.0
@@ -565,84 +564,83 @@ class ChromeDomServiceFullCoverageTest : WebDriverTestBase() {
     }
 
     @Test
-    fun `SnapshotNodeEx scrollRects on scrollable container`() =
-        runEnhancedWebDriverTest(testURL) { driver ->
-            assertIs<PulsarWebDriver>(driver)
-            val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
+    fun `SnapshotNodeEx scrollRects on scrollable container`() = runEnhancedWebDriverTest(testURL) { driver ->
+        assertIs<PulsarWebDriver>(driver)
+        val devTools = driver.implementation as RemoteDevTools
+        val service = ChromeCdpDomService(devTools)
 
-            // Generate a large scrollable list
-            runCatching { devTools.runtime.evaluate("generateLargeList(1000)") }
+        // Generate a large scrollable list
+        runCatching { devTools.runtime.evaluate("generateLargeList(1000)") }
 
-            // Wait for container to be present
-            var hasContainer = false
-            repeat(2) {
-                val ok = runCatching {
-                    devTools.runtime.evaluate("document.getElementById('virtualScrollContainer') != null")
-                }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
-                if (ok) {
-                    hasContainer = true; return@repeat
-                }
-                Thread.sleep(1000)
+        // Wait for container to be present
+        var hasContainer = false
+        repeat(2) {
+            val ok = runCatching {
+                devTools.runtime.evaluate("document.getElementById('virtualScrollContainer') != null")
+            }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
+            if (ok) {
+                hasContainer = true; return@repeat
             }
-            assertTrue(hasContainer, "Expected #virtualScrollContainer to be present")
-
-            val options = SnapshotOptions(
-                maxDepth = 100,
-                includeAX = true,
-                includeSnapshot = true,
-                includeStyles = true,
-                includePaintOrder = true,
-                includeDOMRects = true,
-                includeScrollAnalysis = true,
-                includeVisibility = true,
-                includeInteractivity = true
-            )
-
-            val root = collectEnhancedRoot(service, options)
-
-            // Find the scrollable container
-            val scrollContainer = service.findElement(ElementRefCriteria(cssSelector = "#virtualScrollContainer"))
-            assertNotNull(scrollContainer, "Expected scroll container to be found")
-
-            val snapshot = scrollContainer.snapshotNode
-            assertNotNull(snapshot, "Expected scroll container to have snapshot data")
-            printlnPro(DomDebug.summarize(scrollContainer))
-
-            // Test bounds (use clientRects as fallback since CDP may not populate bounds for all elements)
-            val bounds = snapshot.bounds ?: snapshot.clientRects
-            assertNotNull(bounds, "Expected scroll container to have bounds or clientRects")
-            assertTrue(bounds.width > 0, "Expected scroll container bounds width to be positive")
-            assertTrue(bounds.height > 0, "Expected scroll container bounds height to be positive")
-            printlnPro("ScrollContainer bounds: x=${bounds.x}, y=${bounds.y}, width=${bounds.width}, height=${bounds.height}")
-
-            // Test absoluteBounds (may be null if CDP doesn't provide bounds, only clientRects)
-            if (snapshot.absoluteBounds != null) {
-                val absoluteBounds = snapshot.absoluteBounds!!
-                assertTrue(absoluteBounds.width > 0, "Expected scroll container absoluteBounds width to be positive")
-                assertTrue(absoluteBounds.height > 0, "Expected scroll container absoluteBounds height to be positive")
-                printlnPro("ScrollContainer absoluteBounds: x=${absoluteBounds.x}, y=${absoluteBounds.y}, width=${absoluteBounds.width}, height=${absoluteBounds.height}")
-            } else {
-                printlnPro("ScrollContainer absoluteBounds not available (CDP may only provide clientRects for this element)")
-            }
-
-            // Test scrollRects - should be present for scrollable elements
-            assertNotNull(snapshot.scrollRects, "Expected scroll container to have scrollRects")
-            val scrollRects = snapshot.scrollRects!!
-            assertTrue(scrollRects.width >= 0, "Expected scroll container scrollRects width to be non-negative")
-            assertTrue(scrollRects.height >= 0, "Expected scroll container scrollRects height to be non-negative")
-            printlnPro("ScrollContainer scrollRects: x=${scrollRects.x}, y=${scrollRects.y}, width=${scrollRects.width}, height=${scrollRects.height}")
-
-            // ScrollRects height should typically be larger than bounds height for scrollable content
-            // (though this isn't guaranteed in all cases, so we just log it)
-            printlnPro("ScrollRects.height (${scrollRects.height}) vs Bounds.height (${bounds.height})")
-
-            // Test clientRects
-            if (snapshot.clientRects != null) {
-                val clientRects = snapshot.clientRects!!
-                assertTrue(clientRects.width >= 0, "Expected scroll container clientRects width to be non-negative")
-                assertTrue(clientRects.height >= 0, "Expected scroll container clientRects height to be non-negative")
-                printlnPro("ScrollContainer clientRects: x=${clientRects.x}, y=${clientRects.y}, width=${clientRects.width}, height=${clientRects.height}")
-            }
+            Thread.sleep(1000)
         }
+        assertTrue(hasContainer, "Expected #virtualScrollContainer to be present")
+
+        val options = SnapshotOptions(
+            maxDepth = 100,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
+
+        val root = collectEnhancedRoot(service, options)
+
+        // Find the scrollable container
+        val scrollContainer = service.findElement(ElementRefCriteria(cssSelector = "#virtualScrollContainer"))
+        assertNotNull(scrollContainer, "Expected scroll container to be found")
+
+        val snapshot = scrollContainer.snapshotNode
+        assertNotNull(snapshot, "Expected scroll container to have snapshot data")
+        printlnPro(DomDebug.summarize(scrollContainer))
+
+        // Test bounds (use clientRects as fallback since CDP may not populate bounds for all elements)
+        val bounds = snapshot.bounds ?: snapshot.clientRects
+        assertNotNull(bounds, "Expected scroll container to have bounds or clientRects")
+        assertTrue(bounds.width > 0, "Expected scroll container bounds width to be positive")
+        assertTrue(bounds.height > 0, "Expected scroll container bounds height to be positive")
+        printlnPro("ScrollContainer bounds: x=${bounds.x}, y=${bounds.y}, width=${bounds.width}, height=${bounds.height}")
+
+        // Test absoluteBounds (may be null if CDP doesn't provide bounds, only clientRects)
+        if (snapshot.absoluteBounds != null) {
+            val absoluteBounds = snapshot.absoluteBounds!!
+            assertTrue(absoluteBounds.width > 0, "Expected scroll container absoluteBounds width to be positive")
+            assertTrue(absoluteBounds.height > 0, "Expected scroll container absoluteBounds height to be positive")
+            printlnPro("ScrollContainer absoluteBounds: x=${absoluteBounds.x}, y=${absoluteBounds.y}, width=${absoluteBounds.width}, height=${absoluteBounds.height}")
+        } else {
+            printlnPro("ScrollContainer absoluteBounds not available (CDP may only provide clientRects for this element)")
+        }
+
+        // Test scrollRects - should be present for scrollable elements
+        assertNotNull(snapshot.scrollRects, "Expected scroll container to have scrollRects")
+        val scrollRects = snapshot.scrollRects!!
+        assertTrue(scrollRects.width >= 0, "Expected scroll container scrollRects width to be non-negative")
+        assertTrue(scrollRects.height >= 0, "Expected scroll container scrollRects height to be non-negative")
+        printlnPro("ScrollContainer scrollRects: x=${scrollRects.x}, y=${scrollRects.y}, width=${scrollRects.width}, height=${scrollRects.height}")
+
+        // ScrollRects height should typically be larger than bounds height for scrollable content
+        // (though this isn't guaranteed in all cases, so we just log it)
+        printlnPro("ScrollRects.height (${scrollRects.height}) vs Bounds.height (${bounds.height})")
+
+        // Test clientRects
+        if (snapshot.clientRects != null) {
+            val clientRects = snapshot.clientRects!!
+            assertTrue(clientRects.width >= 0, "Expected scroll container clientRects width to be non-negative")
+            assertTrue(clientRects.height >= 0, "Expected scroll container clientRects height to be non-negative")
+            printlnPro("ScrollContainer clientRects: x=${clientRects.x}, y=${clientRects.y}, width=${clientRects.width}, height=${clientRects.height}")
+        }
+    }
 }
