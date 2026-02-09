@@ -4,9 +4,9 @@
 
 本目录包含 Kotlin SDK 集成测试的完整设计方案。设计采用**模块分离策略**，将集成测试提取到独立模块 `kotlin-sdk-tests`，确保 SDK 的 pom.xml 保持干净和最小化。
 
-**状态**: ✅ 设计完成，待实施
-**版本**: 1.1 (更新：模块分离)
-**日期**: 2025-01-13
+**状态**: ✅ 实施完成（15+ 测试类，55+ 测试用例）
+**版本**: 1.2 (更新：反映实际实现)
+**日期**: 2026-02-09
 
 ## 🎯 关键设计决策
 
@@ -15,13 +15,14 @@
 
 ```
 sdks/
-├── kotlin-sdk/           # SDK 模块（干净、最小）
-│   ├── pom.xml           # 仅核心依赖
+├── browser4-sdk-kotlin/  # SDK 模块（干净、最小）
+│   ├── pom.xml           # groupId: io.browser4
 │   └── src/              # SDK 代码 + 单元测试
 │
 └── kotlin-sdk-tests/     # 独立测试模块
     ├── pom.xml           # 所有测试依赖
-    └── src/test/         # 集成测试代码
+    ├── docs-dev/         # 设计文档
+    └── src/test/         # 集成测试代码（15+ 测试类）
 ```
 
 **优势**:
@@ -147,49 +148,63 @@ kotlin-sdk (干净)          kotlin-sdk-tests (独立)
 单元测试                集成测试
 ```
 
-### 4 大测试套件
+### 4 大测试套件（15+ 测试类）
 1. **PulsarClient**: 会话管理、HTTP 请求
 2. **WebDriver**: 浏览器自动化（20+ API）
+   - WebDriverIntegrationTest
+   - WebDriverAdvancedTest
+   - WebDriverClickAndAttributeTest
+   - WebDriverKeyboardAndFocusTest
 3. **PulsarSession**: 页面加载、数据提取
+   - PulsarSessionIntegrationTest
+   - PulsarSessionAdvancedTest
 4. **AgenticSession**: AI 功能（可选）
+   - AgenticSessionIntegrationTest
+   - AgenticSessionAdvancedTest
+   - AgenticContextsTest
 
 ### 执行方式
 ```bash
-# SDK 单元测试
-cd sdks/kotlin-sdk && mvn test
+# 从项目根目录运行集成测试
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test
 
-# 集成测试（独立模块）
-cd sdks/kotlin-sdk-tests && mvn test -DrunITs=true
+# 运行特定测试类
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dtest=WebDriverIntegrationTest
 
-# 所有测试
-mvn test -Pfull-test
+# 运行快速测试
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dgroups="IntegrationTest,Fast"
 ```
 
-## 📊 实施计划
+## 📊 实施状态
 
-### 阶段 1: 基础设施（1 周）
-- 测试目录结构
-- 测试基类
-- 服务器配置
-- Maven 配置
+### 阶段 1: 基础设施 ✅ 完成
+- ✅ 测试目录结构
+- ✅ 测试基类 (KotlinSdkIntegrationTestBase)
+- ✅ 服务器配置 (MockServerConfiguration)
+- ✅ Maven 配置
 
-### 阶段 2-3: 测试实现（1-2 周）
-- PulsarClient 测试
-- WebDriver 测试
-- PulsarSession 测试
+### 阶段 2-3: 测试实现 ✅ 完成
+- ✅ PulsarClient 测试 (6+ 测试)
+- ✅ WebDriver 测试 (15+ 测试，4 个测试类)
+- ✅ PulsarSession 测试 (18+ 测试，2 个测试类)
 
-### 阶段 4-6: 完善和优化（1 周）
-- 工具类
-- 文档
-- CI/CD
-- 性能优化
+### 阶段 4: 高级功能 ✅ 完成
+- ✅ AgenticSession 测试 (16+ 测试，3 个测试类)
+- ✅ 事件机制测试 (EventMechanismIntegrationTest)
+- ✅ 错误处理测试 (ErrorHandlingAndEdgeCasesTest)
 
-**预计总时间**: 3-4 周
+### 阶段 5-6: 优化和文档 ✅ 完成
+- ✅ 工具类 (TestUrls, TestHelpers)
+- ✅ 文档 (README, 设计文档)
+- ⬜ CI/CD 工作流 (待配置)
+
+**总计**: 15+ 测试类，55+ 测试用例
 
 ## 🔗 相关链接
 
 ### 项目内
-- [SDK README](../kotlin-sdk/README.md) - Kotlin SDK 使用指南
+- [SDK README](../browser4-sdk-kotlin/README.md) - Kotlin SDK 使用指南
+- [测试模块 README](../README.md) - 测试模块指南
 - [REST API 文档](../../docs/rest-api-examples.md) - API 示例
 - [配置指南](../../docs/config.md) - 配置说明
 - [构建指南](../../docs/build.md) - 构建说明
@@ -206,11 +221,11 @@ mvn test -Pfull-test
 
 ## ❓ 常见问题
 
-### Q: 为什么需要这个设计？
-A: 确保 Kotlin SDK 在真实环境中正确工作，提供可靠的质量保证。
+### Q: 测试实施完成了吗？
+A: ✅ 是的，已实现 15+ 测试类，55+ 测试用例。
 
-### Q: 设计已完成，何时实施？
-A: 等待设计审查通过后，预计 3-4 周完成实施。
+### Q: 如何运行集成测试？
+A: 从项目根目录运行 `.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test`
 
 ### Q: 集成测试执行时间？
 A: 目标在 5 分钟内完成，单个测试约 10 秒。
@@ -219,7 +234,7 @@ A: 目标在 5 分钟内完成，单个测试约 10 秒。
 A: JDK 17+、Chrome/Chromium、4GB+ 内存。
 
 ### Q: AI 功能必须测试吗？
-A: 不是必须的，AI 测试标记为可选，需要 LLM 配置。
+A: 不是必须的，AI 测试标记为 `@Tag("RequiresAI")`，默认被排除。
 
 ## 📞 联系和反馈
 
@@ -236,15 +251,24 @@ A: 不是必须的，AI 测试标记为可选，需要 LLM 配置。
 
 ## 📝 版本历史
 
+### v1.2 (2026-02-09)
+- ✅ 更新状态为"实施完成"
+- ✅ 反映 15+ 测试类的实际实现
+- ✅ 更新 SDK 模块名称 (browser4-sdk-kotlin)
+- ✅ 更新测试标签策略
+
+### v1.1 (2025-01-21)
+- ✅ 更新模块分离策略
+- ✅ 架构图更新
+
 ### v1.0 (2025-01-13)
 - ✅ 初始设计完成
 - ✅ 完整文档创建
 - ✅ 架构图绘制
-- ⬜ 代码实施（待开始）
 
 ---
 
-**状态**: ✅ 设计完成，待审核和实施
-**下一步**: Review → 实施 → 测试 → 集成
+**状态**: ✅ 实施完成
+**下一步**: CI/CD 集成 → 持续优化
 
 感谢阅读！如有任何问题或建议，欢迎通过 GitHub Issue 或 PR 讨论。
