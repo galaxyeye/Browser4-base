@@ -3,9 +3,9 @@ package ai.platon.pulsar.skeleton.crawl.fetch.privacy
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.browser.BrowserProfileMode
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.Fingerprint
-import ai.platon.pulsar.common.browser.FingerprintGeneratorProvider
-import ai.platon.pulsar.common.browser.FingerprintLoader
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.FingerprintGeneratorProvider
+import ai.platon.pulsar.common.browser.fingerprint.FingerprintLoader
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.CapabilityTypes.PRIVACY_AGENT_GENERATOR_CLASS
 import ai.platon.pulsar.common.getLogger

@@ -18,7 +18,7 @@ package ai.platon.pulsar.skeleton.crawl.fetch.privacy
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.browser.BrowserFiles
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchResult
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchTask

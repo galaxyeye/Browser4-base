@@ -2,7 +2,7 @@ package ai.platon.pulsar.skeleton.crawl.fetch.privacy
 
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.brief
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.config.MutableConfig

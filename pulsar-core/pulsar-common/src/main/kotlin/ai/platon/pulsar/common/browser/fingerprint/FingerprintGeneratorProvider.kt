@@ -1,4 +1,4 @@
-package ai.platon.pulsar.common.browser
+package ai.platon.pulsar.common.browser.fingerprint
 
 /**
  * Service provider interface for fingerprint generation.

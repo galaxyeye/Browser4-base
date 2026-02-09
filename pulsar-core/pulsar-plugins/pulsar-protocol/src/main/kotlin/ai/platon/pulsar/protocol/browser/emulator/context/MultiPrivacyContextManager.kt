@@ -16,7 +16,7 @@
 package ai.platon.pulsar.protocol.browser.emulator.context
 
 import ai.platon.pulsar.common.*
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.CapabilityTypes.PRIVACY_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.ImmutableConfig

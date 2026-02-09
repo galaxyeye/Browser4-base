@@ -1,4 +1,4 @@
-package ai.platon.pulsar.common.browser
+package ai.platon.pulsar.common.browser.fingerprint
 
 /**
  * Basic fingerprint generator that provides minimal browser fingerprints.
