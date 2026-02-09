@@ -15,7 +15,7 @@ class FingerprintLoader(
     private val logger = LoggerFactory.getLogger(FingerprintLoader::class.java)
 
     // Lazy initialization of fingerprint generator via the loader
-    private val fingerprintGenerator: FingerprintGeneratorProvider by lazy {
+    private val fingerprintGenerator: FingerprintGenerator by lazy {
         FingerprintGeneratorLoader.getProvider()
     }
 
@@ -69,20 +69,20 @@ class FingerprintLoader(
             contextDir.toString().contains("/tmp/") || contextDir.toString().contains("\\temp\\") -> {
                 val platform = when {
                     SystemUtils.IS_OS_WINDOWS ->
-                        FingerprintGenerator.Platform.WINDOWS
+                        BasicFingerprintGenerator.Platform.WINDOWS
 
                     SystemUtils.IS_OS_MAC ->
-                        FingerprintGenerator.Platform.MAC
+                        BasicFingerprintGenerator.Platform.MAC
 
                     else ->
-                        FingerprintGenerator.Platform.LINUX
+                        BasicFingerprintGenerator.Platform.LINUX
                 }
                 return fingerprintGenerator.generateRandom(browserType, platform).also { fingerprint ->
                     saveFingerprintToFile(fingerprint, contextDir)
                 }
             }
             // For permanent contexts, use desktop preset
-            else -> FingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
+            else -> BasicFingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
         }
 
         val fingerprint = fingerprintGenerator.generate(browserType, preset)

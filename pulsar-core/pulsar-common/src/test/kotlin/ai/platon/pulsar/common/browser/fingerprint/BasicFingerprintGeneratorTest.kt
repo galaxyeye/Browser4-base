@@ -20,7 +20,7 @@ class BasicFingerprintGeneratorTest {
     fun testBasicGeneratorOmitsAdvancedParameters() {
         val fingerprint = generator.generate(
             BrowserType.PULSAR_CHROME,
-            FingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
+            BasicFingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
         )
 
         assertNull(fingerprint.geoTimeParameters)
@@ -34,6 +34,6 @@ class BasicFingerprintGeneratorTest {
     @Test
     @DisplayName("test basic generator implements FingerprintGeneratorProvider")
     fun testBasicGeneratorImplementsProvider() {
-        assertTrue(generator is FingerprintGeneratorProvider)
+        assertTrue(generator is FingerprintGenerator)
     }
 }

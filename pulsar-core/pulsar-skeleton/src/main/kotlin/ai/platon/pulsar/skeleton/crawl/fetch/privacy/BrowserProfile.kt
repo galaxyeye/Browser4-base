@@ -4,16 +4,11 @@ import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.browser.BrowserProfileMode
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
-import ai.platon.pulsar.common.browser.fingerprint.FingerprintGeneratorProvider
 import ai.platon.pulsar.common.browser.fingerprint.FingerprintLoader
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.CapabilityTypes.PRIVACY_AGENT_GENERATOR_CLASS
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.logging.ThrottlingLogger
-import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import org.apache.commons.lang3.SystemUtils
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**

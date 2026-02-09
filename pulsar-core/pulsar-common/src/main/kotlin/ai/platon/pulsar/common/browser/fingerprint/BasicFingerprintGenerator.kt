@@ -10,20 +10,49 @@ import ai.platon.pulsar.common.browser.BrowserType
  * userAgent, screen, viewport) but does not include advanced parameters such as WebGL,
  * canvas, media devices, or hardware details.
  */
-class BasicFingerprintGenerator : FingerprintGeneratorProvider {
+class BasicFingerprintGenerator : FingerprintGenerator {
 
     override val name: String = "basic"
 
     override fun generate(
         browserType: BrowserType,
-        preset: FingerprintGenerator.DevicePreset
+        preset: DevicePreset
     ): Fingerprint {
         return Fingerprint(browserType)
     }
 
     override fun generateRandom(
-        browserType: BrowserType, platform: FingerprintGenerator.Platform
+        browserType: BrowserType, platform: Platform
     ): Fingerprint {
         return Fingerprint(browserType)
+    }
+
+    /**
+     * Device preset types for fingerprint generation.
+     */
+    enum class DevicePreset {
+        DESKTOP_WINDOWS,
+        LAPTOP_WINDOWS,
+        MACBOOK_PRO_13,
+        MACBOOK_AIR,
+        DESKTOP_LINUX,
+        LAPTOP_LINUX
+    }
+
+    /**
+     * Platform types.
+     */
+    enum class Platform {
+        WINDOWS,
+        MAC,
+        LINUX
+    }
+
+    companion object {
+        /**
+         * Default Chrome version used for user agent generation.
+         * Shared across all fingerprint generator implementations.
+         */
+        const val DEFAULT_CHROME_VERSION = "120.0.0.0"
     }
 }

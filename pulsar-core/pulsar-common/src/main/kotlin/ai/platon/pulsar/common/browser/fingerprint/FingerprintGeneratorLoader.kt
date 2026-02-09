@@ -49,7 +49,7 @@ object FingerprintGeneratorLoader {
 
     private val basicGenerator = BasicFingerprintGenerator()
 
-    private val activeProvider = AtomicReference<FingerprintGeneratorProvider>(basicGenerator)
+    private val activeProvider = AtomicReference<FingerprintGenerator>(basicGenerator)
 
     private var pluginClassLoader: URLClassLoader? = null
 
@@ -59,9 +59,9 @@ object FingerprintGeneratorLoader {
      * If professional mode is enabled and a professional provider has been loaded,
      * returns the professional provider. Otherwise, returns the basic provider.
      *
-     * @return The active [FingerprintGeneratorProvider]
+     * @return The active [FingerprintGenerator]
      */
-    fun getProvider(): FingerprintGeneratorProvider {
+    fun getProvider(): FingerprintGenerator {
         if (isProEnabled() && activeProvider.get() === basicGenerator) {
             // Attempt to load the pro provider if it hasn't been loaded yet
             loadProProvider()
@@ -80,7 +80,7 @@ object FingerprintGeneratorLoader {
      * Reload the professional fingerprint generator from the plugin directory.
      *
      * This method re-scans the plugin directory for JAR files containing a
-     * [FingerprintGeneratorProvider] implementation and loads it.
+     * [FingerprintGenerator] implementation and loads it.
      * If no professional provider is found, the basic provider remains active.
      */
     fun reload() {
@@ -122,12 +122,12 @@ object FingerprintGeneratorLoader {
         }
     }
 
-    private fun loadFromClasspath(): FingerprintGeneratorProvider? {
-        val loader = ServiceLoader.load(FingerprintGeneratorProvider::class.java)
+    private fun loadFromClasspath(): FingerprintGenerator? {
+        val loader = ServiceLoader.load(FingerprintGenerator::class.java)
         return loader.firstOrNull { it.name != "basic" }
     }
 
-    private fun loadFromPluginDir(): FingerprintGeneratorProvider? {
+    private fun loadFromPluginDir(): FingerprintGenerator? {
         val pluginDir = getPluginDir()
         if (!Files.isDirectory(pluginDir)) {
             logger.debug("Plugin directory does not exist: {}", pluginDir)
@@ -147,10 +147,10 @@ object FingerprintGeneratorLoader {
         logger.info("Loading fingerprint plugin JARs from {}: {}", pluginDir,
             jarUrls.joinToString { it.toString() })
 
-        val classLoader = URLClassLoader(jarUrls, FingerprintGeneratorProvider::class.java.classLoader)
+        val classLoader = URLClassLoader(jarUrls, FingerprintGenerator::class.java.classLoader)
         pluginClassLoader = classLoader
 
-        val loader = ServiceLoader.load(FingerprintGeneratorProvider::class.java, classLoader)
+        val loader = ServiceLoader.load(FingerprintGenerator::class.java, classLoader)
         return loader.firstOrNull { it.name != "basic" }
     }
 
