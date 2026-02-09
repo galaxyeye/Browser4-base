@@ -19,6 +19,7 @@ import ai.platon.cdt.kt.protocol.types.network.LoadNetworkResourceOptions
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.browser.BrowserType
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
@@ -209,7 +210,7 @@ class PulsarWebDriver(
     /**
      * Build the JavaScript injection script for fingerprint parameters.
      */
-    private fun buildFingerprintInjectionScript(fingerprint: ai.platon.pulsar.common.browser.Fingerprint): String {
+    private fun buildFingerprintInjectionScript(fingerprint: Fingerprint): String {
         val scriptParts = mutableListOf<String>()
 
         // Screen parameters injection
