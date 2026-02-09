@@ -19,7 +19,7 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("content", "String", "\"\"")
             ),
             returnType = "String",
-            description = "Write content to a file"
+            description = "Write content to a file in the agent file system. Creates a new file or overwrites existing content. Supported extensions: md, txt, json, jsonl, csv."
         )
 
         toolSpec["readString"] = ToolSpec(
@@ -30,7 +30,7 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("external", "Boolean", "false")
             ),
             returnType = "String",
-            description = "Read content from a file"
+            description = "Read content from a file. If 'external' is false, reads from agent file system; if true, reads from the specified file path on disk."
         )
 
         toolSpec["append"] = ToolSpec(
@@ -41,7 +41,7 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("content", "String", null)
             ),
             returnType = "String",
-            description = "Append content to a file"
+            description = "Append content to an existing file in the agent file system"
         )
 
         toolSpec["replaceContent"] = ToolSpec(
@@ -53,7 +53,7 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("newStr", "String", null)
             ),
             returnType = "String",
-            description = "Replace content in a file"
+            description = "Replace all occurrences of a string in a file with a new string"
         )
 
         toolSpec["fileExists"] = ToolSpec(
@@ -62,8 +62,8 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
             arguments = listOf(
                 ToolSpec.Arg("filename", "String", null)
             ),
-            returnType = "Boolean",
-            description = "Check if a file exists"
+            returnType = "String",
+            description = "Check if a file exists in the agent file system"
         )
 
         toolSpec["getFileInfo"] = ToolSpec(
@@ -72,8 +72,8 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
             arguments = listOf(
                 ToolSpec.Arg("filename", "String", null)
             ),
-            returnType = "Map<String, Any>",
-            description = "Get information about a file"
+            returnType = "String",
+            description = "Get information about a file (size, lines, extension)"
         )
 
         toolSpec["deleteFile"] = ToolSpec(
@@ -83,7 +83,7 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("filename", "String", null)
             ),
             returnType = "String",
-            description = "Delete a file"
+            description = "Delete a file from the agent file system"
         )
 
         toolSpec["copyFile"] = ToolSpec(
@@ -94,7 +94,7 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("dest", "String", null)
             ),
             returnType = "String",
-            description = "Copy a file from source to destination"
+            description = "Copy a file to a new location within the agent file system. Can change file extension."
         )
 
         toolSpec["moveFile"] = ToolSpec(
@@ -105,15 +105,15 @@ class FileSystemToolExecutor : AbstractToolExecutor() {
                 ToolSpec.Arg("dest", "String", null)
             ),
             returnType = "String",
-            description = "Move a file from source to destination"
+            description = "Move or rename a file within the agent file system. Can change file extension."
         )
 
         toolSpec["listFiles"] = ToolSpec(
             domain = domain,
-            method = "listFiles",
+            method = "listFilesInfo",
             arguments = emptyList(),
-            returnType = "List<Map<String, Any>>",
-            description = "List all files in the agent's file system"
+            returnType = "String",
+            description = "List all files in the agent's file system with size and line count information"
         )
     }
 
