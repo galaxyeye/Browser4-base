@@ -28,7 +28,6 @@
         <module>pulsar-parse</module>
         <module>pulsar-protocol</module>
         <module>pulsar-protocol-playwright</module>
-        <module>pulsar-fingerprint-pro</module>
     </modules>
 
     <dependencyManagement>
