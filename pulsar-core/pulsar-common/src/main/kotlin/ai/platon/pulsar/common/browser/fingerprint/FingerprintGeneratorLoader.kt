@@ -1,4 +1,4 @@
-package ai.platon.pulsar.common.browser
+package ai.platon.pulsar.common.browser.fingerprint
 
 import org.slf4j.LoggerFactory
 import java.net.URL

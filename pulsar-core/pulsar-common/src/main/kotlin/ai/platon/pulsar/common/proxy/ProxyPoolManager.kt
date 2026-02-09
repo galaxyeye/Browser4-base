@@ -1,7 +1,7 @@
 package ai.platon.pulsar.common.proxy
 
 import ai.platon.pulsar.common.FileCommand
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.CapabilityTypes
 import ai.platon.pulsar.common.config.CapabilityTypes.PROXY_ROTATION_URL

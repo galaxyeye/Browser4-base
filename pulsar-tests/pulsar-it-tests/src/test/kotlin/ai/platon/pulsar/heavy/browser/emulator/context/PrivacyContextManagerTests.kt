@@ -3,7 +3,7 @@ package ai.platon.pulsar.heavy.browser.emulator.context
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.browser4.driver.common.UserAgent
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.protocol.browser.DefaultWebDriverPoolManager

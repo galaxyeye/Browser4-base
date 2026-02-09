@@ -1,4 +1,4 @@
-package ai.platon.pulsar.common.browser
+package ai.platon.pulsar.common.browser.fingerprint
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.AfterEach

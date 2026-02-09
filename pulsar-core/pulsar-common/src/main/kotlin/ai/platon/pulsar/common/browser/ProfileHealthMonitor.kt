@@ -1,5 +1,7 @@
 package ai.platon.pulsar.common.browser
 
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.FingerprintValidator
 import java.nio.file.Path
 import java.time.Instant
 

@@ -1,5 +1,6 @@
-package ai.platon.pulsar.common.browser
+package ai.platon.pulsar.common.browser.fingerprint
 
+import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.proxy.ProxyEntry
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import com.fasterxml.jackson.annotation.JsonIgnore

@@ -1,5 +1,6 @@
-package ai.platon.pulsar.common.browser
+package ai.platon.pulsar.common.browser.fingerprint
 
+import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.apache.commons.lang3.SystemUtils
@@ -68,20 +69,20 @@ class FingerprintLoader(
             contextDir.toString().contains("/tmp/") || contextDir.toString().contains("\\temp\\") -> {
                 val platform = when {
                     SystemUtils.IS_OS_WINDOWS ->
-                        ai.platon.pulsar.common.browser.FingerprintGenerator.Platform.WINDOWS
+                        FingerprintGenerator.Platform.WINDOWS
 
                     SystemUtils.IS_OS_MAC ->
-                        ai.platon.pulsar.common.browser.FingerprintGenerator.Platform.MAC
+                        FingerprintGenerator.Platform.MAC
 
                     else ->
-                        ai.platon.pulsar.common.browser.FingerprintGenerator.Platform.LINUX
+                        FingerprintGenerator.Platform.LINUX
                 }
                 return fingerprintGenerator.generateRandom(browserType, platform).also { fingerprint ->
                     saveFingerprintToFile(fingerprint, contextDir)
                 }
             }
             // For permanent contexts, use desktop preset
-            else -> ai.platon.pulsar.common.browser.FingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
+            else -> FingerprintGenerator.DevicePreset.DESKTOP_WINDOWS
         }
 
         val fingerprint = fingerprintGenerator.generate(browserType, preset)

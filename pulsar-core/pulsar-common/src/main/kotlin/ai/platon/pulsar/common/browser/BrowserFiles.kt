@@ -1,6 +1,7 @@
 package ai.platon.pulsar.common.browser
 
 import ai.platon.pulsar.common.*
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import com.google.common.collect.Iterators
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomStringUtils
