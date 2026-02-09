@@ -180,8 +180,8 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should combine manual and AI operations")
     suspend fun testShouldCombineManualAndAIOperations() {
-        // Manual navigation
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        // Manual navigation - use open() to ensure page is fully loaded
+        session.driver.open(TestUrls.PRODUCT_DETAIL)
 
         // Manual element check
         assertTrue(session.driver.exists("body"), "Body should exist")

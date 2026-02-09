@@ -324,7 +324,8 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle script tags and special elements")
     suspend fun testShouldHandleScriptTagsAndSpecialElements() {
-        driver.navigateTo(TestUrls.ERROR_PAGE)
+        // Use open() to ensure page is fully loaded before checking elements
+        driver.open(TestUrls.ERROR_PAGE)
 
         // Query for script tag
         val scriptExists = driver.exists("script")
