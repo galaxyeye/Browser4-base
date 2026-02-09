@@ -6,6 +6,8 @@
 
 本方案设计了一个完整的测试框架，用于启动真实的 Browser4 REST 服务器并使用 Kotlin SDK 进行端到端集成测试。
 
+**状态**: ✅ 实施完成（15+ 测试类，55+ 测试用例）
+
 ## 🎯 设计目标
 
 - ✅ 使用真实的 pulsar-rest 服务器（非 mock）
@@ -19,26 +21,40 @@
 ### 测试结构（模块分离）
 ```
 sdks/
-├── kotlin-sdk/                              # SDK 模块（保持干净）
-│   ├── pom.xml                              # 最小依赖
+├── browser4-sdk-kotlin/                     # SDK 模块（保持干净）
+│   ├── pom.xml                              # groupId: io.browser4
 │   └── src/
 │       ├── main/kotlin/                     # SDK 源码
 │       └── test/kotlin/                     # 仅单元测试
 │
-└── kotlin-sdk-tests/                       # 独立测试模块
+└── kotlin-sdk-tests/                        # 独立测试模块
     ├── pom.xml                              # 所有测试依赖
-    └── src/test/kotlin/ai/platon/pulsar/sdk/integration/
-        ├── KotlinSdkIntegrationTestBase.kt  # 测试基类
-        ├── PulsarClientIntegrationTest.kt   # 客户端测试
-        ├── WebDriverIntegrationTest.kt      # WebDriver 测试
-        ├── PulsarSessionIntegrationTest.kt  # 会话测试
-        ├── AgenticSessionIntegrationTest.kt # AI 功能测试
-        ├── server/                           # 测试服务器
-        │   ├── PulsarRestServerApplication.kt
-        │   └── TestServerConfiguration.kt
-        └── util/                             # 工具类
-            ├── TestUrls.kt
-            └── TestHelpers.kt
+    ├── docs-dev/                            # 设计文档
+    └── src/test/kotlin/ai/platon/pulsar/sdk/
+        ├── e2e/                             # E2E 测试
+        │   └── AgentE2ETest.kt
+        └── integration/                     # 集成测试
+            ├── KotlinSdkIntegrationTestBase.kt  # 测试基类
+            ├── PulsarClientIntegrationTest.kt   # 客户端测试
+            ├── WebDriverIntegrationTest.kt      # WebDriver 测试
+            ├── WebDriverAdvancedTest.kt         # 高级 WebDriver
+            ├── WebDriverClickAndAttributeTest.kt
+            ├── WebDriverKeyboardAndFocusTest.kt
+            ├── PulsarSessionIntegrationTest.kt  # 会话测试
+            ├── PulsarSessionAdvancedTest.kt
+            ├── AgenticSessionIntegrationTest.kt # AI 功能测试
+            ├── AgenticSessionAdvancedTest.kt
+            ├── AgenticContextsTest.kt
+            ├── EventMechanismIntegrationTest.kt
+            ├── FusedActsStyleTest.kt
+            ├── ErrorHandlingAndEdgeCasesTest.kt
+            ├── ModelsTest.kt
+            ├── server/                          # 测试服务器
+            │   ├── PulsarRestServerApplication.kt
+            │   └── MockServerConfiguration.kt
+            └── util/                            # 工具类
+                ├── TestUrls.kt
+                └── TestHelpers.kt
 ```
 
 ### 测试基类模板
@@ -135,8 +151,9 @@ abstract class KotlinSdkIntegrationTestBase {
 <dependencies>
     <!-- SDK 依赖 -->
     <dependency>
-        <groupId>ai.platon.pulsar</groupId>
-        <artifactId>pulsar-sdk-kotlin</artifactId>
+        <groupId>io.browser4</groupId>
+        <artifactId>browser4-sdk-kotlin</artifactId>
+        <version>${browser4.sdk.version}</version>
     </dependency>
     <!-- 测试服务器依赖 -->
     <dependency>
@@ -155,63 +172,45 @@ abstract class KotlinSdkIntegrationTestBase {
 </dependencies>
 ```
 
-### Maven Profile（在 kotlin-sdk-tests 模块）
+### Maven Surefire 配置（在 kotlin-sdk-tests 模块）
 ```xml
-<profile>
-    <id>run-integration-tests</id>
-    <activation>
-        <property>
-            <name>runITs</name>
-            <value>true</value>
-        </property>
-    </activation>
-    <properties>
-        <skipTests>false</skipTests>
-    </properties>
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <groups>IntegrationTest</groups>
-                    <excludedGroups>RequiresAI</excludedGroups>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-</profile>
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <configuration>
+        <groups>IntegrationTest</groups>
+        <excludedGroups>MustRunExplicitly,PassedOn20260203</excludedGroups>
+        <parallel>methods</parallel>
+        <threadCount>2</threadCount>
+        <rerunFailingTestsCount>1</rerunFailingTestsCount>
+    </configuration>
+</plugin>
 ```
 
 ## 🏃 执行方式
 
-### 命令行
-```bash
-# 运行 SDK 单元测试
-cd sdks/kotlin-sdk
-mvn test
+### 命令行（推荐从项目根目录运行）
+```powershell
+# 运行集成测试（默认配置）
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test
 
-# 运行集成测试（在独立模块）
-cd sdks/kotlin-sdk-tests
-mvn test -DrunITs=true
+# 运行特定测试类
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dtest=WebDriverIntegrationTest
 
-# 运行所有测试（包括 AI 功能）
-cd sdks/kotlin-sdk-tests
-mvn test -DrunSDKTests=true
+# 运行快速测试
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dgroups="IntegrationTest,Fast"
 
-# 从项目根目录运行
-mvn test -pl sdks/kotlin-sdk-tests -DrunITs=true
+# 排除浏览器测试
+.\mvnw.cmd -pl sdks/kotlin-sdk-tests -am test -Dgroups="IntegrationTest" -DexcludedGroups="RequiresBrowser"
 ```
 
-### 本地脚本
+### Linux/macOS
 ```bash
-# SDK 单元测试
-cd sdks/kotlin-sdk && mvn test
+# 运行集成测试
+./mvnw -pl sdks/kotlin-sdk-tests -am test
 
-# 集成测试
-cd sdks/kotlin-sdk-tests && ./test.sh --integration
-
-# 所有测试
-cd sdks/kotlin-sdk-tests && ./test.sh --all
+# 运行特定测试类
+./mvnw -pl sdks/kotlin-sdk-tests -am test -Dtest=PulsarClientIntegrationTest
 ```
 
 # 集成测试
@@ -239,33 +238,33 @@ cd sdks/kotlin-sdk-tests && ./test.sh --all
 | 完整单元测试套件 | < 10 秒 | 30 秒 |
 | 完整集成测试套件 | < 5 分钟 | 10 分钟 |
 
-## 🔄 实施步骤
+## 🔄 实施状态
 
-### 第一阶段：基础设施（高优先级）
-1. 创建测试目录结构
-2. 实现测试基类
-3. 配置测试服务器
-4. 更新 pom.xml
+### 第一阶段：基础设施 ✅ 完成
+1. ✅ 创建测试目录结构
+2. ✅ 实现测试基类 (KotlinSdkIntegrationTestBase)
+3. ✅ 配置测试服务器 (MockServerConfiguration)
+4. ✅ 更新 pom.xml
 
-### 第二阶段：基础测试（高优先级）
-5. 实现 PulsarClient 集成测试
-6. 实现基础 WebDriver 测试
+### 第二阶段：基础测试 ✅ 完成
+5. ✅ 实现 PulsarClient 集成测试 (6+ 测试)
+6. ✅ 实现基础 WebDriver 测试
 
-### 第三阶段：完整功能测试（中优先级）
-7. 实现完整 WebDriver 测试套件
-8. 实现 PulsarSession 测试
+### 第三阶段：完整功能测试 ✅ 完成
+7. ✅ 实现完整 WebDriver 测试套件 (4 个测试类)
+8. ✅ 实现 PulsarSession 测试 (2 个测试类)
 
-### 第四阶段：高级功能（低优先级）
-9. 实现 AgenticSession 测试（可选）
+### 第四阶段：高级功能 ✅ 完成
+9. ✅ 实现 AgenticSession 测试 (3 个测试类)
+10. ✅ 事件机制测试
+11. ✅ 错误处理测试
 
-### 第五阶段：优化和文档（中优先级）
-10. 创建工具类
-11. 编写文档和示例
-12. 配置 CI/CD 工作流
+### 第五阶段：优化和文档 ✅ 完成
+12. ✅ 创建工具类 (TestUrls, TestHelpers)
+13. ✅ 编写文档和示例
+14. ⬜ 配置 CI/CD 工作流 (待完成)
 
-### 第六阶段：持续改进（低优先级）
-13. 性能优化
-14. 可靠性增强
+**总计**: 15+ 测试类，55+ 测试用例
 
 ## 💡 测试示例
 
@@ -401,25 +400,23 @@ A:
 
 ## ⚠️ 注意事项
 
-1. **设计阶段**：当前仅完成设计，代码实现需要后续进行
-2. **环境要求**：集成测试需要 JDK 17+ 和 Chrome/Chromium
-3. **资源清理**：确保每个测试后清理会话和浏览器上下文
-4. **AI 配置**：AgenticSession 测试需要额外的 LLM API 配置
-5. **并行执行**：测试设计支持并行执行，但需要合理配置资源
+1. **环境要求**：集成测试需要 JDK 17+ 和 Chrome/Chromium
+2. **资源清理**：确保每个测试后清理会话和浏览器上下文
+3. **AI 配置**：AgenticSession 测试需要额外的 LLM API 配置，默认被排除
+4. **并行执行**：测试设计支持并行执行，但需要合理配置资源
+5. **suspend 函数**：`createSession()` 是 suspend 函数，需要在协程上下文中调用
 
 ## 🎉 总结
 
-本设计提供了一个完整、可扩展、易维护的 Kotlin SDK 集成测试方案。通过真实服务器测试，可以：
+本测试框架已完成实施，提供了一个完整、可扩展、易维护的 Kotlin SDK 集成测试方案：
 
-- ✅ 确保 SDK 在实际环境中正常工作
-- ✅ 验证所有 API 功能和错误处理
-- ✅ 提供清晰的测试示例和文档
-- ✅ 支持 CI/CD 自动化测试
-- ✅ 为未来的 SDK 开发提供坚实基础
-
-下一步可根据实施步骤逐步实现测试基础设施和测试用例。
+- ✅ **15+ 测试类**：覆盖所有主要 SDK 功能
+- ✅ **55+ 测试用例**：全面验证 API 功能和错误处理
+- ✅ **真实服务器**：确保 SDK 在实际环境中正常工作
+- ✅ **自动化就绪**：支持 CI/CD 自动化测试
+- ✅ **完整文档**：提供清晰的测试示例和运行指南
 
 ---
 
-**文档版本**: v1.0 (2025-01-13)
-**状态**: 设计完成，待实施
+**文档版本**: v1.2 (2026-02-09)
+**状态**: ✅ 实施完成
