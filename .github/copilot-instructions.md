@@ -192,7 +192,7 @@ fun load(url: String, options: LoadOptions): PageSnapshot {
 - Controllers: ≥85%
 
 ### Test Tags (JUnit 5)
-`IntegrationTest`, `E2ETest`, `ExternalServiceTest`, `Slow`, `HeavyTest`, `SmokeTest`, `BenchmarkTest`
+`IntegrationTest`, `E2ETest`, `RequiresServer`, `Slow`, `HeavyTest`, `SmokeTest`, `BenchmarkTest`
 
 ## 8) Common Commands Cheat Sheet (copy by platform)
 
@@ -229,7 +229,7 @@ fun load(url: String, options: LoadOptions): PageSnapshot {
 ### Browser and CDP Issues
 
 - **Browser/CDP**: prefer reproducing with the heavy suite in `pulsar-tests`
-- **CDP Connection Failures**: 
+- **CDP Connection Failures**:
   - Check Chrome version compatibility
   - Verify no other Chrome instances are interfering
   - Check system resources (memory, file descriptors)
@@ -340,7 +340,7 @@ skillRegistry.register(tool)
    ```kotlin
    // Before: callback-based
    fun loadPage(url: String, callback: (Page) -> Unit)
-   
+
    // After: suspend function
    suspend fun loadPage(url: String): Page
    ```

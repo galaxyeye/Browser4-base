@@ -182,7 +182,7 @@ See `docs-dev/copilot/minimal-test-policy.md` for details and trade-offs.
 - Controllers: ≥85%
 
 ### Test Tags (JUnit 5)
-`IntegrationTest`, `E2ETest`, `ExternalServiceTest`, `Slow`, `HeavyTest`, `SmokeTest`, `BenchmarkTest`
+`IntegrationTest`, `E2ETest`, `RequiresServer`, `Slow`, `HeavyTest`, `SmokeTest`, `BenchmarkTest`
 
 ## Configuration
 
@@ -250,7 +250,7 @@ browser.display.mode=GUI  # GUI | HEADLESS | SUPERVISED
 Browser4 is built around three core concepts:
 
 1. **Sessions** - Manage page loading and state
-2. **Agents** - Autonomous browser agents with reasoning capabilities  
+2. **Agents** - Autonomous browser agents with reasoning capabilities
 3. **Drivers** - Low-level browser control with human-like behaviors
 
 ### Task Planning and Execution
@@ -323,7 +323,7 @@ Browser4 integrates with MCP for tool calling:
 class CustomTool : MCPTool {
     override val name = "custom_action"
     override val description = "Performs a custom action"
-    
+
     override fun execute(params: Map<String, Any>): ToolResult {
         // Implementation
     }
