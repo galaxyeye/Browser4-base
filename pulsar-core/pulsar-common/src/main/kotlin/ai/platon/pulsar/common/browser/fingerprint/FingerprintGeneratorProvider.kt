@@ -1,5 +1,7 @@
 package ai.platon.pulsar.common.browser.fingerprint
 
+import ai.platon.pulsar.common.browser.BrowserType
+
 /**
  * Service provider interface for fingerprint generation.
  *

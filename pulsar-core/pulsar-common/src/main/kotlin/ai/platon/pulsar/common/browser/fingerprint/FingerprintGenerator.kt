@@ -1,5 +1,6 @@
 package ai.platon.pulsar.common.browser.fingerprint
 
+import ai.platon.pulsar.common.browser.BrowserType
 import kotlin.random.Random
 
 /**

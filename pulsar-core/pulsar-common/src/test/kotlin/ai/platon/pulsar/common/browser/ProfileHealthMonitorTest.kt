@@ -1,5 +1,6 @@
 package ai.platon.pulsar.common.browser
 
+import ai.platon.pulsar.common.browser.fingerprint.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
