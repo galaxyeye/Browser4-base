@@ -128,15 +128,27 @@ jobs:
 
       - name: Maven Build
         run: |
-          SKIP_TESTS_FLAG=""
-          if [ "${{ github.event.inputs.skip_tests }}" = "true" ]; then
-            SKIP_TESTS_FLAG="-DskipTests"
-          else
-            # Enable pulsar-tests module tests for release builds
-            SKIP_TESTS_FLAG="-Ptests"
-          fi
+          ./mvnw clean install -Pall-modules -DskipTests --batch-mode --show-version
 
-          ./mvnw clean install $SKIP_TESTS_FLAG --batch-mode --show-version
+      - name: Run Unit Tests (Release)
+        if: github.event.inputs.skip_tests != 'true'
+        uses: ./.github/actions/run-tests
+        with:
+          maven_profiles: 'all-modules'
+          test_excludes: '**integration**,**e2e**'
+          excluded_groups: 'Slow,HeavyTest,E2ETest,IntegrationTest,ExternalServiceTest,BenchmarkTest'
+          run_pulsar_tests: 'false'
+          timeout_minutes: '45'
+
+      - name: Run Integration Tests (Release)
+        if: github.event.inputs.skip_tests != 'true'
+        uses: ./.github/actions/run-tests
+        with:
+          maven_profiles: 'all-modules,pulsar-tests'
+          test_excludes: ''
+          excluded_groups: 'BenchmarkTest'
+          run_pulsar_tests: 'true'
+          timeout_minutes: '90'
 
       - name: Cleanup Docker system to free space
         run: |
