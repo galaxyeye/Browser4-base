@@ -133,10 +133,13 @@ interface ServerSideEventHandlers {
  *
  * @see ServerSideEventHandlers for interface documentation
  */
-class DefaultServerSideEventHandlers : ServerSideEventHandlers {
+class DefaultServerSideEventHandlers(
+    replay: Int = 100,
+    extraBufferCapacity: Int = 64
+) : ServerSideEventHandlers {
     private val _eventFlow = MutableSharedFlow<ServerSideEvent>(
-        replay = 100,
-        extraBufferCapacity = 64
+        replay = replay,
+        extraBufferCapacity = extraBufferCapacity
     )
 
     override val eventFlow: SharedFlow<ServerSideEvent> = _eventFlow.asSharedFlow()

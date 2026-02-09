@@ -4,7 +4,7 @@ import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -45,7 +45,8 @@ class BrowserProfileTest {
 
         assertEquals(BrowserType.PULSAR_CHROME, profile.fingerprint.browserType)
         assertEquals(savedFingerprint.userAgent, profile.fingerprint.userAgent)
-        assertNotNull(savedFingerprint.userAgent)
+        // BasicFingerprintGenerator should leave userAgent as null to use browser default
+        assertNull(savedFingerprint.userAgent)
     }
 }
 

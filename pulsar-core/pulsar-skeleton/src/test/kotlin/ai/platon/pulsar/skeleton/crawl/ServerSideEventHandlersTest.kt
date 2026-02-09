@@ -175,7 +175,7 @@ class ServerSideEventHandlersTest {
 
     @Test
     fun `test event flow buffering with replay 0`() = runBlocking {
-        val handlers = DefaultServerSideEventHandlers()
+        val handlers = DefaultServerSideEventHandlers(replay = 0)
 
         // Emit events before any collector is attached
         handlers.onCrawlEvent("event1", "https://example.com")
