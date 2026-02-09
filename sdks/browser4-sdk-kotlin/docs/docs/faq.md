@@ -19,7 +19,7 @@ A: Add to your `pom.xml`:
 <dependency>
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>pulsar-sdk-kotlin</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 </dependency>
 ```
 
@@ -193,7 +193,7 @@ A: Configure via environment or server config.
 
 ### Q: Where can I get help?
 
-A: 
+A:
 - [GitHub Issues](https://github.com/platonai/Browser4/issues)
 - [Documentation](index.md)
 - [Examples](examples/basic-usage.md)

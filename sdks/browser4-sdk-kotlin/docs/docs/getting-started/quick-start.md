@@ -18,7 +18,7 @@ Add the Browser4 SDK dependency to your project:
 <dependency>
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>pulsar-sdk-kotlin</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 </dependency>
 ```
 
@@ -26,7 +26,7 @@ Add the Browser4 SDK dependency to your project:
 
 ```kotlin
 dependencies {
-    implementation("ai.platon.pulsar:pulsar-sdk-kotlin:4.5.0-SNAPSHOT")
+    implementation("ai.platon.pulsar:pulsar-sdk-kotlin:4.5.0-rc.1")
 }
 ```
 
@@ -34,7 +34,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'ai.platon.pulsar:pulsar-sdk-kotlin:4.5.0-SNAPSHOT'
+    implementation 'ai.platon.pulsar:pulsar-sdk-kotlin:4.5.0-rc.1'
 }
 ```
 
@@ -48,23 +48,23 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     // Create a session (automatically starts local driver)
     val session = AgenticSession.getOrCreate()
-    
+
     // Load a web page
     val page = session.open("https://example.com")
     println("Loaded: ${page.url}")
-    
+
     // Parse the page
     val document = session.parse(page)
-    
+
     // Extract data using CSS selectors
     val fields = session.extract(document, mapOf(
         "title" to "h1",
         "description" to "p"
     ))
-    
+
     println("Title: ${fields["title"]}")
     println("Description: ${fields["description"]}")
-    
+
     // Clean up
     session.close()
 }
@@ -105,21 +105,21 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
+
     // Navigate to a page
     driver.navigateTo("https://example.com")
-    
+
     // Click elements
     driver.click("button.submit")
-    
+
     // Fill forms
     driver.fill("input[name='search']", "kotlin programming")
     driver.press("input[name='search']", "Enter")
-    
+
     // Extract text
     val results = driver.selectTextAll(".result-item")
     results.forEach { println(it) }
-    
+
     session.close()
 }
 ```
@@ -132,18 +132,18 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     val session = AgenticSession.getOrCreate()
     val agent = session.companionAgent
-    
+
     // Navigate to a page
     session.driver.navigateTo("https://example.com")
-    
+
     // Use natural language to interact
     val result = agent.act("click the 'More information' link")
     println("Action result: ${result.message}")
-    
+
     // Run autonomous tasks
     val taskResult = agent.run("find the email address on this page")
     println("Task result: ${taskResult.message}")
-    
+
     session.close()
 }
 ```
@@ -158,19 +158,19 @@ import java.util.Base64
 fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
+
     driver.navigateTo("https://example.com")
-    
+
     // Capture full-page screenshot
     val screenshot = driver.captureScreenshot(fullPage = true)
-    
+
     // Save to file
     if (screenshot != null) {
         val bytes = Base64.getDecoder().decode(screenshot)
         File("screenshot.png").writeBytes(bytes)
         println("Screenshot saved to screenshot.png")
     }
-    
+
     session.close()
 }
 ```

@@ -1,6 +1,6 @@
 # Browser4 Kotlin SDK
 
-**Version:** 4.5.0-SNAPSHOT
+**Version:** 4.5.0-rc.1
 
 Welcome to the Browser4 Kotlin SDK documentation! This SDK provides a powerful and intuitive interface for browser automation, web scraping, and AI-powered web interaction.
 
@@ -53,7 +53,7 @@ suspend fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.getOrCreateBoundDriver()
     val agent = session.companionAgent
-    
+
     // Open a page and extract data
     val page = session.open("https://example.com")
     val document = session.parse(page)
@@ -61,14 +61,14 @@ suspend fun main() {
         "title" to "h1",
         "description" to "p"
     ))
-    
+
     println("Title: ${fields["title"]}")
     println("Description: ${fields["description"]}")
-    
+
     // Use AI for natural language automation
     agent.act("click the search button")
     agent.run("search for 'kotlin' and click the first result")
-    
+
     // Clean up
     session.context.close()
 }

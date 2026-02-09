@@ -1,6 +1,6 @@
 # Browser4 Kotlin SDK 中文文档
 
-**版本:** 4.5.0-SNAPSHOT
+**版本:** 4.5.0-rc.1
 
 欢迎使用 Browser4 Kotlin SDK 中文文档！本 SDK 为浏览器自动化、网页抓取和 AI 驱动的网页交互提供了强大而直观的接口。
 
@@ -53,7 +53,7 @@ suspend fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.getOrCreateBoundDriver()
     val agent = session.companionAgent
-    
+
     // 打开页面并提取数据
     val page = session.open("https://example.com")
     val document = session.parse(page)
@@ -61,14 +61,14 @@ suspend fun main() {
         "title" to "h1",
         "description" to "p"
     ))
-    
+
     println("标题: ${fields["title"]}")
     println("描述: ${fields["description"]}")
-    
+
     // 使用 AI 进行自然语言自动化
     agent.act("点击搜索按钮")
     agent.run("搜索 'kotlin' 并点击第一个结果")
-    
+
     // 清理资源
     session.context.close()
 }
@@ -108,7 +108,7 @@ PulsarClient (底层 HTTP 通信)
 <dependency>
     <groupId>io.browser4</groupId>
     <artifactId>browser4-sdk-kotlin</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 </dependency>
 ```
 
@@ -116,7 +116,7 @@ PulsarClient (底层 HTTP 通信)
 
 ```kotlin
 dependencies {
-    implementation("io.browser4:browser4-sdk-kotlin:4.5.0-SNAPSHOT")
+    implementation("io.browser4:browser4-sdk-kotlin:4.5.0-rc.1")
 }
 ```
 
@@ -124,7 +124,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'io.browser4:browser4-sdk-kotlin:4.5.0-SNAPSHOT'
+    implementation 'io.browser4:browser4-sdk-kotlin:4.5.0-rc.1'
 }
 ```
 

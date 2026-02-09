@@ -2,7 +2,7 @@
 
 ## Document Information
 - **Created**: 2026-01-14
-- **Project Version**: 4.5.0-SNAPSHOT
+- **Project Version**: 4.5.0-rc.1
 - **Objective**: Establish systematic dependency upgrade strategy and process
 
 ---
@@ -394,20 +394,20 @@ on:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-    
+
     - name: Run OWASP Dependency Check
       run: ./mvnw dependency-check:check
-    
+
     - name: Upload Report
       if: always()
       uses: actions/upload-artifact@v4
@@ -431,29 +431,29 @@ on:
 jobs:
   check-updates:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-    
+
     - name: Check for updates
       run: |
         ./mvnw versions:display-dependency-updates > updates.txt
         ./mvnw versions:display-plugin-updates >> updates.txt
-    
+
     - name: Create Issue
       uses: actions/github-script@v7
       with:
         script: |
           const fs = require('fs');
           const updates = fs.readFileSync('updates.txt', 'utf8');
-          
+
           await github.rest.issues.create({
             owner: context.repo.owner,
             repo: context.repo.repo,

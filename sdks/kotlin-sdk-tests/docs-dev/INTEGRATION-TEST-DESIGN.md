@@ -937,7 +937,7 @@ mvn test -pl sdks/kotlin-sdk-tests -Dgroups="IntegrationTest,!Slow"
         <!-- 默认跳过测试，需要显式运行 -->
         <skipTests>true</skipTests>
         <kotlin.version>2.2.21</kotlin.version>
-        <pulsar.version>4.5.0-SNAPSHOT</pulsar.version>
+        <pulsar.version>4.5.0-rc.1</pulsar.version>
         <spring.boot.version>3.2.1</spring.boot.version>
     </properties>
 

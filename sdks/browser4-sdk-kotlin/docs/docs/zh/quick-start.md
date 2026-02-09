@@ -16,14 +16,14 @@
 <dependency>
     <groupId>io.browser4</groupId>
     <artifactId>browser4-sdk-kotlin</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```kotlin
-implementation("io.browser4:browser4-sdk-kotlin:4.5.0-SNAPSHOT")
+implementation("io.browser4:browser4-sdk-kotlin:4.5.0-rc.1")
 ```
 
 ## 第一个示例
@@ -36,21 +36,21 @@ import ai.platon.pulsar.sdk.v0.*
 suspend fun main() {
     // 创建会话（自动启动本地驱动）
     val session = AgenticSession.getOrCreate()
-    
+
     // 打开网页
     val page = session.open("https://news.ycombinator.com")
     println("已打开: ${page.url}")
-    
+
     // 解析页面
     val document = session.parse(page)
     println("标题: ${document?.title()}")
-    
+
     // 提取数据
     val fields = session.extract(document!!, mapOf(
         "headline" to ".titleline > a:first-child"
     ))
     println("第一条新闻: ${fields["headline"]}")
-    
+
     // 清理
     session.context.close()
 }
@@ -78,25 +78,25 @@ import ai.platon.pulsar.sdk.v0.*
 suspend fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.getOrCreateBoundDriver()
-    
+
     // 导航
     driver.navigateTo("https://example.com")
     println("当前 URL: ${driver.currentUrl()}")
-    
+
     // 点击元素
     driver.click("a.more-link")
-    
+
     // 填充表单
     driver.fill("#search-input", "Kotlin SDK")
     driver.press("#search-input", "Enter")
-    
+
     // 等待元素
     driver.waitForSelector(".results")
-    
+
     // 提取文本
     val results = driver.selectTextAll(".result-item")
     results.forEach { println(it) }
-    
+
     session.context.close()
 }
 ```
@@ -109,24 +109,24 @@ import ai.platon.pulsar.sdk.v0.*
 suspend fun main() {
     // 设置 API 密钥
     System.setProperty("OPENROUTER_API_KEY", "your-api-key")
-    
+
     val session = AgenticSession.getOrCreate()
     val agent = session.companionAgent
-    
+
     // 导航到页面
     session.open("https://news.ycombinator.com")
-    
+
     // 使用自然语言执行操作
     val result = agent.act("点击第一条新闻")
     println("操作结果: ${result.message}")
-    
+
     // 执行自主任务
     val task = agent.run("""
         找到搜索框，输入 'Kotlin'，
         然后提交表单
     """)
     println("任务结果: ${task.message}")
-    
+
     session.context.close()
 }
 ```
@@ -138,11 +138,11 @@ import ai.platon.pulsar.sdk.v0.*
 
 suspend fun main() {
     val session = AgenticSession.getOrCreate()
-    
+
     // 加载页面
     val page = session.load("https://example.com/products")
     val document = session.parse(page)
-    
+
     // 定义提取规则
     val selectors = mapOf(
         "name" to ".product-name",
@@ -150,15 +150,15 @@ suspend fun main() {
         "rating" to ".product-rating",
         "availability" to ".product-stock"
     )
-    
+
     // 提取数据
     val product = session.extract(document!!, selectors)
-    
+
     println("产品信息:")
     product.forEach { (field, value) ->
         println("  $field: $value")
     }
-    
+
     session.context.close()
 }
 ```

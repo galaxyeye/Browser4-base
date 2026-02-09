@@ -2,7 +2,7 @@
 
 ## 文档信息
 - **创建日期**: 2026-01-14
-- **项目版本**: 4.5.0-SNAPSHOT
+- **项目版本**: 4.5.0-rc.1
 - **目标**: 制定系统化的依赖包升级策略和流程
 
 ---
@@ -474,27 +474,27 @@ on:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-    
+
     - name: Run OWASP Dependency Check
       run: ./mvnw dependency-check:check
-    
+
     - name: Upload Report
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: dependency-check-report
         path: target/dependency-check-report.html
-    
+
     - name: Check for High Severity Issues
       run: |
         if grep -q "severity=\"HIGH\"" target/dependency-check-report.xml; then
@@ -519,22 +519,22 @@ on:
 jobs:
   check-updates:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: 'maven'
-    
+
     - name: Check for updates
       run: |
         ./mvnw versions:display-dependency-updates > dependency-updates.txt
         ./mvnw versions:display-plugin-updates >> dependency-updates.txt
-    
+
     - name: Create Issue
       if: success()
       uses: actions/github-script@v7
@@ -542,7 +542,7 @@ jobs:
         script: |
           const fs = require('fs');
           const updates = fs.readFileSync('dependency-updates.txt', 'utf8');
-          
+
           await github.rest.issues.create({
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -718,7 +718,7 @@ jobs:
 ```markdown
 # 依赖版本历史
 
-## 当前版本 (4.5.0-SNAPSHOT)
+## 当前版本 (4.5.0-rc.1)
 
 | 依赖 | 版本 | 更新日期 | 说明 |
 |------|------|----------|------|
@@ -909,9 +909,9 @@ jmh-visualizer compare baseline.json upgraded.json
 <ruleset comparisonMethod="maven"
          xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0 
+         xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0
          http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
-  
+
   <!-- 忽略所有 alpha, beta, rc 版本 -->
   <ignoreVersions>
     <ignoreVersion type="regex">.*[-_\.]alpha[-_\.]?[0-9]*</ignoreVersion>
@@ -920,7 +920,7 @@ jmh-visualizer compare baseline.json upgraded.json
     <ignoreVersion type="regex">.*[-_\.]M[0-9]+</ignoreVersion>
     <ignoreVersion type="regex">.*-SNAPSHOT</ignoreVersion>
   </ignoreVersions>
-  
+
   <!-- 特定依赖规则 -->
   <rules>
     <rule groupId="org.apache.lucene" artifactId="*">
