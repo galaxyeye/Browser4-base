@@ -205,9 +205,9 @@ kotlin-sdk (干净)          kotlin-sdk-tests (独立)
 ### 项目内
 - [SDK README](../browser4-sdk-kotlin/README.md) - Kotlin SDK 使用指南
 - [测试模块 README](../README.md) - 测试模块指南
-- [REST API 文档](../../docs/rest-api-examples.md) - API 示例
-- [配置指南](../../docs/config.md) - 配置说明
-- [构建指南](../../docs/build.md) - 构建说明
+- [REST API 文档](../../../../docs/rest-api-examples.md) - API 示例
+- [配置指南](../../../../docs/config.md) - 配置说明
+- [构建指南](../../../../docs/build.md) - 构建说明
 
 ### 现有测试示例
 - `pulsar-rest/src/test/kotlin/ai/platon/pulsar/rest/api/` - REST API 测试
