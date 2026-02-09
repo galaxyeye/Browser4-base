@@ -61,7 +61,7 @@ object FingerprintGeneratorLoader {
      *
      * @return The active [FingerprintGenerator]
      */
-    fun getProvider(): FingerprintGenerator {
+    fun getGenerator(): FingerprintGenerator {
         if (isProEnabled() && activeProvider.get() === basicGenerator) {
             // Attempt to load the pro provider if it hasn't been loaded yet
             loadProProvider()

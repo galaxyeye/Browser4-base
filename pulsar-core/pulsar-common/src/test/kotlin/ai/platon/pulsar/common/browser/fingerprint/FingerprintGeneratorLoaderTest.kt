@@ -17,7 +17,7 @@ class FingerprintGeneratorLoaderTest {
     @Test
     @DisplayName("test default provider is basic generator")
     fun testDefaultProviderIsBasic() {
-        val provider = FingerprintGeneratorLoader.getProvider()
+        val provider = FingerprintGeneratorLoader.getGenerator()
         assertEquals("basic", provider.name)
     }
 
@@ -28,7 +28,7 @@ class FingerprintGeneratorLoaderTest {
         System.setProperty(FingerprintGeneratorLoader.PLUGIN_DIR_KEY, "/tmp/nonexistent-plugin-dir")
         FingerprintGeneratorLoader.reload()
 
-        val provider = FingerprintGeneratorLoader.getProvider()
+        val provider = FingerprintGeneratorLoader.getGenerator()
         // Without the plugin JAR on classpath, should fall back to basic
         assertEquals("basic", provider.name)
     }
