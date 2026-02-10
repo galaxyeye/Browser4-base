@@ -6,9 +6,12 @@ internal FusedActs example, making it consistent with internal code patterns.
 
 This mirrors the Kotlin FusedActsStyleExample to demonstrate API consistency
 across languages.
+
+Prerequisites:
+- A running Browser4 server at http://localhost:8182
+- OPENROUTER_API_KEY environment variable set (for AI actions)
 """
-import asyncio
-from browser4 import AgenticSession
+from browser4 import PulsarClient, AgenticSession
 
 
 class FusedActsStyleExample:
@@ -24,10 +27,12 @@ class FusedActsStyleExample:
     def __init__(self):
         self.step = 0
 
-    async def run(self):
+    def run(self):
         """Run the FusedActs-style example."""
-        # Create session using the convenient factory method
-        session = AgenticSession.get_or_create()
+        # Create client and session
+        client = PulsarClient(base_url="http://localhost:8182")
+        client.create_session()
+        session = AgenticSession(client)
         
         url = "https://news.ycombinator.com/news"
         
@@ -38,18 +43,19 @@ class FusedActsStyleExample:
         self.step += 1
         print(f"[STEP {self.step}] Open URL: {url}")
         page = session.open(url)
-        print(f"Opened page: {page.get('url', 'N/A')}")
+        print(f"Opened page: {page.url}")
         
         self.step += 1
-        print(f"[STEP {self.step}] Parse the page into a Jsoup document")
+        print(f"[STEP {self.step}] Parse the page into a BeautifulSoup document")
         document = session.parse(page)
-        title = document.select_first("title").text if document and document.select_first("title") else "N/A"
+        title_tag = document.select_one("title") if document else None
+        title = title_tag.get_text() if title_tag else "N/A"
         print(f"Parsed document title: {title}")
         
         self.step += 1
         print(f"[STEP {self.step}] Extract fields (title) with CSS selector")
         if document:
-            fields = session.extract(document, {"title": "#title"})
+            fields = session.extract(document, {"title": "title"})
         else:
             fields = {}
         print(f"Extracted fields: {fields}")
@@ -58,7 +64,7 @@ class FusedActsStyleExample:
         self.step += 1
         print(f"[STEP {self.step}] Action: search for 'browser'")
         result = agent.act("search for 'browser'")
-        print(f"Action result: {result.get('message', '')}")
+        print(f"Action result: {result.message}")
         
         self.step += 1
         print(f"[STEP {self.step}] Capture body text in the live DOM after search")
@@ -69,7 +75,7 @@ class FusedActsStyleExample:
         self.step += 1
         print(f"[STEP {self.step}] Action: click the 3rd link")
         result = agent.act("click the 3rd link")
-        print(f"Action result: {result.get('message', '')}")
+        print(f"Action result: {result.message}")
         
         self.step += 1
         print(f"[STEP {self.step}] Capture body text after clicking")
@@ -80,25 +86,25 @@ class FusedActsStyleExample:
         self.step += 1
         print(f"[STEP {self.step}] Action: go back")
         result = agent.act("go back")
-        print(f"Action result: {result.get('message', '')}")
+        print(f"Action result: {result.message}")
         
         self.step += 1
         print(f"[STEP {self.step}] Action: open the 4th link in new tab")
         result = agent.act("open the 4th link in new tab")
-        print(f"Action result: {result.get('message', '')}")
+        print(f"Action result: {result.message}")
         
         self.step += 1
         print(f"[STEP {self.step}] Run autonomous task: find search box and submit")
         agent.clear_history()
-        history = agent.run("find the search box, type 'web scraping' and submit the form")
-        print(f"Task result: {history.get('finalResult', '')}")
+        run_result = agent.run("find the search box, type 'web scraping' and submit the form")
+        print(f"Task result: {run_result.final_result}")
         
         self.step += 1
         print(f"[STEP {self.step}] Capture and parse the live page")
         page = session.capture(driver)
         document = session.parse(page)
         if document:
-            fields = session.extract(document, {"title": "#title"})
+            fields = session.extract(document, {"title": "title"})
         else:
             fields = {}
         print(f"Extracted after search: {fields}")
@@ -106,15 +112,15 @@ class FusedActsStyleExample:
         self.step += 1
         print(f"[STEP {self.step}] Action: scroll to bottom")
         agent.clear_history()
-        history = agent.run("scroll to the bottom of the page and wait for new content to load")
-        print(f"Task result: {history.get('finalResult', '')}")
+        run_result = agent.run("scroll to the bottom of the page and wait for new content to load")
+        print(f"Task result: {run_result.final_result}")
         
         self.step += 1
         print(f"[STEP {self.step}] Re-open the original URL")
         page = session.open(url)
         document = session.parse(page)
         if document:
-            fields = session.extract(document, {"title": "#title"})
+            fields = session.extract(document, {"title": "title"})
         else:
             fields = {}
         print(f"Final fields: {fields}")
@@ -129,11 +135,11 @@ class FusedActsStyleExample:
         session.context.close()
 
 
-async def main():
+def main():
     """Main function to run the example."""
     example = FusedActsStyleExample()
-    await example.run()
+    example.run()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

@@ -115,10 +115,9 @@ def main():
         print()
 
         # Clean up
-        print("Closing driver...")
-        driver.close()
+        print("Closing session...")
         client.delete_session()
-        print("Driver closed successfully!")
+        print("Session closed successfully!")
 
     except Exception as e:
         print(f"Error: {e}")

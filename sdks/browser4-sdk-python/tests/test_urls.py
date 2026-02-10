@@ -61,5 +61,5 @@ def is_mock_server_running() -> bool:
     try:
         with urllib.request.urlopen(MOCK_SERVER_BASE, timeout=5):
             return True
-    except:
+    except Exception:
         return False
