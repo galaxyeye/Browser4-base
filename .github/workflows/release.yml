@@ -197,6 +197,13 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
+      - name: Run Python SDK Tests
+        id: python-sdk-tests
+        if: success() && github.event.inputs.skip_tests != 'true'
+        uses: ./.github/actions/run-python-sdk-tests
+        with:
+          network_name: ${{ env.NETWORK_NAME }}
+
       - name: Run End to End Tests
         id: end-to-end-tests
         shell: bash

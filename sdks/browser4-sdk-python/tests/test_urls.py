@@ -5,8 +5,10 @@ Matches the TestUrls.kt file from Kotlin SDK tests to ensure
 consistent test data across both SDKs.
 """
 
+import os
+
 # Mock server base URL
-MOCK_SERVER_BASE = "http://localhost:18080"
+MOCK_SERVER_BASE = os.environ.get("MOCK_SERVER_BASE", "http://localhost:18080")
 
 # Simple static page (for basic navigation tests)
 SIMPLE_PAGE = f"{MOCK_SERVER_BASE}/ec/"
