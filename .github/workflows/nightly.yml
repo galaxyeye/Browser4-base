@@ -59,10 +59,10 @@ jobs:
         if: inputs.skip_tests != true
         uses: ./.github/actions/run-tests
         with:
-          # Run all tests in this nightly build, do not exclude any
-          maven_profiles: 'all-modules,pulsar-tests'
-          test_excludes: ''
-          excluded_groups: ''
+          # Run integration tests in nightly build using new test strategy
+          maven_profiles: 'all-modules,pulsar-tests,integration-tests'
+          # Allow Integration tests but exclude E2E and SDK
+          excluded_groups: 'E2E,SDK,MustRunExplicitly'
           run_pulsar_tests: 'true'
           timeout_minutes: '60'
 
