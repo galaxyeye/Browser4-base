@@ -137,12 +137,19 @@ object Runtimes {
 
     fun destroyProcess(process: Process, shutdownWaitTime: Duration) {
         val info = formatProcessInfo(process.toHandle())
+        val pid = process.pid()
 
+        // Log and destroy child processes
+        val childCount = process.children().count().toInt()
+        if (childCount > 0) {
+            logger.info("Chrome process {} has {} child process(es), terminating them first", pid, childCount)
+        }
         process.children().forEach { destroyChildProcess(it) }
 
         process.destroy()
         try {
             if (!process.waitFor(shutdownWaitTime.seconds, TimeUnit.SECONDS)) {
+                logger.warn("Chrome process {} did not exit gracefully within {} seconds, force killing", pid, shutdownWaitTime.seconds)
                 process.destroyForcibly()
                 process.waitFor(shutdownWaitTime.seconds, TimeUnit.SECONDS)
             }
@@ -150,6 +157,7 @@ object Runtimes {
             logger.info("Exit | {}", info)
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
+            logger.warn("Interrupted while waiting for chrome process {} to exit, force killing", pid)
             process.destroyForcibly()
             throw e
         } finally {
@@ -161,13 +169,26 @@ object Runtimes {
 
         try {
             ProcessHandle.of(pid.toLong()).ifPresent { handle ->
+                // Log child process count
+                val childCount = handle.children().count().toInt()
+                if (childCount > 0) {
+                    logger.info("Forcibly killing process {} with {} child process(es)", pid, childCount)
+                }
+                
                 destroyChildProcess(handle)
                 if (handle.isAlive) handle.destroy()
                 if (handle.isAlive) handle.destroyForcibly()
+                
+                // Verify process was killed
+                if (handle.isAlive) {
+                    logger.error("Failed to forcibly kill process {} using ProcessHandle", pid)
+                } else {
+                    logger.info("Successfully killed process {} using ProcessHandle", pid)
+                }
             }
             return
         } catch (e: Exception) {
-            logger.debug("ProcessHandle kill failed for pid {}", pid, e)
+            logger.debug("ProcessHandle kill failed for pid {}, falling back to system command", pid, e)
         }
 
         val command = when {
@@ -175,7 +196,12 @@ object Runtimes {
             SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC -> "kill -9 $pid"
             else -> "kill -9 $pid"
         }
-        runCatching { exec(command) }.onFailure { logger.warn("Failed to forcibly kill pid {}", pid, it) }
+        runCatching { 
+            exec(command)
+            logger.info("Executed kill command for pid {}: {}", pid, command)
+        }.onFailure { 
+            logger.warn("Failed to forcibly kill pid {} using command: {}", pid, command, it) 
+        }
     }
 
     fun destroyProcessForcibly(namePattern: String) {
@@ -347,15 +373,23 @@ object Runtimes {
     private fun unallocatedSpaceOr0(store: FileStore) = store.runCatching { unallocatedSpace }.getOrNull() ?: 0L
 
     private fun destroyChildProcess(process: ProcessHandle) {
-        process.children().forEach { destroyChildProcess(it) }
+        val children = process.children().toList()
+        children.forEach { destroyChildProcess(it) }
 
         val info = formatProcessInfo(process)
+        val pid = process.pid()
+        
         process.destroy()
         if (process.isAlive) {
             process.destroyForcibly()
         }
-
-        logger.debug("Exit | {}", info)
+        
+        // Verify child was killed
+        if (process.isAlive) {
+            logger.warn("Failed to kill child process {} | {}", pid, info)
+        } else {
+            logger.debug("Exit child | {}", info)
+        }
     }
 
     /**
@@ -383,6 +417,14 @@ object Runtimes {
             }
         }
     }
+
+    /**
+     * Checks if a process with the given PID is currently alive/running.
+     *
+     * @param pid The process ID to check (as Int)
+     * @return true if the process is alive, false otherwise
+     */
+    fun isProcessAlive(pid: Int): Boolean = isProcessAlive(pid.toLong())
 
     /**
      * Fallback method to check if a process is alive using system commands.
