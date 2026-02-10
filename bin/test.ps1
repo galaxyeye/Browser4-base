@@ -11,7 +11,7 @@ function Print-Usage {
   Write-Host "Usage: test.ps1 [test-type] [maven-args...]"
   Write-Host ""
   Write-Host "Test Types:"
-  Write-Host "  fast        Run fast unit tests only (default)"
+  Write-Host "  fast        Run fast unit tests only"
   Write-Host "  it          Run integration tests"
   Write-Host "  e2e         Run end-to-end tests"
   Write-Host "  sdk         Run SDK tests"
@@ -20,7 +20,6 @@ function Print-Usage {
   Write-Host "  all         Run all tests (integration, e2e, sdk)"
   Write-Host ""
   Write-Host "Examples:"
-  Write-Host "  test.ps1                    # Run fast unit tests"
   Write-Host "  test.ps1 fast               # Run fast unit tests"
   Write-Host "  test.ps1 it                 # Run integration tests"
   Write-Host "  test.ps1 e2e                # Run end-to-end tests"
@@ -44,6 +43,10 @@ $TestType = "fast"
 $AdditionalMvnArgs = @()
 
 # Parse command-line arguments
+if ($args.Count -eq 0) {
+  Print-Usage
+}
+
 if ($args.Count -gt 0) {
   $FirstArg = $args[0]
   switch ($FirstArg) {

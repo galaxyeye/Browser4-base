@@ -11,7 +11,7 @@ function print_usage {
   echo "Usage: test.sh [test-type] [maven-args...]"
   echo ""
   echo "Test Types:"
-  echo "  fast        Run fast unit tests only (default)"
+  echo "  fast        Run fast unit tests only"
   echo "  it          Run integration tests"
   echo "  e2e         Run end-to-end tests"
   echo "  sdk         Run SDK tests"
@@ -20,7 +20,6 @@ function print_usage {
   echo "  all         Run all tests (integration, e2e, sdk)"
   echo ""
   echo "Examples:"
-  echo "  test.sh                    # Run fast unit tests"
   echo "  test.sh fast               # Run fast unit tests"
   echo "  test.sh it                 # Run integration tests"
   echo "  test.sh e2e                # Run end-to-end tests"
@@ -44,6 +43,10 @@ TestType="fast"
 AdditionalMvnArgs=()
 
 # Parse command-line arguments
+if [[ $# -eq 0 ]]; then
+  print_usage
+fi
+
 if [[ $# -gt 0 ]]; then
   case $1 in
     fast|it|e2e|sdk|core|rest|all)
