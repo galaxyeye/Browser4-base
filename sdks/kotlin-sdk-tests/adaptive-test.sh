@@ -100,7 +100,7 @@ echo ""
 cd "$APP_HOME/sdks/kotlin-sdk-tests"
 
 $MvnCmd clean test \
-    -Dtest.thread.multiplier=$MULTIPLIER \
+    -Dtest.thread.count=$OPTIMAL_THREADS \
     "$@"
 
 EXIT_CODE=$?

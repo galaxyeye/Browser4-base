@@ -38,9 +38,9 @@
 
         <surefire.excludedGroups>MustRunExplicitly,PassedOn20260203</surefire.excludedGroups>
 
-        <!-- Adaptive test parallelism: defaults to 50% of CPU cores -->
-        <!-- Override with: mvn test -Dtest.thread.multiplier=1.0 -->
-        <test.thread.multiplier>0.5</test.thread.multiplier>
+        <!-- Adaptive test parallelism: default 4 threads (50% of 8-core machine) -->
+        <!-- Override with: mvn test -Dtest.thread.count=8 -->
+        <test.thread.count>4</test.thread.count>
 
         <pulsar.version>4.5.0-rc.1</pulsar.version>
         <browser4.sdk.version>4.5.0-rc.1</browser4.sdk.version>
@@ -176,9 +176,8 @@
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
                     <!-- Parallel execution with adaptive thread count -->
                     <parallel>methods</parallel>
-                    <!-- Auto-scale based on CPU cores: threadCount = cores × multiplier -->
-                    <perCoreThreadCount>true</perCoreThreadCount>
-                    <threadCountMethods>${test.thread.multiplier}</threadCountMethods>
+                    <!-- Thread count can be overridden: mvn test -Dtest.thread.count=8 -->
+                    <threadCount>${test.thread.count}</threadCount>
                     <useUnlimitedThreads>false</useUnlimitedThreads>
                     <!-- Retry failed tests once -->
                     <rerunFailingTestsCount>1</rerunFailingTestsCount>

@@ -33,14 +33,14 @@ cd sdks/kotlin-sdk-tests
 ### 2. 自定义并行度
 
 ```bash
-# 激进策略：100% CPU 核心
-mvn test -Dtest.thread.multiplier=1.0
+# 快速策略：8 threads
+mvn test -Dtest.thread.count=8
 
-# 保守策略：25% CPU 核心
-mvn test -Dtest.thread.multiplier=0.25
+# 默认策略：4 threads
+mvn test -Dtest.thread.count=4
 
-# 超线程：150% CPU 核心
-mvn test -Dtest.thread.multiplier=1.5
+# 保守策略：2 threads
+mvn test -Dtest.thread.count=2
 ```
 
 ### 3. 使用智能脚本（最简单）
