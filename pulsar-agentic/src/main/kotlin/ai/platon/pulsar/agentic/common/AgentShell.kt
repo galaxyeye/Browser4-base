@@ -348,17 +348,11 @@ class AgentShell constructor(
 
     /**
      * Check if a command is allowed based on the whitelist.
-     * Supports exact matches and multi-word command patterns.
+     * The command parameter should be the base command extracted by extractBaseCommand().
      */
     private fun isCommandAllowed(command: String): Boolean {
-        // Check exact match first
-        if (ALLOWED_COMMANDS.contains(command)) {
-            return true
-        }
-        
-        // For multi-word commands, check if the base command is allowed
-        val firstWord = command.split(Regex("\\s+")).firstOrNull() ?: return false
-        return ALLOWED_COMMANDS.contains(firstWord)
+        // Direct whitelist check - extractBaseCommand() already handles multi-word commands
+        return ALLOWED_COMMANDS.contains(command)
     }
 
     private fun truncateOutput(output: String): String {

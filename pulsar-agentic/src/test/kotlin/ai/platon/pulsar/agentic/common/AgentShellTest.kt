@@ -400,10 +400,11 @@ class AgentShellTest {
     @Test
     @DisplayName("test less command is in whitelist")
     fun testLessCommandInWhitelist() = runBlocking {
-        // less is interactive and would block/timeout, but we just verify it's not blocked by whitelist
-        // The test should not see "not in the whitelist" error
+        // less is interactive and will timeout without input, but we're only verifying
+        // it's not rejected by the whitelist check (it should pass whitelist but timeout)
         val result = shell.execute("less", timeoutSeconds = 1)
         assertFalse(result.contains("not in the whitelist"), "less should be in whitelist")
-        // It may timeout (which is OK) or fail to run, but shouldn't be blocked by whitelist
+        // Note: The command will likely timeout or fail due to no input file,
+        // but the important thing is it's not blocked by whitelist validation
     }
 }
