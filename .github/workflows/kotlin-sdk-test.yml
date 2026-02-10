@@ -96,8 +96,6 @@ jobs:
           cd sdks/kotlin-sdk-tests
           # Run SDK integration tests (test-strategy.md: SDK tag)
           mvn test -DrunSDKTests=true -Pintegration-test
-        env:
-          DISPLAY: :99
 
       - name: Upload test results
         if: always()

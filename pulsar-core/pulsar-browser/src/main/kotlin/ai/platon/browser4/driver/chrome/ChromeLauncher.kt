@@ -57,10 +57,13 @@ class ChromeLauncher constructor(
     private val pidPath get() = userDataDir.resolveSibling(PID_FILE_NAME)
     private val portPath get() = userDataDir.resolveSibling(PORT_FILE_NAME)
     private val cdpUrlPath get() = userDataDir.resolveSibling(CDP_URL_FILE_NAME)
+    private val lastOutputPath get() = userDataDir.resolveSibling("chrome-launch-output.log")
     private val temporaryUddExpiry = BrowserFiles.TEMPORARY_UDD_EXPIRY
     // The number of recent temporary user data directories to keep, the browser has to be closed
     private val recentNToKeep = 10
     private var process: Process? = null
+    @Volatile
+    private var lastChromeProcessOutput: String = ""
 
     private val isClosed get() = closed.get()
     private val isActive get() = AppContext.isActive && !Thread.currentThread().isInterrupted
@@ -144,7 +147,7 @@ class ChromeLauncher constructor(
                 } else {
                     logger.info("Reusing existing Chrome process, CDP URL file not found (port: {})", port)
                 }
-                
+
                 port
             } else {
                 logger.warn("Found port file but process is not alive, cleaning up invalid state")
@@ -436,7 +439,7 @@ class ChromeLauncher constructor(
                         if (matcher.find() && matcher.groupCount() >= 2) {
                             cdpUrl = matcher.group(1) // Full WebSocket URL
                             port = matcher.group(2).toInt() // Port number
-                            
+
                             // Save CDP URL to file
                             try {
                                 Files.writeString(cdpUrlPath, cdpUrl, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
@@ -444,7 +447,7 @@ class ChromeLauncher constructor(
                             } catch (e: Exception) {
                                 logger.warn("Failed to write CDP URL to file: {}", e.message)
                             }
-                            
+
                             break
                         }
                         processOutput.appendLine(line)
@@ -458,19 +461,21 @@ class ChromeLauncher constructor(
 
         try {
             readLineThread.join(options.startupWaitTime.toMillis())
-
-            if (port == 0) {
-                close(readLineThread)
-                logger.debug("Process output:>>>\n{}\n<<<", processOutput)
-
-                handleChromeFailedToStart()
-
-                throw ChromeLaunchTimeoutException("Timeout to waiting for chrome to start | $userDataDir")
-            }
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
             logger.error("Interrupted while waiting for devtools server, close it", e)
             close(readLineThread)
+        } finally {
+            persistLastProcessOutput(processOutput.toString())
+        }
+
+        if (port == 0) {
+            close(readLineThread)
+            logger.debug("Process output:>>>\n{}\n<<<", processOutput)
+
+            handleChromeFailedToStart()
+
+            throw ChromeLaunchTimeoutException("Timeout to waiting for chrome to start | $userDataDir")
         }
 
         return port
@@ -487,7 +492,8 @@ class ChromeLauncher constructor(
     private fun handleChromeFailedToStart() {
         val count = Runtimes.countSystemProcess("chrome")
         if (count == 0) {
-            logger.warn("Failed to start Chrome, no chrome process running in the system")
+            logger.error("Failed to start Chrome, no chrome process running in the system")
+            logLastLaunchDetails()
             return
         }
 
@@ -526,6 +532,27 @@ $scriptPath
 
         logger.warn(message)
         return
+    }
+
+    private fun logLastLaunchDetails() {
+        val reportPath = userDataDir.resolveSibling("chrome-launch-report.json")
+        try {
+            if (Files.exists(reportPath)) {
+                val reportContent = Files.readString(reportPath)
+                logger.warn("Last chrome launch report ({}):\n{}", reportPath, reportContent)
+            } else {
+                logger.warn("Last chrome launch report not found at {}", reportPath)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to read chrome launch report: {}", e.message)
+        }
+
+        val output = readLastProcessOutput().orEmpty()
+        if (output.isNotBlank()) {
+            logger.warn("Last chrome process output:\n{}", output)
+        } else {
+            logger.warn("Last chrome process output is empty")
+        }
     }
 
     /**
@@ -814,6 +841,28 @@ $scriptPath
             logger.debug("Chrome launch arguments saved to: {}", argsFile)
         } catch (e: Exception) {
             logger.warn("Failed to write launch arguments to file: {}", e.message)
+        }
+    }
+
+    private fun persistLastProcessOutput(output: String) {
+        lastChromeProcessOutput = output
+        try {
+            Files.writeString(lastOutputPath, output, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        } catch (e: Exception) {
+            logger.warn("Failed to write chrome process output file: {}", e.message)
+        }
+    }
+
+    private fun readLastProcessOutput(): String? {
+        return try {
+            if (Files.exists(lastOutputPath)) {
+                Files.readString(lastOutputPath)
+            } else {
+                lastChromeProcessOutput
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to read chrome process output file: {}", e.message)
+            lastChromeProcessOutput
         }
     }
 }
