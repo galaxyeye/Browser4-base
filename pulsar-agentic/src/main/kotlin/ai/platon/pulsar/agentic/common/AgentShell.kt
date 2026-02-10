@@ -79,6 +79,31 @@ class AgentShell constructor(
             // Prevent fork bombs
             ":\\(\\)\\{",
         ).map { Regex(it) }
+
+        /**
+         * Whitelist of allowed commands and command patterns.
+         * Only commands starting with these patterns are permitted.
+         */
+        private val ALLOWED_COMMANDS = setOf(
+            // Basic navigation and listing
+            "ls", "pwd", "tree",
+            // File viewing
+            "cat", "less", "head", "tail",
+            // Text processing
+            "grep", "awk", "sed",
+            // Counting
+            "wc",
+            // System info
+            "uname", "hostname", "uptime", "whoami", "id",
+            // Resource monitoring
+            "free", "df", "du",
+            // Process info
+            "ps", "top", "pgrep",
+            // Network commands
+            "ip", "ss",
+            // Environment
+            "env", "printenv", "which", "type"
+        )
     }
 
     private val logger = getLogger(this)
@@ -248,12 +273,65 @@ class AgentShell constructor(
     }
 
     private fun validateCommand(command: String): String? {
+        // First check if command is in whitelist
+        val baseCommand = extractBaseCommand(command)
+        if (baseCommand.isEmpty()) {
+            return "empty or invalid command"
+        }
+        
+        if (!isCommandAllowed(baseCommand)) {
+            return "command '$baseCommand' is not in the whitelist. Allowed commands: ${ALLOWED_COMMANDS.sorted().joinToString(", ")}"
+        }
+        
+        // Then check blocked patterns for additional safety
         for (pattern in BLOCKED_PATTERNS) {
             if (pattern.containsMatchIn(command)) {
                 return "matches blocked pattern: ${pattern.pattern}"
             }
         }
         return null
+    }
+
+    /**
+     * Extract the base command from a command string.
+     * Handles simple commands, multi-word commands (like "ip addr"), and commands with arguments.
+     */
+    private fun extractBaseCommand(command: String): String {
+        val trimmed = command.trim()
+        if (trimmed.isEmpty()) return ""
+        
+        // Split by whitespace and get the first token
+        val tokens = trimmed.split(Regex("\\s+"))
+        if (tokens.isEmpty()) return ""
+        
+        val firstToken = tokens[0]
+        
+        // Handle multi-word commands like "ip addr" or "ip route"
+        if (firstToken == "ip" && tokens.size > 1) {
+            val secondToken = tokens[1]
+            if (secondToken == "addr" || secondToken == "route") {
+                return "ip $secondToken"
+            }
+            // For other ip subcommands, just return "ip" to check against whitelist
+            return "ip"
+        }
+        
+        return firstToken
+    }
+
+    /**
+     * Check if a command is allowed based on the whitelist.
+     * Supports exact matches and multi-word command patterns.
+     */
+    private fun isCommandAllowed(command: String): Boolean {
+        // Check exact match first
+        if (ALLOWED_COMMANDS.contains(command)) {
+            return true
+        }
+        
+        // For multi-word commands, check if the base command is allowed
+        val firstWord = command.split(Regex("\\s+"))[0]
+        return ALLOWED_COMMANDS.contains(firstWord)
     }
 
     private fun truncateOutput(output: String): String {
