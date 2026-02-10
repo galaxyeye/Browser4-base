@@ -17,7 +17,8 @@ import java.nio.file.Path
  * Tests that fingerprint parameters are correctly applied via CDP
  * and JavaScript injection when a browser starts.
  */
-@Tag("IntegrationTest")
+@Tag("Integration")
+@Tag("RequiresBrowser")
 class FingerprintApplicationIT : WebDriverTestBase() {
     
     @TempDir

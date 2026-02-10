@@ -167,6 +167,29 @@ AND NOT MustRunExplicitly
 
 ---
 
+## 为何不使用 maven-failsafe-plugin
+
+项目经过评估（详见 `docs-dev/maven-failsafe-plugin-evaluation.md`），决定 **不全面引入 failsafe-plugin**。
+
+**核心原因：**
+
+* JUnit 5 Tags 四维度分类 > Failsafe 单维度命名约定
+* 物理模块隔离（`pulsar-it-tests/`）已实现统计分离
+* `@SpringBootTest` 已解决生命周期管理
+* GitHub Actions 已编排外部服务（MongoDB、Docker Compose）
+* Failsafe 的 `<groups>` 无法表达多维度组合（如 "Fast 且不需要 AI 的集成测试"）
+
+**替代方案（现有最佳实践）：**
+
+```bash
+mvn test                              # 快速单测
+mvn test -DrunITs=true                # 集成测试
+mvn test -pl pulsar-tests/pulsar-it-tests  # 按模块执行
+mvn test -Dgroups="Integration,Fast"  # 按 Tag 组合过滤
+```
+
+---
+
 ## 一句话共识
 
 > **Tests are contracts for the scheduler.**
