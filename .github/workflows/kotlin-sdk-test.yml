@@ -4,13 +4,15 @@ on:
   push:
     branches: [ main, master, develop ]
     paths:
-      - 'sdks/kotlin-sdk/**'
+      - 'sdks/browser4-sdk-kotlin/**'
+      - 'sdks/kotlin-sdk-tests/**'
       - 'pulsar-rest/**'
       - '.github/workflows/kotlin-sdk-test.yml'
   pull_request:
     branches: [ main, master, develop ]
     paths:
-      - 'sdks/kotlin-sdk/**'
+      - 'sdks/browser4-sdk-kotlin/**'
+      - 'sdks/kotlin-sdk-tests/**'
       - 'pulsar-rest/**'
   schedule:
     # 每日夜间构建
@@ -34,7 +36,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          cd sdks/kotlin-sdk
+          cd sdks/browser4-sdk-kotlin
           # Run fast unit tests only (test-strategy.md)
           mvn test
 
@@ -43,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: sdks/kotlin-sdk/target/surefire-reports/
+          path: sdks/browser4-sdk-kotlin/target/surefire-reports/
 
   integration-tests:
     name: Integration Tests
@@ -72,7 +74,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          cd sdks/kotlin-sdk
+          cd sdks/kotlin-sdk-tests
           # Run SDK integration tests (test-strategy.md: SDK tag)
           mvn test -DrunSDKTests=true -Pintegration-test
         env:
@@ -83,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-results
-          path: sdks/kotlin-sdk/target/surefire-reports/
+          path: sdks/kotlin-sdk-tests/target/surefire-reports/
 
       - name: Upload logs
         if: failure()
@@ -91,7 +93,7 @@ jobs:
         with:
           name: integration-test-logs
           path: |
-            sdks/kotlin-sdk/target/*.log
+            sdks/kotlin-sdk-tests/target/*.log
             ~/.browser4/logs/
 
   publish-results:
