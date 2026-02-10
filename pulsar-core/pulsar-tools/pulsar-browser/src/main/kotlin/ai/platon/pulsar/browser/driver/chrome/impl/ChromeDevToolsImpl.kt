@@ -269,13 +269,13 @@ abstract class ChromeDevToolsImpl(
     private fun doClose() {
         // Use shorter timeout if both transports are already closed/inactive
         // If either transport is still open, use full timeout for graceful shutdown
-        val idleTimeout = if (pageTransport.isOpen || browserTransport.isOpen) {
+        val shutdownWaitTimeout = if (pageTransport.isOpen || browserTransport.isOpen) {
             Duration.ofSeconds(10)
         } else {
             Duration.ofSeconds(3)
         }
         
-        waitUntilIdle(idleTimeout)
+        waitUntilIdle(shutdownWaitTimeout)
 
         logger.debug("Closing devtools client ...")
 

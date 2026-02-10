@@ -139,13 +139,12 @@ object Runtimes {
         val info = formatProcessInfo(process.toHandle())
         val pid = process.pid()
 
-        // Collect child processes once for both logging and iteration
-        val children = process.children().toList()
-        if (children.isNotEmpty()) {
-            logger.info("Chrome process {} has {} child process(es), terminating them first", pid, children.size)
+        // Log and destroy child processes
+        val childCount = process.children().count().toInt()
+        if (childCount > 0) {
+            logger.info("Chrome process {} has {} child process(es), terminating them first", pid, childCount)
         }
-        
-        children.forEach { destroyChildProcess(it) }
+        process.children().forEach { destroyChildProcess(it) }
 
         process.destroy()
         try {
@@ -170,10 +169,10 @@ object Runtimes {
 
         try {
             ProcessHandle.of(pid.toLong()).ifPresent { handle ->
-                // Count child processes for logging
-                val children = handle.children().toList()
-                if (children.isNotEmpty()) {
-                    logger.info("Forcibly killing process {} with {} child process(es)", pid, children.size)
+                // Log child process count
+                val childCount = handle.children().count().toInt()
+                if (childCount > 0) {
+                    logger.info("Forcibly killing process {} with {} child process(es)", pid, childCount)
                 }
                 
                 destroyChildProcess(handle)
