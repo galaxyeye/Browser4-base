@@ -47,6 +47,8 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
+        export LC_ALL=C.UTF-8
+        export LANG=C.UTF-8
 
         VERSION="${{ inputs.version }}"
         OLD_PATTERN="${{ inputs.old_version_pattern }}"
