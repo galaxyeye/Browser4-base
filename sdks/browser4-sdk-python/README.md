@@ -41,12 +41,13 @@ with Browser4Driver() as driver:
     print(f"Opened: {page.url}")
 
     # Use WebDriver for element interaction
-    driver_wd = session.driver
-    driver_wd.fill("input[name='search']", "browser automation")
-    driver_wd.press("input[name='search']", "Enter")
+    web_driver = session.driver
+    web_driver.fill("input[name='search']", "browser automation")
+    web_driver.press("input[name='search']", "Enter")
 
-    # Extract data using CSS selectors
-    fields = session.extract(page, {
+    # Extract data using CSS selectors (parse first, then extract)
+    document = session.parse(page)
+    fields = session.extract(document, {
         "title": "h1",
         "description": ".description"
     })
@@ -128,7 +129,7 @@ driver = Browser4Driver(
 Low-level HTTP client for API communication.
 
 ```python
-from browser4-sdk import PulsarClient
+from browser4 import PulsarClient
 
 client = PulsarClient(
     base_url="http://localhost:8182",
@@ -148,7 +149,7 @@ client.delete_session()
 Session management for page loading and data extraction.
 
 ```python
-from browser4-sdk import PulsarClient, PulsarSession
+from browser4 import PulsarClient, PulsarSession
 
 client = PulsarClient()
 client.create_session()
@@ -167,8 +168,9 @@ page = session.load("https://example.com", args="-expire 1d")
 session.submit("https://example.com/page1")
 session.submit("https://example.com/page2", args="-expire 1h")
 
-# Extract fields
-fields = session.extract(page, {
+# Parse the page and extract fields
+document = session.parse(page)
+fields = session.extract(document, {
     "title": "h1",
     "links": "a[href]"
 })
@@ -186,7 +188,7 @@ data = session.scrape(
 AI-powered browser automation extending PulsarSession.
 
 ```python
-from browser4-sdk import PulsarClient, AgenticSession
+from browser4 import PulsarClient, AgenticSession
 
 client = PulsarClient()
 client.create_session()
@@ -229,7 +231,7 @@ print(session.process_trace)
 Browser control and element interaction.
 
 ```python
-from browser4-sdk import PulsarClient, WebDriver
+from browser4 import PulsarClient, WebDriver
 
 client = PulsarClient()
 client.create_session()
@@ -305,7 +307,7 @@ driver.stop()
 Represents a loaded web page.
 
 ```python
-from browser4-sdk import WebPage
+from browser4 import WebPage
 
 page = session.load("https://example.com")
 print(page.url)           # Page URL
@@ -319,7 +321,7 @@ print(page.is_nil)        # True if page is invalid/not found
 Normalized URL with parsed arguments.
 
 ```python
-from browser4-sdk import NormURL
+from browser4 import NormURL
 
 norm = session.normalize("https://example.com", args="-expire 1d")
 print(norm.spec)    # Full normalized specification
@@ -331,7 +333,7 @@ print(norm.is_nil)  # True if URL is invalid
 ### Agent Results
 
 ```python
-from browser4-sdk import AgentRunResult, AgentActResult
+from browser4 import AgentRunResult, AgentActResult
 
 # Run result
 run_result = session.run("complete the task")
@@ -351,7 +353,7 @@ print(act_result.is_complete)
 Event handlers are reserved for future implementation.
 
 ```python
-from browser4-sdk import PageEventHandlers
+from browser4 import PageEventHandlers
 
 # Placeholder - will be implemented in future releases
 handlers = PageEventHandlers()
@@ -363,7 +365,7 @@ handlers = PageEventHandlers()
 The SDK is designed to mirror the Kotlin FusedActs example:
 
 ```python
-from browser4-sdk import PulsarClient, AgenticSession
+from browser4 import PulsarClient, AgenticSession
 
 client = PulsarClient(base_url="http://localhost:8182")
 client.create_session()

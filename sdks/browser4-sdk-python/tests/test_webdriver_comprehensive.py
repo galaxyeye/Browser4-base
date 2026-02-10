@@ -883,9 +883,10 @@ def test_get_cookies(stub_driver):
     
     cookies = driver.get_cookies()
     
-    # get_cookies may return empty list if value unwrapping doesn't work as expected
-    # The method is being called correctly even if stub response needs adjustment
     assert isinstance(cookies, list)
+    assert len(cookies) == 2
+    assert cookies[0]["name"] == "session"
+    assert cookies[1]["name"] == "user"
 
 
 def test_delete_cookies(stub_driver):

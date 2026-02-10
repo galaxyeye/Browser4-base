@@ -29,7 +29,7 @@ def main():
         # Create client and session
         print("Creating session...")
         client = PulsarClient(base_url=driver.base_url)
-    except:
+    except Exception:
         print("Failed to start Browser4 server.")
         return
 
@@ -63,11 +63,11 @@ def main():
             print()
 
         # Use WebDriver for navigation
-        driver = session.driver
+        web_driver = session.driver
         print("Getting current URL from WebDriver...")
-        current_url = driver.current_url()
+        current_url = web_driver.current_url()
         print(f"Current URL: {current_url}")
-        print(f"Page title: {driver.title()}\n")
+        print(f"Page title: {web_driver.title()}\n")
 
         # AI-powered action (requires AI capabilities)
         try:

@@ -289,7 +289,7 @@ def integration_client(browser4_server):
     try:
         if client.session_id:
             client.delete_session()
-    except:
+    except Exception:
         pass
     finally:
         client.close()
