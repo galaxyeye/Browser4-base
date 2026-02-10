@@ -69,6 +69,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
+      - name: Verify Chrome install
+        run: |
+          command -v google-chrome
+          google-chrome --version
+
+      - name: Diagnose Chrome install failure
+        if: failure()
+        run: |
+          echo "Chrome install/verify failed; collecting diagnostics"
+          sudo apt-cache policy google-chrome-stable || true
+          dpkg -l | grep -i chrome || true
+          sudo tail -n 200 /var/log/apt/term.log || true
+          exit 1
+
       - name: Build project
         run: mvn install -DskipTests -pl pulsar-bom,pulsar-dependencies,pulsar-core,pulsar-rest,pulsar-tests/pulsar-tests-common -am
 
