@@ -42,7 +42,6 @@ import kotlin.test.*
  */
 @Tag("IntegrationTest")
 @Order(Integer.MAX_VALUE)
-@Tag("AlmostPassedOn20260203")
 class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
 
     private lateinit var session: PulsarSession
