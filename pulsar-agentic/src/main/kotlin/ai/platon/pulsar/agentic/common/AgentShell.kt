@@ -105,7 +105,7 @@ class AgentShell constructor(
             "ls", "pwd", "tree",
             // File viewing
             "cat", "less", "head", "tail",
-            // Text processing
+            // Text processing (sed is allowed but with restricted usage - see validation)
             "grep", "awk", "sed",
             // Counting
             "wc",
@@ -115,8 +115,8 @@ class AgentShell constructor(
             "free", "df", "du",
             // Process info
             "ps", "top", "pgrep",
-            // Network commands
-            "ip", "ss",
+            // Network commands (only specific subcommands allowed)
+            "ip addr", "ip route", "ss",
             // Environment
             "env", "printenv", "which", "type"
         )
@@ -299,6 +299,14 @@ class AgentShell constructor(
             return "command '$baseCommand' is not in the whitelist. Allowed commands: ${ALLOWED_COMMANDS.sorted().joinToString(", ")}"
         }
         
+        // Additional validation for specific commands
+        if (baseCommand == "sed") {
+            // Prevent in-place editing with sed -i flag
+            if (Regex("sed\\s+.*-[^\\s]*i").containsMatchIn(command)) {
+                return "sed in-place editing (-i flag) is not allowed. Use read-only mode with -n flag"
+            }
+        }
+        
         // Then check blocked patterns for additional safety
         for (pattern in BLOCKED_PATTERNS) {
             if (pattern.containsMatchIn(command)) {
@@ -323,13 +331,15 @@ class AgentShell constructor(
         val firstToken = tokens[0]
         
         // Handle multi-word commands like "ip addr" or "ip route"
+        // Only these specific ip subcommands are allowed, not all ip commands
         if (firstToken == "ip" && tokens.size > 1) {
             val secondToken = tokens[1]
             if (secondToken == "addr" || secondToken == "route") {
                 return "ip $secondToken"
             }
-            // For other ip subcommands, just return "ip" to check against whitelist
-            return "ip"
+            // For other ip subcommands, return the full "ip <subcommand>" 
+            // which will fail whitelist validation
+            return "ip $secondToken"
         }
         
         return firstToken

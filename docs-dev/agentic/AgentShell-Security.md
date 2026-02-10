@@ -28,7 +28,9 @@ The following commands are permitted (first batch):
 **Text Processing**
 - `grep` - Search text patterns
 - `awk` - Pattern scanning and processing
-- `sed` - Stream editor for text manipulation
+- `sed` - Stream editor for text manipulation (in-place editing with `-i` flag is blocked)
+
+**Note on sed**: While `sed` is in the whitelist, in-place editing with the `-i` flag is explicitly blocked to prevent file modifications. Use read-only operations like `sed -n` instead.
 
 **Counting**
 - `wc` - Word, line, and character count
@@ -54,6 +56,8 @@ The following commands are permitted (first batch):
 - `ip addr` - Display IP addresses
 - `ip route` - Display routing table
 - `ss` - Display socket statistics
+
+**Note on ip**: Only `ip addr` and `ip route` are allowed. Other ip subcommands (like `ip link`, `ip neigh`) are blocked.
 
 **Environment**
 - `env` - Display environment variables
@@ -88,6 +92,10 @@ In addition to the whitelist, `AgentShell` implements:
 3. **Timeout enforcement** - Commands are limited to a maximum execution time (default: 30 seconds, max: 300 seconds)
 
 4. **Output truncation** - Output is limited to 100,000 characters to prevent memory exhaustion
+
+5. **Command-specific restrictions**:
+   - `sed -i` (in-place editing) is blocked to prevent file modifications
+   - Only `ip addr` and `ip route` are allowed; other `ip` subcommands are blocked
 
 ## Usage
 

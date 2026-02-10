@@ -212,6 +212,46 @@ class AgentShellTest {
         assertFalse(result.contains("not in the whitelist"), "type should be allowed")
     }
 
+    // IP command specific tests
+
+    @Test
+    @DisplayName("test ip link command is blocked")
+    fun testIpLinkCommandIsBlocked() = runBlocking {
+        val result = shell.execute("ip link")
+        assertTrue(result.contains("not in the whitelist"), "ip link should be blocked - only ip addr and ip route allowed")
+    }
+
+    @Test
+    @DisplayName("test ip neigh command is blocked")
+    fun testIpNeighCommandIsBlocked() = runBlocking {
+        val result = shell.execute("ip neigh")
+        assertTrue(result.contains("not in the whitelist"), "ip neigh should be blocked - only ip addr and ip route allowed")
+    }
+
+    // Sed specific tests
+
+    @Test
+    @DisplayName("test sed in-place editing is blocked")
+    fun testSedInPlaceEditingIsBlocked() = runBlocking {
+        val result = shell.execute("sed -i 's/foo/bar/g' file.txt")
+        assertTrue(result.contains("sed in-place editing") || result.contains("not allowed"), "sed -i should be blocked")
+    }
+
+    @Test
+    @DisplayName("test sed with -i flag is blocked")
+    fun testSedWithInlineFlagIsBlocked() = runBlocking {
+        val result = shell.execute("sed -ie 's/foo/bar/g' file.txt")
+        assertTrue(result.contains("sed in-place editing") || result.contains("not allowed"), "sed with -i flag should be blocked")
+    }
+
+    @Test
+    @DisplayName("test sed read-only with -n is allowed")
+    fun testSedReadOnlyIsAllowed() = runBlocking {
+        val result = shell.execute("sed -n '1p' /etc/hosts")
+        assertFalse(result.contains("not in the whitelist"), "sed -n should be allowed")
+        assertFalse(result.contains("sed in-place editing"), "sed -n should not be blocked")
+    }
+
     // Blocked command tests
 
     @Test
