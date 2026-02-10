@@ -15,17 +15,20 @@ function print_usage {
   echo "  it          Run integration tests"
   echo "  e2e         Run end-to-end tests"
   echo "  sdk         Run SDK tests"
+  echo "  python-sdk  Run Python SDK tests"
   echo "  core        Run core module supplementary tests"
   echo "  rest        Run REST module tests"
   echo "  all         Run all tests (integration, e2e, sdk)"
   echo ""
   echo "Examples:"
-  echo "  test.sh fast               # Run fast unit tests"
-  echo "  test.sh it                 # Run integration tests"
-  echo "  test.sh e2e                # Run end-to-end tests"
-  echo "  test.sh sdk                # Run SDK tests"
-  echo "  test.sh all                # Run all tests"
-  echo "  test.sh it -pl pulsar-core # Run integration tests for pulsar-core only"
+  echo "  test.sh fast                       # Run fast unit tests"
+  echo "  test.sh it                         # Run integration tests"
+  echo "  test.sh e2e                        # Run end-to-end tests"
+  echo "  test.sh sdk                        # Run SDK tests"
+  echo "  test.sh python-sdk                 # Run Python SDK tests"
+  echo "  test.sh python-sdk -m integration  # Run Python SDK integration tests only"
+  echo "  test.sh all                        # Run all tests"
+  echo "  test.sh it -pl pulsar-core         # Run integration tests for pulsar-core only"
   exit 1
 }
 
@@ -49,7 +52,7 @@ fi
 
 if [[ $# -gt 0 ]]; then
   case $1 in
-    fast|it|e2e|sdk|core|rest|all)
+    fast|it|e2e|sdk|python-sdk|core|rest|all)
       TestType=$1
       shift
       ;;
@@ -88,6 +91,35 @@ case $TestType in
   sdk)
     echo "Running SDK tests..."
     $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
+    ;;
+  python-sdk)
+    echo "Running Python SDK tests..."
+    PythonSdkDir="$APP_HOME/sdks/browser4-sdk-python"
+    
+    if [[ ! -d "$PythonSdkDir" ]]; then
+      echo "Error: Python SDK directory not found at $PythonSdkDir"
+      exit 1
+    fi
+    
+    # Check if Python is available
+    if ! command -v python3 &> /dev/null; then
+      echo "Error: python3 is not installed or not in PATH"
+      exit 1
+    fi
+    
+    # Check if pytest is available
+    if ! python3 -m pytest --version &> /dev/null; then
+      echo "Error: pytest is not installed. Install it with: pip install pytest"
+      echo "Or install all dev dependencies with: pip install -e \".[dev]\" in $PythonSdkDir"
+      exit 1
+    fi
+    
+    cd "$PythonSdkDir"
+    echo "Working directory: $(pwd)"
+    python3 -m pytest "${AdditionalMvnArgs[@]}"
+    ExitCode=$?
+    cd "$APP_HOME"
+    exit $ExitCode
     ;;
   core)
     echo "Running core module supplementary tests..."
