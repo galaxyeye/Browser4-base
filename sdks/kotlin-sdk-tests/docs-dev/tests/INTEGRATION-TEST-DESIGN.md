@@ -1149,13 +1149,15 @@ on:
   push:
     branches: [ main, master, develop ]
     paths:
-      - 'sdks/kotlin-sdk/**'
+      - 'sdks/browser4-sdk-kotlin/**'
+      - 'sdks/kotlin-sdk-tests/**'
       - 'pulsar-rest/**'
       - '.github/workflows/kotlin-sdk-test.yml'
   pull_request:
     branches: [ main, master, develop ]
     paths:
-      - 'sdks/kotlin-sdk/**'
+      - 'sdks/browser4-sdk-kotlin/**'
+      - 'sdks/kotlin-sdk-tests/**'
       - 'pulsar-rest/**'
   schedule:
     # 每日夜间构建
@@ -1179,7 +1181,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-          cd sdks/kotlin-sdk
+          cd sdks/browser4-sdk-kotlin
+          # Run fast unit tests only (test-strategy.md)
           mvn test
 
       - name: Upload test results
@@ -1187,7 +1190,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: sdks/kotlin-sdk/target/surefire-reports/
+          path: sdks/browser4-sdk-kotlin/target/surefire-reports/
 
   integration-tests:
     name: Integration Tests
@@ -1206,18 +1209,24 @@ jobs:
 
       - name: Install Chrome
         run: |
-          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
       - name: Build project
-        run: mvn install -DskipTests -pl pulsar-core,pulsar-rest,pulsar-tests/pulsar-tests-common -am
+        run: mvn install -DskipTests -pl pulsar-bom,pulsar-dependencies,pulsar-core,pulsar-rest,pulsar-tests/pulsar-tests-common -am
+
+      - name: Build SDKs
+        run: |
+          cd sdks
+          mvn install -DskipTests
 
       - name: Run integration tests
         run: |
-          cd sdks/kotlin-sdk
-          mvn test -Pintegration-test
+          cd sdks/kotlin-sdk-tests
+          # Run SDK integration tests (test-strategy.md: SDK tag)
+          mvn test -DrunSDKTests=true -Pintegration-test
         env:
           DISPLAY: :99
 
@@ -1226,7 +1235,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-results
-          path: sdks/kotlin-sdk/target/surefire-reports/
+          path: sdks/kotlin-sdk-tests/target/surefire-reports/
 
       - name: Upload logs
         if: failure()
@@ -1234,7 +1243,7 @@ jobs:
         with:
           name: integration-test-logs
           path: |
-            sdks/kotlin-sdk/target/*.log
+            sdks/kotlin-sdk-tests/target/*.log
             ~/.browser4/logs/
 
   publish-results:
