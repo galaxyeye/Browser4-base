@@ -374,7 +374,7 @@ class WebDriver:
         """
         return self.client.post(
             "/session/{sessionId}/selectors/click",
-            {"selector": selector, "strategy": strategy}
+            {"selector": selector, "strategy": strategy, "count": count}
         )
 
     def click_element(self, element_id: str) -> Any:
@@ -909,6 +909,8 @@ class WebDriver:
             List of cookie dictionaries.
         """
         response = self.client.get("/session/{sessionId}/cookie")
+        if isinstance(response, list):
+            return response
         if isinstance(response, dict) and "value" in response:
             return response["value"]
         return []
@@ -929,7 +931,7 @@ class WebDriver:
             domain: Optional domain.
             path: Optional path.
         """
-        self.client.delete(f"/session/{{sessionId}}/cookie/{name}")
+        self.client.delete(f"/session/{{sessionId}}/cookie/{self._encode_path_segment(name)}")
 
     def clear_browser_cookies(self) -> None:
         """Clear all browser cookies."""

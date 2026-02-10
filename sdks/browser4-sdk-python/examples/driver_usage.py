@@ -58,12 +58,12 @@ def main():
     print("\nMethod 2: Manual control")
     print("-" * 40)
     
+    driver = None
     try:
         # Create driver with custom configuration
         driver = Browser4Driver(
             port=8183,  # Custom port
             java_options={
-                "server.port": "8183",
                 # Add other Java options as needed
             }
         )
@@ -90,7 +90,7 @@ def main():
     except Exception as e:
         print(f"Error: {e}\n")
         # Make sure to stop on error
-        if driver.is_running:
+        if driver and driver.is_running:
             driver.stop()
 
 
@@ -98,6 +98,7 @@ def main():
     print("\nMethod 3: Start without waiting for ready")
     print("-" * 40)
     
+    driver = None
     try:
         driver = Browser4Driver()
         
@@ -119,7 +120,7 @@ def main():
         
     except Exception as e:
         print(f"Error: {e}\n")
-        if driver.is_running:
+        if driver and driver.is_running:
             driver.stop()
 
 
