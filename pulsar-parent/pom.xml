@@ -277,13 +277,6 @@ under the License.
                             </goals>
                         </execution>
                     </executions>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.junit.jupiter</groupId>
-                            <artifactId>junit-jupiter-engine</artifactId>
-                            <version>${junit5.version}</version>
-                        </dependency>
-                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -442,18 +435,6 @@ under the License.
                             <junit.jupiter.execution.parallel.enabled>false</junit.jupiter.execution.parallel.enabled>
                         </systemPropertyVariables>
                     </configuration>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.junit.jupiter</groupId>
-                            <artifactId>junit-jupiter-engine</artifactId>
-                            <version>${junit5.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.junit.vintage</groupId>
-                            <artifactId>junit-vintage-engine</artifactId>
-                            <version>${junit5.version}</version>
-                        </dependency>
-                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
