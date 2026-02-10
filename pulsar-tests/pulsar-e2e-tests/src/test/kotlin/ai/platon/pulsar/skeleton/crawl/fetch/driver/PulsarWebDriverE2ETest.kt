@@ -437,13 +437,11 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
         // [{0 0 1912 10538.8}, ]
         printlnPro("queryClientRect: $bodyInfo")
 
-        jsFun = "document.body.scrollWidth"
-        bodyInfo = driver.evaluate("$jsFun('body')")?.toString() ?: "unexpected"
+        bodyInfo = driver.evaluate("document.body.scrollWidth")?.toString() ?: "unexpected"
         // [{0 0 1912 10538.8}, ]
         printlnPro("body.scrollWidth: $bodyInfo")
 
-        jsFun = "document.body.clientWidth"
-        bodyInfo = driver.evaluate("$jsFun('body')")?.toString() ?: "unexpected"
+        bodyInfo = driver.evaluate("document.body.clientWidth")?.toString() ?: "unexpected"
         // [{0 0 1912 10538.8}, ]
         printlnPro("body.clientWidth: $bodyInfo")
     }
