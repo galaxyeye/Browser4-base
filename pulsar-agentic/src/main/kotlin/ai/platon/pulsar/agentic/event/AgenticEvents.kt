@@ -13,16 +13,16 @@ object AgenticEvents {
      * Used with AgentEventBus.emitAgentEvent().
      */
     object AgentEventTypes {
-        const val ON_WILL_RUN = "onWillRun"
-        const val ON_DID_RUN = "onDidRun"
-        const val ON_WILL_OBSERVE = "onWillObserve"
-        const val ON_DID_OBSERVE = "onDidObserve"
-        const val ON_WILL_ACT = "onWillAct"
-        const val ON_DID_ACT = "onDidAct"
-        const val ON_WILL_EXTRACT = "onWillExtract"
-        const val ON_DID_EXTRACT = "onDidExtract"
-        const val ON_WILL_SUMMARIZE = "onWillSummarize"
-        const val ON_DID_SUMMARIZE = "onDidSummarize"
+        const val ON_WILL_RUN = "agent.onWillRun"
+        const val ON_DID_RUN = "agent.onDidRun"
+        const val ON_WILL_OBSERVE = "agent.onWillObserve"
+        const val ON_DID_OBSERVE = "agent.onDidObserve"
+        const val ON_WILL_ACT = "agent.onWillAct"
+        const val ON_DID_ACT = "agent.onDidAct"
+        const val ON_WILL_EXTRACT = "agent.onWillExtract"
+        const val ON_DID_EXTRACT = "agent.onDidExtract"
+        const val ON_WILL_SUMMARIZE = "agent.onWillSummarize"
+        const val ON_DID_SUMMARIZE = "agent.onDidSummarize"
     }
 
     /**
@@ -30,12 +30,12 @@ object AgenticEvents {
      * Used with AgentEventBus.emitInferenceEvent().
      */
     object InferenceEventTypes {
-        const val ON_WILL_INFER = "onWillInfer"
-        const val ON_DID_INFER = "onDidInfer"
-        const val ON_WILL_EXTRACT_INFER = "onWillExtractInfer"
-        const val ON_DID_EXTRACT_INFER = "onDidExtractInfer"
-        const val ON_WILL_SUMMARIZE_INFER = "onWillSummarizeInfer"
-        const val ON_DID_SUMMARIZE_INFER = "onDidSummarizeInfer"
+        const val ON_WILL_INFER = "inference.onWillInfer"
+        const val ON_DID_INFER = "inference.onDidInfer"
+        const val ON_WILL_EXTRACT_INFER = "inference.onWillExtractInfer"
+        const val ON_DID_EXTRACT_INFER = "inference.onDidExtractInfer"
+        const val ON_WILL_SUMMARIZE_INFER = "inference.onWillSummarizeInfer"
+        const val ON_DID_SUMMARIZE_INFER = "inference.onDidSummarizeInfer"
     }
 
     /**
@@ -43,9 +43,9 @@ object AgenticEvents {
      * Used with AgentEventBus.emitToolEvent().
      */
     object ToolEventTypes {
-        const val ON_WILL_EXECUTE_TOOL = "onWillExecuteTool"
-        const val ON_DID_EXECUTE_TOOL = "onDidExecuteTool"
-        const val ON_TOOL_ERROR = "onToolError"
+        const val ON_WILL_EXECUTE_TOOL = "tool.onWillExecuteTool"
+        const val ON_DID_EXECUTE_TOOL = "tool.onDidExecuteTool"
+        const val ON_TOOL_ERROR = "tool.onToolError"
     }
 
     /**
@@ -53,11 +53,11 @@ object AgenticEvents {
      * Used with AgentEventBus.emitMCPEvent().
      */
     object MCPEventTypes {
-        const val ON_WILL_CALL_MCP = "onWillCallMCP"
-        const val ON_DID_CALL_MCP = "onDidCallMCP"
-        const val ON_MCP_CONNECTED = "onMCPConnected"
-        const val ON_MCP_DISCONNECTED = "onMCPDisconnected"
-        const val ON_MCP_ERROR = "onMCPError"
+        const val ON_WILL_CALL_MCP = "mcp.onWillCallMCP"
+        const val ON_DID_CALL_MCP = "mcp.onDidCallMCP"
+        const val ON_MCP_CONNECTED = "mcp.onMCPConnected"
+        const val ON_MCP_DISCONNECTED = "mcp.onMCPDisconnected"
+        const val ON_MCP_ERROR = "mcp.onMCPError"
     }
 
     /**
@@ -65,11 +65,11 @@ object AgenticEvents {
      * Used with AgentEventBus.emitSkillEvent().
      */
     object SkillEventTypes {
-        const val ON_WILL_RUN_SKILL = "onWillRunSkill"
-        const val ON_DID_RUN_SKILL = "onDidRunSkill"
-        const val ON_SKILL_ACTIVATED = "onSkillActivated"
-        const val ON_SKILLS_LISTED = "onSkillsListed"
-        const val ON_SKILL_ERROR = "onSkillError"
+        const val ON_WILL_RUN_SKILL = "skill.onWillRunSkill"
+        const val ON_DID_RUN_SKILL = "skill.onDidRunSkill"
+        const val ON_SKILL_ACTIVATED = "skill.onSkillActivated"
+        const val ON_SKILLS_LISTED = "skill.onSkillsListed"
+        const val ON_SKILL_ERROR = "skill.onSkillError"
     }
 
     /**
