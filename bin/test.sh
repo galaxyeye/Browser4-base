@@ -83,15 +83,15 @@ case $TestType in
     ;;
   e2e)
     echo "Running end-to-end tests..."
-    $MvnCmd test -DrunE2ETests=true "${AdditionalMvnArgs[@]}"
+    $MvnCmd test -DrunE2ETests=true -P all-modules -pl pulsar-tests,pulsar-tests/pulsar-e2e-tests -am "${AdditionalMvnArgs[@]}"
     ;;
   sdk)
     echo "Running SDK tests..."
-    $MvnCmd test -DrunSDKTests=true "${AdditionalMvnArgs[@]}"
+    $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
     ;;
   core)
     echo "Running core module supplementary tests..."
-    $MvnCmd test -DrunCoreTests=true "${AdditionalMvnArgs[@]}"
+    $MvnCmd test -DrunCoreTests=true -Ppulsar-core-tests -pl pulsar-core,pulsar-core/pulsar-core-tests -am "${AdditionalMvnArgs[@]}"
     ;;
   rest)
     echo "Running REST module tests..."

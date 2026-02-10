@@ -84,15 +84,15 @@ try {
     }
     "e2e" {
       Write-Host "Running end-to-end tests..."
-      & $MvnCmd @MvnArgs "-DrunE2ETests=true"
+      & $MvnCmd @MvnArgs "-DrunE2ETests=true" "-P" "all-modules" "-pl" "pulsar-tests,pulsar-tests/pulsar-e2e-tests" "-am"
     }
     "sdk" {
       Write-Host "Running SDK tests..."
-      & $MvnCmd @MvnArgs "-DrunSDKTests=true"
+      & $MvnCmd @MvnArgs "-DrunSDKTests=true" "-P" "all-modules" "-pl" "sdks/kotlin-sdk-tests" "-am"
     }
     "core" {
       Write-Host "Running core module supplementary tests..."
-      & $MvnCmd @MvnArgs "-DrunCoreTests=true"
+      & $MvnCmd @MvnArgs "-DrunCoreTests=true" "-Ppulsar-core-tests" "-pl" "pulsar-core,pulsar-core/pulsar-core-tests" "-am"
     }
     "rest" {
       Write-Host "Running REST module tests..."
