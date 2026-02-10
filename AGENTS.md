@@ -153,7 +153,7 @@ To keep iteration fast, **don’t run full test suites by default**.
 - Upgrade scope when risk increases (cross-module, public API/DTO/serialization, Spring wiring, dependency bumps,
   concurrency/I/O, browser/CDP lifecycle)
 
-See `docs-dev/copilot/minimal-test-policy.md` for details and trade-offs.
+See [TESTING.md](TESTING.md) for details and trade-offs.
 
 ### Test Location
 - Module unit tests: `src/test/kotlin/...`
@@ -178,9 +178,6 @@ See `docs-dev/copilot/minimal-test-policy.md` for details and trade-offs.
 - Core logic: ≥80%
 - Utilities: ≥90%
 - Controllers: ≥85%
-
-### Test Tags (JUnit 5)
-`IntegrationTest`, `E2ETest`, `RequiresServer`, `Slow`, `HeavyTest`, `SmokeTest`, `BenchmarkTest`
 
 ## Configuration
 
