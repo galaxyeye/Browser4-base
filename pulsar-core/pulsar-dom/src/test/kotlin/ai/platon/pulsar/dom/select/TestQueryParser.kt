@@ -15,7 +15,7 @@ class TestQueryParser {
     fun testOrGetsCorrectPrecedence() {
         // tests that a selector "a b, c d, e f" evals to (a AND b) OR (c AND d) OR (e AND f)"
         // top level or, three child ands
-        val or = PowerQueryParser.parse("a b, c d, e f")
+        val or = PowerQueryParser.Companion.parse("a b, c d, e f")
         assertTrue(or is CombiningEvaluator.Or)
         assertEquals(3, or.evaluators.size.toLong())
         for (and in or.evaluators) {
@@ -28,7 +28,7 @@ class TestQueryParser {
 
     @Test
     fun testParsesMultiCorrectly() {
-        val or = PowerQueryParser.parse(".foo > ol, ol > li + li")
+        val or = PowerQueryParser.Companion.parse(".foo > ol, ol > li + li")
         assertTrue(or is CombiningEvaluator.Or)
         assertEquals(2, or.evaluators.size.toLong())
 
@@ -44,14 +44,14 @@ class TestQueryParser {
     @Test
     fun exceptionOnUncloseAttribute() {
         assertThrows<PowerSelectorParseException> {
-            PowerQueryParser.parse("section > a[href=\"]")
+            PowerQueryParser.Companion.parse("section > a[href=\"]")
         }
     }
 
     @Test
     fun testParsesSingleQuoteInContains() {
         assertThrows<PowerSelectorParseException> {
-            PowerQueryParser.parse("p:contains(One \" One)")
+            PowerQueryParser.Companion.parse("p:contains(One \" One)")
         }
     }
 }
