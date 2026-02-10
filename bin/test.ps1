@@ -15,17 +15,20 @@ function Print-Usage {
   Write-Host "  it          Run integration tests"
   Write-Host "  e2e         Run end-to-end tests"
   Write-Host "  sdk         Run SDK tests"
+  Write-Host "  python-sdk  Run Python SDK tests"
   Write-Host "  core        Run core module supplementary tests"
   Write-Host "  rest        Run REST module tests"
   Write-Host "  all         Run all tests (integration, e2e, sdk)"
   Write-Host ""
   Write-Host "Examples:"
-  Write-Host "  test.ps1 fast               # Run fast unit tests"
-  Write-Host "  test.ps1 it                 # Run integration tests"
-  Write-Host "  test.ps1 e2e                # Run end-to-end tests"
-  Write-Host "  test.ps1 sdk                # Run SDK tests"
-  Write-Host "  test.ps1 all                # Run all tests"
-  Write-Host '  test.ps1 it -pl pulsar-core # Run integration tests for pulsar-core only'
+  Write-Host "  test.ps1 fast                       # Run fast unit tests"
+  Write-Host "  test.ps1 it                         # Run integration tests"
+  Write-Host "  test.ps1 e2e                        # Run end-to-end tests"
+  Write-Host "  test.ps1 sdk                        # Run SDK tests"
+  Write-Host "  test.ps1 python-sdk                 # Run Python SDK tests"
+  Write-Host "  test.ps1 python-sdk -m integration  # Run Python SDK integration tests only"
+  Write-Host "  test.ps1 all                        # Run all tests"
+  Write-Host '  test.ps1 it -pl pulsar-core         # Run integration tests for pulsar-core only'
   exit 1
 }
 
@@ -50,7 +53,7 @@ if ($args.Count -eq 0) {
 if ($args.Count -gt 0) {
   $FirstArg = $args[0]
   switch ($FirstArg) {
-    { $_ -in "fast", "it", "e2e", "sdk", "core", "rest", "all" } {
+    { $_ -in "fast", "it", "e2e", "sdk", "python-sdk", "core", "rest", "all" } {
       $TestType = $FirstArg
       if ($args.Count -gt 1) {
         $AdditionalMvnArgs = $args[1..($args.Count - 1)]
@@ -89,6 +92,40 @@ try {
     "sdk" {
       Write-Host "Running SDK tests..."
       & $MvnCmd @MvnArgs "-DrunSDKTests=true"
+    }
+    "python-sdk" {
+      Write-Host "Running Python SDK tests..."
+      $PythonSdkDir = Join-Path $AppHome "sdks\browser4-sdk-python"
+      
+      if (!(Test-Path $PythonSdkDir)) {
+        Write-Error "Python SDK directory not found at $PythonSdkDir"
+        exit 1
+      }
+      
+      # Check if Python is available
+      $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+      if (!$pythonCmd) {
+        $pythonCmd = Get-Command python3 -ErrorAction SilentlyContinue
+      }
+      if (!$pythonCmd) {
+        Write-Error "Python is not installed or not in PATH"
+        exit 1
+      }
+      
+      # Check if pytest is available
+      $pytestCheck = & $pythonCmd.Source -m pytest --version 2>&1
+      if ($LASTEXITCODE -ne 0) {
+        Write-Error "pytest is not installed. Install it with: pip install pytest"
+        Write-Host "Or install all dev dependencies with: pip install -e `".[dev]`" in $PythonSdkDir"
+        exit 1
+      }
+      
+      Push-Location $PythonSdkDir
+      Write-Host "Working directory: $(Get-Location)"
+      & $pythonCmd.Source -m pytest $AdditionalMvnArgs
+      $ExitCode = $LASTEXITCODE
+      Pop-Location
+      exit $ExitCode
     }
     "core" {
       Write-Host "Running core module supplementary tests..."
