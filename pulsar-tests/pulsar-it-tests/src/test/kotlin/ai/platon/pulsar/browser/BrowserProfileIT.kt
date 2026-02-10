@@ -22,7 +22,7 @@ import java.nio.file.Path
  * Tests the complete profile lifecycle including creation, loading,
  * validation, and persistence.
  */
-@Tag("IntegrationTest")
+@Tag("Integration")
 class BrowserProfileIT : WebDriverTestBase() {
 
     @TempDir
