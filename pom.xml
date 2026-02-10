@@ -106,7 +106,7 @@
                 </property>
             </activation>
             <properties>
-                <surefire.excludedGroups>E2E,SDK,MustRunExplicitly</surefire.excludedGroups>
+                <surefire.excludedGroups>E2E,SDK,MustRunExplicitly,E2ETest</surefire.excludedGroups>
             </properties>
         </profile>
 
@@ -793,7 +793,11 @@
         <runCoreTests>false</runCoreTests>
         <runRestTests>false</runRestTests>
 
-        <!-- Default excludedGroups: exclude all non-Fast tests -->
+        <!-- Default excludedGroups: exclude all non-Fast tests
+             Includes both new taxonomy tags and legacy tags for backward compatibility:
+             - New tags: Slow, Heavy, Integration, E2E, SDK, RequiresXYZ, MustRunExplicitly
+             - Legacy tags: IntegrationTest, E2ETest, HeavyTest, SkippableLowerLevelTest, TestInfraCheck, OptionalTest
+             Migration: Gradually migrate tests from legacy tags to new taxonomy -->
         <surefire.excludedGroups>
             Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,
             Integration,E2E,SDK,MustRunExplicitly,

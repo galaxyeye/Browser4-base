@@ -45,7 +45,8 @@ jobs:
         with:
           maven_profiles: 'all-modules,pulsar-tests,integration-tests'
           # Run Integration tests only (test-strategy.md)
-          excluded_groups: 'E2E,SDK,MustRunExplicitly'
+          # Includes legacy tags for backward compatibility
+          excluded_groups: 'E2E,SDK,MustRunExplicitly,E2ETest'
           run_pulsar_tests: 'true'
           timeout_minutes: '60'
 
