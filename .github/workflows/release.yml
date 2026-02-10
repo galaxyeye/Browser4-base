@@ -136,7 +136,7 @@ jobs:
         with:
           maven_profiles: 'all-modules'
           test_excludes: '**integration**,**e2e**'
-          excluded_groups: 'Slow,HeavyTest,E2ETest,IntegrationTest,RequiresServer,BenchmarkTest'
+          excluded_groups: 'Slow,Heavy,HeavyTest,E2E,E2ETest,Integration,IntegrationTest,RequiresServer,BenchmarkTest'
           run_pulsar_tests: 'false'
           timeout_minutes: '45'
 
