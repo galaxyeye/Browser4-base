@@ -241,6 +241,14 @@ class ChromeLauncher constructor(
             if (pid > 0) {
                 logger.warn("Destroy chrome launcher forcibly, pid: {} | {}", pid, userDataDir)
                 Runtimes.destroyProcessForcibly(pid)
+                
+                // Verify the process was actually killed
+                sleepSeconds(1)
+                if (Runtimes.isProcessAlive(pid)) {
+                    logger.error("Failed to kill chrome process, pid: {} is still alive | {}", pid, userDataDir)
+                } else {
+                    logger.info("Chrome process killed successfully, pid: {} | {}", pid, userDataDir)
+                }
             }
         } catch (e: NoSuchFileException) {
             logger.warn("NoSuchFileException | {}", e.message)
@@ -265,9 +273,21 @@ class ChromeLauncher constructor(
             this.process = null
             try {
                 if (p != null && p.isAlive) {
+                    logger.info("Closing chrome process, pid: {} | {}", p.pid(), userDataDir)
                     Runtimes.destroyProcess(p, options.shutdownWaitTime)
+                    
+                    // Verify process is dead, force kill if still alive
                     if (p.isAlive) {
+                        logger.warn("Chrome process still alive after graceful shutdown, force killing | {}", userDataDir)
                         destroyForcibly()
+                        
+                        // Final verification
+                        sleepSeconds(1)
+                        if (p.isAlive) {
+                            logger.error("Chrome process could not be killed, pid: {} | {}", p.pid(), userDataDir)
+                        }
+                    } else {
+                        logger.info("Chrome process closed successfully | {}", userDataDir)
                     }
                 }
             } catch (t: Throwable) {
