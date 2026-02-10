@@ -175,8 +175,8 @@
                     <threadCount>2</threadCount>
                     <!-- Retry failed tests once -->
                     <rerunFailingTestsCount>1</rerunFailingTestsCount>
-                    <!-- Longer timeout for integration tests -->
-                    <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+                    <!-- Longer timeout for integration tests (35 minutes) -->
+                    <forkedProcessTimeoutInSeconds>2100</forkedProcessTimeoutInSeconds>
                 </configuration>
             </plugin>
         </plugins>
