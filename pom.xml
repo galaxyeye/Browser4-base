@@ -107,6 +107,7 @@
             </activation>
             <properties>
                 <!-- Integration tests can be Slow/Heavy - this is expected behavior
+                     Integration tests CAN require Browser/AI/Docker for service collaboration
                      Only exclude E2E, SDK, and MustRunExplicitly tests -->
                 <surefire.excludedGroups>E2E,SDK,MustRunExplicitly,E2ETest</surefire.excludedGroups>
             </properties>

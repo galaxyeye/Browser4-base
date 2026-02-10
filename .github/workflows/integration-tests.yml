@@ -13,8 +13,9 @@ on:
   # Note: This is a lighter-weight alternative to nightly.yml that only runs tests
   # without building Docker images. Use this for quick integration test validation.
   # For full nightly builds with Docker and E2E tests, see nightly.yml.
+  # Scheduled 2 hours after nightly.yml to distribute CI resource usage.
   schedule:
-    # Runs at 02:00 UTC every day
+    # Runs at 02:00 UTC every day (2 hours after nightly.yml)
     - cron: '0 2 * * *'
 
 env:
