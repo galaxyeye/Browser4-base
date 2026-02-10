@@ -1358,7 +1358,7 @@ __pulsar_utils__.queryClientRect = function(selector) {
         return null;
     }
 
-    let rect = ele.__pulsar_getRect()
+    let rect = NodeOps.getRect(ele)
     return this.formatDOMRect(rect)
 };
 
