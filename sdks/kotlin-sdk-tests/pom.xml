@@ -172,7 +172,8 @@
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
                     <!-- Parallel execution -->
                     <parallel>methods</parallel>
-                    <threadCount>2</threadCount>
+                    <threadCount>4</threadCount>
+                    <useUnlimitedThreads>false</useUnlimitedThreads>
                     <!-- Retry failed tests once -->
                     <rerunFailingTestsCount>1</rerunFailingTestsCount>
                     <!-- Longer timeout for integration tests (35 minutes) -->
