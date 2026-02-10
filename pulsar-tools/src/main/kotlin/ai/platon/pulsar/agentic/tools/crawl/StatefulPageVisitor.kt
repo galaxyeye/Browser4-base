@@ -42,7 +42,7 @@ class StatefulPageVisitor(
         val status = PageVisitStatus()
         // status.request = request
         statusCache.putDatum(status.id, status)
-        status.refresh("created")
+        status.refresh("StatefulPageVisitor.onCreated")
         return status
     }
 

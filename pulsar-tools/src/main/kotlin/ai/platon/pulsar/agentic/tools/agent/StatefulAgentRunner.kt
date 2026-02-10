@@ -22,11 +22,7 @@ class StatefulAgentRunner(
     private val statusCache = ConcurrentExpiringLRUCache<String, AgentTaskStatus>(Duration.ofHours(2))
 
     fun create(): AgentTaskStatus {
-        val status = AgentTaskStatus()
-        // status.request = request
-        statusCache.putDatum(status.id, status)
-        status.refresh("created")
-        return status
+        return createCachedStatus()
     }
 
     fun submit(plainCommand: String): AgentTaskStatus {
@@ -87,7 +83,7 @@ class StatefulAgentRunner(
     private fun createCachedStatus(): AgentTaskStatus {
         val status = AgentTaskStatus()
         statusCache.putDatum(status.id, status)
-        status.refresh("created")
+        status.refresh("StatefulAgentRunner.created")
         return status
     }
 }
