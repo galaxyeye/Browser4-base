@@ -28,6 +28,7 @@
     </build>
 
     <modules>
+        <module>pulsar-common-tests</module>
         <module>pulsar-ql-tests</module>
     </modules>
 </project>
