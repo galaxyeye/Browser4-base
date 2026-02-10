@@ -83,7 +83,7 @@ class StatefulAgentRunner(
     private fun createCachedStatus(): AgentTaskStatus {
         val status = AgentTaskStatus()
         statusCache.putDatum(status.id, status)
-        status.refresh("StatefulAgentRunner.created")
+        status.emitEvent("StatefulAgentRunner.created")
         return status
     }
 }

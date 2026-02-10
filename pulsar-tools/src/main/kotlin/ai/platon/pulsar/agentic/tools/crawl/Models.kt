@@ -62,7 +62,7 @@ fun ScrapeResponse.failed(statusCode: Int): ScrapeResponse {
     return this
 }
 
-fun ScrapeResponse.refresh(event: String) {
+fun ScrapeResponse.emitEvent(event: String) {
     this.event = event
     this.lastModifiedTime = Instant.now()
 }
@@ -286,7 +286,7 @@ fun PageVisitStatus.failed(statusCode: Int): PageVisitStatus {
     return this
 }
 
-fun PageVisitStatus.refresh(event: String) {
+fun PageVisitStatus.emitEvent(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
     lastModifiedTime = Instant.now()
@@ -317,7 +317,7 @@ fun PageVisitStatus.addInstructResult(result: PGInstructResult) {
             visitResult.links = result.result as? List<String>?
         }
     }
-    refresh(result.name)
+    emitEvent(result.name)
 }
 
 fun PageVisitStatus.done() {

@@ -42,7 +42,7 @@ class StatefulPageVisitor(
         val status = PageVisitStatus()
         // status.request = request
         statusCache.putDatum(status.id, status)
-        status.refresh("StatefulPageVisitor.onCreated")
+        status.emitEvent("StatefulPageVisitor.onCreated")
         return status
     }
 
@@ -102,7 +102,7 @@ class StatefulPageVisitor(
             val eventCollectorJob = CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
                 try {
                     serverSideEventHandlers.eventFlow.collect { event ->
-                        status.refresh(event.eventType)
+                        status.emitEvent(event.eventType)
                         logger.info("Collected event {} for command {}", event.eventType, status.id)
                     }
                 } catch (e: CancellationException) {
@@ -217,7 +217,7 @@ class StatefulPageVisitor(
                     // DomUtils.selectNthScreenText(screenNumber, document)
                 }
             }
-            status.refresh("textContent")
+            status.emitEvent("textContent")
 
             if (textContent.isBlank()) {
                 if (document.body.numChars > 100) {

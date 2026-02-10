@@ -3,6 +3,7 @@ package ai.platon.pulsar.agentic.tools.crawl.common
 import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
 import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
 import ai.platon.pulsar.agentic.tools.crawl.refresh
+import ai.platon.pulsar.agentic.tools.crawl.emitEvent
 import ai.platon.pulsar.common.PulsarParams.VAR_IS_SCRAPE
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.getLogger
@@ -31,7 +32,7 @@ open class XSQLScrapeHyperlink(
     ) : DefaultCrawlEventHandlers() {
         init {
             onWillLoad.addLast {
-                response.refresh("onWillLoad")
+                response.emitEvent("onWillLoad")
                 it
             }
             onLoaded.addLast { url, page ->
@@ -64,7 +65,7 @@ open class XSQLScrapeHyperlink(
                 hyperlink.extract(page, document)
             }
             onLoaded.addLast { page ->
-                response.refresh("onLoaded")
+                response.emitEvent("onLoaded")
             }
         }
     }
@@ -79,7 +80,7 @@ open class XSQLScrapeHyperlink(
 
     open fun extract(page: WebPage, document: FeaturedDocument) {
         try {
-            response.refresh("extract")
+            response.emitEvent("extract")
             response.pageContentBytes = page.contentLength.toInt()
             response.pageStatusCode = page.protocolStatus.minorCode
 

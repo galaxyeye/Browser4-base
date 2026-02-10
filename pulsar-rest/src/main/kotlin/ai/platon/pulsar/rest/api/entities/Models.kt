@@ -217,7 +217,7 @@ fun CommandStatus.failed(statusCode: Int): CommandStatus {
     return this
 }
 
-fun CommandStatus.refresh(event: String) {
+fun CommandStatus.emitEvent(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
 }
@@ -247,7 +247,7 @@ fun CommandStatus.addInstructResult(result: InstructResult) {
             commandResult.links = result.result as? List<String>?
         }
     }
-    refresh(result.name)
+    emitEvent(result.name)
 }
 
 fun CommandStatus.done() {

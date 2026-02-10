@@ -102,7 +102,7 @@ fun AgentTaskStatus.failed(statusCode: Int): AgentTaskStatus {
     return this
 }
 
-fun AgentTaskStatus.refresh(event: String) {
+fun AgentTaskStatus.emitEvent(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
 }
