@@ -68,6 +68,8 @@ data class ShellResult(
  * val blocked = shell.execute("rm file.txt")  // Blocked: not in whitelist
  * ```
  *
+ * TODO: use Bashlet or similar library for more robust command parsing and validation.
+ *
  * @param baseDir The base working directory for command execution.
  * @param defaultTimeoutSeconds The default timeout for commands in seconds.
  * @author Browser4 Team
