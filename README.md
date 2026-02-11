@@ -277,7 +277,11 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ## 📜 SDK
 
-Kotlin and Python SDKs are available under `sdks/`; Node.js SDK is planned.
+SDKs are available under `sdks/`, current language support includes:
+
+- [Kotlin](sdks/browser4-sdk-kotlin) (native API, REST client)
+- [Python](sdks/browser4-sdk-python) (REST client)
+- [Node.js](sdks/browser4-sdk-nodejs) (REST client)
 
 ---
 
@@ -364,4 +368,16 @@ agent.run("""
 
 Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
+---
 
+## 🤝 Support & Contact
+
+- 💬 WeChat：galaxyeye
+- 🌐 Weibo：[galaxyeye](https://weibo.com/galaxyeye)
+- 📧 Email：galaxyeye@live.cn, ivincent.zhang@gmail.com
+- 🐦 Twitter：galaxyeye8
+- 🌍 WebSite：[browser4.io](https://browser4.io)
+
+<div style="display: flex;">
+  <img src="docs/images/wechat-author.png" width="300" height="365" alt="微信二维码" />
+</div>

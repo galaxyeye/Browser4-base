@@ -7,7 +7,7 @@
 
 [English](README.md) | 简体中文 | [中国镜像](https://gitee.com/platonai_galaxyeye/Browser4)
 
-> 本文件已与英文版 README 同步（同步日期：2026-01-02），如有差异请以英文版为准。
+> 本文件已与英文版 README 同步（同步日期：2026-02-11），如有差异请以英文版为准。
 
 <!-- TOC -->
 **目录**
@@ -71,7 +71,7 @@ val result = agent.run("""
 
 ## 🚀 快速开始
 
-**前置要求**：Java 17+
+**前置要求**：Java 17+，最新 Google Chrome
 
 1. **克隆仓库**
    ```shell
@@ -85,16 +85,20 @@ val result = agent.run("""
 
 3. **构建项目（Linux/macOS）**
    ```shell
-   ./mvnw -DskipTests
+   ./mvnw -q -DskipTests
+   ```
+   **Windows (PowerShell)**：
+   ```powershell
+   .\mvnw.cmd -q -D"skipTests"
    ```
    **Windows (cmd)**：
    ```shell
-   mvnw.cmd -DskipTests
+   mvnw.cmd -q -DskipTests
    ```
 
 4. **运行示例（Linux/macOS）**
    ```shell
-   ./mvnw -pl browser4-examples exec:java -D"exec.mainClass=ai.platon.pulsar.examples.agent.Browser4AgentKt"
+   ./mvnw -pl examples/browser4-examples exec:java -D"exec.mainClass=ai.platon.pulsar.examples.agent.Browser4AgentKt"
    ```
    **Windows (cmd)**：
    ```shell
@@ -108,6 +112,8 @@ val result = agent.run("""
    在 `browser4-examples` 模块中探索并运行示例，直观了解 Browser4 的能力。
 
 Docker 部署请参见我们的 [Docker Hub 仓库](https://hub.docker.com/r/galaxyeye88/browser4)。
+
+**Windows 用户**：你还可以将 Browser4 打包为独立的 Windows 安装程序，详见 [Windows Installer Guide](browser4/browser4-agents/README.md)。
 
 ---
 
@@ -279,7 +285,13 @@ Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/downloa
 
 ## 📜 SDK
 
-Kotlin 与 Python SDK 已提供（见 `sdks/`），Node.js SDK 正在筹备中。
+SDKs are available under `sdks/`, current language support includes:
+
+- [Kotlin](sdks/browser4-sdk-kotlin) (native API, REST client)
+- [Python](sdks/browser4-sdk-python) (REST client)
+- [Node.js](sdks/browser4-sdk-nodejs) (REST client)
+
+---
 
 ## 📜 文档
 
@@ -375,5 +387,4 @@ export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
 - LLM：大语言模型 (LLM)
 - Structured Logging：结构化日志
 - Auto Extraction：自动抽取
-
 
