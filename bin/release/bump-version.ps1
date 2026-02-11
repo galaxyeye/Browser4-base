@@ -61,10 +61,14 @@ $SNAPSHOT_VERSION = Get-Content "$AppHome\VERSION" -TotalCount 1
 $VERSION = $SNAPSHOT_VERSION -replace "-SNAPSHOT", ""
 
 # Parse version components
-$versionParts = $VERSION -split "\."
-$major = [int]$versionParts[0]
-$minor = [int]$versionParts[1]
-$patch = [int]$versionParts[2]
+if ($VERSION -match "^(\d+)\.(\d+)\.(\d+)") {
+    $major = [int]$matches[1]
+    $minor = [int]$matches[2]
+    $patch = [int]$matches[3]
+} else {
+    Write-Error "Version string '$VERSION' does not match the expected format X.Y.Z"
+    exit 1
+}
 
 # Calculate the next version based on the specified part
 switch ($Part) {
