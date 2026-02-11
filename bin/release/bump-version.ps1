@@ -89,8 +89,15 @@ switch ($Part) {
 $NEXT_VERSION = "$major.$minor.$patch"
 $NEXT_SNAPSHOT_VERSION = "$NEXT_VERSION-SNAPSHOT"
 
+if ($NEXT_SNAPSHOT_VERSION -notmatch "^\d+\.\d+\.\d+-SNAPSHOT$") {
+    Write-Error "Calculated version '$NEXT_SNAPSHOT_VERSION' does not match the expected format X.Y.Z-SNAPSHOT"
+    exit 1
+}
+
 Write-Host "Current version: $SNAPSHOT_VERSION"
 Write-Host "New version: $NEXT_SNAPSHOT_VERSION"
+
+
 
 # Update VERSION file
 $NEXT_SNAPSHOT_VERSION | Set-Content "$AppHome\VERSION"

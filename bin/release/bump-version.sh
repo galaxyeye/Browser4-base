@@ -79,6 +79,11 @@ esac
 NEXT_VERSION="$major.$minor.$patch"
 NEXT_SNAPSHOT_VERSION="$NEXT_VERSION-SNAPSHOT"
 
+if [[ ! "$NEXT_SNAPSHOT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
+    echo "Error: Calculated version '$NEXT_SNAPSHOT_VERSION' does not match the expected format X.Y.Z-SNAPSHOT"
+    exit 1
+fi
+
 echo "Current version: $SNAPSHOT_VERSION"
 echo "New version: $NEXT_SNAPSHOT_VERSION"
 
