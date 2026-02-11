@@ -82,7 +82,7 @@ from
 
 DOM functions are designed to query attributes of the DOM (Document Object Model). Each DOM function accepts a `ValueDom` argument, which is a wrapper around a Jsoup Element.
 
-DOM functions are defined in the following file: [DomFunctions](https://github.com/apache/pulsar/blob/master/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomFunctions.kt).
+DOM functions are defined in the following file: [DomFunctions](https://github.com/apache/pulsar/blob/master/pulsar-core/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomFunctions.kt).
 
 All DOM functions belong to the namespace `DOM`.
 
@@ -108,7 +108,7 @@ Each DOM function accepts a parameter named `DOM` (case-insensitive), of type `V
 
 DOM selection functions typically also accept a `cssSelector` parameter to select a child element of the `DOM`.
 
-The most important DOM selection functions are defined in the following file: [DomSelectFunctions](https://github.com/apache/pulsar/blob/master/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomSelectFunctions.kt).
+The most important DOM selection functions are defined in the following file: [DomSelectFunctions](https://github.com/apache/pulsar/blob/master/pulsar-core/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomSelectFunctions.kt).
 
 All DOM selection functions belong to the namespace `DOM`.
 
@@ -162,7 +162,7 @@ from
 
 Most string functions are automatically converted from `org.apache.commons.lang3.StringUtils` through programming. 
 You can find the UDF definitions in the following file: 
-[StringFunctions](https://github.com/apache/pulsar/blob/master/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/StringFunctions.kt).
+[StringFunctions](https://github.com/apache/pulsar/blob/master/pulsar-core/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/StringFunctions.kt).
 
 All string functions belong to the namespace `STR`.
 

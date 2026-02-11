@@ -82,7 +82,7 @@ from
 
 DOM函数旨在查询DOM属性。每个DOM函数接受一个名为`ValueDom`的参数，它是一个Jsoup Element的包装器。
 
-DOM函数定义在以下文件中：[DomFunctions](https://github.com/apache/pulsar/blob/master/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomFunctions.kt)。
+DOM函数定义在以下文件中：[DomFunctions](https://github.com/apache/pulsar/blob/master/pulsar-core/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomFunctions.kt)。
 
 所有DOM函数都在命名空间`DOM`中。
 
@@ -108,7 +108,7 @@ DOM选择函数旨在从DOM中查询元素及其属性。
 
 DOM选择函数通常也接受一个名为`cssSelector`的参数，用于选择`DOM`的子元素。
 
-最重要的DOM选择函数定义在以下文件中：[DomSelectFunctions](https://github.com/apache/pulsar/blob/master/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomSelectFunctions.kt)。
+最重要的DOM选择函数定义在以下文件中：[DomSelectFunctions](https://github.com/apache/pulsar/blob/master/pulsar-core/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/DomSelectFunctions.kt)。
 
 所有DOM选择函数都在命名空间`DOM`中。
 
@@ -160,7 +160,7 @@ from
 
 ## 字符串函数
 
-大多数字符串函数是通过编程自动从`org.apache.commons.lang3.StringUtils`转换而来。您可以在以下文件中找到UDF定义：[StringFunctions](https://github.com/apache/pulsar/blob/master/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/StringFunctions.kt)。
+大多数字符串函数是通过编程自动从`org.apache.commons.lang3.StringUtils`转换而来。您可以在以下文件中找到UDF定义：[StringFunctions](https://github.com/apache/pulsar/blob/master/pulsar-core/pulsar-ql/src/main/kotlin/ai/platon/pulsar/ql/h2/udfs/StringFunctions.kt)。
 
 所有字符串函数都在命名空间`STR`中。
 

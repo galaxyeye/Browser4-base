@@ -333,13 +333,13 @@ Join our community for support, feedback, and collaboration!
 - **Issue Tracker**: Report bugs or request features.
 - **Social Media**: Follow us for updates and news.
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We welcome contributions! Please open issues or pull requests on GitHub.
 
 ---
 
 ## 📜 Documentation
 
-Comprehensive documentation is available in the `docs/` directory and on our [GitHub Pages site](https://platonai.github.io/browser4/).
+Comprehensive documentation is available in the `docs/` directory.
 
 ---
 

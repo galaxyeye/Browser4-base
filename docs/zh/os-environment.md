@@ -1,7 +1,7 @@
 系统环境
 =================
 
-Linux[get-started](get-started)
+Linux
 -----
 
 更新系统:
