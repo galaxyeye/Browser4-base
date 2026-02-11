@@ -271,7 +271,7 @@ Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/downloa
 | `pulsar-tools` | CLI 工具与运维辅助组件 |
 | `browser4-spa` | 面向浏览器智能体的单页应用 |
 | `browser4-agents` | 智能体与爬虫编排及产品打包 |
-| `sdks` | Kotlin/Python SDK 及其测试与示例 |
+| `sdks` | Kotlin/Python/Rust SDK 及其测试与示例 |
 | `examples` | 可运行示例与演示工程 |
 | `pulsar-tests` | 重型集成与场景测试 |
 
@@ -279,7 +279,11 @@ Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/downloa
 
 ## 📜 SDK
 
-Kotlin 与 Python SDK 已提供（见 `sdks/`），Node.js SDK 正在筹备中。
+Kotlin、Python 和 Rust SDK 已提供（见 `sdks/`），Node.js SDK 正在筹备中。
+
+- **Kotlin SDK**: 基于 JVM 的 SDK，支持协程
+- **Python SDK**: 支持 async/await 的现代 Python SDK
+- **Rust SDK**: 原生性能，使用 tokio 异步运行时（全新发布！🎉）
 
 ## 📜 文档
 
