@@ -107,7 +107,37 @@ class ChromeLauncher constructor(
 
         // Launch the Chrome process with the specified binary path, user data directory, and options.
         val startTime = System.currentTimeMillis()
-        val port = launchChromeProcess(chromeBinaryPath, userDataDir, options)
+        var port = 0
+        var lastException: Exception? = null
+
+        // Retry if the profile is locked, it happens when the previous process is exiting
+        for (i in 1..3) {
+            try {
+                port = launchChromeProcess(chromeBinaryPath, userDataDir, options)
+                break
+            } catch (e: ChromeLaunchException) {
+                lastException = e
+                // If the profile is locked, wait for the previous process to exit
+                if (e.message?.contains("Profile locked") == true) {
+                    if (i < 3) {
+                        logger.warn("Chrome profile locked, retrying... ($i) | {}", e.message)
+                        try {
+                            Thread.sleep(2000)
+                        } catch (interrupted: InterruptedException) {
+                            Thread.currentThread().interrupt()
+                            throw e
+                        }
+                    }
+                } else {
+                    throw e
+                }
+            }
+        }
+
+        if (port == 0) {
+            throw lastException ?: ChromeLaunchException("Failed to launch chrome")
+        }
+
         val launchDuration = System.currentTimeMillis() - startTime
 
         // Generate launch report
@@ -471,7 +501,12 @@ class ChromeLauncher constructor(
 
         if (port == 0) {
             close(readLineThread)
-            logger.debug("Process output:>>>\n{}\n<<<", processOutput)
+            val output = processOutput.toString()
+            logger.debug("Process output:>>>\n{}\n<<<", output)
+
+            if (output.contains("Opening in existing browser session") || output.contains("正在现有的浏览器会话中打开")) {
+                throw ChromeLaunchException("Chrome profile is locked by another process | $userDataDir")
+            }
 
             handleChromeFailedToStart()
 

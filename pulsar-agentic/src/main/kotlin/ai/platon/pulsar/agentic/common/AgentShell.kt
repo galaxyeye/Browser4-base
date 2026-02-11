@@ -109,6 +109,9 @@ class AgentShell constructor(
             "grep", "awk", "sed",
             // Counting
             "wc",
+        )
+
+        private val ALLOWED_COMMANDS_L2 = setOf(
             // System info
             "uname", "hostname", "uptime", "whoami", "id",
             // Resource monitoring
@@ -120,6 +123,8 @@ class AgentShell constructor(
             // Environment
             "env", "printenv", "which", "type"
         )
+
+        private val ALLOWED_COMMANDS_L3 = setOf("*")
     }
 
     private val logger = getLogger(this)
@@ -294,11 +299,11 @@ class AgentShell constructor(
         if (baseCommand.isEmpty()) {
             return "empty or invalid command"
         }
-        
+
         if (!isCommandAllowed(baseCommand)) {
             return "command '$baseCommand' is not in the whitelist. Allowed commands: ${ALLOWED_COMMANDS.sorted().joinToString(", ")}"
         }
-        
+
         // Additional validation for specific commands
         if (baseCommand == "sed") {
             // Prevent in-place editing with sed -i flag (various forms)
@@ -307,7 +312,7 @@ class AgentShell constructor(
                 return "sed in-place editing is not allowed"
             }
         }
-        
+
         // Then check blocked patterns for additional safety
         for (pattern in BLOCKED_PATTERNS) {
             if (pattern.containsMatchIn(command)) {
@@ -324,13 +329,13 @@ class AgentShell constructor(
     private fun extractBaseCommand(command: String): String {
         val trimmed = command.trim()
         if (trimmed.isEmpty()) return ""
-        
+
         // Split by whitespace and get the first token
         val tokens = trimmed.split(Regex("\\s+"))
         if (tokens.isEmpty()) return ""
-        
+
         val firstToken = tokens[0]
-        
+
         // Handle multi-word commands like "ip addr" or "ip route"
         // Only these specific ip subcommands are allowed, not all ip commands
         if (firstToken == "ip" && tokens.size > 1) {
@@ -338,11 +343,11 @@ class AgentShell constructor(
             if (secondToken == "addr" || secondToken == "route") {
                 return "ip $secondToken"
             }
-            // For other ip subcommands, return the full "ip <subcommand>" 
+            // For other ip subcommands, return the full "ip <subcommand>"
             // which will fail whitelist validation
             return "ip $secondToken"
         }
-        
+
         return firstToken
     }
 
