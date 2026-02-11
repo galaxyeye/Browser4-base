@@ -121,6 +121,10 @@ class ChromeLauncher constructor(
                 if (e.message?.contains("profile is locked", ignoreCase = true) == true) {
                     if (i < 5) {
                         logger.warn("Chrome profile locked, retrying... ($i) | {}", e.message)
+                        
+                        // Try to kill the zombie process holding the lock
+                        killLockingProcess()
+
                         try {
                             Thread.sleep(3000)
                         } catch (interrupted: InterruptedException) {
@@ -145,6 +149,73 @@ class ChromeLauncher constructor(
 
         // Return a new instance of ChromeImpl initialized with port
         return ChromeImpl(port)
+    }
+
+    private fun killLockingProcess() {
+        try {
+            logger.info("Attempting to find and kill process holding lock on {}", userDataDir)
+            val allProcesses = ProcessHandle.allProcesses().toList()
+            var found = false
+
+            // Debug: count chrome processes
+            val chromeProcesses = allProcesses.filter {
+                it.info().command().map { cmd -> cmd.contains("chrome", ignoreCase = true) }.orElse(false)
+            }
+            logger.info("Found {} chrome processes via ProcessHandle", chromeProcesses.size)
+
+            chromeProcesses.forEach { handle ->
+                val cmdLine = handle.info().commandLine().orElse("")
+                
+                if (isCommandLineMatch(cmdLine)) {
+                    logger.warn("Killing process holding lock: pid={}, info={}", handle.pid(), handle.info())
+                    handle.destroyForcibly()
+                    found = true
+                }
+            }
+
+            if (!found && SystemUtils.IS_OS_WINDOWS) {
+                killLockingProcessWindows()
+            }
+            
+            // Give the OS some time to release file locks and cleanup the process
+            Thread.sleep(2000)
+
+        } catch (e: Exception) {
+            logger.warn("Failed to kill locking process", e)
+        }
+    }
+
+    private fun isCommandLineMatch(cmdLine: String): Boolean {
+        if (cmdLine.isBlank()) return false
+        val normalizedCmd = cmdLine.replace("\\", "/")
+        val normalizedPath = userDataDir.toAbsolutePath().toString().replace("\\", "/")
+        return normalizedCmd.contains(normalizedPath)
+    }
+
+    private fun killLockingProcessWindows() {
+        try {
+            logger.info("Trying wmic fallback to kill locking process")
+            val pb = ProcessBuilder("wmic", "process", "where", "name='chrome.exe'", "get", "commandline,processid")
+            val process = pb.start()
+            val output = String(process.inputStream.readAllBytes())
+
+            output.lines().forEach { line ->
+                if (isCommandLineMatch(line)) {
+                    // Extract PID (last token)
+                    val parts = line.trim().split("\\s+".toRegex())
+                    if (parts.isNotEmpty()) {
+                        val pidStr = parts.last()
+                        val pid = pidStr.toLongOrNull()
+                        if (pid != null) {
+                            logger.warn("Killing process holding lock (wmic): pid={}, line={}", pid, line.take(100))
+                            ProcessHandle.of(pid).ifPresent { it.destroyForcibly() }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to kill locking process via wmic", e)
+        }
     }
 
     /**
@@ -509,7 +580,9 @@ class ChromeLauncher constructor(
         if (port == 0) {
             close(readLineThread)
             val output = processOutput.toString()
-            logger.debug("Process output:>>>\n{}\n<<<", output)
+            val isAlive = process.isAlive
+            val exitValue = if (!isAlive) process.exitValue() else "N/A"
+            logger.warn("Chrome failed to start. Alive: {}, ExitCode: {}\nProcess output:>>>\n{}\n<<<", isAlive, exitValue, output)
 
             if (output.contains("Opening in existing browser session") || output.contains("正在现有的浏览器会话中打开")) {
                 throw ChromeLaunchException("Chrome profile is locked by another process | $userDataDir")
