@@ -8,10 +8,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let mut session = AgenticSession::new(client.clone());
 
-    // Navigate to a page (using session's driver)
-    let driver = session.session().get_or_create_driver();
-    // Note: Arc doesn't support mutable operations, so we can't use driver methods
-    // that require &mut self through Arc. For this example, we'll skip navigation.
+    // Note: For navigation, you would typically use a separate WebDriver instance
+    // or access the underlying session's driver methods directly
 
     // Use natural language to interact
     let act_result = session

@@ -24,7 +24,7 @@
 //! use std::collections::HashMap;
 //!
 //! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 //!     // Create client and session
 //!     let client = Arc::new(PulsarClient::new());
 //!     client.create_session().await?;
@@ -59,7 +59,7 @@
 //! use std::sync::Arc;
 //!
 //! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 //!     let client = Arc::new(PulsarClient::new());
 //!     client.create_session().await?;
 //!
