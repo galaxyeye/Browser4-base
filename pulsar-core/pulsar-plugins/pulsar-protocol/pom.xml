@@ -14,7 +14,7 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar-plugins</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.5.0-rc.1</version>
     </parent>
 
     <artifactId>pulsar-protocol</artifactId>
@@ -42,11 +42,6 @@
             <artifactId>pulsar-resources</artifactId>
             <type>test-jar</type>
             <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ninja-squad</groupId>
-            <artifactId>springmockk</artifactId>
             <scope>test</scope>
         </dependency>
 

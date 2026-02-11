@@ -68,7 +68,7 @@ val result = agent.run("""
 
 ## 🚀 Quick Start
 
-**Prerequisites**: Java 17+ and Maven 3.6+
+**Prerequisites**: Java 17+
 
 1. **Clone the repository**
    ```shell
@@ -97,6 +97,8 @@ val result = agent.run("""
    Explore and run examples in the `browser4-examples` module to see Browser4 in action.
 
 For Docker deployment, see our [Docker Hub repository](https://hub.docker.com/r/galaxyeye88/browser4).
+
+**Windows Users**: You can also build Browser4 as a standalone Windows installer. See the [Windows Installer Guide](browser4/browser4-agents/README.md) for details.
 
 ---
 
@@ -149,7 +151,7 @@ var fields = session.extract(document, mapOf("title" to "#title"))
 
 // Let the companion agent execute a multi-step navigation/search flow
 val history = agent.run(
-  "Go to amazon.com, search for 'smart phone', open the product page with the highest ratings"
+    "Go to amazon.com, search for 'smart phone', open the product page with the highest ratings"
 )
 
 // Capture the updated browser state back into a PageSnapshot
@@ -237,7 +239,7 @@ Automatic, large-scale, high-precision field discovery and extraction powered by
 **Quick Commands (PulsarRPAPro):**
 ```bash
 # NOTE: MongoDB required
-curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/download/v4.3.0/PulsarRPAPro.jar
+curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/download/v4.6.0/PulsarRPAPro.jar
 ```
 
 **Integration Status:**
@@ -260,100 +262,122 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ## 📦 Modules Overview
 
-| Module | Description |
-|--------|-------------|
-| `pulsar-core` | Core engine: sessions, scheduling, DOM, browser control |
-| `pulsar-rest` | Spring Boot REST layer & command endpoints |
-| `pulsar-client` | Client SDK / CLI utilities |
-| `browser4-spa` | Single Page Application for browser agents |
-| `browser4-agents` | Agent & crawler orchestration with product packaging |
-| `pulsar-tests` | Heavy integration & scenario tests |
-| `pulsar-tests-common` | Shared test utilities & fixtures |
+| Module            | Description                                             |
+|-------------------|---------------------------------------------------------|
+| `pulsar-core`     | Core engine: sessions, scheduling, DOM, browser control |
+| `pulsar-agentic`  | Agent implementation, MCP, and skill registration       |
+| `pulsar-rest`     | Spring Boot REST layer & command endpoints              |
+| `browser4-spa`    | Single Page Application for browser agents              |
+| `browser4-agents` | Agent & crawler orchestration with product packaging    |
+| `sdks`            | Kotlin/Python SDKs plus tests and examples              |
+| `examples`        | Runnable examples and demos                             |
+| `pulsar-tests`    | E2E & heavy integration & scenario tests                |
 
 ---
 
 ## 📜 SDK
 
-Python/Node.js SDKs are on the way.
+SDKs are available under `sdks/`, current language support includes:
 
-## 📜 Documentation
-
-* 🛠️ [Configuration Guide](docs/config.md)
-* 📚 [Build from Source](docs/build.md)
-* 🧠 [Expert Guide](docs/advanced-guides.md)
-* 🤖 [AI Programming Products Guidance](docs/ai-products-guidance.md) - Support for Cursor, Windsurf, Cline, Aider, GitHub Copilot
-
----
-
-## 🔧 Proxies - Unblock Websites
-
-<details>
-
-Set the environment variable PROXY_ROTATION_URL to the URL provided by your proxy service:
-
-```shell
-export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
-```
-
-Each time the rotation URL is accessed, it should return a response containing one or more fresh proxy IPs.
-Ask your proxy provider for such a URL.
-
-</details>
+- [Kotlin](sdks/browser4-sdk-kotlin) (native API, REST client)
+- [Python](sdks/browser4-sdk-python) (REST client)
+- [Node.js](sdks/browser4-sdk-nodejs) (REST client)
 
 ---
 
 ## ✨ Features
 
+Status: [Available] in repo, [Experimental] in active iteration, [Planned] not in repo, [Indicative] performance target.
+
 ### AI & Agents
-- Problem-solving autonomous browser agents
-- Parallel agent sessions
-- LLM-assisted page understanding & extraction
+- [Available] Problem-solving autonomous browser agents
+- [Available] Parallel agent sessions
+- [Experimental] LLM-assisted page understanding & extraction
 
 ### Browser Automation & RPA
-- Workflow-based browser actions
-- Precise coroutine-safe control (scroll, click, extract)
-- Flexible event handlers & lifecycle management
+- [Available] Workflow-based browser actions
+- [Available] Precise coroutine-safe control (scroll, click, extract)
+- [Available] Flexible event handlers & lifecycle management
 
 ### Data Extraction & Query
-- One-line data extraction commands
-- X-SQL extended query language for DOM/content
-- Structured + unstructured hybrid extraction (LLM & ML & selectors)
+- [Available] One-line data extraction commands
+- [Available] X-SQL extended query language for DOM/content
+- [Experimental] Structured + unstructured hybrid extraction (LLM & ML & selectors)
 
 ### Performance & Scalability
-- High-efficiency parallel page rendering
-- Block-resistant design & smart retries
-- 100,000+ complex pages/day on modest hardware (indicative)
+- [Available] High-efficiency parallel page rendering
+- [Available] Block-resistant design & smart retries
+- [Indicative] 100,000+ complex pages/day on modest hardware
 
 ### Stealth & Reliability
-- Advanced anti-bot techniques
-- IP & profile rotation
-- Resilient scheduling & quality assurance
+- [Experimental] Advanced anti-bot techniques
+- [Available] Proxy rotation via `PROXY_ROTATION_URL`
+- [Available] Resilient scheduling & quality assurance
 
 ### Developer Experience
-- Simple API integration (REST, native, text commands)
-- Rich configuration layering
-- Clear structured logging & metrics
+- [Available] Simple API integration (REST, native, text commands)
+- [Available] Rich configuration layering
+- [Available] Clear structured logging & metrics
 
 ### Storage & Monitoring
-- Local FS & MongoDB support (extensible)
-- Comprehensive logs & transparency
-- Detailed metrics & lifecycle visibility
+- [Available] Local FS & MongoDB support (extensible)
+- [Available] Comprehensive logs & transparency
 
 ---
 
 ## 🤝 Support & Community
 
-- 💬 WeChat: galaxyeye
-- 🌐 Weibo: [galaxyeye](https://weibo.com/galaxyeye)
-- 📧 Email: galaxyeye@live.cn, ivincent.zhang@gmail.com
-- 🐦 Twitter: [galaxyeye8](https://x.com/galaxyeye8)
-- 🌍 Website: [browser4.io](https://browser4.io)
+Join our community for support, feedback, and collaboration!
 
-<div style="display: flex;">
-  <img src="docs/images/wechat-author.png" width="300" height="365" alt="WeChat QR Code" />
-</div>
+- **GitHub Discussions**: Engage with developers and users.
+- **Issue Tracker**: Report bugs or request features.
+- **Social Media**: Follow us for updates and news.
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
-> For Chinese documentation, refer to [简体中文 README](README.zh.md).
+## 📜 Documentation
 
+Comprehensive documentation is available in the `docs/` directory and on our [GitHub Pages site](https://platonai.github.io/browser4/).
+
+---
+
+## 🔧 Proxies - Unblock Websites
+
+Browser4 supports proxy rotation and management to access geo-restricted content.
+
+**Quick Start:**
+1. Obtain a list of proxy URLs (e.g., from a proxy provider).
+2. Configure `PROXY_ROTATION_URL` in `application.properties`.
+3. Use the `rotateProxies` command in your agent scripts.
+
+**Example:**
+```kotlin
+agent.run("""
+    1. Go to a blocked website
+    2. If blocked, rotate proxy and retry
+    """)
+```
+
+**Note**: Respect website terms of service and robots.txt rules when scraping.
+
+---
+
+## License
+
+Apache 2.0 License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🤝 Support & Contact
+
+- 💬 WeChat：galaxyeye
+- 🌐 Weibo：[galaxyeye](https://weibo.com/galaxyeye)
+- 📧 Email：galaxyeye@live.cn, ivincent.zhang@gmail.com
+- 🐦 Twitter：galaxyeye8
+- 🌍 WebSite：[browser4.io](https://browser4.io)
+
+<div style="display: flex;">
+  <img src="docs/images/wechat-author.png" width="300" height="365" alt="微信二维码" />
+</div>

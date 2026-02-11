@@ -113,6 +113,7 @@ abstract class AbstractH2SQLSession(
                 warnForClose(this, t)
             }
         }
+        super.close()
     }
 
     private fun <T: Any> loadTopLevelClasses(clazz: KClass<T>): List<Class<*>> {

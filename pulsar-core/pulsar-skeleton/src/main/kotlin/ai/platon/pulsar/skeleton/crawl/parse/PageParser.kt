@@ -7,9 +7,9 @@ import ai.platon.pulsar.common.config.Parameterized
 import ai.platon.pulsar.common.readable
 import ai.platon.pulsar.persist.ParseStatus
 import ai.platon.pulsar.persist.WebPage
-import ai.platon.pulsar.skeleton.common.message.MiscMessageWriter
+import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.common.LazyConfigurable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -22,7 +22,7 @@ import kotlin.system.measureTimeMillis
 class PageParser(
     val parserFactory: ParserFactory,
     override var conf: ImmutableConfig,
-    val messageWriter: MiscMessageWriter? = null
+    val messageWriter: MiscMessageMessageWriter? = null
 ) : Parameterized, LazyConfigurable, AutoCloseable {
     private val logger = LoggerFactory.getLogger(PageParser::class.java)
 
@@ -31,7 +31,7 @@ class PageParser(
     constructor(parserFactory: ParserFactory, conf: ImmutableConfig) : this(
         parserFactory,
         conf,
-        MiscMessageWriter()
+        MiscMessageMessageWriter()
     )
 
     /**
@@ -117,7 +117,9 @@ class PageParser(
         try {
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onWillParse?.invoke(page)
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onWillParse?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillParse?.invoke(page)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onWillParse", page)
         } catch (e: Throwable) {
             logger.warn("[onWillParse]", e)
         }
@@ -125,9 +127,11 @@ class PageParser(
 
     private fun onParsed(page: WebPage) {
         try {
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onParsed?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onParsed?.invoke(page)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onParsed?.invoke(page)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onParsed", page)
         } catch (e: Throwable) {
             logger.warn("[onParsed]", e)
         }

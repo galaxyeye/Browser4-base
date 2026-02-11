@@ -20,25 +20,26 @@ import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.persist.model.GoraWebPage
 import ai.platon.pulsar.skeleton.crawl.fetch.Fetcher
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFetcher
 import ai.platon.pulsar.skeleton.crawl.protocol.Response
 import kotlinx.coroutines.runBlocking
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
-abstract class AbstractBrowserFetcher: BrowserFetcher, Fetcher {
-    
+abstract class AbstractBrowserFetcher : BrowserFetcher, Fetcher {
+
     private val logger = getLogger(this::class)
-    
+
     abstract val isActive: Boolean
-    
+
     @Throws(Exception::class)
     override fun fetch(url: String) = fetchContent(GoraWebPage.newWebPage(url, conf.toVolatileConfig()))
-    
+
     @Throws(Exception::class)
     override fun fetch(url: String, conf: VolatileConfig) = fetchContent(GoraWebPage.newWebPage(url, conf))
-    
+
     /**
      * Fetch page content
      * */
@@ -46,15 +47,15 @@ abstract class AbstractBrowserFetcher: BrowserFetcher, Fetcher {
     override fun fetchContent(page: WebPage): Response = runBlocking {
         fetchContentDeferred(page)
     }
-    
+
     @Throws(Exception::class)
     override suspend fun fetchDeferred(url: String) =
         fetchContentDeferred(GoraWebPage.newWebPage(url, conf.toVolatileConfig()))
-    
+
     @Throws(Exception::class)
     override suspend fun fetchDeferred(url: String, volatileConfig: VolatileConfig) =
         fetchContentDeferred(GoraWebPage.newWebPage(url, volatileConfig))
-    
+
     /**
      * Fetch page content
      * */

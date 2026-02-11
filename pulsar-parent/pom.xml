@@ -27,7 +27,8 @@ under the License.
     <groupId>ai.platon</groupId>
     <artifactId>pulsar-parent</artifactId>
     <name>Pulsar Parent</name>
-    <version>4.4.0-SNAPSHOT</version>
+    <!-- The parent pom should be published separately -->
+    <version>4.5.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <description>
@@ -101,6 +102,7 @@ under the License.
         <!--        <distMgmtSnapshotsUrl>https://repository.apache.org/content/repositories/snapshots</distMgmtSnapshotsUrl>-->
         <!--        <organization.logo>https://www.apache.org/images/asf_logo_wide_2016.png</organization.logo>-->
 
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <sourceReleaseAssemblyDescriptor>source-release</sourceReleaseAssemblyDescriptor>

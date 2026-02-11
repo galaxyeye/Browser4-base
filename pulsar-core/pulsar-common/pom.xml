@@ -15,7 +15,7 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.5.0-rc.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -79,15 +79,23 @@
             <artifactId>gson</artifactId>
         </dependency>
 
-        <!--
-            Woodstox is required by KConfiguration to parse xml files.
-            Woodstox is a high-performance XML processor that implements Stax (JSR-173), SAX2 and Stax2 APIs
-         -->
+        <!-- For URL processing -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+
+        <!-- Stax2 API is an extension to standard Stax API ("the STandard Api for Xml processing"), pull-parser API of JDK. -->
+        <!-- https://mvnrepository.com/artifact/org.codehaus.woodstox/stax2-api/4.2.2 -->
         <dependency>
             <groupId>org.codehaus.woodstox</groupId>
             <artifactId>stax2-api</artifactId>
             <version>${stax2-api.version}</version>
         </dependency>
+        <!--
+            Woodstox is required by KConfiguration to parse xml files.
+            Woodstox is a high-performance XML processor that implements Stax (JSR-173), SAX2 and Stax2 APIs
+         -->
         <!-- https://mvnrepository.com/artifact/org.codehaus.woodstox/woodstox-core-asl -->
         <dependency>
             <groupId>org.codehaus.woodstox</groupId>

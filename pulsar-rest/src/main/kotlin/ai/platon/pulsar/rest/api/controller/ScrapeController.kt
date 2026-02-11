@@ -1,7 +1,7 @@
 package ai.platon.pulsar.rest.api.controller
 
-import ai.platon.pulsar.rest.api.entities.ScrapeRequest
-import ai.platon.pulsar.rest.api.entities.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
 import ai.platon.pulsar.rest.api.entities.ScrapeStatusRequest
 import ai.platon.pulsar.rest.api.service.ScrapeService
 import jakarta.servlet.http.HttpServletRequest
@@ -10,7 +10,6 @@ import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
-import java.util.concurrent.Executors
 
 @RestController
 @CrossOrigin

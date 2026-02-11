@@ -15,12 +15,13 @@
     <parent>
         <groupId>ai.platon</groupId>
         <artifactId>pulsar-parent</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
-        <relativePath>pulsar-parent/pom.xml</relativePath>
+        <!-- Parent POM should always use the published version -->
+        <version>4.5.0</version>
     </parent>
 
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>pulsar</artifactId>
+    <version>4.5.0-rc.1</version>
     <packaging>pom</packaging>
 
     <name>Browser4</name>
@@ -85,17 +86,106 @@
     <!-- Default active modules. The main goal is to allow the user to run PulsarApplication
      with a single click in the IDE right after opening the project. -->
     <modules>
-        <module>pulsar-parent</module>
         <module>pulsar-dependencies</module>
+        <module>pulsar-tests/pulsar-tests-common</module>
         <module>pulsar-core</module>
+        <module>pulsar-agentic</module>
+        <module>pulsar-tools</module>
         <module>pulsar-rest</module>
-        <module>pulsar-client</module>
-        <module>pulsar-tests-common</module>
-        <module>pulsar-tests</module>
         <module>pulsar-bom</module>
     </modules>
 
     <profiles>
+        <!-- Test execution profiles based on test-strategy.md -->
+        <profile>
+            <id>integration-tests</id>
+            <activation>
+                <property>
+                    <name>runITs</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <!-- Integration tests can be Slow/Heavy - this is expected behavior
+                     Integration tests CAN require Browser/AI/Docker for service collaboration
+                     Only exclude E2E, SDK, and MustRunExplicitly tests -->
+                <surefire.excludedGroups>E2E,SDK,MustRunExplicitly,E2ETest</surefire.excludedGroups>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>e2e-tests</id>
+            <activation>
+                <property>
+                    <name>runE2ETests</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <!-- E2E tests can be Heavy, RequiresBrowser, RequiresAI
+                     Only exclude MustRunExplicitly tests -->
+                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>sdk-tests</id>
+            <activation>
+                <property>
+                    <name>runSDKTests</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>core-tests</id>
+            <activation>
+                <property>
+                    <name>runCoreTests</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>rest-tests</id>
+            <activation>
+                <property>
+                    <name>runRestTests</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>all-modules</id>
+            <modules>
+                <module>pulsar-dependencies</module>
+                <module>pulsar-core</module>
+                <module>pulsar-core/pulsar-core-tests</module>
+                <module>pulsar-tools</module>
+                <module>pulsar-agentic</module>
+                <module>pulsar-rest</module>
+                <module>pulsar-bom</module>
+
+                <module>browser4</module>
+
+                <module>examples</module>
+                <module>pulsar-tests</module>
+                <module>sdks</module>
+            </modules>
+        </profile>
+
         <profile>
             <id>examples</id>
             <activation>
@@ -106,7 +196,29 @@
                 <module>browser4/browser4-spa</module>
                 <module>examples/browser4-examples</module>
                 <module>examples/java-compatible</module>
-                <module>sdks/kotlin-sdk</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>pulsar-tests</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>pulsar-tests</module>
+            </modules>
+            <properties>
+                <surefire.excludedGroups>None</surefire.excludedGroups>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>sdk</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>sdks</module>
             </modules>
         </profile>
 
@@ -149,15 +261,14 @@
             <id>deploy</id>
             <properties>
                 <deploy-active>true</deploy-active>
+                <skipTests>false</skipTests>
+                <maven.test.failure.ignore>false</maven.test.failure.ignore>
             </properties>
             <modules>
-                <module>pulsar-parent</module>
                 <module>pulsar-dependencies</module>
                 <module>pulsar-core</module>
 
-                <module>pulsar-tests-common</module>
                 <module>pulsar-tests</module>
-                <module>pulsar-client</module>
                 <module>pulsar-bom</module>
             </modules>
 
@@ -329,8 +440,6 @@
 
     <build>
         <defaultGoal>install</defaultGoal>
-        <directory>target</directory>
-        <finalName>${project.artifactId}-${project.version}</finalName>
 
         <plugins>
             <!--  kotlin plugin should come before maven-compiler-plugin  -->
@@ -417,16 +526,17 @@
             <!--
             The Surefire Plugin is used during the test phase of the build lifecycle to execute the unit tests of
             an application.
-            see https://maven.apache.org/surefire/maven-surefire-plugin/
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>${version.maven-surefire}</version>
                 <configuration>
                     <!--
 
                     -->
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
+
                     <!-- All tests are in the same JVM process -->
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
@@ -434,14 +544,6 @@
                     <argLine>-XX:+EnableDynamicAgentLoading</argLine>
                     <useModulePath>false</useModulePath>
                 </configuration>
-
-<!--                <dependencies>-->
-<!--                    <dependency>-->
-<!--                        <groupId>org.junit.jupiter</groupId>-->
-<!--                        <artifactId>junit-jupiter-engine</artifactId>-->
-<!--                        <version>${junit5.version}</version>-->
-<!--                    </dependency>-->
-<!--                </dependencies>-->
             </plugin>
         </plugins>
     </build>
@@ -458,7 +560,7 @@
             <dependency>
                 <groupId>ai.platon</groupId>
                 <artifactId>pulsar-dependencies</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -467,30 +569,30 @@
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-common</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-plugins</artifactId>
                 <type>pom</type>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-persist</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-skeleton</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-resources</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
@@ -498,86 +600,91 @@
                 <type>test-jar</type>
                 <classifier>tests</classifier>
                 <scope>test</scope>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-protocol</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-parse</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-browser</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-llm</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-dom</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-beans</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-ql-common</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-ql-common</artifactId>
                 <classifier>shaded</classifier>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-ql</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-agentic</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ai.platon.pulsar</groupId>
+                <artifactId>pulsar-tools</artifactId>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-rest</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-boot</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-qa</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-qa</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
                 <type>test-jar</type>
                 <classifier>tests</classifier>
                 <scope>test</scope>
@@ -585,24 +692,24 @@
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-tests-common</artifactId>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-tests-common</artifactId>
                 <classifier>tests</classifier>
                 <scope>test</scope>
-                <version>${project.version}</version>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-tests</artifactId>
-                <version>${project.version}</version>
+                <artifactId>pulsar-it-tests</artifactId>
+                <version>${pulsar.modules.version}</version>
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-tests</artifactId>
-                <version>${project.version}</version>
+                <artifactId>pulsar-it-tests</artifactId>
+                <version>${pulsar.modules.version}</version>
                 <type>test-jar</type>
                 <classifier>tests</classifier>
                 <scope>test</scope>
@@ -632,16 +739,48 @@
     </dependencies>
 
     <properties>
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <surefire.excludedGroups>
-            TimeConsumingTest,ExternalResourceDependent,IntegrationTest,E2ETest,HeavyTest,
-            SkippableLowerLevelTest,TestInfraCheck,MustManuallyRun,OptionalTest
-        </surefire.excludedGroups>
+        <dokka.version>1.9.10</dokka.version>
+
+        <surefire.version>3.5.4</surefire.version>
 
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
 
-        <dokka.version>1.9.10</dokka.version>
+        <version.apache-rat-plugin>0.16.1</version.apache-rat-plugin>
+        <version.apache-resource-bundles>1.7</version.apache-resource-bundles>
+        <version.checksum-maven-plugin>1.11</version.checksum-maven-plugin>
+        <version.maven-antrun-plugin>3.2.0</version.maven-antrun-plugin>
+        <version.maven-assembly-plugin>3.8.0</version.maven-assembly-plugin>
+        <version.maven-clean-plugin>3.5.0</version.maven-clean-plugin>
+        <version.maven-checkstyle-plugin>3.6.0</version.maven-checkstyle-plugin>
+        <version.maven-compiler-plugin>3.14.1</version.maven-compiler-plugin>
+        <version.maven-dependency-plugin>3.9.0</version.maven-dependency-plugin>
+        <version.maven-deploy-plugin>3.1.4</version.maven-deploy-plugin>
+        <version.maven-ear-plugin>3.4.0</version.maven-ear-plugin>
+        <version.maven-enforcer-plugin>3.6.2</version.maven-enforcer-plugin>
+        <version.maven-fluido-skin>2.1.0</version.maven-fluido-skin>
+        <version.maven-gpg-plugin>3.2.8</version.maven-gpg-plugin>
+        <version.maven-help-plugin>3.5.1</version.maven-help-plugin>
+        <version.maven-install-plugin>3.1.4</version.maven-install-plugin>
+        <version.maven-invoker-plugin>3.9.1</version.maven-invoker-plugin>
+        <version.maven-jar-plugin>3.5.0</version.maven-jar-plugin>
+        <version.maven-javadoc-plugin>3.12.0</version.maven-javadoc-plugin>
+        <version.maven-plugin-tools>3.15.2</version.maven-plugin-tools>
+        <version.maven-project-info-reports-plugin>3.9.0</version.maven-project-info-reports-plugin>
+        <version.maven-release-plugin>3.3.1</version.maven-release-plugin>
+        <version.maven-remote-resources-plugin>3.3.0</version.maven-remote-resources-plugin>
+        <version.maven-resources-plugin>3.4.0</version.maven-resources-plugin>
+        <version.maven-scm-plugin>2.2.1</version.maven-scm-plugin>
+        <version.maven-scm-publish-plugin>3.3.0</version.maven-scm-publish-plugin>
+        <version.maven-shade-plugin>3.6.1</version.maven-shade-plugin>
+        <version.maven-site-plugin>3.21.0</version.maven-site-plugin>
+        <version.maven-source-plugin>3.4.0</version.maven-source-plugin>
+        <version.maven-surefire>${surefire.version}</version.maven-surefire>
+        <version.maven-war-plugin>3.5.1</version.maven-war-plugin>
 
         <!--  Language  -->
         <javaVersion>17</javaVersion>
@@ -652,6 +791,28 @@
         <kotlin.version>${kotlinVersion}</kotlin.version>
         <maven.compiler.release>${javaVersion}</maven.compiler.release>
         <kotlin.compiler.jvmTarget>${javaVersion}</kotlin.compiler.jvmTarget>
+
+        <!-- Test execution control properties -->
+        <runITs>false</runITs>
+        <runE2ETests>false</runE2ETests>
+        <runSDKTests>false</runSDKTests>
+        <runCoreTests>false</runCoreTests>
+        <runRestTests>false</runRestTests>
+
+        <!-- Default excludedGroups: exclude all non-Fast tests
+             Includes both new taxonomy tags and legacy tags for backward compatibility:
+             - New tags: Slow, Heavy, Integration, E2E, SDK, RequiresXYZ, MustRunExplicitly
+             - Legacy tags: IntegrationTest, E2ETest, HeavyTest, SkippableLowerLevelTest, TestInfraCheck, OptionalTest
+             Migration: Gradually migrate tests from legacy tags to new taxonomy -->
+        <surefire.excludedGroups>
+            Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,
+            Integration,E2E,SDK,MustRunExplicitly,
+            SkippableLowerLevelTest,TestInfraCheck,OptionalTest,
+            IntegrationTest,E2ETest,HeavyTest
+        </surefire.excludedGroups>
+
+        <pulsar.modules.version>4.5.0-rc.1</pulsar.modules.version>
     </properties>
 
 </project>
+

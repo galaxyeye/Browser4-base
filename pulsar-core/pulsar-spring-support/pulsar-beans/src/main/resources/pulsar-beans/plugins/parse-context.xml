@@ -8,14 +8,12 @@
     <import resource="../common-context.xml"/>
     <import resource="urlfilter-context.xml"/>
 
-    <bean id="signature" class="ai.platon.pulsar.skeleton.signature.TextMD5Signature"/>
-
     <bean id="htmlParser" class="ai.platon.pulsar.skeleton.crawl.parse.html.PrimerHtmlParser">
         <constructor-arg ref="parseFilters"/>
         <constructor-arg ref="conf"/>
     </bean>
 
-    <bean id="tikaParser" class="ai.platon.pulsar.parse.tika.TikaParser">
+    <bean id="tikaParser" class="ai.platon.pulsar.tools.TikaParser">
         <constructor-arg ref="parseFilters"/>
         <constructor-arg ref="conf"/>
     </bean>

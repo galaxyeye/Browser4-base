@@ -1,20 +1,18 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
+import ai.platon.browser4.driver.chrome.util.ChromeRPCException
 import ai.platon.cdt.kt.protocol.events.fetch.AuthRequired
 import ai.platon.cdt.kt.protocol.events.fetch.RequestPaused
 import ai.platon.cdt.kt.protocol.events.network.*
-import ai.platon.cdt.kt.protocol.events.page.FrameNavigated
 import ai.platon.cdt.kt.protocol.types.fetch.AuthChallengeResponse
 import ai.platon.cdt.kt.protocol.types.fetch.AuthChallengeResponseResponse
 import ai.platon.cdt.kt.protocol.types.fetch.RequestPattern
 import ai.platon.cdt.kt.protocol.types.network.Response
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeRPCException
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.event.AbstractEventEmitter
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.protocol.browser.driver.cdt.Credentials
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
-import kotlinx.coroutines.runBlocking
 import java.lang.ref.WeakReference
 import java.time.Duration
 import java.time.Instant
@@ -61,18 +59,18 @@ internal class NetworkManager(
         networkAPI?.onLoadingFinished(::onLoadingFinished)
         networkAPI?.onLoadingFailed(::onLoadingFailed)
         networkAPI?.onResponseReceivedExtraInfo(::onResponseReceivedExtraInfo)
+    }
 
-        runBlocking {
-            if (ignoreHTTPSErrors) {
-                rpc.invokeSilently("setIgnoreCertificateErrors") {
-                    securityAPI?.enable()
-                    securityAPI?.setIgnoreCertificateErrors(ignoreHTTPSErrors)
-                }
+    suspend fun enable() {
+        if (ignoreHTTPSErrors) {
+            rpc.invokeSilently("setIgnoreCertificateErrors") {
+                securityAPI?.enable()
+                securityAPI?.setIgnoreCertificateErrors(ignoreHTTPSErrors)
             }
+        }
 
-            rpc.invokeSilently("enable") {
-                networkAPI?.enable()
-            }
+        rpc.invokeSilently("enable") {
+            networkAPI?.enable()
         }
     }
 
@@ -428,5 +426,13 @@ internal class NetworkManager(
         request.response?.resolveBody(null)
         forgetRequest(request, true)
         emit(NetworkEvents.RequestFailed, request)
+    }
+    
+    /**
+     * Get the RequestWillBeSentExtraInfo event for a given request ID.
+     * This allows access to additional request information including cookies.
+     */
+    fun getRequestWillBeSentExtraInfo(requestId: String): RequestWillBeSentExtraInfo? {
+        return networkEventManager.getRequestWillBeSentExtraInfoEvent(requestId)
     }
 }

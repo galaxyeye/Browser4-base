@@ -28,6 +28,8 @@ import ai.platon.pulsar.skeleton.crawl.component.LoadComponent
 import ai.platon.pulsar.skeleton.crawl.component.ParseComponent
 import ai.platon.pulsar.skeleton.crawl.component.UpdateComponent
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFactory
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFetcher
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import ai.platon.pulsar.skeleton.crawl.filter.ChainedUrlNormalizer
 import ai.platon.pulsar.skeleton.session.AbstractPulsarSession
@@ -159,11 +161,15 @@ abstract class AbstractPulsarContext(
 
     open val loadComponent: LoadComponent get() = getBean()
 
+    open val browserFetcher: BrowserFetcher get() = getBean()
+
     override val globalCache: GlobalCache get() = globalCacheFactory.globalCache
 
-    override val taskLoops: TaskLoops get() = getBean()
-
     override val browserFactory: BrowserFactory get() = getBean()
+
+    override val browserManager: BrowserManager get() = getBean()
+
+    override val taskLoops: TaskLoops get() = getBean()
 
     /**
      * The start time
@@ -458,7 +464,7 @@ abstract class AbstractPulsarContext(
      */
     override fun parse(page: WebPage): FeaturedDocument? {
         val parser = loadComponentOrNull?.parseComponent
-        return parser?.parse(page, noLinkFilter = true)?.document
+        return parser?.parse(page)?.document
     }
 
     override suspend fun chat(prompt: String): ModelResponse {

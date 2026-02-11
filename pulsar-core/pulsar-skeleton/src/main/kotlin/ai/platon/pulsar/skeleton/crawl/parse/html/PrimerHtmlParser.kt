@@ -8,7 +8,7 @@ import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.persist.metadata.ParseStatusCodes
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
 import ai.platon.pulsar.skeleton.common.persist.ext.options
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.parse.ParseFilters
 import ai.platon.pulsar.skeleton.crawl.parse.ParseResult
 import ai.platon.pulsar.skeleton.crawl.parse.Parser
@@ -85,7 +85,9 @@ class PrimerHtmlParser(
             // notice the calling order.
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onWillParseHTMLDocument?.invoke(page)
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onWillParseHTMLDocument?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillParseHTMLDocument?.invoke(page)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onWillParseHTMLDocument", page)
         } catch (e: Throwable) {
             logger.warn("Failed to invoke onWillParseHTMLDocument | ${page.configuredUrl}", e)
         }
@@ -114,7 +116,9 @@ class PrimerHtmlParser(
         try {
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onHTMLDocumentParsed?.invoke(page, document)
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onHTMLDocumentParsed?.invoke(page, document)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onHTMLDocumentParsed?.invoke(page, document)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onHTMLDocumentParsed", page, metadata = mapOf("hasDocument" to true))
         } catch (e: Throwable) {
             logger.warn("Failed to invoke onHTMLDocumentParsed | ${page.configuredUrl}", e)
         } finally {

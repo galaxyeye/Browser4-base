@@ -1,17 +1,17 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
+import ai.platon.browser4.driver.chrome.NodeRef
+import ai.platon.browser4.driver.chrome.PageHandler
+import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.cdt.kt.protocol.commands.Fetch
 import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
 import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
-import ai.platon.pulsar.browser.driver.chrome.NodeRef
-import ai.platon.pulsar.browser.driver.chrome.PageHandler
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeDriverException
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.warnInterruptible
-import ai.platon.pulsar.skeleton.common.message.MiscMessageWriter
+import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.crawl.common.InternalURLUtil
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.JsEvaluation
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.JsException
@@ -29,7 +29,7 @@ class WebDriverHelper(
     val rpc: RobustRPC,
     val page: PageHandler,
     val fetchAPI: Fetch?,
-    val messageWriter: MiscMessageWriter
+    val messageWriter: MiscMessageMessageWriter
 ) {
     suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
         runCatching { traceInterestingResources0(entry, event) }.onFailure { warnInterruptible(this, it) }
@@ -55,7 +55,7 @@ class WebDriverHelper(
         val pageUrl = entry.pageUrl
         val resourceUrl = event.response.url
         val host = InternalURLUtil.getHost(pageUrl) ?: "unknown"
-        val reportDir = messageWriter.reportDir.resolve("trace").resolve(host)
+        val reportDir = messageWriter.baseDir.resolve("trace").resolve(host)
 
         if (!Files.exists(reportDir)) {
             withContext(Dispatchers.IO) {
@@ -96,13 +96,18 @@ class WebDriverHelper(
     }
 
     fun serialize(cookie: ai.platon.cdt.kt.protocol.types.network.Cookie): Map<String, String> {
-        val mapper = jacksonObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        val mapper = jacksonObjectMapper().setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
         return mapper.readValue(mapper.writeValueAsString(cookie))
     }
 
-    suspend fun <T> invokeOnPage(name: String, message: String? = null, action: suspend () -> T): T? {
+    suspend fun <T> invokeOnPage(
+        name: String,
+        url: String? = null,
+        message: String? = null,
+        action: suspend () -> T
+    ): T? {
         try {
-            return rpc.invokeWithRetry(name) {
+            return rpc.invokeWithRetry(name, url = url) {
                 action()
             }
         } catch (e: ChromeDriverException) {

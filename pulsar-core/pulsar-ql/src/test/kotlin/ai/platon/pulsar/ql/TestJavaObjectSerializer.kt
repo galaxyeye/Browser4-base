@@ -109,6 +109,28 @@ class TestJavaObjectSerializer : TestBase() {
     }
 
     @Test
+    fun testSerializedBytesAreTrimmed() {
+        val serializer = PulsarObjectSerializer()
+
+        val baseURI = "https://example.com/"
+        val doc = Jsoup.parseBodyFragment("<div>Hello World</div>", baseURI)
+        val baseDom = ValueDom.get(doc.body().selectFirst("div"))
+
+        val bytes = serializer.serialize(baseDom)
+
+        // Regression guard: previous implementation returned DataOutputBuffer.getData(), which is capacity-sized (e.g. 1024)
+        assertTrue(bytes.size < 1024, "Serialized bytes should be trimmed to actual length, but was ${bytes.size}")
+
+        // Basic sanity: first 4 bytes are the big-endian type id
+        val type = java.nio.ByteBuffer.wrap(bytes, 0, 4).int
+        assertEquals(ValueDom.type, type)
+
+        // Should round-trip cleanly
+        val obj = serializer.deserialize(bytes)
+        assertTrue(obj is ValueDom)
+    }
+
+    @Test
     fun testNetworkSerialization() {
         val conn = remoteDB.getConnection("testNetworkSerialization")
         val stat = conn.createStatement()
@@ -185,4 +207,3 @@ class TestJavaObjectSerializer : TestBase() {
         assertEquals("ai.platon.pulsar.ql.common.PulsarObjectSerializer", JdbcUtils.serializer.javaClass.name)
     }
 }
-

@@ -15,30 +15,17 @@
  */
 package ai.platon.pulsar.protocol.browser.emulator
 
-import ai.platon.pulsar.common.config.ImmutableConfig
-import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.protocol.browser.emulator.context.BrowserPrivacyManager
 import ai.platon.pulsar.skeleton.crawl.fetch.Fetcher
 import ai.platon.pulsar.skeleton.crawl.fetch.WebDriverFetcher
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFetcher
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
-interface BrowserFetcher: AutoCloseable {
-    
-    val conf: ImmutableConfig
-    
-    val browserEmulator: BrowserEmulator
-    
-    fun reset()
-
-    fun cancel(page: WebPage)
-
-    fun cancelAll()
-}
-
-interface IncognitoBrowserFetcher: Fetcher, BrowserFetcher {
+interface IncognitoBrowserFetcher : Fetcher, BrowserFetcher {
     val privacyManager: BrowserPrivacyManager
     val webdriverFetcher: WebDriverFetcher
+    val browserEmulator: BrowserEmulator
 }

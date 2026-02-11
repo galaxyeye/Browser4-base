@@ -1,6 +1,7 @@
 package ai.platon.pulsar.common.browser
 
 import ai.platon.pulsar.common.*
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import com.google.common.collect.Iterators
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomStringUtils
@@ -9,6 +10,7 @@ import java.nio.channels.FileChannel
 import java.nio.channels.OverlappingFileLockException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.MonthDay
@@ -54,6 +56,8 @@ object BrowserFiles {
     const val PID_FILE_NAME = "launcher.pid"
 
     const val PORT_FILE_NAME = "port"
+
+    const val CDP_URL_FILE_NAME = "cdp-url"
 
     const val CONTEXT_LOCK_NAME = "context.lock"
 
@@ -112,14 +116,37 @@ object BrowserFiles {
         return runWithFileLockWithRetry(lockFile) { channel -> computeRandomContextDir0(group, browserType, channel = channel) }
     }
 
+    fun clearProcessMarkers(userDataDir: Path) {
+        val pidPath = userDataDir.resolveSibling(PID_FILE_NAME)
+        val portPath = userDataDir.resolveSibling(PORT_FILE_NAME)
+        val cdpUrlPath = userDataDir.resolveSibling(CDP_URL_FILE_NAME)
+
+        fun backupIfExists(path: Path) {
+            if (Files.exists(path)) {
+                val backup = path.resolveSibling("${path.fileName}.bak")
+                Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+
+        runCatching {
+            backupIfExists(portPath)
+            backupIfExists(pidPath)
+            backupIfExists(cdpUrlPath)
+
+            Files.deleteIfExists(portPath)
+            Files.deleteIfExists(pidPath)
+            Files.deleteIfExists(cdpUrlPath)
+        }.onFailure { logger.warn("Failed to delete process marker files | {}", it.message) }
+    }
+
     @Throws(IOException::class)
     fun cleanOldestContextTmpDirs(expiry: Duration, recentNToKeep: Int = 10) {
         // Remove directories that have too many context directories
         val files = Files.walk(AppPaths.CONTEXT_TMP_DIR, 3)
             .filter { it !in cleanedUserDataDirs } // not processed
             .filter { it.toString().contains("cx.") } // context dir
-            .filter { it.resolve(PID_FILE_NAME).exists() } // already launched
-            .filter { it.resolve(PORT_FILE_NAME).notExists() } // already closed
+            .filter { it.resolve("$PID_FILE_NAME.bak").exists() } // already launched and closed
+            .filter { it.resolve("$PORT_FILE_NAME.bak").notExists() }
             .toList()
             .toSet()
 

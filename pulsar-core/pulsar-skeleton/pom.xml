@@ -14,7 +14,7 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.5.0-rc.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -61,19 +61,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-        </dependency>
-
-        <!-- Requires org.apache.hadoop.io.Text, etc -->
-        <!-- Will remove hadoop dependency in the future -->
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- apache common -->

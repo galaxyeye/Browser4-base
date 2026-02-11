@@ -1,253 +1,207 @@
 #!/bin/bash
 
-# Browser4 Test Runner Script
-# Comprehensive test execution with multiple options
-
-# Find the project root directory (contains VERSION file)
-APP_HOME=$(cd "$(dirname "$0")"/.. >/dev/null || exit 1; pwd)
-cd "$APP_HOME" || exit 1
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Find the first parent directory that contains a VERSION file
+APP_HOME=$(cd "$(dirname "$0")">/dev/null || exit 1; pwd)
+while [[ ! -f "$APP_HOME/VERSION" && "$APP_HOME" != "/" ]]; do
+  APP_HOME=$(dirname "$APP_HOME")
+done
+[[ -f "$APP_HOME/VERSION" ]] && cd "$APP_HOME" || exit 1
 
 function print_usage {
-  echo "Usage: test.sh [OPTIONS]"
+  echo "Usage: test.sh [test-type] [maven-args...]"
   echo ""
-  echo "Options:"
-  echo "  -h, --help          Show this help message"
-  echo "  -clean              Clean before testing"
-  echo "  -integration        Include integration tests"
-  echo "  -e2e                Include E2E tests (implies -integration)"
-  echo "  -module MODULE      Test specific module (e.g., pulsar-core)"
-  echo "  -test CLASS         Test specific class or pattern"
-  echo "  -coverage           Generate coverage report"
-  echo "  -parallel           Enable parallel test execution"
-  echo "  -verbose            Enable verbose output"
-  echo "  -groups TAGS        Include only specific test groups (comma-separated)"
-  echo "  -exclude-groups TAGS Exclude specific test groups (comma-separated)"
+  echo "Test Types:"
+  echo "  fast        Run fast unit tests only"
+  echo "  it          Run integration tests"
+  echo "  e2e         Run end-to-end tests"
+  echo "  sdk         Run SDK tests"
+  echo "  python-sdk  Run Python SDK tests"
+  echo "  nodejs-sdk  Run NodeJS SDK tests"
+  echo "  core        Run core module supplementary tests"
+  echo "  rest        Run REST module tests"
+  echo "  all         Run all tests (integration, e2e, sdk)"
   echo ""
   echo "Examples:"
-  echo "  test.sh                           # Run unit tests only"
-  echo "  test.sh -integration              # Run unit + integration tests"
-  echo "  test.sh -e2e                      # Run all tests including E2E"
-  echo "  test.sh -module pulsar-core       # Test specific module"
-  echo "  test.sh -test MyTest              # Run specific test class"
-  echo "  test.sh -coverage                 # Generate coverage report"
-  echo "  test.sh -clean -integration       # Clean and run integration tests"
-  echo "  test.sh -parallel                 # Run tests in parallel"
-  echo "  test.sh -groups SmokeTest         # Run only smoke tests"
-  echo ""
+  echo "  test.sh fast                       # Run fast unit tests"
+  echo "  test.sh it                         # Run integration tests"
+  echo "  test.sh e2e                        # Run end-to-end tests"
+  echo "  test.sh sdk                        # Run SDK tests"
+  echo "  test.sh python-sdk                 # Run Python SDK tests"
+  echo "  test.sh python-sdk -m integration  # Run Python SDK integration tests only"
+  echo "  test.sh nodejs-sdk                 # Run NodeJS SDK tests"
+  echo "  test.sh nodejs-sdk --coverage      # Run NodeJS SDK tests with coverage"
+  echo "  test.sh all                        # Run all tests"
+  echo "  test.sh it -pl pulsar-core         # Run integration tests for pulsar-core only"
   exit 1
 }
 
-# Validate Maven wrapper exists
+# Maven command
+MvnCmd="./mvnw"
+
+# Validate Maven wrapper exists and is executable
 if [[ ! -x "$APP_HOME/mvnw" ]]; then
-    echo -e "${RED}Error: Maven wrapper not found or not executable at $APP_HOME/mvnw${NC}"
+    echo "Error: Maven wrapper not found or not executable at $APP_HOME/mvnw"
     exit 1
 fi
 
-MvnCmd="./mvnw"
-
-# Initialize variables
-PerformClean=false
-IncludeIntegration=false
-IncludeE2E=false
-SpecificModule=""
-SpecificTest=""
-GenerateCoverage=false
-EnableParallel=false
-VerboseOutput=false
-IncludeGroups=""
-ExcludeGroups="TimeConsumingTest,ExternalServiceTest"
+# Default test type is fast
+TestType="fast"
+AdditionalMvnArgs=()
 
 # Parse command-line arguments
-while [[ $# -gt 0 ]]; do
+if [[ $# -eq 0 ]]; then
+  print_usage
+fi
+
+if [[ $# -gt 0 ]]; then
   case $1 in
-    -h|--help)
+    fast|it|e2e|sdk|python-sdk|nodejs-sdk|core|rest|all)
+      TestType=$1
+      shift
+      ;;
+    -h|-help|--help)
       print_usage
       ;;
-    -clean)
-      PerformClean=true
-      shift
-      ;;
-    -integration)
-      IncludeIntegration=true
-      shift
-      ;;
-    -e2e)
-      IncludeE2E=true
-      IncludeIntegration=true
-      shift
-      ;;
-    -module)
-      SpecificModule="$2"
-      shift 2
-      ;;
-    -test)
-      SpecificTest="$2"
-      shift 2
-      ;;
-    -coverage)
-      GenerateCoverage=true
-      shift
-      ;;
-    -parallel)
-      EnableParallel=true
-      shift
-      ;;
-    -verbose)
-      VerboseOutput=true
-      shift
-      ;;
-    -groups)
-      IncludeGroups="$2"
-      shift 2
-      ;;
-    -exclude-groups)
-      ExcludeGroups="$2"
-      shift 2
-      ;;
     *)
-      echo -e "${RED}Unknown option: $1${NC}"
+      echo "Error: Invalid argument '$1'"
+      echo ""
       print_usage
       ;;
   esac
-done
-
-# Build Maven command
-MvnArgs=()
-
-# Add clean if requested
-if $PerformClean; then
-  MvnArgs+=("clean")
 fi
 
-# Add test goal
-MvnArgs+=("test")
+# Collect remaining arguments
+AdditionalMvnArgs=("$@")
 
-# Add module specification
-if [[ -n "$SpecificModule" ]]; then
-  MvnArgs+=("-pl" "$SpecificModule" "-am")
-  # When using -am, we need this flag to avoid "No tests were executed" error
-  MvnArgs+=("-Dsurefire.failIfNoSpecifiedTests=false")
-fi
+# Execute tests based on type
+echo "=========================================="
+echo "Running $TestType tests..."
+echo "=========================================="
 
-# Add specific test class
-if [[ -n "$SpecificTest" ]]; then
-  MvnArgs+=("-Dtest=$SpecificTest")
-fi
+case $TestType in
+  fast)
+    echo "Running fast unit tests (default behavior)..."
+    $MvnCmd test "${AdditionalMvnArgs[@]}"
+    ;;
+  it)
+    echo "Running integration tests..."
+    $MvnCmd test -DrunITs=true "${AdditionalMvnArgs[@]}"
+    ;;
+  e2e)
+    echo "Running end-to-end tests..."
+    $MvnCmd test -DrunE2ETests=true -P all-modules -pl pulsar-tests,pulsar-tests/pulsar-e2e-tests -am "${AdditionalMvnArgs[@]}"
+    ;;
+  sdk)
+    echo "Running SDK tests..."
+    $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
+    ;;
+  python-sdk)
+    echo "Running Python SDK tests..."
+    PythonSdkDir="$APP_HOME/sdks/browser4-sdk-python"
 
-# Handle test groups
-if $IncludeE2E; then
-  # Include all tests
-  ExcludeGroups=""
-elif $IncludeIntegration; then
-  # Exclude only E2E and time-consuming
-  ExcludeGroups="E2ETest,TimeConsumingTest"
-fi
+    if [[ ! -d "$PythonSdkDir" ]]; then
+      echo "Error: Python SDK directory not found at $PythonSdkDir"
+      exit 1
+    fi
 
-# Set excluded groups
-if [[ -n "$ExcludeGroups" ]]; then
-  MvnArgs+=("-DexcludedGroups=$ExcludeGroups")
-else
-  # Empty string to include all
-  MvnArgs+=("-DexcludedGroups=")
-fi
+    # Check if Python is available
+    if ! command -v python3 &> /dev/null; then
+      echo "Error: python3 is not installed or not in PATH"
+      exit 1
+    fi
 
-# Set included groups if specified
-if [[ -n "$IncludeGroups" ]]; then
-  MvnArgs+=("-Dgroups=$IncludeGroups")
-fi
+    cd "$PythonSdkDir"
+    echo "Working directory: $(pwd)"
 
-# Add parallel execution
-if $EnableParallel; then
-  MvnArgs+=("-Dsurefire.parallel=methods")
-  MvnArgs+=("-Dsurefire.threadCount=4")
-  MvnArgs+=("-Dsurefire.perCoreThreadCount=true")
-fi
+    # Check if venv exists and activate it
+    if [[ -d "$PythonSdkDir/venv" ]]; then
+      echo "Activating virtual environment..."
+      source "$PythonSdkDir/venv/bin/activate"
+    fi
 
-# Add coverage if requested
-if $GenerateCoverage; then
-  MvnArgs+=("jacoco:report")
-fi
+    # Check if pytest is available
+    if ! python3 -m pytest --version &> /dev/null; then
+      echo "Error: pytest is not installed. Install it with: pip install pytest"
+      echo "Or install all dev dependencies with: pip install -e \".[dev]\" in $PythonSdkDir"
+      exit 1
+    fi
 
-# Add verbose output
-if $VerboseOutput; then
-  MvnArgs+=("-X")
-else
-  MvnArgs+=("-B")  # Batch mode
-fi
+    python3 -m pytest "${AdditionalMvnArgs[@]}"
+    ExitCode=$?
+    cd "$APP_HOME"
+    exit $ExitCode
+    ;;
+  nodejs-sdk)
+    echo "Running NodeJS SDK tests..."
+    NodejsSdkDir="$APP_HOME/sdks/browser4-sdk-nodejs"
 
-# Print configuration
-echo -e "${BLUE}╔═══════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║          Browser4 Test Execution                    ║${NC}"
-echo -e "${BLUE}╚═══════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${YELLOW}Configuration:${NC}"
-echo "  Clean: $PerformClean"
-echo "  Integration: $IncludeIntegration"
-echo "  E2E: $IncludeE2E"
-[[ -n "$SpecificModule" ]] && echo "  Module: $SpecificModule"
-[[ -n "$SpecificTest" ]] && echo "  Test: $SpecificTest"
-echo "  Coverage: $GenerateCoverage"
-echo "  Parallel: $EnableParallel"
-[[ -n "$ExcludeGroups" ]] && echo "  Excluded Groups: $ExcludeGroups"
-[[ -n "$IncludeGroups" ]] && echo "  Included Groups: $IncludeGroups"
-echo ""
-echo -e "${YELLOW}Executing:${NC} $MvnCmd ${MvnArgs[*]}"
-echo ""
+    if [[ ! -d "$NodejsSdkDir" ]]; then
+      echo "Error: NodeJS SDK directory not found at $NodejsSdkDir"
+      exit 1
+    fi
 
-# Record start time
-StartTime=$(date +%s)
+    # Check if Node.js is available
+    if ! command -v node &> /dev/null; then
+      echo "Error: node is not installed or not in PATH"
+      exit 1
+    fi
 
-# Execute Maven test command
-$MvnCmd "${MvnArgs[@]}"
+    cd "$NodejsSdkDir"
+    echo "Working directory: $(pwd)"
+
+    # Check if node_modules exists
+    if [[ ! -d "$NodejsSdkDir/node_modules" ]]; then
+      echo "Installing dependencies..."
+      npm install
+      if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to install dependencies"
+        cd "$APP_HOME"
+        exit 1
+      fi
+    fi
+
+    # Check if jest is available
+    if [[ ! -f "$NodejsSdkDir/node_modules/.bin/jest" ]]; then
+      echo "Error: jest is not installed. Install it with: npm install"
+      cd "$APP_HOME"
+      exit 1
+    fi
+
+    npm test -- "${AdditionalMvnArgs[@]}"
+    ExitCode=$?
+    cd "$APP_HOME"
+    exit $ExitCode
+    ;;
+  core)
+    echo "Running core module supplementary tests..."
+    $MvnCmd test -DrunCoreTests=true -Ppulsar-core-tests -pl pulsar-core,pulsar-core/pulsar-core-tests -am "${AdditionalMvnArgs[@]}"
+    ;;
+  rest)
+    echo "Running REST module tests..."
+    $MvnCmd test -DrunRestTests=true "${AdditionalMvnArgs[@]}"
+    ;;
+  all)
+    echo "Running all tests (integration, e2e, sdk)..."
+    $MvnCmd test -Pall-modules -DrunITs=true -DrunE2ETests=true -DrunSDKTests=true "${AdditionalMvnArgs[@]}"
+    ;;
+  *)
+    echo "Error: Unknown test type '$TestType'"
+    print_usage
+    ;;
+esac
+
 ExitCode=$?
 
-# Record end time
-EndTime=$(date +%s)
-Duration=$((EndTime - StartTime))
-
-# Print summary
-echo ""
-echo -e "${BLUE}╔═══════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║          Test Execution Summary                      ║${NC}"
-echo -e "${BLUE}╚═══════════════════════════════════════════════════════╝${NC}"
-echo ""
-
 if [[ $ExitCode -eq 0 ]]; then
-  echo -e "${GREEN}✓ Tests passed successfully!${NC}"
-else
-  echo -e "${RED}✗ Tests failed!${NC}"
-fi
-
-echo ""
-echo "Duration: ${Duration}s"
-
-# Show coverage report location if generated
-if $GenerateCoverage; then
   echo ""
-  echo -e "${YELLOW}Coverage reports:${NC}"
-  if [[ -n "$SpecificModule" ]]; then
-    echo "  - $SpecificModule/target/site/jacoco/index.html"
-  else
-    echo "  - target/site/jacoco-aggregate/index.html"
-  fi
-fi
-
-# Show test reports location
-echo ""
-echo -e "${YELLOW}Test reports:${NC}"
-if [[ -n "$SpecificModule" ]]; then
-  echo "  - $SpecificModule/target/surefire-reports/"
+  echo "=========================================="
+  echo "✅ $TestType tests completed successfully"
+  echo "=========================================="
 else
-  echo "  - */target/surefire-reports/"
+  echo ""
+  echo "=========================================="
+  echo "❌ $TestType tests failed with exit code $ExitCode"
+  echo "=========================================="
 fi
-
-echo ""
 
 exit $ExitCode

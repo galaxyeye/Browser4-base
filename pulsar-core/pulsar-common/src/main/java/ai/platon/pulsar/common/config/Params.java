@@ -1,7 +1,7 @@
 package ai.platon.pulsar.common.config;
 
 import ai.platon.pulsar.common.Strings;
-import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -18,7 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Created by vincent on 16-9-24.
+ * Created by Vincent on 16-9-24.
  *
  * @author vincent
  * @version $Id: $Id
@@ -29,7 +29,7 @@ public class Params {
      */
     public static final Params EMPTY_PARAMS = new Params();
 
-    private Logger log = LoggerFactory.getLogger(Params.class);
+    private final Logger log = LoggerFactory.getLogger(Params.class);
     private List<Pair<String, Object>> paramsList = new LinkedList<>();
     private String captionFormat = String.format("%20sParams Table%-25s\n", "----------", "----------");
     private String headerFormat = String.format("%25s   %-25s\n", "Name", "Value");
@@ -211,7 +211,7 @@ public class Params {
      * @return a {@link java.lang.Object} object.
      */
     public Object get(String name) {
-        Pair<String, Object> entry = CollectionUtils.find(paramsList, e -> e.getKey().equals(name));
+        Pair<String, Object> entry = IterableUtils.find(paramsList, e -> e.getKey().equals(name));
         return entry == null ? null : entry.getValue();
     }
 
@@ -715,13 +715,11 @@ public class Params {
 
             String key = param.getKey();
             Object value = param.getValue();
-            if (value instanceof Map) {
-                Map<?, ?> m = (Map<?, ?>) value;
+            if (value instanceof Map<?, ?> m) {
                 value = m.entrySet().stream()
                         .map(e -> e.getKey() + ":" + e.getValue().toString())
                         .collect(Collectors.joining(", "));
-            } else if (value instanceof Collection) {
-                Collection<?> c = (Collection<?>) value;
+            } else if (value instanceof Collection<?> c) {
                 value = StringUtils.join(c, ", ");
             }
 

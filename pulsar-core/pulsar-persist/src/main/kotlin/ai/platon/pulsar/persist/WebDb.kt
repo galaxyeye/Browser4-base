@@ -50,7 +50,7 @@ class WebDb(
      * Test if the WebDB can be connected.
      * @return true if the WebDB can be connected.
      * */
-    fun canConnect() = dataStorageFactory.canConnect()
+    fun canConnect() = dataStorageFactory.schemaAvailable()
 
     /**
      * Returns the WebPage corresponding to the given url.
@@ -181,7 +181,7 @@ class WebDb(
         if (replaceIfExists) {
             performDSAction("put") { dataStore.delete(key) }
         }
-        
+
         tracer?.trace("Putting {} {} {} {}", page.fetchCount, page.prevFetchTime, page.fetchTime, key)
 
         val startTime = System.nanoTime()
@@ -382,7 +382,7 @@ class WebDb(
         fields.remove("url")
         return fields.toTypedArray()
     }
-    
+
     @Throws(WebDBException::class)
     private fun <T : Any> performDSAction(name: String, url: String? = null, action: () -> T): T {
         try {

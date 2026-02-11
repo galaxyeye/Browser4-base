@@ -2,16 +2,16 @@ package ai.platon.pulsar.rest.api.service
 
 import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.BasicAgenticSession
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.crawl.common.DegenerateXSQLScrapeHyperlink
+import ai.platon.pulsar.agentic.tools.crawl.common.ScrapeAPIUtils
+import ai.platon.pulsar.agentic.tools.crawl.common.ScrapeHyperlink
+import ai.platon.pulsar.agentic.tools.crawl.common.XSQLScrapeHyperlink
+import ai.platon.pulsar.agentic.tools.crawl.refreshed
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
-import ai.platon.pulsar.rest.api.common.DegenerateXSQLScrapeHyperlink
-import ai.platon.pulsar.rest.api.common.ScrapeAPIUtils
-import ai.platon.pulsar.rest.api.common.ScrapeHyperlink
-import ai.platon.pulsar.rest.api.common.XSQLScrapeHyperlink
-import ai.platon.pulsar.rest.api.entities.ScrapeRequest
-import ai.platon.pulsar.rest.api.entities.ScrapeResponse
 import ai.platon.pulsar.rest.api.entities.ScrapeStatusRequest
-import ai.platon.pulsar.rest.api.entities.refreshed
 import ai.platon.pulsar.rest.api.service.CommandService.Companion.FLOW_POLLING_INTERVAL
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*

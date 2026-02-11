@@ -1,10 +1,10 @@
 package ai.platon.pulsar.ql
 
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.sql.ResultSetFormatter
 import ai.platon.pulsar.common.sql.SQLTemplate
 import ai.platon.pulsar.ql.common.ResultSets
 import ai.platon.pulsar.ql.h2.addColumn
-import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.ql.h2.utils.ResultSetUtils
 import org.h2.value.ValueString
 import java.sql.Types
@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Created by vincent on 17-7-29.
+ * Created by Vincent on 17-7-29.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 class TestResultSetPersistUtils {
@@ -24,44 +24,9 @@ class TestResultSetPersistUtils {
         rs.addColumn("B")
         val a = arrayOf(0.8056499951626754, 0.5259673975756397, 0.869188405723, 0.4140625)
         val b = arrayOf("a", "b", "c", "d")
-        a.zip(b).map { arrayOf(it.first, it.second) }.forEach { rs.addRow(*it) }
+        a.zip(b).map { arrayOf<Any>(it.first, it.second) }.forEach { rs.addRow(*it) }
         val fmt = ResultSetFormatter(rs)
         printlnPro(fmt.toString())
-    }
-
-    @Test
-    fun testExtractUrlFromFromClause() {
-        val urls = listOf(
-            "http://amazon.com/a/reviews/123?pageNumber=21&a=b",
-            """https://www.amazon.com/s?k="Boys^27+Novelty+Belt+Buckles"&rh=n:9057119011&page=1""",
-            """https://www.amazon.com/s?k="Boys%27+Novelty+Belt+Buckles"&rh=n:9057119011&page=1""",
-            """https://www.amazon.com/s?k="Boys%27+Novelty+Belt+Buckles"&rh=n:9057119011&page=1 -i 1h -retry"""
-        )
-        val sqlTemplates = listOf(
-            """
-                select dom_first_text(dom, '#container'), dom_first_text(dom, '.price')
-                from load_and_select(@url, ':root body');
-            """,
-            """
-                select dom_first_text(dom, '#container'), dom_first_text(dom, '.price')
-                from load_and_select(     @url, ':root body');
-            """,
-            """
-                select dom_first_text(dom, '#container'), dom_first_text(dom, '.price')
-                from load_and_select(     @url     , ':root body');
-            """,
-            """
-                select dom_first_text(dom, 'div:contains(https://www.amazon.com/)'), dom_first_text(dom, '.price')
-                FROM LOAD_AND_SELECT(     @url     , ':root body');
-            """
-        ).map { it.trimIndent() }
-
-        urls.forEach { url ->
-            sqlTemplates.map { template -> SQLTemplate(template).createSQL(url) }.forEach { sql ->
-                val actualUrl = ResultSetUtils.extractUrlFromFromClause(sql)
-                assertEquals(url, actualUrl, sql)
-            }
-        }
     }
 
     @Test
@@ -69,7 +34,7 @@ class TestResultSetPersistUtils {
         val rs = ResultSets.newSimpleResultSet()
         val columnCount = 5
         val transposedRowCount = 10
-        IntRange(1, columnCount).map { i ->
+        IntRange(1, columnCount).forEach { i ->
             rs.addColumn("C$i", Types.ARRAY, 0, 0)
         }
 

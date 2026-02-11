@@ -1,11 +1,11 @@
-name: 'Run Integration Tests'
-description: 'Runs integration tests against a running application instance'
+name: 'Run E2E Tests'
+description: 'Runs e2e tests against a running application instance'
 
 inputs:
   script_path:
-    description: 'Path to the integration test script'
+    description: 'Path to the e2e test script'
     required: false
-    default: './bin/tests/run-integration-test.sh'
+    default: './bin/tests/run-e2e-test.sh'
   application_url:
     description: 'Application URL to test against'
     required: false
@@ -17,47 +17,47 @@ inputs:
     description: 'Application container name'
     required: false
   timeout_seconds:
-    description: 'Timeout for integration tests in seconds'
+    description: 'Timeout for e2e tests in seconds'
     required: false
     default: '600'
 
 outputs:
   integration_status:
-    description: 'Status of the integration tests (success, failed, skipped)'
+    description: 'Status of the e2e tests (success, failed, skipped)'
     value: ${{ steps.run-tests.outputs.integration_status }}
   integration_exit_code:
-    description: 'Exit code of the integration tests (if failed)'
+    description: 'Exit code of the e2e tests (if failed)'
     value: ${{ steps.run-tests.outputs.integration_exit_code }}
   integration_duration:
-    description: 'Duration of the integration tests in seconds'
+    description: 'Duration of the e2e tests in seconds'
     value: ${{ steps.run-tests.outputs.integration_duration }}
   integration_time:
-    description: 'Timestamp when integration tests completed'
+    description: 'Timestamp when e2e tests completed'
     value: ${{ steps.run-tests.outputs.integration_time }}
 
 runs:
   using: 'composite'
   steps:
-    - name: Run Integration Tests
+    - name: Run E2E Tests
       id: run-tests
       shell: bash
       run: |
-        echo "::group::🧪 Integration Tests"
-        
+        echo "::group::🧪 E2E Tests"
+
         if [ -f "${{ inputs.script_path }}" ]; then
-          echo "✅ Found integration test script"
+          echo "✅ Found e2e test script"
           chmod +x ${{ inputs.script_path }}
-        
-          echo "🚀 Running integration tests..."
+
+          echo "🚀 Running e2e tests..."
           echo "Application URL: ${{ inputs.application_url }}"
           echo "Network: ${{ inputs.network_name }}"
           echo "Container: ${{ inputs.container_name }}"
-        
+
           start_time=$(date +%s)
           if timeout ${{ inputs.timeout_seconds }} ${{ inputs.script_path }}; then
             end_time=$(date +%s)
             duration=$((end_time - start_time))
-            echo "✅ Integration tests passed (completed in ${duration}s)"
+            echo "✅ E2E tests passed (completed in ${duration}s)"
             echo "integration_status=success" >> $GITHUB_OUTPUT
             echo "integration_duration=${duration}" >> $GITHUB_OUTPUT
             echo "integration_time=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ runs:
             EXIT_CODE=$?
             end_time=$(date +%s)
             duration=$((end_time - start_time))
-            echo "❌ Integration tests failed with exit code: $EXIT_CODE (took ${duration}s)"
+            echo "❌ E2E tests failed with exit code: $EXIT_CODE (took ${duration}s)"
             echo "integration_status=failed" >> $GITHUB_OUTPUT
             echo "integration_exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
             echo "integration_duration=${duration}" >> $GITHUB_OUTPUT
@@ -73,9 +73,9 @@ runs:
             exit 1
           fi
         else
-          echo "⚠️ Integration test script not found: ${{ inputs.script_path }}"
-          echo "Skipping integration tests..."
+          echo "⚠️ E2E test script not found: ${{ inputs.script_path }}"
+          echo "Skipping e2e tests..."
           echo "integration_status=skipped" >> $GITHUB_OUTPUT
         fi
-        
+
         echo "::endgroup::"

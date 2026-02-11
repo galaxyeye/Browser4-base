@@ -54,6 +54,10 @@ open class DefaultHtmlIntegrityChecker(val conf: ImmutableConfig): AbstractHtmlI
         }
     }
 
+    /**
+     * Check the html integrity by looking for specific tags and flags.
+     * TODO: do not depend on injected flags in DOM, do not modify the DOM.
+     * */
     private fun checkHtmlIntegrity0(pageSource: String): HtmlIntegrity {
         val p0 = pageSource.indexOf("</head>")
         val p1 = pageSource.indexOf("<body", p0)

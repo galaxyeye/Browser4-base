@@ -15,28 +15,27 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.5.0-rc.1</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>pulsar-persist</artifactId>
     <name>Pulsar Persist</name>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>ai.platon.pulsar</groupId>
             <artifactId>gora-shaded-mongodb</artifactId>
             <version>${gora-shaded-mongodb.version}</version>
-        </dependency>
-        <!-- Requires org.apache.hadoop.conf.Configuration only, required by GoraStorage -->
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-        </dependency>
-        <!-- Required by hadoop-common -->
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
         </dependency>
 
         <dependency>

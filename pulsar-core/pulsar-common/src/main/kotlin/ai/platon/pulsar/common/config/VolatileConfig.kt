@@ -4,12 +4,12 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
- * Created by vincent on 18-1-17.
+ * Created by Vincent on 18-1-17.
  * Copyright @ 2013-2023 Platon AI. All rights reserved.
  *
  * The volatile config is designed to read/write frequently.
  */
-open class VolatileConfig : MutableConfig {
+open class VolatileConfig: MutableConfig {
     var fallbackConfig: ImmutableConfig? = null
 
     private val ttls: MutableMap<String, Int> = ConcurrentHashMap()
@@ -61,6 +61,7 @@ open class VolatileConfig : MutableConfig {
                 super.unset(name)
             }
         }
+
         return fallbackConfig?.get(name)
     }
 

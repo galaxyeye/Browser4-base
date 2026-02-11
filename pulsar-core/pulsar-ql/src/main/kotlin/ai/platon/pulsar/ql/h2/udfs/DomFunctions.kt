@@ -24,7 +24,7 @@ import java.sql.Connection
 import java.time.Duration
 
 /**
- * Created by vincent on 17-11-1.
+ * Created by Vincent on 17-11-1.
  * Copyright @ 2013-2020 Platon AI. All rights reserved
  */
 @Suppress("unused")

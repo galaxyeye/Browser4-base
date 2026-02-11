@@ -111,7 +111,7 @@ fun pulsarObjectMapper(): ObjectMapper = jacksonObjectMapper()
     .configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-    // Prefer non-deprecated API; setSerializationInclusion is deprecated in newer Jackson.
+    // Prefer non-deprecated API; setDefaultPropertyInclusion is deprecated in newer Jackson.
     .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY))
     // Ensure Double/Number formatting works in containers like List<Number>, Map<String, Any>, etc.
     .registerModule(doubleBindModule())
@@ -130,8 +130,17 @@ object PulsarJackson {
     private val mapper = pulsarObjectMapper()
     private val prettyMapper = prettyPulsarObjectMapper()
 
-    fun toJson(any: Any) = mapper.writeValueAsString(any)!!
-    fun toPrettyJson(any: Any) = prettyMapper.writeValueAsString(any)!!
+    fun toJson(value: Any) = mapper.writeValueAsString(value)!!
+    fun toPrettyJson(value: Any) = prettyMapper.writeValueAsString(value)!!
+
+    fun toJsonOrNull(value: Any) = runCatching { mapper.writeValueAsString(value) }.getOrNull()
+    fun toPrettyJsonOrNull(value: Any) = runCatching { prettyMapper.writeValueAsString(value) }.getOrNull()
+
+    fun toJsonOrString(value: Any) = toJsonOrNull(value) ?: value.toString()
+    fun toPrettyJsonOrString(value: Any) = toPrettyJsonOrNull(value) ?: value.toString()
+
+    fun readTree(json: String): JsonNode? = mapper.readTree(json)
+    fun readTreeOrNull(json: String): JsonNode? = runCatching { mapper.readTree(json) }.getOrNull()
 }
 
 /**

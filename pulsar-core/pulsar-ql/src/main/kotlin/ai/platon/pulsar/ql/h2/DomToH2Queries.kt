@@ -123,7 +123,7 @@ object DomToH2Queries {
         var links = transformer(document.document, restrictCss, offset, Int.MAX_VALUE).filter { !URLUtils.isInternal(it) }
 
         if (normalize) {
-            links = links.mapNotNull { session.normalizeOrNull(it)?.spec }
+            links = links.mapNotNull { session.normalizeOrNull(it)?.urlString }
         }
 
         val itemOptions = normURL.options.createItemOptions()
@@ -143,7 +143,7 @@ object DomToH2Queries {
             return listOf()
         }
 
-        val futures = session.loadAllAsync(normUrls.distinctBy { it.spec })
+        val futures = session.loadAllAsync(normUrls.distinctBy { it.urlString })
 
         logger.info("Waiting for {} completable hyperlinks | @{}", futures.size, futures.hashCode())
 
@@ -166,7 +166,7 @@ object DomToH2Queries {
         val timeoutSeconds = options.pageLoadTimeout.seconds + 1
         val links = normUrls
             .asSequence()
-            .map { CompletableListenableHyperlink<WebPage>(it.spec, args = it.args, href = it.hrefSpec) }
+            .map { CompletableListenableHyperlink<WebPage>(it.urlString, args = it.args, href = it.hrefSpec) }
             .onEach { it.completeOnTimeout(GoraWebPage.NIL, timeoutSeconds, TimeUnit.SECONDS) }
             .toList()
 

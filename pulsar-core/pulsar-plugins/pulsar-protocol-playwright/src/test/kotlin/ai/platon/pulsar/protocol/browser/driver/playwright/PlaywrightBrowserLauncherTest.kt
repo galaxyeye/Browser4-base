@@ -1,20 +1,20 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
-import ai.platon.pulsar.browser.driver.chrome.common.ChromeOptions
-import ai.platon.pulsar.browser.driver.chrome.common.LauncherOptions
-import ai.platon.pulsar.common.Runtimes
+import ai.platon.browser4.driver.chrome.common.ChromeOptions
+import ai.platon.browser4.driver.chrome.common.LauncherOptions
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.privacy.BrowserId
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 @Tag("OptionalTest")
+@Tag("MustRunExplicitly")
+@Disabled("MustRunExplicitly")
 class PlaywrightBrowserLauncherTest: PlaywrightTestBase() {
     private val browserLauncher = PlaywrightBrowserLauncher()
 

@@ -11,7 +11,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Created by vincent on 16-7-20.
+ * Created by Vincent on 16-7-20.
  * Copyright @ 2013-2016 Platon AI. All rights reserved
  */
 class TestScopedUrlNormalizer {

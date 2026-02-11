@@ -1,13 +1,15 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright.badcase
 
 import ai.platon.pulsar.common.LinkExtractors
-import ai.platon.pulsar.common.sleepSeconds
 import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.common.sleepSeconds
 import ai.platon.pulsar.protocol.browser.driver.playwright.PlaywrightTestBase.Companion.BAD_PARALLELISM_WARNING
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
 import com.microsoft.playwright.options.LoadState
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Tag
 import java.nio.file.Paths
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -16,6 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Warning: this is a bad case to demonstrate the problem of Playwright's parallelism.
  * */
+@Disabled("MustRunExplicitly")
+@Tag("MustRunExplicitly")
 class PlaywrightThreadBoundLoadTest {
     companion object {
         const val CONTEXT_COUNT = 5           // 模拟 5 个用户

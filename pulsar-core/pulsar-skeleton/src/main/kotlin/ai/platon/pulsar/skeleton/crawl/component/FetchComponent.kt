@@ -2,13 +2,16 @@ package ai.platon.pulsar.skeleton.crawl.component
 
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.config.ImmutableConfig
-import ai.platon.pulsar.persist.*
+import ai.platon.pulsar.persist.PageDatum
+import ai.platon.pulsar.persist.ProtocolStatus
+import ai.platon.pulsar.persist.WebPage
+import ai.platon.pulsar.persist.WebPageExt
 import ai.platon.pulsar.persist.model.GoraWebPage
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
 import ai.platon.pulsar.skeleton.common.persist.ext.options
 import ai.platon.pulsar.skeleton.crawl.CoreMetrics
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.common.FetchEntry
 import ai.platon.pulsar.skeleton.crawl.protocol.ProtocolFactory
 import ai.platon.pulsar.skeleton.crawl.protocol.ProtocolNotFound
@@ -25,7 +28,6 @@ open class FetchComponent(
     val immutableConfig: ImmutableConfig,
 ) : AutoCloseable {
     private val logger = LoggerFactory.getLogger(FetchComponent::class.java)
-    private val tracer = logger.takeIf { it.isTraceEnabled }
 
     private val closed = AtomicBoolean()
     val isActive get() = !closed.get() && AppContext.isActive
@@ -128,9 +130,11 @@ open class FetchComponent(
 
     private fun onWillFetch(page: WebPage) {
         try {
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onWillFetch?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillFetch?.invoke(page)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onWillFetch?.invoke(page)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onWillFetch", page)
         } catch (e: Throwable) {
             logger.warn("Failed to invoke onWillFetch | ${page.configuredUrl}", e)
         }
@@ -138,9 +142,11 @@ open class FetchComponent(
 
     private fun onFetched(page: WebPage) {
         try {
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onFetched?.invoke(page)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onFetched?.invoke(page)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             page.loadEventHandlers?.onFetched?.invoke(page)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onFetched", page)
         } catch (e: Throwable) {
             logger.warn("Failed to invoke onFetched | ${page.configuredUrl}", e)
         }
@@ -167,6 +173,7 @@ open class FetchComponent(
 
     override fun close() {
         if (closed.compareAndSet(false, true)) {
+            // nothing to do
         }
     }
 

@@ -16,14 +16,14 @@ class FetchEntry(val page: WebPage, val options: LoadOptions) {
     companion object {
 
         fun createPageShell(normURL: NormURL): WebPage {
-            val page = createPageShell(normURL.spec, normURL.options, normURL.hrefSpec, normURL.referrer)
+            val page = createPageShell(normURL.urlString, normURL.options, normURL.hrefSpec, normURL.referrer)
             val depth = normURL.detail?.depth ?: 0
             if (depth > 0) {
                 page.distance = depth
             }
             return page
         }
-        
+
         fun createPageShell(url: String, conf: VolatileConfig, href: String? = null, referrer: String? = null): WebPage {
             val page = GoraWebPage.newWebPage(url, conf, href)
             initWebPage(page, null, href, referrer)

@@ -40,11 +40,6 @@ class TestSQLFeatures : TestBase() {
         execute("SET @r=map('a', 1, 'b', 2, 'c', 3)")
         query("SELECT map('a', 1, 'b', 2, 'c', 3)")
         query("SELECT to_json(map('a', 1, 'b', 2, 'c', 3))")
-
-//        assertResultSetEquals("""(('a', 1), ('b', 2), ('c', 3))""",
-//            "SELECT map('a', 1, 'b', 2, 'c', 3)")
-//        assertResultSetEquals("""{"a":"1","b":"2","c":"3"}""",
-//            "SELECT to_json(map('a', 1, 'b', 2, 'c', 3))")
     }
 
     @Test

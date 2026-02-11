@@ -8,12 +8,7 @@ import java.net.*;
 import java.time.Duration;
 import java.util.regex.Pattern;
 
-/**
- * <p>NetUtil class.</p>
- *
- * @author vincent
- * @version $Id: $Id
- */
+@SuppressWarnings("unused")
 public class NetUtil {
 
     private static final Logger log = LoggerFactory.getLogger(NetUtil.class);
@@ -22,8 +17,6 @@ public class NetUtil {
     public static Duration CONNECTION_TIMEOUT = Duration.ofSeconds(3);
 
     public static Duration PROXY_CONNECTION_TIMEOUT = Duration.ofSeconds(3);
-
-    // Pattern for matching ip[:port]
 
     public static final Pattern IP_PORT_PATTERN = Pattern.compile("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}(:\\d+)?");
 

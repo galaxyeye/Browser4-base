@@ -1,10 +1,8 @@
-
 package ai.platon.pulsar.skeleton.crawl.parse
 
 import ai.platon.pulsar.common.config.ImmutableConfig
-import ai.platon.pulsar.skeleton.common.MimeTypeResolver
+import ai.platon.pulsar.skeleton.crawl.common.MimeTypeResolver
 import ai.platon.pulsar.skeleton.crawl.parse.html.PrimerHtmlParser
-import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -23,7 +21,7 @@ class ParserFactory(private val conf: ImmutableConfig) {
         parserConfig: ParserConfig,
         availableParsers: List<Parser>,
         conf: ImmutableConfig
-    ): this(conf) {
+    ) : this(conf) {
         val availableNamedParsers = availableParsers.associateBy { it.javaClass.name }
         parserConfig.parsers.forEach { (mimeType: String, parserClasses: List<String>) ->
             val parsers = parserClasses.mapNotNull { name -> availableNamedParsers[name] }
@@ -34,7 +32,7 @@ class ParserFactory(private val conf: ImmutableConfig) {
 //                .let { Params(it) }.withLogger(LOG).info("Active parsers: ", "", false)
     }
 
-    constructor(parses: Map<String, List<Parser>>, conf: ImmutableConfig): this(conf) {
+    constructor(parses: Map<String, List<Parser>>, conf: ImmutableConfig) : this(conf) {
         mineType2Parsers.putAll(parses)
     }
 
@@ -62,8 +60,8 @@ class ParserFactory(private val conf: ImmutableConfig) {
      */
     @Throws(ParserNotFound::class)
     fun getParsers(contentType: String, url: String = ""): List<Parser> {
-        val mimeType = MimeTypeResolver.cleanMimeType(contentType)
-        return mineType2Parsers[mimeType]?: mineType2Parsers[DEFAULT_MINE_TYPE] ?: listOf()
+        val mimeType = MimeTypeResolver.cleanMimeType(contentType) ?: DEFAULT_MINE_TYPE
+        return mineType2Parsers[mimeType] ?: mineType2Parsers[DEFAULT_MINE_TYPE] ?: listOf()
     }
 
     override fun toString(): String {
@@ -71,7 +69,6 @@ class ParserFactory(private val conf: ImmutableConfig) {
     }
 
     companion object {
-        val LOG = LoggerFactory.getLogger(ParserFactory::class.java)
         const val DEFAULT_MINE_TYPE = "*"
     }
 }

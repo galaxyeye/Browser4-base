@@ -15,6 +15,7 @@ import ai.platon.pulsar.skeleton.crawl.common.GlobalCache
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserFactory
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserLaunchException
+import ai.platon.pulsar.skeleton.crawl.fetch.driver.BrowserManager
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import ai.platon.pulsar.skeleton.crawl.filter.ChainedUrlNormalizer
 import ai.platon.pulsar.skeleton.session.PulsarSession
@@ -57,14 +58,19 @@ interface PulsarContext : java.lang.AutoCloseable {
     val globalCache: GlobalCache
 
     /**
-     * The main loops
-     * */
-    val taskLoops: TaskLoops
-
-    /**
      * The browser factory.
      * */
     val browserFactory: BrowserFactory
+
+    /**
+     * The browser manager.
+     * */
+    val browserManager: BrowserManager
+
+    /**
+     * The main loops
+     * */
+    val taskLoops: TaskLoops
 
     /**
      * Get a bean with the specified class, throws [BeansException] if the bean doesn't exist

@@ -105,18 +105,13 @@ class ProtocolStatus {
         }
 
     val minorName: String
-        get() = getMinorName(minorCode)
+        get() = getStatusText(minorCode)
 
     var minorCode: Int
         get() = protocolStatus.minorCode
         set(minorCode) {
             protocolStatus.minorCode = minorCode
         }
-
-    fun setMinorCode(minorCode: Int, message: String) {
-        this.minorCode = minorCode
-        args[minorName] = message
-    }
 
     fun getArgOrElse(name: String, defaultValue: String): String {
         return args.getOrDefault(name, defaultValue).toString()
@@ -264,7 +259,7 @@ class ProtocolStatus {
             )
         }
 
-        
+
         fun cancel(reason: Any?): ProtocolStatus {
             return failed(
                 ProtocolStatusCodes.CANCELED,
@@ -272,12 +267,12 @@ class ProtocolStatus {
             )
         }
 
-        
+
         fun failed(minorCode: Int): ProtocolStatus {
             return ProtocolStatus(FAILED, minorCode)
         }
 
-        
+
         fun failed(minorCode: Int, vararg args: Any?): ProtocolStatus {
             val protocolStatus = ProtocolStatus(FAILED, minorCode)
 

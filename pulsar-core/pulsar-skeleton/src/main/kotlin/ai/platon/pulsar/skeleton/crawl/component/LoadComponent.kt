@@ -21,8 +21,8 @@ import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.common.persist.ext.eventHandlers
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
 import ai.platon.pulsar.skeleton.common.urls.NormURL
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.common.FetchEntry
 import ai.platon.pulsar.skeleton.crawl.common.FetchState
 import ai.platon.pulsar.skeleton.crawl.common.GlobalCacheFactory
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Created by vincent on 17-7-15.
+ * Created by Vincent on 17-7-15.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  *
  * The load component is the core component of the Pulsar framework, it is responsible for loading pages from the
@@ -59,17 +59,6 @@ class LoadComponent(
     companion object {
         val pageCacheHits = AtomicLong()
         val dbGetCount = AtomicLong()
-
-        var IGNORED_PAGE_FIELDS = setOf(
-            GWebPage.Field.PAGE_MODEL,
-        )
-
-        var LAZY_PAGE_FIELDS = setOf(
-            GWebPage.Field.PAGE_MODEL,
-            GWebPage.Field.CONTENT
-        )
-
-        var PAGE_FIELDS = GWebPage.Field.entries.toSet() - LAZY_PAGE_FIELDS
     }
 
     private val logger = LoggerFactory.getLogger(LoadComponent::class.java)
@@ -214,7 +203,7 @@ class LoadComponent(
     fun loadWithRetry(normURL: NormURL): WebPage {
         var page = loadWithEventHandlers(normURL)
 
-        if (URLUtils.isInternal(normURL.spec)) {
+        if (URLUtils.isInternal(normURL.urlString)) {
             normURL.options.nJitRetry = 1
         }
 
@@ -229,7 +218,7 @@ class LoadComponent(
     suspend fun loadWithRetryDeferred(normURL: NormURL): WebPage {
         var page = loadWithEventHandlersDeferred(normURL)
 
-        if (URLUtils.isInternal(normURL.spec)) {
+        if (URLUtils.isInternal(normURL.urlString)) {
             normURL.options.nJitRetry = 1
         }
 
@@ -283,7 +272,7 @@ class LoadComponent(
             return listOf()
         }
 
-        val linkFutures = normUrls.asSequence().filter { !it.isNil }.distinctBy { it.spec }
+        val linkFutures = normUrls.asSequence().filter { !it.isNil }.distinctBy { it.urlString }
             .map { it.toCompletableListenableHyperlink() }
             .toList()
         globalCache.urlPool.addAll(linkFutures)
@@ -429,7 +418,7 @@ class LoadComponent(
             // get the metadata of the page from the database, this is very fast for a crawler
             // load page content and page model lazily, if we load page content and page model every time,
             // the underlying storage may crash due to the stress.
-            val loadedPage = webDb.getOrNull(normURL.spec)
+            val loadedPage = webDb.getOrNull(normURL.urlString)
             dbGetCount.incrementAndGet()
             if (loadedPage != null) {
                 // override the old variables: args, href, etc
@@ -527,11 +516,13 @@ class LoadComponent(
     }
 
     private fun doHandleOnWillLoadEvent(normURL: NormURL, page: WebPage? = null) {
-        val url = normURL.spec
+        val url = normURL.urlString
         try {
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onWillLoad?.invoke(url)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onWillLoad?.invoke(url)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             getPageEventHandlersOrNull(normURL, page)?.loadEventHandlers?.onWillLoad?.invoke(url)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitCrawlEvent("onWillLoad", url)
         } catch (e: Throwable) {
             val configuredUrl = page?.configuredUrl ?: normURL.configuredUrl
             logger.warn("Failed to invoke beforeLoad | $configuredUrl", e)
@@ -539,7 +530,7 @@ class LoadComponent(
     }
 
     private fun doHandleOnLoadedEvent(normURL: NormURL, page: WebPage? = null) {
-        val url = normURL.spec
+        val url = normURL.urlString
         val detail = normURL.detail
         val page0 = page ?: GoraWebPage.NIL
 
@@ -558,9 +549,11 @@ class LoadComponent(
                 }
             }
 
-            GlobalEventHandlers.pageEventHandlers?.loadEventHandlers?.onLoaded?.invoke(page0)
+            PulsarEventBus.pageEventHandlers?.loadEventHandlers?.onLoaded?.invoke(page0)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             getPageEventHandlersOrNull(normURL, page)?.loadEventHandlers?.onLoaded?.invoke(page0)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitLoadEvent("onLoaded", page0)
         } catch (e: Throwable) {
             val configuredUrl = page?.configuredUrl ?: normURL.configuredUrl
             logger.warn("Failed to invoke doHandleOnLoadedEvent | $configuredUrl", e)
@@ -585,34 +578,8 @@ class LoadComponent(
 
     private fun parse(page: WebPage, options: LoadOptions): ParseResult? {
         val parser = parseComponent.takeIf { options.parse } ?: return null
-        val parseResult = parser.parse(page, options.reparseLinks, options.noFilter)
-        tracer?.trace("ParseResult: {} ParseReport: {}", parseResult, parser.getTraceInfo())
-
+        val parseResult = parser.parse(page)
         return parseResult
-    }
-
-    /**
-     * Because the content is large, a general webpage is up to 2M, so we do not load it from the database unless have to
-     *
-     * if the page is fetched, the content is set by the fetch component, so we do not load it from the database
-     * if the protocol status is not success, the content is useless and not loaded
-     * */
-    private fun processPageContent(page: WebPage, normURL: NormURL) {
-        val options = normURL.options
-
-        if (page.protocolStatus.isSuccess && page.content == null) {
-            shouldBe(false, page.isFetched) { "Page should not be fetched | ${page.configuredUrl}" }
-            // load the content of the page
-            val contentPage = webDb.getOrNull(page.url, GWebPage.Field.CONTENT)
-            if (contentPage != null) {
-                page.setByteBufferContent(contentPage.content)
-                // TODO: test the dirty flag
-                require(page is GoraWebPage)
-                page.unbox().clearDirty(GWebPage.Field.CONTENT.index)
-            }
-        }
-
-        shouldBe(options.conf, page.conf) { "Conf should be the same \n${options.conf} \n${page.conf}" }
     }
 
     private fun report(page: WebPage) {
@@ -636,7 +603,8 @@ class LoadComponent(
      * @return The page, or null
      * */
     private fun getCachedPageOrNull(normURL: NormURL): WebPage? {
-        val (url, options) = normURL
+        val url = normURL.urlString
+        val options = normURL.options
         if (options.refresh) {
             // refresh the page, do not take cached version
             return null

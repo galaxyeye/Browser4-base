@@ -7,7 +7,7 @@ import ai.platon.pulsar.ql.common.types.ValueDom
 import org.h2.value.ValueArray
 
 /**
- * Created by vincent on 18-02-06.
+ * Created by Vincent on 18-02-06.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 @Suppress("unused")

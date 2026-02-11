@@ -11,11 +11,11 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.Instant
 import java.time.LocalDateTime
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isDirectory
+import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
@@ -26,55 +26,57 @@ annotation class RequiredFile
 annotation class RequiredDirectory
 
 /**
- * Created by vincent on 18-3-23.
+ * Created by Vincent on 18-3-23.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 object AppPaths {
 
     private val CACHE = ConcurrentExpiringLRUCache<String, Any>()
 
-    val SYS_TMP_DIR = Paths.get(AppContext.TMP_DIR)
-    val SYS_USER_DIR = Paths.get(AppContext.USER_DIR)
-    val SYS_USER_HOME = Paths.get(AppContext.USER_HOME)
+    val SYS_TMP_DIR: Path = Paths.get(AppContext.TMP_DIR)
+    val SYS_USER_DIR: Path = Paths.get(AppContext.USER_DIR)
+    val SYS_USER_HOME: Path = Paths.get(AppContext.USER_HOME)
 
     /**
      * The directory for the user's default browser.
+     *
+     * NOTE: Chrome DevTools remote debugging requires a non-default data directory. Specify this using --user-data-dir.
      *
      * The placeholder directory for the user's default browser. This is a placeholder, actually no data dir
      * should be specified, so the browser driver opens a browser just like a normal user opens it.
      * The actual data dir of user's browser are different on different operating systems, for example,
      * on linux, chrome's data dir is: ~/.config/google-chrome/
      */
-    val SYSTEM_DEFAULT_BROWSER_DATA_DIR_PLACEHOLDER = SYS_TMP_DIR.resolve(".SYSTEM_DEFAULT_DATA_DIR_PLACEHOLDER")
-    val SYSTEM_DEFAULT_BROWSER_CONTEXT_DIR_PLACEHOLDER = SYSTEM_DEFAULT_BROWSER_DATA_DIR_PLACEHOLDER
+    val SYSTEM_DEFAULT_BROWSER_DATA_DIR_PLACEHOLDER: Path = SYS_TMP_DIR.resolve(".SYSTEM_DEFAULT_DATA_DIR_PLACEHOLDER")
+    val SYSTEM_DEFAULT_BROWSER_CONTEXT_DIR_PLACEHOLDER: Path = SYSTEM_DEFAULT_BROWSER_DATA_DIR_PLACEHOLDER
 
     // Directory for symbolic links, this path should be as short as possible
     @RequiredDirectory
-    val SYS_TMP_LINKS_DIR = SYS_TMP_DIR.resolve("ln")
+    val SYS_TMP_LINKS_DIR: Path = SYS_TMP_DIR.resolve("ln")
 
     @RequiredDirectory
-    val DATA_DIR = AppContext.APP_DATA_DIR
+    val DATA_DIR: Path = AppContext.APP_DATA_DIR
 
     @RequiredDirectory
-    val CONFIG_DIR = AppContext.APP_DATA_DIR.resolve("config")
+    val CONFIG_DIR: Path = AppContext.APP_DATA_DIR.resolve("config")
 
     @RequiredDirectory
-    val CONFIG_AVAILABLE_DIR = CONFIG_DIR.resolve("conf-available")
+    val CONFIG_AVAILABLE_DIR: Path = CONFIG_DIR.resolve("conf-available")
 
     @RequiredDirectory
-    val CONFIG_ENABLED_DIR = CONFIG_DIR.resolve("conf-enabled")
+    val CONFIG_ENABLED_DIR: Path = CONFIG_DIR.resolve("conf-enabled")
 
     @RequiredDirectory
-    val BROWSER_DATA_DIR = DATA_DIR.resolve("browser")
+    val BROWSER_DATA_DIR: Path = DATA_DIR.resolve("browser")
 
     @RequiredDirectory
-    val CHROME_DATA_DIR_PROTOTYPE = BROWSER_DATA_DIR.resolve("chrome/prototype/google-chrome")
+    val CHROME_DATA_DIR_PROTOTYPE: Path = BROWSER_DATA_DIR.resolve("chrome/prototype/google-chrome")
 
     @RequiredDirectory
-    val CONTEXT_DEFAULT_DIR = BROWSER_DATA_DIR.resolve("chrome/default")
+    val CONTEXT_DEFAULT_DIR: Path = BROWSER_DATA_DIR.resolve("chrome/default")
 
     @RequiredDirectory
-    val LOCAL_DATA_DIR = DATA_DIR.resolve("data")
+    val LOCAL_DATA_DIR: Path = DATA_DIR.resolve("data")
 
     @RequiredDirectory
     val LOCAL_STORAGE_DIR = LOCAL_DATA_DIR.resolve("store")
@@ -161,19 +163,25 @@ object AppPaths {
     private val procTmpDirStr get() = PROC_TMP_DIR.toString()
     private val homeDirStr get() = DATA_DIR.toString()
 
-    init {
-        AppPaths::class.java.declaredFields
+    fun createRequiredResources(target: KClass<out Any>) {
+        val targetInstance = target.objectInstance ?: return
+
+        target.java.declaredFields
             .filter { it.annotations.any { it is RequiredDirectory } }
-            .mapNotNull { it.get(AppPaths) as? Path }
+            .mapNotNull { it.isAccessible = true; it.get(targetInstance) as? Path }
             .forEach { it.takeUnless { Files.exists(it) }?.let { Files.createDirectories(it) } }
 
-        AppPaths::class.java.declaredFields
+        target.java.declaredFields
             .filter { it.annotations.any { it is RequiredFile } }
-            .mapNotNull { it.get(AppPaths) as? Path }
+            .mapNotNull { it.isAccessible = true; it.get(targetInstance) as? Path }
             .forEach {
                 it.parent.takeUnless { Files.exists(it) }?.let { Files.createDirectories(it) }
                 it.takeUnless { Files.exists(it) }?.let { Files.createFile(it) }
             }
+    }
+
+    init {
+        createRequiredResources(AppPaths::class)
     }
 
     /**
@@ -438,7 +446,7 @@ object AppPaths {
             return candidates[0]
         }
 
-        val fallback = SYS_TMP_DIR.resolve("pulsar").resolve("logs")
+        val fallback = SYS_TMP_DIR.resolve("browser4").resolve("logs")
         Files.createDirectories(fallback)
 
         return fallback

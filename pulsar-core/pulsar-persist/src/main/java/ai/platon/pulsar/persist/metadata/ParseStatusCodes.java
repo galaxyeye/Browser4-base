@@ -21,10 +21,6 @@ public interface ParseStatusCodes {
     // Secondary success codes:
     int SC_OK = 0;
 
-    int SUCCESS_IGNORE = 1;
-
-    int SUCCESS_EXT = 2;
-
     /**
      * Parsed content contains a directive to redirect to another URL. The target
      * URL can be retrieved from the arguments.

@@ -6,6 +6,7 @@ import ai.platon.pulsar.persist.model.ActiveDOMStat
 import ai.platon.pulsar.persist.model.ActiveDOMStatus
 import java.nio.ByteBuffer
 import java.time.Instant
+import java.util.*
 
 /**
  * Represents a static web page in the Browser4 system. This interface provides methods to access and manipulate
@@ -19,6 +20,11 @@ interface PageSnapshot : Comparable<PageSnapshot> {
      * The unique, in-process identifier of the web page.
      */
     val id: Long
+
+    /**
+     * The universally unique identifier (UUID) of the web page.
+     */
+    val uuid: UUID
 
     /**
      * The url is the permanent internal address, and it's also the storage key (reserved).

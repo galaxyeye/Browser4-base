@@ -1,13 +1,16 @@
 package ai.platon.pulsar.skeleton.session
 
-import ai.platon.pulsar.common.*
+import ai.platon.pulsar.common.AppFiles
+import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.AppPaths.WEB_CACHE_DIR
+import ai.platon.pulsar.common.IllegalApplicationStateException
 import ai.platon.pulsar.common.browser.BrowserProfileMode
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_MODE
 import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.common.urls.PlainUrl
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.common.urls.UrlAware
+import ai.platon.pulsar.common.warnForClose
 import ai.platon.pulsar.dom.FeaturedDocument
 import ai.platon.pulsar.dom.select.firstTextOrNull
 import ai.platon.pulsar.dom.select.selectFirstOrNull
@@ -34,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Created by vincent on 18-1-17.
+ * Created by Vincent on 18-1-17.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 abstract class AbstractPulsarSession(
@@ -53,9 +56,8 @@ abstract class AbstractPulsarSession(
 ) : PulsarSession {
 
     companion object {
-        private val inProcessIdGenerator = InProcessIdGenerator(AppContext.nodeId)
-
-        fun generateNextInProcessId() = inProcessIdGenerator.nextId()
+        private val SEQUENCER = AtomicLong()
+        fun nextId() = SEQUENCER.incrementAndGet()
 
         // Keep existing page/document cache counters
         val pageCacheHits = AtomicLong()
@@ -202,29 +204,35 @@ abstract class AbstractPulsarSession(
     }
 
     override fun createBoundDriver(): WebDriver {
-        val mode = BrowserProfileMode.fromString(sessionConfig[BROWSER_CONTEXT_MODE])
-        val driver = context.browserFactory.launch(mode).newDriver()
-        bindDriver(driver)
-        // return context.launchDefaultBrowser().newDriver().also { bindDriver(it) }
-        return driver
+        synchronized(context) {
+            val mode = BrowserProfileMode.fromString(sessionConfig[BROWSER_CONTEXT_MODE])
+            val driver = context.browserFactory.launch(mode).newDriver()
+            bindDriver(driver)
+            return driver
+        }
     }
 
     override fun getOrCreateBoundDriver(): WebDriver {
-        val driver = boundDriver
-        if (driver != null) {
-            return driver
-        }
+        synchronized(context) {
+            val driver = boundDriver
+            if (driver != null) {
+                return driver
+            }
 
-        return createBoundDriver()
+            return createBoundDriver()
+        }
     }
 
     override fun bindDriver(driver: WebDriver) {
-        sessionConfig.putBean(driver)
-        bindBrowser(driver.browser)
+        synchronized(context) {
+            sessionConfig.putBean(driver)
+            bindBrowser(driver.browser)
+        }
     }
 
     override fun bindBrowser(browser: Browser) {
         sessionConfig.putBean(browser)
+        closableObjects.add(browser)
     }
 
     override fun unbindDriver(driver: WebDriver) {
@@ -233,6 +241,7 @@ abstract class AbstractPulsarSession(
 
     override fun unbindBrowser(browser: Browser) {
         sessionConfig.removeBean(browser)
+        closableObjects.remove(browser)
     }
 
     override fun load(url: String): WebPage = load(url, options())
@@ -571,7 +580,7 @@ abstract class AbstractPulsarSession(
 
     override fun equals(other: Any?) = other === this || (other is PulsarSession && other.id == id)
 
-    override fun hashCode(): Int = id.hashCode()
+    override fun hashCode(): Int = uuid.hashCode()
 
     override fun toString(): String = "#$id"
 
@@ -656,7 +665,8 @@ abstract class AbstractPulsarSession(
     }
 
     private fun getCachedPageOrNull(normURL: NormURL): WebPage? {
-        val (url, options) = normURL
+        val url = normURL.urlString
+        val options = normURL.options
         if (options.refresh) {
             // refresh the page, do not take cached version
             return null
@@ -675,7 +685,7 @@ abstract class AbstractPulsarSession(
     private fun parseNormalizedLink(ele: Element, normalize: Boolean = false, ignoreQuery: Boolean = false): String? {
         var link = ele.attr("abs:href").takeIf { it.startsWith("http") } ?: return null
         if (normalize) {
-            link = normalizeOrNull(link)?.spec ?: return null
+            link = normalizeOrNull(link)?.urlString ?: return null
         }
 
         link = link.takeUnless { ignoreQuery } ?: URLUtils.getUrlWithoutParameters(link)

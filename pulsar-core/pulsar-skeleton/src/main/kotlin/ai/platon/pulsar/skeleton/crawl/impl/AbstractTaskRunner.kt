@@ -5,7 +5,7 @@ import ai.platon.pulsar.common.event.AbstractEventEmitter
 import ai.platon.pulsar.common.urls.UrlAware
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.skeleton.common.persist.ext.eventHandlers
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.TaskRunner
 import ai.platon.pulsar.skeleton.crawl.common.url.ListenableUrl
 import ai.platon.pulsar.skeleton.session.PulsarSession
@@ -62,9 +62,11 @@ abstract class AbstractTaskRunner(
 
     override fun onWillLoad(url: UrlAware) {
         if (url is ListenableUrl) {
-            GlobalEventHandlers.pageEventHandlers?.crawlEventHandlers?.onWillLoad?.invoke(url)
+            PulsarEventBus.pageEventHandlers?.crawlEventHandlers?.onWillLoad?.invoke(url)
             // The more specific handlers has the opportunity to override the result of more general handlers.
             url.eventHandlers.crawlEventHandlers.onWillLoad(url)
+            // Forward to server-side event handlers (non-blocking)
+            PulsarEventBus.emitCrawlEvent("onWillLoad", url.url)
         }
     }
 
@@ -77,7 +79,7 @@ abstract class AbstractTaskRunner(
     }
 
     override fun onLoaded(url: UrlAware, page: WebPage?) {
-        GlobalEventHandlers.pageEventHandlers?.crawlEventHandlers?.onLoaded?.invoke(url, page)
+        PulsarEventBus.pageEventHandlers?.crawlEventHandlers?.onLoaded?.invoke(url, page)
 
         val event = page?.eventHandlers?.crawlEventHandlers
         if (event != null) {
@@ -85,6 +87,13 @@ abstract class AbstractTaskRunner(
             event.onLoaded(url, page)
         } else if (url is ListenableUrl) {
             url.eventHandlers.crawlEventHandlers.onLoaded(url, page)
+        }
+
+        // Forward to server-side event handlers (non-blocking)
+        if (page != null) {
+            PulsarEventBus.emitLoadEvent("onLoaded", page)
+        } else {
+            PulsarEventBus.emitCrawlEvent("onLoaded", url.url)
         }
     }
 

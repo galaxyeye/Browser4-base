@@ -14,7 +14,7 @@
 
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>browser4-agents</artifactId>
-    <version>4.4.0-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 
     <name>Browser4 Agents</name>
     <description>Browser4 Agents - general purpose browser agent</description>
@@ -88,6 +88,15 @@
                     <addResources>true</addResources>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.maven-compiler-plugin}</version>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -158,6 +167,15 @@
                                             <includes>
                                                 <include>${project.build.finalName}.jar</include>
                                             </includes>
+                                        </resource>
+                                        <!-- Extra launch scripts placed next to Browser4.exe in app-image -->
+                                        <resource>
+                                            <directory>${project.basedir}/src/main/packaging</directory>
+                                            <includes>
+                                                <include>Browser4.ps1</include>
+                                                <include>Browser4.cmd</include>
+                                            </includes>
+                                            <filtering>false</filtering>
                                         </resource>
                                     </resources>
                                 </configuration>
@@ -274,10 +292,16 @@
     </profiles>
 
     <properties>
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <version.maven-compiler-plugin>3.14.1</version.maven-compiler-plugin>
+
         <kotlin.version>2.2.21</kotlin.version>
         <spring-boot.version>4.0.1</spring-boot.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
-        <pulsar.version>4.4.0-SNAPSHOT</pulsar.version>
+        <pulsar.version>4.5.0-rc.1</pulsar.version>
 
         <!-- jpackage toggles (defaults keep normal builds unaffected) -->
         <jpackage.skip>true</jpackage.skip>

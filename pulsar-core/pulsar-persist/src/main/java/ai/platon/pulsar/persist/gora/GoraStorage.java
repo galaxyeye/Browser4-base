@@ -36,24 +36,9 @@ public class GoraStorage {
      */
     private static Map<String, Object> dataStores = new HashMap<>();
 
-    public synchronized static <K, V extends Persistent> DataStore<K, V>
-    createDataStore(ImmutableConfig conf, Class<K> keyClass, Class<V> persistentClass)
-            throws GoraException, ClassNotFoundException {
-        return createDataStore(HadoopUtils.INSTANCE.toHadoopConfiguration(conf), keyClass, persistentClass);
-    }
-
     @SuppressWarnings("unchecked")
     public synchronized static <K, V extends Persistent> DataStore<K, V>
-    createDataStore(org.apache.hadoop.conf.Configuration conf, Class<K> keyClass, Class<V> persistentClass)
-            throws GoraException, ClassNotFoundException {
-        String className = conf.get(STORAGE_DATA_STORE_CLASS, MONGO_STORE_CLASS);
-        Class<? extends DataStore<K, V>> dataStoreClass = (Class<? extends DataStore<K, V>>) Class.forName(className);
-        return createDataStore(conf, keyClass, persistentClass, dataStoreClass);
-    }
-
-    @SuppressWarnings("unchecked")
-    public synchronized static <K, V extends Persistent> DataStore<K, V>
-    createDataStore(org.apache.hadoop.conf.Configuration conf,
+    createDataStore(ImmutableConfig conf,
                     Class<K> keyClass, Class<V> persistentClass, Class<? extends DataStore<K, V>> dataStoreClass
     ) throws GoraException {
         String crawlId = conf.get(STORAGE_CRAWL_ID, "");
@@ -72,9 +57,8 @@ public class GoraStorage {
         Object o = dataStores.get(schema);
         if (o == null) {
             String realSchema = schemaPrefix + schema;
-            conf.set(STORAGE_PREFERRED_SCHEMA_NAME, realSchema);
-            DataStore<K, V> dataStore = DataStoreFactory.createDataStore(dataStoreClass,
-                    keyClass, persistentClass, conf, goraProperties, schema);
+
+            DataStore<K, V> dataStore = lowLevelCreateDataStore(conf, realSchema, keyClass, persistentClass, dataStoreClass, schema);
 
             dataStores.put(realSchema, dataStore);
 
@@ -83,6 +67,7 @@ public class GoraStorage {
                 logger.info("Backend data store: {}, real schema: {}", className, dataStore.getSchemaName());
                 logger.info("FileBackendPageStore is only for development and testing, " +
                         "it is not suitable for production environment");
+                logger.info("Start a MongoDB instance and Browser4 will automatically use MongoStore as the backend data store");
             } else {
                 logger.info("Backend data store: {}, real schema: {}, storage id: <{}>, " +
                                 "set config `storage.crawl.id` to define the real schema",
@@ -107,5 +92,20 @@ public class GoraStorage {
             }
         });
         dataStores.clear();
+    }
+
+    private static <K, V extends Persistent> DataStore<K, V> lowLevelCreateDataStore(
+            ImmutableConfig conf,
+            String realSchema,
+            Class<K> keyClass, Class<V> persistentClass, Class<? extends DataStore<K, V>> dataStoreClass,
+            String schema
+    ) throws GoraException {
+        org.apache.hadoop.conf.Configuration hadoopConf = HadoopUtils.INSTANCE.toHadoopConfiguration(conf);
+        hadoopConf.set(STORAGE_PREFERRED_SCHEMA_NAME, realSchema);
+
+        DataStore<K, V> dataStore = DataStoreFactory.createDataStore(dataStoreClass,
+                keyClass, persistentClass, hadoopConf, goraProperties, schema);
+
+        return dataStore;
     }
 }

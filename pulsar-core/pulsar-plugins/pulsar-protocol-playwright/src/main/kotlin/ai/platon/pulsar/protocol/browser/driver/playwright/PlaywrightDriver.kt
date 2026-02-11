@@ -1,8 +1,8 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
-import ai.platon.pulsar.browser.driver.chrome.NetworkResourceResponse
-import ai.platon.pulsar.browser.driver.chrome.dom.model.NanoDOMTree
-import ai.platon.pulsar.browser.driver.chrome.impl.ChromeImpl
+import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
+import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.pulsar.common.NotSupportedException
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.getLogger
@@ -28,6 +28,8 @@ data class Credentials(
 /**
  * A Playwright-based implementation of the WebDriver interface.
  * This driver provides browser automation capabilities using the Playwright library.
+ *
+ * NOTICE: **DO NOT** use this driver (PlaywrightDriver) in production, this driver is used only for test purpose
  *
  * @property browser The PlaywrightBrowser instance
  * @property page The Playwright Page instance
@@ -801,6 +803,11 @@ class PlaywrightDriver(
     @Throws(WebDriverException::class)
     override suspend fun evaluateValue(selector: String, functionDeclaration: String): Any? {
         return page.locator(selector).evaluate(functionDeclaration)
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): JsEvaluation {
+        return JsEvaluation(evaluateValue(selector, functionDeclaration))
     }
 
     /**

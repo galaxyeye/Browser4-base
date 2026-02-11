@@ -11,14 +11,17 @@ import ai.platon.pulsar.persist.metadata.FetchMode
 import ai.platon.pulsar.persist.metadata.MultiMetadata
 import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
-import ai.platon.pulsar.skeleton.common.MimeTypeResolver
+import ai.platon.pulsar.skeleton.crawl.common.MimeTypeResolver
 import ai.platon.pulsar.skeleton.crawl.protocol.ForwardingResponse
 import ai.platon.pulsar.skeleton.crawl.protocol.Protocol
 import ai.platon.pulsar.skeleton.crawl.protocol.ProtocolOutput
 import ai.platon.pulsar.skeleton.crawl.protocol.Response
 import crawlercommons.robots.BaseRobotRules
 import org.slf4j.LoggerFactory
-import java.net.*
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.URI
+import java.net.UnknownHostException
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
@@ -28,7 +31,6 @@ abstract class AbstractHttpProtocol : Protocol {
     protected val closed = AtomicBoolean()
 
     val isActive get() = !closed.get() && AppContext.isActive
-    override val supportParallel: Boolean = true
 
     /**
      * The max retry time
@@ -40,9 +42,9 @@ abstract class AbstractHttpProtocol : Protocol {
      */
     override lateinit var conf: ImmutableConfig
 
-    private lateinit var mimeTypeResolver: MimeTypeResolver
-
     private lateinit var robots: HttpRobotRulesParser
+
+    private val mimeTypeResolver = MimeTypeResolver()
 
     /**
      * Set up the protocol.
@@ -51,12 +53,10 @@ abstract class AbstractHttpProtocol : Protocol {
     override fun configure(conf1: ImmutableConfig) {
         conf = conf1
         fetchMaxRetry = conf1.getInt(CapabilityTypes.HTTP_FETCH_MAX_RETRY, 3)
-        mimeTypeResolver = MimeTypeResolver(conf1)
         robots = HttpRobotRulesParser(conf1)
     }
 
     override fun reset() {
-        // reset proxy, user agent, etc
     }
 
     override fun getResponses(pages: Collection<WebPage>, volatileConfig: VolatileConfig): Collection<Response> {
@@ -154,9 +154,9 @@ abstract class AbstractHttpProtocol : Protocol {
         val httpCode = response.httpCode
         val pageDatum = response.pageDatum
         val content = pageDatum.content
-        // bytes = bytes == null ? EMPTY_CONTENT : bytes;
+
         val contentType = response.getHeader(HttpHeaders.CONTENT_TYPE)
-        pageDatum.contentType = resolveMimeType(contentType, url, content)
+        pageDatum.contentType = mimeTypeResolver.resolveMimeType(contentType, url, content)
 
         val headers = pageDatum.headers
         val finalProtocolStatus = if (httpCode >= ProtocolStatusCodes.INCOMPATIBLE_CODE_START) {
@@ -176,10 +176,6 @@ abstract class AbstractHttpProtocol : Protocol {
         }
 
         return ProtocolOutput(pageDatum, headers, finalProtocolStatus)
-    }
-
-    private fun resolveMimeType(contentType: String?, url: String, data: ByteArray?): String? {
-        return mimeTypeResolver.autoResolveContentType(contentType, url, data)
     }
 
     private fun getFailedResponse(lastThrowable: Throwable?, tryCount: Int, maxRry: Int): ProtocolOutput {

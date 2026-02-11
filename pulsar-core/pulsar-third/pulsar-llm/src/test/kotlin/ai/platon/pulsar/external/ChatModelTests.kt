@@ -4,7 +4,7 @@ import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.dom.Documents
-import ai.platon.pulsar.test.TestResourceUtil
+import ai.platon.pulsar.test.TestUrls
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
@@ -13,11 +13,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-@Tag("ExternalResourceDependent")
+@Tag("RequiresServer")
 class ChatModelTests {
 
     companion object {
-        private val url = TestResourceUtil.PRODUCT_DETAIL_URL
+        private val url = TestUrls.PRODUCT_DETAIL_URL
         private val args = "-requireSize 200000"
         private val productHtml = ResourceLoader.readString("pages/amazon/B08PP5MSVB.original.htm")
         private val productText = ResourceLoader.readString("prompts/product.txt")
@@ -32,11 +32,6 @@ class ChatModelTests {
             ChatModelTestBase.checkConfiguration()
             model = ChatModelFactory.getOrCreate(conf)
         }
-    }
-
-    @BeforeTest
-    fun checkIfModelConfigured() {
-        Assumptions.assumeTrue(isModelConfigured, "Model is not configured")
     }
 
     @BeforeTest

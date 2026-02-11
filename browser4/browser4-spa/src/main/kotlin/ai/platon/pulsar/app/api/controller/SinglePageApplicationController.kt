@@ -1,8 +1,9 @@
 package ai.platon.pulsar.app.api.controller
 
 import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.ai.agent.detail.ActResultHelper
 import ai.platon.pulsar.agentic.context.QLAgenticContext
+import ai.platon.pulsar.agentic.inference.detail.ActResultHelper
+import ai.platon.pulsar.agentic.model.ExtractionSchema
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.ResourceStatus.SC_INTERNAL_SERVER_ERROR
 import ai.platon.pulsar.common.getLogger
@@ -271,7 +272,7 @@ class SinglePageApplicationController(
 
             // Map browserApi.ts request to internal ExtractOptions.
             // The internal API requires a schema; use a permissive schema by default.
-            val schema = ai.platon.pulsar.agentic.ExtractionSchema.fromMap(mapOf("type" to "object"))
+            val schema = ExtractionSchema.fromMap(mapOf("type" to "object"))
             val options = ai.platon.pulsar.agentic.ExtractOptions(
                 instruction = request.instruction,
                 schema = schema,

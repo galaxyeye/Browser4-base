@@ -4,6 +4,7 @@ import ai.platon.pulsar.boot.autoconfigure.PulsarContextInitializer
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.external.ChatModelFactory
+import ai.platon.pulsar.rest.config.JacksonConfig
 import ai.platon.pulsar.skeleton.session.PulsarSession
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,13 +12,14 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.ImportResource
 
 @SpringBootApplication
 @ImportResource("classpath:pulsar-beans/app-context.xml")
 @ComponentScan(
     "ai.platon.pulsar.boot.autoconfigure",
-    "ai.platon.pulsar.rest.api",
+    "ai.platon.pulsar.rest",
 )
 class Browser4Application {
     private val logger = getLogger(Browser4Application::class)
@@ -41,7 +43,14 @@ class Browser4Application {
             val urls = buildServerUrls()
             val help = buildHelpMessage(llmHelp, urls)
 
-            logger.info("Welcome to Browser4! \n{}", help)
+            val pid = try {
+                ProcessHandle.current().pid()
+            } catch (_: Throwable) {
+                -1L
+            }
+
+            logger.info("Welcome to Browser4! (pid={}) \n{}", pid, help)
+            logger.info("To stop Browser4: press Ctrl+C in the console, or send a SIGTERM/stop the process (pid={}).", pid)
         } catch (e: Exception) {
             logger.error("Failed to display help message", e)
         }
@@ -79,7 +88,7 @@ class Browser4Application {
         builder.appendLine("====================================================================================")
         builder.appendLine(llmHelp)
         builder.appendLine("------------------------------------------------------------------------------")
-        builder.appendLine("Example 1: Using the WebUI to run a command:")
+        builder.appendLine("Example 1: 使用 Web UI (Using the Web UI):")
         builder.appendLine(urls.frontend)
         builder.appendLine("------------------------------------------------------------------------------")
         builder.appendLine("Example 2: Open task - Ask Browser4 for Anything:")
@@ -163,7 +172,7 @@ class Browser4Application {
 fun main(args: Array<String>) {
     runApplication<Browser4Application>(*args) {
         addInitializers(PulsarContextInitializer())
-        setAdditionalProfiles("agents", "private")
+        setAdditionalProfiles("agents", "private", "advanced")
         setLogStartupInfo(true)
     }
 }

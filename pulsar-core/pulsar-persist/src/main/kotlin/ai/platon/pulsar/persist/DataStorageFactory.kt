@@ -15,20 +15,18 @@ import org.apache.gora.mongodb.store.MongoStoreParameters.PROP_MONGO_SERVERS
 import org.apache.gora.persistency.Persistent
 import org.apache.gora.store.DataStore
 import org.apache.gora.util.GoraException
-import org.apache.hadoop.conf.Configuration
 import org.slf4j.LoggerFactory
 
 /**
- * Created by vincent on 19-1-19.
+ * Created by Vincent on 19-1-19.
  * Copyright @ 2013-2019 Platon AI. All rights reserved
  */
-class DataStorageFactory(conf: ImmutableConfig) {
-    private val hadoopConf = HadoopUtils.toHadoopConfiguration(conf)
-    private val pageStoreClass: Class<out DataStore<String, GWebPage>> get() = detectDataStoreClass(hadoopConf)
+class DataStorageFactory(val conf: ImmutableConfig) {
+    private val pageStoreClass: Class<out DataStore<String, GWebPage>> get() = detectDataStoreClass(conf)
 
     private var _dataStore: DataStore<String, GWebPage>? = null
 
-    val storeClassName: String get() = detectDataStoreClassName(hadoopConf)
+    val storeClassName: String get() = detectDataStoreClassName(conf)
 
     @get:Synchronized
     val schemaName: String get() = _dataStore?.schemaName ?: "(unknown, not initialized)"
@@ -37,7 +35,7 @@ class DataStorageFactory(conf: ImmutableConfig) {
     fun isInitialized() = _dataStore != null
 
     @Synchronized
-    fun canConnect() = runCatching { _dataStore?.schemaExists() == true }.getOrNull() ?: false
+    fun schemaAvailable() = runCatching { _dataStore?.schemaExists() == true }.getOrNull() ?: false
 
     @Synchronized
     fun getOrCreatePageStore(): DataStore<String, GWebPage> {
@@ -52,7 +50,7 @@ class DataStorageFactory(conf: ImmutableConfig) {
             throw IllegalApplicationStateException("Inactive application context")
         }
 
-        val pageStore = GoraStorage.createDataStore(hadoopConf, String::class.java, GWebPage::class.java, pageStoreClass)
+        val pageStore = GoraStorage.createDataStore(conf, String::class.java, GWebPage::class.java, pageStoreClass)
         logger.debug("Backend data store is created: {}, realSchema: {}", pageStoreClass.name, pageStore.schemaName)
         return pageStore
     }
@@ -60,8 +58,12 @@ class DataStorageFactory(conf: ImmutableConfig) {
     companion object {
         private val logger = LoggerFactory.getLogger(DataStorageFactory::class.java)
 
-        fun detectDataStoreClassName(conf: ImmutableConfig): String {
-            return detectDataStoreClassName(HadoopUtils.toHadoopConfiguration(conf))
+        fun checkIfMongoClientAvailable(conf: ImmutableConfig): Boolean {
+            val mongoServers = conf[PROP_MONGO_SERVERS]
+            if (mongoServers != null) {
+                return MongoDBUtils.isMongoReachable(mongoServers)
+            }
+            return ResourceLoader.exists("gora-mongodb-mapping.xml")
         }
 
         /**
@@ -70,18 +72,18 @@ class DataStorageFactory(conf: ImmutableConfig) {
          * @param conf AppConstants configuration
          * @return the DataStore persistent class
          */
-        fun detectDataStoreClassName(conf: HadoopConfiguration): String {
+        fun detectDataStoreClassName(conf: ImmutableConfig): String {
             if (!AppContext.isActive) {
                 throw IllegalApplicationStateException("Inactive application context")
             }
 
-            val specified = conf.get(STORAGE_DATA_STORE_CLASS)
+            val specified = conf[STORAGE_DATA_STORE_CLASS]
             if (specified != null) {
                 return specified
             }
 
             patchGoraMongoServersConfig(conf)
-            val mongoServers = conf.get(PROP_MONGO_SERVERS)
+            val mongoServers = conf[PROP_MONGO_SERVERS]
             if (mongoServers != null) {
                 return MONGO_STORE_CLASS
             }
@@ -117,7 +119,7 @@ class DataStorageFactory(conf: ImmutableConfig) {
          */
         @Suppress("UNCHECKED_CAST")
         @Throws(ClassNotFoundException::class)
-        fun <K, V : Persistent> detectDataStoreClass(conf: HadoopConfiguration): Class<out DataStore<K, V>> {
+        fun <K, V : Persistent> detectDataStoreClass(conf: ImmutableConfig): Class<out DataStore<K, V>> {
             return Class.forName(detectDataStoreClassName(conf)) as Class<out DataStore<K, V>>
         }
 
@@ -126,7 +128,7 @@ class DataStorageFactory(conf: ImmutableConfig) {
          * Enable environment variable or system property `GORA_MONGODB_SERVERS`
          */
         @Throws(GoraException::class)
-        fun patchGoraMongoServersConfig(conf: Configuration) {
+        fun patchGoraMongoServersConfig(conf: ImmutableConfig) {
             // Keep this assertion to remind us the real property name
             require("gora.mongodb.servers" == PROP_MONGO_SERVERS)
 
@@ -146,16 +148,8 @@ class DataStorageFactory(conf: ImmutableConfig) {
 
             if (servers != null) {
                 GoraStorage.goraProperties.setProperty(PROP_MONGO_SERVERS, servers)
-                conf[PROP_MONGO_SERVERS] = servers
+                conf.unbox()[PROP_MONGO_SERVERS] = servers
             }
-        }
-
-        private fun checkIfMongoClientAvailable(conf: HadoopConfiguration): Boolean {
-            val mongoServers = conf.get(PROP_MONGO_SERVERS)
-            if (mongoServers != null) {
-                return MongoDBUtils.isMongoReachable(mongoServers)
-            }
-            return ResourceLoader.exists("gora-mongodb-mapping.xml")
         }
     }
 }

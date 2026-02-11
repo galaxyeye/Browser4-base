@@ -18,7 +18,7 @@ package ai.platon.pulsar.skeleton.crawl.fetch.privacy
 import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.browser.BrowserFiles
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchResult
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchTask
@@ -240,6 +240,7 @@ interface PrivacyContext: AutoCloseable {
         // required to start with the prefix.
         const val CONTEXT_DIR_PREFIX = "cx."
 
+        // NOTE: Chrome DevTools remote debugging requires a non-default data directory. Specify this using --user-data-dir.
         val SYSTEM_DEFAULT_BROWSER_CONTEXT_DIR_PLACEHOLDER: Path = AppPaths.SYSTEM_DEFAULT_BROWSER_CONTEXT_DIR_PLACEHOLDER
 
         // The default context directory, if you need a permanent and isolate context, use this one.
@@ -247,10 +248,10 @@ interface PrivacyContext: AutoCloseable {
         val DEFAULT_CONTEXT_DIR: Path = AppPaths.CONTEXT_DEFAULT_DIR
 
         // The prototype context directory, all privacy contexts copies browser data from the prototype.
-        // A typical prototype data dir is: ~/.pulsar/browser/chrome/prototype/google-chrome/
+        // A typical prototype data dir is: ~/.browser4/browser/chrome/prototype/google-chrome/
         val PROTOTYPE_DATA_DIR: Path = AppPaths.CHROME_DATA_DIR_PROTOTYPE
         // A context dir is the dir which contains the browser data dir, and supports different browsers.
-        // For example: ~/.pulsar/browser/chrome/prototype/
+        // For example: ~/.browser4/browser/chrome/prototype/
         val PROTOTYPE_CONTEXT_DIR: Path = AppPaths.CHROME_DATA_DIR_PROTOTYPE.parent
 
         // A random context directory, if you need a random temporary context, use this one

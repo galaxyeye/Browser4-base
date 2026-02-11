@@ -12,12 +12,7 @@ import dev.langchain4j.data.message.*
 import dev.langchain4j.model.chat.request.ChatRequest
 import dev.langchain4j.model.chat.response.ChatResponse
 import dev.langchain4j.model.output.FinishReason
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.CancellationException
-import java.lang.InterruptedException
+import kotlinx.coroutines.*
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.lang3.StringUtils
 import org.ehcache.Cache
@@ -58,24 +53,24 @@ open class CachedBrowserChatModel(
 
     override val settings = ChatModelSettings(conf)
 
-    override suspend fun call(userMessage: String) = callUmSm(userMessage, "")
+    override suspend fun call(userMessage: String, category: String?) = callUmSm(userMessage, "")
 
-    override suspend fun call(document: FeaturedDocument, prompt: String) = call(document.document, prompt)
+    override suspend fun call(document: FeaturedDocument, prompt: String, category: String?) = call(document.document, prompt)
 
-    override suspend fun call(ele: Element, prompt: String) = callUmSm(ele.text(), prompt)
+    override suspend fun call(ele: Element, prompt: String, category: String?) = callUmSm(ele.text(), prompt)
 
     override suspend fun callSmUm(
         systemMessage: String, userMessage: String,
-        imageUrl: String?, b64Image: String?, mediaType: String?
+        imageUrl: String?, b64Image: String?, mediaType: String?, category: String?
     ): ModelResponse {
-        return callSmUmWithCache(systemMessage, userMessage, imageUrl, b64Image, mediaType)
+        return callSmUmWithCache(systemMessage, userMessage, imageUrl, b64Image, mediaType, category)
     }
 
     override suspend fun callUmSm(
         userMessage: String, systemMessage: String,
-        imageUrl: String?, b64Image: String?, mediaType: String?
+        imageUrl: String?, b64Image: String?, mediaType: String?, category: String?
     ): ModelResponse {
-        return callUmSmWithCache(userMessage, systemMessage, imageUrl, b64Image, mediaType)
+        return callUmSmWithCache(userMessage, systemMessage, imageUrl, b64Image, mediaType, category)
     }
 
     /**
@@ -84,7 +79,7 @@ open class CachedBrowserChatModel(
      * @param chatRequest a [ChatRequest], containing all the inputs to the LLM
      * @return a [ChatResponse], containing all the outputs from the LLM
      */
-    override suspend fun langChainChat(chatRequest: ChatRequest): ChatResponse {
+    override suspend fun langChainChat(chatRequest: ChatRequest, category: String?): ChatResponse {
         // Extract user/system messages for logging (best-effort)
         val (userText, systemText) = try {
             val msgs = chatRequest.messages()
@@ -94,7 +89,7 @@ open class CachedBrowserChatModel(
             Pair("", "")
         }
 
-        val requestId = llmLogger.logRequestUmSm(userText, systemText)
+        val requestId = llmLogger.logRequestUmSm(userText, systemText, category = category)
         try {
             return withContext(Dispatchers.IO) {
                 val resp = langchainModel.chat(chatRequest)
@@ -109,7 +104,7 @@ open class CachedBrowserChatModel(
         }
     }
 
-    override suspend fun langChainChat(vararg messages: ChatMessage): ChatResponse {
+    override suspend fun langChainChat(vararg messages: ChatMessage, category: String?): ChatResponse {
         val (userText, systemText) = extractUserAndSystemTexts(messages.toList())
         val requestId = llmLogger.logRequestUmSm(userText, systemText)
         try {
@@ -124,7 +119,7 @@ open class CachedBrowserChatModel(
         }
     }
 
-    override suspend fun langChainChat(messages: List<ChatMessage>): ChatResponse {
+    override suspend fun langChainChat(messages: List<ChatMessage>, category: String?): ChatResponse {
         val (userText, systemText) = extractUserAndSystemTexts(messages)
         val requestId = llmLogger.logRequestUmSm(userText, systemText)
         try {
@@ -146,15 +141,16 @@ open class CachedBrowserChatModel(
     private suspend fun callUmSmWithCache(
         userMessage: String, systemMessage: String,
         imageUrl: String? = null,
-        b64Image: String? = null, mediaType: String? = null,
+        b64Image: String? = null, mediaType: String? = null, category: String?
     ): ModelResponse {
-        return callSmUmWithCache(systemMessage, userMessage, imageUrl, b64Image, mediaType)
+        return callSmUmWithCache(systemMessage, userMessage, imageUrl, b64Image, mediaType, category)
     }
 
     private suspend fun callSmUmWithCache(
         systemMessage: String, userMessage: String,
         imageUrl: String? = null,
         b64Image: String? = null, mediaType: String? = null,
+        category: String? = null
     ): ModelResponse {
         if (userMessage.isBlank()) {
             logger.warn("No user message, return empty response")
@@ -190,7 +186,7 @@ open class CachedBrowserChatModel(
         }
 
         // 记录请求
-        val requestId = llmLogger.logRequestUmSm(trimmedUserMessage, systemMessage)
+        val requestId = llmLogger.logRequestUmSm(trimmedUserMessage, systemMessage, category)
 
         // Build user message, optionally with b64Image content parts
         val um: UserMessage = if (imageProvided) {
@@ -229,7 +225,7 @@ open class CachedBrowserChatModel(
         } catch (e: Exception) {
             logger.warn("[Unexpected] Exception | {} | {}", langchainModel.javaClass.simpleName, e.stringify())
             return ModelResponse("", ResponseState.OTHER).also {
-                llmLogger.logResponse(requestId, it)
+                llmLogger.logResponse(requestId, it, category)
             }
         }
 
@@ -262,7 +258,7 @@ open class CachedBrowserChatModel(
         }
 
         // 记录响应
-        llmLogger.logResponse(requestId, modelResponse)
+        llmLogger.logResponse(requestId, modelResponse, category)
 
         // Cache the response
         responseCache.put(cacheKey, modelResponse)

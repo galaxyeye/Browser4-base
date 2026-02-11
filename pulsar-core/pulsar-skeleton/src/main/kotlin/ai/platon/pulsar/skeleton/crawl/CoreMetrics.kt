@@ -3,7 +3,8 @@ package ai.platon.pulsar.skeleton.crawl
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.AppPaths.PATH_UNREACHABLE_HOSTS
 import ai.platon.pulsar.common.chrono.scheduleAtFixedRate
-import ai.platon.pulsar.common.config.CapabilityTypes.*
+import ai.platon.pulsar.common.config.CapabilityTypes.FETCH_MAX_HOST_FAILURES
+import ai.platon.pulsar.common.config.CapabilityTypes.PARSE_MAX_URL_LENGTH
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.config.Parameterized
 import ai.platon.pulsar.common.config.Params
@@ -12,7 +13,7 @@ import ai.platon.pulsar.common.measure.ByteUnitConverter
 import ai.platon.pulsar.persist.WebDb
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.skeleton.common.AppSystemInfo
-import ai.platon.pulsar.skeleton.common.message.MiscMessageWriter
+import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.common.metrics.MetricsSystem
 import ai.platon.pulsar.skeleton.crawl.common.InternalURLUtil
 import ai.platon.pulsar.skeleton.crawl.component.LoadComponent
@@ -33,7 +34,7 @@ import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicBoolean
 
 class CoreMetrics(
-    private val messageWriter: MiscMessageWriter,
+    private val messageWriter: MiscMessageMessageWriter,
     conf: ImmutableConfig
 ) : Parameterized, AutoCloseable {
 

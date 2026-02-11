@@ -1,6 +1,6 @@
 package ai.platon.pulsar.rest.api.service
 
-import ai.platon.pulsar.rest.api.common.DEFAULT_INTRODUCE
+import ai.platon.pulsar.agentic.tools.crawl.common.DEFAULT_INTRODUCE
 import ai.platon.pulsar.rest.api.entities.PromptRequest
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.session.PulsarSession

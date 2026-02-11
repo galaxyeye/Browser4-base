@@ -1,9 +1,8 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
-import ai.platon.pulsar.browser.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NetworkResourceResponse
 import org.jsoup.Connection
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 
 data class JsException(
     val text: String? = null,

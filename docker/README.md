@@ -2,9 +2,23 @@
 
 ## 🛠️ Build Local Development Image
 
+### Option 1: Build from Source (Full Build)
 ```bash
 docker build -t browser4-dev .
-````
+```
+
+### Option 2: Fast Build (Pre-built JAR)
+If you have already built the JAR locally, you can use the fast Dockerfile to skip the Maven build stage:
+
+```bash
+# First, build the JAR locally
+./mvnw clean package -DskipTests
+
+# Then build the Docker image using the pre-built JAR
+docker build -f Dockerfile.fast -t browser4-dev .
+```
+
+> 💡 **Fast Build Advantage**: This approach significantly reduces build time by copying the pre-built `browser4/browser4-agents/target/Browser4.jar` instead of rebuilding from source inside Docker.
 
 ## 🏠 Run Local Docker Image
 

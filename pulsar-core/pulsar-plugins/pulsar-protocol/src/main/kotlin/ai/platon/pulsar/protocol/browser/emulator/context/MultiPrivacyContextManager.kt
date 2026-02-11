@@ -16,7 +16,7 @@
 package ai.platon.pulsar.protocol.browser.emulator.context
 
 import ai.platon.pulsar.common.*
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.CapabilityTypes.PRIVACY_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.ImmutableConfig
@@ -91,7 +91,7 @@ open class MultiPrivacyContextManager(
     private var lastDumpTime = Instant.now()
     private val snapshotDumpCount = AtomicInteger()
     var snapshotDumpInterval = SNAPSHOT_DUMP_INTERVAL
-    private val messageWriter = MultiSinkWriter()
+    private val messageWriter = MultiSinkMessageWriter()
 
     private val activeContextCount get() = permanentContexts.size + temporaryContexts.size
 

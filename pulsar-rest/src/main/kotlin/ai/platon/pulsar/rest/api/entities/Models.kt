@@ -1,11 +1,15 @@
 package ai.platon.pulsar.rest.api.entities
 
-import ai.platon.pulsar.agentic.AgentHistory
-import ai.platon.pulsar.agentic.AgentState
+import ai.platon.pulsar.agentic.model.AgentHistory
+import ai.platon.pulsar.agentic.model.AgentState
+import ai.platon.pulsar.agentic.tools.agent.AgentTaskStatus
+import ai.platon.pulsar.agentic.tools.crawl.PGInstructResult
+import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
 import ai.platon.pulsar.common.ResourceStatus
-import ai.platon.pulsar.persist.ProtocolStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
+import ai.platon.pulsar.skeleton.crawl.ServerSideEventHandlers
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -32,7 +36,7 @@ data class PromptRequest(
     /**
      * The load arguments
      *
-     * @see [ai.platon.pulsar.skeleton.common.options.LoadOptions]
+     * @see [LoadOptions]
      * */
     var args: String? = null,
     /**
@@ -40,80 +44,6 @@ data class PromptRequest(
      * */
     var actions: List<String>? = null
 )
-
-data class ScrapeRequest(
-    var sql: String,
-)
-
-data class ScrapeResponse(
-    var id: String? = null,
-    var statusCode: Int = ResourceStatus.SC_CREATED,
-    var pageStatusCode: Int = ProtocolStatusCodes.SC_CREATED,
-    var pageContentBytes: Int = 0,
-    var isDone: Boolean = false,
-    var resultSet: List<Map<String, Any?>>? = null,
-
-    var event: String = "",
-) {
-    val status: String get() = ResourceStatus.getStatusText(statusCode)
-    val pageStatus: String get() = ProtocolStatus.getMinorName(pageStatusCode)
-    val createTime: Instant = Instant.now()
-    var lastModifiedTime: Instant? = null
-    var finishTime: Instant? = null
-
-    companion object {
-        fun notFound(id: String) = ScrapeResponse(id, ResourceStatus.SC_NOT_FOUND, ResourceStatus.SC_NOT_FOUND)
-        fun failed(id: String, statusCode: Int, pageStatusCode: Int) =
-            ScrapeResponse(id, statusCode = statusCode, pageStatusCode = pageStatusCode)
-
-        fun failed(id: String, e: Exception) =
-            ScrapeResponse(
-                id,
-                statusCode = ResourceStatus.SC_EXPECTATION_FAILED,
-                pageStatusCode = ResourceStatus.SC_EXPECTATION_FAILED
-            )
-    }
-}
-
-fun ScrapeResponse.refresh(isDone: Boolean = false) {
-    lastModifiedTime = Instant.now()
-    this.isDone = isDone
-}
-
-fun ScrapeResponse.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
-
-fun ScrapeResponse.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolean) {
-    lastModifiedTime = Instant.now()
-    this.statusCode = statusCode
-    this.pageStatusCode = pageStatusCode
-    this.isDone = isDone
-}
-
-fun ScrapeResponse.failed(statusCode: Int): ScrapeResponse {
-    // do not change pageStatusCode
-    refresh(statusCode, pageStatusCode, isDone = true)
-    return this
-}
-
-fun ScrapeResponse.refresh(event: String) {
-    this.event = event
-    this.lastModifiedTime = Instant.now()
-}
-
-fun ScrapeResponse.failed(statusCode: Int, pageStatusCode: Int): ScrapeResponse {
-    refresh(statusCode, pageStatusCode, isDone = true)
-    return this
-}
-
-fun ScrapeResponse.done() {
-    refresh(isDone = true)
-    finishTime = Instant.now()
-}
-
-fun ScrapeResponse.refreshed(lastModifiedTime: Instant): Boolean {
-    val time = this.lastModifiedTime ?: return false
-    return time > lastModifiedTime
-}
 
 data class ScrapeStatusRequest(
     val id: String,
@@ -127,58 +57,7 @@ data class W3DocumentRequest(
     val args: String? = null,
 )
 
-/**
- * Request for web page interactions with structured data extraction capabilities.
- *
- * @property url The target page URL to process.
- * @property args Optional load arguments to customize page loading behavior.
- * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigateTo").
- * @property onPageReadyActions Actions to perform when the document is fully loaded (e.g., "scroll down", "click button").
- * @property pageSummaryPrompt A prompt to analyze or discuss the HTML structure of the page.
- * @property dataExtractionRules Specifications for extracting structured fields from the HTML content.
- * @property uriExtractionRules A regex pattern to extract specific URIs from the page, e.g. "links containing /dp/".
- * @property xsql An X-SQL query for structured data extraction, e.g. "select dom_first_text(dom, '#title') as title, llm_extract(dom, 'price') as price".
- * @property richText Whether to retain rich text formatting in the extracted content.
- * @property async If true, the command is executed asynchronous; otherwise, it's synchronously.
- * @property mode The execution mode, either "sync" or "async", default to "sync". (Deprecated: use [async] instead)
- */
-data class CommandRequest @JsonCreator constructor(
-    @param:JsonProperty("url") var url: String,
-    @param:JsonProperty("args") var args: String? = null,
-    @param:JsonProperty("onBrowserLaunchedActions") var onBrowserLaunchedActions: List<String>? = null,
-    @param:JsonProperty("onPageReadyActions") var onPageReadyActions: List<String>? = null,
-    @param:JsonProperty("actions") var actions: List<String>? = null,
-    @param:JsonProperty("pageSummaryPrompt") var pageSummaryPrompt: String? = null,
-    @param:JsonProperty("dataExtractionRules") var dataExtractionRules: String? = null,
-    @param:JsonProperty("uriExtractionRules") var uriExtractionRules: String? = null,
-    @param:JsonProperty("xsql") var xsql: String? = null,
-    @param:JsonProperty("richText") var richText: Boolean? = null,
-    @param:JsonProperty("async") var async: Boolean? = null,
-    @param:JsonProperty("id") var id: String? = null,
-) {
-    fun hasAction(): Boolean {
-        return !onBrowserLaunchedActions.isNullOrEmpty() || !onPageReadyActions.isNullOrEmpty()
-    }
-
-    fun isAsync(): Boolean {
-        return when {
-            async == true -> true
-            else -> false
-        }
-    }
-
-    fun enhanceArgs(): String {
-        val minimalSize = 100 // minimal page size required
-        val args = if (hasAction()) {
-            LoadOptions.mergeArgs(this.args, "-refresh -requireSize $minimalSize")
-        } else {
-            LoadOptions.mergeArgs(this.args, "-requireSize $minimalSize")
-        }
-
-        this.args = args
-        return args
-    }
-}
+typealias CommandRequest = PageVisitRequest
 
 /**
  * Command result
@@ -241,11 +120,22 @@ data class InstructResult @JsonCreator constructor(
  * @property instructResults A list of results from the instructions executed during the command.
  * */
 data class CommandStatus(
+    /**
+     * The unique identifier for the page visit status.
+     * */
     val id: String = UUID.randomUUID().toString(),
-
+    /**
+     * The status code representing the task status.
+     * */
     var statusCode: Int = ResourceStatus.SC_CREATED,
+    /**
+     * The last event associated with the task.
+     * */
     var event: String = "",
-    var state: String = "created", // created, in_progress, done
+    /**
+     * The progress state of the agent task. Can be "created", "in_progress", or "done".
+     * */
+    var processState: String = "created", // created, in_progress, done
 
     var pageStatusCode: Int = ProtocolStatusCodes.SC_CREATED,
     var pageContentBytes: Int = 0,
@@ -257,12 +147,10 @@ data class CommandStatus(
     var instructResults: MutableList<InstructResult> = mutableListOf()
 ) {
     val status: String get() = ResourceStatus.getStatusText(statusCode)
-    val pageStatus: String get() = ProtocolStatus.getStatusText(pageStatusCode)
-    val createTime: Instant = Instant.now()
     var lastModifiedTime: Instant? = null
     var finishTime: Instant? = null
 
-    val isDone: Boolean get() = state == "done"
+    val isDone: Boolean get() = processState == "done"
 
     /**
      * The agent's state history reference for tracking agent execution progress.
@@ -279,18 +167,26 @@ data class CommandStatus(
     val currentAgentState: AgentState?
         get() = agentHistory?.lastOrNull()
 
-    companion object {
-        fun notFound(id: String) = CommandStatus(id, ResourceStatus.SC_NOT_FOUND, state = "done")
+    /**
+     * The server-side event handlers reference for tracking server-side events during command execution.
+     * This is set when executing commands and provides access to the event flow.
+     * It is excluded from JSON serialization as it's only used for internal event streaming.
+     */
+    @get:JsonIgnore
+    var serverSideEventHandlers: ServerSideEventHandlers? = null
 
-        fun failed(id: String) = CommandStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+    companion object {
+        fun notFound(id: String) = CommandStatus(id, ResourceStatus.SC_NOT_FOUND, processState = "done")
+
+        fun failed(id: String) = CommandStatus(id, ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
 
         fun failed(id: String, statusCode: Int, pageStatusCode: Int = statusCode) =
-            CommandStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, state = "done")
+            CommandStatus(id, statusCode = statusCode, pageStatusCode = pageStatusCode, processState = "done")
 
         fun failed(statusCode: Int, pageStatusCode: Int = statusCode) = failed("", statusCode, pageStatusCode)
 
         fun failed(id: String, e: Exception): CommandStatus {
-            return CommandStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, state = "done")
+            return CommandStatus(id, statusCode = ResourceStatus.SC_EXPECTATION_FAILED, processState = "done")
         }
     }
 }
@@ -303,7 +199,7 @@ fun CommandStatus.ensureCommandResult(): CommandResult {
 
 fun CommandStatus.refresh(isDone: Boolean = false) {
     lastModifiedTime = Instant.now()
-    state = "done".takeIf { isDone } ?: "in_progress"
+    processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun CommandStatus.refresh(statusCode: Int) = refresh(statusCode, this.pageStatusCode, false)
@@ -312,7 +208,7 @@ fun CommandStatus.refresh(statusCode: Int, pageStatusCode: Int, isDone: Boolean)
     lastModifiedTime = Instant.now()
     this.statusCode = statusCode
     this.pageStatusCode = pageStatusCode
-    state = "done".takeIf { isDone } ?: "in_progress"
+    processState = "done".takeIf { isDone } ?: "in_progress"
 }
 
 fun CommandStatus.failed(statusCode: Int): CommandStatus {
@@ -321,7 +217,7 @@ fun CommandStatus.failed(statusCode: Int): CommandStatus {
     return this
 }
 
-fun CommandStatus.refresh(event: String) {
+fun CommandStatus.emitEvent(event: String) {
     this.event = event
     message = if (message != null) "$message,$event" else event
 }
@@ -351,7 +247,7 @@ fun CommandStatus.addInstructResult(result: InstructResult) {
             commandResult.links = result.result as? List<String>?
         }
     }
-    refresh(result.name)
+    emitEvent(result.name)
 }
 
 fun CommandStatus.done() {
@@ -362,6 +258,70 @@ fun CommandStatus.done() {
 fun CommandStatus.refreshed(lastModifiedTime: Instant): Boolean {
     val modifiedTime = this.lastModifiedTime ?: return false
     return modifiedTime > lastModifiedTime
+}
+
+fun AgentTaskStatus.toCommandStatus(): CommandStatus {
+    val status = CommandStatus(this.id)
+    // Transfer all status fields
+    status.statusCode = this.statusCode
+    status.event = this.event
+    status.processState = this.processState
+    status.message = this.message
+    status.lastModifiedTime = this.lastModifiedTime
+    status.finishTime = this.finishTime
+
+    // Transfer agent-specific data
+    status.agentHistory = this.agentHistory
+    if (this.agentHistory != null) {
+        val summary = this.agentHistory?.lastOrNull()?.summary ?: ""
+        if (summary.isNotBlank()) {
+            status.ensureCommandResult().summary = summary
+        }
+    }
+
+    // Note: pageStatusCode and pageContentBytes remain at their default values
+    // as AgentTaskStatus doesn't have these fields
+
+    return status
+}
+
+fun PageVisitStatus.toCommandStatus(): CommandStatus {
+    val status = CommandStatus(this.id)
+
+    // Transfer all basic status fields
+    status.statusCode = this.statusCode
+    status.event = this.event
+    status.processState = this.processState
+    status.pageStatusCode = this.pageStatusCode
+    status.pageContentBytes = this.pageContentBytes
+    status.message = this.message
+    status.lastModifiedTime = this.lastModifiedTime
+    status.finishTime = this.finishTime
+
+    // Transfer request if present
+    status.request = this.request
+
+    // instruct results -> REST instruct results
+    @Suppress("UNCHECKED_CAST")
+    val restResults = instructResults.map { it.toRestInstructResult() }
+    status.instructResults = restResults.toMutableList()
+
+    // best-effort summary mapping
+    val visitResult = pageVisitResult
+    if (visitResult != null) {
+        val commandResult = status.ensureCommandResult()
+        commandResult.pageSummary = visitResult.pageSummary
+        commandResult.fields = visitResult.fields
+        commandResult.xsqlResultSet = visitResult.xsqlResultSet
+    }
+
+    return status
+}
+
+fun PGInstructResult.toRestInstructResult(): InstructResult {
+    // Keep naming aligned to REST API conventions.
+    val t = resultType ?: "string"
+    return InstructResult.ok(name, result ?: "", t)
 }
 
 data class NavigateRequest(

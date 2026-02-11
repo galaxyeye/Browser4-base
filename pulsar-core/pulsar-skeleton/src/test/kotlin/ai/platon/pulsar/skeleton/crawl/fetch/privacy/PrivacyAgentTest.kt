@@ -1,6 +1,6 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.privacy
 
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import org.junit.jupiter.api.Assertions.*
 

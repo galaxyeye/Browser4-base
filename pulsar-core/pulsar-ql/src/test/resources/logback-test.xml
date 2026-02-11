@@ -81,9 +81,6 @@
     </logger>
 
     <logger name="org.apache.gora" level="ERROR"/>
-    <logger name="org.apache.zookeeper" level="ERROR"/>
-    <logger name="org.apache.solr" level="INFO"/>
-    <logger name="org.apache.hadoop" level="WARN"/>
 
     <logger name="org.springframework.context" level="INFO"/>
     <logger name="org.springframework.core" level="INFO"/>
@@ -109,7 +106,7 @@
     <logger name="ai.platon.pulsar.protocol.browser.emulator.BrowserResponseHandler" level="INFO"/>
     <logger name="ai.platon.pulsar.protocol.browser.emulator.context" level="INFO"/>
 
-<!--    <logger name="ai.platon.pulsar.browser.driver.chrome" level="TRACE"/>-->
+<!--    <logger name="ai.platon.browser4.driver.chrome" level="TRACE"/>-->
 
     <logger name="ai.platon.pulsar.examples" level="INFO"/>
 

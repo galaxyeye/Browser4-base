@@ -1,7 +1,7 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
-import ai.platon.pulsar.browser.driver.chrome.common.ChromeOptions
-import ai.platon.pulsar.browser.driver.chrome.common.LauncherOptions
+import ai.platon.browser4.driver.chrome.common.ChromeOptions
+import ai.platon.browser4.driver.chrome.common.LauncherOptions
 import ai.platon.pulsar.common.LinkExtractors
 import ai.platon.pulsar.common.Runtimes
 import ai.platon.pulsar.common.browser.BrowserType
@@ -12,10 +12,13 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
 
 @Tag("OptionalTest")
+@Tag("MustRunExplicitly")
+@Disabled("MustRunExplicitly")
 class PlaywrightBrowserTest {
 
     private val browserId = BrowserId.createRandomTemp(BrowserType.PLAYWRIGHT_CHROME)

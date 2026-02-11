@@ -138,8 +138,7 @@ class FileBackendPageStore(
             Files.deleteIfExists(path)
             null
         } catch (e: IOException) {
-            // logger.warn(Throwable.brief())
-            Files.deleteIfExists(path)
+            logger.warn(e.brief())
             null
         }
     }

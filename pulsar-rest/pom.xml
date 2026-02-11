@@ -14,7 +14,8 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar</artifactId>
-        <version>4.4.0-SNAPSHOT</version>
+        <version>4.5.0-rc.1</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>pulsar-rest</artifactId>
@@ -33,16 +34,6 @@
         <dependency>
             <groupId>ai.platon.pulsar</groupId>
             <artifactId>pulsar-skeleton</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.sun.jersey</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.ws.rs</groupId>
-                    <artifactId>jsr311-api</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>ai.platon.pulsar</groupId>
@@ -68,6 +59,10 @@
             <groupId>ai.platon.pulsar</groupId>
             <artifactId>pulsar-agentic</artifactId>
         </dependency>
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-tools</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -76,11 +71,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-        </dependency>
-        <!-- TODO: This artifact was moved to: jakarta.servlet » jakarta.servlet-api -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
         </dependency>
 
         <dependency>
@@ -112,14 +102,6 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-reactor</artifactId>
         </dependency>
-
-        <!-- Automatic Restart, LiveReload, Remote Debug -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-devtools</artifactId>-->
-<!--            <scope>runtime</scope>-->
-<!--            <optional>true</optional> &lt;!&ndash; 推荐设置 &ndash;&gt;-->
-<!--        </dependency>-->
 
         <!--
             - health checks, metrics, and monitoring

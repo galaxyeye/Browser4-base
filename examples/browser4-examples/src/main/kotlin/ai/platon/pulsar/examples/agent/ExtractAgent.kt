@@ -1,7 +1,7 @@
 package ai.platon.pulsar.examples.agent
 
-import ai.platon.pulsar.agentic.ExtractionSchema
 import ai.platon.pulsar.agentic.context.AgenticContexts
+import ai.platon.pulsar.agentic.model.ExtractionSchema
 
 class Extract {
     private val session = AgenticContexts.getOrCreateSession()

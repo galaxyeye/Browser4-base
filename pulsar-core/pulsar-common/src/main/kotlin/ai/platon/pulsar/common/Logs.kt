@@ -74,11 +74,11 @@ fun warnInterruptible(target: Any, t: Throwable, message: String?, vararg args: 
         getLogger(target).warn(message1, *args)
     } catch (t2: Throwable) {
         catastrophicError(t2, message1, *args)
-    }
-
-    if (t is InterruptedException) {
-        // Preserve interrupt status
-        Thread.currentThread().interrupt()
+    } finally {
+        if (t is InterruptedException) {
+            // Preserve interrupt status
+            Thread.currentThread().interrupt()
+        }
     }
 }
 

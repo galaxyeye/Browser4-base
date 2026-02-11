@@ -15,8 +15,8 @@
  */
 package ai.platon.pulsar.protocol.browser.emulator.impl
 
-import ai.platon.pulsar.browser.common.BrowserSettings
-import ai.platon.pulsar.browser.common.DomSettlePolicy
+import ai.platon.browser4.driver.common.BrowserSettings
+import ai.platon.browser4.driver.common.DomSettlePolicy
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.AppConstants.VAR_CAPTURE
@@ -34,7 +34,7 @@ import ai.platon.pulsar.protocol.browser.emulator.*
 import ai.platon.pulsar.skeleton.common.metrics.MetricsSystem
 import ai.platon.pulsar.skeleton.common.persist.ext.browseEventHandlers
 import ai.platon.pulsar.skeleton.common.persist.ext.options
-import ai.platon.pulsar.skeleton.crawl.GlobalEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchResult
 import ai.platon.pulsar.skeleton.crawl.fetch.FetchTask
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
@@ -48,7 +48,7 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved.
  */
 open class InteractiveBrowserEmulator(
@@ -166,80 +166,93 @@ open class InteractiveBrowserEmulator(
     }
 
     override suspend fun onWillNavigate(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onWillNavigate", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
     }
 
     override suspend fun onNavigated(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onNavigated?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onNavigated", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onNavigated?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onNavigated?.invoke(page, driver)
     }
 
     override suspend fun onWillInteract(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onWillInteract", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onWillInteract?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
-        page.browseEventHandlers?.onWillNavigate?.invoke(page, driver)
+        page.browseEventHandlers?.onWillInteract?.invoke(page, driver)
     }
 
     override suspend fun onWillCheckDocumentState(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillCheckDocumentState?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onWillCheckDocumentState", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onWillCheckDocumentState?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillCheckDocumentState?.invoke(page, driver)
     }
 
     override suspend fun onDocumentFullyLoaded(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDocumentFullyLoaded?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onDocumentFullyLoaded", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onDocumentFullyLoaded?.invoke(page, driver)
         page.browseEventHandlers?.onDocumentFullyLoaded?.invoke(page, driver)
     }
 
     override suspend fun onWillScroll(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillScroll?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onWillScroll", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onWillScroll?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillScroll?.invoke(page, driver)
     }
 
     override suspend fun onDidScroll(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDidScroll?.invoke(page, driver)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onDidScroll?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onDidScroll?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onDidScroll", page)
     }
 
     override suspend fun onDocumentSteady(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDocumentSteady?.invoke(page, driver)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onDocumentSteady?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onDocumentSteady?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onDocumentSteady", page)
     }
 
     override suspend fun onWillComputeFeature(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillComputeFeature?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onWillComputeFeature", page)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onWillComputeFeature?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onWillComputeFeature?.invoke(page, driver)
     }
 
     override suspend fun onFeatureComputed(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onFeatureComputed?.invoke(page, driver)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onFeatureComputed?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onFeatureComputed?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onFeatureComputed", page)
     }
 
     override suspend fun onDidInteract(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onDidInteract?.invoke(page, driver)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onDidInteract?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onDidInteract?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onDidInteract", page)
     }
 
     override suspend fun onWillStopTab(page: WebPage, driver: WebDriver) {
+        PulsarEventBus.emitBrowseEvent("onWillStopTab", page)
         // The more specific handlers has the opportunity to override the result of more general handlers.
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onWillStopTab?.invoke(page, driver)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onWillStopTab?.invoke(page, driver)
         page.browseEventHandlers?.onWillStopTab?.invoke(page, driver)
     }
 
     override suspend fun onTabStopped(page: WebPage, driver: WebDriver) {
-        GlobalEventHandlers.pageEventHandlers?.browseEventHandlers?.onTabStopped?.invoke(page, driver)
+        PulsarEventBus.pageEventHandlers?.browseEventHandlers?.onTabStopped?.invoke(page, driver)
         // The more specific handlers has the opportunity to override the result of more general handlers.
         page.browseEventHandlers?.onTabStopped?.invoke(page, driver)
+        PulsarEventBus.emitBrowseEvent("onTabStopped", page)
     }
 
     override fun close() {
@@ -638,7 +651,7 @@ open class InteractiveBrowserEmulator(
         }
 
         if (n <= 0) {
-            logger.warn("Javascript is not injected | {}", page.href ?: page.url)
+            logger.warn("JavaScript is not injected | {}", page.href ?: page.url)
         }
 
         return n > 0
@@ -649,7 +662,7 @@ open class InteractiveBrowserEmulator(
      * */
     protected suspend fun isScriptInjected(driver: WebDriver): Boolean {
         // Ensure __pulsar_utils__ is defined. For some type of pages, the script can not be injected.
-        val utils = driver.evaluate("typeof(__pulsar_)")
+        val utils = driver.evaluate("typeof(__pulsar_utils__)")
         return utils == "function"
     }
 

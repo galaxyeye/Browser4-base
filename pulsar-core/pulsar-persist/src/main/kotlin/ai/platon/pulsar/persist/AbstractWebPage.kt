@@ -54,6 +54,8 @@ abstract class AbstractWebPage(
     override var id: Long = ID_SEQUENCER.nextId()
         protected set
 
+    override val uuid: UUID = UUID.randomUUID()
+
     val reversedUrl get() = reverseUrlOrEmpty(url)
 
     /**

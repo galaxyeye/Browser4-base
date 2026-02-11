@@ -15,7 +15,7 @@
 
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>browser4-examples</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 
     <name>Browser4 Kotlin Examples</name>
     <description>
@@ -46,6 +46,14 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -75,8 +83,11 @@
     </dependencies>
 
     <properties>
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <kotlin.version>2.2.21</kotlin.version>
         <spring-boot.version>4.0.1</spring-boot.version>
-        <pulsar.version>4.4.0-SNAPSHOT</pulsar.version>
+        <pulsar.version>4.5.0-rc.1</pulsar.version>
     </properties>
 </project>

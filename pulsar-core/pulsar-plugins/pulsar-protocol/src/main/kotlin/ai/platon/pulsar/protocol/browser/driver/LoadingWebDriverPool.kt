@@ -12,10 +12,10 @@ import ai.platon.pulsar.common.readable
 import ai.platon.pulsar.common.stringify
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.protocol.browser.emulator.WebDriverPoolExhaustedException
-import ai.platon.pulsar.protocol.browser.impl.BrowserManager
 import ai.platon.pulsar.skeleton.common.AppSystemInfo
 import ai.platon.pulsar.skeleton.common.metrics.MetricsSystem
 import ai.platon.pulsar.skeleton.crawl.BrowseEventHandlers
+import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
 import ai.platon.pulsar.skeleton.crawl.fetch.privacy.BrowserId
 import org.slf4j.LoggerFactory
@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Created by vincent on 18-1-1.
+ * Created by Vincent on 18-1-1.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 class LoadingWebDriverPool constructor(
@@ -327,10 +327,16 @@ class LoadingWebDriverPool constructor(
         priority: Int, conf: MutableConfig, event: BrowseEventHandlers?, page: WebPage, timeout: Duration
     ): WebDriver {
         // TODO: is it better to handle launch events in browser?
-        dispatchEvent("onWillLaunchBrowser") { event?.onWillLaunchBrowser?.invoke(page) }
+        dispatchEvent("onWillLaunchBrowser") {
+            PulsarEventBus.emitBrowseEvent("onWillLaunchBrowser", page)
+            event?.onWillLaunchBrowser?.invoke(page)
+        }
 
         return poll(priority, conf, timeout).also { driver ->
-            dispatchEvent("onBrowserLaunched") { event?.onBrowserLaunched?.invoke(page, driver) }
+            dispatchEvent("onBrowserLaunched") {
+                event?.onBrowserLaunched?.invoke(page, driver)
+                PulsarEventBus.emitBrowseEvent("onBrowserLaunched", page)
+            }
         }
     }
 

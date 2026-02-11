@@ -3,7 +3,7 @@ package ai.platon.pulsar.common.config;
 import com.google.common.annotations.Beta;
 
 /**
- * Created by vincent on 17-1-17.
+ * Created by Vincent on 17-1-17.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  *
  * @author vincent
@@ -16,7 +16,7 @@ public interface CapabilityTypes {
 
     /**
      * The key to retrieve the application identity string, can be specified by system environment variable or system property.
-     *
+     * <p>
      * The default value is the current username.
      * */
     String APP_ID_KEY = "app.ident";
@@ -186,7 +186,7 @@ public interface CapabilityTypes {
     String BROWSER_REUSE_RECOVERED_DRIVERS = "browser.reuse.recovered.drivers";
     /**
      * Add a --no-sandbox flag to launch the chrome if we are running inside a virtual machine,
-     * for example, virtualbox, vmware or WSL
+     * for example, VirtualBox, VMware or WSL
      * */
     String BROWSER_LAUNCH_NO_SANDBOX = "browser.launch.no.sandbox";
     String BROWSER_LAUNCH_SUPERVISOR_PROCESS = "browser.launch.supervisor.process";

@@ -1,8 +1,9 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeDriverException
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeIOException
-import ai.platon.pulsar.browser.driver.chrome.util.ChromeRPCException
+import ai.platon.browser4.driver.chrome.util.CDPReturnError
+import ai.platon.browser4.driver.chrome.util.ChromeDriverException
+import ai.platon.browser4.driver.chrome.util.ChromeIOException
+import ai.platon.browser4.driver.chrome.util.ChromeRPCException
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
@@ -20,6 +21,7 @@ class RobustRPC(
 ) {
     companion object {
         private val logger = getLogger(this)
+
         // handle to many exceptions
         private val exceptionCounts = ConcurrentHashMap<Long, AtomicInteger>()
         private val exceptionMessages = ConcurrentHashMap<Long, String>()
@@ -49,13 +51,23 @@ class RobustRPC(
     }
 
     @Throws(Exception::class)
-    suspend fun <T> invokeWithRetry(action: String, maxRetry: Int = 2, block: suspend () -> T): T? {
+    suspend fun <T> invokeWithRetry(
+        action: String,
+        maxRetry: Int = 2,
+        url: String? = null,
+        block: suspend () -> T
+    ): T? {
         if (!driver.checkState(action)) {
             return null
         }
 
-        var result = kotlin.runCatching { invokeDeferred0(action, block) }
-            .onFailure { logger.info("Oop, a bit slip-up executing action: [$action], retrying 1/$maxRetry time ...", it.brief()) }
+        var result = kotlin.runCatching { invokeDeferred0(action, url, block) }
+            .onFailure {
+                logger.info(
+                    "Oop, a bit slip-up executing action: [$action], retrying 1/$maxRetry time ...",
+                    it.brief()
+                )
+            }
 
         var i = 1
         while (result.isFailure && i++ < maxRetry && driver.checkState()) {
@@ -65,8 +77,8 @@ class RobustRPC(
                 logger.warn("Encountered non-retryable exception: [$action], aborting retries | {}", exception.message)
                 break
             }
-            delay(500)
-            result = kotlin.runCatching { invokeDeferred0(action, block) }
+            delay(200)
+            result = kotlin.runCatching { invokeDeferred0(action, url, block) }
                 .onFailure { logger.warn("Exception to execute action: [$action], retrying $i/$maxRetry times", it) }
         }
 
@@ -82,7 +94,7 @@ class RobustRPC(
      */
     private fun isRetryableException(e: Throwable): Boolean {
         // Non-retryable CDP errors
-        if (e is ai.platon.pulsar.browser.driver.chrome.util.CDPReturnError) {
+        if (e is CDPReturnError) {
             val errorMessage = e.errorMessage?.lowercase() ?: ""
             val message = e.message?.lowercase() ?: ""
 
@@ -122,10 +134,10 @@ class RobustRPC(
     }
 
     suspend fun <T> invokeDeferredSilently(
-        action: String, message: String? = null, maxRetry: Int = 2, block: suspend () -> T
+        action: String, url: String? = null, message: String? = null, maxRetry: Int = 2, block: suspend () -> T
     ): T? {
         return try {
-            invokeWithRetry(action, maxRetry, block)
+            invokeWithRetry(action, maxRetry, url, block)
         } catch (e: ChromeRPCException) {
             handleChromeException(e, action, message)
             null
@@ -138,9 +150,11 @@ class RobustRPC(
             is ChromeIOException -> {
                 handleChromeIOException(e, action, message)
             }
+
             is ChromeRPCException -> {
                 handleChromeRPCException(e, action, message)
             }
+
             else -> throw e
         }
     }
@@ -152,8 +166,10 @@ class RobustRPC(
             return
         }
 
-        val message2 = MessageFormat.format("Browser unavailable: {0} ({1}/{2}) | {3}",
-            action, rpcFailures, maxRPCFailures, e.message)
+        val message2 = MessageFormat.format(
+            "Browser unavailable: {0} ({1}/{2}) | {3}",
+            action, rpcFailures, maxRPCFailures, e.message
+        )
 
         if (!e.isOpen) {
             throw BrowserUnavailableException("Browser connection closed | $message2", e)
@@ -184,7 +200,7 @@ class RobustRPC(
     }
 
     @Throws(ChromeRPCException::class)
-    private suspend fun <T> invokeDeferred0(action: String, block: suspend () -> T): T? {
+    private suspend fun <T> invokeDeferred0(action: String, url: String? = null, block: suspend () -> T): T? {
         if (!driver.checkState(action)) {
             return null
         }
@@ -194,6 +210,7 @@ class RobustRPC(
         } catch (e: ChromeRPCException) {
             increaseRPCFailures()
             fixCDTAgentIfNecessary(e)
+            e.url = url
             throw e
         }
     }
@@ -238,9 +255,15 @@ class RobustRPC(
 
     private fun logException(count: Int, e: ChromeRPCException, action: String? = null, message: String? = null) {
         if (message == null) {
-            logger.info("{}.\t[{}] ({}/{}) | code: {}, {}", count, action, rpcFailures, maxRPCFailures, e.code, e.message)
+            logger.info(
+                "{}.\t[{}] ({}/{}) | code={}, exception_message={} | url={}",
+                count, action, rpcFailures, maxRPCFailures, e.code, e.message, e.url
+            )
         } else {
-            logger.info("{}.\t[{}] ({}/{}) | {} | code: {}, {}", count, action, rpcFailures, maxRPCFailures, message, e.code, e.message)
+            logger.info(
+                "{}.\t[{}] ({}/{}) | message={} | code={}, exception_message={} | url={}",
+                count, action, rpcFailures, maxRPCFailures, message, e.code, e.message, e.url
+            )
         }
 
         if (e.cause != null) {

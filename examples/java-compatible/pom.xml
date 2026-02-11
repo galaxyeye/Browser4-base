@@ -15,7 +15,7 @@
 
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>java-compatible</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>4.5.0-rc.1</version>
 
     <name>Java Compatible Examples</name>
     <description>
@@ -67,14 +67,14 @@
     </dependencies>
 
     <properties>
-        <!-- Keep this module copy/paste friendly: explicitly pin UTF-8 instead of relying on repo parent -->
+        <!-- Suppress warning: [WARNING] Using platform encoding (GBK actually) to copy filtered resources -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <version.maven-resources-plugin>3.4.0</version.maven-resources-plugin>
         <version.maven-compiler-plugin>3.14.1</version.maven-compiler-plugin>
 
-        <pulsar.version>4.4.0-SNAPSHOT</pulsar.version>
+        <pulsar.version>4.5.0-rc.1</pulsar.version>
         <spring-boot.version>4.0.1</spring-boot.version>
         <maven.compiler.release>17</maven.compiler.release>
     </properties>

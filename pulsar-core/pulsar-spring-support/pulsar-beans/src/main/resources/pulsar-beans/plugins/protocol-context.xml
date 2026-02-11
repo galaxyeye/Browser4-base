@@ -7,16 +7,17 @@
 
     <import resource="../proxy-context.xml"/>
 
-    <bean id="browserSettings" class="ai.platon.pulsar.browser.common.BrowserSettings">
-        <constructor-arg ref="conf"/>
-    </bean>
-
-    <bean id="browserManager" class="ai.platon.pulsar.protocol.browser.impl.BrowserManager"
-          destroy-method="close">
+    <bean id="browserSettings" class="ai.platon.browser4.driver.common.BrowserSettings">
         <constructor-arg ref="conf"/>
     </bean>
 
     <bean id="browserFactory" class="ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory">
+        <constructor-arg ref="conf"/>
+    </bean>
+
+    <bean id="browserManager" class="ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager"
+          destroy-method="close">
+        <constructor-arg ref="browserFactory"/>
         <constructor-arg ref="conf"/>
     </bean>
 
@@ -58,6 +59,8 @@
     </bean>
 
     <bean id="browserFetcher" class="ai.platon.pulsar.protocol.browser.emulator.impl.PrivacyManagedBrowserFetcher" destroy-method="close">
+        <constructor-arg ref="browserManager"/>
+        <constructor-arg ref="browserFactory"/>
         <constructor-arg ref="privacyManager"/>
         <constructor-arg ref="browserEmulator"/>
         <constructor-arg ref="conf"/>

@@ -84,6 +84,20 @@ aider
 
 **官网 / Website:** https://aider.chat/
 
+### 6. Claude (Anthropic)
+
+**配置文件 / Configuration File:** `CLAUDE.md`
+
+Claude 是 Anthropic 推出的 AI 助手，可通过 API 或 Claude.ai 使用，支持代码理解、生成和重构。
+
+Claude is an AI assistant from Anthropic, available via API or Claude.ai, supporting code understanding, generation, and refactoring.
+
+**使用方式 / Usage:**
+- Claude 会读取项目根目录的 `CLAUDE.md` 文件获取项目指导
+- Claude reads the `CLAUDE.md` file in the project root for project guidance
+
+**官网 / Website:** https://claude.ai/
+
 ## 文件内容说明 / File Content Description
 
 所有指导文件都包含以下核心内容：
@@ -117,11 +131,13 @@ All guidance files contain the following core content:
 For more detailed information, please refer to:
 
 - **完整 AI 编程指南** / **Complete AI Programming Guide:** `README-AI.md`
-- **快速参考指南** / **Quick Reference Guide:** `devdocs/copilot/README-nano.md`
+- **快速参考指南** / **Quick Reference Guide:** `docs-dev/copilot/README-nano.md`
 - **项目概念** / **Project Concepts:** `docs/concepts.md`
 - **高级指南** / **Advanced Guide:** `docs/advanced-guides.md`
 
 ## 版本历史 / Version History
 
+- **v2026-01-25**: 添加 Claude (Anthropic) 支持
+- **v2026-01-25**: Added Claude (Anthropic) support
 - **v2025-10-14**: 初始版本，支持 GitHub Copilot, Cursor, Windsurf, Cline, Aider
 - **v2025-10-14**: Initial version, supporting GitHub Copilot, Cursor, Windsurf, Cline, Aider

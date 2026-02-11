@@ -14,7 +14,7 @@ import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Created by vincent on 16-9-14.
+ * Created by Vincent on 16-9-14.
  */
 class JsoupParser(
     private val page: WebPage,

@@ -70,7 +70,7 @@ abstract class AbstractSQLContext(
 
     override fun normalize(url: String, options: LoadOptions, toItemOption: Boolean): NormURL {
         val normURL = super.normalize(url, options, toItemOption)
-        return NormURL(SQLUtils.unsanitizeUrl(normURL.spec), normURL.options, hrefSpec = normURL.hrefSpec)
+        return NormURL(SQLUtils.unsanitizeUrl(normURL.urlString), normURL.options, hrefSpec = normURL.hrefSpec)
     }
 
     @Throws(Exception::class)

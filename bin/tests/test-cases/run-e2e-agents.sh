@@ -3,8 +3,8 @@
 # =============================================================================
 # run-e2e-tests.sh - Use Case Based End-to-End Test Suite
 # =============================================================================
-# This script reads use case files from bin/tests/use-cases/ and executes them
-# against the Browser4 server using the api/commands/plain endpoint.
+# This script reads use case files from pulsar-tests/pulsar-tests-common/src/main/resources/e2e/scenarios/happy_path/use-cases/
+# and executes them against the Browser4 server using the api/commands/plain endpoint.
 #
 # Each use case file contains:
 #   - Task description (lines starting with #)
@@ -29,7 +29,7 @@ set -e
 readonly API_BASE="${API_BASE:-http://localhost:8182}"
 readonly COMMAND_ENDPOINT="$API_BASE/api/commands/plain?async=1"
 readonly COMMAND_STATUS_BASE="$API_BASE/api/commands"
-readonly USE_CASES_DIR="$AppHome/bin/tests/use-cases"
+readonly USE_CASES_DIR="$AppHome/pulsar-tests/pulsar-tests-common/src/main/resources/e2e/scenarios/happy_path/use-cases"
 readonly TEST_RESULTS_DIR="./target/test-results/use-cases"
 readonly TIMESTAMP="$(date '+%Y%m%d_%H%M%S')"
 readonly LOG_FILE="${TEST_RESULTS_DIR}/use_case_tests_${TIMESTAMP}.log"
@@ -677,7 +677,7 @@ EXAMPLES:
     $0 --skip-server -v             # Skip server check, verbose mode
 
 USE CASE FILES:
-    Use case files are located in: bin/tests/use-cases/
+    Use case files are located in: pulsar-tests/pulsar-tests-common/src/main/resources/e2e/scenarios/happy_path/use-cases/
     Each file should contain:
         - Comment lines (starting with #) for description
         - Task steps for the agent to execute

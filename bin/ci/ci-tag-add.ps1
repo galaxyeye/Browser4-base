@@ -18,7 +18,8 @@ $version = $SNAPSHOT_VERSION -replace "-SNAPSHOT", ""
 
 $parts = $version -split "\."
 $PREFIX = $parts[0] + "." + $parts[1]
-$pattern = "^v$version-$PreReleaseVersion\.[0-9]+$"
+$escapedVersion = [regex]::Escape($version)
+$pattern = "^v$escapedVersion-$PreReleaseVersion\.[0-9]+$"
 
 # Get all matching tags and sort them by version and pre-release number
 $tags = git tag --list | Where-Object { $_ -match "^$pattern$" }
@@ -32,20 +33,19 @@ if (-not $tags) {
     exit 0
 }
 
-# Sort tags by version and pre-release number (natural order)
+# Sort tags by pre-release number (natural order within the same base version)
 $latestTag = $tags | Sort-Object {
-    # Extract version and pre-release number for sorting
-    if ($_ -match "^v(\d+)\.(\d+)\.(\d+)-$PreReleaseVersion\.(\d+)$") {
-        return [int]$matches[1]*1000000 + [int]$matches[2]*10000 + [int]$matches[3]*100 + [int]$matches[4]
+    if ($_ -match "^v$escapedVersion-$PreReleaseVersion\.(\d+)$") {
+        return [int]$matches[1]
     }
     return 0
 } -Descending | Select-Object -First 1
 
 Write-Host "Latest tag found: $latestTag"
 
-if ($latestTag -match "^(v\d+\.\d+\.\d+)-$PreReleaseVersion\.(\d+)$") {
-    $baseVersion = $matches[1]
-    $prNumber = [int]$matches[2]
+if ($latestTag -match "^v$escapedVersion-$PreReleaseVersion\.(\d+)$") {
+    $baseVersion = "v$version"
+    $prNumber = [int]$matches[1]
     $newPrNumber = $prNumber + 1
     $newTag = "$baseVersion-$PreReleaseVersion.$newPrNumber"
     git tag $newTag

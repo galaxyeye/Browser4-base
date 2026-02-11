@@ -56,13 +56,18 @@ if ($version.EndsWith("-SNAPSHOT")) {
     Write-Host "Cleaned version: $version"
 }
 
-# Validate version format
-if ($version -notmatch "^\d+\.\d+\.\d+") {
+# Validate version format (support rc tags like x.y.z-rc.1)
+if ($version -notmatch "^\d+\.\d+\.\d+(?:-rc\.\d+)?$") {
     Write-Error "Invalid version format: $version"
     exit 1
 }
 
-$newTag = "v$version"
+# Use rc tag without 'v' prefix to match release workflow expectations
+if ($version -match "-rc\.\d+$") {
+    $newTag = $version
+} else {
+    $newTag = "v$version"
+}
 
 # Check if tag already exists
 $existingTag = git tag -l $newTag
@@ -91,10 +96,37 @@ if ($existingTag) {
     }
 }
 
-# Get previous tag for release notes
-$prevTag = git tag --list | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
-        Sort-Object { [version]($_ -replace '^v','') } -Descending |
-        Select-Object -First 1
+function Get-TagSortKey {
+    param(
+        [string]$Tag
+    )
+
+    $clean = $Tag -replace '^v',''
+    if ($clean -notmatch '^(?<base>\d+\.\d+\.\d+)(?:-rc\.(?<rc>\d+))?$') {
+        return $null
+    }
+
+    $baseVersion = [version]$matches['base']
+    $rcValue = if ($matches['rc']) { [int]$matches['rc'] } else { [int]::MaxValue }
+
+    return [pscustomobject]@{
+        Base = $baseVersion
+        Rc = $rcValue
+    }
+}
+
+# Get previous tag for release notes (supports vX.Y.Z and X.Y.Z-rc.N)
+$tagCandidates = git tag --list | Where-Object { $_ -match '^(v\d+\.\d+\.\d+|\d+\.\d+\.\d+-rc\.\d+)$' }
+$prevTag = $tagCandidates |
+        ForEach-Object {
+            $key = Get-TagSortKey $_
+            if ($key) {
+                [pscustomobject]@{ Tag = $_; Base = $key.Base; Rc = $key.Rc }
+            }
+        } |
+        Sort-Object Base, Rc -Descending |
+        Select-Object -First 1 |
+        ForEach-Object { $_.Tag }
 
 if ($prevTag) {
     Write-Host "`nChanges since $prevTag :"

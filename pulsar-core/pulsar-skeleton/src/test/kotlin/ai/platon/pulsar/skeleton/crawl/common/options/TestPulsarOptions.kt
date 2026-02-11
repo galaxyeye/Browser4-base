@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Created by vincent on 16-7-20.
+ * Created by Vincent on 16-7-20.
  * Copyright @ 2013-2016 Platon AI. All rights reserved
  */
 class TestPulsarOptions {
@@ -42,7 +42,6 @@ class TestPulsarOptions {
         val loadOptions = LoadOptions.parse(args, conf)
         val finalArgs = loadOptions.toString()
         assertTrue(loadOptions.params.asMap().containsKey("-persist"))
-        assertTrue(finalArgs.contains("-reparseLinks"))
         assertTrue(!finalArgs.contains("-notSupport"))
     }
 

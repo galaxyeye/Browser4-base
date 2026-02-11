@@ -81,7 +81,11 @@ open class UrlEventHandler : AbstractChainedFunction1<String, String?>() {
     }
 }
 
-open class WebPageEventHandler : AbstractChainedFunction1<WebPage, Any?>()
+open class WebPageEventHandler : AbstractChainedFunction1<WebPage, Any?>() {
+    override fun invoke(page: WebPage): Any? {
+        return super.invoke(param = page)
+    }
+}
 
 /**
  * An event handler that accepts a [UrlAware] and a [WebPage], anything can be returned.
@@ -91,7 +95,11 @@ open class WebPageEventHandler : AbstractChainedFunction1<WebPage, Any?>()
  * Another possible way to write more robust code is to remove all setters in [WebPage],
  * and add a MutableWebPage subclass.
  * */
-open class UrlAwareWebPageEventHandler : AbstractChainedFunction2<UrlAware, WebPage?, Any?>()
+open class UrlAwareWebPageEventHandler : AbstractChainedFunction2<UrlAware, WebPage?, Any?>() {
+    override fun invoke(url: UrlAware, page: WebPage?): Any? {
+        return super.invoke(param = url, param2 = page)
+    }
+}
 
 /**
  * An event handler that accepts a [WebPage] and a [FeaturedDocument], anything can be returned.
@@ -104,11 +112,19 @@ open class UrlAwareWebPageEventHandler : AbstractChainedFunction2<UrlAware, WebP
  * Another possible way to write more robust code is to remove all setters in [WebPage],
  * and add a MutableWebPage subclass.
  * */
-open class WebPageHTMLDocumentEventHandler : AbstractChainedFunction2<WebPage, FeaturedDocument, Any?>()
+open class WebPageHTMLDocumentEventHandler : AbstractChainedFunction2<WebPage, FeaturedDocument, Any?>() {
+    override fun invoke(page: WebPage, document: FeaturedDocument): Any? {
+        return super.invoke(param = page, param2 = document)
+    }
+}
 
 typealias HTMLDocumentEventHandler = WebPageHTMLDocumentEventHandler
 
-open class PageDatumEventHandler : AbstractChainedFunction2<String, PageDatum, Any?>()
+open class PageDatumEventHandler : AbstractChainedFunction2<String, PageDatum, Any?>() {
+    override fun invoke(url: String, pageDatum: PageDatum): Any? {
+        return super.invoke(param = url, param2 = pageDatum)
+    }
+}
 
 /**
  * An event handler that accepts a [WebPage] and a [WebDriver], anything can be returned.
@@ -119,7 +135,11 @@ open class PageDatumEventHandler : AbstractChainedFunction2<String, PageDatum, A
  * Another possible way to write more robust code is to remove all setters in [WebPage],
  * and add a MutableWebPage subclass.
  * */
-open class WebPageWebDriverEventHandler : AbstractChainedPDFunction2<WebPage, WebDriver, Any?>()
+open class WebPageWebDriverEventHandler : AbstractChainedPDFunction2<WebPage, WebDriver, Any?>() {
+    override suspend fun invoke(page: WebPage, driver: WebDriver): Any? {
+        return super.invoke(param = page, param2 = driver)
+    }
+}
 
 abstract class JvmWebPageWebDriverEventHandler : WebPageWebDriverEventHandler() {
     override suspend fun invoke(page: WebPage, driver: WebDriver): Any? {

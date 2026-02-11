@@ -7,7 +7,7 @@
 
 [English](README.md) | 简体中文 | [中国镜像](https://gitee.com/platonai_galaxyeye/Browser4)
 
-> 本文件已与英文版 README 同步（同步日期：2026-01-02），如有差异请以英文版为准。
+> 本文件已与英文版 README 同步（同步日期：2026-02-11），如有差异请以英文版为准。
 
 <!-- TOC -->
 **目录**
@@ -71,7 +71,7 @@ val result = agent.run("""
 
 ## 🚀 快速开始
 
-**前置要求**：Java 17+ 与 Maven 3.6+
+**前置要求**：Java 17+，最新 Google Chrome
 
 1. **克隆仓库**
    ```shell
@@ -85,16 +85,20 @@ val result = agent.run("""
 
 3. **构建项目（Linux/macOS）**
    ```shell
-   ./mvnw -DskipTests
+   ./mvnw -q -DskipTests
+   ```
+   **Windows (PowerShell)**：
+   ```powershell
+   .\mvnw.cmd -q -D"skipTests"
    ```
    **Windows (cmd)**：
    ```shell
-   mvnw.cmd -DskipTests
+   mvnw.cmd -q -DskipTests
    ```
 
 4. **运行示例（Linux/macOS）**
    ```shell
-   ./mvnw -pl browser4-examples exec:java -D"exec.mainClass=ai.platon.pulsar.examples.agent.Browser4AgentKt"
+   ./mvnw -pl examples/browser4-examples exec:java -D"exec.mainClass=ai.platon.pulsar.examples.agent.Browser4AgentKt"
    ```
    **Windows (cmd)**：
    ```shell
@@ -108,6 +112,8 @@ val result = agent.run("""
    在 `browser4-examples` 模块中探索并运行示例，直观了解 Browser4 的能力。
 
 Docker 部署请参见我们的 [Docker Hub 仓库](https://hub.docker.com/r/galaxyeye88/browser4)。
+
+**Windows 用户**：你还可以将 Browser4 打包为独立的 Windows 安装程序，详见 [Windows Installer Guide](browser4/browser4-agents/README.md)。
 
 ---
 
@@ -237,9 +243,9 @@ session.submitAll(links)
 **快捷命令（PulsarRPAPro）：**
 ```bash
 # Linux/macOS：下载并演示采集（附诊断输出）
-curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/download/v4.3.0/PulsarRPAPro.jar
+curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/download/v4.6.0/PulsarRPAPro.jar
 # Windows (PowerShell)：
-Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/download/v4.3.0/PulsarRPAPro.jar -OutFile PulsarRPAPro.jar
+Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/download/v4.6.0/PulsarRPAPro.jar -OutFile PulsarRPAPro.jar
 ```
 > 旧版 exotic-standalone*.jar 调用方式已弃用，示例已更新为最新发布包下载。
 
@@ -266,18 +272,26 @@ Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/downloa
 | 模块 | 说明 |
 |--------|-------------|
 | `pulsar-core` | 核心引擎：会话、调度、DOM、浏览器控制 |
+| `pulsar-agentic` | 智能体实现、MCP 与技能注册 |
 | `pulsar-rest` | Spring Boot REST 层与命令端点 |
-| `pulsar-client` | 客户端 SDK / CLI 工具 |
+| `pulsar-tools` | CLI 工具与运维辅助组件 |
 | `browser4-spa` | 面向浏览器智能体的单页应用 |
 | `browser4-agents` | 智能体与爬虫编排及产品打包 |
+| `sdks` | Kotlin/Python SDK 及其测试与示例 |
+| `examples` | 可运行示例与演示工程 |
 | `pulsar-tests` | 重型集成与场景测试 |
-| `pulsar-tests-common` | 共享测试工具与夹具 |
 
 ---
 
 ## 📜 SDK
 
-Python / Node.js SDK 正在筹备中。
+SDKs are available under `sdks/`, current language support includes:
+
+- [Kotlin](sdks/browser4-sdk-kotlin) (native API, REST client)
+- [Python](sdks/browser4-sdk-python) (REST client)
+- [Node.js](sdks/browser4-sdk-nodejs) (REST client)
+
+---
 
 ## 📜 文档
 
@@ -307,40 +321,42 @@ export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
 
 ## ✨ 功能特性
 
+状态说明：[已提供] 已在仓库中，[实验中] 正在迭代，[规划中] 暂未在仓库中，[指标] 性能目标值。
+
 ### AI 与智能体
-- 面向问题求解的自主浏览器智能体
-- 并行智能体会话
-- LLM 辅助的页面理解与抽取
+- [已提供] 面向问题求解的自主浏览器智能体
+- [已提供] 并行智能体会话
+- [实验中] LLM 辅助的页面理解与抽取
 
 ### 浏览器自动化与 RPA
-- 基于工作流的浏览器动作
-- 协程安全的精确控制（滚动、点击、抽取）
-- 灵活的事件处理与生命周期管理
+- [已提供] 基于工作流的浏览器动作
+- [已提供] 协程安全的精确控制（滚动、点击、抽取）
+- [已提供] 灵活的事件处理与生命周期管理
 
 ### 数据抽取与查询
-- 一行命令完成数据抽取
-- 面向 DOM/内容的 X-SQL 扩展查询语言
-- 结构化 + 非结构化的混合抽取（LLM + 选择器）
+- [已提供] 一行命令完成数据抽取
+- [已提供] 面向 DOM/内容的 X-SQL 扩展查询语言
+- [实验中] 结构化 + 非结构化的混合抽取（LLM + 选择器）
 
 ### 性能与可扩展性
-- 高效并行页面渲染
-- 抗封锁设计与智能重试
-- 在普通硬件上达到 100,000+ 页/天（指示性）
+- [已提供] 高效并行页面渲染
+- [已提供] 抗封锁设计与智能重试
+- [指标] 在普通硬件上达到 100,000+ 页/天
 
 ### 隐匿与可靠性
-- 先进的反机器人技术
-- IP 与配置文件轮换
-- 弹性调度与质量保证
+- [实验中] 先进的反机器人技术
+- [已提供] 通过 `PROXY_ROTATION_URL` 实现代理轮换
+- [已提供] 弹性调度与质量保证
 
 ### 开发者体验
-- 简单的 API 集成（REST、原生、文本命令）
-- 丰富的配置分层
-- 清晰的结构化日志 (Structured Logging) 与指标
+- [已提供] 简单的 API 集成（REST、原生、文本命令）
+- [已提供] 丰富的配置分层
+- [已提供] 清晰的结构化日志与指标
 
 ### 存储与监控
-- 本地文件系统与 MongoDB 支持（可扩展）
-- 全面日志与透明度
-- 细致的指标与生命周期可观测性
+- [已提供] 本地文件系统与 MongoDB 支持（可扩展）
+- [已提供] 全面日志与透明度
+- [已提供] 细致的指标与生命周期可观测性
 
 ---
 

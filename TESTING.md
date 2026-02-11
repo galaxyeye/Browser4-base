@@ -1,385 +1,195 @@
-# Browser4 Testing Guide
+# Test Taxonomy (AI-First)
 
-Quick reference for running tests in the Browser4 project.
+## 核心原则（TL;DR）
 
-## Prerequisites
+* `mvn test` **必须永远快、永远安全**
+* 所有高成本测试 **必须显式启用**
+* **Tag = 语义事实**
+* **Property = 是否执行**
+* 测试是给 **调度系统** 看的，不只是给人看的
 
-- Java 17+
-- Maven (wrapper included)
-- Chrome/Chromium (for E2E tests)
+---
 
-## Quick Start
+## 四个正交维度（必须声明）
 
-### Run All Tests
+### 1. Test Level（测试层级）
+
+**必选其一**
+
+* `Unit` — 单模块，默认
+* `Integration` — 多模块 / 服务协作
+* `E2E` — 用户端到端路径
+* `SDK` — 对外 SDK 契约
+
+---
+
+### 2. Cost（执行成本）
+
+**必选其一**
+
+* `Fast` — < 5s
+* `Slow` — 5–30s
+* `Heavy` — > 30s / 高资源
+
+遗留代码默认 `Fast`, 但必须逐步补齐成本标签
+
+---
+
+### 3. Environment（环境依赖）
+
+**按需声明**
+
+* `RequiresServer`
+* `RequiresBrowser`
+* `RequiresAI`
+* `RequiresDocker`
+
+---
+
+### 4. Policy（执行策略）
+
+**按需声明**
+
+* `MustRunExplicitly` — 永不默认执行
+* `SkippableLowerLevel` — 上层成功可跳过
+* `TestInfraCheck` — 基础设施自检（最高优先级）
+
+---
+
+## 合法 Tag 组合示例
+
+### 默认可跑的单测
+
+```java
+@Tag("Unit")
+@Tag("Fast")
+class ParserTest {}
+```
+
+---
+
+### 稳定但慢的单测
+
+```java
+@Tag("Unit")
+@Tag("Slow")
+@Tag("MustRunExplicitly")
+class LegacyEngineTest {}
+```
+
+---
+
+### 集成测试
+
+```java
+@Tag("Integration")
+@Tag("Heavy")
+@Tag("RequiresServer")
+@Tag("MustRunExplicitly")
+class RestContractIT {}
+```
+
+---
+
+### E2E 测试
+
+```java
+@Tag("E2E")
+@Tag("Heavy")
+@Tag("RequiresBrowser")
+@Tag("RequiresAI")
+@Tag("MustRunExplicitly")
+class ChatFlowE2ETest {}
+```
+
+---
+
+## 默认执行语义
+
+### `mvn test` 等价于
+
+```
+Level = Unit
+AND Cost = Fast
+AND NOT MustRunExplicitly
+```
+
+---
+
+## 执行控制（Property）
+
+| 行为     | Property             |
+| ------ | -------------------- |
+| 集成测试   | `-DrunITs=true`      |
+| E2E 测试 | `-DrunE2ETests=true` |
+| SDK 测试 | `-DrunSDKTests=true` |
+| 全量     | `bin/test.sh all`    |
+
+---
+
+## 测试放置规范
+
+| 类型          | 目录                         |
+| ----------- | -------------------------- |
+| Unit        | `<module>/src/test`        |
+| Integration | `pulsar-tests/*-it-tests`  |
+| E2E         | `pulsar-tests/*-e2e-tests` |
+| SDK         | `sdks/*-tests`             |
+
+---
+
+## CI / 调度语义（给 AI）
+
+* `Fast` → 可并行、即时反馈
+* `Heavy` → 夜间 / 手动 / 资源隔离
+* `MustRunExplicitly` → 永不自动触发
+* `SkippableLowerLevel` → 可剪枝执行
+* `TestInfraCheck` → 失败立即中断
+
+---
+
+## Reviewer / AI Checklist
+
+* 是否声明 **Level**？
+* 是否声明 **Cost**？
+* 是否有隐式外部依赖？
+* 是否会污染 `mvn test`？
+* 是否需要 `MustRunExplicitly`？
+
+---
+
+## Anti-Patterns（禁止）
+
+* 不标 Cost
+* 默认跑 E2E
+* Tag 语义模糊（如 `IntegrationTest`）
+* 用代码而非 Tag 控制是否执行
+
+---
+
+## 为何不使用 maven-failsafe-plugin
+
+项目经过评估（详见 `docs-dev/maven-failsafe-plugin-evaluation.md`），决定 **不全面引入 failsafe-plugin**。
+
+**核心原因：**
+
+* JUnit 5 Tags 四维度分类 > Failsafe 单维度命名约定
+* 物理模块隔离（`pulsar-it-tests/`）已实现统计分离
+* `@SpringBootTest` 已解决生命周期管理
+* GitHub Actions 已编排外部服务（MongoDB、Docker Compose）
+* Failsafe 的 `<groups>` 无法表达多维度组合（如 "Fast 且不需要 AI 的集成测试"）
+
+**替代方案（现有最佳实践）：**
 
 ```bash
-# Linux/macOS
-./bin/test.sh
-
-# Windows
-bin\test.ps1
+mvn test                              # 快速单测
+mvn test -DrunITs=true                # 集成测试
+mvn test -pl pulsar-tests/pulsar-it-tests  # 按模块执行
+mvn test -Dgroups="Integration,Fast"  # 按 Tag 组合过滤
 ```
 
-### Run Tests for Specific Module
+---
 
-```bash
-# Linux/macOS
-./mvnw test -pl pulsar-core
+## 一句话共识
 
-# Windows
-mvnw.cmd test -pl pulsar-core
-```
-
-### Skip Tests During Build
-
-```bash
-# Linux/macOS
-./bin/build.sh
-
-# Windows (default behavior - tests skipped)
-bin\build.ps1
-```
-
-### Run Tests During Build
-
-```bash
-# Linux/macOS
-./bin/build.sh -test
-
-# Windows
-bin\build.ps1 -test
-```
-
-## Test Categories
-
-### Unit Tests (Default)
-
-Fast, isolated tests that run by default:
-
-```bash
-# Linux/macOS
-./mvnw test
-
-# Windows
-mvnw.cmd test
-```
-
-### Integration Tests
-
-Include integration tests with the `IntegrationTest` tag:
-
-```bash
-# Linux/macOS
-./mvnw test -DexcludedGroups=""
-
-# Windows
-mvnw.cmd test -D"excludedGroups="
-```
-
-### E2E Tests
-
-Run end-to-end browser automation tests:
-
-```bash
-# Linux/macOS
-./mvnw test -pl pulsar-tests -Dtest="*E2ETest*"
-
-# Windows
-mvnw.cmd test -pl pulsar-tests -Dtest="*E2ETest*"
-```
-
-### Specific Test Class
-
-```bash
-# Linux/macOS
-./mvnw test -Dtest=MyTestClass
-
-# Windows
-mvnw.cmd test -Dtest=MyTestClass
-```
-
-### Specific Test Method
-
-```bash
-# Linux/macOS
-./mvnw test -Dtest=MyTestClass#myTestMethod
-
-# Windows
-mvnw.cmd test -Dtest=MyTestClass#myTestMethod
-```
-
-## Test Scripts
-
-The project provides convenient test scripts in the `bin/` directory:
-
-### test.sh / test.ps1
-
-Comprehensive test runner with multiple options:
-
-```bash
-# Run unit tests only (default)
-./bin/test.sh
-
-# Run with integration tests
-./bin/test.sh -integration
-
-# Run full suite including E2E
-./bin/test.sh -e2e
-
-# Run specific module
-./bin/test.sh -module pulsar-core
-
-# Run with coverage report
-./bin/test.sh -coverage
-
-# Clean before testing
-./bin/test.sh -clean
-```
-
-Windows equivalent:
-```powershell
-bin\test.ps1 -integration
-bin\test.ps1 -e2e
-bin\test.ps1 -module pulsar-core
-bin\test.ps1 -coverage
-bin\test.ps1 -clean
-```
-
-## Common Scenarios
-
-### Development Workflow
-
-During active development, run tests for the module you're working on:
-
-```bash
-# Linux/macOS
-./mvnw test -pl pulsar-core -am
-
-# Windows (note: requires -D"surefire.failIfNoSpecifiedTests=false")
-mvnw.cmd test -pl pulsar-core -am -D"surefire.failIfNoSpecifiedTests=false"
-```
-
-### Before Commit
-
-Run full unit test suite:
-
-```bash
-./bin/test.sh
-```
-
-### Before Push
-
-Run integration tests:
-
-```bash
-./bin/test.sh -integration
-```
-
-### Debug Single Test
-
-```bash
-# Linux/macOS with debug port
-./mvnw test -Dtest=MyTest -Dmaven.surefire.debug
-
-# Windows
-mvnw.cmd test -Dtest=MyTest -D"maven.surefire.debug"
-```
-
-Then attach your debugger to port 5005.
-
-## Test Tags
-
-Tests can be tagged for selective execution:
-
-- `IntegrationTest`: Multi-component tests
-- `E2ETest`: Browser automation tests
-- `ExternalServiceTest`: Requires external services
-- `TimeConsumingTest`: Takes > 10 seconds
-- `HeavyTest`: Resource intensive
-- `SmokeTest`: Quick health checks
-- `BenchmarkTest`: Performance tests
-
-### Exclude Specific Tags
-
-```bash
-# Linux/macOS
-./mvnw test -DexcludedGroups="TimeConsumingTest,ExternalServiceTest"
-
-# Windows
-mvnw.cmd test -D"excludedGroups=TimeConsumingTest,ExternalServiceTest"
-```
-
-### Include Only Specific Tags
-
-```bash
-# Linux/macOS
-./mvnw test -Dgroups="SmokeTest"
-
-# Windows
-mvnw.cmd test -D"groups=SmokeTest"
-```
-
-## Coverage Reports
-
-### Generate Coverage Report
-
-```bash
-# Linux/macOS
-./mvnw test jacoco:report
-
-# Windows
-mvnw.cmd test jacoco:report
-```
-
-### View Coverage Report
-
-Open `target/site/jacoco/index.html` in your browser.
-
-### Aggregate Coverage (All Modules)
-
-```bash
-# Linux/macOS
-./mvnw verify -Pci
-
-# Windows
-mvnw.cmd verify -P"ci"
-```
-
-View aggregate report at `target/site/jacoco-aggregate/index.html`.
-
-## Parallel Testing
-
-Enable parallel test execution for faster results:
-
-```bash
-# Linux/macOS
-./mvnw test -Dsurefire.parallel=methods -Dsurefire.threadCount=4
-
-# Windows
-mvnw.cmd test -D"surefire.parallel=methods" -D"surefire.threadCount=4"
-```
-
-## Troubleshooting
-
-### Tests Not Running
-
-If tests are being skipped:
-
-```bash
-# Check if skipTests is set
-./mvnw help:effective-pom | grep skipTests
-
-# Force tests to run
-./mvnw test -DskipTests=false
-```
-
-### Test Compilation Errors
-
-Compile tests without running them:
-
-```bash
-# Linux/macOS
-./mvnw test-compile
-
-# Windows
-mvnw.cmd test-compile
-```
-
-### Memory Issues
-
-Increase memory for tests:
-
-```bash
-# Linux/macOS
-export MAVEN_OPTS="-Xmx4g"
-./mvnw test
-
-# Windows
-set MAVEN_OPTS=-Xmx4g
-mvnw.cmd test
-```
-
-### Windows-Specific Issues
-
-When using `-am` flag on Windows, you must add:
-```bash
-mvnw.cmd test -pl pulsar-core -am -D"surefire.failIfNoSpecifiedTests=false"
-```
-
-When using properties with dots, quote them:
-```bash
-mvnw.cmd test -D"my.dotted.property=value"
-```
-
-## CI/CD Integration
-
-The project uses GitHub Actions for continuous testing:
-
-- **Fast Feedback**: Unit tests on every commit
-- **Integration**: Integration tests on PR
-- **E2E**: Full suite on merge to main
-- **Nightly**: Complete suite with benchmarks
-
-See `.github/workflows/ci.yml` for configuration details.
-
-## Performance Benchmarks
-
-Run JMH benchmarks:
-
-```bash
-# Build benchmarks
-./mvnw -pl pulsar-benchmarks -am package -DskipTests
-
-# Run all benchmarks
-java -jar pulsar-benchmarks/target/pulsar-benchmarks-*-shaded.jar
-
-# Run specific benchmark
-java -jar pulsar-benchmarks/target/pulsar-benchmarks-*-shaded.jar MyBenchmark
-```
-
-## Test Resources
-
-### Mock Test Server
-
-Tests requiring a web server can use the built-in mock server from `pulsar-tests-common`:
-
-```kotlin
-@ExtendWith(TestWebSiteAccess::class)
-class MyTest {
-    @Test
-    fun testWithMockServer() {
-        // Mock server available at http://localhost:<random-port>
-    }
-}
-```
-
-### Test Data
-
-- **Static Resources**: `pulsar-tests-common/src/main/resources/static/`
-- **Generated Data**: `pulsar-tests-common/src/main/resources/static/generated/`
-- **Test Fixtures**: `src/test/resources/` in each module
-
-## Best Practices
-
-1. **Keep tests fast**: Unit tests < 100ms, Integration < 5s, E2E < 30s
-2. **Use meaningful names**: `` `Given X When Y Then Z` ``
-3. **One assertion per test**: Focus on single behavior
-4. **Clean up resources**: Use `@AfterEach` or try-with-resources
-5. **Avoid test interdependence**: Tests should run in any order
-6. **Tag appropriately**: Use @Tag for categorization
-7. **Mock external services**: Don't depend on external APIs in unit tests
-8. **Test edge cases**: Not just happy paths
-
-## Additional Resources
-
-- [Test Strategy](docs/test-strategy.md) - Comprehensive testing strategy
-- [Test Guide](devdocs/copilot/test-guide.md) - Detailed testing guide with examples
-- [Maven Test Control](devdocs/development/mvn-test.md) - Maven Surefire configuration
-- [Test Tags](devdocs/development/test/test-tags.md) - Tag usage and conventions
-
-## Getting Help
-
-- Check existing tests for examples
-- Review test documentation in `docs/` and `devdocs/`
-- Ask in project discussions or issues
-- See [FAQ](docs/faq/) for common questions
+> **Tests are contracts for the scheduler.**

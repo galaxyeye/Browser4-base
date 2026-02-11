@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 import kotlin.system.exitProcess
 
 /**
- * Created by vincent on 17-4-12.
+ * Created by Vincent on 17-4-12.
  * Copyright @ 2013-2023 Platon AI. All rights reserved
  */
 open class PulsarOptions(

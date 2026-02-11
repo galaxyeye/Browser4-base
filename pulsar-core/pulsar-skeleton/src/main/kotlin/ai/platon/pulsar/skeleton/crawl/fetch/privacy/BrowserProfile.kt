@@ -1,16 +1,14 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.privacy
 
-import ai.platon.pulsar.browser.common.BrowserSettings
+import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.browser.BrowserProfileMode
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
+import ai.platon.pulsar.common.browser.fingerprint.FingerprintLoader
 import ai.platon.pulsar.common.config.CapabilityTypes.BROWSER_CONTEXT_NUMBER
 import ai.platon.pulsar.common.config.CapabilityTypes.PRIVACY_AGENT_GENERATOR_CLASS
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.logging.ThrottlingLogger
-import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -60,16 +58,10 @@ data class BrowserProfile(
          * */
         val RANDOM_TEMP get() = createRandomTemp()
 
-        private fun create(contextDir: Path) = create(BrowserType.PULSAR_CHROME, contextDir)
+        fun create(contextDir: Path) = create(BrowserType.PULSAR_CHROME, contextDir)
 
-        private fun create(browserType: BrowserType, contextDir: Path): BrowserProfile {
-            val path = contextDir.resolve("fingerprint.json")
-            val fingerprint: Fingerprint = if (Files.exists(path)) {
-                pulsarObjectMapper().readValue<Fingerprint>(path.toFile()).also { it.source = path.toString() }
-            } else {
-                Fingerprint(browserType)
-            }
-            fingerprint.browserType = browserType
+        fun create(browserType: BrowserType, contextDir: Path): BrowserProfile {
+            val fingerprint: Fingerprint = FingerprintLoader(browserType, contextDir).loadOrGenerateFingerprint()
             return BrowserProfile(contextDir, fingerprint)
         }
 
@@ -79,6 +71,8 @@ data class BrowserProfile(
 
         fun createSystemDefault(browserType: BrowserType): BrowserProfile {
             throttlingLogger.info("You are creating a SYSTEM_DEFAULT browser context, force set max browser number to be 1")
+            throttlingLogger.info("Chrome DevTools remote debugging requires a non-default data directory. Specify this using --user-data-dir.")
+
             BrowserSettings.withBrowserContextMode(BrowserProfileMode.SYSTEM_DEFAULT, browserType)
             require(System.getProperty(BROWSER_CONTEXT_NUMBER).toIntOrNull() == 1)
             require(System.getProperty(PRIVACY_AGENT_GENERATOR_CLASS).contains("SystemDefaultPrivacyAgentGenerator"))
@@ -90,7 +84,7 @@ data class BrowserProfile(
         }
 
         fun createDefault(browserType: BrowserType): BrowserProfile {
-            throttlingLogger.info("You are creating a DEFAULT browser context, force set max browser number to be 1")
+            throttlingLogger.info("You are creating a DEFAULT browser context, force set max browser number to 1")
 
             BrowserSettings.withBrowserContextMode(BrowserProfileMode.DEFAULT, browserType)
             require(System.getProperty(BROWSER_CONTEXT_NUMBER).toIntOrNull() == 1)

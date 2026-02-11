@@ -121,7 +121,7 @@ class FatLinkExtractor(
     fun createFatLink(
         seed: NormURL, page: WebPage, document: FeaturedDocument? = null, denyList: Collection<UrlAware>
     ): PageFatLink? {
-        val fatLinkSpec = seed.spec
+        val fatLinkSpec = seed.urlString
         val normalizedFatLink = normalizer.invoke(fatLinkSpec) ?: fatLinkSpec
         val options = seed.options
         val args = if (options.label.isNotBlank()) "-label ${options.label}" else ""
@@ -171,7 +171,7 @@ class FatLinkExtractor(
         seed: NormURL, page: WebPage, document: FeaturedDocument, denyList: Collection<UrlAware>
     ): List<StatefulHyperlink> {
         val now = Instant.now()
-        val fatLinkSpec = seed.spec
+        val fatLinkSpec = seed.urlString
         val options = seed.options
         val selector = options.outLinkSelector
         val urlRegex = options.outLinkPattern.toRegex()

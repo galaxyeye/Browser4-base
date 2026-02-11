@@ -89,7 +89,7 @@ object LLMFunctions {
         return ValueStringJSON.get(pulsarObjectMapper().writeValueAsString(result), Map::class.qualifiedName)
     }
 
-    internal fun extractInternal(domContent: String, dataExtractionRules: String): Map<String, String> {
+    fun extractInternal(domContent: String, dataExtractionRules: String): Map<String, String> {
         val prompt = LLM_UDF_EXTRACT_PROMPT.replace(DATA_EXTRACTION_RULES_PLACEHOLDER, dataExtractionRules)
         val content = try {
             runBlocking { session.chat(prompt + "\n" + domContent).content }
