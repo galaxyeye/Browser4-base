@@ -62,12 +62,7 @@ if ($version -notmatch "^\d+\.\d+\.\d+(?:-rc\.\d+)?$") {
     exit 1
 }
 
-# Use rc tag without 'v' prefix to match release workflow expectations
-if ($version -match "-rc\.\d+$") {
-    $newTag = $version
-} else {
-    $newTag = "v$version"
-}
+$newTag = "v$version"
 
 # Check if tag already exists
 $existingTag = git tag -l $newTag
