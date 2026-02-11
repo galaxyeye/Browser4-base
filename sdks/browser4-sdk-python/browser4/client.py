@@ -80,6 +80,8 @@ class PulsarClient:
     def delete_session(self, session_id: Optional[str] = None) -> None:
         sid = self._require_session(session_id)
         self._request("DELETE", f"/session/{sid}")
+        if session_id is None or session_id == self.session_id:
+            self.session_id = None
 
     def post(self, path: str, body: Dict[str, Any], session_id: Optional[str] = None) -> Any:
         return self._request("POST", path, session_id=session_id, body=body)

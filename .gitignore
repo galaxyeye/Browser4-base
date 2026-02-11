@@ -120,4 +120,3 @@ application-private.properties
 /node_modules/
 */**/py/dom/
 */**/human-private/
-/docs-dev/vault/

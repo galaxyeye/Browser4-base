@@ -135,8 +135,15 @@ class KtorTransport : Transport {
             scope.cancel()
             if (ws != null) {
                 runCatching {
-                    runBlocking(Dispatchers.IO) { ws.close(CloseReason(CloseReason.Codes.NORMAL, "")) }
-                }.onFailure { warnForClose(this, it) }
+                    runBlocking(Dispatchers.IO) {
+                        withTimeout(CLOSE_TIMEOUT_MS) {
+                            ws.close(CloseReason(CloseReason.Codes.NORMAL, ""))
+                        }
+                    }
+                }.onFailure { 
+                    logger.debug("WebSocket close timeout or error, forcing closure | {}", uri)
+                    warnForClose(this, it) 
+                }
             }
             runCatching { client?.close() }.onFailure { warnForClose(this, it) }
         }
@@ -168,6 +175,7 @@ class KtorTransport : Transport {
         private const val DEFAULT_SOCKET_TIMEOUT_MS: Long = 20_000
         private val DEFAULT_PING_INTERVAL: Duration = 15_000.milliseconds
         private const val DEFAULT_KEEP_ALIVE_TIME_MS: Long = 5_000
+        private const val CLOSE_TIMEOUT_MS: Long = 3_000
 
         @Throws(ChromeIOException::class)
         fun create(uri: URI): Transport {
