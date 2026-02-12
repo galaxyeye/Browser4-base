@@ -486,9 +486,9 @@ Method names use Python naming conventions (snake_case) with Kotlin-style aliase
 
 For maintainers and contributors working on SDK releases:
 
-- **[Release Plan (中文)](RELEASE_PLAN.md)** - Complete release process documentation in Chinese
-- **[Release Plan (English)](RELEASE_PLAN.en.md)** - Complete release process documentation in English
-- **[Quick Reference](RELEASE_QUICKREF.md)** - Quick reference guide for releases (Chinese)
+- **[Release Plan (中文)](docs-dev/RELEASE_PLAN.md)** - Complete release process documentation in Chinese
+- **[Release Plan (English)](docs-dev/RELEASE_PLAN.en.md)** - Complete release process documentation in English
+- **[Quick Reference](docs-dev/RELEASE_QUICKREF.md)** - Quick reference guide for releases (Chinese)
 
 These documents cover:
 - Version management and semantic versioning strategy

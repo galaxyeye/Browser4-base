@@ -171,7 +171,7 @@ python -c "import browser4"
 
 ## Additional Resources
 
-- [Release Plan (Chinese)](../RELEASE_PLAN.md)
-- [Release Plan (English)](../RELEASE_PLAN.en.md)
-- [Quick Reference](../RELEASE_QUICKREF.md)
+- [Release Plan (Chinese)](../docs-dev/RELEASE_PLAN.md)
+- [Release Plan (English)](../docs-dev/RELEASE_PLAN.en.md)
+- [Quick Reference](../docs-dev/RELEASE_QUICKREF.md)
 - [GitHub Actions Workflow](/.github/workflows/python-sdk-release.yml)
