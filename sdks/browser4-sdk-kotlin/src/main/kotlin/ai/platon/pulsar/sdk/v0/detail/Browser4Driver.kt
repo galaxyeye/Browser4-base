@@ -54,7 +54,7 @@ class Browser4Driver(
 
     companion object {
         const val DEFAULT_DOWNLOAD_URL =
-            "https://github.com/platonai/Browser4/releases/download/v4.4.0/Browser4.jar"
+            "https://github.com/platonai/Browser4/releases/download/v4.5.0/Browser4.jar"
         private const val LATEST_RELEASE_API =
             "https://api.github.com/repos/platonai/Browser4/releases/latest"
         private val DOWNLOAD_URL_REGEX =
