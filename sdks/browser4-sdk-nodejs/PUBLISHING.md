@@ -145,48 +145,48 @@ npm install @platonai/browser4-sdk@beta
 
 ## Automated Publishing with CI/CD
 
-### GitHub Actions Example
+The repository includes GitHub Actions workflows for automated publishing:
 
-Create `.github/workflows/publish.yml`:
+### Workflow: `publish-nodejs-sdk.yml`
 
-```yaml
-name: Publish to npm
+Automatically publishes the SDK when a tag is pushed or manually triggered.
 
-on:
-  push:
-    tags:
-      - 'v*'
+**Trigger by Git Tag:**
 
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          registry-url: 'https://registry.npmjs.org'
-      
-      - name: Install dependencies
-        working-directory: sdks/browser4-sdk-nodejs
-        run: npm ci
-      
-      - name: Run tests
-        working-directory: sdks/browser4-sdk-nodejs
-        run: npm test
-      
-      - name: Build
-        working-directory: sdks/browser4-sdk-nodejs
-        run: npm run build
-      
-      - name: Publish
-        working-directory: sdks/browser4-sdk-nodejs
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+```bash
+# Create and push a version tag
+git tag sdk-nodejs-v0.1.0
+git push origin sdk-nodejs-v0.1.0
 ```
+
+**Manual Trigger:**
+
+1. Go to GitHub Actions tab
+2. Select "Publish NodeJS SDK" workflow
+3. Click "Run workflow"
+4. Enter version and npm tag (latest/beta/rc/next)
+
+**What the workflow does:**
+
+1. ✅ Runs linting and tests
+2. ✅ Builds the package
+3. ✅ Verifies build output
+4. ✅ Publishes to npm
+5. ✅ Creates GitHub release
+
+### Workflow: `nodejs-sdk-test.yml`
+
+Automatically tests the SDK on pull requests and pushes.
+
+**Tests across:**
+- Operating Systems: Ubuntu, macOS, Windows
+- Node.js versions: 16, 18, 20
+
+**What it tests:**
+1. Linting
+2. Unit tests
+3. Build verification
+4. Package installation
 
 ### Setting Up CI/CD
 
@@ -201,9 +201,15 @@ jobs:
 
 3. Create and push a version tag:
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git tag sdk-nodejs-v0.1.0
+   git push origin sdk-nodejs-v0.1.0
    ```
+
+The workflow will automatically:
+- Run tests
+- Build the package  
+- Publish to npm
+- Create a GitHub release
 
 ## Unpublishing
 
