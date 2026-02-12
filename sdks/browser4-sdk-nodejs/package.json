@@ -22,7 +22,8 @@
     "version:major": "npm version major",
     "publish:test": "npm publish --dry-run",
     "publish:public": "npm publish --access public",
-    "verify": "node scripts/verify-installation.js"
+    "verify": "node scripts/verify-installation.js",
+    "verify:build": "node scripts/verify-build.js"
   },
   "keywords": [
     "browser4",
