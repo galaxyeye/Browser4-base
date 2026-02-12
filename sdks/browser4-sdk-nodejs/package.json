@@ -6,12 +6,23 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf dist",
+    "rebuild": "npm run clean && npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src tests --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint && npm test && npm run build",
+    "prepack": "npm run rebuild",
+    "pack:check": "npm pack --dry-run",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "publish:test": "npm publish --dry-run",
+    "publish:public": "npm publish --access public",
+    "verify": "node scripts/verify-installation.js"
   },
   "keywords": [
     "browser4",
@@ -26,6 +37,18 @@
     "type": "git",
     "url": "https://github.com/platonai/Browser4.git",
     "directory": "sdks/browser4-sdk-nodejs"
+  },
+  "bugs": {
+    "url": "https://github.com/platonai/Browser4/issues"
+  },
+  "homepage": "https://github.com/platonai/Browser4/tree/main/sdks/browser4-sdk-nodejs",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "dependencies": {
     "axios": "^1.6.0",

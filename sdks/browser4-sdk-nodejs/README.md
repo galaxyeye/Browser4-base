@@ -14,6 +14,23 @@ This SDK provides a NodeJS interface to the Browser4 browser automation platform
 npm install @platonai/browser4-sdk
 ```
 
+For detailed installation instructions, troubleshooting, and system requirements, see [INSTALLATION.md](./INSTALLATION.md).
+
+### Verify Installation
+
+After installation, verify it works:
+
+```bash
+npm run verify
+```
+
+Or manually test:
+
+```javascript
+const sdk = require('@platonai/browser4-sdk');
+console.log(sdk.PulsarClient ? '✅ Installed' : '❌ Failed');
+```
+
 ## Quick Start
 
 The easiest way to get started is using `Browser4Driver`, which automatically downloads and starts the Browser4 server:
@@ -316,6 +333,10 @@ See the `examples/` directory for more examples:
 - Web scraping
 - AI-powered automation
 - Advanced workflows
+
+## Publishing
+
+For maintainers who need to publish the package to npm, see [PUBLISHING.md](./PUBLISHING.md) for detailed instructions.
 
 ## Requirements
 
