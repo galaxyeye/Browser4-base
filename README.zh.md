@@ -362,11 +362,11 @@ export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
 
 ## 🤝 支持与社区
 
-- 💬 微信：galaxyeye
-- 🌐 微博：[galaxyeye](https://weibo.com/galaxyeye)
-- 📧 邮箱：galaxyeye@live.cn, ivincent.zhang@gmail.com
-- 🐦 Twitter：galaxyeye8
-- 🌍 官网：[browser4.io](https://browser4.io)
+- 💬 WeChat: galaxyeye
+- 🌐 Weibo: [galaxyeye](https://weibo.com/galaxyeye)
+- 📧 Email: galaxyeye@live.cn, ivincent.zhang@gmail.com
+- 🐦 Twitter: [galaxyeye8](https://x.com/galaxyeye8)
+- 🌍 Website: [browser4.io](https://browser4.io)
 
 <div style="display: flex;">
   <img src="docs/images/wechat-author.png" width="300" height="365" alt="微信二维码" />

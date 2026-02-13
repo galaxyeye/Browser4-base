@@ -345,22 +345,18 @@ Comprehensive documentation is available in the `docs/` directory and on our [Gi
 
 ## 🔧 Proxies - Unblock Websites
 
-Browser4 supports proxy rotation and management to access geo-restricted content.
+<details>
 
-**Quick Start:**
-1. Obtain a list of proxy URLs (e.g., from a proxy provider).
-2. Configure `PROXY_ROTATION_URL` in `application.properties`.
-3. Use the `rotateProxies` command in your agent scripts.
+Set the environment variable PROXY_ROTATION_URL to the URL provided by your proxy service:
 
-**Example:**
-```kotlin
-agent.run("""
-    1. Go to a blocked website
-    2. If blocked, rotate proxy and retry
-    """)
+```shell
+export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
 ```
 
-**Note**: Respect website terms of service and robots.txt rules when scraping.
+Each time the rotation URL is accessed, it should return a response containing one or more fresh proxy IPs.
+Ask your proxy provider for such a URL.
+
+</details>
 
 ---
 
@@ -370,13 +366,13 @@ Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🤝 Support & Contact
+## 🤝 Support & Community
 
-- 💬 WeChat：galaxyeye
-- 🌐 Weibo：[galaxyeye](https://weibo.com/galaxyeye)
-- 📧 Email：galaxyeye@live.cn, ivincent.zhang@gmail.com
-- 🐦 Twitter：galaxyeye8
-- 🌍 WebSite：[browser4.io](https://browser4.io)
+- 💬 WeChat: galaxyeye
+- 🌐 Weibo: [galaxyeye](https://weibo.com/galaxyeye)
+- 📧 Email: galaxyeye@live.cn, ivincent.zhang@gmail.com
+- 🐦 Twitter: [galaxyeye8](https://x.com/galaxyeye8)
+- 🌍 Website: [browser4.io](https://browser4.io)
 
 <div style="display: flex;">
   <img src="docs/images/wechat-author.png" width="300" height="365" alt="微信二维码" />
