@@ -21,7 +21,7 @@ if ! python3 -c "import requests" 2>/dev/null; then
     echo "⚠️  Warning: 'requests' library not found." >&2
     echo "   This script requires the 'requests' library to function." >&2
     echo "" >&2
-    
+
     # Try to install if pip is available
     if command -v pip3 &> /dev/null; then
         echo "   Attempting automatic installation with pip3..." >&2
@@ -42,4 +42,9 @@ fi
 cd "$ROOT_DIR"
 
 # Run the Python script with all arguments passed through
-python3 "$PYTHON_SCRIPT" "$@"
+extra_args=()
+if [[ "${BROWSER4_CHECK_LOCALHOST:-}" == "1" ]]; then
+    extra_args+=("--check-localhost")
+fi
+
+python3 "$PYTHON_SCRIPT" "${extra_args[@]}" "$@"

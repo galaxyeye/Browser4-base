@@ -32,7 +32,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "⚠️  Warning: 'requests' library not found." -ForegroundColor Yellow
     Write-Host "   This script requires the 'requests' library to function." -ForegroundColor Yellow
     Write-Host ""
-    
+
     # Try to install if pip is available
     $pipCmd = $null
     foreach ($cmd in @("pip3", "pip")) {
@@ -41,7 +41,7 @@ if ($LASTEXITCODE -ne 0) {
             break
         }
     }
-    
+
     if ($pipCmd) {
         Write-Host "   Attempting automatic installation with $pipCmd..." -ForegroundColor Yellow
         Write-Host "   (This is safe - requests is a well-known HTTP library)" -ForegroundColor Yellow
@@ -62,5 +62,10 @@ if ($LASTEXITCODE -ne 0) {
 Set-Location $RootDir
 
 # Run the Python script with all arguments passed through
-& $pythonCmd $PythonScript $args
+$extraArgs = @()
+if ($env:BROWSER4_CHECK_LOCALHOST -eq "1") {
+    $extraArgs += "--check-localhost"
+}
+
+& $pythonCmd $PythonScript @extraArgs @args
 exit $LASTEXITCODE
