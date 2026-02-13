@@ -1,7 +1,9 @@
 name: E2E Tests
 
 on:
-  # Allow manual workflow runs only (test-strategy.md: MustRunExplicitly)
+  # Manual workflow runs only (test-strategy.md: MustRunExplicitly)
+  # This workflow runs comprehensive E2E tests with browser and AI requirements
+  # For Docker deployment testing only, see docker-e2e-test.yml
   workflow_dispatch:
     inputs:
       debug_mode:

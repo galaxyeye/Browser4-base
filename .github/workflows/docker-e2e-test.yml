@@ -1,4 +1,4 @@
-name: Docker E2E Test
+name: Docker Deployment E2E Test
 
 on:
   push:
@@ -7,11 +7,6 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+-e2e.[0-9]+'
   workflow_dispatch:
     inputs:
-      skip_tests:
-        description: 'Skip tests'
-        required: false
-        default: false
-        type: boolean
       debug_mode:
         description: 'Enable debug mode'
         required: false
@@ -30,7 +25,8 @@ env:
   MAVEN_OPTS: '-Xmx3g -XX:+UseG1GC'
 
 jobs:
-  ci-build:
+  docker-deployment-test:
+    name: Docker Deployment Test
     runs-on: ubuntu-latest
 
     steps:
@@ -59,7 +55,7 @@ jobs:
         id: build-maven
         uses: ./.github/actions/maven-build
         with:
-          skip_tests: ${{ inputs.skip_tests || 'true' }}
+          skip_tests: 'true'
           timeout_minutes: '15'
 
       - name: Build Docker Image
