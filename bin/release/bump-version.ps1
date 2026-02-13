@@ -87,24 +87,24 @@ switch ($Part) {
 }
 
 $NEXT_VERSION = "$major.$minor.$patch"
-$NEXT_SNAPSHOT_VERSION = "$NEXT_VERSION-SNAPSHOT"
+4.6.0-SNAPSHOT = "$NEXT_VERSION-SNAPSHOT"
 
-if ($NEXT_SNAPSHOT_VERSION -notmatch "^\d+\.\d+\.\d+-SNAPSHOT$") {
-    Write-Error "Calculated version '$NEXT_SNAPSHOT_VERSION' does not match the expected format X.Y.Z-SNAPSHOT"
+if (4.6.0-SNAPSHOT -notmatch "^\d+\.\d+\.\d+-SNAPSHOT$") {
+    Write-Error "Calculated version '4.6.0-SNAPSHOT' does not match the expected format X.Y.Z-SNAPSHOT"
     exit 1
 }
 
 Write-Host "Current version: $SNAPSHOT_VERSION"
-Write-Host "New version: $NEXT_SNAPSHOT_VERSION"
+Write-Host "New version: 4.6.0-SNAPSHOT"
 
 
 
 # Update VERSION file
-$NEXT_SNAPSHOT_VERSION | Set-Content "$AppHome\VERSION"
+4.6.0-SNAPSHOT | Set-Content "$AppHome\VERSION"
 
 # Update pom.xml files using Maven
 $mvnCmd = if ($IsWindows) { "$AppHome\mvnw.cmd" } else { "$AppHome\mvnw" }
-& $mvnCmd versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION -DprocessAllModules -DgenerateBackupPoms=false
+& $mvnCmd versions:set -DnewVersion=4.6.0-SNAPSHOT -DprocessAllModules -DgenerateBackupPoms=false
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Maven versions:set command failed. Reverting VERSION file."
     $SNAPSHOT_VERSION | Set-Content "$AppHome\VERSION"
@@ -127,7 +127,7 @@ $VERSION_AWARE_FILES = @(
 foreach ($F in $VERSION_AWARE_FILES) {
     if (Test-Path $F) {
         $content = Get-Content $F -Raw
-        $content = $content -replace $SNAPSHOT_VERSION, $NEXT_SNAPSHOT_VERSION
+        $content = $content -replace $SNAPSHOT_VERSION, 4.6.0-SNAPSHOT
         $content = $content -replace "v[0-9]+\.[0-9]+\.[0-9]+", "v$NEXT_VERSION"
         $content | Set-Content $F
     }

@@ -79,19 +79,19 @@ esac
 NEXT_VERSION="$major.$minor.$patch"
 NEXT_SNAPSHOT_VERSION="$NEXT_VERSION-SNAPSHOT"
 
-if [[ ! "$NEXT_SNAPSHOT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
-    echo "Error: Calculated version '$NEXT_SNAPSHOT_VERSION' does not match the expected format X.Y.Z-SNAPSHOT"
+if [[ ! "4.6.0-SNAPSHOT" =~ ^[0-9]+\.[0-9]+\.[0-9]+-SNAPSHOT$ ]]; then
+    echo "Error: Calculated version '4.6.0-SNAPSHOT' does not match the expected format X.Y.Z-SNAPSHOT"
     exit 1
 fi
 
 echo "Current version: $SNAPSHOT_VERSION"
-echo "New version: $NEXT_SNAPSHOT_VERSION"
+echo "New version: 4.6.0-SNAPSHOT"
 
 # Update VERSION file
-echo "$NEXT_SNAPSHOT_VERSION" > "$APP_HOME/VERSION"
+echo "4.6.0-SNAPSHOT" > "$APP_HOME/VERSION"
 
 # Update pom.xml files using Maven
-if ! ./mvnw versions:set -DnewVersion="$NEXT_SNAPSHOT_VERSION" -DprocessAllModules -DgenerateBackupPoms=false; then
+if ! ./mvnw versions:set -DnewVersion="4.6.0-SNAPSHOT" -DprocessAllModules -DgenerateBackupPoms=false; then
     echo "Maven versions:set command failed. Reverting VERSION file."
     echo "$SNAPSHOT_VERSION" > "$APP_HOME/VERSION"
     exit 1
@@ -112,7 +112,7 @@ for F in "${VERSION_AWARE_FILES[@]}"; do
     if [ -f "$F" ]; then
         # Use a temporary file for sed to work on both Linux and macOS
         tmp_file=$(mktemp)
-        sed "s/$SNAPSHOT_VERSION/$NEXT_SNAPSHOT_VERSION/g; s/v[0-9]\+\.[0-9]\+\.[0-9]\+/v$NEXT_VERSION/g" "$F" > "$tmp_file"
+        sed "s/$SNAPSHOT_VERSION/4.6.0-SNAPSHOT/g; s/v[0-9]\+\.[0-9]\+\.[0-9]\+/v$NEXT_VERSION/g" "$F" > "$tmp_file"
         mv "$tmp_file" "$F"
     fi
 done

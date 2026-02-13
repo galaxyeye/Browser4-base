@@ -74,16 +74,16 @@ if ($VERSION -match "^(\d+)\.(\d+)\.(\d+)") {
 $nextMinor = $minor + 1
 $newBranchName = "$major.$nextMinor.x"
 $NEXT_VERSION = "$major.$nextMinor.0"
-$NEXT_SNAPSHOT_VERSION = "$NEXT_VERSION-SNAPSHOT"
+4.6.0-SNAPSHOT = "$NEXT_VERSION-SNAPSHOT"
 
-if ($NEXT_SNAPSHOT_VERSION -notmatch "^\d+\.\d+\.\d+-SNAPSHOT$") {
-    Write-Error "Calculated version '$NEXT_SNAPSHOT_VERSION' does not match the expected format X.Y.Z-SNAPSHOT"
+if (4.6.0-SNAPSHOT -notmatch "^\d+\.\d+\.\d+-SNAPSHOT$") {
+    Write-Error "Calculated version '4.6.0-SNAPSHOT' does not match the expected format X.Y.Z-SNAPSHOT"
     exit 1
 }
 
 Write-Host "Current version: $SNAPSHOT_VERSION"
 Write-Host "Creating branch: $newBranchName"
-Write-Host "Next snapshot version: $NEXT_SNAPSHOT_VERSION"
+Write-Host "Next snapshot version: 4.6.0-SNAPSHOT"
 
 # Create and switch to the new branch
 & git checkout -b $newBranchName
@@ -93,11 +93,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Update VERSION file
-$NEXT_SNAPSHOT_VERSION | Set-Content "$AppHome\VERSION"
+4.6.0-SNAPSHOT | Set-Content "$AppHome\VERSION"
 
 # Update pom.xml files using Maven
 $mvnCmd = if ($IsWindows) { Join-Path $AppHome "mvnw.cmd" } else { Join-Path $AppHome "mvnw" }
-& $mvnCmd versions:set -DnewVersion=$NEXT_SNAPSHOT_VERSION -DprocessAllModules -DgenerateBackupPoms=false
+& $mvnCmd versions:set -DnewVersion=4.6.0-SNAPSHOT -DprocessAllModules -DgenerateBackupPoms=false
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Maven versions:set command failed. Reverting VERSION file and branch."
     $SNAPSHOT_VERSION | Set-Content "$AppHome\VERSION"
@@ -123,7 +123,7 @@ foreach ($F in $VERSION_AWARE_FILES) {
     if (Test-Path $F) {
         $content = Get-Content $F -Raw
         # Replace the full snapshot string safely
-        $content = $content -replace [regex]::Escape($SNAPSHOT_VERSION), $NEXT_SNAPSHOT_VERSION
+        $content = $content -replace [regex]::Escape($SNAPSHOT_VERSION), 4.6.0-SNAPSHOT
         # Update 'vMAJOR.MINOR.PATCH' tokens to new release version (digits only)
         $content = $content -replace "v[0-9]+\.[0-9]+\.[0-9]+", "v$NEXT_VERSION"
         Set-Content $F $content -Encoding utf8
@@ -155,5 +155,5 @@ if ($Push) {
     Write-Host "Push skipped. Run with -Push to push the branch to '$Remote'."
 }
 
-Write-Host "Branch '$newBranchName' created and version bumped to $NEXT_SNAPSHOT_VERSION. Commit message: '$newBranchName'"
+Write-Host "Branch '$newBranchName' created and version bumped to 4.6.0-SNAPSHOT. Commit message: '$newBranchName'"
 
