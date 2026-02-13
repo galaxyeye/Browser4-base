@@ -11,8 +11,8 @@ on:
   # Run on push to main branches
   push:
     branches:
-      - main-disabled
-      - master-disabled
+      - main
+      - master
     paths:
       - 'docs/**'
       - '*.md'
