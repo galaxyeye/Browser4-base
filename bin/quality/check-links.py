@@ -81,12 +81,14 @@ class LinkChecker:
     )
 
     def __init__(self, root_dir: Path, exclude_patterns: List[str] = None,
-                 max_workers: int = 10, timeout: int = 10, skip_external: bool = False):
+                 max_workers: int = 10, timeout: int = 10, skip_external: bool = False,
+                 check_localhost: bool = False):
         self.root_dir = root_dir.resolve()
         self.exclude_patterns = exclude_patterns or []
         self.max_workers = max_workers
         self.timeout = timeout
         self.skip_external = skip_external
+        self.check_localhost = check_localhost
         self.stats = Statistics()
         self.checked_external_urls: Set[str] = set()
         self.external_urls_lock = threading.Lock()  # Thread safety for checked URLs
@@ -201,6 +203,12 @@ class LinkChecker:
             return True
         return False
 
+    def _is_localhost_url(self, url: str) -> bool:
+        """Check whether a URL points to localhost/loopback."""
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").strip().lower().rstrip(".")
+        return host in {"localhost", "127.0.0.1", "::1"}
+
     def check_internal_link(self, url: str, source_file: Path) -> Tuple[bool, str]:
         """Check if an internal link is valid"""
         # Remove query parameters and fragments for file checking
@@ -289,6 +297,16 @@ class LinkChecker:
                     line_number=line_number,
                     is_valid=True,  # Treat as valid when skipped
                     error_message="Skipped (external)",
+                    link_type=link_type
+                )
+            if not self.check_localhost and self._is_localhost_url(url):
+                self.stats.skipped_links += 1
+                return LinkCheckResult(
+                    url=url,
+                    source_file=str(source_file.relative_to(self.root_dir)),
+                    line_number=line_number,
+                    is_valid=True,
+                    error_message="Skipped (localhost)",
                     link_type=link_type
                 )
             is_valid, error = self.check_external_link(url)
@@ -417,6 +435,9 @@ Examples:
 
   # Exclude patterns
   %(prog)s --exclude node_modules --exclude .git
+
+  # Check localhost URLs too
+  %(prog)s --check-localhost
         """
     )
 
@@ -452,6 +473,12 @@ Examples:
         '--skip-external',
         action='store_true',
         help='Skip checking external links (faster)'
+    )
+
+    parser.add_argument(
+        '--check-localhost',
+        action='store_true',
+        help='Check localhost/loopback URLs (default: skipped)'
     )
 
     parser.add_argument(
@@ -501,7 +528,8 @@ Examples:
         exclude_patterns=exclude_patterns,
         max_workers=args.workers,
         timeout=args.timeout,
-        skip_external=args.skip_external
+        skip_external=args.skip_external,
+        check_localhost=args.check_localhost
     )
 
     try:
