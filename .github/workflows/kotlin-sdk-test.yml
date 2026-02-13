@@ -14,9 +14,7 @@ on:
       - 'sdks/browser4-sdk-kotlin/**'
       - 'sdks/kotlin-sdk-tests/**'
       - 'pulsar-rest/**'
-  schedule:
-    # 每日夜间构建
-    - cron: '0 2 * * *'
+  # Manual trigger only (removed scheduled run to avoid duplication with push/PR)
   workflow_dispatch:
 
 jobs:
