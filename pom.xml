@@ -108,8 +108,8 @@
             <properties>
                 <!-- Integration tests can be Slow/Heavy - this is expected behavior
                      Integration tests CAN require Browser/AI/Docker for service collaboration
-                     Only exclude E2E, SDK, and MustRunExplicitly tests -->
-                <surefire.excludedGroups>E2E,SDK,MustRunExplicitly,E2ETest</surefire.excludedGroups>
+                     Only exclude E2E, SDK, and ManualOnly tests -->
+                <surefire.excludedGroups>E2E,SDK,ManualOnly,E2ETest</surefire.excludedGroups>
             </properties>
         </profile>
 
@@ -123,8 +123,8 @@
             </activation>
             <properties>
                 <!-- E2E tests can be Heavy, RequiresBrowser, RequiresAI
-                     Only exclude MustRunExplicitly tests -->
-                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+                     Only exclude ManualOnly tests -->
+                <surefire.excludedGroups>ManualOnly</surefire.excludedGroups>
             </properties>
         </profile>
 
@@ -137,7 +137,7 @@
                 </property>
             </activation>
             <properties>
-                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+                <surefire.excludedGroups>ManualOnly</surefire.excludedGroups>
             </properties>
         </profile>
 
@@ -150,7 +150,7 @@
                 </property>
             </activation>
             <properties>
-                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+                <surefire.excludedGroups>ManualOnly</surefire.excludedGroups>
             </properties>
         </profile>
 
@@ -163,7 +163,7 @@
                 </property>
             </activation>
             <properties>
-                <surefire.excludedGroups>MustRunExplicitly</surefire.excludedGroups>
+                <surefire.excludedGroups>ManualOnly</surefire.excludedGroups>
             </properties>
         </profile>
 
@@ -801,12 +801,12 @@
 
         <!-- Default excludedGroups: exclude all non-Fast tests
              Includes both new taxonomy tags and legacy tags for backward compatibility:
-             - New tags: Slow, Heavy, Integration, E2E, SDK, RequiresXYZ, MustRunExplicitly
+             - New tags: Slow, Heavy, Integration, E2E, SDK, RequiresXYZ, ManualOnly
              - Legacy tags: IntegrationTest, E2ETest, HeavyTest, SkippableLowerLevelTest, TestInfraCheck, OptionalTest
              Migration: Gradually migrate tests from legacy tags to new taxonomy -->
         <surefire.excludedGroups>
             Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,
-            Integration,E2E,SDK,MustRunExplicitly,
+            Integration,E2E,SDK,ManualOnly,
             SkippableLowerLevelTest,TestInfraCheck,OptionalTest,
             IntegrationTest,E2ETest,HeavyTest
         </surefire.excludedGroups>

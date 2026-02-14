@@ -77,7 +77,7 @@ jobs:
           # CI Pipeline: Run only Fast unit tests (same as PR tests)
           # Comprehensive tests (Slow + Integration) run in nightly.yml
           # Exclude: Slow, Heavy, Integration, E2E, SDK, and all environment-dependent tests
-          excluded_groups: 'Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,Integration,E2E,SDK,MustRunExplicitly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
+          excluded_groups: 'Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,Integration,E2E,SDK,ManualOnly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
           timeout_minutes: '35'
 
       - name: Check Test Status

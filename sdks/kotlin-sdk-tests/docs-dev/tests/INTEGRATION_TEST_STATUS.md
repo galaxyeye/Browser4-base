@@ -76,7 +76,7 @@ The Kotlin SDK integration test framework has been fully implemented with:
 
 ### Tag Configuration (pom.xml)
 - **groups**: `IntegrationTest`
-- **excludedGroups**: `MustRunExplicitly,PassedOn20260203`
+- **excludedGroups**: `ManualOnly,PassedOn20260203`
 
 ### Running Specific Tests
 ```powershell

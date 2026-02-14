@@ -12,8 +12,8 @@ import org.junit.jupiter.api.*
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 
 @Tag("Slow")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SinglePageApplicationControllerTest : IntegrationTestBase() {
 

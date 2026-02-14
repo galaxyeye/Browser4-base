@@ -43,7 +43,7 @@ import kotlin.test.assertTrue
 @Tag("IntegrationTest")
 @Tag("RequiresServer")
 @Tag("Slow")
-@Tag("MustRunExplicitly")
+@Tag("ManualOnly")
 class EventMechanismIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     private companion object {

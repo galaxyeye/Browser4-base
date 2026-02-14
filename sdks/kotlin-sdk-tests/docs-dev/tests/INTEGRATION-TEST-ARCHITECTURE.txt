@@ -142,11 +142,11 @@
 │    @Tag("RequiresAI")         ← Needs AI/LLM config (optional)             │
 │    @Tag("Fast")               ← < 5 seconds                                │
 │    @Tag("Slow")               ← > 10 seconds                               │
-│    @Tag("MustRunExplicitly")  ← Excluded by default, run manually          │
+│    @Tag("ManualOnly")  ← Excluded by default, run manually          │
 │                                                                           │
 │  Default execution behavior (sdks/kotlin-sdk-tests/pom.xml):               │
 │    - surefire.groups = IntegrationTest                                     │
-│    - surefire.excludedGroups = MustRunExplicitly,PassedOn20260203          │
+│    - surefire.excludedGroups = ManualOnly,PassedOn20260203          │
 │                                                                           │
 │  Test Execution (Windows PowerShell, recommended from repo root):          │
 │    - Run integration tests (default tags):                                 │

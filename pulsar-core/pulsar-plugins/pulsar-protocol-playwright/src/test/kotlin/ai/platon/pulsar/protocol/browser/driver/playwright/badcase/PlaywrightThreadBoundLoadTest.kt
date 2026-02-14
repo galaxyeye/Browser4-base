@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Warning: this is a bad case to demonstrate the problem of Playwright's parallelism.
  * */
-@Disabled("MustRunExplicitly")
-@Tag("MustRunExplicitly")
+@Disabled("ManualOnly")
+@Tag("ManualOnly")
 class PlaywrightThreadBoundLoadTest {
     companion object {
         const val CONTEXT_COUNT = 5           // 模拟 5 个用户

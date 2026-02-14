@@ -27,7 +27,7 @@ Updated `surefire.excludedGroups` to exclude all non-Fast tests by default:
 ```xml
 <surefire.excludedGroups>
     Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,
-    Integration,E2E,SDK,MustRunExplicitly,
+    Integration,E2E,SDK,ManualOnly,
     IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest
 </surefire.excludedGroups>
 ```
@@ -102,7 +102,7 @@ PowerShell equivalent with the same interface:
    - Excludes E2E and SDK tests
 
 2. **`e2e-tests.yml`** - Manual E2E tests only
-   - Workflow dispatch only (MustRunExplicitly)
+   - Workflow dispatch only (ManualOnly)
    - Includes full infrastructure setup (Docker, MongoDB)
    - Runs E2E test scripts
    - Heavy resource usage
@@ -129,7 +129,7 @@ According to the test strategy, tests are classified using JUnit 5 tags:
 - `RequiresDocker`
 
 ### Policies (Optional)
-- `MustRunExplicitly` - Never run by default
+- `ManualOnly` - 必须人工触发
 - `SkippableLowerLevel` - Can be skipped if upper level passes
 - `TestInfraCheck` - Infrastructure self-check (highest priority)
 
@@ -140,7 +140,7 @@ According to the test strategy, tests are classified using JUnit 5 tags:
 Runs only Fast unit tests:
 - Level = Unit
 - Cost = Fast
-- NOT MustRunExplicitly
+- NOT ManualOnly
 
 ### Explicit Test Types
 
@@ -184,14 +184,14 @@ class MyUnitTest { }
 @Tag("Integration")
 @Tag("Slow")
 @Tag("RequiresServer")
-@Tag("MustRunExplicitly")
+@Tag("ManualOnly")
 class MyIntegrationTest { }
 
 @Tag("E2E")
 @Tag("Heavy")
 @Tag("RequiresBrowser")
 @Tag("RequiresAI")
-@Tag("MustRunExplicitly")
+@Tag("ManualOnly")
 class MyE2ETest { }
 ```
 

@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Tag
 import kotlin.test.Test
 
 @Tag("OptionalTest")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 class PlaywrightBrowserTest {
 
     private val browserId = BrowserId.createRandomTemp(BrowserType.PLAYWRIGHT_CHROME)

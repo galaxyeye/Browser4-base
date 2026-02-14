@@ -77,7 +77,7 @@ mvn test -Dgroups="Integration,Fast" -DexcludedGroups="RequiresBrowser"
 @Tag("Integration")        // Level: 集成测试
 @Tag("Heavy")              // Cost: 慢速
 @Tag("RequiresServer")     // Environment: 需要服务器
-@Tag("MustRunExplicitly")  // Policy: 必须显式运行
+@Tag("ManualOnly")  // Policy: 必须人工触发
 
 // Failsafe 只能做单维度过滤
 <includes>**/*IT.kt</includes>  // 无法区分 Fast IT vs Heavy IT
@@ -111,7 +111,7 @@ class RestAPIIT {
             <excludes><exclude>**/*IT.kt</exclude></excludes>
         </configuration>
     </plugin>
-    
+
     <!-- Failsafe: 包含 IT -->
     <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -214,5 +214,5 @@ fun cleanup() {
 
 ---
 
-**最后更新：** 2026-02-10  
+**最后更新：** 2026-02-10
 **作者：** GitHub Copilot

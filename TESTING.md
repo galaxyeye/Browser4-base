@@ -50,7 +50,7 @@
 
 **按需声明**
 
-* `MustRunExplicitly` — 永不默认执行
+* `ManualOnly` — 必须人工触发
 * `SkippableLowerLevel` — 上层成功可跳过
 * `TestInfraCheck` — 基础设施自检（最高优先级）
 
@@ -73,7 +73,7 @@ class ParserTest {}
 ```java
 @Tag("Unit")
 @Tag("Slow")
-@Tag("MustRunExplicitly")
+@Tag("ManualOnly")
 class LegacyEngineTest {}
 ```
 
@@ -85,7 +85,7 @@ class LegacyEngineTest {}
 @Tag("Integration")
 @Tag("Heavy")
 @Tag("RequiresServer")
-@Tag("MustRunExplicitly")
+@Tag("ManualOnly")
 class RestContractIT {}
 ```
 
@@ -98,7 +98,7 @@ class RestContractIT {}
 @Tag("Heavy")
 @Tag("RequiresBrowser")
 @Tag("RequiresAI")
-@Tag("MustRunExplicitly")
+@Tag("ManualOnly")
 class ChatFlowE2ETest {}
 ```
 
@@ -111,7 +111,7 @@ class ChatFlowE2ETest {}
 ```
 Level = Unit
 AND Cost = Fast
-AND NOT MustRunExplicitly
+AND NOT ManualOnly
 ```
 
 ---
@@ -142,7 +142,7 @@ AND NOT MustRunExplicitly
 
 * `Fast` → 可并行、即时反馈
 * `Heavy` → 夜间 / 手动 / 资源隔离
-* `MustRunExplicitly` → 永不自动触发
+* `ManualOnly` → 必须人工触发
 * `SkippableLowerLevel` → 可剪枝执行
 * `TestInfraCheck` → 失败立即中断
 
@@ -154,7 +154,7 @@ AND NOT MustRunExplicitly
 * 是否声明 **Cost**？
 * 是否有隐式外部依赖？
 * 是否会污染 `mvn test`？
-* 是否需要 `MustRunExplicitly`？
+* 是否需要 `ManualOnly`？
 
 ---
 

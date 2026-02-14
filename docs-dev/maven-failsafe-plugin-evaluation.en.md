@@ -23,7 +23,7 @@ Browser4 uses an **AI-First Test Taxonomy** (see `TESTING.md`) based on four ort
 | **Level** | Unit / Integration / E2E / SDK | JUnit 5 `@Tag` |
 | **Cost** | Fast / Slow / Heavy | JUnit 5 `@Tag` |
 | **Environment** | RequiresServer / RequiresBrowser / RequiresAI | JUnit 5 `@Tag` |
-| **Policy** | MustRunExplicitly / SkippableLowerLevel | JUnit 5 `@Tag` |
+| **Policy** | ManualOnly / SkippableLowerLevel | JUnit 5 `@Tag` |
 
 **Execution Control:**
 ```bash
@@ -60,7 +60,7 @@ pulsar-tests/
     <version>3.5.4</version>
     <configuration>
         <groups>Unit,Fast</groups>
-        <excludedGroups>MustRunExplicitly</excludedGroups>
+        <excludedGroups>ManualOnly</excludedGroups>
         <parallel>methods</parallel>
         <threadCount>4</threadCount>
     </configuration>
@@ -147,7 +147,7 @@ pulsar-tests/
 @Tag("Integration")        // Level
 @Tag("Heavy")              // Cost
 @Tag("RequiresServer")     // Environment
-@Tag("MustRunExplicitly")  // Policy
+@Tag("ManualOnly")  // Policy
 class RestContractIT { ... }
 
 // With Failsafe: Loses dimensions
@@ -320,7 +320,7 @@ class ResourceIT {
 ```yaml
 - name: Run Unit Tests
   run: mvn test -pl '!pulsar-it-tests,!pulsar-e2e-tests'
-  
+
 - name: Run Integration Tests
   run: mvn test -pl pulsar-it-tests
 ```
@@ -359,7 +359,7 @@ Browser4 project **should NOT comprehensively adopt maven-failsafe-plugin** beca
 
 ---
 
-**Document Version:** v1.0  
-**Last Updated:** 2026-02-10  
-**Author:** GitHub Copilot (Browser4 Evaluation Task)  
+**Document Version:** v1.0
+**Last Updated:** 2026-02-10
+**Author:** GitHub Copilot (Browser4 Evaluation Task)
 **Review Status:** Pending team review

@@ -20,8 +20,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @Tag("OptionalTest")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 class PlaywrightDriverTest {
 
     val browserId = BrowserId.createRandomTemp(BrowserType.PLAYWRIGHT_CHROME)

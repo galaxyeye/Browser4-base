@@ -29,7 +29,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
         with:
           # PR tests: Fast unit tests only (test-strategy.md)
           # Exclude: Integration, E2E, SDK, Heavy, Slow, all environment-dependent tests
-          excluded_groups: 'Integration,E2E,SDK,Heavy,Slow,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,MustRunExplicitly,IntegrationTest,E2ETest,HeavyTest,TimeConsumingTest,ExternalServiceTest'
+          excluded_groups: 'Integration,E2E,SDK,Heavy,Slow,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,ManualOnly,IntegrationTest,E2ETest,HeavyTest,TimeConsumingTest,ExternalServiceTest'
           timeout_minutes: '15'
           test_reports: 'true'
 
@@ -67,7 +67,7 @@ jobs:
     if: always()
     permissions:
       contents: read
-    
+
     steps:
       - name: Summary
         run: |
@@ -78,7 +78,7 @@ jobs:
           echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Fast Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          
+
           # Overall status
           if [ "${{ needs.unit-tests.result }}" == "success" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY

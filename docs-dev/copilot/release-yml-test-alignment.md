@@ -26,7 +26,7 @@ run_pulsar_tests: 'false'
 ```yaml
 maven_profiles: 'pulsar-tests'
 test_excludes: ''
-excluded_groups: 'BenchmarkTest,MustRunExplicitly'
+excluded_groups: 'BenchmarkTest,ManualOnly'
 run_pulsar_tests: 'true'
 ```
 - 问题1: 使用 `pulsar-tests` profile，只运行 pulsar-tests 模块
@@ -44,7 +44,7 @@ run_pulsar_tests: 'true'
 - 使用 pom.xml 默认的 `surefire.excludedGroups`:
   ```
   Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,
-  Integration,E2E,SDK,MustRunExplicitly,
+  Integration,E2E,SDK,ManualOnly,
   SkippableLowerLevelTest,TestInfraCheck,OptionalTest,
   IntegrationTest,E2ETest,HeavyTest
   ```
@@ -56,7 +56,7 @@ run_pulsar_tests: 'true'
 ```
 - 使用默认模块（同上）
 - 激活 `integration-tests` profile
-- 覆盖 `surefire.excludedGroups` 为: `E2E,SDK,MustRunExplicitly,E2ETest`
+- 覆盖 `surefire.excludedGroups` 为: `E2E,SDK,ManualOnly,E2ETest`
 - **允许** Integration, Slow, Heavy 标签的测试运行
 - **不包含** `pulsar-tests` 模块
 
@@ -90,7 +90,7 @@ timeout_minutes: '90'
 
 1. **依赖 pom.xml 配置**: 不在 CI 中重复配置排除规则，使用 pom.xml 的默认配置和 profile
 2. **保持一致性**: CI 测试行为应该与开发者本地运行 `bin/test.sh` 的行为完全一致
-3. **清晰的语义**: 
+3. **清晰的语义**:
    - `run_pulsar_tests: 'false'` → 快速单元测试（默认行为）
    - `run_pulsar_tests: 'true'` → 集成测试（激活 integration-tests profile）
 
@@ -101,7 +101,7 @@ timeout_minutes: '90'
 ```xml
 <surefire.excludedGroups>
     Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,
-    Integration,E2E,SDK,MustRunExplicitly,
+    Integration,E2E,SDK,ManualOnly,
     SkippableLowerLevelTest,TestInfraCheck,OptionalTest,
     IntegrationTest,E2ETest,HeavyTest
 </surefire.excludedGroups>
@@ -121,8 +121,8 @@ timeout_minutes: '90'
     <properties>
         <!-- Integration tests can be Slow/Heavy - this is expected behavior
              Integration tests CAN require Browser/AI/Docker for service collaboration
-             Only exclude E2E, SDK, and MustRunExplicitly tests -->
-        <surefire.excludedGroups>E2E,SDK,MustRunExplicitly,E2ETest</surefire.excludedGroups>
+             Only exclude E2E, SDK, and ManualOnly tests -->
+        <surefire.excludedGroups>E2E,SDK,ManualOnly,E2ETest</surefire.excludedGroups>
     </properties>
 </profile>
 ```
@@ -137,7 +137,7 @@ timeout_minutes: '90'
 | RequiresXYZ 测试 | ❌ 排除 | ✅ 运行 |
 | E2E 测试 | ❌ 排除 | ❌ 排除 |
 | SDK 测试 | ❌ 排除 | ❌ 排除 |
-| MustRunExplicitly | ❌ 排除 | ❌ 排除 |
+| ManualOnly | ❌ 排除 | ❌ 排除 |
 
 ## 验证方法
 

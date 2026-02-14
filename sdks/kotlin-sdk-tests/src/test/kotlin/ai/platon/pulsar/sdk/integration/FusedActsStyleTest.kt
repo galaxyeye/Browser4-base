@@ -27,8 +27,8 @@ import kotlin.test.assertTrue
  * migrate code or follow internal examples.
  */
 @Tag("Slow")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
 
     private lateinit var session: AgenticSession
@@ -275,8 +275,8 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     @Tag("Slow")
-    @Tag("MustRunExplicitly")
-    @Disabled("MustRunExplicitly")
+    @Tag("ManualOnly")
+    @Disabled("ManualOnly")
     @DisplayName("test agent run operation from FusedActsStyleExample")
     suspend fun testAgentRunOperationFromFusedActsStyleExample() {
         val agent = session.companionAgent

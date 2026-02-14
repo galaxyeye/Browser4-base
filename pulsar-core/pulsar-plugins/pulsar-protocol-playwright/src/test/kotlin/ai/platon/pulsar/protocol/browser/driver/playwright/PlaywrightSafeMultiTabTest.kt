@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * own thread.
  * */
 @Tag("OptionalTest")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 class PlaywrightSafeMultiTabTest {
 
     private val originURL = "https://www.amazon.com/"

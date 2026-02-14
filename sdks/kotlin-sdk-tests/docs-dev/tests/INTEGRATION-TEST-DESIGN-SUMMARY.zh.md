@@ -179,7 +179,7 @@ abstract class KotlinSdkIntegrationTestBase {
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
         <groups>IntegrationTest</groups>
-        <excludedGroups>MustRunExplicitly,PassedOn20260203</excludedGroups>
+        <excludedGroups>ManualOnly,PassedOn20260203</excludedGroups>
         <parallel>methods</parallel>
         <threadCount>2</threadCount>
         <rerunFailingTestsCount>1</rerunFailingTestsCount>

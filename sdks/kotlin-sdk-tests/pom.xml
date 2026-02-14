@@ -36,7 +36,7 @@
         <kotlin.version>${kotlinVersion}</kotlin.version>
         <kotlinx-coroutines.version>1.10.1</kotlinx-coroutines.version>
 
-        <surefire.excludedGroups>MustRunExplicitly,PassedOn20260203</surefire.excludedGroups>
+        <surefire.excludedGroups>ManualOnly,PassedOn20260203</surefire.excludedGroups>
 
         <!-- Adaptive test parallelism: default 4 threads (50% of 8-core machine) -->
         <!-- Override with: mvn test -Dtest.thread.count=8 -->

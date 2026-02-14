@@ -47,8 +47,8 @@ import java.util.concurrent.atomic.AtomicInteger
 @Tag("E2ETest")
 @Tag("RequiresServer")
 @Tag("Slow")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 class AgentE2ETest : KotlinSdkIntegrationTestBase() {
 
     private lateinit var session: AgenticSession

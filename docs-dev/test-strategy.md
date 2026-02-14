@@ -159,7 +159,7 @@ mvn test -DrunSDKTests=true
 
 #### 执行策略
 
-* `MustRunExplicitly`
+* `ManualOnly`
 * `SkippableLowerLevel`
 * `TestInfraCheck`
 

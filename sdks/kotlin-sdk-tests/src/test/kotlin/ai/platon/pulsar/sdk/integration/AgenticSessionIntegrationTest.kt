@@ -66,8 +66,8 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     @Tag("Slow")
-    @Tag("MustRunExplicitly")
-    @Disabled("MustRunExplicitly")
+    @Tag("ManualOnly")
+    @Disabled("ManualOnly")
     @DisplayName("should run autonomous task")
     suspend fun testShouldRunAutonomousTask() {
         val result = session.run("visit ${TestUrls.PRODUCT_DETAIL} and summarize the product")
@@ -78,8 +78,8 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     @Tag("Slow")
-    @Tag("MustRunExplicitly")
-    @Disabled("MustRunExplicitly")
+    @Tag("ManualOnly")
+    @Disabled("ManualOnly")
     @DisplayName("should run task with multiple steps")
     suspend fun testShouldRunTaskWithMultipleSteps() {
         val task = """
