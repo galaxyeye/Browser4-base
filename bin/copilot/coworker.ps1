@@ -1,10 +1,17 @@
-# run_tasks.ps1
+#!/usr/bin/env pwsh
 
-$baseDir = "D:\workspace\Browser4\Browser4-4.6\docs-dev\copilot\tasks\daily"
+# Find the first parent directory that contains a VERSION file
+$AppHome = (Get-Item -Path $MyInvocation.MyCommand.Path).Directory
+while ($AppHome -ne $null -and -not (Test-Path (Join-Path $AppHome "VERSION"))) {
+    $AppHome = Split-Path -Parent $AppHome
+}
+Set-Location $AppHome
+
+$baseDir = Join-Path $AppHome "docs-dev\copilot\tasks\daily"
 $createdDir = Join-Path $baseDir "created"
 $workingDir = Join-Path $baseDir "working"
 $finishedDir = Join-Path $baseDir "finished"
-$repoRoot = "D:\workspace\Browser4\Browser4-4.6"
+$repoRoot = $AppHome
 
 # Ensure directories exist
 if (!(Test-Path $createdDir)) { New-Item -ItemType Directory -Path $createdDir | Out-Null }

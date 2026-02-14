@@ -1,7 +1,5 @@
 #!/usr/bin/env pwsh
 
-# Run copilot to execute task described in `docs-dev/copilot/tasks/daily/tasks.md`
-
 # Find the first parent directory that contains a VERSION file
 $AppHome = (Get-Item -Path $MyInvocation.MyCommand.Path).Directory
 while ($AppHome -ne $null -and -not (Test-Path (Join-Path $AppHome "VERSION"))) {
