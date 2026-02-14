@@ -482,21 +482,21 @@ class PageHandler(
      */
     @Throws(ChromeDriverException::class)
     private suspend fun resolveXPath(xpath: String): NodeRef? {
-        val selector = "#preferencesSection"
-        val r = domAPI?.performSearch(selector)
-        println("resultCount for selector: " + r?.resultCount)
-
-        val xpath2 = "//*[@id='preferencesSection']/h2"
-        val r2 = domAPI?.performSearch(xpath2, true)
-        println("resultCount for xpath2: " + r2?.resultCount)
-
-        val xpath3 = "//*[@id=preferencesSection]/h2"
-        val r3 = domAPI?.performSearch(xpath3, true)
-        println("resultCount for xpath3: " + r3?.resultCount)
+//        val selector = "#preferencesSection"
+//        val r = domAPI?.performSearch(selector)
+//        println("resultCount for selector: " + r?.resultCount)
+//
+//        val xpath2 = "//*[@id='preferencesSection']/h2"
+//        val r2 = domAPI?.performSearch(xpath2, true)
+//        println("resultCount for xpath2: " + r2?.resultCount)
+//
+//        val xpath3 = "//*[@id=preferencesSection]/h2"
+//        val r3 = domAPI?.performSearch(xpath3, true)
+//        println("resultCount for xpath3: " + r3?.resultCount)
 
         var node = resolveXPath1(xpath)
 
-        println("nodeId: " + node?.nodeId)
+        // println("nodeId: " + node?.nodeId)
 
         return node
     }
