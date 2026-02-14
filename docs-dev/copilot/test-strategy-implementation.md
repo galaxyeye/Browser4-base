@@ -249,7 +249,7 @@ mvn test -DrunITs=true -DskipTests
 
 ## References
 
-- [TESTING.md](../TESTING.md) - Test taxonomy and guidelines
+- [TESTING.md](../../TESTING.md) - Test taxonomy and guidelines
 - [test-strategy.md](test-strategy.md) - Detailed test strategy
 - [Maven Surefire Plugin](https://maven.apache.org/surefire/maven-surefire-plugin/) - Test execution configuration
 - [JUnit 5 Tags](https://junit.org/junit5/docs/current/user-guide/#writing-tests-tagging-and-filtering) - Test tagging and filtering

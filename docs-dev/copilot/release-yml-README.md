@@ -24,19 +24,19 @@ This PR optimizes the `.github/workflows/release.yml` workflow with significant 
 
 Three comprehensive documents explain the optimizations:
 
-1. **[release-yml-optimizations.md](./release-yml-optimizations.md)** (Chinese)
+1. **[release-yml-optimizations.md](release-yml-optimizations.md)** (Chinese)
    - Detailed explanation of each optimization
    - Before/after code comparisons
    - Benefits and trade-offs
    - Implementation details
 
-2. **[release-yml-optimization-summary.md](./release-yml-optimization-summary.md)** (English)
+2. **[release-yml-optimization-summary.md](release-yml-optimization-summary.md)** (English)
    - Concise summary of key changes
    - Comparative analysis table
    - Validation checklist
    - Additional recommendations
 
-3. **[release-yml-visual-comparison.md](./release-yml-visual-comparison.md)** (Visual)
+3. **[release-yml-visual-comparison.md](release-yml-visual-comparison.md)** (Visual)
    - ASCII diagrams showing workflow changes
    - Performance comparison charts
    - Resource usage visualization
@@ -204,9 +204,9 @@ Before merging, verify:
 
 ## 📖 Further Reading
 
-- **Architecture Details**: See [release-yml-optimizations.md](./release-yml-optimizations.md)
-- **Visual Comparison**: See [release-yml-visual-comparison.md](./release-yml-visual-comparison.md)
-- **Summary**: See [release-yml-optimization-summary.md](./release-yml-optimization-summary.md)
+- **Architecture Details**: See [release-yml-optimizations.md](release-yml-optimizations.md)
+- **Visual Comparison**: See [release-yml-visual-comparison.md](release-yml-visual-comparison.md)
+- **Summary**: See [release-yml-optimization-summary.md](release-yml-optimization-summary.md)
 
 ## 🔮 Future Enhancements
 
