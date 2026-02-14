@@ -165,8 +165,8 @@ See [TESTING.md](TESTING.md) for details and trade-offs.
 - Integration tests: `<ClassName>IT.kt`
 - E2E tests: `<ClassName>E2ETest.kt`
 - **Method names: Use camelCase (NOT backtick naming)**
-  - ✅ `testUserLoginWithValidCredentials()` + `@DisplayName("test user login with valid credentials")`
-  - ❌ `` `test user login with valid credentials` ``
+    - ✅ `testUserLoginWithValidCredentials()` + `@DisplayName("test user login with valid credentials")`
+    - ❌ `` `test user login with valid credentials` ``
 
 ### Test Performance Targets
 - Unit tests: <100ms
@@ -187,6 +187,7 @@ Default: 8182
 ### Configuration Files
 - `application.properties` — Main configuration
 - `application-*.properties` — Profile-specific overrides
+- `application-private.properties` — Private overrides (ignored by Git), secrets should be set here or via environment variables
 
 ### Key Configuration Properties
 ```properties
@@ -220,13 +221,13 @@ browser.display.mode=GUI  # GUI | HEADLESS | SUPERVISED
 
 ## Common Issues & Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| `mvnw` no execute permission | `chmod +x mvnw` |
-| JDK version mismatch | Ensure JDK 17+ in `JAVA_HOME` |
-| Windows parameter escaping | Use `-D"key.with.dots=value"` |
-| Port 8182 in use | Override `server.port` or use `application-local.properties` |
-| CDP retry log storms | Use existing retry utilities, lower log level |
+| Issue | Solution                                                    |
+|-------|-------------------------------------------------------------|
+| `mvnw` no execute permission | `chmod +x mvnw`                                             |
+| JDK version mismatch | Ensure JDK 17+ in `JAVA_HOME`                               |
+| Windows parameter escaping | Use `-D"key.with.dots=value"`                               |
+| Port 8182 in use | Override `server.port` or use root `application.properties` |
+| CDP retry log storms | Use existing retry utilities, lower log level               |
 
 ## Documentation References
 
@@ -244,9 +245,9 @@ browser.display.mode=GUI  # GUI | HEADLESS | SUPERVISED
 
 Browser4 is built around three core concepts:
 
-1. **Sessions** - Manage page loading and state
+1. **Sessions** - Main interface to manage page loading, fetching, parsing, extracting, AI chatting, page state, persistence, and more
 2. **Agents** - Autonomous browser agents with reasoning capabilities
-3. **Drivers** - Low-level browser control with human-like behaviors
+3. **WebDrivers** - Low-level browser control with human-like behaviors
 
 ### Task Planning and Execution
 
