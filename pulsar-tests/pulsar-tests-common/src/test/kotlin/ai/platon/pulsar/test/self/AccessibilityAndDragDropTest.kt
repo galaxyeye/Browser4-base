@@ -10,17 +10,17 @@ import java.util.regex.Pattern
 class AccessibilityAndDragDropTest {
 
     private fun readResource(path: String): String {
-        val url = javaClass.classLoader.getResource("static/generated/$path")
+        val url = javaClass.classLoader.getResource("static/$path")
             ?: fail("Resource not found: $path")
         return url.openStream().use { it.readBytes().toString(StandardCharsets.UTF_8) }
     }
 
     private val interactiveFiles = listOf(
-        "interactive-1.html",
-        "interactive-2.html",
-        "interactive-3.html",
-        "interactive-4.html",
-        "interactive-screens.html"
+        "generated/interactive-1.html",
+        "generated/interactive-2.html",
+        "generated/interactive-3.html",
+        "generated/interactive-4.html",
+        "generated/interactive-screens.html"
     )
 
     @Test
@@ -41,7 +41,7 @@ class AccessibilityAndDragDropTest {
 
     @Test
     fun `toggle message buttons manage aria-expanded and controls attribute`() {
-        val html = readResource("interactive-1.html") + readResource("interactive-screens.html")
+        val html = readResource("generated/interactive-1.html") + readResource("generated/interactive-screens.html")
         assertTrue(html.contains("id=\"toggleMessageButton\""), "Missing toggleMessageButton id")
         val pattern = Pattern.compile("<button[^>]*id=\"toggleMessageButton\"[^>]*>")
         val m = pattern.matcher(html)
@@ -72,7 +72,7 @@ class AccessibilityAndDragDropTest {
 
     @Test
     fun `drag-drop list items have sequential data-order and unique ids`() {
-        val html = readResource("interactive-4.html")
+        val html = readResource("generated/interactive-4.html")
         // Capture list items
         val itemPattern = Pattern.compile("<li[^>]*data-order=\"(\\d+)\"[^>]*>([\\s\\S]*?)</li>")
         val m = itemPattern.matcher(html)
