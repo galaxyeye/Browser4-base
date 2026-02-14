@@ -204,7 +204,7 @@ class TestMCPServerForPluginMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         Assertions.assertNotNull(result)
         assertTrue(result.containsKey("content"), "Result should contain content")
@@ -227,7 +227,7 @@ class TestMCPServerForPluginMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         @Suppress("UNCHECKED_CAST")
         val content = result["content"] as List<Map<String, Any>>
@@ -244,7 +244,7 @@ class TestMCPServerForPluginMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         @Suppress("UNCHECKED_CAST")
         val content = result["content"] as List<Map<String, Any>>
@@ -262,7 +262,7 @@ class TestMCPServerForPluginMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         @Suppress("UNCHECKED_CAST")
         val content = result["content"] as List<Map<String, Any>>
@@ -279,7 +279,7 @@ class TestMCPServerForPluginMock {
         }
 
         assertThrows(IllegalArgumentException::class.java) {
-            server.callTool(request)
+            server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
         }
     }
 
@@ -291,7 +291,7 @@ class TestMCPServerForPluginMock {
         }
 
         assertThrows(IllegalArgumentException::class.java) {
-            server.callTool(request)
+            server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
         }
     }
 
@@ -302,7 +302,7 @@ class TestMCPServerForPluginMock {
             set<ObjectNode>("arguments", objectMapper.createObjectNode()) // Missing 'message'
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         Assertions.assertNotNull(result)
         assertTrue(result.containsKey("isError"), "Response should indicate error")
@@ -329,7 +329,7 @@ class TestMCPServerForPluginMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.writeValueAsString(request))
 
         assertTrue(result.containsKey("isError"))
         assertEquals(true, result["isError"])
@@ -346,7 +346,7 @@ class TestMCPServerForPluginMock {
                 put("message", "First call")
             })
         }
-        var result = server.callTool(request)
+        var result = server.callTool(objectMapper.writeValueAsString(request))
         assertFalse(result.containsKey("isError"), "First call should succeed")
 
         // Call 2: Add
@@ -357,7 +357,7 @@ class TestMCPServerForPluginMock {
                 put("b", 20)
             })
         }
-        result = server.callTool(request)
+        result = server.callTool(objectMapper.writeValueAsString(request))
         assertFalse(result.containsKey("isError"), "Second call should succeed")
 
         @Suppress("UNCHECKED_CAST")
@@ -372,7 +372,7 @@ class TestMCPServerForPluginMock {
                 put("b", 8)
             })
         }
-        result = server.callTool(request)
+        result = server.callTool(objectMapper.writeValueAsString(request))
         assertFalse(result.containsKey("isError"), "Third call should succeed")
 
         @Suppress("UNCHECKED_CAST")
@@ -392,7 +392,7 @@ class TestMCPServerForPluginMock {
                 put("message", "Success")
             })
         }
-        var result = server.callTool(request)
+        var result = server.callTool(objectMapper.writeValueAsString(request))
         assertFalse(result.containsKey("isError"))
 
         // Failed call (missing argument)
@@ -403,7 +403,7 @@ class TestMCPServerForPluginMock {
                 // Missing 'b'
             })
         }
-        result = server.callTool(request)
+        result = server.callTool(objectMapper.writeValueAsString(request))
         assertTrue(result.containsKey("isError"))
 
         // Another successful call
@@ -414,7 +414,7 @@ class TestMCPServerForPluginMock {
                 put("b", 4)
             })
         }
-        result = server.callTool(request)
+        result = server.callTool(objectMapper.writeValueAsString(request))
         assertFalse(result.containsKey("isError"))
 
         @Suppress("UNCHECKED_CAST")
@@ -436,7 +436,7 @@ class TestMCPServerForPluginMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.writeValueAsString(request))
 
         // MCP spec: successful responses have 'content' array
         assertTrue(result.containsKey("content"))
@@ -457,7 +457,7 @@ class TestMCPServerForPluginMock {
             set<ObjectNode>("arguments", objectMapper.createObjectNode())
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.writeValueAsString(request))
 
         // MCP spec: error responses have 'isError' flag and 'content' with error details
         assertTrue(result.containsKey("isError"))

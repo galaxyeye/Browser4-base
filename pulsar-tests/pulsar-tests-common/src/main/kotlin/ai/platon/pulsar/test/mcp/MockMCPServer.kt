@@ -1,6 +1,7 @@
 package ai.platon.pulsar.test.mcp
 
 import ai.platon.pulsar.common.getLogger
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -93,10 +94,20 @@ class MockMCPServer(
      */
     @PostMapping("/call_tool", produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
     @ResponseBody
-    fun callTool(@RequestBody request: JsonNode): Map<String, Any> {
-        val toolName = request.get("name")?.asText()
+    fun callTool(@RequestBody requestBody: String): Map<String, Any> {
+        val request: Map<String, Any> = try {
+            objectMapper.readValue(requestBody, object : TypeReference<Map<String, Any>>() {})
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid JSON body", e)
+        }
+
+        val toolName = request["name"] as? String
             ?: throw IllegalArgumentException("Tool name is required")
-        val arguments = request.get("arguments") ?: objectMapper.createObjectNode()
+        
+        @Suppress("UNCHECKED_CAST")
+        val arguments = (request["arguments"] as? Map<String, Any>)?.let { 
+             objectMapper.valueToTree<JsonNode>(it) 
+        } ?: objectMapper.createObjectNode()
 
         logger.debug("Received call_tool request for tool: {}", toolName)
 

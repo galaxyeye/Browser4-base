@@ -84,7 +84,7 @@ class MCPToolExecutorE2ETest {
     private fun callTool(request: ObjectNode): Map<String, Any> =
         client.post().uri("/mcp/call_tool")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
+            .body(jacksonObjectMapper().convertValue(request, Map::class.java))
             .exchange()
             .expectStatus().is2xxSuccessful
             .expectBody<Map<String, Any>>()
@@ -239,7 +239,7 @@ class MCPToolExecutorE2ETest {
 
         client.post().uri("/mcp/call_tool")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
+            .body(jacksonObjectMapper().convertValue(request, Map::class.java))
             .exchange()
             .expectStatus().is5xxServerError
     }

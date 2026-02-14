@@ -4,31 +4,13 @@
 
 ## Bugs
 
-### ✅ FIXED: Test Status False Negative (2026-02-11)
+创建 ps1/sh 脚本，扫描 docs-dev/copilot/tasks/daily/created 目录，该目录下每个文件均会描述一个编程任务，并调用 copilot 完成任务。
 
-**Issue**: CI pipeline reported test failure despite 0 failed tests.
-
-**Root Cause**: Maven exit code was used as sole status indicator, ignoring actual test results.
-
-**Solution**: Added status reconciliation logic that cross-checks exit code against test failure count.
-
-**Fix Details**: See `docs-dev/copilot/tasks/daily/fix-test-status-logic.md`
-
-**Commit**: `def0f0e5b` - fix: reconcile test status based on actual test failures
-
----
-
-**Original Error Output (for reference)**:
-```
-if [ "failed" != "success" ]; then
-echo "❌ Tests failed with status: failed"
-echo "📊 Test Results:"
-echo "  - Total Tests: 1589"
-echo "  - Failed Tests: 0"      # ← All tests passed!
-echo "  - Passed Tests: 1568"
-echo "  - Skipped Tests: 21"
-exit 1
-```
+1. 读取任务，整理任务（标题+描述+原始prompt），重命名文件
+2. 执行任务前，将任务文件移入 working 目录
+3. 调用 copilot 完成任务。运行 copilot 获得帮助信息，正确使用 copilot 完成任务
+4. 保存 copilot 的输入
+5. 完成任务后，将任务文件移入 finished 目录
 
 ### Skill
 

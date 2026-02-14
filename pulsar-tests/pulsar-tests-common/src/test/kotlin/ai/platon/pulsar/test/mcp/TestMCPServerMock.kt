@@ -66,7 +66,7 @@ class TestMCPServerMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         assertNotNull(result)
         assertTrue(result.containsKey("content"))
@@ -88,7 +88,7 @@ class TestMCPServerMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         assertNotNull(result)
         assertTrue(result.containsKey("content"))
@@ -110,7 +110,7 @@ class TestMCPServerMock {
             })
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         assertNotNull(result)
         assertTrue(result.containsKey("content"))
@@ -130,7 +130,7 @@ class TestMCPServerMock {
         }
 
         assertThrows(IllegalArgumentException::class.java) {
-            server.callTool(request)
+            server.callTool(objectMapper.writeValueAsString(request))
         }
     }
 
@@ -141,7 +141,7 @@ class TestMCPServerMock {
             set<ObjectNode>("arguments", objectMapper.createObjectNode()) // Missing 'message' argument
         }
 
-        val result = server.callTool(request)
+        val result = server.callTool(objectMapper.convertValue(request, Map::class.java) as Map<String, Any>)
 
         assertNotNull(result)
         assertTrue(result.containsKey("isError"))
