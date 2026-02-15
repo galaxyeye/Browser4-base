@@ -91,7 +91,7 @@ data class CommandRequest(
 | 字段 | 类型 | 必需 | 描述 |
 |------|------|------|------|
 | `url` | String | **是** | 目标页面 URL。必须是有效的 HTTP/HTTPS URL。 |
-| `args` | String | 否 | CLI 风格的加载选项（如 `-expires 1d -refresh`）。参见 [LoadOptions 指南](./load-options-guide-zh.md)。 |
+| `args` | String | 否 | CLI 风格的加载选项（如 `-expires 1d -refresh`）。参见 [LoadOptions 指南](../../load-options-guide-zh.md)。 |
 | `onBrowserLaunchedActions` | List<String> | 否 | 浏览器启动时、导航到 URL 之前执行的操作。 |
 | `onPageReadyActions` | List<String> | 否 | 页面内容完全加载后执行的操作。 |
 | `pageSummaryPrompt` | String | 否 | LLM 总结页面内容的自然语言提示。 |
@@ -507,12 +507,12 @@ curl "http://localhost:8182/api/commands/550e8400-e29b-41d4-a716-446655440000/st
 
 ## 相关文档
 
-- [LoadOptions 指南](./load-options-guide-zh.md) - URL 级别配置选项
-- [LoadOptions 快速参考](./load-options-quick-ref.md) - 快速选项参考
-- [PageEventHandlers](./page-event-handlers.md) - 页面生命周期事件处理
-- [PulsarSettings 指南](./pulsar-settings-guide.md) - 全局浏览器配置
-- [REST API 示例](../../docs/rest-api-examples.md) - 更多 API 示例
-- [X-SQL 文档](../../docs/x-sql.md) - X-SQL 查询参考
+- [LoadOptions 指南](../pulsar/load-options-guide-zh.md) - URL 级别配置选项
+- [LoadOptions 快速参考](../pulsar/load-options-quick-ref.md) - 快速选项参考
+- [PageEventHandlers](../infra/page-event-handlers.md) - 页面生命周期事件处理
+- [PulsarSettings 指南](../../pulsar-settings-guide.md) - 全局浏览器配置
+- [REST API 示例](../../../docs/rest-api-examples.md) - 更多 API 示例
+- [X-SQL 文档](../../../docs/x-sql.md) - X-SQL 查询参考
 
 ---
 
@@ -543,6 +543,6 @@ curl "http://localhost:8182/api/commands/550e8400-e29b-41d4-a716-446655440000/st
 
 ---
 
-**版本**: 2026-01-11  
-**维护者**: Browser4 团队  
+**版本**: 2026-01-11
+**维护者**: Browser4 团队
 **状态**: 持续更新文档 - 随 Command API 演进更新

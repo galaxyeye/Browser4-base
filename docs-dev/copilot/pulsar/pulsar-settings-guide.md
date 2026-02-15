@@ -583,9 +583,9 @@ PulsarSettings.withTemporaryBrowser() // Data lost after session
 
 ## Related Documentation
 
-- [LoadOptions Guide](./load-options-guide.md) - URL-level configuration
-- [Configuration Guide](../../docs/config.md) - Environment/properties configuration
-- [LLM Configuration](../config/llm/llm-config.md) - LLM provider setup
+- [LoadOptions Guide](load-options-guide.md) - URL-level configuration
+- [Configuration Guide](../../../docs/config.md) - Environment/properties configuration
+- [LLM Configuration](../../config/llm/llm-config.md) - LLM provider setup
 - [Basic Usage Example](../../examples/browser4-examples/src/main/kotlin/ai/platon/pulsar/manual/_0_BasicUsage.kt)
 
 ---

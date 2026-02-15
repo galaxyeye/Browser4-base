@@ -91,7 +91,7 @@ data class CommandRequest(
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `url` | String | **Yes** | Target page URL. Must be a valid HTTP/HTTPS URL. |
-| `args` | String | No | Load options in CLI style (e.g., `-expires 1d -refresh`). See [LoadOptions Guide](./load-options-guide.md). |
+| `args` | String | No | Load options in CLI style (e.g., `-expires 1d -refresh`). See [LoadOptions Guide](../../load-options-guide.md). |
 | `onBrowserLaunchedActions` | List<String> | No | Actions executed when browser launches, before navigating to URL. |
 | `onPageReadyActions` | List<String> | No | Actions executed after page content is fully loaded. |
 | `pageSummaryPrompt` | String | No | Natural language prompt for LLM to summarize page content. |
@@ -507,12 +507,12 @@ The system validates:
 
 ## Related Documentation
 
-- [LoadOptions Guide](./load-options-guide.md) - URL-level configuration options
-- [LoadOptions Quick Reference](./load-options-quick-ref.md) - Quick option reference
-- [PageEventHandlers](./page-event-handlers.md) - Event handling during page lifecycle
-- [PulsarSettings Guide](./pulsar-settings-guide.md) - Global browser configuration
-- [REST API Examples](../../docs/rest-api-examples.md) - Additional API examples
-- [X-SQL Documentation](../../docs/x-sql.md) - X-SQL query reference
+- [LoadOptions Guide](../pulsar/load-options-guide.md) - URL-level configuration options
+- [LoadOptions Quick Reference](../pulsar/load-options-quick-ref.md) - Quick option reference
+- [PageEventHandlers](../infra/page-event-handlers.md) - Event handling during page lifecycle
+- [PulsarSettings Guide](../../pulsar-settings-guide.md) - Global browser configuration
+- [REST API Examples](../../../docs/rest-api-examples.md) - Additional API examples
+- [X-SQL Documentation](../../../docs/x-sql.md) - X-SQL query reference
 
 ---
 
@@ -543,6 +543,6 @@ The system validates:
 
 ---
 
-**Version**: 2026-01-11  
-**Maintainer**: Browser4 Team  
+**Version**: 2026-01-11
+**Maintainer**: Browser4 Team
 **Status**: Living Document - Update as Command API evolves

@@ -145,7 +145,7 @@ git push origin python-sdk-v0.2.0
 - **PyPI 项目**：https://pypi.org/project/browser4-sdk/（首次发布后）
 
 ### 参考文档
-- **主项目发布流程**：[bin/release/README.md](../../bin/release/README.md)
+- **主项目发布流程**：[bin/release/README.md](../../../bin/release/README.md)
 - **Kotlin SDK**：`sdks/browser4-sdk-kotlin/`
 - **CI/CD 工作流**：`.github/workflows/release.yml`
 

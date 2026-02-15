@@ -167,9 +167,9 @@ bin/test.sh it
 
 ## 参考文档
 
-- [TESTING.md](../../TESTING.md) - 测试分类和标签说明
-- [bin/test.sh](../../bin/test.sh) - 测试脚本实现
-- [pom.xml](../../pom.xml) - Maven 配置和 profile 定义
+- [TESTING.md](../../../TESTING.md) - 测试分类和标签说明
+- [bin/test.sh](../../../bin/test.sh) - 测试脚本实现
+- [pom.xml](../../../pom.xml) - Maven 配置和 profile 定义
 
 ## 变更历史
 

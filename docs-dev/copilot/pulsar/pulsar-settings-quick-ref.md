@@ -163,6 +163,6 @@ PulsarSettings.headless()  // Too late!
 **Quick Links**:
 - [Full Guide](./pulsar-settings-guide.md)
 - [LoadOptions Guide](./load-options-guide.md)
-- [Config Guide](../../docs/config.md)
+- [Config Guide](../../../docs/config.md)
 
 **Version**: 2026-01-10

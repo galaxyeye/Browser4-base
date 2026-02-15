@@ -86,35 +86,92 @@ if [[ ${#TestTypes[@]} -eq 0 ]]; then
   fi
 fi
 
-# Expand 'all' to specific types
-ExpandedTestTypes=()
+# Separate Maven tests from SDK tests
+MavenTests=()
+SDKTests=()
 for type in "${TestTypes[@]}"; do
   if [[ "$type" == "all" ]]; then
-    ExpandedTestTypes+=("fast" "core" "it" "e2e" "rest")
+    # For 'all', include all Maven tests and skip SDK tests (they're optional)
+    MavenTests=("fast" "core" "it" "e2e" "rest")
+    break
+  elif [[ "$type" == "python-sdk" || "$type" == "nodejs-sdk" || "$type" == "kotlin-sdk" ]]; then
+    SDKTests+=("$type")
   else
-    ExpandedTestTypes+=("$type")
+    # Maven test types
+    MavenTests+=("$type")
   fi
 done
-TestTypes=("${ExpandedTestTypes[@]}")
 
-# Remove duplicates (preserve order, bash 3.2 compatible)
-UniqueTestTypes=()
-for type in "${TestTypes[@]}"; do
+# Remove duplicates from MavenTests (preserve order)
+UniqueMavenTests=()
+for type in "${MavenTests[@]}"; do
   found=false
-  for u in "${UniqueTestTypes[@]}"; do
+  for u in "${UniqueMavenTests[@]}"; do
     if [[ "$u" == "$type" ]]; then
       found=true
       break
     fi
   done
   if [[ "$found" == "false" ]]; then
-    UniqueTestTypes+=("$type")
+    UniqueMavenTests+=("$type")
   fi
 done
-TestTypes=("${UniqueTestTypes[@]}")
+MavenTests=("${UniqueMavenTests[@]}")
 
-# Execute tests
-for TestType in "${TestTypes[@]}"; do
+# If we have Maven tests, execute them as a single command
+if [[ ${#MavenTests[@]} -gt 0 ]]; then
+    echo "=========================================="
+    echo "Running Maven tests: ${MavenTests[*]}"
+    echo "=========================================="
+
+    # Build Maven command with appropriate flags
+    MvnTestArgs=("test")
+
+    # Check which test types are requested
+    HasFast=false
+    HasIT=false
+    HasE2E=false
+    HasCore=false
+    HasRest=false
+
+    for type in "${MavenTests[@]}"; do
+      case $type in
+        fast) HasFast=true ;;
+        it) HasIT=true ;;
+        e2e) HasE2E=true ;;
+        core) HasCore=true ;;
+        rest) HasRest=true ;;
+      esac
+    done
+
+    # Add flags based on what's needed
+    [[ "$HasIT" == "true" ]] && MvnTestArgs+=("-DrunITs=true")
+    [[ "$HasE2E" == "true" ]] && MvnTestArgs+=("-DrunE2ETests=true")
+    [[ "$HasCore" == "true" ]] && MvnTestArgs+=("-DrunCoreTests=true" "-Ppulsar-core-tests" "-pl" "pulsar-core,pulsar-core/pulsar-core-tests" "-am")
+
+    # Add any additional Maven args
+    MvnTestArgs+=("${AdditionalMvnArgs[@]}")
+
+    # Execute Maven test command
+    $MvnCmd "${MvnTestArgs[@]}"
+    ExitCode=$?
+
+    if [[ $ExitCode -ne 0 ]]; then
+      echo ""
+      echo "=========================================="
+      echo "❌ Maven tests failed with exit code $ExitCode"
+      echo "=========================================="
+      exit $ExitCode
+    fi
+
+    echo ""
+    echo "=========================================="
+    echo "✅ Maven tests completed successfully"
+    echo "=========================================="
+fi
+
+# Execute SDK tests
+for TestType in "${SDKTests[@]}"; do
     echo "=========================================="
     echo "Running $TestType tests..."
     echo "=========================================="
@@ -122,26 +179,6 @@ for TestType in "${TestTypes[@]}"; do
     ExitCode=0
 
     case $TestType in
-      fast)
-        echo "Running fast unit tests (default behavior)..."
-        $MvnCmd test "${AdditionalMvnArgs[@]}"
-        ExitCode=$?
-        ;;
-      it)
-        echo "Running integration tests..."
-        $MvnCmd test -DrunITs=true "${AdditionalMvnArgs[@]}"
-        ExitCode=$?
-        ;;
-      e2e)
-        echo "Running end-to-end tests..."
-        $MvnCmd test -DrunE2ETests=true -P all-modules -pl pulsar-tests,pulsar-tests/pulsar-e2e-tests -am "${AdditionalMvnArgs[@]}"
-        ExitCode=$?
-        ;;
-      kotlin-sdk)
-        echo "Running Kotlin SDK tests..."
-        $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
-        ExitCode=$?
-        ;;
       python-sdk)
         echo "Running Python SDK tests..."
         PythonSdkDir="$APP_HOME/sdks/browser4-sdk-python"
@@ -217,18 +254,13 @@ for TestType in "${TestTypes[@]}"; do
         ExitCode=$?
         cd "$APP_HOME"
         ;;
-      core)
-        echo "Running core module supplementary tests..."
-        $MvnCmd test -DrunCoreTests=true -Ppulsar-core-tests -pl pulsar-core,pulsar-core/pulsar-core-tests -am "${AdditionalMvnArgs[@]}"
-        ExitCode=$?
-        ;;
-      rest)
-        echo "Running REST module tests..."
-        $MvnCmd test -DrunRestTests=true "${AdditionalMvnArgs[@]}"
+      kotlin-sdk)
+        echo "Running Kotlin SDK tests..."
+        $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
         ExitCode=$?
         ;;
       *)
-        echo "Error: Unknown test type '$TestType'"
+        echo "Error: Unknown SDK test type '$TestType'"
         exit 1
         ;;
     esac

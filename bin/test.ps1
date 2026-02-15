@@ -71,69 +71,99 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 
 if ($TestTypes.Count -eq 0) {
     if ($AdditionalMvnArgs.Count -eq 0) {
-         # No args provided at all, covered by top check but good for safety
          $TestTypes += "fast"
     } else {
-         # Only maven args provided, assume fast
          $TestTypes += "fast"
     }
 }
 
-# Expand 'all' to specific types
-$ExpandedTestTypes = @()
+# Separate Maven tests from SDK tests
+$MavenTests = @()
+$SDKTests = @()
+
 foreach ($type in $TestTypes) {
     if ($type -eq "all") {
-        $ExpandedTestTypes += "fast"
-        $ExpandedTestTypes += "core"
-        $ExpandedTestTypes += "it"
-        $ExpandedTestTypes += "e2e"
-        $ExpandedTestTypes += "rest"
+        $MavenTests += "fast", "core", "it", "e2e", "rest"
+        break
+    } elseif ($type -in "python-sdk", "nodejs-sdk", "kotlin-sdk") {
+        $SDKTests += $type
     } else {
-        $ExpandedTestTypes += $type
+        $MavenTests += $type
     }
 }
-$TestTypes = $ExpandedTestTypes
 
-# Remove duplicates while preserving order
-$UniqueTestTypes = @()
-foreach ($type in $TestTypes) {
-    if ($type -notin $UniqueTestTypes) {
-        $UniqueTestTypes += $type
+# Remove duplicates from MavenTests while preserving order
+$UniqueMavenTests = @()
+foreach ($type in $MavenTests) {
+    if ($type -notin $UniqueMavenTests) {
+        $UniqueMavenTests += $type
     }
 }
-$TestTypes = $UniqueTestTypes
+$MavenTests = $UniqueMavenTests
 
-# Execute tests
-foreach ($TestType in $TestTypes) {
+# If we have Maven tests, execute them as a single command
+if ($MavenTests.Count -gt 0) {
+    Write-Host "=========================================="
+    Write-Host "Running Maven tests: $($MavenTests -join ', ')"
+    Write-Host "=========================================="
+
+    $MvnTestArgs = @("test")
+
+    # Check which test types are requested
+    $HasFast = $MavenTests -contains "fast"
+    $HasIT = $MavenTests -contains "it"
+    $HasE2E = $MavenTests -contains "e2e"
+    $HasCore = $MavenTests -contains "core"
+    $HasRest = $MavenTests -contains "rest"
+
+    # Add flags based on what's needed
+    if ($HasIT) { $MvnTestArgs += "-DrunITs=true" }
+    if ($HasE2E) { $MvnTestArgs += "-DrunE2ETests=true" }
+    if ($HasCore) {
+        $MvnTestArgs += "-DrunCoreTests=true"
+        $MvnTestArgs += "-Ppulsar-core-tests"
+        $MvnTestArgs += "-pl"
+        $MvnTestArgs += "pulsar-core,pulsar-core/pulsar-core-tests"
+        $MvnTestArgs += "-am"
+    }
+
+    # Add any additional Maven args
+    $MvnTestArgs += $AdditionalMvnArgs
+
+    # Execute Maven test command
+    try {
+        & $MvnCmd @MvnTestArgs
+        $ExitCode = $LASTEXITCODE
+
+        if ($ExitCode -ne 0) {
+            Write-Host ""
+            Write-Host "=========================================="
+            Write-Host "❌ Maven tests failed with exit code $ExitCode"
+            Write-Host "=========================================="
+            exit $ExitCode
+        }
+
+        Write-Host ""
+        Write-Host "=========================================="
+        Write-Host "✅ Maven tests completed successfully"
+        Write-Host "=========================================="
+    }
+    catch {
+        Write-Error "Failed to execute Maven tests: $_"
+        exit 1
+    }
+}
+
+# Execute SDK tests
+foreach ($TestType in $SDKTests) {
     Write-Host "=========================================="
     Write-Host "Running $TestType tests..."
     Write-Host "=========================================="
 
-    $MvnArgs = @("test") + $AdditionalMvnArgs
     $ExitCode = 0
 
     try {
       switch ($TestType) {
-        "fast" {
-          Write-Host "Running fast unit tests (default behavior)..."
-          & $MvnCmd @MvnArgs
-          $ExitCode = $LASTEXITCODE
-        }
-        "it" {
-          Write-Host "Running integration tests..."
-          & $MvnCmd @MvnArgs "-DrunITs=true"
-          $ExitCode = $LASTEXITCODE
-        }
-        "e2e" {
-          Write-Host "Running end-to-end tests..."
-          & $MvnCmd @MvnArgs "-DrunE2ETests=true" "-P" "all-modules" "-pl" "pulsar-tests,pulsar-tests/pulsar-e2e-tests" "-am"
-          $ExitCode = $LASTEXITCODE
-        }
-        "kotlin-sdk" {
-          Write-Host "Running Kotlin SDK tests..."
-          & $MvnCmd @MvnArgs "-DrunSDKTests=true" "-P" "all-modules" "-pl" "sdks/kotlin-sdk-tests" "-am"
-          $ExitCode = $LASTEXITCODE
-        }
         "python-sdk" {
           Write-Host "Running Python SDK tests..."
           $PythonSdkDir = Join-Path $AppHome "sdks\browser4-sdk-python"
@@ -208,18 +238,14 @@ foreach ($TestType in $TestTypes) {
           $ExitCode = $LASTEXITCODE
           Pop-Location
         }
-        "core" {
-          Write-Host "Running core module supplementary tests..."
-          & $MvnCmd @MvnArgs "-DrunCoreTests=true" "-Ppulsar-core-tests" "-pl" "pulsar-core,pulsar-core/pulsar-core-tests" "-am"
-          $ExitCode = $LASTEXITCODE
-        }
-        "rest" {
-          Write-Host "Running REST module tests..."
-          & $MvnCmd @MvnArgs "-DrunRestTests=true"
+        "kotlin-sdk" {
+          Write-Host "Running Kotlin SDK tests..."
+          $KotlinTestArgs = @("test", "-DrunSDKTests=true", "-P", "all-modules", "-pl", "sdks/kotlin-sdk-tests", "-am") + $AdditionalMvnArgs
+          & $MvnCmd @KotlinTestArgs
           $ExitCode = $LASTEXITCODE
         }
         Default {
-          Write-Error "Unknown test type '$TestType'"
+          Write-Error "Unknown SDK test type '$TestType'"
           exit 1
         }
       }

@@ -1,6 +1,6 @@
 # LoadOptions Quick Reference Card
 
-> Ultra-compact reference for AI agents. For detailed guide see [load-options-guide.md](./load-options-guide.md)
+> Ultra-compact reference for AI agents. For detailed guide see [load-options-guide.md](load-options-guide.md)
 
 ## Most Used Options (Top 15)
 
@@ -149,7 +149,7 @@ session.loadOutPages(portalUrl,
     "-scrollCount 3 " +
     "-outLink a.product " +
     "-topLinks 20 " +
-    
+
     // Item page settings (prefix: item)
     "-itemExpires 7d " +
     "-itemRequireSize 500000 " +
@@ -252,8 +252,8 @@ session.load("https://example.com", "-expires 1d -parse")
 ---
 
 **Quick Links**:
-- [Full Guide](./load-options-guide.md)
-- [Chinese Guide](./load-options-guide-zh.md)
-- [Source Code](../../pulsar-core/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/common/options/LoadOptions.kt)
+- [Full Guide](load-options-guide.md)
+- [Chinese Guide](load-options-guide-zh.md)
+- [Source Code](../../../pulsar-core/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/common/options/LoadOptions.kt)
 
 **Version**: 2024-01-05

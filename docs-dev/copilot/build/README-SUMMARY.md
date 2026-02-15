@@ -8,9 +8,9 @@
 - **[升级检查清单](dependency-upgrade-checklist.md)** - 可复用的升级检查清单模板
 
 ### 🛠️ 工具使用 | Tools
-- **[工具使用指南](../../bin/tools/README.md)** - 依赖管理工具的详细使用说明
-- **[健康检查脚本](../../bin/tools/check-dependencies.sh)** - 自动化依赖检查脚本
-- **[版本规则配置](../../maven-version-rules.xml)** - Maven Versions Plugin 配置
+- **[工具使用指南](../../../bin/tools/README.md)** - 依赖管理工具的详细使用说明
+- **[健康检查脚本](../../../bin/tools/check-dependencies.sh)** - 自动化依赖检查脚本
+- **[版本规则配置](../../../maven-version-rules.xml)** - Maven Versions Plugin 配置
 
 ---
 
@@ -312,7 +312,7 @@ Browser4/
 - [完整升级计划](dependency-upgrade-plan.md)
 - [English Version](dependency-upgrade-plan-en.md)
 - [升级检查清单](dependency-upgrade-checklist.md)
-- [工具使用指南](../../bin/tools/README.md)
+- [工具使用指南](../../../bin/tools/README.md)
 
 ### 🔗 外部资源 | External Resources
 - [Maven Versions Plugin](https://www.mojohaus.org/versions-maven-plugin/)
@@ -354,8 +354,8 @@ Browser4/
 | [dependency-upgrade-plan.md](dependency-upgrade-plan.md) | 完整计划 | 维护者 |
 | [dependency-upgrade-plan-en.md](dependency-upgrade-plan-en.md) | English plan | Maintainers |
 | [dependency-upgrade-checklist.md](dependency-upgrade-checklist.md) | 执行清单 | 开发者 |
-| [../bin/tools/README.md](../../bin/tools/README.md) | 工具说明 | 开发者 |
-| [../maven-version-rules.xml](../../maven-version-rules.xml) | 版本规则 | 高级用户 |
+| [../bin/tools/README.md](../../../bin/tools/README.md) | 工具说明 | 开发者 |
+| [../maven-version-rules.xml](../../../maven-version-rules.xml) | 版本规则 | 高级用户 |
 
 ---
 

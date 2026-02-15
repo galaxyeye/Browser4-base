@@ -335,8 +335,8 @@ Follow the automated release workflow:
 
 - **Release Plan**: [RELEASE_PLAN.md](../sdks/browser4-sdk-python/RELEASE_PLAN.md)
 - **Quick Reference**: [RELEASE_QUICKREF.md](../sdks/browser4-sdk-python/RELEASE_QUICKREF.md)
-- **Scripts Guide**: [scripts/README.md](../../sdks/browser4-sdk-python/scripts/README.md)
-- **Workflow**: [.github/workflows/python-sdk-release.yml](../../.github/workflows/python-sdk-release.yml)
+- **Scripts Guide**: [scripts/README.md](../../../sdks/browser4-sdk-python/scripts/README.md)
+- **Workflow**: [.github/workflows/python-sdk-release.yml](../../../.github/workflows/python-sdk-release.yml)
 
 ---
 

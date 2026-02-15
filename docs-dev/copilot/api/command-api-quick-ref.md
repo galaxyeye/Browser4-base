@@ -1,6 +1,6 @@
 # Command API Quick Reference Card
 
-> Ultra-compact reference for AI agents. For detailed guide see [command-api-guide.md](./command-api-guide.md)
+> Ultra-compact reference for AI agents. For detailed guide see [command-api-guide.md](command-api-guide.md)
 
 ## Endpoints
 
@@ -193,10 +193,10 @@ Has URL?
 
 ## Related Docs
 
-- [Full Guide](./command-api-guide.md)
-- [LoadOptions](./load-options-quick-ref.md)
-- [PulsarSettings](./pulsar-settings-quick-ref.md)
-- [REST API Examples](../../docs/rest-api-examples.md)
+- [Full Guide](command-api-guide.md)
+- [LoadOptions](../../load-options-quick-ref.md)
+- [PulsarSettings](../pulsar/pulsar-settings-quick-ref.md)
+- [REST API Examples](../../../docs/rest-api-examples.md)
 
 ---
 
