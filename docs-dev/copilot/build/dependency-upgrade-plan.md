@@ -223,7 +223,7 @@ Browser4 是一个多模块 Maven 项目，包含以下核心模块：
     <version>2.18.0</version>
     <configuration>
         <generateBackupPoms>false</generateBackupPoms>
-        <rulesUri>file://${project.basedir}/maven-version-rules.xml</rulesUri>
+        <rulesUri>file://${project.basedir}/.github/rules/maven-version-rules.xml</rulesUri>
     </configuration>
 </plugin>
 ```
@@ -903,7 +903,7 @@ jmh-visualizer compare baseline.json upgraded.json
 
 ### A. Maven Version Rules 示例
 
-创建 `maven-version-rules.xml`:
+创建 `.github/rules/maven-version-rules.xml`:
 
 ```xml
 <ruleset comparisonMethod="maven"

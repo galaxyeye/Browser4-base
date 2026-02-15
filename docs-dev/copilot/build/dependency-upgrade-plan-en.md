@@ -180,7 +180,7 @@ Phase 5: Other Dependencies
     <version>2.18.0</version>
     <configuration>
         <generateBackupPoms>false</generateBackupPoms>
-        <rulesUri>file://${project.basedir}/maven-version-rules.xml</rulesUri>
+        <rulesUri>file://${project.basedir}/.github/rules/maven-version-rules.xml</rulesUri>
     </configuration>
 </plugin>
 ```
