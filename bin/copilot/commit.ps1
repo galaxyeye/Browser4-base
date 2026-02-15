@@ -16,4 +16,4 @@ Set-Location $AppHome
 
 # Call copilot to commit all changes with a message
 $prompt = "Commit all changes in $AppHome and push to the remote repository. Resolve conflicts if there is any."
-copilot -p "$prompt" --allow-all-tools
+gh copilot -p "$prompt" --allow-all-tools

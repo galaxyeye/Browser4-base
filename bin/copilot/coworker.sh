@@ -185,7 +185,7 @@ for file in "$createdDir"/*; do
 
         # Execute copilot tool with the task prompt
         # Capture both standard output and standard error to separate files
-        if copilot -p "$prompt" --allow-all-tools --allow-all-paths > "$stdOutLog" 2> "$stdErrLog"; then
+        if gh copilot -p "$prompt" --allow-all-tools --allow-all-paths > "$stdOutLog" 2> "$stdErrLog"; then
             exitCode=$?
         else
             exitCode=$?

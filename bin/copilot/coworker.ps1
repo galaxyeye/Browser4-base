@@ -129,7 +129,7 @@ Prompt: $promptSample
         $nameArgs = "-p `"$promptEscaped`" --allow-all-tools --allow-all-paths"
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
-        $nameProcess = Start-Process -FilePath "copilot" -ArgumentList $nameArgs -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+        $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
 
         $waited = $false
         try {
@@ -318,7 +318,7 @@ Copilot Execution Output:
 
             # Execute Copilot tool with the task prompt
             # Capture both standard output and error output to separate files
-            $process = Start-Process -FilePath "copilot" -ArgumentList $copilotArgs -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+            $process = Start-Process -FilePath "gh" -ArgumentList "copilot $copilotArgs" -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
 
             $runWaited = $false
             try {

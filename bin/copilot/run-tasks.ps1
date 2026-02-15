@@ -10,4 +10,4 @@ Set-Location $AppHome
 $taskFilePath = Join-Path $AppHome "docs-dev\copilot\tasks\daily\tasks.md"
 $prompt = "Run tasks described in $taskFilePath"
 
-copilot -p "$prompt" --allow-all-tools
+gh copilot -p "$prompt" --allow-all-tools
