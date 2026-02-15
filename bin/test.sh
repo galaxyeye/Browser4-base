@@ -119,22 +119,28 @@ for TestType in "${TestTypes[@]}"; do
     echo "Running $TestType tests..."
     echo "=========================================="
 
+    ExitCode=0
+
     case $TestType in
       fast)
         echo "Running fast unit tests (default behavior)..."
         $MvnCmd test "${AdditionalMvnArgs[@]}"
+        ExitCode=$?
         ;;
       it)
         echo "Running integration tests..."
         $MvnCmd test -DrunITs=true "${AdditionalMvnArgs[@]}"
+        ExitCode=$?
         ;;
       e2e)
         echo "Running end-to-end tests..."
         $MvnCmd test -DrunE2ETests=true -P all-modules -pl pulsar-tests,pulsar-tests/pulsar-e2e-tests -am "${AdditionalMvnArgs[@]}"
+        ExitCode=$?
         ;;
       kotlin-sdk)
         echo "Running Kotlin SDK tests..."
         $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
+        ExitCode=$?
         ;;
       python-sdk)
         echo "Running Python SDK tests..."
@@ -170,7 +176,6 @@ for TestType in "${TestTypes[@]}"; do
         python3 -m pytest "${AdditionalMvnArgs[@]}"
         ExitCode=$?
         cd "$APP_HOME"
-        if [[ $ExitCode -ne 0 ]]; then exit $ExitCode; fi
         ;;
       nodejs-sdk)
         echo "Running NodeJS SDK tests..."
@@ -211,21 +216,31 @@ for TestType in "${TestTypes[@]}"; do
         npm test -- "${AdditionalMvnArgs[@]}"
         ExitCode=$?
         cd "$APP_HOME"
-        if [[ $ExitCode -ne 0 ]]; then exit $ExitCode; fi
         ;;
       core)
         echo "Running core module supplementary tests..."
         $MvnCmd test -DrunCoreTests=true -Ppulsar-core-tests -pl pulsar-core,pulsar-core/pulsar-core-tests -am "${AdditionalMvnArgs[@]}"
+        ExitCode=$?
         ;;
       rest)
         echo "Running REST module tests..."
         $MvnCmd test -DrunRestTests=true "${AdditionalMvnArgs[@]}"
+        ExitCode=$?
         ;;
       *)
         echo "Error: Unknown test type '$TestType'"
         exit 1
         ;;
     esac
+
+    # Check if test failed and exit immediately
+    if [[ $ExitCode -ne 0 ]]; then
+      echo ""
+      echo "=========================================="
+      echo "❌ $TestType tests failed with exit code $ExitCode"
+      echo "=========================================="
+      exit $ExitCode
+    fi
 
     echo ""
     echo "=========================================="

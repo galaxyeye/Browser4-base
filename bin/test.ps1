@@ -117,18 +117,22 @@ foreach ($TestType in $TestTypes) {
         "fast" {
           Write-Host "Running fast unit tests (default behavior)..."
           & $MvnCmd @MvnArgs
+          $ExitCode = $LASTEXITCODE
         }
         "it" {
           Write-Host "Running integration tests..."
           & $MvnCmd @MvnArgs "-DrunITs=true"
+          $ExitCode = $LASTEXITCODE
         }
         "e2e" {
           Write-Host "Running end-to-end tests..."
           & $MvnCmd @MvnArgs "-DrunE2ETests=true" "-P" "all-modules" "-pl" "pulsar-tests,pulsar-tests/pulsar-e2e-tests" "-am"
+          $ExitCode = $LASTEXITCODE
         }
         "kotlin-sdk" {
           Write-Host "Running Kotlin SDK tests..."
           & $MvnCmd @MvnArgs "-DrunSDKTests=true" "-P" "all-modules" "-pl" "sdks/kotlin-sdk-tests" "-am"
+          $ExitCode = $LASTEXITCODE
         }
         "python-sdk" {
           Write-Host "Running Python SDK tests..."
@@ -162,7 +166,6 @@ foreach ($TestType in $TestTypes) {
           & $pythonCmd.Source -m pytest $AdditionalMvnArgs
           $ExitCode = $LASTEXITCODE
           Pop-Location
-          if ($ExitCode -ne 0) { exit $ExitCode }
         }
         "nodejs-sdk" {
           Write-Host "Running NodeJS SDK tests..."
@@ -204,15 +207,16 @@ foreach ($TestType in $TestTypes) {
           & npm test -- $AdditionalMvnArgs
           $ExitCode = $LASTEXITCODE
           Pop-Location
-          if ($ExitCode -ne 0) { exit $ExitCode }
         }
         "core" {
           Write-Host "Running core module supplementary tests..."
           & $MvnCmd @MvnArgs "-DrunCoreTests=true" "-Ppulsar-core-tests" "-pl" "pulsar-core,pulsar-core/pulsar-core-tests" "-am"
+          $ExitCode = $LASTEXITCODE
         }
         "rest" {
           Write-Host "Running REST module tests..."
           & $MvnCmd @MvnArgs "-DrunRestTests=true"
+          $ExitCode = $LASTEXITCODE
         }
         Default {
           Write-Error "Unknown test type '$TestType'"
@@ -220,23 +224,19 @@ foreach ($TestType in $TestTypes) {
         }
       }
 
-      $LastExitCode = $LASTEXITCODE
-      if ($LastExitCode -ne 0) {
-         $ExitCode = $LastExitCode
-      }
-      
-      if ($ExitCode -eq 0) {
-        Write-Host ""
-        Write-Host "=========================================="
-        Write-Host "✅ $TestType tests completed successfully"
-        Write-Host "=========================================="
-      } else {
+      # Check if test failed and exit immediately
+      if ($ExitCode -ne 0) {
         Write-Host ""
         Write-Host "=========================================="
         Write-Host "❌ $TestType tests failed with exit code $ExitCode"
         Write-Host "=========================================="
         exit $ExitCode
       }
+
+      Write-Host ""
+      Write-Host "=========================================="
+      Write-Host "✅ $TestType tests completed successfully"
+      Write-Host "=========================================="
     }
     catch {
       Write-Error "Failed to execute tests: $_"
