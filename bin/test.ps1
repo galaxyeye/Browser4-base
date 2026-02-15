@@ -19,7 +19,9 @@ function Print-Usage {
   Write-Host "  nodejs-sdk  Run NodeJS SDK tests"
   Write-Host "  core        Run core module supplementary tests"
   Write-Host "  rest        Run REST module tests"
-  Write-Host "  all         Run all tests (fast, core, it, e2e, rest)"
+  Write-Host "  skills      Run skills module tests"
+  Write-Host "  mcp         Run MCP module tests"
+  Write-Host "  browser4    Run all Browser4 main tests (fast, core, rest, it, e2e)"
   Write-Host ""
   Write-Host "Examples:"
   Write-Host "  test.ps1 fast                       # Run fast unit tests"
@@ -31,7 +33,9 @@ function Print-Usage {
   Write-Host "  test.ps1 python-sdk -m integration  # Run Python SDK integration tests only"
   Write-Host "  test.ps1 nodejs-sdk                 # Run NodeJS SDK tests"
   Write-Host "  test.ps1 nodejs-sdk --coverage      # Run NodeJS SDK tests with coverage"
-  Write-Host "  test.ps1 all                        # Run all tests"
+  Write-Host "  test.ps1 skills                     # Run skills module tests"
+  Write-Host "  test.ps1 mcp                        # Run MCP module tests"
+  Write-Host "  test.ps1 browser4                   # Run all Browser4 main tests"
   Write-Host '  test.ps1 it -pl pulsar-core         # Run integration tests for pulsar-core only'
   exit 1
 }
@@ -54,7 +58,7 @@ if ($args.Count -eq 0) {
   Print-Usage
 }
 
-$KnownTestTypes = @("fast", "it", "e2e", "kotlin-sdk", "python-sdk", "nodejs-sdk", "core", "rest", "all")
+$KnownTestTypes = @("fast", "it", "e2e", "kotlin-sdk", "python-sdk", "nodejs-sdk", "core", "rest", "skills", "mcp", "browser4")
 $ParsingTestTypes = $true
 
 for ($i = 0; $i -lt $args.Count; $i++) {
@@ -82,7 +86,7 @@ $MavenTests = @()
 $SDKTests = @()
 
 foreach ($type in $TestTypes) {
-    if ($type -eq "all") {
+    if ($type -eq "all-maven" -or $type -eq "browser4") {
         $MavenTests += "fast", "core", "it", "e2e", "rest"
         break
     } elseif ($type -in "python-sdk", "nodejs-sdk", "kotlin-sdk") {
@@ -115,6 +119,14 @@ if ($MavenTests.Count -gt 0) {
     $HasE2E = $MavenTests -contains "e2e"
     $HasCore = $MavenTests -contains "core"
     $HasRest = $MavenTests -contains "rest"
+    $HasSkills = $MavenTests -contains "skills"
+    $HasMcp = $MavenTests -contains "mcp"
+
+    $TestPatterns = @()
+    if ($HasSkills) { $TestPatterns += "**/skills/**" }
+    if ($HasMcp) { $TestPatterns += "**/mcp/**" }
+
+    $Modules = @()
 
     # Add flags based on what's needed
     if ($HasIT) { $MvnTestArgs += "-DrunITs=true" }
@@ -122,8 +134,30 @@ if ($MavenTests.Count -gt 0) {
     if ($HasCore) {
         $MvnTestArgs += "-DrunCoreTests=true"
         $MvnTestArgs += "-Ppulsar-core-tests"
+        $Modules += "pulsar-core", "pulsar-core/pulsar-core-tests"
+    }
+
+    if ($HasSkills -or $HasMcp) {
+        $Modules += "pulsar-agentic"
+
+        # Only set -Dtest if we are NOT running other main test types
+        if (-not ($HasFast -or $HasIT -or $HasE2E -or $HasCore -or $HasRest)) {
+            if ($HasSkills) { $MvnTestArgs += "-DrunSkillsTests=true" }
+            if ($HasMcp) { $MvnTestArgs += "-DrunMcpTests=true" }
+
+            $JoinedPatterns = $TestPatterns -join ","
+            $MvnTestArgs += "-Dtest=$JoinedPatterns"
+        }
+    }
+
+    if ($HasFast -or $HasRest) {
+        $Modules = @()
+    }
+
+    if ($Modules.Count -gt 0) {
+        $JoinedModules = $Modules -join ","
         $MvnTestArgs += "-pl"
-        $MvnTestArgs += "pulsar-core,pulsar-core/pulsar-core-tests"
+        $MvnTestArgs += $JoinedModules
         $MvnTestArgs += "-am"
     }
 
