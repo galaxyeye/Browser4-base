@@ -30,12 +30,12 @@ Set-Location $AppHome
 # Define directory paths for task management workflow
 $repoRoot = $AppHome                              # Repository root for Copilot execution
 
-$tasksRoot = Join-Path $AppHome "docs-dev\tasks"
+$tasksRoot = Join-Path $AppHome "docs-dev\tasks\copilot"
 $taskRoots = @(
     @{
-        Created = (Join-Path $tasksRoot "created")
-        Working = (Join-Path $tasksRoot "working")
-        Finished = (Join-Path $tasksRoot "finished")
+        Created = (Join-Path $tasksRoot "1created")
+        Working = (Join-Path $tasksRoot "2working")
+        Finished = (Join-Path $tasksRoot "3finished")
         Logs = (Join-Path $tasksRoot "logs")
         Label = "tasks"
     }

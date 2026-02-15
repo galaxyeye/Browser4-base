@@ -30,10 +30,10 @@ done
 cd "$AppHome"
 
 # Define directory paths for task management workflow
-baseDir="$AppHome/docs-dev/copilot/tasks/daily"
-createdDir="$baseDir/created"        # Input directory for new tasks
-workingDir="$baseDir/working"        # Processing directory for current tasks
-finishedDir="$baseDir/finished"      # Output directory for completed tasks
+baseDir="$AppHome/docs-dev/tasks/copilot"
+createdDir="$baseDir/1created"        # Input directory for new tasks
+workingDir="$baseDir/2working"        # Processing directory for current tasks
+finishedDir="$baseDir/3finished"      # Output directory for completed tasks
 logsDir="$baseDir/logs"              # Directory for script and execution logs
 repoRoot="$AppHome"                  # Repository root for Copilot execution
 
