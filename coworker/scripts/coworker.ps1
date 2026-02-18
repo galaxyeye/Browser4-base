@@ -363,7 +363,15 @@ Copilot Log: $copilotLogPath
         }
 
         # Move completed task from working directory to finished directory
-        $finishedInfo = Resolve-UniquePath -Directory $finishedDir -BaseName $workingBaseName -Extension $file.Extension
+        # Create date-based subdirectory: YYYY/MMDD
+        $currentYear = Get-Date -Format "yyyy"
+        $currentDate = Get-Date -Format "MMdd"
+        $finishedSubDir = Join-Path $finishedDir "$currentYear\$currentDate"
+        if (!(Test-Path $finishedSubDir)) {
+            New-Item -ItemType Directory -Path $finishedSubDir | Out-Null
+        }
+
+        $finishedInfo = Resolve-UniquePath -Directory $finishedSubDir -BaseName $workingBaseName -Extension $file.Extension
         
         Move-Item -Path $workingPath -Destination $finishedInfo.Path -Force
         Write-LogMessage "Task moved to finished: $($finishedInfo.Path)" INFO

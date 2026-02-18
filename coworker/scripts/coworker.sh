@@ -254,6 +254,14 @@ for file in "$createdDir"/*; do
     popd > /dev/null || exit 1
 
     # Move completed task from working directory to finished directory
+    # Create date-based subdirectory: YYYY/MMDD
+    currentYear=$(date +%Y)
+    currentDate=$(date +%m%d)
+    finishedSubDir="$finishedDir/$currentYear/$currentDate"
+    mkdir -p "$finishedSubDir"
+
+    finishedPath="$finishedSubDir/$newFileName"
+    
     mv "$workingPath" "$finishedPath"
     log_message "Task moved to finished: $finishedPath" INFO
     log_message "---" INFO
