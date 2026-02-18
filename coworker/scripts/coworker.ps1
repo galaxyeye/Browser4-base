@@ -30,7 +30,7 @@ Set-Location $AppHome
 # Define directory paths for task management workflow
 $repoRoot = $AppHome                              # Repository root for Copilot execution
 
-$tasksRoot = Join-Path $AppHome "docs-dev\tasks\copilot"
+$tasksRoot = Join-Path $AppHome "coworker\tasks"
 $taskRoots = @(
     @{
         Created = (Join-Path $tasksRoot "1created")
@@ -222,82 +222,69 @@ foreach ($taskRoot in $taskRoots) {
 
     # Process each task file found in the created directory
     foreach ($file in $files) {
-        $incomingInfo = Resolve-UniquePath -Directory $workingDir -BaseName ("$($file.BaseName).incoming") -Extension $file.Extension
-        Move-Item -Path $file.FullName -Destination $incomingInfo.Path -Force
-        Write-LogMessage "Moved to working (incoming): $($incomingInfo.Path)" INFO
+        # 1. Move to working directory with a temporary name to mark as in-progress
+        $tempName = "processing-$($file.Name)"
+        $tempPath = Join-Path $workingDir $tempName
+        Move-Item -Path $file.FullName -Destination $tempPath -Force
+        Write-LogMessage "Moved to working (processing): $tempPath" INFO
 
-        Write-LogMessage "Processing $($file.Name)..." INFO
+        # 2. Determine the descriptive name based on content
+        $renameScript = Join-Path $scriptsDir "rename.ps1"
+        $descriptiveName = ""
+        
+        # Read content for fallback title
+        $content = Get-Content -Path $tempPath -Raw
+        $safeTitle = $file.BaseName -replace '[\\/*?:"<>|]', '_'
+        if ([string]::IsNullOrWhiteSpace($safeTitle)) { $safeTitle = "task" }
 
-        # Read the entire file content
-        $content = Get-Content -Path $incomingInfo.Path -Raw
+        if (Test-Path $renameScript) {
+            # Execute rename.ps1 script
+            $generatedName = & $renameScript -FilePath $tempPath
+            if (-not [string]::IsNullOrWhiteSpace($generatedName) -and $generatedName -notmatch "Error") {
+                $descriptiveName = $generatedName
+            }
+        }
+        
+        if ([string]::IsNullOrWhiteSpace($descriptiveName)) {
+             $descriptiveName = $safeTitle
+        }
 
-        # Initialize variables for task metadata
-        $title = ""
-        $description = ""
-        $prompt = ""
+        # 3. Rename the file in working directory to the descriptive name
+        $finalTaskInfo = Resolve-UniquePath -Directory $workingDir -BaseName $descriptiveName -Extension $file.Extension
+        $workingPath = $finalTaskInfo.Path
+        Move-Item -Path $tempPath -Destination $workingPath -Force
+        Write-LogMessage "Renamed to: $workingPath" INFO
 
-        # Try to parse structured content with Title, Description, and Prompt sections
-        # Uses regex to extract these fields if they follow the expected format
+        # 4. Parse content for execution (logging purposes)
+        $title = $descriptiveName
+        $description = "Task from $($file.Name)"
+        $prompt = $content
+        
+        # Try to parse structured content
         if ($content -match "(?ms)^Title:\s*(?<title>.*?)(\r\n|\n)Description:\s*(?<desc>.*?)(\r\n|\n)Prompt:\s*(?<prompt>.*)$") {
             $title = $Matches['title'].Trim()
             $description = $Matches['desc'].Trim()
             $prompt = $Matches['prompt'].Trim()
-        } else {
-            # Fallback: If file is not in structured format, use it as-is
-            $title = $file.BaseName
-            $description = "Task from $($file.Name)"
-            $prompt = $content
         }
 
-        # Sanitize the title to make it safe for use as a filename
-        # Remove special characters that are not allowed in Windows filenames
-        $safeTitle = $title -replace '[\\/*?:"<>|]', '_'
-        if ([string]::IsNullOrWhiteSpace($safeTitle)) {
-            $safeTitle = "task"
-        }
-
-        $baseName = Get-TaskBaseName -Title $title -Description $description -Prompt $prompt -Fallback $safeTitle
-
-        $taskInfo = Resolve-UniquePath -Directory $workingDir -BaseName $baseName -Extension $file.Extension
-        $originalInfo = Resolve-UniquePath -Directory $workingDir -BaseName "$baseName.original" -Extension $file.Extension
-
-        # Define full paths for the task file at each workflow stage
-        $workingPath = $taskInfo.Path
-        $workingOriginalPath = $originalInfo.Path
-
-        Move-Item -Path $incomingInfo.Path -Destination $workingOriginalPath -Force
-        Write-LogMessage "Renamed incoming to original: $workingOriginalPath" INFO
-
-        # Write optimized task file to working directory
-        $optimizedContent = @"
-Title: $title
-Description: $description
-Prompt:
-$prompt
-"@
-
-        $optimizedContent | Out-File -FilePath $workingPath -Encoding UTF8
-        Write-LogMessage "Created optimized task: $workingPath" INFO
-
-        # Define log file paths for this task
-        $workingBaseName = $taskInfo.FileName -replace [regex]::Escape($file.Extension), ''
+        # Define log file paths
+        $workingBaseName = $finalTaskInfo.FileName -replace [regex]::Escape($file.Extension), ''
         $taskLogPath = Join-Path $logsDir "$workingBaseName.task.log"
         $copilotLogPath = Join-Path $logsDir "$workingBaseName.copilot.log"
 
         Write-LogVerbose "Task log will be written to: $taskLogPath"
 
         # Change working directory to repository root
-        # This ensures that Copilot runs in the correct context
         Push-Location $repoRoot
 
-        Write-LogMessage "Executing Copilot for task: $title" INFO
-        Write-LogVerbose "Task Description: $description"
+        Write-LogMessage "Executing Copilot for task: $workingBaseName" INFO
         Write-LogVerbose "Prompt length: $($prompt.Length) characters"
 
         # Record task execution details to task log
         @"
 Task: $title
 Description: $description
+Original File: $($file.Name)
 Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
 Prompt:
 $prompt
@@ -376,15 +363,10 @@ Copilot Log: $copilotLogPath
 
         # Move completed task from working directory to finished directory
         $finishedInfo = Resolve-UniquePath -Directory $finishedDir -BaseName $workingBaseName -Extension $file.Extension
-        $finishedOriginalInfo = Resolve-UniquePath -Directory $finishedDir -BaseName "$workingBaseName.original" -Extension $file.Extension
-
+        
         Move-Item -Path $workingPath -Destination $finishedInfo.Path -Force
         Write-LogMessage "Task moved to finished: $($finishedInfo.Path)" INFO
 
-        if (Test-Path $workingOriginalPath) {
-            Move-Item -Path $workingOriginalPath -Destination $finishedOriginalInfo.Path -Force
-            Write-LogMessage "Original moved to finished: $($finishedOriginalInfo.Path)" INFO
-        }
 
         Write-LogMessage "---" INFO
     }

@@ -30,7 +30,7 @@ done
 cd "$AppHome"
 
 # Define directory paths for task management workflow
-baseDir="$AppHome/docs-dev/tasks/copilot"
+baseDir="$AppHome/coworker/tasks"
 createdDir="$baseDir/1created"        # Input directory for new tasks
 workingDir="$baseDir/2working"        # Processing directory for current tasks
 finishedDir="$baseDir/3finished"      # Output directory for completed tasks
@@ -104,72 +104,89 @@ for file in "$createdDir"/*; do
 
     log_message "Processing $(basename "$file")..." INFO
 
-    # Read file content
-    content=$(cat "$file")
+    # 1. Move to working directory with a temporary name
+    # This ensures we 'claim' the task immediately
+    tempName="processing-$(basename "$file")"
+    tempPath="$workingDir/$tempName"
+    
+    mv "$file" "$tempPath"
+    log_message "Moved to working (processing): $tempPath" INFO
 
-    # Initialize variables for task metadata
-    title=""
-    description=""
-    prompt=""
+    # Read content for basic info
+    content=$(cat "$tempPath")
+    
+    # Initialize variables
+    title="$(basename "$file" | sed 's/\.[^.]*$//')"
+    safeTitle=$(echo "$title" | sed 's/[\/\\*?:"<>|]/_/g')
+    description="Task from $(basename "$file")"
+    prompt="$content"
 
-    # Try to parse structured content with Title, Description, and Prompt sections
-    # Format expected:
-    # Title: ...
-    # Description: ...
-    # Prompt: ...
-    # Uses bash regex matching to extract these fields if they follow the expected format
+    # Try to parse structured content
     if [[ $content =~ ^Title:[[:space:]]*([^$'\n']+)$'\n'Description:[[:space:]]*([^$'\n']+)$'\n'Prompt:[[:space:]]*(.*)$ ]]; then
-        # Extract matched groups from structured format
         title="${BASH_REMATCH[1]}"
         description="${BASH_REMATCH[2]}"
         prompt="${BASH_REMATCH[3]}"
-    else
-        # Fallback: If file is not in structured format, treat entire content as prompt
-        title="$(basename "$file" | sed 's/\.[^.]*$//')"
-        description="Task from $(basename "$file")"
-        prompt="$content"
     fi
 
-    # Sanitize title to make it safe for use as a filename
-    # Remove special characters that are not allowed in filenames across Unix systems
-    safeTitle=$(echo "$title" | sed 's/[\/\\*?:"<>|]/_/g')
+    # 2. Call rename.sh on the file in working dir
+    scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    renameScript="$scriptDir/rename.sh"
+    descriptiveName=""
+    
+    chmod +x "$renameScript" 2>/dev/null
+    
+    if [[ -f "$renameScript" && -x "$renameScript" ]]; then
+        generatedName=$("$renameScript" "$tempPath")
+        if [[ -n "$generatedName" && "$generatedName" != *" "* && "$generatedName" != "Error"* ]]; then
+            descriptiveName="$generatedName"
+        fi
+    fi
+    
+    if [[ -z "$descriptiveName" ]]; then
+         descriptiveName="$safeTitle"
+    fi
 
-    # Extract file extension and construct new filename with sanitized title
+    # 3. Rename the file in working directory to the final descriptive name
     fileExt="${file##*.}"
-    if [[ "$file" == *.* ]]; then
-        newFileName="${safeTitle}.${fileExt}"
+    if [[ "$tempName" == *.* ]]; then
+        newFileName="${descriptiveName}.${fileExt}"
     else
-        newFileName="$safeTitle"
+        newFileName="$descriptiveName"
     fi
 
-    # Define full paths for the task file at each workflow stage
     workingPath="$workingDir/$newFileName"
+    
+    # Handle filename collision in working dir
+    if [[ -e "$workingPath" ]]; then
+        counter=2
+        while [[ -e "$workingDir/$descriptiveName.$counter.$fileExt" ]]; do
+            ((counter++))
+        done
+        newFileName="$descriptiveName.$counter.$fileExt"
+        workingPath="$workingDir/$newFileName"
+    fi
+
+    mv "$tempPath" "$workingPath"
+    log_message "Renamed to: $workingPath" INFO
     finishedPath="$finishedDir/$newFileName"
 
-    # Task log path - combined log for task execution
-    taskLogPath="$logsDir/task_${safeTitle}_$(date +%Y%m%d-%H%M%S).log"
+    # Task log path
+    taskLogPath="$logsDir/task_${newFileName}_$(date +%Y%m%d-%H%M%S).log"
+    copilotLogPath="$logsDir/copilot_${newFileName}_$(date +%Y%m%d-%H%M%S).log"
 
-    # Copilot-specific external tool log (separate from task log)
-    copilotLogPath="$logsDir/copilot_${safeTitle}_$(date +%Y%m%d-%H%M%S).log"
-
-    # Move task file from created directory to working directory
-    # This marks the task as currently being processed
-    mv "$file" "$workingPath"
-    log_message "Moved to working: $workingPath" INFO
     log_verbose "Task log will be written to: $taskLogPath"
 
     # Change to repository root directory for execution
-    # This ensures that Copilot runs in the correct context
     pushd "$repoRoot" > /dev/null || exit 1
 
-    log_message "Executing Copilot for task: $title" INFO
-    log_verbose "Task Description: $description"
+    log_message "Executing Copilot for task: $descriptiveName" INFO
     log_verbose "Prompt length: ${#prompt} characters"
 
     # Record task execution details to task log
     {
-        echo "Task: $title"
+        echo "Task: $descriptiveName"
         echo "Description: $description"
+        echo "Original File: $(basename "$file")"
         echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
         echo "Prompt:"
         echo "$prompt"
