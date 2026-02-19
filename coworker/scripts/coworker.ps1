@@ -19,16 +19,9 @@
 #   powershell -ExecutionPolicy Bypass -File coworker.ps1
 # ============================================================================
 
-
 # This allows the script to be run from any location within the project
-$repoRoot = (Get-Item -Path $MyInvocation.MyCommand.Path).Directory
-while ($repoRoot -ne $null -and -not (Test-Path (Join-Path $repoRoot "ROOT.md"))) {
-    $repoRoot = Split-Path -Parent $repoRoot
-}
+$repoRoot = (git rev-parse --show-toplevel 2>$null)
 Set-Location $repoRoot
-
-# Define directory paths for task management workflow
-$repoRoot = $repoRoot                              # Repository root for Copilot execution
 
 $tasksRoot = Join-Path $repoRoot "coworker\tasks"
 $scriptsDir = Join-Path $repoRoot "coworker\scripts"
