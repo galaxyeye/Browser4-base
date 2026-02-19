@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic.inference
 
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Tag
@@ -11,6 +12,19 @@ import kotlin.io.path.readLines
 
 @Tag("inference")
 class InferenceSummaryJsonLinesTest {
+
+    @AfterEach
+    fun cleanupTempDirs() {
+        // Clean up any temporary directories created during tests.
+        // In a real test suite, consider using a more robust temp directory management strategy.
+        val tempRoot = System.getProperty("java.io.tmpdir")
+        Files.list(Path.of(tempRoot))
+            .filter {
+                it.fileName.toString().startsWith("pulsar-agentic-jsonl-") || it.fileName.toString()
+                    .startsWith("pulsar-agentic-jsonl-concurrent-")
+            }
+            .forEach { it.toFile().deleteRecursively() }
+    }
 
     @Test
     fun appendJsonLineAtomicallyWritesOneJsonPerLine() {

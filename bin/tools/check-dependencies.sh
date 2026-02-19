@@ -9,6 +9,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 REPORT_DIR="$PROJECT_ROOT/target/dependency-reports"
 
+MVN_LOG_FLAGS="-Dorg.slf4j.simpleLogger.defaultLogLevel=warn"
+VERSIONS_LOG_FLAGS="-Dorg.slf4j.simpleLogger.log.org.codehaus.mojo.versions=info"
+DEPENDENCY_LOG_FLAGS="-Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.dependency=info"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -60,7 +64,7 @@ echo -e "${GREEN}✓ Maven command: $MVN_CMD${NC}"
 # 1. Check for dependency updates
 print_header "1. Checking for Dependency Updates"
 echo "Generating dependency update report..."
-$MVN_CMD versions:display-dependency-updates -q > "$REPORT_DIR/dependency-updates.txt" 2>&1 || true
+$MVN_CMD versions:display-dependency-updates $MVN_LOG_FLAGS $VERSIONS_LOG_FLAGS -Dversions.outputFile="$REPORT_DIR/dependency-updates.txt" > /dev/null 2>&1 || true
 
 if grep -q "No dependencies in Dependencies" "$REPORT_DIR/dependency-updates.txt"; then
     echo -e "${GREEN}✓ All dependencies are up to date${NC}"
@@ -74,7 +78,7 @@ fi
 # 2. Check for plugin updates
 print_header "2. Checking for Plugin Updates"
 echo "Generating plugin update report..."
-$MVN_CMD versions:display-plugin-updates -q > "$REPORT_DIR/plugin-updates.txt" 2>&1 || true
+$MVN_CMD versions:display-plugin-updates $MVN_LOG_FLAGS $VERSIONS_LOG_FLAGS -Dversions.outputFile="$REPORT_DIR/plugin-updates.txt" > /dev/null 2>&1 || true
 
 if grep -q "All plugins have a version specified" "$REPORT_DIR/plugin-updates.txt" || \
    grep -q "All plugins with a version specified are using the latest versions" "$REPORT_DIR/plugin-updates.txt"; then
@@ -86,13 +90,13 @@ fi
 # 3. Check for property updates
 print_header "3. Checking for Property Updates"
 echo "Generating property update report..."
-$MVN_CMD versions:display-property-updates -q > "$REPORT_DIR/property-updates.txt" 2>&1 || true
+$MVN_CMD versions:display-property-updates $MVN_LOG_FLAGS $VERSIONS_LOG_FLAGS -Dversions.outputFile="$REPORT_DIR/property-updates.txt" > /dev/null 2>&1 || true
 echo -e "${GREEN}✓ Report generated: $REPORT_DIR/property-updates.txt${NC}"
 
 # 4. Analyze dependencies
 print_header "4. Analyzing Dependency Usage"
 echo "Analyzing declared dependencies..."
-$MVN_CMD dependency:analyze -q > "$REPORT_DIR/dependency-analysis.txt" 2>&1 || true
+$MVN_CMD dependency:analyze $MVN_LOG_FLAGS $DEPENDENCY_LOG_FLAGS -DscriptableOutput=true > "$REPORT_DIR/dependency-analysis.txt" 2>&1 || true
 
 if grep -q "Used undeclared dependencies" "$REPORT_DIR/dependency-analysis.txt"; then
     echo -e "${YELLOW}⚠ Found used undeclared dependencies${NC}"
@@ -107,7 +111,8 @@ echo -e "${GREEN}✓ Analysis complete. See: $REPORT_DIR/dependency-analysis.txt
 # 5. Check for duplicate dependencies
 print_header "5. Checking for Duplicate Dependencies"
 echo "Generating dependency tree..."
-$MVN_CMD dependency:tree -q > "$REPORT_DIR/dependency-tree.txt" 2>&1 || true
+rm -f "$REPORT_DIR/dependency-tree.txt"
+$MVN_CMD dependency:tree $MVN_LOG_FLAGS $DEPENDENCY_LOG_FLAGS -DoutputFile="$REPORT_DIR/dependency-tree.txt" -DappendOutput=true > /dev/null 2>&1 || true
 
 # Look for version conflicts
 if grep -q "omitted for conflict" "$REPORT_DIR/dependency-tree.txt"; then
@@ -126,7 +131,7 @@ if [ "$1" == "--full" ]; then
     echo "Running OWASP Dependency Check (this may take several minutes)..."
     echo -e "${YELLOW}Note: First run will download CVE database${NC}"
     
-    if $MVN_CMD dependency-check:check -q > "$REPORT_DIR/security-check.log" 2>&1; then
+    if $MVN_CMD dependency-check:check $MVN_LOG_FLAGS > "$REPORT_DIR/security-check.log" 2>&1; then
         echo -e "${GREEN}✓ No high severity vulnerabilities found${NC}"
     else
         echo -e "${RED}✗ Security vulnerabilities detected!${NC}"
