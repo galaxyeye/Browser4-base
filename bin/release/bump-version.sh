@@ -33,7 +33,7 @@ fi
 
 # Find the project root directory
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-APP_HOME=$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel)
+repoRoot=$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel)
 
 if [ -z "$repoRoot" ]; then
     echo "Error: Could not determine project root. Make sure you are in a git repository."

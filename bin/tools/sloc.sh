@@ -1,12 +1,12 @@
 #bin
 
 # Find the first parent directory that contains a pom.xml file
-APP_HOME=$(cd "$(dirname "$0")">/dev/null || exit; pwd)
+repoRoot=$(cd "$(dirname "$0")">/dev/null || exit; pwd)
 while [[ "$repoRoot" != "/" ]]; do
   if [[ -f "$repoRoot/pom.xml" ]]; then
     break
   fi
-  APP_HOME=$(dirname "$repoRoot")
+  repoRoot=$(dirname "$repoRoot")
 done
 
 cd "$repoRoot" || exit

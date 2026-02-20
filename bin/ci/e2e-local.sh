@@ -3,9 +3,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_HOME="$SCRIPT_DIR"
+repoRoot="$SCRIPT_DIR"
 while [[ "$repoRoot" != "/" && ! -f "$repoRoot/VERSION" ]]; do
-  APP_HOME="$(dirname "$repoRoot")"
+  repoRoot="$(dirname "$repoRoot")"
 done
 [[ -f "$repoRoot/VERSION" ]] || { echo "VERSION file not found"; exit 1; }
 cd "$repoRoot"

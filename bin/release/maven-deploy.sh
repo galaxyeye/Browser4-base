@@ -1,9 +1,9 @@
 #bin
 
 
-APP_HOME=$(cd "$(dirname "$0")">/dev/null || exit; pwd)
+repoRoot=$(cd "$(dirname "$0")">/dev/null || exit; pwd)
 while [[ ! -f "$repoRoot/VERSION" && "$repoRoot" != "/" ]]; do
-  APP_HOME=$(dirname "$repoRoot")
+  repoRoot=$(dirname "$repoRoot")
 done
 [[ -f "$repoRoot/VERSION" ]] && cd "$repoRoot" || exit
 

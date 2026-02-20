@@ -2,9 +2,9 @@
 
 
 BIN=$(dirname "$0")
-APP_HOME=$(realpath "$BIN/..")
+repoRoot=$(realpath "$BIN/..")
 while [[ ! -f "$repoRoot/VERSION" && "$repoRoot" != "/" ]]; do
-  APP_HOME=$(dirname "$repoRoot")
+  repoRoot=$(dirname "$repoRoot")
 done
 [[ -f "$repoRoot/VERSION" ]] || exit 1
 

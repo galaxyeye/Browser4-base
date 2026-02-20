@@ -42,14 +42,14 @@ done
 
 # 🔍 Find the first parent directory containing the VERSION file
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-APP_HOME="$SCRIPT_DIR/.."
+repoRoot="$SCRIPT_DIR/.."
 
 while [[ ! -f "$repoRoot/VERSION" ]]; do
     if [[ "$repoRoot" == "/" ]]; then
         echo "❌ VERSION file not found in any parent directory"
         exit 1
     fi
-    APP_HOME="$(dirname "$repoRoot")"
+    repoRoot="$(dirname "$repoRoot")"
 done
 
 if [[ "$VERBOSE" == true ]]; then

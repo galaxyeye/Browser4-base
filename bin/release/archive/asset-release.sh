@@ -29,9 +29,9 @@ done
 
 # Find the first parent directory containing the VERSION file
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_HOME="$SCRIPT_DIR"
+repoRoot="$SCRIPT_DIR"
 while [[ ! -f "$repoRoot/VERSION" && "$repoRoot" != "/" ]]; do
-  APP_HOME="$(dirname "$repoRoot")"
+  repoRoot="$(dirname "$repoRoot")"
 done
 
 if [[ ! -f "$repoRoot/VERSION" ]]; then
