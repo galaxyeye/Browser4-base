@@ -1,6 +1,7 @@
 package ai.platon.pulsar.common
 
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -10,7 +11,7 @@ import kotlin.test.assertEquals
 class StringsKtTest {
 
     @Test
-        @DisplayName("test readableClassName with KClass object")
+    @DisplayName("test readableClassName with KClass object")
     fun testReadableclassnameWithKclassObject() {
         val kclass = KStringsTest::class
         val result = readableClassName(kclass)
@@ -18,7 +19,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test readableClassName with Companion object")
+    @DisplayName("test readableClassName with Companion object")
     fun testReadableclassnameWithCompanionObject() {
         val obj = TestCompanion
         val result = readableClassName(obj)
@@ -26,7 +27,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test readableClassName with nested class")
+    @DisplayName("test readableClassName with nested class")
     fun testReadableclassnameWithNestedClass() {
         val obj = TestNestedClass()
         val result = readableClassName(obj)
@@ -34,7 +35,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test prependReadableClassName with whitespace ident")
+    @DisplayName("test prependReadableClassName with whitespace ident")
     fun testPrependreadableclassnameWithWhitespaceIdent() {
         val obj = KStringsTest()
         val ident = "   "
@@ -44,7 +45,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test stringifyException with prefix")
+    @DisplayName("test stringifyException with prefix")
     fun testStringifyexceptionWithPrefix() {
         val exception = RuntimeException("Test exception")
         val prefix = "ERROR: "
@@ -54,7 +55,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test stringifyException with postfix")
+    @DisplayName("test stringifyException with postfix")
     fun testStringifyexceptionWithPostfix() {
         val exception = RuntimeException("Test exception")
         val postfix = " [END]"
@@ -64,7 +65,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test stringifyException with both prefix and postfix")
+    @DisplayName("test stringifyException with both prefix and postfix")
     fun testStringifyexceptionWithBothPrefixAndPostfix() {
         val exception = RuntimeException("Test exception")
         val prefix = "ERROR: "
@@ -76,7 +77,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test stringifyException with nested exception")
+    @DisplayName("test stringifyException with nested exception")
     fun testStringifyexceptionWithNestedException() {
         val innerException = IllegalArgumentException("Inner exception")
         val outerException = RuntimeException("Outer exception", innerException)
@@ -87,7 +88,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with simple message")
+    @DisplayName("test simplifyException with simple message")
     fun testSimplifyexceptionWithSimpleMessage() {
         val exception = RuntimeException("Simple error message")
         val result = simplifyException(exception)
@@ -95,7 +96,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with multiline message")
+    @DisplayName("test simplifyException with multiline message")
     fun testSimplifyexceptionWithMultilineMessage() {
         val exception = RuntimeException("First line\nSecond line")
         val result = simplifyException(exception)
@@ -103,7 +104,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with three line message")
+    @DisplayName("test simplifyException with three line message")
     fun testSimplifyexceptionWithThreeLineMessage() {
         val exception = RuntimeException("First line\nSecond line\nThird line")
         val result = simplifyException(exception)
@@ -111,7 +112,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with prefix")
+    @DisplayName("test simplifyException with prefix")
     fun testSimplifyexceptionWithPrefix() {
         val exception = RuntimeException("Error message")
         val prefix = "ALERT: "
@@ -120,7 +121,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with postfix")
+    @DisplayName("test simplifyException with postfix")
     fun testSimplifyexceptionWithPostfix() {
         val exception = RuntimeException("Error message")
         val postfix = " (handled)"
@@ -129,7 +130,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with both prefix and postfix")
+    @DisplayName("test simplifyException with both prefix and postfix")
     fun testSimplifyexceptionWithBothPrefixAndPostfix() {
         val exception = RuntimeException("Error message")
         val prefix = "ALERT: "
@@ -139,7 +140,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test readableClassName with very long class name")
+    @DisplayName("test readableClassName with very long class name")
     fun testReadableclassnameWithVeryLongClassName() {
         val obj = TestVeryLongClassNameThatGoesOnAndOn()
         val result = readableClassName(obj, maxPartCount = 5)
@@ -148,7 +149,7 @@ class StringsKtTest {
 
     @ParameterizedTest
     @ValueSource(strings = [".", "-", "_", "/", "|", "::"])
-        @DisplayName("test prependReadableClassName with various separators")
+    @DisplayName("test prependReadableClassName with various separators")
     fun testPrependreadableclassnameWithVariousSeparators(separator: String) {
         val obj = KStringsTest()
         val name = "testName"
@@ -158,7 +159,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test stringifyException with IOException")
+    @DisplayName("test stringifyException with IOException")
     fun testStringifyexceptionWithIoexception() {
         val exception = IOException("File not found")
         val result = stringifyException(exception)
@@ -167,7 +168,7 @@ class StringsKtTest {
     }
 
     @Test
-        @DisplayName("test simplifyException with IOException")
+    @DisplayName("test simplifyException with IOException")
     fun testSimplifyexceptionWithIoexception() {
         val exception = IOException("File not found")
         val result = simplifyException(exception)

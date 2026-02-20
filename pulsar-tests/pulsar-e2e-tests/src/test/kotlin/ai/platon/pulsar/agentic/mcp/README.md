@@ -30,7 +30,7 @@ The tests in the `pulsar-tests` module are skipped by default because they are t
 
 ### Run a specific test method
 ```bash
-./mvnw -pl pulsar-tests test -Dtest="MCPToolExecutorE2ETest#test server is accessible via HTTP" -DrunITs=true
+./mvnw -pl pulsar-tests test -Dtest="MCPToolExecutorE2ETest#testServerIsAccessibleViaHttp" -DrunITs=true
 ```
 
 ### Run all tests with MCP tag

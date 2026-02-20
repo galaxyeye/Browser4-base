@@ -9,7 +9,6 @@ import kotlinx.coroutines.delay
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.concurrent.ConcurrentHashMap
-import org.junit.jupiter.api.DisplayName
 
 /**
  * End-to-end test for skill registration and invocation.
@@ -71,8 +70,8 @@ class SkillRegistrationAndInvocationE2ETest {
     }
 
     @Test
-    suspend  @DisplayName("test skill registration and invocation through agent")
- fun testSkillRegistrationAndInvocationThroughAgent() {
+    @DisplayName("test skill registration and invocation through agent")
+    suspend fun testSkillRegistrationAndInvocationThroughAgent() {
         val session = AgenticContexts.getOrCreateSession()
         val driver = session.createBoundDriver()
         val agent = session.companionAgent
@@ -109,16 +108,20 @@ class SkillRegistrationAndInvocationE2ETest {
             if (toolCall != null && isSkillRelatedToolCall(toolCall)) toolCall else null
         }
 
-        assertTrue(skillRelatedToolCalls.isNotEmpty(),
+        assertTrue(
+            skillRelatedToolCalls.isNotEmpty(),
             "At least one ActionDescription should have a skill-related toolCall. " +
-            "Found ${actionDescriptions.size} ActionDescriptions, " +
-            "but none had skill-related toolCalls.")
+                    "Found ${actionDescriptions.size} ActionDescriptions, " +
+                    "but none had skill-related toolCalls."
+        )
 
         // Additional verification: ensure the toolCall has the expected domain
         val hasCorrectDomain = skillRelatedToolCalls.any { it.domain.startsWith("skill") }
-        assertTrue(hasCorrectDomain,
+        assertTrue(
+            hasCorrectDomain,
             "At least one skill toolCall should have domain starting with 'skill'. " +
-            "Found domains: ${skillRelatedToolCalls.map { it.domain }}")
+                    "Found domains: ${skillRelatedToolCalls.map { it.domain }}"
+        )
     }
 
     /**
@@ -129,6 +132,6 @@ class SkillRegistrationAndInvocationE2ETest {
      */
     private fun isSkillRelatedToolCall(toolCall: ToolCall): Boolean {
         return toolCall.domain.startsWith("skill") ||
-               toolCall.domain.contains("skill.debug.scraping")
+                toolCall.domain.contains("skill.debug.scraping")
     }
 }

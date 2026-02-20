@@ -1,17 +1,19 @@
 package ai.platon.pulsar.common.code
 
+import ai.platon.pulsar.common.getLogger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.notExists
-import kotlin.jvm.optionals.getOrNull
+import kotlin.io.path.walk
 
 /**
  * A utility class for project-related operations, such as locating the project root directory
  * or finding specific files within the project structure.
  */
 object ProjectUtils {
+    private val logger = getLogger(this)
 
     const val CODE_MIRROR_DIR = "code-mirror"
 
@@ -48,6 +50,10 @@ object ProjectUtils {
             projectRootDir = projectRootDir.parent
         }
 
+        if (projectRootDir == null) {
+            logger.warn("Project root directory not found. Please ensure you are running within a project structure containing a VERSION file.")
+        }
+
         return projectRootDir
     }
 
@@ -65,27 +71,53 @@ object ProjectUtils {
     /**
      * Walks through the directory tree starting from the specified base directory to find a file with the given name.
      *
+     * Excludes any files located in "target" and "build" directories to avoid unnecessary processing of build artifacts.
+     *
+     * This method works only when running in an environment where the project structure is accessible (i.e., not in a JAR environment). If the project root directory cannot be found, it returns an empty list.
+
      * @param fileName The name of the file to find.
      * @param baseDir The directory to start the search from.
-     * @return The path to the file if found, otherwise null.
+     * @return The list of paths to the files that match the specified name, excluding those in "target" and "build" directories.
      */
-    fun walkToFindFile(fileName: String, baseDir: Path): Path? {
+    fun walkToFindFiles(fileName: String, baseDir: Path): List<Path> {
         return Files.walk(baseDir)
             .filter { it.fileName.toString() == fileName }
             .filter { !it.toString().contains("/target/") && !it.toString().contains("/build/") }
-            .findFirst().getOrNull()
+            .toList()
     }
 
     /**
      * Finds the project root directory and then searches for a file with the specified name within the project structure.
      *
+     * Excludes any files located in "target" and "build" directories to avoid unnecessary processing of build artifacts.
+     *
+     * This method works only when running in an environment where the project structure is accessible (i.e., not in a JAR environment). If the project root directory cannot be found, it returns an empty list.
+     *
      * @param fileName The name of the file to find.
-     * @return The path to the file if found, otherwise null.
+     * @return The list of paths to the files that match the specified name, or null if the project root directory is not found.
      */
-    fun findFile(fileName: String): Path? {
+    fun findFiles(fileName: String): List<Path> {
         val projectRootDir = findProjectRootDir()
         return if (projectRootDir != null) {
-            walkToFindFile(fileName, projectRootDir)
-        } else null
+            walkToFindFiles(fileName, projectRootDir)
+        } else emptyList()
+    }
+
+    /**
+     * Finds the project root directory and then searches for a file with the specified name within the project structure.
+     *
+     * Excludes any files located in "target" and "build" directories to avoid unnecessary processing of build artifacts.
+     *
+     * This method works only when running in an environment where the project structure is accessible (i.e., not in a JAR environment). If the project root directory cannot be found, it returns an empty list.
+     *
+     * @param fileName The name of the file to find.
+     * @return The list of paths to the files that match the specified name, or null if the project root directory is not found.
+     */
+    fun findFiles(moduleName: String, fileName: String): List<Path> {
+        val projectRootDir = findProjectRootDir() ?: return emptyList()
+        val moduleRootDir = Files.walk(projectRootDir).filter { it.fileName.toString() == moduleName }.toList()
+        return if (moduleRootDir.isNotEmpty()) {
+            walkToFindFiles(fileName, moduleRootDir.first())
+        } else emptyList()
     }
 }

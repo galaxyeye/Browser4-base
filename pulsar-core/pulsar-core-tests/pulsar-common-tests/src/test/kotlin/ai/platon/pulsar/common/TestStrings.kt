@@ -1,7 +1,7 @@
 package ai.platon.pulsar.common
 
 import org.apache.commons.lang3.StringUtils
-import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.DisplayName
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -24,7 +24,7 @@ class TestStrings {
     }
 
     @Test
-        @DisplayName("Urls match regexes")
+    @DisplayName("Urls match regexes")
     fun urlsMatchRegexes() {
         assertTrue { "http://amazon.com/b/ref=dp_bc_aui_C_3&node=17874225011".contains("&node=\\d+".toRegex()) }
         assertTrue { "http://amazon.com/a/reviews/123".contains("/reviews/".toRegex()) }

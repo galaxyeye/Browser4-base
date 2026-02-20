@@ -4,14 +4,15 @@ import ai.platon.pulsar.agentic.tools.specs.SourceCodeToToolCallSpec
 import ai.platon.pulsar.skeleton.common.llm.LLMUtils
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 
 class SourceCodeToToolCallTest {
     @Test
-        @DisplayName("extract methods from WebDriver resource")
+    @DisplayName("extract methods from WebDriver resource")
     fun extractMethodsFromWebdriverResource() {
-        val sourceCode = LLMUtils.readSourceFileFromResource("WebDriver.kt")
+        val sourceCode =
+            LLMUtils.readSourceFileFromResource("WebDriver.kt")
         val tools = SourceCodeToToolCallSpec.extractInterface("driver", sourceCode, "WebDriver")
         assertTrue(tools.isNotEmpty(), "Tool list should not be empty")
         val click = tools.firstOrNull { it.domain == "driver" && it.method == "click" }

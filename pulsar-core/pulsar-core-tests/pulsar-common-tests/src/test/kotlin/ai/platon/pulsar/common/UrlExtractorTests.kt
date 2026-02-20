@@ -2,6 +2,7 @@ package ai.platon.pulsar.common
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -27,7 +28,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract should return first URL from line")
+    @DisplayName("extract should return first URL from line")
     fun extractShouldReturnFirstUrlFromLine() {
         val urlExtractor = UrlExtractor()
         val line = "Check out this link: http://example.com and this one: https://another-example.com"
@@ -36,7 +37,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract should return null if no URL found in line")
+    @DisplayName("extract should return null if no URL found in line")
     fun extractShouldReturnNullIfNoUrlFoundInLine() {
         val urlExtractor = UrlExtractor()
         val line = "No URLs here"
@@ -45,7 +46,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extractTo should add all URLs from line to set")
+    @DisplayName("extractTo should add all URLs from line to set")
     fun extracttoShouldAddAllUrlsFromLineToSet() {
         val urlExtractor = UrlExtractor()
         val line = "Check out these links: http://example.com and https://another-example.com"
@@ -55,7 +56,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extractTo should not add anything to set if no URL found in line")
+    @DisplayName("extractTo should not add anything to set if no URL found in line")
     fun extracttoShouldNotAddAnythingToSetIfNoUrlFoundInLine() {
         val urlExtractor = UrlExtractor()
         val line = "No URLs here"
@@ -65,7 +66,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract from file with URLs should extract URLs")
+    @DisplayName("extract from file with URLs should extract URLs")
     fun extractFromFileWithUrlsShouldExtractUrls() {
         Files.write(tempFile, "http://example.com\nhttps://another-example.com".toByteArray())
         val urls = LinkExtractors.fromFile(tempFile)
@@ -73,7 +74,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract from non-existent file should return empty set")
+    @DisplayName("extract from non-existent file should return empty set")
     fun extractFromNonExistentFileShouldReturnEmptySet() {
         val nonExistentFile = Paths.get("non_existent_file.txt")
         val urls = LinkExtractors.fromFile(nonExistentFile)
@@ -81,7 +82,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract from directory with files containing URLs should extract URLs")
+    @DisplayName("extract from directory with files containing URLs should extract URLs")
     fun extractFromDirectoryWithFilesContainingUrlsShouldExtractUrls() {
         val file1 = Files.createTempFile(tempDir, "file1", ".txt")
         val file2 = Files.createTempFile(tempDir, "file2", ".txt")
@@ -93,7 +94,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract from non-existent directory should return empty set")
+    @DisplayName("extract from non-existent directory should return empty set")
     fun extractFromNonExistentDirectoryShouldReturnEmptySet() {
         val nonExistentDir = Paths.get("non_existent_dir")
         val urls = LinkExtractors.fromDirectory(nonExistentDir)
@@ -101,7 +102,7 @@ class UrlExtractorTests {
     }
 
     @Test
-        @DisplayName("extract and filter then return filtered URLs")
+    @DisplayName("extract and filter then return filtered URLs")
     fun extractAndFilterThenReturnFilteredUrls() {
         val urlExtractor = UrlExtractor()
         val line = "Check out these links: http://example.com and https://amazon.com"

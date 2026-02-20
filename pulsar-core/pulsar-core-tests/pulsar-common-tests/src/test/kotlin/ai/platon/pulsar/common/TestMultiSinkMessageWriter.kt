@@ -1,5 +1,6 @@
 package ai.platon.pulsar.common
 
+import org.junit.jupiter.api.DisplayName
 import java.nio.file.Files
 import java.time.Duration
 import kotlin.test.Test
@@ -12,7 +13,7 @@ class TestMultiSinkMessageWriter {
     private val writer = MultiSinkMessageWriter()
 
     @Test
-        @DisplayName("When writer is idle then close it automatically")
+    @DisplayName("When writer is idle then close it automatically")
     fun whenWriterIsIdleThenCloseItAutomatically() {
         IntRange(1, 10).forEach { i ->
             writer.write("hello world", "hello.$i.txt")

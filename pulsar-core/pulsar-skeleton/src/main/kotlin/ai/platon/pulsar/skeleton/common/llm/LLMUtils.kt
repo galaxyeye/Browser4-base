@@ -16,22 +16,22 @@ object LLMUtils {
             return
         }
 
-        val file = ProjectUtils.findFile(filename) ?: throw FileNotFoundException(filename)
+        val file = ProjectUtils.findFiles("pulsar-core", filename).firstOrNull() ?: throw FileNotFoundException(filename)
         ProjectUtils.copySourceFileAsCodeResource(file)
     }
 
-    fun readSourceFileFromResource(fileName: String): String {
-        copySourceFileAsResource(fileName)
+    fun readSourceFileFromResource(resource: String): String {
+        copySourceFileAsResource(resource)
 
-        val resource = "$CODE_MIRROR_DIR/$fileName.txt"
+        val resource = "$CODE_MIRROR_DIR/$resource.txt"
         return when {
             ResourceLoader.exists(resource) -> ResourceLoader.readString(resource)
-            else -> ResourceLoader.readString("$CODE_MIRROR_DIR/$fileName") // fallback
+            else -> ResourceLoader.readString("$CODE_MIRROR_DIR/$resource") // fallback
         }
     }
 
     fun writeAsResource(fileName: String, content: String): Path? {
-        val baseDir = ProjectUtils.findFile(CODE_MIRROR_DIR) ?: return null
+        val baseDir = ProjectUtils.findFiles(CODE_MIRROR_DIR).firstOrNull() ?: return null
         if (baseDir.notExists()) {
             return null
         }

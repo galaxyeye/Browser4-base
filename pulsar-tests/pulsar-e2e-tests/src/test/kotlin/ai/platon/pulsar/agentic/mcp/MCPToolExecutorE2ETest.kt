@@ -3,10 +3,7 @@ package ai.platon.pulsar.agentic.mcp
 import ai.platon.pulsar.test.mcp.MockMCPServer
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -17,7 +14,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
 /**
  * End-to-end tests for MCP functionality.
@@ -95,7 +91,7 @@ class MCPToolExecutorE2ETest {
     // ========== Server Connectivity Tests ==========
 
     @Test
-        @DisplayName("test server is accessible via HTTP")
+    @DisplayName("test server is accessible via HTTP")
     fun testServerIsAccessibleViaHttp() {
         val info = getInfo()
         assertNotNull(info)
@@ -104,7 +100,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test server lists available tools")
+    @DisplayName("test server lists available tools")
     fun testServerListsAvailableTools() {
         val result = listTools()
         assertNotNull(result)
@@ -120,7 +116,7 @@ class MCPToolExecutorE2ETest {
     // ========== Tool Discovery Tests ==========
 
     @Test
-        @DisplayName("test tool discovery returns all available tools")
+    @DisplayName("test tool discovery returns all available tools")
     fun testToolDiscoveryReturnsAllAvailableTools() {
         val result = listTools()
 
@@ -142,7 +138,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test echo tool schema is correct")
+    @DisplayName("test echo tool schema is correct")
     fun testEchoToolSchemaIsCorrect() {
         val result = listTools()
 
@@ -154,8 +150,10 @@ class MCPToolExecutorE2ETest {
 
         @Suppress("UNCHECKED_CAST")
         val schema = echoTool["inputSchema"] as Map<String, Any>
+
         @Suppress("UNCHECKED_CAST")
         val properties = schema["properties"] as Map<String, Any>
+
         @Suppress("UNCHECKED_CAST")
         val required = schema["required"] as List<String>
 
@@ -166,7 +164,7 @@ class MCPToolExecutorE2ETest {
     // ========== Tool Execution Tests ==========
 
     @Test
-        @DisplayName("test echo tool execution via direct server call")
+    @DisplayName("test echo tool execution via direct server call")
     fun testEchoToolExecutionViaDirectServerCall() {
         val request = jacksonObjectMapper().createObjectNode().apply {
             put("name", "echo")
@@ -190,7 +188,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test add tool execution returns correct sum")
+    @DisplayName("test add tool execution returns correct sum")
     fun testAddToolExecutionReturnsCorrectSum() {
         val request = jacksonObjectMapper().createObjectNode().apply {
             put("name", "add")
@@ -212,7 +210,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test multiply tool execution returns correct product")
+    @DisplayName("test multiply tool execution returns correct product")
     fun testMultiplyToolExecutionReturnsCorrectProduct() {
         val request = jacksonObjectMapper().createObjectNode().apply {
             put("name", "multiply")
@@ -236,7 +234,7 @@ class MCPToolExecutorE2ETest {
     // ========== Error Handling Tests ==========
 
     @Test
-        @DisplayName("test calling non-existent tool throws exception")
+    @DisplayName("test calling non-existent tool throws exception")
     fun testCallingNonExistentToolThrowsException() {
         val request = jacksonObjectMapper().createObjectNode().apply {
             put("name", "non_existent_tool")
@@ -254,7 +252,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test calling tool with missing required argument returns error")
+    @DisplayName("test calling tool with missing required argument returns error")
     fun testCallingToolWithMissingRequiredArgumentReturnsError() {
         val request = jacksonObjectMapper().createObjectNode().apply {
             put("name", "echo")
@@ -272,7 +270,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test add tool with missing argument returns error")
+    @DisplayName("test add tool with missing argument returns error")
     fun testAddToolWithMissingArgumentReturnsError() {
         val request = jacksonObjectMapper().createObjectNode().apply {
             put("name", "add")
@@ -294,7 +292,7 @@ class MCPToolExecutorE2ETest {
     // ========== Sequential Operations Tests ==========
 
     @Test
-        @DisplayName("test multiple sequential tool calls maintain server state")
+    @DisplayName("test multiple sequential tool calls maintain server state")
     fun testMultipleSequentialToolCallsMaintainServerState() {
         // First call: echo
         var request = jacksonObjectMapper().createObjectNode().apply {
@@ -348,7 +346,7 @@ class MCPToolExecutorE2ETest {
     }
 
     @Test
-        @DisplayName("test mixed successful and failed calls maintain server stability")
+    @DisplayName("test mixed successful and failed calls maintain server stability")
     fun testMixedSuccessfulAndFailedCallsMaintainServerStability() {
         // Successful call
         var request = jacksonObjectMapper().createObjectNode().apply {
@@ -401,7 +399,7 @@ class MCPToolExecutorE2ETest {
     // ========== Network Communication Tests ==========
 
     @Test
-        @DisplayName("test cross-network communication via HTTP endpoints")
+    @DisplayName("test cross-network communication via HTTP endpoints")
     fun testCrossNetworkCommunicationViaHttpEndpoints() {
         // This test validates that the TestMCPServer is accessible over HTTP
         // and can handle requests across network boundaries
@@ -412,6 +410,7 @@ class MCPToolExecutorE2ETest {
 
         // List tools via HTTP
         val toolsList = listTools()
+
         @Suppress("UNCHECKED_CAST")
         val tools = toolsList["tools"] as List<Map<String, Any>>
         assertTrue(tools.isNotEmpty())

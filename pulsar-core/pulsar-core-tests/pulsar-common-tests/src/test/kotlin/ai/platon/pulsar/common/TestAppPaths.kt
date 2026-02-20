@@ -16,7 +16,6 @@
  */
 package ai.platon.pulsar.common
 
-import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.CapabilityTypes
 import org.apache.commons.lang3.SystemUtils
@@ -27,13 +26,14 @@ import java.nio.file.Paths
 import kotlin.random.Random
 import kotlin.test.*
 
-class TestAppPaths {
+class TestAppPaths() {
     private val tmpDirStr get() = AppPaths.TMP_DIR.toString()
     private val homeDirStr get() = AppPaths.DATA_DIR.toString()
 
     val home = SystemUtils.USER_HOME
     val tmp = SystemUtils.JAVA_IO_TMPDIR
     val appName = AppContext.APP_NAME
+
     /**
      * The application identifier, default is the current username.
      * */
@@ -131,7 +131,7 @@ class TestAppPaths {
         var i = 0
         val n = 50
 
-        while(i++ < n) {
+        while (i++ < n) {
             val filename = "" + Random.nextInt(10) + ".htm"
             val url = AppConstants.EXAMPLE_URL + "/$filename"
             val path = AppPaths.getTmpDirectory(AppPaths.fromUri(url))
@@ -163,8 +163,6 @@ class TestAppPaths {
         assertEquals("localhost", AppPaths.fromHost("https://localhost/a/b/c?t=1&k=2#domain"))
         assertEquals("baidu-com", AppPaths.fromHost("https://baidu.com/a/b/c?t=1&k=2#domain"))
     }
-
-
 
 
     @BeforeEach
@@ -242,7 +240,12 @@ class TestAppPaths {
     fun testMockPagePath() {
         val uri = "http://example.com/test"
         val path = AppPaths.mockPagePath(uri)
-        assertEquals(Paths.get(AppPaths.LOCAL_TEST_WEB_PAGE_DIR.toString(), "example-com-44739ab8292f3d29beb6975ac3207e46.htm"), path)
+        assertEquals(
+            Paths.get(
+                AppPaths.LOCAL_TEST_WEB_PAGE_DIR.toString(),
+                "example-com-44739ab8292f3d29beb6975ac3207e46.htm"
+            ), path
+        )
     }
 
     @Test

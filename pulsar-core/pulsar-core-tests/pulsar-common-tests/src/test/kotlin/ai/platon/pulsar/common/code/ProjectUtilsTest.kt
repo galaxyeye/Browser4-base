@@ -42,34 +42,35 @@ class ProjectUtilsTest {
     }
 
     @Test
-    fun testWalkToFindFile(@TempDir tempDir: Path) {
+    fun testWalkToFindFiles(@TempDir tempDir: Path) {
         // Create a mock file
         val targetFile = tempDir.resolve("testFile.txt")
         Files.createFile(targetFile)
 
-        val foundFile = ProjectUtils.walkToFindFile("testFile.txt", tempDir)
-        assertNotNull(foundFile)
-        assertEquals(targetFile, foundFile)
+        val foundFiles = ProjectUtils.walkToFindFiles("testFile.txt", tempDir)
+        assertEquals(foundFiles.size, 1)
+        assertEquals(targetFile, foundFiles.first())
     }
 
     @Test
-    fun testFindFile() {
+    fun testFindFiles() {
         printlnPro("Project root dir:")
         printlnPro(ProjectUtils.findProjectRootDir())
         printlnPro("Current dir:")
         printlnPro(Paths.get(".").toAbsolutePath().normalize())
-        val foundFile = ProjectUtils.findFile("WebDriver.kt")
-        assertEquals("WebDriver.kt", foundFile?.fileName?.toString())
-        assertEquals("PulsarSession.kt", ProjectUtils.findFile("PulsarSession.kt")?.fileName?.toString())
+        val foundFiles = ProjectUtils.findFiles("pulsar-core", "WebDriver.kt")
+        assertEquals(foundFiles.size, 1)
+        assertEquals("WebDriver.kt", foundFiles.first().fileName?.toString())
+        assertEquals("PulsarSession.kt", ProjectUtils.findFiles("pulsar-core", "PulsarSession.kt").first().fileName?.toString())
     }
 
     @Test
-    fun testFindFileNotFound(@TempDir tempDir: Path) {
+    fun testFindFilesNotFound(@TempDir tempDir: Path) {
         // Create a mock project structure
         val versionFile = tempDir.resolve("VERSION")
         Files.createFile(versionFile)
 
-        val foundFile = ProjectUtils.findFile("nonExistentFile.txt")
-        assertNull(foundFile)
+        val foundFiles = ProjectUtils.findFiles("nonExistentFile.txt")
+        assertTrue { foundFiles.isEmpty() }
     }
 }

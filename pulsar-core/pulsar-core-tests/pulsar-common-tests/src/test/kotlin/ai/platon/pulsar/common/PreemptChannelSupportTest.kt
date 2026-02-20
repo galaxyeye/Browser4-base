@@ -1,11 +1,8 @@
 package ai.platon.pulsar.common
 
 import ai.platon.pulsar.common.concurrent.PreemptChannelSupport
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -21,7 +18,7 @@ class PreemptChannelSupportTest {
     }
 
     @Test
-        @DisplayName("test initial state")
+    @DisplayName("test initial state")
     fun testInitialState() {
         assertFalse(channel.isPreempted)
         assertTrue(channel.isNormal)
@@ -30,7 +27,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test preemptive task blocks normal tasks")
+    @DisplayName("test preemptive task blocks normal tasks")
     fun testPreemptiveTaskBlocksNormalTasks() {
         val latch = CountDownLatch(1)
         val normalTaskStarted = AtomicInteger(0)
@@ -68,7 +65,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test multiple preemptive tasks")
+    @DisplayName("test multiple preemptive tasks")
     fun testMultiplePreemptiveTasks() {
         val latch = CountDownLatch(2)
         val results = ConcurrentLinkedDeque<String>()
@@ -95,7 +92,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test releaseLocks")
+    @DisplayName("test releaseLocks")
     fun testReleaselocks() {
         val latch = CountDownLatch(1)
         var normalTaskCompleted = false
@@ -130,7 +127,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test concurrent normal tasks")
+    @DisplayName("test concurrent normal tasks")
     fun testConcurrentNormalTasks() {
         val latch = CountDownLatch(3)
         val results = ConcurrentLinkedDeque<String>()
@@ -158,7 +155,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test preemptive task with exception")
+    @DisplayName("test preemptive task with exception")
     fun testPreemptiveTaskWithException() {
         val exception = assertThrows<RuntimeException> {
             channel.preempt {
@@ -172,7 +169,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test normal task with exception")
+    @DisplayName("test normal task with exception")
     fun testNormalTaskWithException() {
         val exception = assertThrows<RuntimeException> {
             channel.whenNormal {
@@ -186,7 +183,7 @@ class PreemptChannelSupportTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-        @DisplayName("test mixed preemptive and normal tasks")
+    @DisplayName("test mixed preemptive and normal tasks")
     fun testMixedPreemptiveAndNormalTasks() {
         val latch = CountDownLatch(4)
         val results = ConcurrentLinkedDeque<String>()
