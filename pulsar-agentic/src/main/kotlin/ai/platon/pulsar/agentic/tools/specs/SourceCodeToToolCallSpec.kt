@@ -13,7 +13,7 @@ object SourceCodeToToolCallSpec {
     val perceptiveAgentToolCallList = mutableListOf<ToolSpec>()
 
     init {
-        var sourceCode = LLMUtils.readSourceFileFromResource("ai/platon/pulsar/skeleton/crawl/fetch/driver/WebDriver.kt")
+        var sourceCode = LLMUtils.readSourceFileFromResource("WebDriver.kt")
         extractInterface("driver", sourceCode, "WebDriver").toCollection(webDriverToolCallList)
 
         sourceCode = LLMUtils.readSourceFileFromResource("PerceptiveAgent.kt")
