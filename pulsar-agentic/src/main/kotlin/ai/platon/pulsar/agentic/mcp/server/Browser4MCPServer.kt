@@ -57,7 +57,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * @param driver The [WebDriver] instance that will execute browser actions.
  * @param serverInfo MCP server identification (name and version).
  */
-class Browser4DemoMCPServer(
+class Browser4MCPServer(
     private val driver: WebDriver,
     serverInfo: Implementation = Implementation(name = "browser4-mcp-server", version = "1.0.0"),
 ) {
