@@ -1,79 +1,127 @@
 # Scripts
 
-This directory contains scripts for building, running, and testing Browser4.
+This directory contains scripts for building, running, testing, and maintaining Browser4.
 
 ## Root Scripts
 
-### build.ps1, build.sh
+### `browser4.ps1`, `browser4.sh`
 
-Build the project.
+Start the Browser4 server (Agentic Service).
+- Copies the built artifact from `browser4/browser4-agents/target/` to the root `target/` directory.
+- Runs the application using `java -jar`.
+- **Note:** You must build the project first (e.g., using `build` or `build-run`).
 
-Options:
-- `-clean`: Clean before building
-- `-test`: Run tests (tests are skipped by default)
+### `build.ps1`, `build.sh`
 
-### build-run.ps1, build-run.sh
+Build the project using Maven.
+- Defaults to `mvnw install -DskipTests`.
+- Options:
+    - `-clean`: Run `mvn clean` before building.
+    - `-test`: Enable tests (skips tests by default).
+- Accepts standard Maven arguments (e.g., `-pl`, `-am`).
 
-Build and run the project.
+### `build-run.ps1`, `build-run.sh`
 
-### browser4.ps1, browser4.sh
+Build the project and then start the Browser4 server.
+- Combines `build` and `browser4` scripts.
 
-Start the Browser4 server.
+### `open-chrome.ps1`, `open-chrome.sh`
 
-### command-sse.ps1, command-sse.sh
+Launch Google Chrome with a dedicated user data directory for Browser4.
+- **Default**: Compiles and runs `ai.platon.pulsar.tools.OpenChromeKt` using Maven.
+- **Fallback**: Launches Chrome executable directly if the Kotlin launcher fails.
+- **`--native`** (Unix) / **`-Native`** (Windows): Force native Chrome launch immediately.
+- Useful for debugging or maintaining a persistent browser session (`~/.browser4/browser/chrome/default/pulsar_chrome`).
 
-SSE client to connect to the server.
+### `run-examples.ps1`
 
-### run-examples.ps1
+Run Browser4 examples (`ai.platon.pulsar.examples.agent.Browser4AgentKt`).
+- Requires the project to be built or will attempt to run using `mvnw exec:java`.
 
-Run Browser4 examples.
+### `test.ps1`, `test.sh`
 
-### version.ps1, version.sh
+Comprehensive test runner for the project. Supports various test suites and SDKs.
+
+**Usage:**
+```bash
+./bin/test.sh [test-types...] [maven-args...]
+```
+
+**Test Types:**
+- `fast`: Run fast unit tests (default)
+- `it`: Run integration tests
+- `e2e`: Run end-to-end tests
+- `core`: Run core module supplementary tests
+- `rest`: Run REST module tests
+- `skills`: Run skills module tests
+- `mcp`: Run MCP module tests
+- `browser4`: Run all Browser4 main tests (`fast`, `core`, `rest`, `it`, `e2e`)
+- `kotlin-sdk`: Run Kotlin SDK tests
+- `python-sdk`: Run Python SDK tests
+- `nodejs-sdk`: Run NodeJS SDK tests
+
+**Examples:**
+```bash
+./bin/test.sh fast                       # Run unit tests
+./bin/test.sh it                         # Run integration tests
+./bin/test.sh browser4                   # Run all main tests
+./bin/test.sh python-sdk                 # Run Python SDK tests
+```
+
+### `version.ps1`, `version.sh`
 
 Print the version of Browser4.
+- `version.sh`: Prints version from `VERSION` file.
+- `version.sh -v`: Prints version plus git hash, branch, and date.
 
-### seeds.txt
+### `seeds.txt`
 
-Seed URLs for testing Browser4.
+A text file containing seed URLs for testing or crawling.
 
 ## Subdirectories
 
-### ci/
+### `ci/`
 
 CI/CD related scripts for local and Docker builds.
+- `ci-local.ps1/sh`: Run CI checks locally.
+- `ci-docker-local.ps1/sh`: Run CI checks in Docker.
 
-### legacy/
+### `legacy/`
 
-Legacy scraping scripts:
-- `scrape.ps1`, `scrape.sh`, `scrape.bat` - Scrape a webpage using Browser4
-- `scrape-async.ps1`, `scrape-async.sh` - Scrape using async API
+Legacy scraping scripts (deprecated but preserved for reference).
+- `scrape.ps1/sh`: Scrape a webpage using Browser4.
+- `scrape-async.ps1/sh`: Scrape using async API.
 
-### python/
+### `python/`
 
 Python client scripts and examples.
 
-### quality/
+### `quality/`
 
-Code quality check scripts:
-- `check-links.py`, `check-links.sh`, `check-links.ps1` - Check documentation links for validity (internal paths and external connectivity)
-- `quality-check.sh`, `quality-check.ps1` - Overall quality checks
+Code quality check scripts.
+- `check-links.sh/ps1`: Check documentation links for validity.
+- `quality-check.sh/ps1`: Run overall quality checks.
+- See `quality/README.md` for details.
 
-See [quality/README.md](quality/README.md) for detailed documentation on the link checker.
+### `release/`
 
-### release/
+Release management scripts.
+- Version bumping (`bump-version.ps1/sh`)
+- Creating release notes
+- Maven deployment
 
-Release management scripts (versioning, deployment, documentation).
+### `script-tests/`
 
-### script-tests/
+Tests for validating the scripts in this directory.
 
-Tests for validating scripts.
+### `tests/`
 
-### tests/
+End-to-end and integration test helper scripts.
+- `run-e2e-tests.sh`: Helper to run E2E tests.
 
-End-to-end and integration test scripts:
-- `run-e2e-test.ps1`, `run-e2e-tests.sh` - Run end-to-end tests (use `--suite main|agents|all`; default runs only `main`)
-- `run-test-cases.ps1`, `run-test-cases.sh` - Test using curl commands
+### `tools/`
 
-### tools/
-
-Utility scripts for development (code counting, cleanup, etc.).
+Utility scripts for development.
+- `install-depends.ps1/sh`: Install dependencies (like Chrome).
+- `kill-browsers.ps1/sh`: Kill lingering browser processes.
+- `cloc.sh`: Count lines of code.

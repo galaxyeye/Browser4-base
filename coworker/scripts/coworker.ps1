@@ -297,22 +297,71 @@ Copilot Execution Output:
             $stdOutLog = $copilotLogPath + ".stdout"
             $stdErrLog = $copilotLogPath + ".stderr"
 
+            Write-LogMessage "=== Starting Copilot execution ===" INFO
+
             # Execute Copilot tool with the task prompt
             # Capture both standard output and error output to separate files
             $process = Start-Process -FilePath "gh" -ArgumentList "copilot $copilotArgs" -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
 
             $runWaited = $false
-            try {
-                $null = Wait-Process -Id $process.Id -Timeout $copilotRunTimeoutSeconds -ErrorAction Stop
-                $runWaited = $true
-            } catch {
-                $runWaited = $false
+            $lastOutputLineCount = 0
+
+            # Monitor output in real-time while process is running
+            while (-not $process.HasExited) {
+                Start-Sleep -Milliseconds 500
+
+                # Check and display new stdout lines
+                if (Test-Path $stdOutLog) {
+                    $currentLines = @(Get-Content $stdOutLog -ErrorAction SilentlyContinue)
+                    $currentLineCount = $currentLines.Count
+                    if ($currentLineCount -gt $lastOutputLineCount) {
+                        $newLines = $currentLines[$lastOutputLineCount..($currentLineCount - 1)]
+                        foreach ($line in $newLines) {
+                            if (-not [string]::IsNullOrWhiteSpace($line)) {
+                                Write-Host $line
+                            }
+                        }
+                        $lastOutputLineCount = $currentLineCount
+                    }
+                }
+
+                # Check timeout
+                $elapsed = (Get-Date) - $process.StartTime
+                if ($elapsed.TotalSeconds -gt $copilotRunTimeoutSeconds) {
+                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                    Write-LogMessage "Copilot timed out after ${copilotRunTimeoutSeconds}s" WARN
+                    Write-Host "[TIMEOUT] Copilot execution exceeded ${copilotRunTimeoutSeconds}s timeout" -ForegroundColor Yellow
+                    break
+                }
             }
 
-            if (-not $runWaited -or -not $process.HasExited) {
-                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-                Write-LogMessage "Copilot timed out after ${copilotRunTimeoutSeconds}s" WARN
+            # Final output capture after process ends
+            if (Test-Path $stdOutLog) {
+                $remainingLines = @(Get-Content $stdOutLog -ErrorAction SilentlyContinue)
+                if ($remainingLines.Count -gt $lastOutputLineCount) {
+                    $newLines = $remainingLines[$lastOutputLineCount..($remainingLines.Count - 1)]
+                    foreach ($line in $newLines) {
+                        if (-not [string]::IsNullOrWhiteSpace($line)) {
+                            Write-Host $line
+                        }
+                    }
+                }
             }
+
+            # Capture stderr output and display to console
+            if (Test-Path $stdErrLog) {
+                $errContent = @(Get-Content $stdErrLog -ErrorAction SilentlyContinue)
+                if ($errContent) {
+                    Write-Host "`n[STDERR OUTPUT]" -ForegroundColor Yellow
+                    foreach ($line in $errContent) {
+                        if (-not [string]::IsNullOrWhiteSpace($line)) {
+                            Write-Host $line -ForegroundColor Yellow
+                        }
+                    }
+                }
+            }
+
+            $runWaited = $process.HasExited
 
             # Combine copilot stdout and stderr logs into the copilot-specific log
             # First append stdout if it exists
@@ -331,6 +380,7 @@ Copilot Execution Output:
             Remove-Item $stdErrLog -ErrorAction SilentlyContinue
 
             Write-LogMessage "Copilot execution finished with exit code $($process.ExitCode)" INFO
+            Write-LogMessage "=== Copilot execution completed ===" INFO
             Write-LogVerbose "Copilot external tool log: $copilotLogPath"
 
             # Append copilot result to task log

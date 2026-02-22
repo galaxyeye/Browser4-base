@@ -7,6 +7,11 @@ param (
 $repoRoot = (git rev-parse --show-toplevel 2>$null)
 Set-Location $repoRoot
 
+# Import common utility script
+. $repoRoot\bin\common\Util.ps1
+
+Fix-Encoding-UTF8
+
 if (-not $Native) {
     Write-Host "Launching OpenChrome.kt..."
 
