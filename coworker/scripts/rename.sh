@@ -53,11 +53,13 @@ generatedName=$(gh copilot -p "$namingPrompt" --allow-all-tools --allow-all-path
 # But sometimes LLMs are chatty.
 
 # Filter to get just the kebab-case line
-cleanedName=$(echo "$generatedName" | grep -E "^[a-z0-9]+(-[a-z0-9]+)+$" | head -n 1)
+cleanedName=$(echo "$generatedName" | grep -E "^[a-z0-9]+(-[a-z0-9]+)*$" | head -n 1)
 
 if [[ -z "$cleanedName" ]]; then
     # Fallback to simple cleaning of the output if regex didn't match perfectly
-    cleanedName=$(echo "$generatedName" | tr -d '\r' | head -n 1 | sed 's/[^a-zA-Z0-9-]/-/g' | sed 's/^-//;s/-$//')
+    # Take the first non-empty line
+    firstLine=$(echo "$generatedName" | grep -v '^[[:space:]]*$' | head -n 1)
+    cleanedName=$(echo "$firstLine" | tr -d '\r' | sed 's/[^a-zA-Z0-9-]/-/g' | sed 's/-\{2,\}/-/g' | sed 's/^-//;s/-$//')
 fi
 
 # If still empty or failed, fallback to safe title from filename

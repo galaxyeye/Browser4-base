@@ -19,8 +19,26 @@
 #   powershell -ExecutionPolicy Bypass -File coworker.ps1
 # ============================================================================
 
-# This allows the script to be run from any location within the project
+param(
+    [Parameter(Position=0)]
+    [string]$TaskFile
+)
+
+# Handle specified TaskFile
+if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
+    # Resolve full path before changing location
+    if (Test-Path $TaskFile) {
+        $TaskFile = Resolve-Path $TaskFile
+    }
+}
+
 $repoRoot = (git rev-parse --show-toplevel 2>$null)
+if (-not $repoRoot) {
+    $repoRoot = $PSScriptRoot
+    while ($repoRoot -and -not (Test-Path (Join-Path $repoRoot "ROOT.md"))) {
+        $repoRoot = Split-Path $repoRoot -Parent
+    }
+}
 Set-Location $repoRoot
 
 $tasksRoot = Join-Path $repoRoot "coworker\tasks"
@@ -42,6 +60,21 @@ $logsDir = $taskRoots[0].Logs
 foreach ($root in $taskRoots) {
     foreach ($dir in @($root.Created, $root.Working, $root.Finished, $root.Logs)) {
         if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
+    }
+}
+
+# Handle specified TaskFile
+if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
+    if (Test-Path $TaskFile) {
+        $fileItem = Get-Item $TaskFile
+        $createdDir = $taskRoots[0].Created
+        # Move directly to createdDir with original name
+        $destPath = Join-Path $createdDir $fileItem.Name
+        Move-Item -Path $fileItem.FullName -Destination $destPath -Force
+        Write-Host "Moved specified task file to: $destPath"
+    } else {
+        Write-Error "Specified task file not found: $TaskFile"
+        exit 1
     }
 }
 
@@ -216,40 +249,64 @@ foreach ($taskRoot in $taskRoots) {
 
     # Process each task file found in the created directory
     foreach ($file in $files) {
-        # 1. Move to working directory with a temporary name to mark as in-progress
-        $tempName = "processing-$($file.Name)"
-        $tempPath = Join-Path $workingDir $tempName
-        Move-Item -Path $file.FullName -Destination $tempPath -Force
-        Write-LogMessage "Moved to working (processing): $tempPath" INFO
-
-        # 2. Determine the descriptive name based on content
+        # 1. Determine the descriptive name based on content (while still in created dir)
         $renameScript = Join-Path $scriptsDir "rename.ps1"
         $descriptiveName = ""
-
+        
         # Read content for fallback title
-        $content = Get-Content -Path $tempPath -Raw
+        $content = Get-Content -Path $file.FullName -Raw
         $safeTitle = $file.BaseName -replace '[\\/*?:"<>|]', '_'
         if ([string]::IsNullOrWhiteSpace($safeTitle)) { $safeTitle = "task" }
 
+        # Check if the file needs renaming (numeric or generic names, or always rename?)
+        # User implies "numeric filenames are treated as random filenames... coworker needs to rename these"
+        # The current implementation attempts to rename ALL files using gh copilot via rename.ps1.
+        # This seems to cover the requirement "1.md, 2.md... are treated as random... rename these".
+        
         if (Test-Path $renameScript) {
             # Execute rename.ps1 script
-            $generatedName = & $renameScript -FilePath $tempPath
+            $generatedName = & $renameScript -FilePath $file.FullName
             if (-not [string]::IsNullOrWhiteSpace($generatedName) -and $generatedName -notmatch "Error") {
                 $descriptiveName = $generatedName
             }
+        } else {
+            # Fallback to internal function if rename.ps1 is missing
+            $descriptiveName = Get-TaskBaseName -Title $safeTitle -Description "Task from $($file.Name)" -Prompt $content -Fallback $safeTitle
         }
 
         if ([string]::IsNullOrWhiteSpace($descriptiveName)) {
              $descriptiveName = $safeTitle
         }
+        
+        # 2. Rename in place (in created dir) then Move to working directory
+        
+        # Only rename if the name is different
+        if ($descriptiveName -ne $file.BaseName) {
+            $renamedPath = Join-Path $createdDir "$descriptiveName$($file.Extension)"
+            if (Test-Path $renamedPath) {
+                 # Collision handling in created dir
+                 $counter = 2
+                 while (Test-Path (Join-Path $createdDir "$descriptiveName.$counter$($file.Extension)")) {
+                     $counter++
+                 }
+                 $renamedPath = Join-Path $createdDir "$descriptiveName.$counter$($file.Extension)"
+                 $descriptiveName = "$descriptiveName.$counter"
+            }
+            Move-Item -Path $file.FullName -Destination $renamedPath -Force
+            Write-LogMessage "Renamed in created: $($file.Name) -> $(Split-Path $renamedPath -Leaf)" INFO
+            
+            # Update $file to point to the new location for the next step (move to working)
+            $file = Get-Item $renamedPath
+        }
 
-        # 3. Rename the file in working directory to the descriptive name
-        $finalTaskInfo = Resolve-UniquePath -Directory $workingDir -BaseName $descriptiveName -Extension $file.Extension
+        # 3. Move to working directory
+        $finalTaskInfo = Resolve-UniquePath -Directory $workingDir -BaseName $file.BaseName -Extension $file.Extension
         $workingPath = $finalTaskInfo.Path
-        Move-Item -Path $tempPath -Destination $workingPath -Force
-        Write-LogMessage "Renamed to: $workingPath" INFO
+        
+        Move-Item -Path $file.FullName -Destination $workingPath -Force
+        Write-LogMessage "Moved to working: $workingPath" INFO
 
-        # 4. Parse content for execution (logging purposes)
+        # 3. Parse content for execution (logging purposes)
         $title = $descriptiveName
         $description = "Task from $($file.Name)"
         $prompt = $content

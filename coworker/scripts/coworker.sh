@@ -21,10 +21,14 @@
 # ============================================================================
 
 
+# Handle optional TaskFile argument
+taskFile="$1"
+
 # This allows the script to be run from any location within the project
 AppHome="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repoRoot="$AppHome"
 while [[ ! -f "$repoRoot/ROOT.md" ]] && [[ "$repoRoot" != "/" ]]; do
-    AppHome="$(dirname "$repoRoot")"
+    repoRoot="$(dirname "$repoRoot")"
 done
 
 cd "$repoRoot"
@@ -43,6 +47,19 @@ mkdir -p "$createdDir"
 mkdir -p "$workingDir"
 mkdir -p "$finishedDir"
 mkdir -p "$logsDir"
+
+# Handle specified TaskFile
+if [[ -n "$taskFile" ]]; then
+    if [[ -f "$taskFile" ]]; then
+        fileName=$(basename "$taskFile")
+        destPath="$createdDir/$fileName"
+        mv "$taskFile" "$destPath"
+        echo "Moved specified task file to: $destPath"
+    else
+        echo "Error: Specified task file not found: $taskFile" >&2
+        exit 1
+    fi
+fi
 
 # Initialize script-level logging
 # Main log file for all script output
@@ -104,20 +121,128 @@ for file in "$createdDir"/*; do
 
     log_message "Processing $(basename "$file")..." INFO
 
-    # 1. Move to working directory with a temporary name
-    # This ensures we 'claim' the task immediately
-    tempName="processing-$(basename "$file")"
-    tempPath="$workingDir/$tempName"
-
-    mv "$file" "$tempPath"
-    log_message "Moved to working (processing): $tempPath" INFO
+    # 1. Determine the descriptive name based on content
+    scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    renameScript="$scriptDir/rename.sh"
+    descriptiveName=""
 
     # Read content for basic info
-    content=$(cat "$tempPath")
-
-    # Initialize variables
+    content=$(cat "$file")
     title="$(basename "$file" | sed 's/\.[^.]*$//')"
     safeTitle=$(echo "$title" | sed 's/[\/\\*?:"<>|]/_/g')
+
+    chmod +x "$renameScript" 2>/dev/null
+
+        if [[ -f "$renameScript" && -x "$renameScript" ]]; then
+            # Execute rename.sh on the file in created dir
+            generatedName=$("$renameScript" "$file")
+            # Check for valid output (not empty, no spaces if possible, not Error)
+            if [[ -n "$generatedName" && "$generatedName" != "Error"* ]]; then
+                 # Basic validation - if it contains spaces, replace with dashes
+                 generatedName=$(echo "$generatedName" | tr ' ' '-')
+                 descriptiveName="$generatedName"
+            fi
+        else
+            # Fallback to internal renaming logic if rename.sh is missing
+            # Extract first 600 chars for prompt context
+            promptSample=$(head -c 600 "$file")
+            
+            # Escape quotes for JSON/shell safety
+            promptEscaped=$(echo "$promptSample" | sed 's/"/\\"/g')
+            
+            namingPrompt="Create a short, descriptive task name in kebab-case (3-6 words max). Output only the name.
+Title: $safeTitle
+Description: Task from $(basename "$file")
+Prompt: $promptEscaped"
+
+            # Call gh copilot directly using the same arguments as the PowerShell script
+            # Assuming 'gh copilot' supports -p based on existing PS1 logic
+            if command -v gh &> /dev/null; then
+                 generatedName=$(gh copilot -p "$namingPrompt" --allow-all-tools --allow-all-paths 2>/dev/null | head -n 1)
+            fi
+            
+            # Clean up the name (remove spaces, special chars, ensure kebab-case)
+            if [[ -n "$generatedName" ]]; then
+                generatedName=$(echo "$generatedName" | tr -d '[:space:]' | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | head -c 60)
+                if [[ -n "$generatedName" ]]; then
+                    descriptiveName="$generatedName"
+                fi
+            fi
+        fi
+
+    if [[ -z "$descriptiveName" ]]; then
+         descriptiveName="$safeTitle"
+    fi
+    
+    # 2. Rename in place (in created dir)
+    # Only rename if the name is different
+    fileName=$(basename "$file")
+    
+    if [[ "$fileName" == *.* ]]; then
+      fileExt="${fileName##*.}"
+      baseName="${fileName%.*}"
+      dotExt=".$fileExt"
+    else
+      fileExt=""
+      baseName="$fileName"
+      dotExt=""
+    fi
+    
+    if [[ "$descriptiveName" != "$baseName" ]]; then
+        newCreatedName="${descriptiveName}${dotExt}"
+        renamedPath="$createdDir/$newCreatedName"
+        
+        # Collision handling in created dir
+        if [[ -e "$renamedPath" ]]; then
+            counter=2
+            while [[ -e "$createdDir/$descriptiveName.$counter$dotExt" ]]; do
+                ((counter++))
+            done
+            newCreatedName="$descriptiveName.$counter$dotExt"
+            renamedPath="$createdDir/$newCreatedName"
+            # Update descriptiveName to reflect the conflict resolution
+            descriptiveName="$descriptiveName.$counter"
+        fi
+        
+        mv "$file" "$renamedPath"
+        log_message "Renamed in created: $fileName -> $newCreatedName" INFO
+        
+        # Update file variable to point to new path
+        file="$renamedPath"
+        # Update content variable re-read is not needed as content didn't change, but variable names did
+        # We need to ensure subsequent logic uses the correct file path
+    fi
+    
+    # 3. Move to working directory
+    # Re-calculate basename/ext from the (possibly renamed) file
+    currentFileName=$(basename "$file")
+    
+    if [[ "$currentFileName" == *.* ]]; then
+      currentExt="${currentFileName##*.}"
+      currentBaseName="${currentFileName%.*}"
+      currentDotExt=".$currentExt"
+    else
+      currentExt=""
+      currentBaseName="$currentFileName"
+      currentDotExt=""
+    fi
+
+    workingPath="$workingDir/$currentFileName"
+
+    # Handle filename collision in working dir
+    if [[ -e "$workingPath" ]]; then
+        counter=2
+        while [[ -e "$workingDir/$currentBaseName.$counter$currentDotExt" ]]; do
+            ((counter++))
+        done
+        newWorkingName="$currentBaseName.$counter$currentDotExt"
+        workingPath="$workingDir/$newWorkingName"
+    fi
+    
+    mv "$file" "$workingPath"
+    log_message "Moved to working: $workingPath" INFO
+    
+    # Initialize variables for execution
     description="Task from $(basename "$file")"
     prompt="$content"
 
@@ -127,48 +252,6 @@ for file in "$createdDir"/*; do
         description="${BASH_REMATCH[2]}"
         prompt="${BASH_REMATCH[3]}"
     fi
-
-    # 2. Call rename.sh on the file in working dir
-    scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    renameScript="$scriptDir/rename.sh"
-    descriptiveName=""
-
-    chmod +x "$renameScript" 2>/dev/null
-
-    if [[ -f "$renameScript" && -x "$renameScript" ]]; then
-        generatedName=$("$renameScript" "$tempPath")
-        if [[ -n "$generatedName" && "$generatedName" != *" "* && "$generatedName" != "Error"* ]]; then
-            descriptiveName="$generatedName"
-        fi
-    fi
-
-    if [[ -z "$descriptiveName" ]]; then
-         descriptiveName="$safeTitle"
-    fi
-
-    # 3. Rename the file in working directory to the final descriptive name
-    fileExt="${file##*.}"
-    if [[ "$tempName" == *.* ]]; then
-        newFileName="${descriptiveName}.${fileExt}"
-    else
-        newFileName="$descriptiveName"
-    fi
-
-    workingPath="$workingDir/$newFileName"
-
-    # Handle filename collision in working dir
-    if [[ -e "$workingPath" ]]; then
-        counter=2
-        while [[ -e "$workingDir/$descriptiveName.$counter.$fileExt" ]]; do
-            ((counter++))
-        done
-        newFileName="$descriptiveName.$counter.$fileExt"
-        workingPath="$workingDir/$newFileName"
-    fi
-
-    mv "$tempPath" "$workingPath"
-    log_message "Renamed to: $workingPath" INFO
-    finishedPath="$finishedDir/$newFileName"
 
     # Task log path
     taskLogPath="$logsDir/task_${newFileName}_$(date +%Y%m%d-%H%M%S).log"
