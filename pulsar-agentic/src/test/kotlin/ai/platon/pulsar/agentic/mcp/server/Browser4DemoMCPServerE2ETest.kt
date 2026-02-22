@@ -31,11 +31,11 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 
 /**
- * End-to-end tests for [Browser4MCPServer].
+ * End-to-end tests for [Browser4DemoMCPServer].
  *
  * These tests exercise the **full MCP protocol stack** by connecting a real MCP client
- * to a [Browser4MCPServer] over in-process STDIO pipes.  Unlike the unit tests in
- * [Browser4MCPServerTest] (which call tool handlers directly), these tests go through:
+ * to a [Browser4DemoMCPServer] over in-process STDIO pipes.  Unlike the unit tests in
+ * [Browser4DemoMCPServerTest] (which call tool handlers directly), these tests go through:
  *
  * 1. JSON-RPC initialization handshake (MCP `initialize` / `initialized`)
  * 2. `tools/list` request → response
@@ -53,11 +53,11 @@ import java.io.PipedOutputStream
  */
 @Tag("E2ETest")
 @Tag("mcp")
-@DisplayName("Browser4MCPServer E2E (full MCP protocol)")
-class Browser4MCPServerE2ETest {
+@DisplayName("Browser4DemoMCPServer E2E (full MCP protocol)")
+class Browser4DemoMCPServerE2ETest {
 
     private lateinit var driver: WebDriver
-    private lateinit var mcpServer: Browser4MCPServer
+    private lateinit var mcpServer: Browser4DemoMCPServer
     private lateinit var client: Client
     private lateinit var serverJob: Job
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -65,7 +65,7 @@ class Browser4MCPServerE2ETest {
     @BeforeEach
     fun setUp() = runBlocking {
         driver = mockk(relaxed = true)
-        mcpServer = Browser4MCPServer(
+        mcpServer = Browser4DemoMCPServer(
             driver = driver,
             serverInfo = Implementation(name = "browser4-e2e-test", version = "1.0.0")
         )

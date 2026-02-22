@@ -19,7 +19,7 @@ import kotlinx.io.buffered
  *
  * ### Direct invocation
  * ```bash
- * java -cp browser4-all.jar ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt
+ * java -cp browser4-all.jar ai.platon.pulsar.agentic.mcp.server.Browser4DemoMCPServerRunnerKt
  * ```
  *
  * ### Claude Desktop configuration (`claude_desktop_config.json`)
@@ -29,7 +29,7 @@ import kotlinx.io.buffered
  *     "browser4": {
  *       "command": "java",
  *       "args": ["-cp", "/path/to/browser4-all.jar",
- *                "ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt"]
+ *                "ai.platon.pulsar.agentic.mcp.server.Browser4DemoMCPServerRunnerKt"]
  *     }
  *   }
  * }
@@ -37,21 +37,21 @@ import kotlinx.io.buffered
  *
  * ## Behaviour
  * 1. Creates an [AgenticSession] and acquires a [WebDriver] bound to a real Chrome browser.
- * 2. Wraps it in a [Browser4MCPServer] to register all tools.
+ * 2. Wraps it in a [Browser4DemoMCPServer] to register all tools.
  * 3. Creates a [StdioServerTransport] that reads JSON-RPC messages from stdin
  *    and writes responses to stdout.
  * 4. Blocks until the MCP client closes the connection (i.e. EOF on stdin).
  * 5. Shuts down the Pulsar context and closes the browser.
  */
 fun main() {
-    val logger = getLogger("Browser4MCPServerRunner")
+    val logger = getLogger("Browser4DemoMCPServerRunner")
     logger.info("Starting Browser4 MCP Server (STDIO transport)")
 
     val session = AgenticContexts.createSession()
     val driver = session.getOrCreateBoundDriver()
 
     try {
-        val mcpServer = Browser4MCPServer(driver)
+        val mcpServer = Browser4DemoMCPServer(driver)
 
         val transport = StdioServerTransport(
             inputStream = System.`in`.asSource().buffered(),

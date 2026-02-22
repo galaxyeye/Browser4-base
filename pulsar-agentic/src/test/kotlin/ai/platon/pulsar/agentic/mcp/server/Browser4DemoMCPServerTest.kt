@@ -11,23 +11,23 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
- * Unit tests for [Browser4MCPServer].
+ * Unit tests for [Browser4DemoMCPServer].
  *
  * These tests verify that:
  * - All expected MCP tools are registered with correct names.
  * - Each tool returns a non-error result when the underlying WebDriver succeeds.
  * - Each tool returns an error result (isError = true) when the WebDriver throws.
  */
-@DisplayName("Browser4MCPServer")
-class Browser4MCPServerTest {
+@DisplayName("Browser4DemoMCPServer")
+class Browser4DemoMCPServerTest {
 
     private lateinit var driver: WebDriver
-    private lateinit var mcpServer: Browser4MCPServer
+    private lateinit var mcpServer: Browser4DemoMCPServer
 
     @BeforeEach
     fun setUp() {
         driver = mockk(relaxed = true)
-        mcpServer = Browser4MCPServer(
+        mcpServer = Browser4DemoMCPServer(
             driver = driver,
             serverInfo = Implementation(name = "browser4-test", version = "0.0.0")
         )

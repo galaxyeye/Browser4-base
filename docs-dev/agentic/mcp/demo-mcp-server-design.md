@@ -16,7 +16,7 @@ real Chrome browser without writing any automation code themselves.
 │  (Claude Desktop, Cursor …)  │                            │
 └──────────────────────────────┘                            │
                                             ┌───────────────────────────────┐
-                                            │  Browser4MCPServer            │
+                                            │  Browser4DemoMCPServer            │
                                             │  (kotlin-sdk-server-jvm 0.8.1)│
                                             │                               │
                                             │  STDIO transport (default)    │
@@ -33,8 +33,8 @@ The implementation lives in:
 
 | File | Purpose |
 |------|---------|
-| `pulsar-agentic/.../mcp/server/Browser4MCPServer.kt` | MCP Server — registers all tools |
-| `pulsar-agentic/.../mcp/server/Browser4MCPServerRunner.kt` | STDIO entry-point (`main`) |
+| `pulsar-agentic/.../mcp/server/Browser4DemoMCPServer.kt` | MCP Server — registers all tools |
+| `pulsar-agentic/.../mcp/server/Browser4DemoMCPServerRunner.kt` | STDIO entry-point (`main`) |
 
 ---
 
@@ -116,7 +116,7 @@ The server reads newline-delimited JSON-RPC from `stdin` and writes responses to
       "command": "java",
       "args": [
         "-cp", "/path/to/browser4-all.jar",
-        "ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt"
+        "ai.platon.pulsar.agentic.mcp.server.Browser4DemoMCPServerRunnerKt"
       ]
     }
   }
@@ -126,8 +126,8 @@ The server reads newline-delimited JSON-RPC from `stdin` and writes responses to
 ### Optional: SSE (HTTP Streaming)
 
 For remote or shared deployments, the server can be fronted by a Ktor HTTP server
-using the `mcp {}` extension from `kotlin-sdk-server-jvm`.  
-The `Browser4MCPServer.server` field exposes the `Server` instance,
+using the `mcp {}` extension from `kotlin-sdk-server-jvm`.
+The `Browser4DemoMCPServer.server` field exposes the `Server` instance,
 making it straightforward to attach any transport.
 
 ---
