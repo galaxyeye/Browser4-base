@@ -226,7 +226,7 @@ class AgenticSessionLocalDriverTest {
 
     @Test
         @DisplayName("AgenticSession getOrCreate accepts null baseUrl")
-    fun agenticsessionGetorcreateAcceptsNullBaseurl() {
+    fun agenticSessionGetorcreateAcceptsNullBaseurl() {
         // Note: This would start local driver in real usage
         // For unit test, we just validate the API signature exists
         assertNotNull(AgenticSession::getOrCreate)
@@ -234,7 +234,7 @@ class AgenticSessionLocalDriverTest {
 
     @Test
         @DisplayName("AgenticSession create accepts null baseUrl")
-    fun agenticsessionCreateAcceptsNullBaseurl() {
+    fun agenticSessionCreateAcceptsNullBaseurl() {
         // Note: This would start local driver in real usage
         // For unit test, we just validate the API signature exists
         assertNotNull(AgenticSession::create)
@@ -242,7 +242,7 @@ class AgenticSessionLocalDriverTest {
 
     @Test
         @DisplayName("AgenticSession getOrCreate with explicit URL works")
-    fun agenticsessionGetorcreateWithExplicitUrlWorks() {
+    fun agenticSessionGetorcreateWithExplicitUrlWorks() {
         // With explicit URL, should not start local driver
         // This test validates backward compatibility
         assertNotNull(AgenticSession::getOrCreate)

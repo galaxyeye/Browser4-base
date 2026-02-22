@@ -12,6 +12,7 @@
  */
 package ai.platon.pulsar.sdk
 
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -19,7 +20,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
 /**
  * Tests to verify URL encoding behavior for special characters.
@@ -27,7 +27,7 @@ import org.junit.jupiter.api.DisplayName
 class UrlEncodingTest {
 
     @Test
-        @DisplayName("URL encoding should encode hash symbol")
+    @DisplayName("URL encoding should encode hash symbol")
     fun urlEncodingShouldEncodeHashSymbol() {
         val selector = "#username"
         val encoded = URLEncoder.encode(selector, StandardCharsets.UTF_8)
@@ -37,7 +37,7 @@ class UrlEncodingTest {
     }
 
     @Test
-        @DisplayName("URL encoding should encode various special characters")
+    @DisplayName("URL encoding should encode various special characters")
     fun urlEncodingShouldEncodeVariousSpecialCharacters() {
         val testCases = mapOf(
             "#id" to "%23id",
@@ -54,7 +54,7 @@ class UrlEncodingTest {
     }
 
     @Test
-        @DisplayName("URL encoded string should not contain fragment identifier")
+    @DisplayName("URL encoded string should not contain fragment identifier")
     fun urlEncodedStringShouldNotContainFragmentIdentifier() {
         val selectors = listOf("#username", "#password", "#email", "#id-123")
 
@@ -66,7 +66,7 @@ class UrlEncodingTest {
     }
 
     @Test
-        @DisplayName("sendKeys delegates to fill method")
+    @DisplayName("sendKeys delegates to fill method")
     fun sendkeysDelegatesToFillMethod() {
         // This test documents that sendKeys now takes a selector parameter
         // and delegates to fill() instead of using /element/{id}/value endpoint
