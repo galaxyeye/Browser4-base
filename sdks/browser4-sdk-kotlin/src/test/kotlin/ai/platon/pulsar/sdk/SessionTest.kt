@@ -238,7 +238,7 @@ class AgenticSessionTest {
 
     @Test
     @DisplayName("PageEventHandlers can be created")
-    fun pageeventhandlersCanBeCreated() {
+    fun pageEventHandlersCanBeCreated() {
         val handlers = PageEventHandlers()
 
         assertTrue(handlers.browse.isEmpty())
@@ -248,7 +248,7 @@ class AgenticSessionTest {
 
     @Test
     @DisplayName("AgentHistory can be created")
-    fun agenthistoryCanBeCreated() {
+    fun agentHistoryCanBeCreated() {
         val history = AgentHistory()
 
         assertEquals(0, history.size)
@@ -259,7 +259,7 @@ class AgenticSessionTest {
 
     @Test
     @DisplayName("AgentHistory can track states")
-    fun agenthistoryCanTrackStates() {
+    fun agentHistoryCanTrackStates() {
         val state1 = AgentState(step = 1, action = "test", success = true)
         val state2 = AgentState(step = 2, action = "test2", success = false)
         val history = AgentHistory(states = mutableListOf(state1, state2), hasErrors = true)
@@ -272,7 +272,7 @@ class AgenticSessionTest {
 
     @Test
     @DisplayName("ChatResponse can be created from string")
-    fun chatresponseCanBeCreatedFromString() {
+    fun chatResponseCanBeCreatedFromString() {
         val response = ChatResponse.fromAny("Hello, world!")
 
         assertEquals("Hello, world!", response.content)
@@ -281,7 +281,7 @@ class AgenticSessionTest {
 
     @Test
     @DisplayName("ChatResponse can be created from map")
-    fun chatresponseCanBeCreatedFromMap() {
+    fun chatResponseCanBeCreatedFromMap() {
         val map = mapOf(
             "content" to "Test content",
             "role" to "user",

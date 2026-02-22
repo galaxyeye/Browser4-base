@@ -11,7 +11,7 @@ Browser4's AI automation capabilities allow you to control the browser using nat
 The `AgenticSession` provides three main AI operations:
 
 1. **Act** - Execute single actions
-2. **Run** - Execute multi-step autonomous tasks  
+2. **Run** - Execute multi-step autonomous tasks
 3. **Observe** - Analyze page and suggest actions
 4. **Extract** - AI-powered data extraction
 5. **Summarize** - Generate page summaries
@@ -27,11 +27,11 @@ fun main() {
     val session = AgenticSession.getOrCreate()
     val agent = session.companionAgent
     val driver = session.driver
-    
+
     driver.navigateTo("https://example.com")
-    
+
     // Your AI automation code here
-    
+
     session.close()
 }
 ```
@@ -264,7 +264,7 @@ AgentEventHandlers.EventTypes.ON_DID_OBSERVE
 AgentEventHandlers.EventTypes.ON_WILL_INFER
 AgentEventHandlers.EventTypes.ON_DID_INFER
 
-// Tool events  
+// Tool events
 AgentEventHandlers.EventTypes.ON_WILL_EXECUTE_TOOL
 AgentEventHandlers.EventTypes.ON_DID_EXECUTE_TOOL
 ```
@@ -326,7 +326,7 @@ val result = agent.act("click the submit button")
 
 if (!result.success) {
     println("Action failed: ${"$"}{result.message}")
-    
+
     // Try alternative
     val alt = agent.act("click the send button")
     if (!alt.success) {

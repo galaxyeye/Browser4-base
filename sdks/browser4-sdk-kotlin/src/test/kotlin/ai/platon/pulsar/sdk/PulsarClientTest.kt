@@ -29,28 +29,28 @@ class PulsarClientTest {
 
     @Test
         @DisplayName("PulsarClient can be created with default settings")
-    fun pulsarclientCanBeCreatedWithDefaultSettings() {
+    fun pulsarClientCanBeCreatedWithDefaultSettings() {
         val client = PulsarClient()
         assertNull(client.sessionId)
     }
 
     @Test
         @DisplayName("PulsarClient can be created with custom base URL")
-    fun pulsarclientCanBeCreatedWithCustomBaseUrl() {
+    fun pulsarClientCanBeCreatedWithCustomBaseUrl() {
         val client = PulsarClient(baseUrl = "http://custom-server:9999")
         assertNull(client.sessionId)
     }
 
     @Test
         @DisplayName("PulsarClient can be created with initial session ID")
-    fun pulsarclientCanBeCreatedWithInitialSessionId() {
+    fun pulsarClientCanBeCreatedWithInitialSessionId() {
         val client = PulsarClient(sessionId = "test-session-123")
         assertEquals("test-session-123", client.sessionId)
     }
 
     @Test
         @DisplayName("PulsarClient requires session for session-dependent operations")
-    fun pulsarclientRequiresSessionForSessionDependentOperations() = runTest {
+    fun pulsarClientRequiresSessionForSessionDependentOperations() = runTest {
         val client = PulsarClient()
 
         // post with {sessionId} placeholder should throw without session
@@ -61,7 +61,7 @@ class PulsarClientTest {
 
     @Test
         @DisplayName("PulsarClient session ID can be updated")
-    fun pulsarclientSessionIdCanBeUpdated() {
+    fun pulsarClientSessionIdCanBeUpdated() {
         val client = PulsarClient()
         assertNull(client.sessionId)
 
@@ -71,7 +71,7 @@ class PulsarClientTest {
 
     @Test
         @DisplayName("PulsarClient close does not throw")
-    fun pulsarclientCloseDoesNotThrow() {
+    fun pulsarClientCloseDoesNotThrow() {
         val client = PulsarClient()
         client.close()
         // Should complete without exception

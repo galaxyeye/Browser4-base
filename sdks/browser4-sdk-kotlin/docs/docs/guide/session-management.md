@@ -26,10 +26,10 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     // Get or create default session
     val session = AgenticSession.getOrCreate()
-    
+
     // Use session
     session.driver.navigateTo("https://example.com")
-    
+
     // Close when done
     session.close()
 }
@@ -52,10 +52,10 @@ import kotlinx.coroutines.runBlocking
 fun main() = runBlocking {
     // Always creates a new session
     val session = AgenticSession.create()
-    
+
     // Use session
     session.driver.navigateTo("https://example.com")
-    
+
     // Clean up
     session.close()
 }
@@ -80,20 +80,20 @@ fun main() {
             "server.port" to "9000"
         )
     )
-    
+
     // Create client with options
     val client = PulsarClient(
         useLocalDriver = true,
         localDriverOptions = options
     )
-    
+
     // Create session
     client.createSession()
     val session = AgenticSession(client)
-    
+
     // Use session
     session.driver.navigateTo("https://example.com")
-    
+
     // Clean up
     session.close()
     client.close() // Also stops local driver
@@ -142,14 +142,14 @@ fun main() {
     val client = PulsarClient(useLocalDriver = true)
     client.createSession()
     val session = PulsarSession(client)
-    
+
     // Load and extract
     val page = session.load("https://example.com")
     val document = session.parse(page)
     val fields = session.extract(document, mapOf("title" to "h1"))
-    
+
     println("Title: ${fields["title"]}")
-    
+
     session.close()
     client.close()
 }
@@ -173,10 +173,10 @@ fun main() {
     val client = PulsarClient(baseUrl = "http://remote-server:8182")
     client.createSession()
     val session = AgenticSession(client)
-    
+
     // Use session normally
     session.driver.navigateTo("https://example.com")
-    
+
     session.close()
     client.close()
 }
@@ -233,13 +233,13 @@ fun main() = runBlocking {
     session1.driver.navigateTo("https://example.com")
     val data1 = session1.driver.selectFirstTextOrNull("h1")
     session1.close()
-    
+
     // Second session (fresh state)
     val session2 = AgenticSession.create()
     session2.driver.navigateTo("https://example.org")
     val data2 = session2.driver.selectFirstTextOrNull("h1")
     session2.close()
-    
+
     println("Data1: $data1")
     println("Data2: $data2")
 }
@@ -261,7 +261,7 @@ fun main() = runBlocking {
         client.createSession()
         AgenticSession(client)
     }
-    
+
     // Use sessions in parallel
     val results = sessions.mapIndexed { index, session ->
         async {
@@ -271,9 +271,9 @@ fun main() = runBlocking {
             data
         }
     }.awaitAll()
-    
+
     println("Results: $results")
-    
+
     // Clean up clients
     sessions.forEach { it.client.close() }
 }
@@ -391,13 +391,13 @@ import ai.platon.pulsar.sdk.v0.detail.LocalDriverOptions
 val options = LocalDriverOptions(
     // Custom JAR path
     jarPath = "/opt/browser4/Browser4.jar",
-    
+
     // Custom download URL (for automatic download)
     downloadUrl = "https://github.com/platonai/Browser4/releases/download/latest/Browser4.jar",
-    
+
     // Custom port
     port = 9000,
-    
+
     // Java system properties / environment variables
     javaOptions = mapOf(
         "OPENROUTER_API_KEY" to "your-api-key",
@@ -459,13 +459,13 @@ fun main() {
     try {
         session = AgenticSession.getOrCreate()
         session.driver.navigateTo("https://example.com")
-        
+
         // Operations that might fail
         val title = session.driver.selectFirstTextOrNull("h1")
             ?: throw Exception("Title not found")
-        
+
         println("Title: $title")
-        
+
     } catch (e: Exception) {
         println("Error: ${e.message}")
     } finally {
@@ -489,7 +489,7 @@ class SessionPool(
     private val poolSize: Int = 5
 ) {
     private val pool = ConcurrentLinkedQueue<AgenticSession>()
-    
+
     suspend fun init() {
         repeat(poolSize) {
             val client = PulsarClient(baseUrl = baseUrl, useLocalDriver = false)
@@ -498,13 +498,13 @@ class SessionPool(
             pool.offer(session)
         }
     }
-    
+
     fun acquire(): AgenticSession? = pool.poll()
-    
+
     fun release(session: AgenticSession) {
         pool.offer(session)
     }
-    
+
     fun close() {
         while (pool.isNotEmpty()) {
             pool.poll()?.close()
@@ -516,7 +516,7 @@ class SessionPool(
 fun main() = runBlocking {
     val pool = SessionPool(poolSize = 3)
     pool.init()
-    
+
     try {
         val session = pool.acquire()
         if (session != null) {
