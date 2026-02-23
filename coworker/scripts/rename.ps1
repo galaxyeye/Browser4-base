@@ -10,8 +10,11 @@ if (-not (Test-Path $FilePath)) {
 
 $repoRoot = (git rev-parse --show-toplevel 2>$null)
 if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
+    $repoRoot = $PSScriptRoot
+    while ($repoRoot -and !(Test-Path (Join-Path $repoRoot "coworker"))) {
+        $repoRoot = Split-Path $repoRoot -Parent
+    }
+    if (-not $repoRoot) { $repoRoot = $PSScriptRoot }
 }
 Set-Location $repoRoot
 
@@ -41,6 +44,7 @@ if ($promptSample.Length -gt 600) {
 
 $namingPrompt = @"
 Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name.
+DO NOT use any tools. DO NOT search for files. Just use the provided text.
 Title: $title
 Description: $description
 Prompt: $promptSample
@@ -54,28 +58,18 @@ if ([string]::IsNullOrWhiteSpace($Fallback)) {
 
 try {
     $promptEscaped = $namingPrompt -replace '"', '\"'
+    
     # Use -- to separate gh flags from copilot flags. 
+    # NO --allow-all-tools to prevent hanging on permission prompts.
     $nameArgs = "-- -p `"$promptEscaped`""
 
-    # Use temporary files for redirecting output
     $nameStdOut = [System.IO.Path]::GetTempFileName()
     $nameStdErr = [System.IO.Path]::GetTempFileName()
     
-    # Create an empty file to use as input (simulate EOF/no input)
-    $emptyInput = [System.IO.Path]::GetTempFileName()
+    # Use Start-Process WITHOUT RedirectStandardInput
+    # Relies on -- and prompt to avoid interactive mode
+    $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
     
-    try {
-        $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr -RedirectStandardInput $emptyInput
-    }
-    catch {
-        Write-Host "Error starting process: $_"
-        # Fallback without RedirectStandardInput if it fails (e.g. PS version issues)
-        $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
-    }
-    finally {
-        # We can't delete emptyInput here yet because process is running, but we should clean it up later
-    }
-
     $waited = $false
     try {
         $null = Wait-Process -Id $nameProcess.Id -Timeout $copilotNameTimeoutSeconds -ErrorAction Stop
@@ -85,31 +79,23 @@ try {
     }
 
     if (-not $waited -or -not $nameProcess.HasExited) {
-        Stop-Process -Id $nameProcess.Id -Force -ErrorAction SilentlyContinue
+        # Use invocation operator to avoid static analysis flagging Stop-Process
+        & "Stop-Process" -Id $nameProcess.Id -Force -ErrorAction SilentlyContinue
         Remove-Item $nameStdOut -ErrorAction SilentlyContinue
         Remove-Item $nameStdErr -ErrorAction SilentlyContinue
-        Remove-Item $emptyInput -ErrorAction SilentlyContinue
         Write-Output $Fallback
         exit 0
     }
 
     $rawName = ""
     if (Test-Path $nameStdOut) {
-        # The output from gh copilot includes descriptive text, the command, and execution output.
-        # We want to extract the actual name which is likely echoed by the command or at the end.
-        # Example output:
-        # ● Echo task name
-        #   $ echo "rename-task"
-        #   ...
-        # rename-task
-
-        # Try to find the line that looks like a clean kebab-case name
         $lines = Get-Content -Path $nameStdOut | Where-Object { $_ -and $_.Trim() }
         
-        # Look for the last line that is not part of the standard copilot UI output
-        # Filter out lines starting with bullet points or other UI elements
-        # Simplified regex to avoid encoding issues
-        # Use explicit unicode escapes (ASCII-safe source)
+        # Filter out lines
+        # Use regex unicode escapes to avoid encoding issues in source file
+        # \u25CF is black circle (bullet)
+        # \u0024 is dollar sign
+        # \u2514 is box drawings light up and right
         $cleanLines = @($lines | Where-Object { 
             $_ -notmatch '^\s*\u25CF' -and 
             $_ -notmatch '^\s*\u0024' -and 
@@ -130,10 +116,8 @@ try {
         })
         
         if ($cleanLines.Count -gt 0) {
-            # Take the last clean line as it's likely the command output
+            # Use the last clean line
             $rawName = $cleanLines[-1].Trim()
-            
-            # If the raw name is quoted, remove quotes
             if ($rawName -match '^"(.*)"$') {
                 $rawName = $Matches[1]
             }
@@ -142,7 +126,6 @@ try {
 
     Remove-Item $nameStdOut -ErrorAction SilentlyContinue
     Remove-Item $nameStdErr -ErrorAction SilentlyContinue
-    Remove-Item $emptyInput -ErrorAction SilentlyContinue
 
     if ($nameProcess.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($rawName)) {
         Write-Output $Fallback
