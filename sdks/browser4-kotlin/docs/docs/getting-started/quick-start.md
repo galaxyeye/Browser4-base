@@ -162,7 +162,7 @@ fun main() {
     driver.navigateTo("https://example.com")
 
     // Capture full-page screenshot
-    val screenshot = driver.captureScreenshot(fullPage = true)
+    val screenshot = driver.screenshot(fullPage = true)
 
     // Save to file
     if (screenshot != null) {

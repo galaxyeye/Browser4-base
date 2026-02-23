@@ -22,7 +22,7 @@ The Kotlin SDK provides the following public APIs:
 - Scrolling: `scrollDown()`, `scrollUp()`, `scrollTo()`, `scrollToBottom()`, `scrollToTop()`
 - Selection: `exists()`, `waitForSelector()`, `selectFirstText()`, `selectTextAll()`
 - Attributes: `selectFirstAttributeOrNull()`, `selectAttributeAll()`, `getAttribute()`
-- Screenshots: `captureScreenshot()`
+- Screenshots: `screenshot()`
 - Script execution: `evaluate()`, `executeScript()`
 - Control: `delay()`, `pause()`, `stop()`
 
@@ -521,7 +521,7 @@ sdks/kotlin-sdk-tests/
 
 ---
 
-**Document Version:** 1.0  
-**Date:** 2026-01-21  
-**Author:** GitHub Copilot  
+**Document Version:** 1.0
+**Date:** 2026-01-21
+**Author:** GitHub Copilot
 **Status:** Complete

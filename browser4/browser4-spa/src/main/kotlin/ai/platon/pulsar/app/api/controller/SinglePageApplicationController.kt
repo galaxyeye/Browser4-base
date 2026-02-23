@@ -104,7 +104,7 @@ class SinglePageApplicationController(
 
             val url = runCatching { driver.currentUrl() }.getOrDefault("")
             val title = runCatching { driver.title() }.getOrDefault("")
-            val screenshotBase64 = runCatching { driver.captureScreenshot() }.getOrDefault("") ?: ""
+            val screenshotBase64 = runCatching { driver.screenshot() }.getOrDefault("") ?: ""
 
             PageInfo(url, title, screenshotBase64)
         } catch (_: Throwable) {
@@ -335,7 +335,7 @@ class SinglePageApplicationController(
 
             // We can't reliably capture element-only screenshot with current WebDriver API;
             // use page screenshot as the PNG base64 output.
-            val screenshotBase64 = driver.captureScreenshot() ?: ""
+            val screenshotBase64 = driver.screenshot() ?: ""
             val pageInfo = capturePageInfoOrEmpty()
 
             ResponseEntity.ok(

@@ -9,13 +9,13 @@ import ai.platon.pulsar.sdk.v0.*
 
 fun main() {
     val session = AgenticSession.getOrCreate()
-    
+
     val page = session.open("https://example.com")
     val document = session.parse(page)
     val title = document.title()
-    
+
     println("Page title: $title")
-    
+
     session.close()
 }
 ```
@@ -87,7 +87,7 @@ import java.util.Base64
 val driver = session.driver
 driver.navigateTo("https://example.com")
 
-val screenshot = driver.captureScreenshot(fullPage = true)
+val screenshot = driver.screenshot(fullPage = true)
 if (screenshot != null) {
     val bytes = Base64.getDecoder().decode(screenshot)
     File("page.png").writeBytes(bytes)
@@ -124,9 +124,9 @@ var page = 1
 while (page <= 5) {
     val items = driver.selectTextAll(".product-name")
     allItems.addAll(items)
-    
+
     if (!driver.exists(".next-page:not(.disabled)")) break
-    
+
     driver.click(".next-page")
     driver.waitForNavigation()
     page++

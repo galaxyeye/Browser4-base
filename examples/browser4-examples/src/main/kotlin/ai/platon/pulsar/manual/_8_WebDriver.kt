@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory
  * - `evaluate(expression)` - Execute JavaScript and return result
  *
  * ### Screenshots
- * - `captureScreenshot(selector)` - Screenshot of specific element
+ * - `screenshot(selector)` - Screenshot of specific element
  *
  * ### AI Integration (Agentic Features)
  * - `session.bindDriver(driver)` - Connect WebDriver to AI session
@@ -61,10 +61,10 @@ internal class WebDriverDemo(private val session: AgenticSession = AgenticContex
     // =====================================================================
     // Selector Definitions
     // =====================================================================
-    // 
+    //
     // CSS selectors for target elements on the page.
     // AI Note: These selectors are Amazon-specific; adjust for other sites.
-    
+
     // Search form selectors
     private val searchBoxSelector = ".form input[type=text]"
     private val searchBoxSubmit = ".form input[type=submit]"
@@ -161,7 +161,7 @@ internal class WebDriverDemo(private val session: AgenticSession = AgenticContex
         // =====================================================================
         // Scrolling Operations
         // =====================================================================
-        
+
         // Scroll to bottom and get page dimensions
         println("scroll to the bottom of the page ...")
         driver.scrollToBottom()
@@ -177,7 +177,7 @@ internal class WebDriverDemo(private val session: AgenticSession = AgenticContex
         // =====================================================================
         // Click and Type
         // =====================================================================
-        
+
         // Click the product title element
         println("click $selector ...")
         driver.click(selector)
@@ -195,7 +195,7 @@ internal class WebDriverDemo(private val session: AgenticSession = AgenticContex
         // Capture screenshot of specific element (not full page)
         // AI Note: Returns base64 encoded image data
         println("capture screenshot over $selector ...")
-        driver.captureScreenshot(selector)
+        driver.screenshot(selector)
 
         // =====================================================================
         // JavaScript Evaluation
@@ -258,14 +258,14 @@ fun main() {
     val url = PRODUCT_DETAIL_URL
     // "-refresh -parse" forces fresh load and enables parsing
     val args = "-refresh -parse"
-    
+
     // Set the system to work with single page applications (SPA)
     // AI Note: AgenticSession is the AI-enhanced version of PulsarSession
     val session = AgenticContexts.createSession()
-    
+
     // Create demo crawler with WebDriver interaction handlers
     val crawler = WebDriverDemo(session)
-    
+
     // Load page - WebDriver interactions happen during load via event handlers
     session.load(url, crawler.options(args))
 }

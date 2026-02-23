@@ -149,7 +149,7 @@ session.context.close()
 
 **截屏方法：**
 
-- `captureScreenshot(selector, fullPage)` - 捕获截屏
+- `screenshot(selector, fullPage)` - 捕获截屏
 - `screenshot(selector)` - 快捷截屏方法
 
 **脚本执行方法：**
@@ -181,7 +181,7 @@ driver.press("#search", "Enter")
 val results = driver.selectTextAll(".result-item")
 
 // 截屏
-val screenshot = driver.captureScreenshot()
+val screenshot = driver.screenshot()
 
 // 脚本
 val result = driver.executeScript("return document.title")

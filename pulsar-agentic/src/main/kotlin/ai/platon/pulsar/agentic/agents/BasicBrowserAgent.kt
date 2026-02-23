@@ -647,7 +647,7 @@ open class BasicBrowserAgent(
                 domService.addHighlights(interactiveElements)
             }
 
-            context.screenshotB64 = activeDriver.captureScreenshot()
+            context.screenshotB64 = activeDriver.screenshot()
 
             val actionDescription = withTimeout(config.llmInferenceTimeoutMs) {
                 inference.observe(params, context)
@@ -669,7 +669,7 @@ open class BasicBrowserAgent(
         var lastEx: Exception? = null
         for (i in 1..attempts) {
             try {
-                val screenshot = activeDriver.captureScreenshot()
+                val screenshot = activeDriver.screenshot()
                 if (screenshot != null) {
                     logger.info(
                         "📸✅ screenshot.ok sid={} step={} size={} attempt={} ",

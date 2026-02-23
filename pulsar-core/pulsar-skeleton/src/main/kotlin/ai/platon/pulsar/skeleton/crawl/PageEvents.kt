@@ -538,7 +538,7 @@ interface BrowseEventHandlers {
      * ## Example
      * ```kotlin
      * onWillStopTab.addLast { page: WebPage, driver: WebDriver ->
-     *     val screenshot = driver.captureScreenshot()
+     *     val screenshot = driver.screenshot()
      *     saveScreenshot(page.url, screenshot)
      * }
      * ```

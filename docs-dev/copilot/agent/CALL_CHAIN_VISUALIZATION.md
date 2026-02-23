@@ -423,7 +423,7 @@ PerceptiveAgentError (sealed class)
       └─ 优化: 缓存、批处理、使用更快的模型
 
 2. 页面截图 [次耗时]
-   └─ driver.captureScreenshot()
+   └─ driver.screenshot()
       └─ 通常 100-500ms
       └─ 优化: 降低分辨率、按需截图、异步处理
 
@@ -450,7 +450,7 @@ PerceptiveAgentError (sealed class)
 
 ├─ prepareStep()              ~100ms     (2%)
 ├─ generateActions()          ~5-30s     (90%)
-│  ├─ captureScreenshot()     ~200ms     (4%)
+│  ├─ screenshot()     ~200ms     (4%)
 │  ├─ buildMessages()         ~50ms      (1%)
 │  └─ cta.generate()          ~5-30s     (85%)
 │     └─ chatModel.call()     ~5-30s     (LLM 推理)

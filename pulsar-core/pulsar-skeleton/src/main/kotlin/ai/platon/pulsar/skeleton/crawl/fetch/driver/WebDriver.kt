@@ -1451,26 +1451,38 @@ interface WebDriver : Closeable {
      * The target element (if any) is scrolled into view before capture.
      *
      * ```kotlin
-     * val base64 = driver.captureScreenshot()
+     * val base64 = driver.screenshot()
      * val bytes = Base64.getDecoder().decode(base64)
      * ```
      */
     @Throws(WebDriverException::class)
-    suspend fun captureScreenshot(fullPage: Boolean = false): String?
+    suspend fun screenshot(fullPage: Boolean = false): String?
 
     /**
      * Scroll the element matched by [selector] into view (if needed) then take a screenshot of that element's bounding box.
      * Returns a Base64 encoded image (implementation usually PNG/JPEG), PNG by default.
      */
     @Throws(WebDriverException::class)
-    suspend fun captureScreenshot(selector: String): String?
+    suspend fun screenshot(selector: String): String?
 
     /**
      * Take a screenshot of the rectangle specified by [rect] in the current page coordinate space. Caller is responsible
      * for ensuring the rectangle is visible or scrolled into view if the implementation requires it.
      */
     @Throws(WebDriverException::class)
-    suspend fun captureScreenshot(rect: RectD): String?
+    suspend fun screenshot(rect: RectD): String?
+
+    @Deprecated("Use screenshot(fullPage = true) instead", ReplaceWith("screenshot(fullPage = true)"))
+    suspend fun captureScreenshot(fullPage: Boolean = false): String? = screenshot(fullPage)
+
+    @Deprecated("Use screenshot(selector) instead", ReplaceWith("screenshot(selector)"))
+    suspend fun captureScreenshot(selector: String): String? = screenshot(selector)
+
+    @Deprecated("Use screenshot(rect) instead", ReplaceWith("screenshot(rect)"))
+    suspend fun captureScreenshot(rect: RectD): String? = screenshot(rect)
+
+    @Throws(WebDriverException::class)
+    suspend fun ariaSnapshot(): String
 
     /**
      * Calculate the clickable point of an element located by [selector].

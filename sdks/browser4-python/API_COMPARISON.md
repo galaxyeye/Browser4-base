@@ -135,7 +135,7 @@ The Python SDK implements the same interfaces as the Kotlin SDK, with naming ada
 | `selectFirstAttributeOrNull()` | `select_first_attribute_or_null()` | ✅ Same |
 | `selectAttributeAll()` | `select_attribute_all()` | ✅ Same |
 | `extract()` | `extract()` | ✅ Same |
-| `captureScreenshot()` | `capture_screenshot()` | ✅ Same |
+| `screenshot()` | `capture_screenshot()` | ✅ Same |
 | `screenshot()` | `screenshot()` | ✅ Same |
 | `executeScript()` | `execute_script()` | ✅ Same |
 | `executeAsyncScript()` | `execute_async_script()` | ✅ Same |

@@ -223,7 +223,7 @@ fun main() {
     println("Fields: $fields")
 
     // Screenshots
-    val screenshot = driver.captureScreenshot()
+    val screenshot = driver.screenshot()
     println("Screenshot length: ${screenshot?.length}")
 
     // Execute JavaScript
@@ -303,7 +303,7 @@ Browser control and element interaction.
 - `extract(fields)` - Extract multiple fields at once
 
 **Screenshots:**
-- `captureScreenshot(selector, fullPage)`, `screenshot(selector)`
+- `screenshot(selector, fullPage)`, `screenshot(selector)`
 
 **Scripts:**
 - `executeScript(script, args)`, `executeAsyncScript(script, args, timeout)`

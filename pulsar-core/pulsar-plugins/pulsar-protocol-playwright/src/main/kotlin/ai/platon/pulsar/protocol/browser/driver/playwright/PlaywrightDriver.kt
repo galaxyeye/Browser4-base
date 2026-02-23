@@ -815,9 +815,9 @@ class PlaywrightDriver(
      * @return The screenshot as a base64 encoded string
      * @throws RuntimeException if screenshot capture fails
      */
-    override suspend fun captureScreenshot(fullPage: Boolean): String? {
+    override suspend fun screenshot(fullPage: Boolean): String? {
         return try {
-            rpc.invokeDeferred("captureScreenshot") {
+            rpc.invokeDeferred("screenshot") {
                 val options = Page.ScreenshotOptions()
                 if (fullPage) {
                     options.setFullPage(true)
@@ -826,7 +826,7 @@ class PlaywrightDriver(
                 Base64.getEncoder().encodeToString(src)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "captureScreenshot")
+            rpc.handleWebDriverException(e, "screenshot")
             null
         }
     }
@@ -837,26 +837,26 @@ class PlaywrightDriver(
      * @return The screenshot as a base64 encoded string
      * @throws RuntimeException if screenshot capture fails
      */
-    override suspend fun captureScreenshot(selector: String): String? {
+    override suspend fun screenshot(selector: String): String? {
         return try {
-            rpc.invokeDeferred("captureScreenshot") {
+            rpc.invokeDeferred("screenshot") {
                 val sc = page.querySelector(selector).screenshot()
                 Base64.getEncoder().encodeToString(sc)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "captureScreenshot", selector)
+            rpc.handleWebDriverException(e, "screenshot", selector)
             null
         }
     }
 
-    override suspend fun captureScreenshot(rect: RectD): String? {
+    override suspend fun screenshot(rect: RectD): String? {
         return try {
-            rpc.invokeDeferred("captureScreenshot") {
+            rpc.invokeDeferred("screenshot") {
                 val sc = page.screenshot(Page.ScreenshotOptions().setClip(rect.x, rect.y, rect.width, rect.height))
                 Base64.getEncoder().encodeToString(sc)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "captureScreenshot", "rect: $rect")
+            rpc.handleWebDriverException(e, "screenshot", "rect: $rect")
             null
         }
     }

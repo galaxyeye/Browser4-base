@@ -18,18 +18,18 @@ import java.util.Base64
 fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
+
     driver.navigateTo("https://example.com")
-    
+
     // Capture visible viewport
-    val screenshot = driver.captureScreenshot()
-    
+    val screenshot = driver.screenshot()
+
     if (screenshot != null) {
         val bytes = Base64.getDecoder().decode(screenshot)
         File("viewport.png").writeBytes(bytes)
         println("Screenshot saved")
     }
-    
+
     session.close()
 }
 ```
@@ -41,7 +41,7 @@ val driver = session.driver
 driver.navigateTo("https://example.com")
 
 // Capture entire page (scrolls automatically)
-val screenshot = driver.captureScreenshot(fullPage = true)
+val screenshot = driver.screenshot(fullPage = true)
 
 if (screenshot != null) {
     val bytes = Base64.getDecoder().decode(screenshot)
@@ -56,7 +56,7 @@ val driver = session.driver
 driver.navigateTo("https://example.com")
 
 // Capture specific element
-val screenshot = driver.captureScreenshot(
+val screenshot = driver.screenshot(
     selector = ".header",
     fullPage = false
 )
@@ -77,7 +77,7 @@ The `screenshot()` method is a convenient alternative:
 val driver = session.driver
 driver.navigateTo("https://example.com")
 
-// Same as captureScreenshot(selector, fullPage=false)
+// Same as screenshot(selector, fullPage=false)
 val screenshot = driver.screenshot(".product-image")
 ```
 
@@ -88,7 +88,7 @@ val screenshot = driver.screenshot(".product-image")
 ```kotlin
 fun saveScreenshot(screenshot: String?, filename: String): Boolean {
     if (screenshot == null) return false
-    
+
     try {
         val bytes = Base64.getDecoder().decode(screenshot)
         File(filename).writeBytes(bytes)
@@ -100,7 +100,7 @@ fun saveScreenshot(screenshot: String?, filename: String): Boolean {
 }
 
 // Usage
-val screenshot = driver.captureScreenshot(fullPage = true)
+val screenshot = driver.screenshot(fullPage = true)
 saveScreenshot(screenshot, "page.png")
 ```
 
@@ -112,20 +112,20 @@ import java.time.format.DateTimeFormatter
 
 fun saveScreenshotWithTimestamp(screenshot: String?, prefix: String = "screenshot"): String? {
     if (screenshot == null) return null
-    
+
     val timestamp = LocalDateTime.now().format(
         DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
     )
     val filename = "${"$"}{prefix}_${"$"}{timestamp}.png"
-    
+
     val bytes = Base64.getDecoder().decode(screenshot)
     File(filename).writeBytes(bytes)
-    
+
     return filename
 }
 
 // Usage
-val filename = saveScreenshotWithTimestamp(driver.captureScreenshot())
+val filename = saveScreenshotWithTimestamp(driver.screenshot())
 println("Saved: ${"$"}filename")
 ```
 
@@ -138,7 +138,7 @@ val driver = session.driver
 driver.navigateTo("https://example.com")
 
 // Before action
-val before = driver.captureScreenshot()
+val before = driver.screenshot()
 saveScreenshot(before, "before.png")
 
 // Perform action
@@ -146,7 +146,7 @@ driver.click("button.toggle-menu")
 Thread.sleep(500) // Wait for animation
 
 // After action
-val after = driver.captureScreenshot()
+val after = driver.screenshot()
 saveScreenshot(after, "after.png")
 ```
 
@@ -158,7 +158,7 @@ fun performActionWithScreenshot(action: () -> Unit) {
         action()
     } catch (e: Exception) {
         // Capture screenshot on error
-        val screenshot = driver.captureScreenshot(fullPage = true)
+        val screenshot = driver.screenshot(fullPage = true)
         val filename = saveScreenshotWithTimestamp(screenshot, "error")
         println("Error screenshot saved: ${"$"}filename")
         throw e
@@ -185,7 +185,7 @@ val productCount = driver.executeScript(
 // Screenshot each product
 for (i in 0 until productCount) {
     val selector = ".product-card:nth-child(${"$"}{i + 1})"
-    val screenshot = driver.captureScreenshot(selector = selector)
+    val screenshot = driver.screenshot(selector = selector)
     saveScreenshot(screenshot, "product_${"$"}{i + 1}.png")
 }
 ```
@@ -201,12 +201,12 @@ val screenshots = mutableListOf<String>()
 
 repeat(5) { index ->
     // Capture current view
-    val screenshot = driver.captureScreenshot()
+    val screenshot = driver.screenshot()
     if (screenshot != null) {
         screenshots.add(screenshot)
         saveScreenshot(screenshot, "scroll_${"$"}{index + 1}.png")
     }
-    
+
     // Scroll down
     driver.scrollDown(count = 1)
     Thread.sleep(500)
@@ -232,14 +232,14 @@ fun getScreenshotHash(screenshot: String): String {
 val driver = session.driver
 driver.navigateTo("https://example.com")
 
-val screenshot1 = driver.captureScreenshot()
+val screenshot1 = driver.screenshot()
 Thread.sleep(1000)
-val screenshot2 = driver.captureScreenshot()
+val screenshot2 = driver.screenshot()
 
 if (screenshot1 != null && screenshot2 != null) {
     val hash1 = getScreenshotHash(screenshot1)
     val hash2 = getScreenshotHash(screenshot2)
-    
+
     if (hash1 == hash2) {
         println("Screenshots are identical")
     } else {
@@ -252,7 +252,7 @@ if (screenshot1 != null && screenshot2 != null) {
 
 ```kotlin
 fun isElementVisuallyPresent(driver: WebDriver, selector: String): Boolean {
-    val screenshot = driver.captureScreenshot(selector = selector)
+    val screenshot = driver.screenshot(selector = selector)
     return screenshot != null && screenshot.length > 1000 // Min size check
 }
 
@@ -286,19 +286,19 @@ driver.navigateTo("https://example.com")
 driver.waitForSelector("body")
 Thread.sleep(1000) // Wait for rendering
 
-val screenshot = driver.captureScreenshot()
+val screenshot = driver.screenshot()
 ```
 
 ### Screenshot is Partial
 
 ```kotlin
 // For full page, use fullPage parameter
-val screenshot = driver.captureScreenshot(fullPage = true)
+val screenshot = driver.screenshot(fullPage = true)
 
 // Or scroll to ensure content is loaded
 driver.scrollToBottom()
 Thread.sleep(500)
-val screenshot2 = driver.captureScreenshot(fullPage = true)
+val screenshot2 = driver.screenshot(fullPage = true)
 ```
 
 ### Element Not in Screenshot
@@ -308,7 +308,7 @@ val screenshot2 = driver.captureScreenshot(fullPage = true)
 driver.scrollTo(".target-element")
 Thread.sleep(300)
 
-val screenshot = driver.captureScreenshot(selector = ".target-element")
+val screenshot = driver.screenshot(selector = ".target-element")
 ```
 
 ## Next Steps

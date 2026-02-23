@@ -596,45 +596,45 @@ function() {
 
     /**
      * This method scrolls element into view if needed, and then uses
-     * {@link screenshot.captureScreenshot} to take a screenshot of the element.
+     * {@link screenshot.screenshot} to take a screenshot of the element.
      * If the element is detached from DOM, the method throws an error.
      */
     @Throws(WebDriverException::class)
-    override suspend fun captureScreenshot(fullPage: Boolean): String? {
+    override suspend fun screenshot(fullPage: Boolean): String? {
         return try {
-            rpc.invokeWithRetry("captureScreenshot") {
-                screenshot.captureScreenshot(fullPage)
+            rpc.invokeWithRetry("screenshot") {
+                screenshot.screenshot(fullPage)
             }
         } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "captureScreenshot")
+            rpc.handleChromeException(e, "screenshot")
             null
         }
     }
 
     /**
      * This method scrolls element into view if needed, and then uses
-     * {@link page.captureScreenshot} to take a screenshot of the element.
+     * {@link page.screenshot} to take a screenshot of the element.
      * If the element is detached from DOM, the method throws an error.
      */
     @Throws(WebDriverException::class)
-    override suspend fun captureScreenshot(selector: String): String? {
+    override suspend fun screenshot(selector: String): String? {
         return try {
             page.scrollIntoViewIfNeeded(selector) ?: return null
             // Force the page stop all navigations and pending resource fetches.
-            rpc.invokeWithRetry("captureScreenshot") { screenshot.captureScreenshot(selector) }
+            rpc.invokeWithRetry("screenshot") { screenshot.screenshot(selector) }
         } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "captureScreenshot")
+            rpc.handleChromeException(e, "screenshot")
             null
         }
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun captureScreenshot(rect: RectD): String? {
+    override suspend fun screenshot(rect: RectD): String? {
         return try {
             // Force the page stop all navigations and pending resource fetches.
-            rpc.invokeWithRetry("captureScreenshot") { screenshot.captureScreenshot(rect) }
+            rpc.invokeWithRetry("screenshot") { screenshot.screenshot(rect) }
         } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "captureScreenshot")
+            rpc.handleChromeException(e, "screenshot")
             null
         }
     }

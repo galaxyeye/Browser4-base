@@ -506,7 +506,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     fun `should capture screenshot`() {
         driver.navigateTo(TestUrls.SIMPLE_PAGE)
 
-        val screenshot = driver.captureScreenshot()
+        val screenshot = driver.screenshot()
         assertNotNull(screenshot)
         assertTrue(screenshot.isNotEmpty())
     }

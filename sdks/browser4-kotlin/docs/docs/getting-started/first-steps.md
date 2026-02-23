@@ -35,9 +35,9 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     // Automatically starts local driver and creates session
     val session = AgenticSession.getOrCreate()
-    
+
     // Your automation code here
-    
+
     // Clean up
     session.close()
 }
@@ -62,13 +62,13 @@ fun main() {
         baseUrl = "http://localhost:8182",
         useLocalDriver = true
     )
-    
+
     // Create session
     client.createSession()
     val session = AgenticSession(client)
-    
+
     // Your automation code here
-    
+
     // Clean up
     session.close()
     client.close()
@@ -387,13 +387,13 @@ val driver = session.driver
 driver.navigateTo("https://example.com")
 
 // Capture viewport screenshot
-val screenshot = driver.captureScreenshot()
+val screenshot = driver.screenshot()
 
 // Capture full-page screenshot
-val fullScreenshot = driver.captureScreenshot(fullPage = true)
+val fullScreenshot = driver.screenshot(fullPage = true)
 
 // Capture specific element
-val elementScreenshot = driver.captureScreenshot(selector = ".header")
+val elementScreenshot = driver.screenshot(selector = ".header")
 
 // Save to file
 if (fullScreenshot != null) {
@@ -477,35 +477,35 @@ fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
     val agent = session.companionAgent
-    
+
     try {
         // Navigate to page
         println("Navigating to example.com...")
         driver.navigateTo("https://example.com")
-        
+
         // Wait for content
         driver.waitForSelector("h1")
-        
+
         // Extract data
         val title = driver.selectFirstTextOrNull("h1")
         val description = driver.selectFirstTextOrNull("p")
         println("Title: $title")
         println("Description: $description")
-        
+
         // Use AI to interact
         val result = agent.act("click the 'More information' link")
         println("AI Action: ${result.message}")
-        
+
         // Capture screenshot
-        val screenshot = driver.captureScreenshot(fullPage = true)
+        val screenshot = driver.screenshot(fullPage = true)
         if (screenshot != null) {
             val bytes = Base64.getDecoder().decode(screenshot)
             File("example.png").writeBytes(bytes)
             println("Screenshot saved!")
         }
-        
+
         println("Automation complete!")
-        
+
     } finally {
         // Always clean up
         session.close()

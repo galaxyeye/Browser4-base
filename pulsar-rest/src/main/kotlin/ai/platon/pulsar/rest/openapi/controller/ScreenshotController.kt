@@ -42,7 +42,7 @@ class ScreenshotController(
 
         return try {
             val screenshot = managed.withLock {
-                driver.captureScreenshot(fullPage = false)
+                driver.screenshot(fullPage = false)
             }
             ResponseEntity.ok(ScreenshotResponse(value = screenshot))
         } catch (e: Exception) {
@@ -71,7 +71,7 @@ class ScreenshotController(
 
         return try {
             val screenshot = managed.withLock {
-                driver.captureScreenshot(element.selector)
+                driver.screenshot(element.selector)
             }
             ResponseEntity.ok(ScreenshotResponse(value = screenshot))
         } catch (e: Exception) {

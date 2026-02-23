@@ -70,7 +70,7 @@ Source: sdks/browser4-kotlin/src/main/kotlin/ai/platon/pulsar/sdk/v0/WebDriver.k
 | scrollToBottom() | Yes | WebDriverIntegrationTest | |
 | scrollToMiddle(ratio) | Yes | WebDriverIntegrationTest | |
 | scrollBy(x, y, smooth) | Yes | WebDriverIntegrationTest | |
-| captureScreenshot() | Yes | WebDriverIntegrationTest | |
+| screenshot() | Yes | WebDriverIntegrationTest | |
 | executeScript(script) | Yes | WebDriverIntegrationTest | |
 | selectFirstTextOrNull(selector) | Yes | Multiple | |
 | selectTextAll(selector) | Partial | ErrorHandlingAndEdgeCasesTest | empty result only |

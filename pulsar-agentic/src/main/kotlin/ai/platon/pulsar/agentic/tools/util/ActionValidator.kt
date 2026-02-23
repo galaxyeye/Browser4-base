@@ -51,7 +51,7 @@ class ActionValidator(
                 "evaluate", "clickablePoint", "boundingBox" -> validateElementAction(toolCall.arguments)
 
                 "waitForNavigation", "waitForSelector" -> validateWaitForNavigation(toolCall.arguments)
-                "captureScreenshot", "outerHTML" -> validateOptionalElementAction(toolCall.arguments)
+                "screenshot", "outerHTML" -> validateOptionalElementAction(toolCall.arguments)
                 // New no-selector actions
                 "scrollDown", "scrollUp" -> true
                 "scrollBy" -> validateScrollBy(toolCall.arguments)

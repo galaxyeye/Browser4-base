@@ -22,9 +22,9 @@ class ScreenshotHandler(
     /**
      * Capture page screenshot.
      * */
-    suspend fun captureScreenshot(fullPage: Boolean): String? {
+    suspend fun screenshot(fullPage: Boolean): String? {
         if (!fullPage) {
-            return page?.captureScreenshot()
+            return page?.screenshot()
         }
 
         val metrics = page?.getLayoutMetrics() ?: return null
@@ -45,7 +45,7 @@ class ScreenshotHandler(
         // PNG = Crisp, precise, lossless, and supports transparency (ideal for testing and UI design)
         // JPEG = Compact, softly detailed, lossy, and opaque (suitable for presentation and archiving)
         val format = CaptureScreenshotFormat.JPEG
-        val result = page?.captureScreenshot(
+        val result = page?.screenshot(
             format = format,
             captureBeyondViewport = true,
         )
@@ -55,7 +55,7 @@ class ScreenshotHandler(
         return result
     }
 
-    suspend fun captureScreenshot(selector: String): String? {
+    suspend fun screenshot(selector: String): String? {
         val node = pageHandler.resolveSelector(selector)
         if (node == null) {
             logger.info("No such element <{}>", selector)
@@ -65,9 +65,9 @@ class ScreenshotHandler(
         return captureScreenshotWithoutVi(node, selector)
     }
 
-    suspend fun captureScreenshot(clip: RectD) = captureScreenshot0(null, clip)
+    suspend fun screenshot(clip: RectD) = captureScreenshot0(null, clip)
 
-    suspend fun captureScreenshot(viewport: Viewport) = captureScreenshot0(null, viewport)
+    suspend fun screenshot(viewport: Viewport) = captureScreenshot0(null, viewport)
 
     private suspend fun captureScreenshotWithoutVi(node: NodeRef, selector: String): String? {
         val nodeClip = calculateNodeClip(node, selector)
@@ -114,7 +114,7 @@ class ScreenshotHandler(
             return null
         }
 
-        return page?.captureScreenshot(
+        return page?.screenshot(
             format, quality, viewport,
             fromSurface = true,
             captureBeyondViewport = false

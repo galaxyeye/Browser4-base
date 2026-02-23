@@ -22,7 +22,7 @@ Kotlin SDK 提供以下公共 API：
 - 滚动：`scrollDown()`、`scrollUp()`、`scrollTo()`、`scrollToBottom()`、`scrollToTop()`
 - 选择器：`exists()`、`waitForSelector()`、`selectFirstText()`、`selectTextAll()`
 - 属性：`selectFirstAttributeOrNull()`、`selectAttributeAll()`、`getAttribute()`
-- 截图：`captureScreenshot()`
+- 截图：`screenshot()`
 - 脚本执行：`evaluate()`、`executeScript()`
 - 控制：`delay()`、`pause()`、`stop()`
 
@@ -521,7 +521,7 @@ sdks/kotlin-sdk-tests/
 
 ---
 
-**文档版本：** 1.0  
-**日期：** 2026-01-21  
-**作者：** GitHub Copilot  
+**文档版本：** 1.0
+**日期：** 2026-01-21
+**作者：** GitHub Copilot
 **状态：** 完成

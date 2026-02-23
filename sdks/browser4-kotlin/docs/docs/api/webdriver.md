@@ -230,10 +230,10 @@ Extract multiple fields.
 
 ## Screenshots
 
-### captureScreenshot()
+### screenshot()
 
 ```kotlin
-suspend fun captureScreenshot(
+suspend fun screenshot(
     selector: String? = null,
     fullPage: Boolean = false,
     strategy: String = "css"

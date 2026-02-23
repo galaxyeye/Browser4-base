@@ -60,7 +60,7 @@ fully-qualified `backend:<N>` refs directly.
 browser4-cli open
 
 # Navigate to a page
-browser4-cli goto https://playwright.dev
+browser4-cli goto https://browser4.io
 
 # Inspect the page — note the eN labels on interactive nodes
 browser4-cli snapshot

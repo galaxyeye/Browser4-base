@@ -386,8 +386,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
         val paths = mutableListOf<Path>()
         fieldSelectors.entries.take(3).forEach { (name, selector) ->
-            val screenshot = driver.runCatching { captureScreenshot(selector) }
-                .onFailure { logger.info("Failed to captureScreenshot | $name - $selector") }
+            val screenshot = driver.runCatching { screenshot(selector) }
+                .onFailure { logger.info("Failed to screenshot | $name - $selector") }
                 .getOrNull()
 
             if (screenshot != null) {

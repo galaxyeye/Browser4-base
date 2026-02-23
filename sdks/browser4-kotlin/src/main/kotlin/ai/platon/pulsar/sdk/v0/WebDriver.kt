@@ -27,7 +27,7 @@ import java.util.*
  * - Element interaction: click, fill, type, press, hover, focus
  * - Scrolling: scrollDown, scrollUp, scrollTo, scrollToBottom, scrollToTop
  * - Selection: exists, waitForSelector, selectFirstText, selectTextAll
- * - Screenshots: captureScreenshot
+ * - Screenshots: screenshot
  * - Script execution: evaluate, executeScript
  * - Control: delay, pause, stop
  *

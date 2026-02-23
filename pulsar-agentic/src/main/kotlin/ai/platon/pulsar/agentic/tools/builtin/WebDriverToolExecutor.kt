@@ -191,12 +191,12 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
                 }
             }
             "dragAndDrop" -> { validateArgs(args, allowed("selector", "deltaX", "deltaY"), setOf("selector", "deltaX"), functionName); driver.dragAndDrop(paramString(args, "selector", functionName)!!, paramInt(args, "deltaX", functionName)!!, paramInt(args, "deltaY", functionName, required = false, default = 0)!!) }
-            "captureScreenshot" -> {
+            "screenshot" -> {
                 when {
-                    args.isEmpty() -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.captureScreenshot() }
-                    args.containsKey("selector") -> { validateArgs(args, allowed("selector"), setOf("selector"), functionName); driver.captureScreenshot(paramString(args, "selector", functionName)!!) }
-                    args.containsKey("fullPage") -> { validateArgs(args, allowed("fullPage"), setOf("fullPage"), functionName); driver.captureScreenshot(paramBool(args, "fullPage", functionName)!!) }
-                    else -> throw IllegalArgumentException("captureScreenshot allows none or one of: 'selector' | 'fullPage'")
+                    args.isEmpty() -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.screenshot() }
+                    args.containsKey("selector") -> { validateArgs(args, allowed("selector"), setOf("selector"), functionName); driver.screenshot(paramString(args, "selector", functionName)!!) }
+                    args.containsKey("fullPage") -> { validateArgs(args, allowed("fullPage"), setOf("fullPage"), functionName); driver.screenshot(paramBool(args, "fullPage", functionName)!!) }
+                    else -> throw IllegalArgumentException("screenshot allows none or one of: 'selector' | 'fullPage'")
                 }
             }
 

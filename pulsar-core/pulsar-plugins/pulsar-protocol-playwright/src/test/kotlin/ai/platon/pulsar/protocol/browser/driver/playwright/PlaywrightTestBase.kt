@@ -19,7 +19,7 @@ open class PlaywrightTestBase {
     Playwright methods at any given time. Having said that it's okay to create multiple Playwright instances each on its
     own thread.
 
-    @see https://playwright.dev/java/docs/multithreading#introduction
+    @see https://browser4.io/java/docs/multithreading#introduction
     """
 
         const val BAD_PARALLELISM_WARNING = """

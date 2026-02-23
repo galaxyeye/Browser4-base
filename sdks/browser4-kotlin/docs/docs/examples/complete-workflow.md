@@ -22,14 +22,14 @@ data class Product(
 fun main() = runBlocking {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
+
     try {
         println("Starting product scraper...")
-        
+
         // Navigate to search page
         driver.navigateTo("https://example.com/products")
         driver.waitForSelector(".product-list")
-        
+
         // Apply filters
         println("Applying filters...")
         driver.click(".filter-category")
@@ -38,47 +38,47 @@ fun main() = runBlocking {
         driver.click("option[value='under-100']")
         driver.click("button.apply-filters")
         driver.waitForNavigation()
-        
+
         // Scrape all pages
         val allProducts = mutableListOf<Product>()
         var currentPage = 1
-        
+
         while (currentPage <= 5) {
             println("Scraping page $currentPage...")
-            
+
             // Extract products from current page
             val pageProducts = extractProducts(driver)
             allProducts.addAll(pageProducts)
-            
+
             println("  Found ${pageProducts.size} products")
-            
+
             // Check for next page
             if (!driver.exists(".pagination .next:not(.disabled)")) {
                 break
             }
-            
+
             // Go to next page
             driver.click(".pagination .next")
             driver.waitForNavigation()
             driver.waitForSelector(".product-list")
             currentPage++
         }
-        
+
         // Visit each product for detailed info
         println("\nGathering detailed information...")
         val detailedProducts = allProducts.take(10).map { product ->
             getProductDetails(driver, product)
         }
-        
+
         // Save results
         saveResults(detailedProducts)
-        
+
         // Generate report
         generateReport(detailedProducts)
-        
+
         println("\nScraping complete!")
         println("Total products: ${detailedProducts.size}")
-        
+
     } finally {
         session.close()
     }
@@ -96,7 +96,7 @@ fun extractProducts(driver: WebDriver): List<Product> {
             detailUrl: item.querySelector('a')?.href || ''
         }));
     """) as List<Map<String, Any>>
-    
+
     return products.map { data ->
         Product(
             name = data["name"] as String,
@@ -113,13 +113,13 @@ fun getProductDetails(driver: WebDriver, product: Product): Product {
     // Navigate to detail page
     driver.navigateTo("https://example.com/product/${product.name.hashCode()}")
     driver.waitForSelector(".product-detail")
-    
+
     // Extract additional details
     val description = driver.selectFirstTextOrNull(".description") ?: ""
     val features = driver.selectTextAll(".features li")
-    
+
     // Capture screenshot
-    val screenshot = driver.captureScreenshot(selector = ".product-image")
+    val screenshot = driver.screenshot(selector = ".product-image")
     if (screenshot != null) {
         val bytes = Base64.getDecoder().decode(screenshot)
         File("screenshots/${product.name.hashCode()}.png").apply {
@@ -127,7 +127,7 @@ fun getProductDetails(driver: WebDriver, product: Product): Product {
             writeBytes(bytes)
         }
     }
-    
+
     return product // Return with additional info if needed
 }
 
@@ -146,7 +146,7 @@ fun generateReport(products: List<Product>) {
     val avgPrice = products.map { it.price }.average()
     val avgRating = products.map { it.rating }.average()
     val available = products.count { it.availability }
-    
+
     println("\n=== Report ===")
     println("Total products: ${products.size}")
     println("Average price: $${"%.2f".format(avgPrice)}")
@@ -162,18 +162,18 @@ fun runAiWorkflow() = runBlocking {
     val session = AgenticSession.getOrCreate()
     val agent = session.companionAgent
     val driver = session.driver
-    
+
     try {
         // Let AI handle the workflow
         driver.navigateTo("https://example.com")
-        
+
         val result = agent.run("""
-            Navigate to the products page, 
+            Navigate to the products page,
             apply filters for electronics under $100,
             extract product names, prices, and ratings from the first 3 pages,
             and save the results
         """)
-        
+
         if (result.success) {
             println("AI workflow completed!")
             println("Result: ${result.finalResult}")

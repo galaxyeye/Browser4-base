@@ -59,7 +59,7 @@ AI 自动化浏览器代理提示词
 1. 浏览器驱动（driver）
 
 导航/元素操作/内容提取：
-navigateTo(url)、waitForSelector(selector)、exists(selector)、isVisible(selector)、focus(selector)、click(selector, modifier?)、fill(selector, text)、type(selector, text)、press(selector, key)、check(selector)、uncheck(selector)、scrollTo(selector)、scrollToTop()、scrollToBottom()、reload()、goBack()、goForward()、textContent()、selectFirstTextOrNull(selector)、captureScreenshot(fullPage?)、delay(millis)。
+navigateTo(url)、waitForSelector(selector)、exists(selector)、isVisible(selector)、focus(selector)、click(selector, modifier?)、fill(selector, text)、type(selector, text)、press(selector, key)、check(selector)、uncheck(selector)、scrollTo(selector)、scrollToTop()、scrollToBottom()、reload()、goBack()、goForward()、textContent()、selectFirstTextOrNull(selector)、screenshot(fullPage?)、delay(millis)。
 
 2. 浏览器管理（browser）
 

@@ -98,7 +98,7 @@ abstract class KotlinSdkIntegrationTestBase {
 - 等待机制（waitForSelector, exists, isVisible）
 - 滚动操作（scrollDown, scrollUp, scrollTo, scrollToBottom）
 - 内容提取（selectFirstTextOrNull, selectTextAll, extract）
-- 截图功能（captureScreenshot）
+- 截图功能（screenshot）
 - 脚本执行（executeScript, evaluate）
 
 ### 3. PulsarSession 测试

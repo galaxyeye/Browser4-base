@@ -12,7 +12,7 @@ allowed-tools: Bash(browser4-cli:*)
 # open new browser
 browser4-cli open
 # navigate to a page
-browser4-cli goto https://browser4.io
+browser4-cli goto https://browser4.io/
 # interact with the page using refs from the snapshot
 browser4-cli click e15
 browser4-cli type "page.click"
@@ -31,7 +31,7 @@ browser4-cli close
 browser4-cli open
 # open and navigate right away
 browser4-cli open https://example.com/
-browser4-cli goto https://browser4.dev
+browser4-cli goto https://playwright.dev/
 browser4-cli type "search query"
 browser4-cli click e3
 browser4-cli dblclick e7
@@ -165,8 +165,6 @@ browser4-cli open --config=my-config.json
 
 # Close the browser
 browser4-cli close
-# Delete user data for the default session
-browser4-cli delete-data
 ```
 
 ## Snapshots
@@ -179,7 +177,7 @@ After each command, browser4-cli provides a snapshot of the current browser stat
 - Page URL: https://example.com/
 - Page Title: Example Domain
 ### Snapshot
-[Snapshot](.browser4-cli/page-2026-02-14T19-22-42-679Z.yml)
+[Snapshot](.browser4-cli/snapshot/page-2026-02-14T19-22-42-679Z.yml)
 ```
 
 You can also take a snapshot on demand using `browser4-cli snapshot` command.
@@ -256,3 +254,8 @@ browser4-cli fill e7 "test"
 browser4-cli tracing-stop
 browser4-cli close
 ```
+
+## Specific tasks
+
+* **Browser session management** [references/session-management.md](references/session-management.md)
+* **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)

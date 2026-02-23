@@ -99,8 +99,8 @@ driver.goBack()
 driver.goForward()
 driver.textContent(): String?
 driver.selectFirstTextOrNull(selector: String): String?
-driver.captureScreenshot(fullPage: Boolean = false)
-driver.captureScreenshot(selector: String)
+driver.screenshot(fullPage: Boolean = false)
+driver.screenshot(selector: String)
 driver.delay(millis: Long)
 
 // domain: browser

@@ -291,7 +291,7 @@ class SelectorController(
 
         return try {
             val base64 = managed.withLock {
-                driver.captureScreenshot(request.selector)
+                driver.screenshot(request.selector)
             }
             ResponseEntity.ok(ScreenshotResponse(value = base64))
         } catch (e: WebDriverException) {

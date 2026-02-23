@@ -288,7 +288,7 @@ ELEMENT REFERENCES
 
 EXAMPLES
   browser4-cli open
-  browser4-cli goto https://playwright.dev
+  browser4-cli goto https://browser4.io
   browser4-cli snapshot
   browser4-cli click e15
   browser4-cli type "page.click"

@@ -172,7 +172,7 @@ A: Wait for page to render:
 ```kotlin
 driver.navigateTo(url)
 Thread.sleep(1000)
-val screenshot = driver.captureScreenshot()
+val screenshot = driver.screenshot()
 ```
 
 ## Advanced

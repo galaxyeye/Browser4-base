@@ -99,7 +99,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     suspend fun testShouldCaptureScreenshot() {
         driver.open(TestUrls.SIMPLE_PAGE)
 
-        val screenshot = driver.captureScreenshot()
+        val screenshot = driver.screenshot()
         assertNotNull(screenshot, "Screenshot should not be null")
         assertTrue(screenshot.isNotEmpty(), "Screenshot should not be empty")
     }

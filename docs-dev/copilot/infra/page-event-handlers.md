@@ -7,7 +7,7 @@ This document provides comprehensive AI-friendly documentation for the `PageEven
 The `PageEventHandlers` class is the central interface for managing all events that occur during the web page lifecycle in Browser4. It organizes events into three main groups:
 
 1. **LoadEventHandlers** - Events during the loading and parsing phase
-2. **BrowseEventHandlers** - Events during the interactive browsing phase  
+2. **BrowseEventHandlers** - Events during the interactive browsing phase
 3. **CrawlEventHandlers** - Events within the crawl iteration (before/after loading)
 
 **Source File:** `pulsar-core/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/crawl/PageEvents.kt`
@@ -21,12 +21,12 @@ interface PageEventHandlers {
     var loadEventHandlers: LoadEventHandlers
     var browseEventHandlers: BrowseEventHandlers
     var crawlEventHandlers: CrawlEventHandlers
-    
+
     // Aliases for brevity
     var le // alias for loadEventHandlers
     var be // alias for browseEventHandlers
     var ce // alias for crawlEventHandlers
-    
+
     fun chain(other: PageEventHandlers): PageEventHandlers
 }
 ```
@@ -61,7 +61,7 @@ Manages events related to the loading and parsing of web pages.
 ### Load Event Flow (Execution Order)
 
 ```
-onNormalize → onWillLoad → onWillFetch → [Browser Phase] → onFetched → 
+onNormalize → onWillLoad → onWillFetch → [Browser Phase] → onFetched →
 onWillParse → onWillParseHTMLDocument → onHTMLDocumentParsed → onParsed → onLoaded
 ```
 
@@ -73,19 +73,19 @@ loadEventHandlers.apply {
     onNormalize.addLast { url ->
         url.replace(Regex("\\?utm_.*"), "")
     }
-    
+
     // Log before loading
     onWillLoad.addLast { url ->
         println("Loading: $url")
         url // return the url to continue, or null to skip
     }
-    
+
     // Extract data after parsing
     onHTMLDocumentParsed.addLast { page: WebPage, document: FeaturedDocument ->
         val title = document.selectFirst("h1")?.text()
         println("Page title: $title")
     }
-    
+
     // Final processing after load
     onLoaded.addLast { page ->
         println("Loaded ${page.url} with ${page.contentLength} bytes")
@@ -124,9 +124,9 @@ Controls events during the interactive browsing phase when a real browser is use
 ### Browse Event Flow (Execution Order)
 
 ```
-onWillLaunchBrowser → onBrowserLaunched → onWillFetch → onWillNavigate → onNavigated → 
-onWillInteract → onWillCheckDocumentState → onDocumentFullyLoaded → onWillScroll → 
-onDidScroll → onDocumentSteady → onWillComputeFeature → onFeatureComputed → 
+onWillLaunchBrowser → onBrowserLaunched → onWillFetch → onWillNavigate → onNavigated →
+onWillInteract → onWillCheckDocumentState → onDocumentFullyLoaded → onWillScroll →
+onDidScroll → onDocumentSteady → onWillComputeFeature → onFeatureComputed →
 onDidInteract → onWillStopTab → onTabStopped → onFetched
 ```
 
@@ -152,27 +152,27 @@ browseEventHandlers.apply {
     onBrowserLaunched.addLast { page, driver ->
         driver.addInitScript("console.log('Browser initialized')")
     }
-    
+
     // Wait for specific content after navigation
     onNavigated.addLast { page, driver ->
         driver.waitForSelector(".main-content", timeout = 10_000)
     }
-    
+
     // Scroll to load lazy content
     onWillScroll.addLast { page, driver ->
         driver.scrollDown(5) // scroll down 5 times
     }
-    
+
     // Click buttons or interact when document is stable
     onDocumentSteady.addLast { page, driver ->
         // Good time for custom RPA actions
         driver.click("button.load-more")
         driver.waitForNavigation()
     }
-    
+
     // Capture screenshot before closing
     onWillStopTab.addLast { page, driver ->
-        val screenshot = driver.captureScreenshot()
+        val screenshot = driver.screenshot()
         // save screenshot...
     }
 }
@@ -209,7 +209,7 @@ crawlEventHandlers.apply {
             url // continue with URL
         }
     }
-    
+
     // Process results after loading
     onLoaded.addLast { url, page ->
         if (page != null) {
@@ -376,7 +376,7 @@ GlobalEventHandlers.pageEventHandlers = DefaultPageEventHandlers().apply {
 handlers.loadEventHandlers.onLoaded.addLast { page -> /* ... */ }
 handlers.le.onLoaded.addLast { page -> /* ... */ } // using alias
 
-// Browse events  
+// Browse events
 handlers.browseEventHandlers.onDocumentSteady.addLast { page, driver -> /* ... */ }
 handlers.be.onDocumentSteady.addLast { page, driver -> /* ... */ } // using alias
 

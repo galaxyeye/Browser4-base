@@ -85,7 +85,7 @@ class WebDriverDemo(private val session: PulsarSession) {
         driver.type(searchBoxSelector, text)
 
         println("capture screenshot over $selector ...")
-        driver.captureScreenshot(selector)
+        driver.screenshot(selector)
 
         println("evaluate 1 + 1 ...")
         val result = driver.evaluate("1 + 1")

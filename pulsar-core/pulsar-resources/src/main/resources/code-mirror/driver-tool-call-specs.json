@@ -944,17 +944,17 @@
   "returnType" : "JsEvaluation?"
 }, {
   "domain" : "driver",
-  "method" : "captureScreenshot",
+  "method" : "screenshot",
   "arguments" : [ {
     "name" : "fullPage",
     "type" : "Boolean",
     "defaultValue" : "false"
   } ],
   "returnType" : "String?",
-  "description" : "    /**\n     * Capture a screenshot of the current viewport (or primary browsing context) after ensuring any pending layout.\n     * If the backend supports element-centric capture this may represent the full page; implementation specific.\n     *\n     * The target element (if any) is scrolled into view before capture.\n     *\n     * ```kotlin\n     * val base64 = driver.captureScreenshot()\n     * val bytes = Base64.getDecoder().decode(base64)\n     * ```\n     */\n"
+  "description" : "    /**\n     * Capture a screenshot of the current viewport (or primary browsing context) after ensuring any pending layout.\n     * If the backend supports element-centric capture this may represent the full page; implementation specific.\n     *\n     * The target element (if any) is scrolled into view before capture.\n     *\n     * ```kotlin\n     * val base64 = driver.screenshot()\n     * val bytes = Base64.getDecoder().decode(base64)\n     * ```\n     */\n"
 }, {
   "domain" : "driver",
-  "method" : "captureScreenshot",
+  "method" : "screenshot",
   "arguments" : [ {
     "name" : "selector",
     "type" : "String"
@@ -963,7 +963,7 @@
   "description" : "    /**\n     * Scroll the element matched by [selector] into view (if needed) then take a screenshot of that element's bounding box.\n     * Returns a Base64 encoded image (implementation usually PNG/JPEG), PNG by default.\n     */\n"
 }, {
   "domain" : "driver",
-  "method" : "captureScreenshot",
+  "method" : "screenshot",
   "arguments" : [ {
     "name" : "rect",
     "type" : "RectD"
