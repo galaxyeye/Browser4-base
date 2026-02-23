@@ -1,6 +1,6 @@
 # Release Scripts
 
-This directory contains helper scripts for releasing browser4-sdk-python.
+This directory contains helper scripts for releasing browser4-python.
 
 ## Scripts
 
@@ -132,7 +132,7 @@ Before running release scripts:
 After release:
 
 - [ ] Verify PyPI page
-- [ ] Test installation: `pip install browser4-sdk==X.Y.Z`
+- [ ] Test installation: `pip install browser4-python==X.Y.Z`
 - [ ] Verify GitHub Release
 - [ ] Monitor for issues
 
@@ -161,11 +161,11 @@ python -m build
 ### Import error after installation
 
 Check that package name and import name match:
-- Package name: `browser4-sdk` (on PyPI)
+- Package name: `browser4-python` (on PyPI)
 - Import name: `browser4` (in Python)
 
 ```bash
-pip install browser4-sdk
+pip install browser4-python
 python -c "import browser4"
 ```
 

@@ -7,7 +7,7 @@ Comprehensive MkDocs documentation has been successfully created for the Browser
 ## Documentation Structure
 
 ```
-sdks/browser4-sdk-python/docs/
+sdks/browser4-python/docs/
 ├── mkdocs.yml                      # MkDocs configuration
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # Documentation guide

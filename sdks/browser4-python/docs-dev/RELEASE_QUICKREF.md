@@ -1,4 +1,4 @@
-# browser4-sdk-python 发布快速参考
+# browser4-python 发布快速参考
 
 这是 [完整发布计划](RELEASE_PLAN.md) 的简化版本，供快速查阅。
 
@@ -7,7 +7,7 @@
 ### 1. 准备阶段（15-30分钟）
 
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 
 # 1.1 运行测试
 uv run pytest -m "not integration" --cov=browser4  # 单元测试
@@ -62,7 +62,7 @@ deactivate
 
 ```bash
 # 4.1 创建 Git 标签
-git tag -a python-sdk-vX.Y.Z -m "Release browser4-sdk-python vX.Y.Z"
+git tag -a python-sdk-vX.Y.Z -m "Release browser4-python vX.Y.Z"
 git push origin python-sdk-vX.Y.Z
 
 # 4.2 上传到 PyPI
@@ -70,7 +70,7 @@ twine upload dist/*
 
 # 4.3 创建 GitHub Release
 gh release create python-sdk-vX.Y.Z \
-  --title "browser4-sdk-python vX.Y.Z" \
+  --title "browser4-python vX.Y.Z" \
   --notes-file CHANGELOG.md \
   dist/*
 ```
@@ -104,7 +104,7 @@ gh release create python-sdk-vX.Y.Z \
 | `setup.cfg` | `version = X.Y.Z` | `version = 0.1.0` |
 | `browser4/__init__.py` | `__version__ = "X.Y.Z"` | `__version__ = "0.1.0"` |
 | `CHANGELOG.md` | 添加新版本条目 | `## [0.1.0] - 2026-02-11` |
-| `README.md` | 更新安装示例（如需要） | `pip install browser4-sdk==0.1.0` |
+| `README.md` | 更新安装示例（如需要） | `pip install browser4-python==0.1.0` |
 
 ---
 
@@ -198,13 +198,13 @@ git push origin --delete python-sdk-vX.Y.Z
 ```bash
 # 创建 Release
 gh release create python-sdk-vX.Y.Z \
-  --title "browser4-sdk-python vX.Y.Z" \
+  --title "browser4-python vX.Y.Z" \
   --notes-file CHANGELOG.md \
   dist/*
 
 # 预发布版本
 gh release create python-sdk-vX.Y.Z-rc.1 \
-  --title "browser4-sdk-python vX.Y.Z RC1" \
+  --title "browser4-python vX.Y.Z RC1" \
   --notes "Release candidate" \
   --prerelease \
   dist/*
@@ -241,7 +241,7 @@ pip install --index-url https://test.pypi.org/simple/ \
 # 检查包名称
 pip list | grep browser4
 
-# 应该看到：browser4-sdk
+# 应该看到：browser4-python
 # 导入时使用：import browser4  # 不是 browser4-sdk
 ```
 
@@ -295,13 +295,13 @@ gh workflow run python-sdk-release.yml \
 ### 检查发布状态
 ```bash
 # PyPI 页面
-open https://pypi.org/project/browser4-sdk/
+open https://pypi.org/project/browser4-python/
 
 # GitHub Release
 open https://github.com/platonai/Browser4/releases
 
 # 下载统计
-pypistats recent browser4-sdk
+pypistats recent browser4-python
 ```
 
 ### 验证安装
@@ -323,7 +323,7 @@ rm -rf verify
 ### 如果发现严重问题
 
 1. **在 PyPI 上 yank 问题版本**
-   - 访问 https://pypi.org/manage/project/browser4-sdk/releases/
+   - 访问 https://pypi.org/manage/project/browser4-python/releases/
    - 点击问题版本
    - 点击 "Yank"
    - 用户仍可指定版本安装，但不会自动选择

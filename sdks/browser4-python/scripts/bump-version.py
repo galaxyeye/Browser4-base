@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Version bumping script for browser4-sdk-python.
+Version bumping script for browser4-python.
 
 This script updates the version number in all relevant files:
 - pyproject.toml
@@ -124,7 +124,7 @@ def main():
         print("Examples: 0.1.0, 0.2.0, 1.0.0-rc.1")
         sys.exit(1)
     
-    # Determine SDK directory (script is in sdks/browser4-sdk-python/scripts)
+    # Determine SDK directory (script is in sdks/browser4-python/scripts)
     script_dir = Path(__file__).parent
     sdk_dir = script_dir.parent
     

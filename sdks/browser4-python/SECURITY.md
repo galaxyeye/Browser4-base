@@ -23,7 +23,7 @@ Please include the following information in your report:
 - **Description**: A clear description of the vulnerability
 - **Steps to Reproduce**: Detailed steps to reproduce the issue
 - **Impact**: Potential impact and attack scenarios
-- **Affected Versions**: Which versions of browser4-sdk-python are affected
+- **Affected Versions**: Which versions of browser4-python are affected
 - **Suggested Fix**: If you have a suggested fix or mitigation (optional)
 - **Your Contact**: How we can reach you for follow-up questions
 
@@ -47,7 +47,7 @@ When a security vulnerability is confirmed:
 
 ### Security Best Practices for Users
 
-When using browser4-sdk-python:
+When using browser4-python:
 
 1. **Keep Updated**: Always use the latest version of the SDK
 2. **Validate Input**: Validate and sanitize all user inputs before passing to the SDK
@@ -90,4 +90,4 @@ All security updates will be documented in:
 - **GitHub Security**: https://github.com/platonai/Browser4/security
 - **General Contact**: https://github.com/platonai/Browser4/issues (for non-security issues only)
 
-Thank you for helping keep browser4-sdk-python and its users secure!
+Thank you for helping keep browser4-python and its users secure!

@@ -41,7 +41,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone or create your project
 git clone https://github.com/platonai/Browser4.git
-cd Browser4/sdks/browser4-sdk-python
+cd Browser4/sdks/browser4-python
 
 # Install dependencies (creates/updates virtualenv automatically)
 uv sync
@@ -59,7 +59,7 @@ uv sync --extra dev
 
 ```bash
 # Install from local source
-cd Browser4/sdks/browser4-sdk-python
+cd Browser4/sdks/browser4-python
 pip install -e .
 
 # Or install with dev dependencies
@@ -70,7 +70,7 @@ pip install -e ".[dev]"
 
 ```bash
 # Once published to PyPI
-pip install browser4-sdk
+pip install browser4-python
 ```
 
 ## Verify Installation

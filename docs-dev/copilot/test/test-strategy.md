@@ -121,7 +121,7 @@ mvn test -DrunE2ETests=true
 
 ```
 sdks/kotlin-sdk-tests
-sdks/browser4-sdk-python
+sdks/browser4-python
 ```
 
 **命令**

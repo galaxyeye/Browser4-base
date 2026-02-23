@@ -258,7 +258,7 @@ Integration Test Execution
 ## File Organization
 
 ```
-sdks/browser4-sdk-python/
+sdks/browser4-python/
 ├── browser4/                    # SDK source code
 │   ├── __init__.py
 │   ├── client.py               # PulsarClient

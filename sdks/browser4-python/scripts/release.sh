@@ -1,5 +1,5 @@
 #!/bin/bash
-# Manual release script for browser4-sdk-python
+# Manual release script for browser4-python
 # This script automates the manual release process as documented in RELEASE_PLAN.md
 
 set -e  # Exit on error
@@ -79,7 +79,7 @@ echo ""
 
 # Step 3: Clean and build
 info "📦 Building package..."
-rm -rf dist/ build/ *.egg-info browser4_sdk.egg-info
+rm -rf dist/ build/ *.egg-info browser4_python.egg-info
 
 if command -v uv &> /dev/null; then
     uv run python -m build
@@ -124,7 +124,7 @@ if [ "$DRY_RUN" = "true" ]; then
     success "Test upload complete!"
     echo ""
     info "📦 Install with:"
-    echo "    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ browser4-sdk==$VERSION"
+    echo "    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ browser4-python==$VERSION"
 else
     echo ""
     warning "⚠️  You are about to upload to PyPI. This action cannot be undone!"
@@ -148,10 +148,10 @@ else
         success "✅ Release complete!"
         echo ""
         info "📦 Install with:"
-        echo "    pip install browser4-sdk==$VERSION"
+        echo "    pip install browser4-python==$VERSION"
         echo ""
         info "🔗 Links:"
-        echo "    PyPI: https://pypi.org/project/browser4-sdk/$VERSION/"
+        echo "    PyPI: https://pypi.org/project/browser4-python/$VERSION/"
         echo "    GitHub: https://github.com/platonai/Browser4/releases/tag/python-sdk-v$VERSION"
     else
         warning "❌ Upload cancelled"

@@ -86,7 +86,7 @@ Added 27 methods to `sdks/browser4-sdk-kotlin/src/main/kotlin/ai/platon/pulsar/s
 - `boundingBox(selector)` - Get element bounding box
 
 #### 2.2 Python SDK Enhancements
-Added the same 27 methods to `sdks/browser4-sdk-python/browser4/webdriver.py` with Python-style naming:
+Added the same 27 methods to `sdks/browser4-python/browser4/webdriver.py` with Python-style naming:
 - Cookie operations: `get_cookies`, `delete_cookies`, `clear_browser_cookies`, `add_cookie`
 - Advanced clicks: `click_text_matches`, `click_matches`, `click_nth_anchor`
 - Mouse operations: `mouse_wheel_down`, `mouse_wheel_up`, `move_mouse_to`, `drag_and_drop`
@@ -96,7 +96,7 @@ Added the same 27 methods to `sdks/browser4-sdk-python/browser4/webdriver.py` wi
 - Geometry: `clickable_point`, `bounding_box`
 
 #### 2.3 Python FusedActsStyleExample
-Created `sdks/browser4-sdk-python/examples/fused_acts_style_example.py`:
+Created `sdks/browser4-python/examples/fused_acts_style_example.py`:
 - Mirrors the Kotlin FusedActsStyleExample exactly
 - Demonstrates the three-layer architecture: PulsarSession, WebDriver, Agent
 - Shows 14 steps of browser automation using natural language instructions
@@ -166,14 +166,14 @@ Verified that both Kotlin and Python SDKs have all required methods:
 ### New Files (3)
 1. `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/controller/CookieController.kt` - Cookie operations
 2. `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/controller/ScreenshotController.kt` - Screenshot operations
-3. `sdks/browser4-sdk-python/examples/fused_acts_style_example.py` - Python example
+3. `sdks/browser4-python/examples/fused_acts_style_example.py` - Python example
 
 ### Modified Files (5)
 1. `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/controller/NavigationController.kt` - Added pageSource endpoint
 2. `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/controller/ElementController.kt` - Added 11 element endpoints
 3. `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/dto/ApiDtos.kt` - Added Cookie DTOs
 4. `sdks/browser4-sdk-kotlin/src/main/kotlin/ai/platon/pulsar/sdk/v0/WebDriver.kt` - Added 27 methods
-5. `sdks/browser4-sdk-python/browser4/webdriver.py` - Added 27 methods
+5. `sdks/browser4-python/browser4/webdriver.py` - Added 27 methods
 
 ## Testing Recommendations
 

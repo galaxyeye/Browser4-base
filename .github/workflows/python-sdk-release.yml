@@ -23,7 +23,7 @@ permissions:
 
 env:
   PYTHON_VERSION: '3.11'
-  SDK_DIR: 'sdks/browser4-sdk-python'
+  SDK_DIR: 'sdks/browser4-python'
 
 jobs:
   build:
@@ -96,7 +96,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           python -m pip install dist/*.whl
-          python -c "import browser4; print(f'✓ browser4-sdk {browser4.__version__}')"
+          python -c "import browser4; print(f'✓ browser4-python {browser4.__version__}')"
 
       - name: Test wheel installation (Windows)
         if: runner.os == 'Windows'
@@ -104,7 +104,7 @@ jobs:
         run: |
           $wheel = Get-ChildItem -Path dist -Filter *.whl | Select-Object -First 1
           python -m pip install $wheel.FullName
-          python -c "import browser4; print(f'✓ browser4-sdk {browser4.__version__}')"
+          python -c "import browser4; print(f'✓ browser4-python {browser4.__version__}')"
 
       - name: Test basic imports
         run: |
@@ -120,7 +120,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/project/browser4-sdk/
+      url: https://test.pypi.org/project/browser4-python/
 
     permissions:
       id-token: write
@@ -148,7 +148,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/project/browser4-sdk/
+      url: https://pypi.org/project/browser4-python/
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -210,13 +210,13 @@ jobs:
           if [ "${{ steps.changelog.outputs.exists }}" = "true" ]; then
             NOTES_FILE="CHANGELOG.md"
           else
-            echo "Release browser4-sdk-python v${{ steps.version.outputs.version }}" > /tmp/release-notes.md
+            echo "Release browser4-python v${{ steps.version.outputs.version }}" > /tmp/release-notes.md
             NOTES_FILE="/tmp/release-notes.md"
           fi
 
           # Create release
           gh release create ${{ github.ref_name }} \
-            --title "browser4-sdk-python v${{ steps.version.outputs.version }}" \
+            --title "browser4-python v${{ steps.version.outputs.version }}" \
             --notes-file "$NOTES_FILE" \
             ../../dist/*
 
@@ -228,10 +228,10 @@ jobs:
           echo "**Tag:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Published Packages" >> $GITHUB_STEP_SUMMARY
-          echo "- [PyPI](https://pypi.org/project/browser4-sdk/${{ steps.version.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
+          echo "- [PyPI](https://pypi.org/project/browser4-python/${{ steps.version.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
           echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📥 Installation" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "pip install browser4-sdk==${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "pip install browser4-python==${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

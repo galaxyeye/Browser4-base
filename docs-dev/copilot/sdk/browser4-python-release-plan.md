@@ -1,16 +1,16 @@
-# browser4-sdk-python 发布计划文档
+# browser4-python 发布计划文档
 
 ## 📚 文档概览
 
-本目录包含 browser4-sdk-python 的完整发布计划文档，为 Python SDK 的首次发布和后续维护提供详细指南。
+本目录包含 browser4-python 的完整发布计划文档，为 Python SDK 的首次发布和后续维护提供详细指南。
 
 ### 文档清单
 
 | 文档 | 语言 | 描述 | 目标读者 |
 |------|------|------|---------|
-| [RELEASE_PLAN.md](../sdks/browser4-sdk-python/RELEASE_PLAN.md) | 中文 | 完整发布计划（35页） | 发布管理员、维护者 |
-| [RELEASE_PLAN.en.md](../sdks/browser4-sdk-python/RELEASE_PLAN.en.md) | English | Complete release plan (35 pages) | Release managers, Maintainers |
-| [RELEASE_QUICKREF.md](../sdks/browser4-sdk-python/RELEASE_QUICKREF.md) | 中文 | 快速参考指南（5页） | 快速查阅、日常发布 |
+| [RELEASE_PLAN.md](../sdks/browser4-python/RELEASE_PLAN.md) | 中文 | 完整发布计划（35页） | 发布管理员、维护者 |
+| [RELEASE_PLAN.en.md](../sdks/browser4-python/RELEASE_PLAN.en.md) | English | Complete release plan (35 pages) | Release managers, Maintainers |
+| [RELEASE_QUICKREF.md](../sdks/browser4-python/RELEASE_QUICKREF.md) | 中文 | 快速参考指南（5页） | 快速查阅、日常发布 |
 
 ---
 
@@ -37,7 +37,7 @@
 
 ## 📖 文档内容概览
 
-### [完整发布计划](../sdks/browser4-sdk-python/RELEASE_PLAN.md)
+### [完整发布计划](../sdks/browser4-python/RELEASE_PLAN.md)
 
 **章节结构：**
 
@@ -56,7 +56,7 @@
 - 自动化脚本（release.sh）
 - 模板文件（SECURITY.md, CONTRIBUTING.md）
 
-### [快速参考指南](../sdks/browser4-sdk-python/RELEASE_QUICKREF.md)
+### [快速参考指南](../sdks/browser4-python/RELEASE_QUICKREF.md)
 
 **快速索引：**
 
@@ -141,7 +141,7 @@ git push origin python-sdk-v0.2.0
 
 ### 项目链接
 - **GitHub 仓库**：https://github.com/platonai/Browser4
-- **Python SDK 目录**：`sdks/browser4-sdk-python/`
+- **Python SDK 目录**：`sdks/browser4-python/`
 - **PyPI 项目**：https://pypi.org/project/browser4-sdk/（首次发布后）
 
 ### 参考文档

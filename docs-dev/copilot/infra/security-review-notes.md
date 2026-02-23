@@ -11,7 +11,7 @@ Code review identified JavaScript injection vulnerabilities in SDK WebDriver met
 **Severity**: Medium to High
 **Files Affected**:
 - `sdks/browser4-sdk-kotlin/src/main/kotlin/ai/platon/pulsar/sdk/v0/WebDriver.kt`
-- `sdks/browser4-sdk-python/browser4/webdriver.py`
+- `sdks/browser4-python/browser4/webdriver.py`
 - `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/controller/ElementController.kt`
 - `pulsar-rest/src/main/kotlin/ai/platon/pulsar/rest/openapi/controller/CookieController.kt`
 

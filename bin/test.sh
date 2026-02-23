@@ -356,7 +356,7 @@ for TestType in "${SDKTests[@]}"; do
     case $TestType in
       python-sdk)
         echo "Running Python SDK tests..."
-        PythonSdkDir="$repoRoot/sdks/browser4-sdk-python"
+        PythonSdkDir="$repoRoot/sdks/browser4-python"
 
         if [[ ! -d "$PythonSdkDir" ]]; then
           echo "Error: Python SDK directory not found at $PythonSdkDir"

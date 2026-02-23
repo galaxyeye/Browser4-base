@@ -1,5 +1,5 @@
 [project]
-name = "browser4-sdk"
+name = "browser4-python"
 version = "0.1.0"
 description = "Python SDK for Browser4 WebDriver-compatible and AgenticSession APIs"
 authors = [

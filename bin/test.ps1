@@ -196,7 +196,7 @@ foreach ($TestType in $SDKTests) {
       switch ($TestType) {
         "python-sdk" {
           Write-Host "Running Python SDK tests..."
-          $PythonSdkDir = Join-Path $repoRoot "sdks\browser4-sdk-python"
+          $PythonSdkDir = Join-Path $repoRoot "sdks\browser4-python"
 
           if (!(Test-Path $PythonSdkDir)) {
             Write-Error "Python SDK directory not found at $PythonSdkDir"

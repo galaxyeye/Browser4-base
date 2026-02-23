@@ -213,7 +213,7 @@ We welcome contributions! Please:
 
 ## Support
 
-- **Documentation**: https://github.com/platonai/Browser4/tree/master/sdks/browser4-sdk-python/docs
+- **Documentation**: https://github.com/platonai/Browser4/tree/master/sdks/browser4-python/docs
 - **Issues**: https://github.com/platonai/Browser4/issues
 - **Discussions**: https://github.com/platonai/Browser4/discussions
 

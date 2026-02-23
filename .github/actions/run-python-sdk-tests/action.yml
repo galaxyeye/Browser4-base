@@ -12,7 +12,7 @@ inputs:
   sdk_directory:
     description: 'Path to Python SDK directory'
     required: false
-    default: 'sdks/browser4-sdk-python'
+    default: 'sdks/browser4-python'
   mock_server_port:
     description: 'Port for the mock server'
     required: false

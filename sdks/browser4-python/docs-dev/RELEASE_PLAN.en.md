@@ -1,8 +1,8 @@
-# browser4-sdk-python Release Plan
+# browser4-python Release Plan
 
 ## 📋 Overview
 
-This document outlines the complete release process for browser4-sdk-python, including version management, packaging, testing, publishing, and ongoing maintenance.
+This document outlines the complete release process for browser4-python, including version management, packaging, testing, publishing, and ongoing maintenance.
 
 **Current Status:**
 - Version: 0.1.0
@@ -39,13 +39,13 @@ Following Semantic Versioning 2.0.0: `MAJOR.MINOR.PATCH[-SUFFIX]`
 
 ### 1.2 Version Synchronization Strategy
 
-browser4-sdk-python follows an **independent versioning** strategy, **decoupled** from the main Browser4 project:
+browser4-python follows an **independent versioning** strategy, **decoupled** from the main Browser4 project:
 
 | Component | Current Version | Version Strategy |
 |-----------|-----------------|------------------|
 | Browser4 (main project) | 4.5.0           | Maven semantic versioning |
 | browser4-sdk-kotlin | Follows main    | Synced with main project |
-| browser4-sdk-python | 0.1.0           | Independent versioning |
+| browser4-python | 0.1.0           | Independent versioning |
 | browser4-sdk-nodejs | TBD             | Independent versioning |
 | browser4-sdk-rust | TBD             | Independent versioning |
 
@@ -57,14 +57,14 @@ browser4-sdk-python follows an **independent versioning** strategy, **decoupled*
 
 **Compatibility Indication:**
 - Clearly document compatible Browser4 server version ranges in README and documentation
-- Example: `browser4-sdk-python 0.1.x` compatible with `Browser4 4.5.x - 4.6.x`
+- Example: `browser4-python 0.1.x` compatible with `Browser4 4.5.x - 4.6.x`
 
 ### 1.3 Version File Management
 
 Files requiring version synchronization:
 
 ```
-sdks/browser4-sdk-python/
+sdks/browser4-python/
 ├── pyproject.toml        # version = "X.Y.Z"
 ├── setup.cfg             # version = X.Y.Z
 ├── browser4/__init__.py  # __version__ = "X.Y.Z"
@@ -87,7 +87,7 @@ sdks/browser4-sdk-python/
 
 #### Unit Tests
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 uv run pytest -m "not integration" --cov=browser4 --cov-report=term-missing
 ```
 
@@ -98,7 +98,7 @@ uv run pytest -m "not integration" --cov=browser4 --cov-report=term-missing
 
 #### Integration Tests
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 uv run pytest -m integration -v -s
 ```
 
@@ -158,7 +158,7 @@ done
 
 #### Documentation Site (Optional, Future Enhancement)
 ```bash
-cd sdks/browser4-sdk-python/docs
+cd sdks/browser4-python/docs
 mkdocs build
 mkdocs serve  # Local preview
 ```
@@ -202,7 +202,7 @@ Create `CHANGELOG.md` (if it doesn't exist):
 ```markdown
 # Changelog
 
-All notable changes to browser4-sdk-python will be documented in this file.
+All notable changes to browser4-python will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -212,7 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-02-XX
 
 ### Added
-- Initial release of browser4-sdk-python
+- Initial release of browser4-python
 - Browser4Driver for automatic server management
 - PulsarClient for low-level HTTP API communication
 - PulsarSession for page loading and data extraction
@@ -242,7 +242,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Commit Version Changes
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 git add pyproject.toml setup.cfg browser4/__init__.py CHANGELOG.md README.md
 git commit -m "chore(python-sdk): Prepare release 0.1.0"
 ```
@@ -255,7 +255,7 @@ git commit -m "chore(python-sdk): Prepare release 0.1.0"
 
 #### Clean Old Builds
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 rm -rf dist/ build/ *.egg-info
 ```
 
@@ -388,7 +388,7 @@ source test-testpypi/bin/activate
 # Install from TestPyPI
 pip install --index-url https://test.pypi.org/simple/ \
     --extra-index-url https://pypi.org/simple/ \
-    browser4-sdk==0.1.0
+    browser4-python==0.1.0
 
 # Verify
 python -c "import browser4; print(browser4.__version__)"
@@ -422,7 +422,7 @@ git checkout main  # or master
 git pull
 
 # Create annotated tag
-git tag -a python-sdk-v0.1.0 -m "Release browser4-sdk-python v0.1.0"
+git tag -a python-sdk-v0.1.0 -m "Release browser4-python v0.1.0"
 
 # Push tag
 git push origin python-sdk-v0.1.0
@@ -430,7 +430,7 @@ git push origin python-sdk-v0.1.0
 
 #### Upload to PyPI
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 
 # Ensure dist/ only contains current version
 rm -rf dist/
@@ -454,7 +454,7 @@ twine upload dist/*
 #### Via GitHub Web Interface
 1. Visit https://github.com/platonai/Browser4/releases/new
 2. Select tag: `python-sdk-v0.1.0`
-3. Release title: `browser4-sdk-python v0.1.0`
+3. Release title: `browser4-python v0.1.0`
 4. Description: Copy content from CHANGELOG.md
 5. Attachments: Upload files from `dist/` directory (optional)
 6. Check "Set as the latest release" or "Set as a pre-release"
@@ -471,15 +471,15 @@ gh auth login
 
 # Create Release
 gh release create python-sdk-v0.1.0 \
-  --title "browser4-sdk-python v0.1.0" \
-  --notes-file sdks/browser4-sdk-python/CHANGELOG.md \
+  --title "browser4-python v0.1.0" \
+  --notes-file sdks/browser4-python/CHANGELOG.md \
   dist/browser4_sdk-0.1.0-py3-none-any.whl \
   dist/browser4_sdk-0.1.0.tar.gz
 
 # If pre-release
 gh release create python-sdk-v0.1.0-rc.1 \
-  --title "browser4-sdk-python v0.1.0 Release Candidate 1" \
-  --notes-file sdks/browser4-sdk-python/CHANGELOG.md \
+  --title "browser4-python v0.1.0 Release Candidate 1" \
+  --notes-file sdks/browser4-python/CHANGELOG.md \
   --prerelease \
   dist/*
 ```
@@ -487,7 +487,7 @@ gh release create python-sdk-v0.1.0-rc.1 \
 ### 4.4 Verify Release
 
 #### Verify PyPI Page
-- [ ] Visit https://pypi.org/project/browser4-sdk/
+- [ ] Visit https://pypi.org/project/browser4-python/
 - [ ] Confirm version number correct
 - [ ] Check project description renders correctly (README.md)
 - [ ] Verify metadata (author, license, project links)
@@ -500,7 +500,7 @@ uv venv fresh-install
 source fresh-install/bin/activate
 
 # Install released version
-pip install browser4-sdk==0.1.0
+pip install browser4-python==0.1.0
 
 # Verify
 python -c "
@@ -572,19 +572,19 @@ jobs:
 
       - name: Build package
         run: |
-          cd sdks/browser4-sdk-python
+          cd sdks/browser4-python
           python -m build
 
       - name: Check package
         run: |
-          cd sdks/browser4-sdk-python
+          cd sdks/browser4-python
           twine check dist/*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
-          path: sdks/browser4-sdk-python/dist/
+          path: sdks/browser4-python/dist/
 
   test-package:
     name: Test Package Installation
@@ -622,7 +622,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/project/browser4-sdk/
+      url: https://test.pypi.org/project/browser4-python/
 
     steps:
       - name: Download artifacts
@@ -645,7 +645,7 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/project/browser4-sdk/
+      url: https://pypi.org/project/browser4-python/
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -689,9 +689,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd sdks/browser4-sdk-python
+          cd sdks/browser4-python
           gh release create ${{ github.ref_name }} \
-            --title "browser4-sdk-python v${{ steps.version.outputs.version }}" \
+            --title "browser4-python v${{ steps.version.outputs.version }}" \
             --notes-file CHANGELOG.md \
             dist/*
 ```
@@ -702,10 +702,10 @@ Recommended: Use PyPI's Trusted Publishing feature for secure, token-free publis
 
 #### Configuration Steps
 1. Log in to PyPI: https://pypi.org/
-2. Go to project settings: https://pypi.org/manage/project/browser4-sdk/settings/
+2. Go to project settings: https://pypi.org/manage/project/browser4-python/settings/
 3. Click "Publishing" → "Add a new publisher"
 4. Fill in information:
-   - **PyPI Project Name**: `browser4-sdk`
+   - **PyPI Project Name**: `browser4-python`
    - **Owner**: `platonai`
    - **Repository**: `Browser4`
    - **Workflow name**: `python-sdk-release.yml`
@@ -756,9 +756,9 @@ gh workflow run python-sdk-release.yml \
 
 #### User Notification
 ```markdown
-📢 **browser4-sdk-python v0.1.0 Released!**
+📢 **browser4-python v0.1.0 Released!**
 
-We're excited to announce the first official release of browser4-sdk-python!
+We're excited to announce the first official release of browser4-python!
 
 🎉 **Key Features:**
 - Automatic Browser4 server management
@@ -768,11 +768,11 @@ We're excited to announce the first official release of browser4-sdk-python!
 
 📦 **Installation:**
 ```bash
-pip install browser4-sdk
+pip install browser4-python
 ```
 
 📖 **Documentation:**
-https://github.com/platonai/Browser4/tree/main/sdks/browser4-sdk-python
+https://github.com/platonai/Browser4/tree/main/sdks/browser4-python
 
 🙏 Thank you to all contributors!
 ```
@@ -780,12 +780,12 @@ https://github.com/platonai/Browser4/tree/main/sdks/browser4-sdk-python
 ### 6.2 Monitoring and Feedback
 
 #### PyPI Download Statistics
-- Monitor PyPI downloads: https://pypistats.org/packages/browser4-sdk
+- Monitor PyPI downloads: https://pypistats.org/packages/browser4-python
 - Use pypistats tool:
   ```bash
   pip install pypistats
-  pypistats recent browser4-sdk
-  pypistats overall browser4-sdk --monthly
+  pypistats recent browser4-python
+  pypistats overall browser4-python --monthly
   ```
 
 #### GitHub Activity Monitoring
@@ -1084,7 +1084,7 @@ twine upload --repository-url https://upload.pypi.org/legacy/ dist/* --verbose
 
 ## Summary
 
-This release plan provides a complete guide for browser4-sdk-python from development to release and maintenance. Key points:
+This release plan provides a complete guide for browser4-python from development to release and maintenance. Key points:
 
 1. **Semantic Versioning**: Follow SemVer 2.0.0, independent from main project
 2. **Rigorous Testing**: Unit tests, integration tests, compatibility tests

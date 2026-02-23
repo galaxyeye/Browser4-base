@@ -69,7 +69,7 @@ Browser4 Python SDK requires Python 3.9 or higher. We recommend Python 3.11 for 
 Yes, clone the repository and install:
 ```bash
 git clone https://github.com/platonai/Browser4.git
-cd Browser4/sdks/browser4-sdk-python
+cd Browser4/sdks/browser4-python
 pip install -e .
 ```
 
@@ -541,7 +541,7 @@ Open a feature request on [GitHub Issues](https://github.com/platonai/Browser4/i
 ### Where is the source code?
 
 - **Main repository**: https://github.com/platonai/Browser4
-- **Python SDK**: https://github.com/platonai/Browser4/tree/master/sdks/browser4-sdk-python
+- **Python SDK**: https://github.com/platonai/Browser4/tree/master/sdks/browser4-python
 
 ## Next Steps
 

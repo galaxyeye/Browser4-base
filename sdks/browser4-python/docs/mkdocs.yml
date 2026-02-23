@@ -5,7 +5,7 @@ site_url: https://browser4.io
 
 repo_name: platonai/Browser4
 repo_url: https://github.com/platonai/Browser4
-edit_uri: edit/main/sdks/browser4-sdk-python/docs/
+edit_uri: edit/main/sdks/browser4-python/docs/
 
 theme:
   name: material
@@ -110,6 +110,6 @@ extra:
     - icon: fontawesome/brands/docker
       link: https://hub.docker.com/r/galaxyeye88/browser4
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/browser4-sdk/
+      link: https://pypi.org/project/browser4-python/
 
 copyright: Copyright &copy; 2025 Platon AI

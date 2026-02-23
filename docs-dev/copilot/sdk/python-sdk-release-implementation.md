@@ -1,8 +1,8 @@
-# browser4-sdk-python Release Automation Implementation
+# browser4-python Release Automation Implementation
 
 ## Overview
 
-This document summarizes the implementation of the release automation infrastructure for browser4-sdk-python, based on the release plan documentation.
+This document summarizes the implementation of the release automation infrastructure for browser4-python, based on the release plan documentation.
 
 **Implementation Date**: 2026-02-12
 **Status**: ✅ Complete and tested
@@ -14,13 +14,13 @@ This document summarizes the implementation of the release automation infrastruc
 ### 1. Documentation Files
 
 #### CHANGELOG.md
-- **Location**: `sdks/browser4-sdk-python/CHANGELOG.md`
+- **Location**: `sdks/browser4-python/CHANGELOG.md`
 - **Purpose**: Track all notable changes for each version
 - **Format**: Keep a Changelog format
 - **Content**: Initial v0.1.0 release notes with comprehensive feature list
 
 #### SECURITY.md
-- **Location**: `sdks/browser4-sdk-python/SECURITY.md`
+- **Location**: `sdks/browser4-python/SECURITY.md`
 - **Purpose**: Security vulnerability reporting guidelines
 - **Features**:
   - Supported versions table
@@ -135,7 +135,7 @@ Browser4/
 │   └── workflows/
 │       └── python-sdk-release.yml          # GitHub Actions workflow
 └── sdks/
-    └── browser4-sdk-python/
+    └── browser4-python/
         ├── CHANGELOG.md                     # Version history
         ├── SECURITY.md                      # Security policy
         ├── RELEASE_PLAN.md                  # Complete release plan (existing)
@@ -155,7 +155,7 @@ Browser4/
 ### ✅ Build Testing
 
 ```bash
-cd sdks/browser4-sdk-python
+cd sdks/browser4-python
 python -m build
 twine check dist/*
 ```
@@ -333,9 +333,9 @@ Follow the automated release workflow:
 
 ## References
 
-- **Release Plan**: [RELEASE_PLAN.md](../sdks/browser4-sdk-python/RELEASE_PLAN.md)
-- **Quick Reference**: [RELEASE_QUICKREF.md](../sdks/browser4-sdk-python/RELEASE_QUICKREF.md)
-- **Scripts Guide**: [scripts/README.md](../../../sdks/browser4-sdk-python/scripts/README.md)
+- **Release Plan**: [RELEASE_PLAN.md](../sdks/browser4-python/RELEASE_PLAN.md)
+- **Quick Reference**: [RELEASE_QUICKREF.md](../sdks/browser4-python/RELEASE_QUICKREF.md)
+- **Scripts Guide**: [scripts/README.md](../../../sdks/browser4-python/scripts/README.md)
 - **Workflow**: [.github/workflows/python-sdk-release.yml](../../../.github/workflows/python-sdk-release.yml)
 
 ---
