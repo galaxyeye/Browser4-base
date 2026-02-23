@@ -578,6 +578,119 @@ data class ChatResponse(
     )
 }
 
+// ========== Extended Interaction DTOs ==========
+
+/**
+ * Request for double-click on an element by selector.
+ */
+data class DblclickRequest(
+    @param:JsonProperty("selector") val selector: String,
+    @param:JsonProperty("strategy") val strategy: String = "css"
+)
+
+/**
+ * Request for drag-and-drop.
+ */
+data class DragRequest(
+    @param:JsonProperty("sourceSelector") val sourceSelector: String,
+    @param:JsonProperty("targetSelector") val targetSelector: String,
+    @param:JsonProperty("strategy") val strategy: String = "css"
+)
+
+/**
+ * Request to select option(s) in a dropdown.
+ */
+data class SelectOptionRequest(
+    @param:JsonProperty("selector") val selector: String,
+    @param:JsonProperty("strategy") val strategy: String = "css",
+    @param:JsonProperty("values") val values: List<String>
+)
+
+/**
+ * Request for type text (without clearing first, unlike fill).
+ */
+data class TypeRequest(
+    @param:JsonProperty("selector") val selector: String,
+    @param:JsonProperty("strategy") val strategy: String = "css",
+    @param:JsonProperty("text") val text: String
+)
+
+/**
+ * Request for dialog accept.
+ */
+data class DialogAcceptRequest(
+    @param:JsonProperty("promptText") val promptText: String? = null
+)
+
+/**
+ * Request for window resize.
+ */
+data class ResizeRequest(
+    @param:JsonProperty("width") val width: Int,
+    @param:JsonProperty("height") val height: Int
+)
+
+/**
+ * Request for individual key events (keydown/keyup).
+ */
+data class KeyEventRequest(
+    @param:JsonProperty("key") val key: String
+)
+
+/**
+ * Request for mouse move.
+ */
+data class MouseMoveRequest(
+    @param:JsonProperty("x") val x: Double,
+    @param:JsonProperty("y") val y: Double
+)
+
+/**
+ * Request for mouse button events (mousedown/mouseup).
+ */
+data class MouseButtonRequest(
+    @param:JsonProperty("button") val button: String = "left"
+)
+
+/**
+ * Request for mouse wheel.
+ */
+data class MouseWheelRequest(
+    @param:JsonProperty("deltaX") val deltaX: Double = 0.0,
+    @param:JsonProperty("deltaY") val deltaY: Double = 100.0
+)
+
+/**
+ * Request for tab-new with optional URL.
+ */
+data class TabNewRequest(
+    @param:JsonProperty("url") val url: String? = null
+)
+
+/**
+ * Request for tab-close by index.
+ */
+data class TabCloseRequest(
+    @param:JsonProperty("index") val index: Int? = null
+)
+
+/**
+ * Request for tab-select by index.
+ */
+data class TabSelectRequest(
+    @param:JsonProperty("index") val index: Int
+)
+
+/**
+ * Session summary for listing.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class SessionSummary(
+    @param:JsonProperty("sessionId") val sessionId: String,
+    @param:JsonProperty("url") val url: String? = null,
+    @param:JsonProperty("status") val status: String = "active"
+)
+
 /**
  * Cookie data structure.
  */
