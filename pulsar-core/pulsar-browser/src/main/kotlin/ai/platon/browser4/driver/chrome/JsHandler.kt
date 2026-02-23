@@ -56,7 +56,7 @@ class JsHandler(
 
     @Throws(ChromeDriverException::class)
     suspend fun callFunctionOn(selector: String, functionDeclaration: String): CallFunctionOn? {
-        val node = pageHandler.resolveSelector(selector) ?: return null
+        val node = pageHandler.querySelector(selector) ?: return null
         // Resolve a fresh objectId and ensure it's released after the call
         val resolved = try {
             when {

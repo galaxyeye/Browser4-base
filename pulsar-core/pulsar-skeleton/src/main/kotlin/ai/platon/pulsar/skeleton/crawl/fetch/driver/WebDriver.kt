@@ -1,6 +1,7 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NodeRef
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.ExperimentalApi
@@ -10,6 +11,7 @@ import ai.platon.pulsar.common.math.geometric.RectD
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.dom.nodes.GeoAnchor
 import ai.platon.pulsar.external.ModelResponse
+import com.google.common.annotations.Beta
 import org.jsoup.Connection
 import java.io.Closeable
 import java.time.Duration
@@ -1156,6 +1158,19 @@ interface WebDriver : Closeable {
     suspend fun textContent(selector: String? = null): String?
 
     suspend fun extract(fields: Map<String, String>): Map<String, String?>
+
+    /**
+     * Use querySelectorAll to get all matched elements, and then return their NodeRefs.
+     * Note that the NodeRefs may become stale after certain operations, so they should be used immediately after selection.
+     *
+     * @param selector selector string, supported selector types include CSS selector, XPath, and backend node id.
+     * The type is determined by the prefix of the selector string, e.g. "css:div" for CSS selector, "xpath://div" for XPath,
+     * "e123" for backendNodeId. If no prefix is provided, CSS selector is used by default.
+     * @return a list of NodeRefs for the matched elements, or an empty list if no elements are matched or an error occurs.
+     * */
+    @Beta
+    @Throws(WebDriverException::class)
+    suspend fun select(selector: String): List<NodeRef>
 
     /**
      * Returns the node's text content, the node is located by [selector].

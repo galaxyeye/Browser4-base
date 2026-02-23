@@ -29,6 +29,7 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.common.annotations.Beta
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
@@ -510,6 +511,12 @@ class PulsarWebDriver(
                 else -> domAPI?.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
             }
         }
+    }
+
+    @Beta
+    @Throws(WebDriverException::class)
+    override suspend fun select(selector: String): List<NodeRef> {
+        return driverHelper.invokeOnPage("select") { page.querySelectorAll(selector) } ?: listOf()
     }
 
     @Throws(WebDriverException::class)

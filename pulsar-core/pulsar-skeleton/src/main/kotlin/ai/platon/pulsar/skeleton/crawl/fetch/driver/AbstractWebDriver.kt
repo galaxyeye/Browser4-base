@@ -1,6 +1,7 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NodeRef
 import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
