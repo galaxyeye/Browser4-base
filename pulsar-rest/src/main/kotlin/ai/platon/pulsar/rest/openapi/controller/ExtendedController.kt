@@ -79,11 +79,14 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                // Use evaluate to compute the delta between source and target, then dragAndDrop
+                // Use evaluate with properly encoded selectors to prevent injection
+                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+                val encodedSrc = mapper.writeValueAsString(request.sourceSelector)
+                val encodedTgt = mapper.writeValueAsString(request.targetSelector)
                 val script = """
                     (() => {
-                        const src = document.querySelector('${request.sourceSelector.replace("'", "\\'")}');
-                        const tgt = document.querySelector('${request.targetSelector.replace("'", "\\'")}');
+                        const src = document.querySelector($encodedSrc);
+                        const tgt = document.querySelector($encodedTgt);
                         if (!src || !tgt) return JSON.stringify({dx:0,dy:0});
                         const sr = src.getBoundingClientRect();
                         const tr = tgt.getBoundingClientRect();
@@ -91,7 +94,7 @@ class ExtendedController(
                     })()
                 """.trimIndent()
                 val result = driver.evaluate(script) as? String ?: """{"dx":0,"dy":0}"""
-                val parsed = com.fasterxml.jackson.databind.ObjectMapper().readTree(result)
+                val parsed = mapper.readTree(result)
                 val dx = parsed.get("dx")?.asInt() ?: 0
                 val dy = parsed.get("dy")?.asInt() ?: 0
                 driver.dragAndDrop(request.sourceSelector, dx, dy)
@@ -217,8 +220,9 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                val promptText = request?.promptText ?: ""
-                driver.evaluate("window.__browser4DialogResult = true; window.__browser4DialogText = '${promptText.replace("'", "\\'")}'")
+                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+                val encodedText = mapper.writeValueAsString(request?.promptText ?: "")
+                driver.evaluate("window.__browser4DialogResult = true; window.__browser4DialogText = $encodedText")
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -309,7 +313,8 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: '${request.key}', bubbles: true}))")
+                val encodedKey = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(request.key)
+                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: $encodedKey, bubbles: true}))")
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -335,7 +340,8 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: '${request.key}', bubbles: true}))")
+                val encodedKey = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(request.key)
+                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: $encodedKey, bubbles: true}))")
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -542,7 +548,8 @@ class ExtendedController(
         return try {
             managed.withLock {
                 val url = request?.url ?: "about:blank"
-                driver.evaluate("window.open('${url.replace("'", "\\'")}')")
+                val encodedUrl = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(url)
+                driver.evaluate("window.open($encodedUrl)")
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {

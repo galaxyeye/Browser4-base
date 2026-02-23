@@ -325,20 +325,18 @@ async function cmdUpload(args: string[]): Promise<void> {
   const ax = makeAxios(state.baseUrl);
   const absPath = path.resolve(filePath);
 
-  // Use JS evaluate to set file input programmatically
+  // File uploads via this CLI send a JS evaluation to trigger the file input.
+  // Actual file content transfer requires the server-side file upload API.
   await apiPost(ax, `/session/${state.sessionId}/execute/sync`, {
     script: `
       const input = document.querySelector('input[type=file]');
       if (input) {
-        const dt = new DataTransfer();
-        dt.items.add(new File([''], '${path.basename(absPath)}'));
-        input.files = dt.files;
-        input.dispatchEvent(new Event('change', {bubbles: true}));
+        input.click();
       }
     `,
   });
 
-  console.log(`Upload triggered for ${absPath}`);
+  console.log(`Upload triggered for ${absPath} (file input activated)`);
 }
 
 /**
@@ -576,11 +574,13 @@ async function cmdPdf(args: string[]): Promise<void> {
   const outPath = path.resolve(outName);
   ensureDir(path.dirname(outPath));
 
-  if (base64 && typeof base64 === 'string' && base64.length > 100) {
+  // Minimum expected base64 length for a valid PDF header
+  const MIN_PDF_BASE64_LEN = 100;
+  if (base64 && typeof base64 === 'string' && base64.length > MIN_PDF_BASE64_LEN) {
     const buf = Buffer.from(base64, 'base64');
     fs.writeFileSync(outPath, buf);
   } else {
-    fs.writeFileSync(outPath, `PDF generation placeholder — ${new Date().toISOString()}\n`);
+    throw new Error('Server did not return valid PDF data');
   }
   console.log(`PDF saved to ${outPath}`);
 }
@@ -642,8 +642,9 @@ async function cmdEval(args: string[]): Promise<void> {
   const rawRef = args[1];
   if (rawRef) {
     const selector = resolveRef(rawRef);
-    // Wrap as a function that receives the element
-    script = `(function() { var el = document.querySelector('${selector.replace(/'/g, "\\'")}'); return (${expression})(el); })()`;
+    // Use JSON.stringify to safely encode the selector into the script
+    const safeSelector = JSON.stringify(selector);
+    script = `(function() { var el = document.querySelector(${safeSelector}); return (${expression})(el); })()`;
   } else {
     script = expression;
   }
