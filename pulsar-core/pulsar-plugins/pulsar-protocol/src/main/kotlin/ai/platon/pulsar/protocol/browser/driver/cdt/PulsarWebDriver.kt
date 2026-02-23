@@ -19,13 +19,11 @@ import ai.platon.cdt.kt.protocol.types.network.LoadNetworkResourceOptions
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.detail.*
-import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.crawl.common.InternalURLUtil
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -77,7 +75,7 @@ class PulsarWebDriver(
 
     private val rpc = RobustRPC(this)
     private val networkManager by lazy { NetworkManager(this, rpc) }
-    private val messageWriter = MiscMessageMessageWriter()
+    private val messageWriter = MultiSinkMessageWriter()
 
     private val driverHelper get() = WebDriverHelper(this, rpc, page, fetchAPI, messageWriter)
 

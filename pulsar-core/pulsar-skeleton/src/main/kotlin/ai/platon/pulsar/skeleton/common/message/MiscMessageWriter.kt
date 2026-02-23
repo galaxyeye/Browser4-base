@@ -9,7 +9,7 @@ import ai.platon.pulsar.persist.WebPage
  *
  * Write misc messages into misc sinks
  */
-class MiscMessageMessageWriter: MultiSinkMessageWriter() {
+class MiscMessageWriter: MultiSinkMessageWriter() {
 
     fun debugIllegalLastFetchTime(page: WebPage) {
         val report = String.format(
