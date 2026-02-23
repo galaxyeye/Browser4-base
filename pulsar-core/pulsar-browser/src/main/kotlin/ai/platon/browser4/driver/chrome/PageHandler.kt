@@ -185,27 +185,9 @@ class PageHandler(
             return null
         }
 
-        return nodeIds.mapNotNull { nodeId ->
-            try {
-                val node = domAPI?.describeNode(nodeId, null, null, null, null)
-                if (node != null) {
-                    val nId = if (node.nodeId > 0) node.nodeId else nodeId
-                    val bnId = node.backendNodeId
-                    if (nId > 0) {
-                        NodeRef(nId, bnId, null)
-                    } else if (bnId > 0) {
-                        resolveNode(null, bnId)
-                    } else {
-                        null
-                    }
-                } else {
-                    null
-                }
-            } catch (e: Exception) {
-                logger.warn("Exception from domAPI?.describeNode | selector=$selector, nodeId=$nodeId", e)
-                null
-            }
-        }
+        // Optimized: map directly to NodeRefs without resolving each one via CDP if possible.
+        // querySelectorAll returns nodeIds which are already valid.
+        return nodeIds.map { nodeId -> NodeRef(nodeId, 0, null) }
     }
 
     @Throws(ChromeDriverException::class)
@@ -233,27 +215,7 @@ class PageHandler(
                 return null
             }
 
-            nodeIds.mapNotNull { nodeId ->
-                try {
-                    val node = domAPI?.describeNode(nodeId, null, null, null, null)
-                    if (node != null) {
-                        val nId = if (node.nodeId > 0) node.nodeId else nodeId
-                        val bnId = node.backendNodeId
-                        if (nId > 0) {
-                            NodeRef(nId, bnId, null)
-                        } else if (bnId > 0) {
-                            resolveNode(null, bnId)
-                        } else {
-                            null
-                        }
-                    } else {
-                        null
-                    }
-                } catch (e: Exception) {
-                    logger.warn("Exception from domAPI?.describeNode | xpath=$xpath, nodeId=$nodeId", e)
-                    null
-                }
-            }
+            return nodeIds.map { nodeId -> NodeRef(nodeId, 0, null) }
         } catch (e: CDPReturnError) {
             if (e.errorCode != -32000L) {
                 logger.warn(
@@ -597,30 +559,7 @@ class PageHandler(
             return null
         }
 
-        val node = try {
-            domAPI?.describeNode(nodeId, null, null, null, null)
-        } catch (e: Exception) {
-            logger.warn("Exception from domAPI?.describeNode | selector=$selector, nodeId=$nodeId", e)
-            null
-        }
-
-        node ?: return null
-
-        if (node.nodeId == 0 && node.backendNodeId == 0) {
-            logger.info("Both nodeId and backendNodeId are not found (value: 0)")
-            return null
-        }
-        
-        val nId = if (node.nodeId > 0) node.nodeId else nodeId
-        val bnId = node.backendNodeId
-        
-        return if (nId > 0) {
-            NodeRef(nId, bnId, null)
-        } else if (bnId > 0) {
-            resolveNode(null, bnId)
-        } else {
-            null
-        }
+        return NodeRef(nodeId, 0, null)
     }
 
     /**
@@ -675,30 +614,7 @@ class PageHandler(
             return null
         }
 
-        val node = try {
-            domAPI?.describeNode(nodeId, null, null, null, null)
-        } catch (e: Exception) {
-            logger.warn("Exception from domAPI?.describeNode | nodeId=$nodeId", e)
-            null
-        }
-
-        node ?: return null
-
-        if (node.nodeId == 0 && node.backendNodeId == 0) {
-            logger.info("Both nodeId and backendNodeId are not found (value: 0)")
-            return null
-        }
-
-        val nId = if (node.nodeId > 0) node.nodeId else nodeId
-        val bnId = node.backendNodeId
-
-        return if (nId > 0) {
-            NodeRef(nId, bnId, null)
-        } else if (bnId > 0) {
-            resolveNode(null, bnId)
-        } else {
-            null
-        }
+        return NodeRef(nodeId, 0, null)
     }
 
     @Throws(ChromeDriverException::class)

@@ -513,9 +513,21 @@ class PulsarWebDriver(
         }
     }
 
+    /**
+     * Queries for a list of elements using a selector.
+     *
+     * Supports two selector formats:
+     * - CSS selector: "div.class", "#id", etc.
+     * - XPath selector: "//div[@class='class']", etc.
+     * - Backend node ID: "backend:123", "e1233"
+     * - Frame backend node ID: "fbn:FRAMExID,123"
+     *
+     * @param selector CSS selector or "backend:nodeId" format
+     * @return nodeId or null if not found
+     */
     @Beta
     @Throws(WebDriverException::class)
-    override suspend fun select(selector: String): List<NodeRef> {
+    override suspend fun querySelectorAll(selector: String): List<NodeRef> {
         return driverHelper.invokeOnPage("select") { page.querySelectorAll(selector) } ?: listOf()
     }
 

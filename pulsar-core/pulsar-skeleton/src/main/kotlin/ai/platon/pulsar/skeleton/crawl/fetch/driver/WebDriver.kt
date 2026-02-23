@@ -1170,7 +1170,7 @@ interface WebDriver : Closeable {
      * */
     @Beta
     @Throws(WebDriverException::class)
-    suspend fun select(selector: String): List<NodeRef>
+    suspend fun querySelectorAll(selector: String): List<NodeRef>
 
     /**
      * Returns the node's text content, the node is located by [selector].

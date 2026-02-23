@@ -156,7 +156,11 @@ Prompt: $promptSample
 
     try {
         $promptEscaped = $namingPrompt -replace '"', '\"'
-        $nameArgs = "-p `"$promptEscaped`" --allow-all-tools --allow-all-paths"
+        # Remove --allow-all-tools --allow-all-paths for naming to prevent tool execution delays/output
+        $nameArgs = "-p `"$promptEscaped`""
+        
+        Write-LogVerbose "Executing GH Copilot for naming: gh copilot $nameArgs"
+
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
         $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
@@ -167,10 +171,17 @@ Prompt: $promptSample
             $waited = $true
         } catch {
             $waited = $false
+            Write-LogMessage "GH Copilot naming timed out after ${copilotNameTimeoutSeconds}s" WARN
         }
 
         if (-not $waited -or -not $nameProcess.HasExited) {
             Stop-Process -Id $nameProcess.Id -Force -ErrorAction SilentlyContinue
+            
+            if (Test-Path $nameStdErr) {
+                 $errContent = Get-Content $nameStdErr
+                 Write-LogVerbose "Naming Copilot STDERR (Timeout): $errContent"
+            }
+            
             Remove-Item $nameStdOut -ErrorAction SilentlyContinue
             Remove-Item $nameStdErr -ErrorAction SilentlyContinue
             return $Fallback
@@ -179,12 +190,28 @@ Prompt: $promptSample
         $rawName = ""
         if (Test-Path $nameStdOut) {
             $rawName = (Get-Content -Path $nameStdOut | Where-Object { $_ -and $_.Trim() } | Select-Object -First 1)
+            Write-LogVerbose "Naming Copilot STDOUT: $rawName"
+        } else {
+             Write-LogVerbose "Naming Copilot STDOUT file not found"
+        }
+        
+        if (Test-Path $nameStdErr) {
+             $errContent = Get-Content $nameStdErr
+             if ($errContent) {
+                Write-LogVerbose "Naming Copilot STDERR: $errContent"
+             }
         }
 
         Remove-Item $nameStdOut -ErrorAction SilentlyContinue
         Remove-Item $nameStdErr -ErrorAction SilentlyContinue
 
-        if ($nameProcess.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($rawName)) {
+        if ($nameProcess.ExitCode -ne 0) {
+            Write-LogVerbose "Naming Copilot exited with code $($nameProcess.ExitCode)"
+            return $Fallback
+        }
+        
+        if ([string]::IsNullOrWhiteSpace($rawName)) {
+            Write-LogVerbose "Naming Copilot returned empty name"
             return $Fallback
         }
 
@@ -266,6 +293,9 @@ foreach ($taskRoot in $taskRoots) {
         # The current implementation attempts to rename ALL files using gh copilot via rename.ps1.
         # This seems to cover the requirement "1.md, 2.md... are treated as random... rename these".
 
+        Write-Host "DEBUG: renameScript path: $renameScript"
+        Write-Host "DEBUG: Test-Path renameScript: $(Test-Path $renameScript)"
+        
         if (Test-Path $renameScript) {
             # Execute rename.ps1 script
             $generatedName = & $renameScript -FilePath $file.FullName

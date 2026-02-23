@@ -1,6 +1,7 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NodeRef
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.pulsar.common.NotSupportedException
@@ -733,6 +734,21 @@ class PlaywrightDriver(
             rpc.handleWebDriverException(e, "outerHTML", selector)
             null
         }
+    }
+
+    override suspend fun querySelectorAll(selector: String): List<NodeRef> {
+        TODO("Not supported by PlaywrightDriver currently")
+//        return try {
+//            rpc.invokeDeferred("querySelectorAll") {
+//                page.querySelectorAll(selector).map { element ->
+//                    val handle = (element as ElementHandle).asElement()
+//                    NodeRef(handle)
+//                }
+//            } ?: listOf()
+//        } catch (e: Exception) {
+//            rpc.handleWebDriverException(e, "querySelectorAll", selector)
+//            listOf()
+//        }
     }
 
     override suspend fun selectFirstTextOrNull(selector: String): String? {

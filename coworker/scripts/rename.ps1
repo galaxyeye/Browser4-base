@@ -54,13 +54,27 @@ if ([string]::IsNullOrWhiteSpace($Fallback)) {
 
 try {
     $promptEscaped = $namingPrompt -replace '"', '\"'
-    $nameArgs = "-p `"$promptEscaped`" --allow-all-tools --allow-all-paths"
+    # Use -- to separate gh flags from copilot flags. 
+    $nameArgs = "-- -p `"$promptEscaped`""
 
     # Use temporary files for redirecting output
     $nameStdOut = [System.IO.Path]::GetTempFileName()
     $nameStdErr = [System.IO.Path]::GetTempFileName()
-
-    $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+    
+    # Create an empty file to use as input (simulate EOF/no input)
+    $emptyInput = [System.IO.Path]::GetTempFileName()
+    
+    try {
+        $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr -RedirectStandardInput $emptyInput
+    }
+    catch {
+        Write-Host "Error starting process: $_"
+        # Fallback without RedirectStandardInput if it fails (e.g. PS version issues)
+        $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+    }
+    finally {
+        # We can't delete emptyInput here yet because process is running, but we should clean it up later
+    }
 
     $waited = $false
     try {
@@ -74,17 +88,61 @@ try {
         Stop-Process -Id $nameProcess.Id -Force -ErrorAction SilentlyContinue
         Remove-Item $nameStdOut -ErrorAction SilentlyContinue
         Remove-Item $nameStdErr -ErrorAction SilentlyContinue
+        Remove-Item $emptyInput -ErrorAction SilentlyContinue
         Write-Output $Fallback
         exit 0
     }
 
     $rawName = ""
     if (Test-Path $nameStdOut) {
-        $rawName = (Get-Content -Path $nameStdOut | Where-Object { $_ -and $_.Trim() } | Select-Object -First 1)
+        # The output from gh copilot includes descriptive text, the command, and execution output.
+        # We want to extract the actual name which is likely echoed by the command or at the end.
+        # Example output:
+        # ● Echo task name
+        #   $ echo "rename-task"
+        #   ...
+        # rename-task
+
+        # Try to find the line that looks like a clean kebab-case name
+        $lines = Get-Content -Path $nameStdOut | Where-Object { $_ -and $_.Trim() }
+        
+        # Look for the last line that is not part of the standard copilot UI output
+        # Filter out lines starting with bullet points or other UI elements
+        # Simplified regex to avoid encoding issues
+        # Use explicit unicode escapes (ASCII-safe source)
+        $cleanLines = @($lines | Where-Object { 
+            $_ -notmatch '^\s*\u25CF' -and 
+            $_ -notmatch '^\s*\u0024' -and 
+            $_ -notmatch '^\s*\u2514' -and 
+            $_ -notmatch '^error:' -and 
+            $_ -notmatch '^Try ''copilot --help''' -and 
+            $_ -notmatch '^Total' -and 
+            $_ -notmatch '^API' -and 
+            $_ -notmatch '^Breakdown' -and
+            $_ -notmatch '^\s+gemini' -and
+            $_ -notmatch '^\s+gpt' -and
+            $_ -notmatch '^Days' -and
+            $_ -notmatch '^Hours' -and
+            $_ -notmatch '^Minutes' -and
+            $_ -notmatch '^Seconds' -and
+            $_ -notmatch '^Milliseconds' -and
+            $_ -notmatch '^Ticks'
+        })
+        
+        if ($cleanLines.Count -gt 0) {
+            # Take the last clean line as it's likely the command output
+            $rawName = $cleanLines[-1].Trim()
+            
+            # If the raw name is quoted, remove quotes
+            if ($rawName -match '^"(.*)"$') {
+                $rawName = $Matches[1]
+            }
+        }
     }
 
     Remove-Item $nameStdOut -ErrorAction SilentlyContinue
     Remove-Item $nameStdErr -ErrorAction SilentlyContinue
+    Remove-Item $emptyInput -ErrorAction SilentlyContinue
 
     if ($nameProcess.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($rawName)) {
         Write-Output $Fallback
