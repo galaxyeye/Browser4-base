@@ -113,7 +113,7 @@ function Write-LogMessage {
     }
 
     # Append to script log file
-    $logEntry | Out-File -FilePath $scriptLogPath -Append
+    $logEntry | Out-File -FilePath $scriptLogPath -Append -Encoding UTF8
 }
 
 # Function: Write message only to log file (for verbose output)
@@ -127,7 +127,7 @@ function Write-LogVerbose {
     $logEntry = "[$timestamp] [DEBUG] $Message"
 
     # Append to script log file only (not console)
-    $logEntry | Out-File -FilePath $scriptLogPath -Append
+    $logEntry | Out-File -FilePath $scriptLogPath -Append -Encoding UTF8
 }
 
 function Get-TaskBaseName {
@@ -189,14 +189,14 @@ Prompt: $promptSample
 
         $rawName = ""
         if (Test-Path $nameStdOut) {
-            $rawName = (Get-Content -Path $nameStdOut | Where-Object { $_ -and $_.Trim() } | Select-Object -First 1)
+            $rawName = (Get-Content -Path $nameStdOut -Encoding UTF8 | Where-Object { $_ -and $_.Trim() } | Select-Object -First 1)
             Write-LogVerbose "Naming Copilot STDOUT: $rawName"
         } else {
              Write-LogVerbose "Naming Copilot STDOUT file not found"
         }
         
         if (Test-Path $nameStdErr) {
-             $errContent = Get-Content $nameStdErr
+             $errContent = Get-Content $nameStdErr -Encoding UTF8
              if ($errContent) {
                 Write-LogVerbose "Naming Copilot STDERR: $errContent"
              }
@@ -284,7 +284,7 @@ foreach ($taskRoot in $taskRoots) {
         $descriptiveName = ""
 
         # Read content for fallback title
-        $content = Get-Content -Path $file.FullName -Raw
+        $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
         $safeTitle = $file.BaseName -replace '[\\/*?:"<>|]', '_'
         if ([string]::IsNullOrWhiteSpace($safeTitle)) { $safeTitle = "task" }
 
@@ -374,7 +374,7 @@ Prompt:
 $prompt
 ---
 Copilot Execution Output:
-"@ | Out-File -FilePath $taskLogPath
+"@ | Out-File -FilePath $taskLogPath -Encoding UTF8
 
         try {
             # Escape double quotes in prompt for safe argument passing
@@ -402,7 +402,7 @@ Copilot Execution Output:
 
                 # Check and display new stdout lines
                 if (Test-Path $stdOutLog) {
-                    $currentLines = @(Get-Content $stdOutLog -ErrorAction SilentlyContinue)
+                    $currentLines = @(Get-Content $stdOutLog -Encoding UTF8 -ErrorAction SilentlyContinue)
                     $currentLineCount = $currentLines.Count
                     if ($currentLineCount -gt $lastOutputLineCount) {
                         $newLines = $currentLines[$lastOutputLineCount..($currentLineCount - 1)]
@@ -427,7 +427,7 @@ Copilot Execution Output:
 
             # Final output capture after process ends
             if (Test-Path $stdOutLog) {
-                $remainingLines = @(Get-Content $stdOutLog -ErrorAction SilentlyContinue)
+                $remainingLines = @(Get-Content $stdOutLog -Encoding UTF8 -ErrorAction SilentlyContinue)
                 if ($remainingLines.Count -gt $lastOutputLineCount) {
                     $newLines = $remainingLines[$lastOutputLineCount..($remainingLines.Count - 1)]
                     foreach ($line in $newLines) {
@@ -440,7 +440,7 @@ Copilot Execution Output:
 
             # Capture stderr output and display to console
             if (Test-Path $stdErrLog) {
-                $errContent = @(Get-Content $stdErrLog -ErrorAction SilentlyContinue)
+                $errContent = @(Get-Content $stdErrLog -Encoding UTF8 -ErrorAction SilentlyContinue)
                 if ($errContent) {
                     Write-Host "`n[STDERR OUTPUT]" -ForegroundColor Yellow
                     foreach ($line in $errContent) {
@@ -455,13 +455,13 @@ Copilot Execution Output:
 
             # Combine copilot stdout and stderr logs into the copilot-specific log
             # First append stdout if it exists
-            if (Test-Path $stdOutLog) { Get-Content $stdOutLog | Out-File -FilePath $copilotLogPath -Append }
+            if (Test-Path $stdOutLog) { Get-Content $stdOutLog -Encoding UTF8 | Out-File -FilePath $copilotLogPath -Append -Encoding UTF8 }
             # Then append stderr if it exists and contains content
             if (Test-Path $stdErrLog) {
-                $errContent = Get-Content $stdErrLog
+                $errContent = Get-Content $stdErrLog -Encoding UTF8
                 if ($errContent) {
-                    "`r`n=== COPILOT STDERR ===`r`n" | Out-File -FilePath $copilotLogPath -Append
-                    $errContent | Out-File -FilePath $copilotLogPath -Append
+                    "`r`n=== COPILOT STDERR ===`r`n" | Out-File -FilePath $copilotLogPath -Append -Encoding UTF8
+                    $errContent | Out-File -FilePath $copilotLogPath -Append -Encoding UTF8
                 }
             }
 
@@ -478,7 +478,7 @@ Copilot Execution Output:
 
 Copilot Exit Code: $($process.ExitCode)
 Copilot Log: $copilotLogPath
-"@ | Out-File -FilePath $taskLogPath -Append
+"@ | Out-File -FilePath $taskLogPath -Append -Encoding UTF8
 
             # Warn if Copilot exited with an error code
             if ($process.ExitCode -ne 0) {
@@ -488,7 +488,7 @@ Copilot Log: $copilotLogPath
         catch {
             # Handle any errors that occur during Copilot execution
             Write-LogMessage "Failed to execute copilot: $_" ERROR
-            "Error executing copilot: $_" | Out-File -FilePath $taskLogPath -Append
+            "Error executing copilot: $_" | Out-File -FilePath $taskLogPath -Append -Encoding UTF8
         }
         finally {
             # Always return to the original directory after execution
