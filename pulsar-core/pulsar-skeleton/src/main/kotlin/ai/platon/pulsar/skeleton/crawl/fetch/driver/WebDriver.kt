@@ -1482,7 +1482,7 @@ interface WebDriver : Closeable {
     suspend fun captureScreenshot(rect: RectD): String? = screenshot(rect)
 
     @Throws(WebDriverException::class)
-    suspend fun ariaSnapshot(): String
+    suspend fun ariaSnapshot(selector: String = ":root"): String
 
     /**
      * Calculate the clickable point of an element located by [selector].

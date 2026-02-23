@@ -595,6 +595,9 @@ data class NanoDOMTreeNode(
 ) {
     @get:JsonIgnore
     val lazyJson: String by lazy { DOMSerializer.toJson(this) }
+
+    @get:JsonIgnore
+    val lazyYaml: String by lazy { DOMSerializer.toYaml(this) }
 }
 
 typealias NanoDOMTree = NanoDOMTreeNode
@@ -608,6 +611,9 @@ data class DOMState constructor(
 ) {
     @get:JsonIgnore
     val nanoTreeLazyJson: String get() = microTree.toNanoTree().lazyJson
+
+    @get:JsonIgnore
+    val nanoTreeLazyYaml: String get() = microTree.toNanoTree().lazyYaml
 
     @get:JsonIgnore
     val nanoTree get() = microTree.toNanoTree()

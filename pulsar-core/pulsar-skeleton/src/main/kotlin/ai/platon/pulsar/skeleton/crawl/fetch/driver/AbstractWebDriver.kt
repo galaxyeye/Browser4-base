@@ -2,6 +2,9 @@ package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
 import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.model.PageTarget
+import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.browser4.driver.chrome.dom.util.DomDebug
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.common.urls.URLUtils
@@ -313,12 +316,19 @@ abstract class AbstractWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun baseURI() = evaluate("document.baseURI", "")
 
+    @Throws(WebDriverException::class)
     override suspend fun title(): String {
         return evaluate("document.title")?.toString() ?: ""
     }
 
     @Throws(WebDriverException::class)
     override suspend fun referrer() = evaluate("document.referrer", "")
+
+    @Throws(WebDriverException::class)
+    override suspend fun ariaSnapshot(selector: String): String {
+        val buState = domService?.getBrowserUseState(PageTarget(), SnapshotOptions()) ?: return ""
+        return buState.domState.nanoTreeLazyJson
+    }
 
     @Throws(WebDriverException::class)
     override suspend fun chat(prompt: String, selector: String): ModelResponse {
