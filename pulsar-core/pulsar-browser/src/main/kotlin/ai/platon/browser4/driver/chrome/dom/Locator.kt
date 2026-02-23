@@ -55,7 +55,13 @@ open class Locator(
 
     companion object {
         fun parse(selector: String): Locator? {
-            val trimmed = selector.trim()
+            var trimmed = selector.trim()
+
+            // support playwright format: `e15`, where `e` stands for element and `15` is the backend node id. This is equivalent to `backend:15`
+            if (trimmed.startsWith("e") && trimmed.length > 1 && StringUtils.isNumeric(trimmed.substring(1))) {
+                trimmed = "backend:${trimmed.substring(1)}"
+            }
+
             val parts = trimmed.split(':')
             if (parts.size == 1) {
                 return if (parts[0].startsWith("//")) {
