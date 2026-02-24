@@ -20,6 +20,8 @@ export interface CliState {
    * commands.
    */
   activeSelector?: string;
+  /** Named session label for the `-s=<name>` flag. */
+  sessionName?: string;
 }
 
 /** Default directory for persisted state. Can be overridden for testing. */

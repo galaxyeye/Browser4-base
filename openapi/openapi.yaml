@@ -1817,6 +1817,465 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /session/{sessionId}/snapshot:
+    get:
+      tags:
+        - selectors
+      summary: Get accessibility tree snapshot
+      description: Returns the ARIA accessibility snapshot of the current page.
+      operationId: getSnapshot
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Snapshot retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /session/{sessionId}/selectors/dblclick:
+    post:
+      tags:
+        - selectors
+      summary: Double-click element by selector
+      operationId: dblclickBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectorRef'
+      responses:
+        '200':
+          description: Element double-clicked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/selectors/drag:
+    post:
+      tags:
+        - selectors
+      summary: Drag from one element to another
+      operationId: dragBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DragRequest'
+      responses:
+        '200':
+          description: Drag completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/selectors/selectOption:
+    post:
+      tags:
+        - selectors
+      summary: Select option in dropdown by selector
+      operationId: selectOptionBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectOptionRequest'
+      responses:
+        '200':
+          description: Option selected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/selectors/type:
+    post:
+      tags:
+        - selectors
+      summary: Type text into element without clearing
+      operationId: typeBySelector
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypeRequest'
+      responses:
+        '200':
+          description: Text typed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/dialog/accept:
+    post:
+      tags:
+        - session
+      summary: Accept dialog (alert/confirm/prompt)
+      operationId: dialogAccept
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DialogAcceptRequest'
+      responses:
+        '200':
+          description: Dialog accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/dialog/dismiss:
+    post:
+      tags:
+        - session
+      summary: Dismiss dialog
+      operationId: dialogDismiss
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Dialog dismissed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/resize:
+    post:
+      tags:
+        - session
+      summary: Resize browser viewport
+      operationId: resize
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResizeRequest'
+      responses:
+        '200':
+          description: Viewport resized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/keydown:
+    post:
+      tags:
+        - selectors
+      summary: Dispatch keydown event
+      operationId: keydown
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyEventRequest'
+      responses:
+        '200':
+          description: Keydown dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/keyup:
+    post:
+      tags:
+        - selectors
+      summary: Dispatch keyup event
+      operationId: keyup
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyEventRequest'
+      responses:
+        '200':
+          description: Keyup dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/mousemove:
+    post:
+      tags:
+        - selectors
+      summary: Move mouse to coordinates
+      operationId: mousemove
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MouseMoveRequest'
+      responses:
+        '200':
+          description: Mouse moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/mousedown:
+    post:
+      tags:
+        - selectors
+      summary: Dispatch mousedown event
+      operationId: mousedown
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MouseButtonRequest'
+      responses:
+        '200':
+          description: Mouse down dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/mouseup:
+    post:
+      tags:
+        - selectors
+      summary: Dispatch mouseup event
+      operationId: mouseup
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MouseButtonRequest'
+      responses:
+        '200':
+          description: Mouse up dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/mousewheel:
+    post:
+      tags:
+        - selectors
+      summary: Dispatch mouse wheel event
+      operationId: mousewheel
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MouseWheelRequest'
+      responses:
+        '200':
+          description: Mouse wheel dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/pdf:
+    get:
+      tags:
+        - session
+      summary: Generate PDF of current page
+      operationId: generatePdf
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: PDF generated (base64)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/tabs:
+    get:
+      tags:
+        - session
+      summary: List open tabs
+      operationId: tabList
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Tab list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/tab/new:
+    post:
+      tags:
+        - session
+      summary: Open a new tab
+      operationId: tabNew
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TabNewRequest'
+      responses:
+        '200':
+          description: Tab opened
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/tab/close:
+    post:
+      tags:
+        - session
+      summary: Close a tab
+      operationId: tabClose
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TabCloseRequest'
+      responses:
+        '200':
+          description: Tab closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/tab/select:
+    post:
+      tags:
+        - session
+      summary: Switch to a tab by index
+      operationId: tabSelect
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TabSelectRequest'
+      responses:
+        '200':
+          description: Tab selected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /session/{sessionId}/delete-data:
+    post:
+      tags:
+        - session
+      summary: Delete user data for session
+      operationId: deleteData
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: User data deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /sessions:
+    get:
+      tags:
+        - session
+      summary: List all active sessions
+      operationId: listSessions
+      responses:
+        '200':
+          description: Session list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /sessions/close-all:
+    post:
+      tags:
+        - session
+      summary: Close all sessions
+      operationId: closeAllSessions
+      responses:
+        '200':
+          description: All sessions closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
+  /sessions/kill-all:
+    post:
+      tags:
+        - session
+      summary: Kill all browser processes
+      operationId: killAllSessions
+      responses:
+        '200':
+          description: All browsers killed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebDriverResponse'
+
 components:
   parameters:
     sessionId:
@@ -2608,4 +3067,137 @@ components:
                   type: string
                   format: byte
                   description: Base64-encoded PNG screenshot (optional)
+
+    DragRequest:
+      type: object
+      required:
+        - sourceSelector
+        - targetSelector
+      properties:
+        sourceSelector:
+          type: string
+          description: CSS selector or backend ref for source element
+        targetSelector:
+          type: string
+          description: CSS selector or backend ref for target element
+        strategy:
+          type: string
+          default: css
+
+    SelectOptionRequest:
+      type: object
+      required:
+        - selector
+        - values
+      properties:
+        selector:
+          type: string
+        strategy:
+          type: string
+          default: css
+        values:
+          type: array
+          items:
+            type: string
+
+    TypeRequest:
+      type: object
+      required:
+        - selector
+        - text
+      properties:
+        selector:
+          type: string
+        strategy:
+          type: string
+          default: css
+        text:
+          type: string
+
+    DialogAcceptRequest:
+      type: object
+      properties:
+        promptText:
+          type: string
+          description: Text to enter in a prompt dialog
+
+    ResizeRequest:
+      type: object
+      required:
+        - width
+        - height
+      properties:
+        width:
+          type: integer
+        height:
+          type: integer
+
+    KeyEventRequest:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          description: Key name (e.g. Shift, Control, Alt)
+
+    MouseMoveRequest:
+      type: object
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+
+    MouseButtonRequest:
+      type: object
+      properties:
+        button:
+          type: string
+          default: left
+          enum: [left, right, middle]
+
+    MouseWheelRequest:
+      type: object
+      properties:
+        deltaX:
+          type: number
+          default: 0
+        deltaY:
+          type: number
+          default: 100
+
+    TabNewRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+
+    TabCloseRequest:
+      type: object
+      properties:
+        index:
+          type: integer
+
+    TabSelectRequest:
+      type: object
+      required:
+        - index
+      properties:
+        index:
+          type: integer
+
+    SessionSummary:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
 
