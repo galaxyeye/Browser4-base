@@ -44,16 +44,24 @@ cd "$repoRoot" || exit 1
 
 # Define directory paths for task management workflow
 baseDir="$repoRoot/coworker/tasks"
+prepareDir="$baseDir/0prepare"
 createdDir="$baseDir/1created"        # Input directory for new tasks
 workingDir="$baseDir/2working"        # Processing directory for current tasks
 finishedDir="$baseDir/3finished"      # Output directory for completed tasks
+reviewDir="$baseDir/4review"
+approvedDir="$baseDir/5approved"
+pushedDir="$baseDir/6pushed"
 logsDir="$baseDir/logs"              # Directory for script and execution logs
 scriptsDir="$repoRoot/coworker/scripts"
 
 # Ensure all required directories exist
+mkdir -p "$prepareDir"
 mkdir -p "$createdDir"
 mkdir -p "$workingDir"
 mkdir -p "$finishedDir"
+mkdir -p "$reviewDir"
+mkdir -p "$approvedDir"
+mkdir -p "$pushedDir"
 mkdir -p "$logsDir"
 
 # Handle specified TaskFile
@@ -216,6 +224,74 @@ log_message "Coworker Task Runner - Bash Shell Version" INFO
 log_message "Started at: $scriptStartTime" INFO
 log_message "Script Log: $scriptLogPath" INFO
 log_message "==========================================================================" INFO
+
+# 1. Process 0prepare
+shopt -s nullglob
+prepare_files=("$prepareDir"/*)
+shopt -u nullglob
+for file in "${prepare_files[@]}"; do
+    [[ -f "$file" ]] || continue
+    log_message "[PREPARE] Task: $(basename "$file")" INFO
+done
+
+# 2. Process 4review
+shopt -s nullglob
+review_files=("$reviewDir"/*)
+shopt -u nullglob
+for file in "${review_files[@]}"; do
+    [[ -f "$file" ]] || continue
+    log_message "[REVIEW] Task: $(basename "$file")" INFO
+done
+
+# 3. Process 5approved
+shopt -s nullglob
+approved_files=("$approvedDir"/*)
+shopt -u nullglob
+if [[ ${#approved_files[@]} -gt 0 ]]; then
+    commitScript="$scriptsDir/commit.sh"
+        if [[ -f "$commitScript" ]]; then
+        log_message "Executing commit script for approved tasks..." INFO
+        bash "$commitScript"
+        
+        # Move files to pushed directory
+        currentYear=$(date +%Y)
+        currentDate=$(date +%m%d)
+        pushedSubDir="$pushedDir/$currentYear/$currentDate"
+        mkdir -p "$pushedSubDir"
+        
+        # Refresh file list
+        shopt -s nullglob
+        approved_files_refresh=("$approvedDir"/*)
+        shopt -u nullglob
+        
+        for file in "${approved_files_refresh[@]}"; do
+             [[ -f "$file" ]] || continue
+             fileName=$(basename "$file")
+             if [[ "$fileName" == *.* ]]; then
+                fileExt=".${fileName##*.}"
+                baseName="${fileName%.*}"
+             else
+                fileExt=""
+                baseName="$fileName"
+             fi
+             
+             pushedPath=$(resolve_unique_path "$pushedSubDir" "$baseName" "$fileExt")
+             mv "$file" "$pushedPath"
+             log_message "Task moved to pushed: $pushedPath" INFO
+        done
+    else
+        log_message "Commit script not found at $commitScript" WARN
+    fi
+fi
+
+# 4. Process 6pushed (last 2 days)
+# Use find to locate files modified in the last 2 days
+# -mtime -2 means modified less than 2 days ago
+if command -v find >/dev/null 2>&1; then
+    find "$pushedDir" -type f -mtime -2 -print0 | while IFS= read -r -d '' file; do
+        log_message "[PUSHED] Task: $(basename "$file")" INFO
+    done
+fi
 
 # Process each file in the created directory
 # Using nullglob to handle empty directory case safely

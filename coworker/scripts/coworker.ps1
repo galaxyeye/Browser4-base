@@ -48,9 +48,13 @@ $tasksRoot = Join-Path $repoRoot "coworker\tasks"
 $scriptsDir = Join-Path $repoRoot "coworker\scripts"
 $taskRoots = @(
     @{
+        Prepare = (Join-Path $tasksRoot "0prepare")
         Created = (Join-Path $tasksRoot "1created")
         Working = (Join-Path $tasksRoot "2working")
         Finished = (Join-Path $tasksRoot "3finished")
+        Review = (Join-Path $tasksRoot "4review")
+        Approved = (Join-Path $tasksRoot "5approved")
+        Pushed = (Join-Path $tasksRoot "6pushed")
         Logs = (Join-Path $tasksRoot "logs")
         Label = "tasks"
     }
@@ -61,7 +65,7 @@ $logsDir = $taskRoots[0].Logs
 # Ensure all required directories exist
 # Create them if they don't already exist
 foreach ($root in $taskRoots) {
-    foreach ($dir in @($root.Created, $root.Working, $root.Finished, $root.Logs)) {
+    foreach ($dir in @($root.Prepare, $root.Created, $root.Working, $root.Finished, $root.Review, $root.Approved, $root.Pushed, $root.Logs)) {
         if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
     }
 }
@@ -270,10 +274,68 @@ Write-LogMessage "Script Log: $scriptLogPath" INFO
 Write-LogMessage "==========================================================================" INFO
 
 foreach ($taskRoot in $taskRoots) {
+    $prepareDir = $taskRoot.Prepare
     $createdDir = $taskRoot.Created
     $workingDir = $taskRoot.Working
     $finishedDir = $taskRoot.Finished
+    $reviewDir = $taskRoot.Review
+    $approvedDir = $taskRoot.Approved
+    $pushedDir = $taskRoot.Pushed
     $logsDir = $taskRoot.Logs
+
+    # 1. Process 0prepare
+    $prepareFiles = Get-ChildItem -Path $prepareDir -File
+    foreach ($file in $prepareFiles) {
+        Write-LogMessage "[PREPARE] Task: $($file.Name)" INFO
+    }
+
+    # 2. Process 4review
+    $reviewFiles = Get-ChildItem -Path $reviewDir -File
+    foreach ($file in $reviewFiles) {
+        Write-LogMessage "[REVIEW] Task: $($file.Name)" INFO
+    }
+
+    # 3. Process 5approved
+    $approvedFiles = Get-ChildItem -Path $approvedDir -File
+    if ($approvedFiles.Count -gt 0) {
+        # Call commit script
+        $commitScript = Join-Path $scriptsDir "commit.ps1"
+        if (Test-Path $commitScript) {
+             Write-LogMessage "Executing commit script for approved tasks..." INFO
+             & $commitScript
+             
+             # Move files to pushed directory
+             # Refresh file list just in case commit script modified them (unlikely but safe)
+             $approvedFilesToMove = Get-ChildItem -Path $approvedDir -File
+             foreach ($file in $approvedFilesToMove) {
+                 # Create date-based subdirectory: YYYY/MMDD
+                 $currentYear = Get-Date -Format "yyyy"
+                 $currentDate = Get-Date -Format "MMdd"
+                 $pushedSubDir = Join-Path $pushedDir "$currentYear\$currentDate"
+                 if (!(Test-Path $pushedSubDir)) {
+                     New-Item -ItemType Directory -Path $pushedSubDir | Out-Null
+                 }
+                 
+                 $pushedInfo = Resolve-UniquePath -Directory $pushedSubDir -BaseName $file.BaseName -Extension $file.Extension
+                 Move-Item -Path $file.FullName -Destination $pushedInfo.Path -Force
+                 Write-LogMessage "Task moved to pushed: $($pushedInfo.Path)" INFO
+             }
+        } else {
+             Write-LogMessage "Commit script not found at $commitScript" WARN
+        }
+    }
+
+    # 4. Process 6pushed (last 2 days)
+    # Recursively find files in 6pushed
+    if (Test-Path $pushedDir) {
+        $pushedFiles = Get-ChildItem -Path $pushedDir -Recurse -File
+        $twoDaysAgo = (Get-Date).AddDays(-2)
+        foreach ($file in $pushedFiles) {
+            if ($file.LastWriteTime -ge $twoDaysAgo) {
+                Write-LogMessage "[PUSHED] Task: $($file.Name) (updated $($file.LastWriteTime))" INFO
+            }
+        }
+    }
 
     $files = Get-ChildItem -Path $createdDir -File
 
