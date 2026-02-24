@@ -27,18 +27,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Find the first parent directory containing the VERSION file
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repoRoot="$SCRIPT_DIR"
-while [[ ! -f "$repoRoot/VERSION" && "$repoRoot" != "/" ]]; do
-  repoRoot="$(dirname "$repoRoot")"
-done
-
-if [[ ! -f "$repoRoot/VERSION" ]]; then
-  echo "Error: Could not find VERSION file in any parent directory" >&2
-  exit 1
-fi
-
+repoRoot=$(git rev-parse --show-toplevel 2>null)
 cd "$repoRoot" || exit 1
 
 VERSION=$(head -n 1 "$repoRoot/VERSION" | sed 's/-SNAPSHOT//')
