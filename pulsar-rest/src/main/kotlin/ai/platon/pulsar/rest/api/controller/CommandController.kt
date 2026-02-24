@@ -29,11 +29,11 @@ class CommandController(
      * @return Structured command response
      * */
     @PostMapping(value = ["", "/"])
-    fun submitCommand(@RequestBody request: CommandRequest): ResponseEntity<Any> {
+    suspend fun submitCommand(@RequestBody request: CommandRequest): ResponseEntity<Any> {
         val eventHandlers = PageEventHandlersFactory.create()
         val response = when {
             request.isAsync() -> commandService.submitPageVisitCommandAsync(request, eventHandlers)
-            else -> runBlocking { commandService.executePageVisitCommandSync(request, eventHandlers) }
+            else -> commandService.executePageVisitCommandSync(request, eventHandlers)
         }
 
         return ResponseEntity.ok(response)
@@ -53,7 +53,7 @@ class CommandController(
      * @return Command response (CommandStatus for sync execution, status ID string for async execution)
      * */
     @PostMapping("/plain")
-    fun submitPlainCommand(
+    suspend fun submitPlainCommand(
         @RequestBody plainCommand: String,
         @RequestParam(name = "async") async: Boolean? = null,
         @RequestParam(name = "mode") mode: String? = null,
@@ -67,9 +67,9 @@ class CommandController(
         }
 
         val response = if (isAsync()) {
-            runBlocking { commandService.submitPlainCommandAsync(plainCommand) }
+            commandService.submitPlainCommandAsync(plainCommand)
         } else {
-            runBlocking { commandService.executePlainCommandSync(plainCommand) }
+            commandService.executePlainCommandSync(plainCommand)
         }
 
         return ResponseEntity.ok(response)

@@ -20,14 +20,13 @@ class CommandRevisionController(
     private val conversationService: ConversationService,
 ) {
     @PostMapping(produces = [MediaType.TEXT_PLAIN_VALUE])
-    fun create(@RequestBody prompt: String): String {
+    suspend fun create(@RequestBody prompt: String): String {
         var urls = LinkExtractors.fromText(prompt)
         if (urls.isEmpty()) {
             urls = setOf(AppConstants.EXAMPLE_URL)
         }
 
-        val json = runBlocking { conversationService.convertPlainCommandToJSON(prompt, urls.first()) }
-            ?: return prompt
+        val json = conversationService.convertPlainCommandToJSON(prompt, urls.first()) ?: return prompt
 
         val resource = "prompts/api/request/command/command_revision_template.md"
         val message = PromptTemplateLoader(
