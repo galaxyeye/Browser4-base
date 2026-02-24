@@ -51,7 +51,7 @@ $taskRoots = @(
         Prepare = (Join-Path $tasksRoot "0prepare")
         Created = (Join-Path $tasksRoot "1created")
         Working = (Join-Path $tasksRoot "2working")
-        Finished = (Join-Path $tasksRoot "3finished")
+        Finished = (Join-Path $tasksRoot "3code-complete")
         Review = (Join-Path $tasksRoot "4review")
         Approved = (Join-Path $tasksRoot "5approved")
         Pushed = (Join-Path $tasksRoot "6pushed")
@@ -162,7 +162,7 @@ Prompt: $promptSample
         $promptEscaped = $namingPrompt -replace '"', '\"'
         # Remove --allow-all-tools --allow-all-paths for naming to prevent tool execution delays/output
         $nameArgs = "-p `"$promptEscaped`""
-        
+
         Write-LogVerbose "Executing GH Copilot for naming: gh copilot $nameArgs"
 
         $nameStdOut = [System.IO.Path]::GetTempFileName()
@@ -180,12 +180,12 @@ Prompt: $promptSample
 
         if (-not $waited -or -not $nameProcess.HasExited) {
             Stop-Process -Id $nameProcess.Id -Force -ErrorAction SilentlyContinue
-            
+
             if (Test-Path $nameStdErr) {
                  $errContent = Get-Content $nameStdErr
                  Write-LogVerbose "Naming Copilot STDERR (Timeout): $errContent"
             }
-            
+
             Remove-Item $nameStdOut -ErrorAction SilentlyContinue
             Remove-Item $nameStdErr -ErrorAction SilentlyContinue
             return $Fallback
@@ -198,7 +198,7 @@ Prompt: $promptSample
         } else {
              Write-LogVerbose "Naming Copilot STDOUT file not found"
         }
-        
+
         if (Test-Path $nameStdErr) {
              $errContent = Get-Content $nameStdErr -Encoding UTF8
              if ($errContent) {
@@ -213,7 +213,7 @@ Prompt: $promptSample
             Write-LogVerbose "Naming Copilot exited with code $($nameProcess.ExitCode)"
             return $Fallback
         }
-        
+
         if ([string]::IsNullOrWhiteSpace($rawName)) {
             Write-LogVerbose "Naming Copilot returned empty name"
             return $Fallback
@@ -303,7 +303,7 @@ foreach ($taskRoot in $taskRoots) {
         if (Test-Path $commitScript) {
              Write-LogMessage "Executing commit script for approved tasks..." INFO
              & $commitScript
-             
+
              # Move files to pushed directory
              # Refresh file list just in case commit script modified them (unlikely but safe)
              $approvedFilesToMove = Get-ChildItem -Path $approvedDir -File
@@ -315,7 +315,7 @@ foreach ($taskRoot in $taskRoots) {
                  if (!(Test-Path $pushedSubDir)) {
                      New-Item -ItemType Directory -Path $pushedSubDir | Out-Null
                  }
-                 
+
                  $pushedInfo = Resolve-UniquePath -Directory $pushedSubDir -BaseName $file.BaseName -Extension $file.Extension
                  Move-Item -Path $file.FullName -Destination $pushedInfo.Path -Force
                  Write-LogMessage "Task moved to pushed: $($pushedInfo.Path)" INFO
@@ -357,7 +357,7 @@ foreach ($taskRoot in $taskRoots) {
 
         Write-Host "DEBUG: renameScript path: $renameScript"
         Write-Host "DEBUG: Test-Path renameScript: $(Test-Path $renameScript)"
-        
+
         if (Test-Path $renameScript) {
             # Execute rename.ps1 script
             $generatedName = & $renameScript -FilePath $file.FullName

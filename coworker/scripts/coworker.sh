@@ -47,7 +47,7 @@ baseDir="$repoRoot/coworker/tasks"
 prepareDir="$baseDir/0prepare"
 createdDir="$baseDir/1created"        # Input directory for new tasks
 workingDir="$baseDir/2working"        # Processing directory for current tasks
-finishedDir="$baseDir/3finished"      # Output directory for completed tasks
+finishedDir="$baseDir/3code-complete"      # Output directory for completed tasks
 reviewDir="$baseDir/4review"
 approvedDir="$baseDir/5approved"
 pushedDir="$baseDir/6pushed"
@@ -73,7 +73,7 @@ if [[ -n "$taskFile" ]]; then
         else
              fullTaskPath="$taskFile"
         fi
-        
+
         fileName=$(basename "$fullTaskPath")
         destPath="$createdDir/$fileName"
         mv "$fullTaskPath" "$destPath"
@@ -136,15 +136,15 @@ resolve_unique_path() {
     local dir="$1"
     local base="$2"
     local ext="$3"
-    
+
     local candidateName="${base}${ext}"
     local candidatePath="$dir/$candidateName"
-    
+
     if [[ ! -e "$candidatePath" ]]; then
         echo "$candidatePath"
         return
     fi
-    
+
     local counter=2
     while true; do
         local nextName="${base}.${counter}${ext}"
@@ -163,20 +163,20 @@ get_task_basename() {
     local description="$2"
     local prompt="$3"
     local fallback="$4"
-    
+
     # Truncate prompt for naming context
     local promptSample="${prompt:0:600}"
-    
+
     # Escape quotes for the prompt content
     local promptEscaped=$(echo "$promptSample" | sed 's/"/\\"/g')
-    
+
     local namingPrompt="Create a short, descriptive task name in kebab-case (3-6 words max). Output only the name.
 Title: $title
 Description: $description
 Prompt: $promptEscaped"
 
     local nameArgs="-p \"$namingPrompt\" --allow-all-tools --allow-all-paths"
-    
+
     # Run gh copilot with timeout
     # Using timeout command if available, otherwise just run
     local rawName=""
@@ -194,7 +194,7 @@ Prompt: $promptEscaped"
         echo "$fallback"
         return
     fi
-    
+
     # Normalize name
     # 1. Trim whitespace
     # 2. Replace whitespace with dashes
@@ -202,7 +202,7 @@ Prompt: $promptEscaped"
     # 4. Collapse multiple dashes
     # 5. Trim leading/trailing separators
     # 6. Truncate to 60 chars
-    
+
     local normalized=$(echo "$rawName" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
     normalized=$(echo "$normalized" | sed 's/[[:space:]]\+/-/g')
     normalized=$(echo "$normalized" | sed 's/[^A-Za-z0-9._-]/-/g')
@@ -210,7 +210,7 @@ Prompt: $promptEscaped"
     normalized=$(echo "$normalized" | sed -e 's/^[-._]\+//' -e 's/[-._]\+$//')
     normalized="${normalized:0:60}"
     normalized=$(echo "$normalized" | sed -e 's/^[-._]\+//' -e 's/[-._]\+$//')
-    
+
     if [[ -z "$normalized" ]]; then
         echo "$fallback"
     else
@@ -252,18 +252,18 @@ if [[ ${#approved_files[@]} -gt 0 ]]; then
         if [[ -f "$commitScript" ]]; then
         log_message "Executing commit script for approved tasks..." INFO
         bash "$commitScript"
-        
+
         # Move files to pushed directory
         currentYear=$(date +%Y)
         currentDate=$(date +%m%d)
         pushedSubDir="$pushedDir/$currentYear/$currentDate"
         mkdir -p "$pushedSubDir"
-        
+
         # Refresh file list
         shopt -s nullglob
         approved_files_refresh=("$approvedDir"/*)
         shopt -u nullglob
-        
+
         for file in "${approved_files_refresh[@]}"; do
              [[ -f "$file" ]] || continue
              fileName=$(basename "$file")
@@ -274,7 +274,7 @@ if [[ ${#approved_files[@]} -gt 0 ]]; then
                 fileExt=""
                 baseName="$fileName"
              fi
-             
+
              pushedPath=$(resolve_unique_path "$pushedSubDir" "$baseName" "$fileExt")
              mv "$file" "$pushedPath"
              log_message "Task moved to pushed: $pushedPath" INFO
@@ -312,7 +312,7 @@ for file in "${files[@]}"; do
     # Read content
     content=$(cat "$file")
     fileName=$(basename "$file")
-    
+
     # Extract extension and basename
     if [[ "$fileName" == *.* ]]; then
         fileExt=".${fileName##*.}"
@@ -321,7 +321,7 @@ for file in "${files[@]}"; do
         fileExt=""
         baseName="$fileName"
     fi
-    
+
     safeTitle=$(echo "$baseName" | sed 's/[\/\\*?:"<>|]/_/g')
     if [[ -z "$safeTitle" ]]; then safeTitle="task"; fi
 
@@ -341,14 +341,14 @@ for file in "${files[@]}"; do
     if [[ -z "$descriptiveName" ]]; then
          descriptiveName="$safeTitle"
     fi
-    
+
     # 2. Rename in place (in created dir) then Move to working directory
-    
+
     currentPath="$file"
-    
+
     if [[ "$descriptiveName" != "$baseName" ]]; then
         renamedPath=$(resolve_unique_path "$createdDir" "$descriptiveName" "$fileExt")
-        
+
         # If resolve_unique_path returned a path with a counter, update descriptiveName
         # resolve_unique_path returns full path. extraction needed if we want to update descriptiveName variable correctly for next steps
         renamedName=$(basename "$renamedPath")
@@ -357,10 +357,10 @@ for file in "${files[@]}"; do
         else
              renamedBase="$renamedName"
         fi
-        
+
         mv "$file" "$renamedPath"
         log_message "Renamed in created: $fileName -> $renamedName" INFO
-        
+
         currentPath="$renamedPath"
         fileName="$renamedName"
         baseName="$renamedBase"
@@ -376,40 +376,40 @@ for file in "${files[@]}"; do
     else
         workingBaseNameNoExt="$workingBaseName"
     fi
-    
+
     mv "$currentPath" "$workingPath"
     log_message "Moved to working: $workingPath" INFO
-    
+
     # 4. Parse content for execution
     title="$descriptiveName"
     description="Task from $fileName"
     prompt="$content"
-    
+
     # Try to parse structured content (simple regex approach)
     # Using perl for multiline regex support which is more robust than bash regex
     if command -v perl >/dev/null 2>&1; then
         parsed_title=$(perl -0777 -ne 'print $1 if /Title:\s*(.*?)(\r\n|\n)/s' "$workingPath")
         parsed_desc=$(perl -0777 -ne 'print $1 if /Description:\s*(.*?)(\r\n|\n)/s' "$workingPath")
         parsed_prompt=$(perl -0777 -ne 'print $1 if /Prompt:\s*(.*)$/s' "$workingPath")
-        
+
         if [[ -n "$parsed_title" ]]; then title=$(echo "$parsed_title" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'); fi
         if [[ -n "$parsed_desc" ]]; then description=$(echo "$parsed_desc" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'); fi
         if [[ -n "$parsed_prompt" ]]; then prompt=$(echo "$parsed_prompt" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'); fi
     fi
-    
+
     # Define log file paths
     # workingBaseNameNoExt was calculated earlier
     taskLogPath="$logsDir/$workingBaseNameNoExt.task.log"
     copilotLogPath="$logsDir/$workingBaseNameNoExt.copilot.log"
-    
+
     log_verbose "Task log will be written to: $taskLogPath"
-    
+
     # Change working directory to repository root
     pushd "$repoRoot" > /dev/null
-    
+
     log_message "Executing Copilot for task: $workingBaseNameNoExt" INFO
     log_verbose "Prompt length: ${#prompt} characters"
-    
+
     # Record task execution details to task log
     {
         echo "Task: $title"
@@ -421,33 +421,33 @@ for file in "${files[@]}"; do
         echo "---"
         echo "Copilot Execution Output:"
     } > "$taskLogPath"
-    
+
     # Define paths for temporary output and error logs
     stdOutLog="${copilotLogPath}.stdout"
     stdErrLog="${copilotLogPath}.stderr"
-    
+
     log_message "=== Starting Copilot execution ===" INFO
-    
+
     # Start Copilot in background to allow monitoring
     # We use a subshell to redirect outputs
-    
+
     (
         gh copilot -p "$prompt" --allow-all-tools --allow-all-paths > "$stdOutLog" 2> "$stdErrLog"
     ) &
     copilotPid=$!
-    
+
     startTime=$(date +%s)
     lastOutputLineCount=0
-    
+
     # Monitor loop
     while kill -0 "$copilotPid" 2>/dev/null; do
         sleep 0.5
-        
+
         # Check and display new stdout lines
         if [[ -f "$stdOutLog" ]]; then
             # Read new lines. We use wc -l to get line count
             currentLineCount=$(wc -l < "$stdOutLog")
-            
+
             # If we have more lines than before
             if [[ "$currentLineCount" -gt "$lastOutputLineCount" ]]; then
                 # Print lines from lastOutputLineCount+1 to currentLineCount
@@ -455,11 +455,11 @@ for file in "${files[@]}"; do
                 lastOutputLineCount=$currentLineCount
             fi
         fi
-        
+
         # Check timeout
         currentTime=$(date +%s)
         elapsed=$((currentTime - startTime))
-        
+
         if [[ "$elapsed" -gt "$COPILOT_RUN_TIMEOUT_SECONDS" ]]; then
             kill -9 "$copilotPid" 2>/dev/null
             log_message "Copilot timed out after ${COPILOT_RUN_TIMEOUT_SECONDS}s" WARN
@@ -467,11 +467,11 @@ for file in "${files[@]}"; do
             break
         fi
     done
-    
+
     # Wait for process to fully exit and get exit code
     wait "$copilotPid" 2>/dev/null
     exitCode=$?
-    
+
     # Final output capture
     if [[ -f "$stdOutLog" ]]; then
         currentLineCount=$(wc -l < "$stdOutLog")
@@ -479,7 +479,7 @@ for file in "${files[@]}"; do
             tail -n +"$((lastOutputLineCount + 1))" "$stdOutLog"
         fi
     fi
-    
+
     # Capture stderr output
     if [[ -f "$stdErrLog" && -s "$stdErrLog" ]]; then
         echo -e "\n[STDERR OUTPUT]"
@@ -488,7 +488,7 @@ for file in "${files[@]}"; do
             echo -e "\033[33m$line\033[0m"
         done < "$stdErrLog"
     fi
-    
+
     # Combine logs
     if [[ -f "$stdOutLog" ]]; then cat "$stdOutLog" >> "$copilotLogPath"; fi
     if [[ -f "$stdErrLog" && -s "$stdErrLog" ]]; then
@@ -497,40 +497,40 @@ for file in "${files[@]}"; do
             cat "$stdErrLog"
         } >> "$copilotLogPath"
     fi
-    
+
     # Cleanup temps
     rm -f "$stdOutLog" "$stdErrLog"
-    
+
     log_message "Copilot execution finished with exit code $exitCode" INFO
     log_message "=== Copilot execution completed ===" INFO
     log_verbose "Copilot external tool log: $copilotLogPath"
-    
+
     # Append result to task log
     {
         echo ""
         echo "Copilot Exit Code: $exitCode"
         echo "Copilot Log: $copilotLogPath"
     } >> "$taskLogPath"
-    
+
     if [[ $exitCode -ne 0 ]]; then
         log_message "Warning: Copilot exited with non-zero code. Check log: $copilotLogPath" WARN
     fi
-    
+
     popd > /dev/null
-    
+
     # Move to finished
     currentYear=$(date +%Y)
     currentDate=$(date +%m%d)
     finishedSubDir="$finishedDir/$currentYear/$currentDate"
     mkdir -p "$finishedSubDir"
-    
+
     finishedPath=$(resolve_unique_path "$finishedSubDir" "$workingBaseName" "$fileExt")
-    
+
     mv "$workingPath" "$finishedPath"
     log_message "Task moved to finished: $finishedPath" INFO
-    
+
     log_message "---" INFO
-    
+
 done
 
 # Log script completion
