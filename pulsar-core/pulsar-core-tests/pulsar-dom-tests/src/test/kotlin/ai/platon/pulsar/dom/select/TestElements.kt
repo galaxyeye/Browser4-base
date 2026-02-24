@@ -3,8 +3,11 @@ package ai.platon.pulsar.dom.select
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Node
 import org.jsoup.select.NodeVisitor
-import kotlin.test.*
 import org.junit.jupiter.api.DisplayName
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Tests for ElementList.
@@ -15,7 +18,8 @@ class TestElements {
 
     @Test
     fun filter() {
-        val h = "<p>Excl</p><div class=headline><p>Hello</p><p>There</p></div><div class=headline><h1>Headline</h1></div>"
+        val h =
+            "<p>Excl</p><div class=headline><p>Hello</p><p>There</p></div><div class=headline><h1>Headline</h1></div>"
         val doc = Jsoup.parse(h)
         val els = doc.select(".headline").select("p")
         assertEquals(2, els.size.toLong())
@@ -155,8 +159,8 @@ class TestElements {
     }
 
     @Test
-        @DisplayName("val")
-    fun val() {
+    @DisplayName("val")
+    fun `val`() {
         val doc = Jsoup.parse("<input value='one' /><textarea>two</textarea>")
         val els = doc.select("input, textarea")
         assertEquals(2, els.size.toLong())
@@ -173,14 +177,20 @@ class TestElements {
     fun before() {
         val doc = Jsoup.parse("<p>This <a>is</a> <a>dom</a>.</p>")
         doc.select("a").before("<span>foo</span>")
-        assertEquals("<p>This <span>foo</span><a>is</a> <span>foo</span><a>dom</a>.</p>", stripNewlines(doc.body().html()))
+        assertEquals(
+            "<p>This <span>foo</span><a>is</a> <span>foo</span><a>dom</a>.</p>",
+            stripNewlines(doc.body().html())
+        )
     }
 
     @Test
     fun after() {
         val doc = Jsoup.parse("<p>This <a>is</a> <a>dom</a>.</p>")
         doc.select("a").after("<span>foo</span>")
-        assertEquals("<p>This <a>is</a><span>foo</span> <a>dom</a><span>foo</span>.</p>", stripNewlines(doc.body().html()))
+        assertEquals(
+            "<p>This <a>is</a><span>foo</span> <a>dom</a><span>foo</span>.</p>",
+            stripNewlines(doc.body().html())
+        )
     }
 
     @Test
@@ -196,8 +206,10 @@ class TestElements {
         val h = "<p><b>This</b> is <b>dom</b>.</p> <p>How do you like it?</p>"
         val doc = Jsoup.parse(h)
         doc.select("p").wrap("<div></div>")
-        assertEquals("<div><p><b>This</b> is <b>dom</b>.</p></div> <div><p>How do you like it?</p></div>",
-                stripNewlines(doc.body().html()))
+        assertEquals(
+            "<div><p><b>This</b> is <b>dom</b>.</p></div> <div><p>How do you like it?</p></div>",
+            stripNewlines(doc.body().html())
+        )
     }
 
     @Test
@@ -251,8 +263,8 @@ class TestElements {
     }
 
     @Test
-        @DisplayName("is")
-    fun is() {
+    @DisplayName("is")
+    fun `is`() {
         val h = "<p>Hello<p title=foo>there<p>world"
         val doc = Jsoup.parse(h)
         val ps = doc.select("p")
@@ -398,8 +410,9 @@ class TestElements {
     @Test
     fun eachAttr() {
         val doc = Jsoup.parse(
-                "<div><a href='/foo'>1</a><a href='http://example.com/bar'>2</a><a href=''>3</a><a>4</a>",
-                "http://example.com")
+            "<div><a href='/foo'>1</a><a href='http://example.com/bar'>2</a><a href=''>3</a><a>4</a>",
+            "http://example.com"
+        )
 
         val hrefAttrs = doc.select("a").eachAttr("href")
         assertEquals(3, hrefAttrs.size.toLong())
