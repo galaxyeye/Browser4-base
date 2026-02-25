@@ -84,15 +84,15 @@ class PageEventHandlersFactory(val conf: ImmutableConfig = ImmutableConfig()) {
     private val logger = LoggerFactory.getLogger(PageEventHandlersFactory::class.java)
 
     companion object {
-        fun create() = PageEventHandlersFactory().create()
+        fun create(): PageEventHandlers = PageEventHandlersFactory().create()
 
-        fun create(className: String) = PageEventHandlersFactory().create(className)
+        fun create(className: String): PageEventHandlers = PageEventHandlersFactory().create(className)
 
         fun create(
             loadEventHandlers: LoadEventHandlers = DefaultLoadEventHandlers(),
             browseEventHandlers: BrowseEventHandlers = DefaultBrowseEventHandlers(),
             crawlEventHandlers: CrawlEventHandlers = DefaultCrawlEventHandlers()
-        ) = PageEventHandlersFactory().create(loadEventHandlers, browseEventHandlers, crawlEventHandlers)
+        ): PageEventHandlers = PageEventHandlersFactory().create(loadEventHandlers, browseEventHandlers, crawlEventHandlers)
     }
 
     /**
