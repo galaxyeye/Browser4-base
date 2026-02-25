@@ -87,12 +87,13 @@ fi
 # Initialize script-level logging
 # Main log file for all script output
 currentYear=$(date +%Y)
-currentDate=$(date +%m%d)
+currentMonth=$(date +%m)
+currentDay=$(date +%d)
 currentTime=$(date +%H%M%S)
-logsSubDir="$logsDir/$currentYear/$currentDate"
+logsSubDir="$logsDir/$currentYear/$currentMonth/$currentDay"
 mkdir -p "$logsSubDir"
 
-scriptLogPath="$logsSubDir/${currentTime}coworker.log"
+scriptLogPath="$logsSubDir/${currentTime}-coworker.log"
 scriptStartTime=$(date '+%Y-%m-%d %H:%M:%S')
 
 # ============================================================================
@@ -411,13 +412,14 @@ for file in "${files[@]}"; do
     # workingBaseNameNoExt was calculated earlier
 
     currentYear=$(date +%Y)
-    currentDate=$(date +%m%d)
+    currentMonth=$(date +%m)
+    currentDay=$(date +%d)
     currentTime=$(date +%H%M%S)
-    logsSubDir="$logsDir/$currentYear/$currentDate"
+    logsSubDir="$logsDir/$currentYear/$currentMonth/$currentDay"
     mkdir -p "$logsSubDir"
 
-    taskLogPath="$logsSubDir/${currentTime}${workingBaseNameNoExt}.task.log"
-    copilotLogPath="$logsSubDir/${currentTime}${workingBaseNameNoExt}.copilot.log"
+    taskLogPath="$logsSubDir/${currentTime}-${workingBaseNameNoExt}.task.log"
+    copilotLogPath="$logsSubDir/${currentTime}-${workingBaseNameNoExt}.copilot.log"
 
     log_verbose "Task log will be written to: $taskLogPath"
 

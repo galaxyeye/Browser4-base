@@ -88,12 +88,13 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
 # Initialize script-level logging
 # Main log file for all script output
 $currentYear = Get-Date -Format "yyyy"
-$currentDate = Get-Date -Format "MMdd"
+$currentMonth = Get-Date -Format "MM"
+$currentDay = Get-Date -Format "dd"
 $currentTime = Get-Date -Format "HHmmss"
-$logsSubDir = Join-Path $logsDir "$currentYear\$currentDate"
+$logsSubDir = Join-Path $logsDir "$currentYear\$currentMonth\$currentDay"
 if (!(Test-Path $logsSubDir)) { New-Item -ItemType Directory -Path $logsSubDir | Out-Null }
 
-$scriptLogPath = Join-Path $logsSubDir "${currentTime}coworker.log"
+$scriptLogPath = Join-Path $logsSubDir "${currentTime}-coworker.log"
 $scriptStartTime = Get-Date
 
 $copilotNameTimeoutSeconds = 60
@@ -426,13 +427,14 @@ foreach ($taskRoot in $taskRoots) {
         $workingBaseName = $finalTaskInfo.FileName -replace [regex]::Escape($file.Extension), ''
 
         $currentYear = Get-Date -Format "yyyy"
-        $currentDate = Get-Date -Format "MMdd"
+        $currentMonth = Get-Date -Format "MM"
+        $currentDay = Get-Date -Format "dd"
         $currentTime = Get-Date -Format "HHmmss"
-        $logsSubDir = Join-Path $logsDir "$currentYear\$currentDate"
+        $logsSubDir = Join-Path $logsDir "$currentYear\$currentMonth\$currentDay"
         if (!(Test-Path $logsSubDir)) { New-Item -ItemType Directory -Path $logsSubDir | Out-Null }
 
-        $taskLogPath = Join-Path $logsSubDir "${currentTime}${workingBaseName}.task.log"
-        $copilotLogPath = Join-Path $logsSubDir "${currentTime}${workingBaseName}.copilot.log"
+        $taskLogPath = Join-Path $logsSubDir "${currentTime}-${workingBaseName}.task.log"
+        $copilotLogPath = Join-Path $logsSubDir "${currentTime}-${workingBaseName}.copilot.log"
 
         Write-LogVerbose "Task log will be written to: $taskLogPath"
 
