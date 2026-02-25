@@ -853,6 +853,21 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     suspend fun click(selector: String, modifier: String)
 
+    @Throws(WebDriverException::class)
+    suspend fun dblclick(selector: String)
+
+    /**
+     * focus on an element with [selector] and dblclick it with [modifier] pressed
+     * */
+    @Throws(WebDriverException::class)
+    suspend fun dblclick(selector: String, modifier: String)
+
+    suspend fun resize(width: Int, height: Int)
+
+    suspend fun dialogAccept(promptText: String? = null)
+
+    suspend fun dialogDismiss()
+
     /**
      * This method clicks an element with [selector] whose text content matches [pattern], and then focuses it.
      * If there's no element matching [selector], or the element's text content doesn't match [pattern], nothing to do.
@@ -888,6 +903,27 @@ interface WebDriver : Closeable {
      * */
     @Throws(WebDriverException::class)
     suspend fun clickMatches(selector: String, attrName: String, pattern: String, count: Int = 1)
+
+    /**
+     * Selects one or more options in a <select> element.
+     *
+     * @param selector A selector to query the element
+     * @param values The values or labels of the options to select
+     * @return The list of selected option values
+     */
+    suspend fun selectOption(selector: String, values: List<String>): List<String>
+
+    /**
+     * Selects an option in a <select> element.
+     *
+     * @param selector A selector to query the element
+     * @param value The value or label of the option to select
+     * @return The selected option value, or null if not found
+     */
+    suspend fun selectOption(selector: String, value: String): String? {
+        val selected = selectOption(selector, listOf(value))
+        return selected.firstOrNull()
+    }
 
     /**
      * Clicks the nth anchor element in the DOM.
@@ -1497,7 +1533,7 @@ interface WebDriver : Closeable {
     suspend fun captureScreenshot(rect: RectD): String? = screenshot(rect)
 
     @Throws(WebDriverException::class)
-    suspend fun ariaSnapshot(selector: String = ":root"): String
+    suspend fun ariaSnapshot(): String
 
     /**
      * Calculate the clickable point of an element located by [selector].

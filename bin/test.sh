@@ -163,7 +163,25 @@ if [[ ${#MavenTests[@]} -gt 0 ]]; then
     [[ "$HasE2E" == "true" ]] && MvnTestArgs+=("-DrunE2ETests=true")
     if [[ "$HasCore" == "true" ]]; then
          MvnTestArgs+=("-DrunCoreTests=true" "-Ppulsar-core-tests")
-         Modules+=("pulsar-core" "pulsar-core/pulsar-core-tests")
+         # List every pulsar-core submodule explicitly so Maven discovers their tests.
+         # "-pl pulsar-core" alone only matches the aggregator pom, not the child modules.
+         Modules+=(
+             "pulsar-core/pulsar-resources"
+             "pulsar-core/pulsar-common"
+             "pulsar-core/pulsar-dom"
+             "pulsar-core/pulsar-persist"
+             "pulsar-core/pulsar-plugins"
+             "pulsar-core/pulsar-third"
+             "pulsar-core/pulsar-skeleton"
+             "pulsar-core/pulsar-browser"
+             "pulsar-core/pulsar-spring-support"
+             "pulsar-core/pulsar-ql-common"
+             "pulsar-core/pulsar-ql"
+             "pulsar-core/pulsar-core-tests"
+             "pulsar-core/pulsar-core-tests/pulsar-common-tests"
+             "pulsar-core/pulsar-core-tests/pulsar-dom-tests"
+             "pulsar-core/pulsar-core-tests/pulsar-ql-tests"
+         )
     fi
 
     if [[ "$HasSkills" == "true" || "$HasMcp" == "true" ]]; then
