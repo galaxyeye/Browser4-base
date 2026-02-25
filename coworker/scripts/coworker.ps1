@@ -296,32 +296,33 @@ foreach ($taskRoot in $taskRoots) {
     }
 
     # 3. Process 5approved
-    $approvedFiles = Get-ChildItem -Path $approvedDir -File
-    if ($approvedFiles.Count -gt 0) {
-        # Call commit script
-        $commitScript = Join-Path $scriptsDir "commit.ps1"
-        if (Test-Path $commitScript) {
-             Write-LogMessage "Executing commit script for approved tasks..." INFO
-             & $commitScript
+    # If there are any files in 5approved or its subdirectories, move them to 6git-pushed with date-based organization, and then call the commit script
+    if (Test-Path $approvedDir) {
+        $approvedFiles = Get-ChildItem -Path $approvedDir -Recurse -File
+        if ($approvedFiles.Count -gt 0) {
+            # Move files to pushed directory
+            foreach ($file in $approvedFiles) {
+                # Create date-based subdirectory: YYYY/MMDD
+                $currentYear = Get-Date -Format "yyyy"
+                $currentDate = Get-Date -Format "MMdd"
+                $pushedSubDir = Join-Path $pushedDir "$currentYear\$currentDate"
+                if (!(Test-Path $pushedSubDir)) {
+                    New-Item -ItemType Directory -Path $pushedSubDir | Out-Null
+                }
 
-             # Move files to pushed directory
-             # Refresh file list just in case commit script modified them (unlikely but safe)
-             $approvedFilesToMove = Get-ChildItem -Path $approvedDir -File
-             foreach ($file in $approvedFilesToMove) {
-                 # Create date-based subdirectory: YYYY/MMDD
-                 $currentYear = Get-Date -Format "yyyy"
-                 $currentDate = Get-Date -Format "MMdd"
-                 $pushedSubDir = Join-Path $pushedDir "$currentYear\$currentDate"
-                 if (!(Test-Path $pushedSubDir)) {
-                     New-Item -ItemType Directory -Path $pushedSubDir | Out-Null
-                 }
+                $pushedInfo = Resolve-UniquePath -Directory $pushedSubDir -BaseName $file.BaseName -Extension $file.Extension
+                Move-Item -Path $file.FullName -Destination $pushedInfo.Path -Force
+                Write-LogMessage "Task moved to pushed: $($pushedInfo.Path)" INFO
+            }
 
-                 $pushedInfo = Resolve-UniquePath -Directory $pushedSubDir -BaseName $file.BaseName -Extension $file.Extension
-                 Move-Item -Path $file.FullName -Destination $pushedInfo.Path -Force
-                 Write-LogMessage "Task moved to pushed: $($pushedInfo.Path)" INFO
-             }
-        } else {
-             Write-LogMessage "Commit script not found at $commitScript" WARN
+            # Call commit script
+            $commitScript = Join-Path $scriptsDir "git-sync.ps1"
+            if (Test-Path $commitScript) {
+                 Write-LogMessage "Executing commit script for approved tasks..." INFO
+                 & $commitScript
+            } else {
+                 Write-LogMessage "Commit script not found at $commitScript" WARN
+            }
         }
     }
 

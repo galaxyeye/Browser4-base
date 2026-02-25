@@ -15,13 +15,13 @@ After tasks are completed, you can use the commit scripts to push changes to you
 **Windows (PowerShell):**
 
 ```powershell
-.\coworker\scripts\commit.ps1
+.\coworker\scripts\git-sync.ps1
 ```
 
 **Linux/macOS (Bash):**
 
 ```bash
-./coworker/scripts/commit.sh
+./coworker/scripts/git-sync.sh
 ```
 
 ## Periodical Runner

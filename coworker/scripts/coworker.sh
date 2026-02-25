@@ -244,27 +244,21 @@ for file in "${review_files[@]}"; do
 done
 
 # 3. Process 5approved
-shopt -s nullglob
-approved_files=("$approvedDir"/*)
-shopt -u nullglob
-if [[ ${#approved_files[@]} -gt 0 ]]; then
-    commitScript="$scriptsDir/commit.sh"
-        if [[ -f "$commitScript" ]]; then
-        log_message "Executing commit script for approved tasks..." INFO
-        bash "$commitScript"
-
+# Find files recursively in approvedDir
+if [[ -d "$approvedDir" ]]; then
+    # Use find to get all files recursively and process them in a loop
+    # This avoids mapfile compatibility issues and array handling complexities
+    found_files=0
+    
+    # Check if there are any files first to avoid running logic if empty
+    if [[ -n $(find "$approvedDir" -type f -print -quit) ]]; then
         # Move files to pushed directory
         currentYear=$(date +%Y)
         currentDate=$(date +%m%d)
         pushedSubDir="$pushedDir/$currentYear/$currentDate"
         mkdir -p "$pushedSubDir"
 
-        # Refresh file list
-        shopt -s nullglob
-        approved_files_refresh=("$approvedDir"/*)
-        shopt -u nullglob
-
-        for file in "${approved_files_refresh[@]}"; do
+        while IFS= read -r -d '' file; do
              [[ -f "$file" ]] || continue
              fileName=$(basename "$file")
              if [[ "$fileName" == *.* ]]; then
@@ -278,9 +272,19 @@ if [[ ${#approved_files[@]} -gt 0 ]]; then
              pushedPath=$(resolve_unique_path "$pushedSubDir" "$baseName" "$fileExt")
              mv "$file" "$pushedPath"
              log_message "Task moved to pushed: $pushedPath" INFO
-        done
-    else
-        log_message "Commit script not found at $commitScript" WARN
+             found_files=1
+        done < <(find "$approvedDir" -type f -print0)
+
+        if [[ $found_files -eq 1 ]]; then
+            # Call commit script
+            commitScript="$scriptsDir/git-sync.sh"
+            if [[ -f "$commitScript" ]]; then
+                log_message "Executing commit script for approved tasks..." INFO
+                bash "$commitScript"
+            else
+                log_message "Commit script not found at $commitScript" WARN
+            fi
+        fi
     fi
 fi
 
