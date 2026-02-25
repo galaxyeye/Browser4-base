@@ -51,7 +51,7 @@ finishedDir="$baseDir/3complete"      # Output directory for completed tasks
 reviewDir="$baseDir/4review"
 approvedDir="$baseDir/5approved"
 pushedDir="$baseDir/6git-pushed"
-logsDir="$baseDir/logs"              # Directory for script and execution logs
+logsDir="$baseDir/300logs"              # Directory for script and execution logs
 scriptsDir="$repoRoot/coworker/scripts"
 
 # Ensure all required directories exist
@@ -86,7 +86,13 @@ fi
 
 # Initialize script-level logging
 # Main log file for all script output
-scriptLogPath="$logsDir/coworker-$(date +%Y%m%d-%H%M%S).log"
+currentYear=$(date +%Y)
+currentDate=$(date +%m%d)
+currentTime=$(date +%H%M%S)
+logsSubDir="$logsDir/$currentYear/$currentDate"
+mkdir -p "$logsSubDir"
+
+scriptLogPath="$logsSubDir/${currentTime}coworker.log"
 scriptStartTime=$(date '+%Y-%m-%d %H:%M:%S')
 
 # ============================================================================
@@ -249,7 +255,7 @@ if [[ -d "$approvedDir" ]]; then
     # Use find to get all files recursively and process them in a loop
     # This avoids mapfile compatibility issues and array handling complexities
     found_files=0
-    
+
     # Check if there are any files first to avoid running logic if empty
     if [[ -n $(find "$approvedDir" -type f -print -quit) ]]; then
         # Move files to pushed directory
@@ -403,8 +409,15 @@ for file in "${files[@]}"; do
 
     # Define log file paths
     # workingBaseNameNoExt was calculated earlier
-    taskLogPath="$logsDir/$workingBaseNameNoExt.task.log"
-    copilotLogPath="$logsDir/$workingBaseNameNoExt.copilot.log"
+
+    currentYear=$(date +%Y)
+    currentDate=$(date +%m%d)
+    currentTime=$(date +%H%M%S)
+    logsSubDir="$logsDir/$currentYear/$currentDate"
+    mkdir -p "$logsSubDir"
+
+    taskLogPath="$logsSubDir/${currentTime}${workingBaseNameNoExt}.task.log"
+    copilotLogPath="$logsSubDir/${currentTime}${workingBaseNameNoExt}.copilot.log"
 
     log_verbose "Task log will be written to: $taskLogPath"
 

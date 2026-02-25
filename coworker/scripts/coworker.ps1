@@ -55,7 +55,7 @@ $taskRoots = @(
         Review = (Join-Path $tasksRoot "4review")
         Approved = (Join-Path $tasksRoot "5approved")
         Pushed = (Join-Path $tasksRoot "6git-pushed")
-        Logs = (Join-Path $tasksRoot "logs")
+        Logs = (Join-Path $tasksRoot "300logs")
         Label = "tasks"
     }
 )
@@ -87,7 +87,13 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
 
 # Initialize script-level logging
 # Main log file for all script output
-$scriptLogPath = Join-Path $logsDir "coworker-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
+$currentYear = Get-Date -Format "yyyy"
+$currentDate = Get-Date -Format "MMdd"
+$currentTime = Get-Date -Format "HHmmss"
+$logsSubDir = Join-Path $logsDir "$currentYear\$currentDate"
+if (!(Test-Path $logsSubDir)) { New-Item -ItemType Directory -Path $logsSubDir | Out-Null }
+
+$scriptLogPath = Join-Path $logsSubDir "${currentTime}coworker.log"
 $scriptStartTime = Get-Date
 
 $copilotNameTimeoutSeconds = 60
@@ -302,6 +308,8 @@ foreach ($taskRoot in $taskRoots) {
         if ($approvedFiles.Count -gt 0) {
             # Move files to pushed directory
             foreach ($file in $approvedFiles) {
+                Write-Host "Moving approved task to pushed: $($file.FullName)" -ForegroundColor Green
+
                 # Create date-based subdirectory: YYYY/MMDD
                 $currentYear = Get-Date -Format "yyyy"
                 $currentDate = Get-Date -Format "MMdd"
@@ -416,8 +424,15 @@ foreach ($taskRoot in $taskRoots) {
 
         # Define log file paths
         $workingBaseName = $finalTaskInfo.FileName -replace [regex]::Escape($file.Extension), ''
-        $taskLogPath = Join-Path $logsDir "$workingBaseName.task.log"
-        $copilotLogPath = Join-Path $logsDir "$workingBaseName.copilot.log"
+
+        $currentYear = Get-Date -Format "yyyy"
+        $currentDate = Get-Date -Format "MMdd"
+        $currentTime = Get-Date -Format "HHmmss"
+        $logsSubDir = Join-Path $logsDir "$currentYear\$currentDate"
+        if (!(Test-Path $logsSubDir)) { New-Item -ItemType Directory -Path $logsSubDir | Out-Null }
+
+        $taskLogPath = Join-Path $logsSubDir "${currentTime}${workingBaseName}.task.log"
+        $copilotLogPath = Join-Path $logsSubDir "${currentTime}${workingBaseName}.copilot.log"
 
         Write-LogVerbose "Task log will be written to: $taskLogPath"
 

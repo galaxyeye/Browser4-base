@@ -19,17 +19,18 @@ echo "Script path: $SCRIPT_PATH"
 while true; do
     # Check for tasks in 1created or 5approved
     HAS_TASKS=false
-    
+
     # Check 1created
     if [ -d "coworker/tasks/1created" ]; then
         if [ "$(ls -A coworker/tasks/1created)" ]; then
             HAS_TASKS=true
         fi
     fi
-    
+
     # Check 5approved if no tasks found yet
     if [ "$HAS_TASKS" = false ] && [ -d "coworker/tasks/5approved" ]; then
-        if [ "$(ls -A coworker/tasks/5approved)" ]; then
+        # Check recursively for any files in 5approved
+        if find coworker/tasks/5approved -type f | grep -q .; then
             HAS_TASKS=true
         fi
     fi
@@ -45,20 +46,20 @@ while true; do
     # Check if script is running
     # We look for processes matching the script name, but exclude this wrapper script
     IS_RUNNING=false
-    
+
     # Get PIDs of processes matching the script name
     PIDS=$(pgrep -f "$SCRIPT_NAME")
-    
+
     if [ -n "$PIDS" ]; then
         for pid in $PIDS; do
             # Skip if it's the current process
             if [ "$pid" = "$$" ]; then
                 continue
             fi
-            
+
             # Get the command line for this PID
             CMDLINE=$(ps -p "$pid" -o args= 2>/dev/null)
-            
+
             # Check if it contains SCRIPT_NAME and does NOT contain WRAPPER_NAME
             if [[ "$CMDLINE" == *"$SCRIPT_NAME"* ]] && [[ "$CMDLINE" != *"$WRAPPER_NAME"* ]]; then
                 IS_RUNNING=true
@@ -71,18 +72,18 @@ while true; do
         echo "$TIMESTAMP - $SCRIPT_NAME is already running."
     else
         echo "$TIMESTAMP - $SCRIPT_NAME is NOT running. Starting it..."
-        
+
         if [ -f "$SCRIPT_PATH" ]; then
             # Make sure it's executable
             if [ ! -x "$SCRIPT_PATH" ]; then
                 chmod +x "$SCRIPT_PATH"
             fi
-            
+
             # Run the script
-            # We run it directly and wait for it to complete. 
+            # We run it directly and wait for it to complete.
             # This ensures we don't start multiple instances concurrently from this loop.
             "$SCRIPT_PATH"
-            
+
             echo "Finished $SCRIPT_NAME execution."
         else
             echo "Error: Script not found at $SCRIPT_PATH"

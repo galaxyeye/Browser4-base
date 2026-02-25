@@ -15,7 +15,7 @@ Write-Host "Script path: $ScriptPath"
 
 while ($true) {
     $createdTasks = Get-ChildItem -Path ".\coworker\tasks\1created" -File -ErrorAction SilentlyContinue
-    $approvedTasks = Get-ChildItem -Path ".\coworker\tasks\5approved" -File -ErrorAction SilentlyContinue
+    $approvedTasks = Get-ChildItem -Path ".\coworker\tasks\5approved" -File -Recurse -ErrorAction SilentlyContinue
 
     if (-not ($createdTasks -or $approvedTasks)) {
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
