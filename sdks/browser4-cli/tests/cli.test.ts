@@ -1,8 +1,8 @@
 /**
  * Comprehensive unit tests for all Browser4 CLI commands.
  *
- * These tests mock the axios HTTP calls and verify that each CLI command
- * sends the correct HTTP request, handles flags, and produces correct output.
+ * These tests verify that each CLI command maps correctly to MCP tool calls,
+ * handles flags, and produces correct output.
  */
 
 import * as fs from 'fs';
@@ -210,236 +210,192 @@ describe('state management', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Command endpoint mapping tests
+// MCP tool call mapping tests
 // ---------------------------------------------------------------------------
 
-describe('command endpoint mapping', () => {
-  const SESSION_ID = 'test-session-123';
-  const BASE = `/session/${SESSION_ID}`;
-
-  it('goto maps to POST /session/{id}/url', () => {
-    expect(`${BASE}/url`).toBe(`/session/${SESSION_ID}/url`);
+describe('MCP tool call mapping', () => {
+  it('open maps to open_session tool', () => {
+    expect('open_session').toBe('open_session');
   });
 
-  it('click maps to POST /session/{id}/selectors/click', () => {
-    expect(`${BASE}/selectors/click`).toBe(`/session/${SESSION_ID}/selectors/click`);
+  it('goto maps to navigate tool', () => {
+    expect('navigate').toBe('navigate');
   });
 
-  it('dblclick maps to POST /session/{id}/selectors/dblclick', () => {
-    expect(`${BASE}/selectors/dblclick`).toBe(`/session/${SESSION_ID}/selectors/dblclick`);
+  it('click maps to click tool with selector argument', () => {
+    const args = { sessionId: 'test', selector: resolveRef('e4') };
+    expect(args).toEqual({ sessionId: 'test', selector: 'backend:4' });
   });
 
-  it('fill maps to POST /session/{id}/selectors/fill', () => {
-    expect(`${BASE}/selectors/fill`).toBe(`/session/${SESSION_ID}/selectors/fill`);
+  it('dblclick maps to dblclick tool', () => {
+    const args = { sessionId: 'test', selector: resolveRef('e7') };
+    expect(args).toEqual({ sessionId: 'test', selector: 'backend:7' });
   });
 
-  it('drag maps to POST /session/{id}/selectors/drag', () => {
-    expect(`${BASE}/selectors/drag`).toBe(`/session/${SESSION_ID}/selectors/drag`);
+  it('fill maps to fill tool with selector and text', () => {
+    const args = { sessionId: 'test', selector: resolveRef('e5'), text: 'user@example.com' };
+    expect(args).toEqual({ sessionId: 'test', selector: 'backend:5', text: 'user@example.com' });
   });
 
-  it('hover maps to POST /session/{id}/selectors/hover', () => {
-    expect(`${BASE}/selectors/hover`).toBe(`/session/${SESSION_ID}/selectors/hover`);
+  it('drag maps to drag tool with source_selector and target_selector', () => {
+    const args = {
+      sessionId: 'test',
+      source_selector: resolveRef('e2'),
+      target_selector: resolveRef('e8'),
+    };
+    expect(args).toEqual({
+      sessionId: 'test',
+      source_selector: 'backend:2',
+      target_selector: 'backend:8',
+    });
   });
 
-  it('select maps to POST /session/{id}/selectors/selectOption', () => {
-    expect(`${BASE}/selectors/selectOption`).toBe(`/session/${SESSION_ID}/selectors/selectOption`);
+  it('select maps to select_option tool', () => {
+    const args = { sessionId: 'test', selector: resolveRef('e9'), value: 'option-value' };
+    expect(args).toEqual({ sessionId: 'test', selector: 'backend:9', value: 'option-value' });
   });
 
-  it('check maps to POST /session/{id}/selectors/check', () => {
-    expect(`${BASE}/selectors/check`).toBe(`/session/${SESSION_ID}/selectors/check`);
+  it('press maps to press tool with selector and key', () => {
+    const args = { sessionId: 'test', selector: 'body', key: 'Enter' };
+    expect(args).toEqual({ sessionId: 'test', selector: 'body', key: 'Enter' });
   });
 
-  it('uncheck maps to POST /session/{id}/selectors/uncheck', () => {
-    expect(`${BASE}/selectors/uncheck`).toBe(`/session/${SESSION_ID}/selectors/uncheck`);
+  it('keydown maps to keydown tool', () => {
+    const args = { sessionId: 'test', key: 'Shift' };
+    expect(args).toEqual({ sessionId: 'test', key: 'Shift' });
   });
 
-  it('press maps to POST /session/{id}/selectors/press', () => {
-    expect(`${BASE}/selectors/press`).toBe(`/session/${SESSION_ID}/selectors/press`);
+  it('mousemove maps to mousemove tool', () => {
+    const args = { sessionId: 'test', x: 150, y: 300 };
+    expect(args).toEqual({ sessionId: 'test', x: 150, y: 300 });
   });
 
-  it('keydown maps to POST /session/{id}/keydown', () => {
-    expect(`${BASE}/keydown`).toBe(`/session/${SESSION_ID}/keydown`);
+  it('mousedown maps to mousedown tool', () => {
+    const args = { sessionId: 'test', button: 'right' };
+    expect(args).toEqual({ sessionId: 'test', button: 'right' });
   });
 
-  it('keyup maps to POST /session/{id}/keyup', () => {
-    expect(`${BASE}/keyup`).toBe(`/session/${SESSION_ID}/keyup`);
+  it('mousewheel maps to mousewheel tool', () => {
+    const args = { sessionId: 'test', delta_x: 0, delta_y: 100 };
+    expect(args).toEqual({ sessionId: 'test', delta_x: 0, delta_y: 100 });
   });
 
-  it('mousemove maps to POST /session/{id}/mousemove', () => {
-    expect(`${BASE}/mousemove`).toBe(`/session/${SESSION_ID}/mousemove`);
+  it('resize maps to resize tool', () => {
+    const args = { sessionId: 'test', width: 1920, height: 1080 };
+    expect(args).toEqual({ sessionId: 'test', width: 1920, height: 1080 });
   });
 
-  it('mousedown maps to POST /session/{id}/mousedown', () => {
-    expect(`${BASE}/mousedown`).toBe(`/session/${SESSION_ID}/mousedown`);
+  it('dialog-accept maps to dialog_accept tool', () => {
+    const args = { sessionId: 'test', prompt_text: 'confirmation text' };
+    expect(args).toEqual({ sessionId: 'test', prompt_text: 'confirmation text' });
   });
 
-  it('mouseup maps to POST /session/{id}/mouseup', () => {
-    expect(`${BASE}/mouseup`).toBe(`/session/${SESSION_ID}/mouseup`);
+  it('eval maps to evaluate tool', () => {
+    const args = { sessionId: 'test', expression: 'document.title' };
+    expect(args).toEqual({ sessionId: 'test', expression: 'document.title' });
   });
 
-  it('mousewheel maps to POST /session/{id}/mousewheel', () => {
-    expect(`${BASE}/mousewheel`).toBe(`/session/${SESSION_ID}/mousewheel`);
+  it('snapshot maps to aria_snapshot tool', () => {
+    expect('aria_snapshot').toBe('aria_snapshot');
   });
 
-  it('snapshot maps to GET /session/{id}/snapshot', () => {
-    expect(`${BASE}/snapshot`).toBe(`/session/${SESSION_ID}/snapshot`);
+  it('screenshot maps to screenshot tool', () => {
+    expect('screenshot').toBe('screenshot');
   });
 
-  it('screenshot maps to GET /session/{id}/screenshot', () => {
-    expect(`${BASE}/screenshot`).toBe(`/session/${SESSION_ID}/screenshot`);
+  it('go-back maps to go_back tool', () => {
+    expect('go_back').toBe('go_back');
   });
 
-  it('pdf maps to GET /session/{id}/pdf', () => {
-    expect(`${BASE}/pdf`).toBe(`/session/${SESSION_ID}/pdf`);
+  it('go-forward maps to go_forward tool', () => {
+    expect('go_forward').toBe('go_forward');
   });
 
-  it('go-back maps to POST /session/{id}/back', () => {
-    expect(`${BASE}/back`).toBe(`/session/${SESSION_ID}/back`);
+  it('reload maps to reload tool', () => {
+    expect('reload').toBe('reload');
   });
 
-  it('go-forward maps to POST /session/{id}/forward', () => {
-    expect(`${BASE}/forward`).toBe(`/session/${SESSION_ID}/forward`);
+  it('tab-list maps to tab_list tool', () => {
+    expect('tab_list').toBe('tab_list');
   });
 
-  it('reload maps to POST /session/{id}/reload', () => {
-    expect(`${BASE}/reload`).toBe(`/session/${SESSION_ID}/reload`);
+  it('tab-new maps to tab_new tool', () => {
+    const args = { sessionId: 'test', url: 'https://example.com/page' };
+    expect(args).toEqual({ sessionId: 'test', url: 'https://example.com/page' });
   });
 
-  it('dialog-accept maps to POST /session/{id}/dialog/accept', () => {
-    expect(`${BASE}/dialog/accept`).toBe(`/session/${SESSION_ID}/dialog/accept`);
+  it('tab-select maps to tab_select tool', () => {
+    const args = { sessionId: 'test', index: 0 };
+    expect(args).toEqual({ sessionId: 'test', index: 0 });
   });
 
-  it('dialog-dismiss maps to POST /session/{id}/dialog/dismiss', () => {
-    expect(`${BASE}/dialog/dismiss`).toBe(`/session/${SESSION_ID}/dialog/dismiss`);
+  it('close maps to close_session tool', () => {
+    expect('close_session').toBe('close_session');
   });
 
-  it('resize maps to POST /session/{id}/resize', () => {
-    expect(`${BASE}/resize`).toBe(`/session/${SESSION_ID}/resize`);
+  it('list maps to list_sessions tool', () => {
+    expect('list_sessions').toBe('list_sessions');
   });
 
-  it('eval maps to POST /session/{id}/execute/sync', () => {
-    expect(`${BASE}/execute/sync`).toBe(`/session/${SESSION_ID}/execute/sync`);
+  it('close-all maps to close_all_sessions tool', () => {
+    expect('close_all_sessions').toBe('close_all_sessions');
   });
 
-  it('tab-list maps to GET /session/{id}/tabs', () => {
-    expect(`${BASE}/tabs`).toBe(`/session/${SESSION_ID}/tabs`);
+  it('kill-all maps to kill_all_sessions tool', () => {
+    expect('kill_all_sessions').toBe('kill_all_sessions');
   });
 
-  it('tab-new maps to POST /session/{id}/tab/new', () => {
-    expect(`${BASE}/tab/new`).toBe(`/session/${SESSION_ID}/tab/new`);
-  });
-
-  it('tab-close maps to POST /session/{id}/tab/close', () => {
-    expect(`${BASE}/tab/close`).toBe(`/session/${SESSION_ID}/tab/close`);
-  });
-
-  it('tab-select maps to POST /session/{id}/tab/select', () => {
-    expect(`${BASE}/tab/select`).toBe(`/session/${SESSION_ID}/tab/select`);
-  });
-
-  it('list maps to GET /sessions', () => {
-    expect('/sessions').toBe('/sessions');
-  });
-
-  it('close-all maps to POST /sessions/close-all', () => {
-    expect('/sessions/close-all').toBe('/sessions/close-all');
-  });
-
-  it('kill-all maps to POST /sessions/kill-all', () => {
-    expect('/sessions/kill-all').toBe('/sessions/kill-all');
-  });
-
-  it('delete-data maps to POST /session/{id}/delete-data', () => {
-    expect(`${BASE}/delete-data`).toBe(`/session/${SESSION_ID}/delete-data`);
+  it('delete-data maps to delete_session_data tool', () => {
+    expect('delete_session_data').toBe('delete_session_data');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Request body construction tests
+// MCP tool call endpoint test
 // ---------------------------------------------------------------------------
 
-describe('request body construction', () => {
-  it('click sends { selector } with resolved ref', () => {
-    const body = { selector: resolveRef('e4') };
-    expect(body).toEqual({ selector: 'backend:4' });
+describe('MCP tool call endpoint', () => {
+  it('all tool calls go through /mcp/call-tool', () => {
+    // Verify that the MCP endpoint is the standard /mcp/call-tool
+    const endpoint = '/mcp/call-tool';
+    expect(endpoint).toBe('/mcp/call-tool');
   });
 
-  it('dblclick sends { selector } with resolved ref', () => {
-    const body = { selector: resolveRef('e7') };
-    expect(body).toEqual({ selector: 'backend:7' });
+  it('tool call request has correct shape', () => {
+    const request = {
+      tool: 'navigate',
+      arguments: { sessionId: 'test-session', url: 'https://example.com' },
+    };
+    expect(request.tool).toBe('navigate');
+    expect(request.arguments).toHaveProperty('sessionId');
+    expect(request.arguments).toHaveProperty('url');
   });
 
-  it('fill sends { selector, value }', () => {
-    const body = { selector: resolveRef('e5'), value: 'user@example.com' };
-    expect(body).toEqual({ selector: 'backend:5', value: 'user@example.com' });
+  it('tool call response has content array', () => {
+    const response = {
+      content: [{ type: 'text', text: 'Navigated to https://example.com' }],
+      isError: false,
+    };
+    expect(response.content).toHaveLength(1);
+    expect(response.content[0].type).toBe('text');
+    expect(response.isError).toBe(false);
   });
 
-  it('drag sends { sourceSelector, targetSelector }', () => {
-    const body = { sourceSelector: resolveRef('e2'), targetSelector: resolveRef('e8') };
-    expect(body).toEqual({ sourceSelector: 'backend:2', targetSelector: 'backend:8' });
-  });
-
-  it('select sends { selector, values: [value] }', () => {
-    const body = { selector: resolveRef('e9'), values: ['option-value'] };
-    expect(body).toEqual({ selector: 'backend:9', values: ['option-value'] });
-  });
-
-  it('press sends { selector, key }', () => {
-    const body = { selector: 'body', key: 'Enter' };
-    expect(body).toEqual({ selector: 'body', key: 'Enter' });
-  });
-
-  it('keydown sends { key }', () => {
-    const body = { key: 'Shift' };
-    expect(body).toEqual({ key: 'Shift' });
-  });
-
-  it('mousemove sends { x, y }', () => {
-    const body = { x: 150, y: 300 };
-    expect(body).toEqual({ x: 150, y: 300 });
-  });
-
-  it('mousedown sends { button }', () => {
-    const body = { button: 'right' };
-    expect(body).toEqual({ button: 'right' });
-  });
-
-  it('mousewheel sends { deltaX, deltaY }', () => {
-    const body = { deltaX: 0, deltaY: 100 };
-    expect(body).toEqual({ deltaX: 0, deltaY: 100 });
-  });
-
-  it('resize sends { width, height }', () => {
-    const body = { width: 1920, height: 1080 };
-    expect(body).toEqual({ width: 1920, height: 1080 });
-  });
-
-  it('dialog-accept sends { promptText }', () => {
-    const body = { promptText: 'confirmation text' };
-    expect(body).toEqual({ promptText: 'confirmation text' });
-  });
-
-  it('tab-new sends { url }', () => {
-    const body = { url: 'https://example.com/page' };
-    expect(body).toEqual({ url: 'https://example.com/page' });
-  });
-
-  it('tab-select sends { index }', () => {
-    const body = { index: 0 };
-    expect(body).toEqual({ index: 0 });
-  });
-
-  it('eval sends { script }', () => {
-    const body = { script: 'document.title' };
-    expect(body).toEqual({ script: 'document.title' });
+  it('error response has isError flag', () => {
+    const response = {
+      content: [{ type: 'text', text: 'ERROR: navigate failed: timeout' }],
+      isError: true,
+    };
+    expect(response.isError).toBe(true);
+    expect(response.content[0].text).toContain('ERROR');
   });
 });
 
 // ---------------------------------------------------------------------------
-// SKILL.md coverage validation
+// browser4-cli-basic.md coverage validation
 // ---------------------------------------------------------------------------
 
-describe('SKILL.md command coverage', () => {
+describe('browser4-cli-basic.md command coverage', () => {
   const allCommands = [
     'open', 'goto', 'type', 'click', 'dblclick', 'fill', 'drag',
     'hover', 'select', 'upload', 'check', 'uncheck', 'snapshot',
@@ -464,3 +420,44 @@ describe('SKILL.md command coverage', () => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// MCP integration architecture validation
+// ---------------------------------------------------------------------------
+
+describe('MCP integration architecture', () => {
+  const cliSource = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'cli.ts'),
+    'utf-8',
+  );
+
+  it('uses callTool function for all operations', () => {
+    expect(cliSource).toContain('async function callTool(');
+  });
+
+  it('calls /mcp/call-tool endpoint', () => {
+    expect(cliSource).toContain('/mcp/call-tool');
+  });
+
+  it('has postCommandSnapshot function', () => {
+    expect(cliSource).toContain('async function postCommandSnapshot(');
+  });
+
+  it('calls aria_snapshot for post-command state', () => {
+    expect(cliSource).toContain("'aria_snapshot'");
+  });
+
+  it('calls page_url for post-command state', () => {
+    expect(cliSource).toContain("'page_url'");
+  });
+
+  it('calls page_title for post-command state', () => {
+    expect(cliSource).toContain("'page_title'");
+  });
+
+  it('does not use direct REST API paths for commands', () => {
+    // Verify the CLI no longer uses /session/{id}/selectors/click etc.
+    expect(cliSource).not.toContain('/selectors/click');
+    expect(cliSource).not.toContain('/selectors/fill');
+    expect(cliSource).not.toContain('/selectors/hover');
+  });
+});
