@@ -84,7 +84,7 @@ if (listEl && listEl.getAttribute("data-server-rendered") === "true" && listEl.c
           input.setAttribute('aria-expanded','false');
       }
 
-      function navigateToProduct(){
+      function navigateProduct(){
           window.location.href = '../product/index.html';
       }
 
@@ -129,11 +129,11 @@ if (listEl && listEl.getAttribute("data-server-rendered") === "true" && listEl.c
                   updateActive(items);
               } else if(e.key === 'Enter') {
                   e.preventDefault();
-                  navigateToProduct();
+                  navigateProduct();
               } else if(e.key === 'Escape') hide();
           } else if(e.key === 'Enter' && input.value.trim()) {
               e.preventDefault();
-              navigateToProduct();
+              navigateProduct();
           }
       });
 
@@ -147,12 +147,12 @@ if (listEl && listEl.getAttribute("data-server-rendered") === "true" && listEl.c
       list.addEventListener('click', e=>{
           const item = e.target.closest('.autocomplete-item');
           if(!item) return;
-          navigateToProduct();
+          navigateProduct();
       });
 
       document.addEventListener('click', e=>{ if(!e.target.closest('.autocomplete-container')) hide(); });
 
       const searchBtn = document.querySelector('.search-btn');
-      if(searchBtn){ searchBtn.addEventListener('click', ()=> navigateToProduct()); }
+      if(searchBtn){ searchBtn.addEventListener('click', ()=> navigateProduct()); }
   })();
 }

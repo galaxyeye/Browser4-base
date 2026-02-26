@@ -42,7 +42,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     @DisplayName("should navigate to URL")
-    suspend fun testShouldNavigateToURL() {
+    suspend fun testShouldNavigateURL() {
         val url = TestUrls.SIMPLE_PAGE
         driver.open(url)
 

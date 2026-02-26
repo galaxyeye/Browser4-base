@@ -14,7 +14,7 @@ session_id = client.create_session()
 driver = WebDriver(client)
 
 # Navigate to page
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Click element by CSS selector
 driver.click("button.submit")
@@ -68,25 +68,25 @@ driver.press("input[name='search']", "Enter")
 ```python
 def fill_login_form(driver):
     """Fill and submit a login form."""
-    
+
     # Fill username
     driver.fill("input#username", "john_doe")
-    
+
     # Fill password
     driver.fill("input#password", "SecurePass123!")
-    
+
     # Check "remember me"
     driver.check("input#remember")
-    
+
     # Submit form
     driver.click("button[type='submit']")
-    
+
     # Wait for navigation
     driver.wait_for_selector(".dashboard", timeout=10000)
     print("Login successful!")
 
 # Usage
-driver.navigate_to("https://example.com/login")
+driver.navigate("https://example.com/login")
 fill_login_form(driver)
 ```
 
@@ -277,27 +277,27 @@ driver.scroll_to_middle(0.75)  # 75% of page height
 ```python
 def scroll_to_load_all(driver, max_scrolls=10):
     """Scroll to load all content on infinite scroll page."""
-    
+
     for i in range(max_scrolls):
         # Get current scroll position
         prev_position = driver.evaluate("window.scrollY")
-        
+
         # Scroll down
         driver.scroll_down()
-        
+
         # Wait for content to load
         driver.delay(1000)
-        
+
         # Check if reached bottom
         current_position = driver.evaluate("window.scrollY")
         if current_position == prev_position:
             print(f"Reached bottom after {i+1} scrolls")
             break
-    
+
     print("Finished loading all content")
 
 # Usage
-driver.navigate_to("https://example.com/infinite-scroll")
+driver.navigate("https://example.com/infinite-scroll")
 scroll_to_load_all(driver)
 ```
 
@@ -308,56 +308,56 @@ from browser4 import Browser4Driver, PulsarClient, AgenticSession
 
 def complete_registration_form():
     """Complete a registration form with various input types."""
-    
+
     with Browser4Driver() as driver_mgr:
         client = PulsarClient(base_url=driver_mgr.base_url)
         session_id = client.create_session()
         session = AgenticSession(client)
         driver = session.driver
-        
+
         try:
             # Navigate to form
-            driver.navigate_to("https://example.com/register")
-            
+            driver.navigate("https://example.com/register")
+
             # Wait for form to load
             driver.wait_for_selector("form#registration", timeout=10000)
-            
+
             # Fill text fields
             driver.fill("input#firstName", "John")
             driver.fill("input#lastName", "Doe")
             driver.fill("input#email", "john.doe@example.com")
-            
+
             # Fill password
             driver.fill("input#password", "SecurePass123!")
             driver.fill("input#confirmPassword", "SecurePass123!")
-            
+
             # Select radio button
             driver.click("input[name='gender'][value='male']")
-            
+
             # Check checkboxes
             driver.check("input#terms")
             driver.check("input#newsletter")
-            
+
             # Select dropdown
             driver.click("select#country")
             driver.click("select#country option[value='US']")
-            
+
             # Fill textarea
             driver.fill("textarea#bio", "Software developer interested in automation.")
-            
+
             # Scroll to submit button
             driver.scroll_to("button[type='submit']")
-            
+
             # Submit form
             driver.click("button[type='submit']")
-            
+
             # Wait for success message
             if driver.wait_for_selector(".success-message", timeout=10000):
                 message = driver.select_first_text_or_null(".success-message")
                 print(f"Registration successful: {message}")
             else:
                 print("No success message found")
-            
+
         finally:
             session.close()
             client.close()
@@ -373,18 +373,18 @@ if __name__ == "__main__":
 ```python
 def interact_conditionally(driver):
     """Interact based on element state."""
-    
+
     # Check and interact pattern
     if driver.exists("button.cookie-accept"):
         driver.click("button.cookie-accept")
         print("Accepted cookies")
-    
+
     # Wait and interact pattern
     if driver.wait_for_selector(".modal", timeout=5000):
         if driver.is_visible(".modal"):
             driver.click(".modal button.close")
             print("Closed modal")
-    
+
     # Verify before interact pattern
     if driver.exists("input#search"):
         driver.fill("input#search", "query")
@@ -399,24 +399,24 @@ interact_conditionally(driver)
 ```python
 def click_with_retry(driver, selector, max_attempts=3):
     """Click element with retry logic."""
-    
+
     for attempt in range(max_attempts):
         try:
             # Wait for element
             if driver.wait_for_selector(selector, timeout=5000):
                 # Scroll into view
                 driver.scroll_to(selector)
-                
+
                 # Click
                 driver.click(selector)
                 print(f"Clicked {selector}")
                 return True
-                
+
         except Exception as e:
             print(f"Click attempt {attempt + 1} failed: {e}")
             if attempt < max_attempts - 1:
                 driver.delay(1000)
-    
+
     print(f"Failed to click {selector} after {max_attempts} attempts")
     return False
 
@@ -429,23 +429,23 @@ success = click_with_retry(driver, "button.dynamic-element")
 ```python
 def fill_and_validate(driver, field_selector, value, error_selector):
     """Fill field and check for validation errors."""
-    
+
     # Fill field
     driver.fill(field_selector, value)
-    
+
     # Trigger validation (blur)
     driver.focus(field_selector)
     driver.press(field_selector, "Tab")
-    
+
     # Wait for validation
     driver.delay(500)
-    
+
     # Check for error
     if driver.exists(error_selector) and driver.is_visible(error_selector):
         error = driver.select_first_text_or_null(error_selector)
         print(f"Validation error: {error}")
         return False
-    
+
     return True
 
 # Usage
@@ -542,7 +542,7 @@ driver.execute_script("""
 
 ```python
 # Wait for dynamic content to load
-driver.navigate_to("https://example.com/dynamic")
+driver.navigate("https://example.com/dynamic")
 
 # Wait for specific element
 driver.wait_for_selector(".dynamic-content", timeout=15000)

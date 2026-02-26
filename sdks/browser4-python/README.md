@@ -238,7 +238,7 @@ client.create_session()
 driver = WebDriver(client)
 
 # Navigation
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 driver.reload()
 driver.go_back()
 driver.go_forward()

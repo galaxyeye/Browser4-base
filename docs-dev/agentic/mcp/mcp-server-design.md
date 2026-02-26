@@ -44,7 +44,7 @@ The implementation lives in:
 
 | Tool | Rationale |
 |------|-----------|
-| `navigate_to` | Entry point of every browsing task. Without navigation the browser stays on the blank page. |
+| `navigate` | Entry point of every browsing task. Without navigation the browser stays on the blank page. |
 | `go_back` | Required for multi-step workflows where the agent needs to return to a previous state (e.g. pick a different search result). |
 | `go_forward` | Complement to `go_back`; allows re-doing navigation. |
 | `reload` | Necessary when pages stall or content is dynamic and must be refreshed. |
@@ -93,7 +93,7 @@ The implementation lives in:
 |------------|-------------------|
 | `run_agent` (autonomous LLM loop) | Recursive: the MCP client is already an LLM. Exposing a second LLM loop creates unpredictable nesting of model calls and costs. |
 | `X-SQL` / scrape | Domain-specific to Pulsar's extraction engine. Exposing it requires the caller to know the X-SQL dialect, raising the barrier to entry unnecessarily. |
-| `loadResource` / `loadJsoupResource` | Low-level HTTP utilities that bypass the real browser. MCP clients should use `navigate_to` instead to get authentic browser behaviour. |
+| `loadResource` / `loadJsoupResource` | Low-level HTTP utilities that bypass the real browser. MCP clients should use `navigate` instead to get authentic browser behaviour. |
 | Cookie management (`getCookies`, `deleteCookies`) | Security-sensitive. Exposing raw cookie access to an MCP client could allow session hijacking if the client is compromised. |
 | `evaluateDetail` / `evaluateValueDetail` | Internals of the CDP response. `evaluate` covers all practical use cases; the detail variants add complexity without benefit. |
 | Tab management (`switchTab`, `bringToFront`) | Advanced lifecycle management. The single-session model of the MCP server makes multi-tab coordination the server's concern, not the client's. |

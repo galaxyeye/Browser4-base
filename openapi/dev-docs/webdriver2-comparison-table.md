@@ -1,7 +1,7 @@
 # W3C WebDriver2 vs Browser4 API 快速对照表
 
-> **更新日期**: 2026-01-20  
-> **用途**: 快速查看 Browser4 对 W3C WebDriver2 标准的支持情况  
+> **更新日期**: 2026-01-20
+> **用途**: 快速查看 Browser4 对 W3C WebDriver2 标准的支持情况
 > **详细分析**: 请参考 `webdriver2-gap-analysis.md` 和 `webdriver2-gap-analysis.zh.md`
 
 ---
@@ -47,7 +47,7 @@
 | GET | - | 🔵 扩展 | `/session/{sessionId}/documentUri` | - |
 | GET | - | 🔵 扩展 | `/session/{sessionId}/baseUri` | - |
 
-**覆盖率**: 2/6 = 33%  
+**覆盖率**: 2/6 = 33%
 **注意**: `GET /url` 返回会话存储的 URL，而非浏览器实时 URL
 
 ---
@@ -69,7 +69,7 @@
 | POST | `/session/{sessionId}/window/minimize` | ❌ | P2 |
 | POST | `/session/{sessionId}/window/fullscreen` | ❌ | P2 |
 
-**覆盖率**: 0/12 = 0%  
+**覆盖率**: 0/12 = 0%
 **影响**: 无法处理多窗口、标签页、iframe 场景
 
 ---
@@ -147,7 +147,7 @@
 | DELETE | `/session/{sessionId}/cookie/{name}` | ❌ | P0 |
 | DELETE | `/session/{sessionId}/cookie` | ❌ | P0 |
 
-**覆盖率**: 0/5 = 0%  
+**覆盖率**: 0/5 = 0%
 **影响**: 无法管理登录状态和会话
 
 ---
@@ -159,7 +159,7 @@
 | GET | `/session/{sessionId}/timeouts` | ❌ | P0 |
 | POST | `/session/{sessionId}/timeouts` | ❌ | P0 |
 
-**覆盖率**: 0/2 = 0%  
+**覆盖率**: 0/2 = 0%
 **注意**: 部分端点有独立的 timeout 参数（如 `waitFor`）
 
 ---
@@ -171,7 +171,7 @@
 | POST | `/session/{sessionId}/actions` | ❌ | P3 |
 | DELETE | `/session/{sessionId}/actions` | ❌ | P3 |
 
-**覆盖率**: 0/2 = 0%  
+**覆盖率**: 0/2 = 0%
 **影响**: 无法执行复杂交互序列（拖拽、悬停、组合键等）
 
 ---
@@ -185,7 +185,7 @@
 | GET | `/session/{sessionId}/alert/text` | ❌ | P0 |
 | POST | `/session/{sessionId}/alert/text` | ❌ | P0 |
 
-**覆盖率**: 0/4 = 0%  
+**覆盖率**: 0/4 = 0%
 **影响**: 无法处理 alert/confirm/prompt 弹窗
 
 ---
@@ -202,7 +202,7 @@
 |------|---------------|------|
 | POST | `/session/{sessionId}/selectors/screenshot` | 🔵 通过选择器截图（POST 方式）|
 
-**覆盖率**: 0/2 = 0%（标准方式）  
+**覆盖率**: 0/2 = 0%（标准方式）
 **注意**: Browser4 提供了不同的截图方式
 
 ---
@@ -224,7 +224,7 @@
 | POST | `/session/{sessionId}/execute/sync` | ✅ | `/session/{sessionId}/execute/sync` |
 | POST | `/session/{sessionId}/execute/async` | ✅ | `/session/{sessionId}/execute/async` |
 
-**覆盖率**: 2/2 = 100% ✅  
+**覆盖率**: 2/2 = 100% ✅
 **这是唯一完全兼容的模块**
 
 ---
@@ -329,7 +329,7 @@
 - [ ] 服务器状态（1 个端点）
 - [ ] 基础导航（2 个端点：back/forward）
 
-**新增**: 16 个端点  
+**新增**: 16 个端点
 **预期覆盖率**: 28/58 = **48%**
 
 ### 第二阶段（3-6 个月）- 达到 70% 覆盖率
@@ -341,7 +341,7 @@
 - [ ] 标准截图（2 个端点）
 - [ ] 元素清除（1 个端点）
 
-**新增**: 20 个端点  
+**新增**: 20 个端点
 **预期覆盖率**: 48/58 = **83%**
 
 ### 第三阶段（6-12 个月）- 达到 90%+ 覆盖率
@@ -353,7 +353,7 @@
 - [ ] 元素属性完整性（3 个端点）
 - [ ] 活动元素（1 个端点）
 
-**新增**: 8 个端点  
+**新增**: 8 个端点
 **预期覆盖率**: 56/58 = **97%**
 
 ---
@@ -374,7 +374,7 @@
 
 **可直接迁移的功能**：
 - ✅ 会话管理
-- ✅ 基础导航（navigateTo, getCurrentUrl）
+- ✅ 基础导航（navigate, getCurrentUrl）
 - ✅ 元素查找和点击
 - ✅ 脚本执行
 

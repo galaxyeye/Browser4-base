@@ -170,7 +170,7 @@ try {
 A: Wait for page to render:
 
 ```kotlin
-driver.navigateTo(url)
+driver.navigate(url)
 Thread.sleep(1000)
 val screenshot = driver.screenshot()
 ```

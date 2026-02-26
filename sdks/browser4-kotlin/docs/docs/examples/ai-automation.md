@@ -11,16 +11,16 @@ fun main() {
     val session = AgenticSession.getOrCreate()
     val agent = session.companionAgent
     val driver = session.driver
-    
-    driver.navigateTo("https://example.com")
-    
+
+    driver.navigate("https://example.com")
+
     // Click using natural language
     agent.act("click the search button")
-    
+
     // Fill form
     agent.act("fill the search box with 'kotlin programming'")
     agent.act("press Enter in the search box")
-    
+
     session.close()
 }
 ```
@@ -29,7 +29,7 @@ fun main() {
 
 ```kotlin
 val agent = session.companionAgent
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 val result = agent.run(
     "navigate to products page, apply price filter $20-$50, and extract product names"
@@ -43,7 +43,7 @@ if (result.success) {
 ## Intelligent Data Extraction
 
 ```kotlin
-driver.navigateTo("https://example.com/product")
+driver.navigate("https://example.com/product")
 
 val result = agent.extract(
     instruction = "extract product name, price, and customer rating"
@@ -113,11 +113,11 @@ val result = session.runWithEvents(
 
 ```kotlin
 val agent = session.companionAgent
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Check if login needed
 val obs = agent.observe("check if login is required")
-val needsLogin = obs.observations.any { 
+val needsLogin = obs.observations.any {
     it.description?.contains("login", ignoreCase = true) == true
 }
 

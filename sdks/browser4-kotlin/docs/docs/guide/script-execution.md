@@ -16,13 +16,13 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
-    driver.navigateTo("https://example.com")
-    
+
+    driver.navigate("https://example.com")
+
     // Execute JavaScript
     val result = driver.executeScript("return document.title")
     println("Title: ${"$"}result")
-    
+
     session.close()
 }
 ```
@@ -31,7 +31,7 @@ fun main() {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Return primitive values
 val linkCount = driver.executeScript(
@@ -56,7 +56,7 @@ println("Page info: ${"$"}pageInfo")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Script with arguments
 val result = driver.executeScript(
@@ -77,7 +77,7 @@ println(greeting) // "Hello John, age 30"
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Set element value
 driver.executeScript(
@@ -104,7 +104,7 @@ val value = driver.executeScript(
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Evaluate expression (simpler syntax)
 val title = driver.evaluate("document.title") as String
@@ -209,7 +209,7 @@ driver.executeScript("""
             childList: true,
             subtree: true
         });
-        
+
         // Timeout after 10 seconds
         setTimeout(() => {
             observer.disconnect();
@@ -225,13 +225,13 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Async script with callback
 val result = driver.executeAsyncScript(
     """
     const callback = arguments[arguments.length - 1];
-    
+
     setTimeout(() => {
         callback({ status: 'completed', time: Date.now() });
     }, 2000);
@@ -250,7 +250,7 @@ val data = driver.executeAsyncScript(
     """
     const callback = arguments[arguments.length - 1];
     const url = arguments[0];
-    
+
     fetch(url)
         .then(res => res.json())
         .then(data => callback(data))
@@ -292,11 +292,11 @@ driver.executeScript(
 driver.executeAsyncScript(
     """
     const callback = arguments[arguments.length - 1];
-    
+
     document.addEventListener('myevent', function(e) {
         callback({ received: true, detail: e.detail });
     }, { once: true });
-    
+
     // Timeout
     setTimeout(() => callback({ received: false }), 5000);
     """,

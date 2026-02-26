@@ -129,9 +129,9 @@ class Browser4MCPServer(
 
     private fun Server.registerDriverTools() {
 
-        // driver.navigateTo(url: String)
+        // driver.navigate(url: String)
         addTool(
-            name = "navigate_to",
+            name = "navigate",
             description = "Navigate the browser to the given URL. " +
                     "Call wait_for_selector afterwards if the page has dynamic content.",
             inputSchema = schemaOf(
@@ -141,10 +141,10 @@ class Browser4MCPServer(
         ) { request ->
             val url = arg(request.params.arguments, "url")
                 ?: return@addTool errorResult("Missing required parameter: url")
-            runCatching { driver.navigateTo(url) }
+            runCatching { driver.navigate(url) }
                 .fold(
                     onSuccess = { textResult("Navigated to $url") },
-                    onFailure = { errorResult("navigate_to failed: ${it.message}") }
+                    onFailure = { errorResult("navigate failed: ${it.message}") }
                 )
         }
 

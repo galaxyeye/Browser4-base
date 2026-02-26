@@ -120,7 +120,7 @@ Get the bound WebDriver instance (creates one if not exists).
 ```python
 session = PulsarSession(client)
 driver = session.driver
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 ```
 
 ### `bound_driver`
@@ -521,7 +521,7 @@ Get or create a bound WebDriver instance.
 ```python
 session = PulsarSession(client)
 driver = session.get_or_create_bound_driver()
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 ```
 
 ### `create_bound_driver`
@@ -721,7 +721,7 @@ session = PulsarSession(client)
 
 # Access bound driver
 driver = session.driver
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 driver.click("button.submit")
 
 # Capture and parse

@@ -137,7 +137,7 @@ class AgentToolManager constructor(
             val method = tc.method
             when (method) {
                 "switchTab" -> onDidSwitchTab(evaluate)
-                "navigateTo" -> onDidNavigateTo(driver, tc, evaluate)
+                "navigate" -> onDidNavigate(driver, tc, evaluate)
             }
 
             val timeoutMs = 3_000L
@@ -189,7 +189,7 @@ class AgentToolManager constructor(
     }
 
     @Suppress("UNUSED_PARAMETER")
-    private suspend fun onDidNavigateTo(driver: WebDriver, toolCall: ToolCall, evaluate: TcEvaluate) {
+    private suspend fun onDidNavigate(driver: WebDriver, toolCall: ToolCall, evaluate: TcEvaluate) {
         driver.waitForNavigation()
         driver.waitForSelector("body")
         delay(3000)

@@ -37,7 +37,7 @@ Best for: UI testing, form filling, clicking buttons
 
 ```kotlin
 val driver = session.getOrCreateBoundDriver()
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.click("button#submit")
 driver.fill("input[name='email']", "user@example.com")
 ```
@@ -111,7 +111,7 @@ agent.run("""
 UI and integration tests:
 
 ```kotlin
-driver.navigateTo("https://app.example.com/login")
+driver.navigate("https://app.example.com/login")
 driver.fill("#username", "testuser")
 driver.fill("#password", "testpass")
 driver.click("#login-button")

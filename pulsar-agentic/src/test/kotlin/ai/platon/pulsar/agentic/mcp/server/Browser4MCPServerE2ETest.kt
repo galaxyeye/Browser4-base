@@ -122,7 +122,7 @@ class Browser4MCPServerE2ETest {
     @DisplayName("listTools includes all navigation tools")
     fun listToolsIncludesNavigationTools() = runBlocking {
         val names = client.listTools().tools.map { it.name }.toSet()
-        val expected = setOf("navigate_to", "go_back", "go_forward", "reload", "current_url")
+        val expected = setOf("navigate", "go_back", "go_forward", "reload", "current_url")
         assertTrue(names.containsAll(expected),
             "Missing navigation tools: ${expected - names}")
     }
@@ -171,11 +171,11 @@ class Browser4MCPServerE2ETest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to succeeds and returns confirmation over MCP")
-    fun navigateToSucceedsViaMCP() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } returns Unit
+    @DisplayName("navigate succeeds and returns confirmation over MCP")
+    fun navigateSucceedsViaMCP() = runBlocking {
+        coEvery { driver.navigate(any<String>()) } returns Unit
 
-        val result = client.callTool("navigate_to", mapOf("url" to "https://example.com"))
+        val result = client.callTool("navigate", mapOf("url" to "https://example.com"))
         assertFalse(result.isError == true)
         val text = (result.content.firstOrNull() as? TextContent)?.text
         assertTrue(text?.contains("https://example.com") == true,
@@ -277,9 +277,9 @@ class Browser4MCPServerE2ETest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to with missing url parameter returns isError=true over MCP")
-    fun navigateToMissingUrlReturnsErrorViaMCP() = runBlocking {
-        val result = client.callTool("navigate_to", emptyMap())
+    @DisplayName("navigate with missing url parameter returns isError=true over MCP")
+    fun navigateMissingUrlReturnsErrorViaMCP() = runBlocking {
+        val result = client.callTool("navigate", emptyMap())
         assertTrue(result.isError == true,
             "Expected isError=true for missing url parameter")
         val text = (result.content.firstOrNull() as? TextContent)?.text
@@ -304,11 +304,11 @@ class Browser4MCPServerE2ETest {
     }
 
     @Test
-    @DisplayName("WebDriver failure in navigate_to propagates as isError=true over MCP")
+    @DisplayName("WebDriver failure in navigate propagates as isError=true over MCP")
     fun webDriverFailurePropagatesAsErrorViaMCP() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } throws RuntimeException("CDP disconnected")
+        coEvery { driver.navigate(any<String>()) } throws RuntimeException("CDP disconnected")
 
-        val result = client.callTool("navigate_to", mapOf("url" to "https://example.com"))
+        val result = client.callTool("navigate", mapOf("url" to "https://example.com"))
         assertTrue(result.isError == true,
             "Expected isError=true when WebDriver throws")
         val text = (result.content.firstOrNull() as? TextContent)?.text
@@ -334,12 +334,12 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("multiple sequential tool calls succeed over a single MCP connection")
     fun multipleSequentialCallsSucceedViaMCP() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } returns Unit
+        coEvery { driver.navigate(any<String>()) } returns Unit
         coEvery { driver.selectFirstTextOrNull(any()) } returns "headline"
         coEvery { driver.evaluate(any()) } returns "42"
 
-        val nav = client.callTool("navigate_to", mapOf("url" to "https://example.com"))
-        assertFalse(nav.isError == true, "navigate_to failed")
+        val nav = client.callTool("navigate", mapOf("url" to "https://example.com"))
+        assertFalse(nav.isError == true, "navigate failed")
 
         val text = client.callTool("get_text", mapOf("selector" to "h1"))
         assertFalse(text.isError == true, "get_text failed")

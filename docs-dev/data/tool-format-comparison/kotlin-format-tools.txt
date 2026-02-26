@@ -1,6 +1,6 @@
 
 // domain: driver
-driver.navigateTo(url: String)
+driver.navigate(url: String)
 driver.reload()
 driver.goBack()
 driver.goForward()

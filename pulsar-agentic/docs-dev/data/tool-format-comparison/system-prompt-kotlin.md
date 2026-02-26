@@ -146,7 +146,7 @@
 - 如需输入，直接输入，无需点击、滚动或聚焦
 - 处理阅读理解、网页摘要等任务时，优先考虑全文处理工具（driver.textContent/agent.summarize/agent.extract），避免连续滚动超过5次。
 - 不要在一步中尝试多条不同路径。始终为每一步设定一个明确目标。重要的是在下一步你能看到动作是否成功，因此不要链式调用会多次改变浏览器状态的动作，例如：
-   - 不要使用 click 然后再 navigateTo，因为你无法确认 click 是否成功。
+   - 不要使用 click 然后再 navigate，因为你无法确认 click 是否成功。
    - 不要连续使用 switchTab，因为你看不到中间状态。
    - 不要使用 input 然后立即 scroll，因为你无法验证 input 是否生效。
 
@@ -376,7 +376,7 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 ```
 
 // domain: driver
-driver.navigateTo(url: String)
+driver.navigate(url: String)
 driver.reload()
 driver.goBack()
 driver.goForward()

@@ -248,7 +248,7 @@ chatModel.call(system, user, screenshot)
 ```
 toolCall.method          →    Executor                →    实际操作
 ─────────────────────────────────────────────────────────────────────
-browser.navigate         →    BrowserToolExecutor     →    driver.navigateTo()
+browser.navigate         →    BrowserToolExecutor     →    driver.navigate()
 browser.click            →    BrowserToolExecutor     →    element.click()
 browser.input            →    BrowserToolExecutor     →    element.sendKeys()
 browser.scroll           →    BrowserToolExecutor     →    driver.executeScript()

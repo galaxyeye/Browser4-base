@@ -94,7 +94,7 @@ Browser control and element interaction.
 driver = session.driver
 
 # Navigation
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 driver.reload()
 driver.go_back()
 
@@ -245,7 +245,7 @@ The WebDriver provides precise browser control.
 driver = session.driver
 
 # Go to URL
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Get current URL
 url = driver.current_url()
@@ -389,21 +389,21 @@ from browser4 import Browser4Driver, PulsarClient, AgenticSession
 try:
     with Browser4Driver() as driver:
         client = PulsarClient(base_url=driver.base_url)
-        
+
         try:
             session_id = client.create_session()
             session = AgenticSession(client)
-            
+
             # Your automation code
             page = session.open("https://example.com")
-            
+
         except Exception as e:
             print(f"Session error: {e}")
         finally:
             if 'session' in locals():
                 session.close()
             client.close()
-            
+
 except Exception as e:
     print(f"Server error: {e}")
 ```

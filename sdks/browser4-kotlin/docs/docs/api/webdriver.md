@@ -10,10 +10,10 @@ class WebDriver(val client: PulsarClient)
 
 ## Navigation
 
-### navigateTo()
+### navigate()
 
 ```kotlin
-suspend fun navigateTo(url: String): Any?
+suspend fun navigate(url: String): Any?
 ```
 
 Navigate to URL.

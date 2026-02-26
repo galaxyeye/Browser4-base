@@ -65,7 +65,7 @@ class LoadingWebDriverPoolTest {
                     printlnPro("Created WebDriver #${driver.id} | ${pool.takeSnapshot()} | ${driver::class.qualifiedName}")
                 }
 
-                driver.navigateTo(seeds.random())
+                driver.navigate(seeds.random())
                 driver.waitForSelector("body")
                 driver.stop()
             }
@@ -97,7 +97,7 @@ class LoadingWebDriverPoolTest {
 
             executor.submit {
                 val url = seeds.random()
-                navigateTo(url, driver)
+                navigate(url, driver)
 
                 printlnPro("Navigated, put driver #${driver.id} | $url")
                 pool.put(driver)
@@ -107,12 +107,12 @@ class LoadingWebDriverPoolTest {
         drivers.forEach { it.close() }
     }
 
-    private fun navigateTo(url: String, driver: WebDriver) {
+    private fun navigate(url: String, driver: WebDriver) {
         printlnPro("Navigating to $url")
 
         runBlocking {
             try {
-                driver.navigateTo(url)
+                driver.navigate(url)
                 // driver.waitForSelector("body")
                 driver.delay(5000)
             } catch (e: Exception) {

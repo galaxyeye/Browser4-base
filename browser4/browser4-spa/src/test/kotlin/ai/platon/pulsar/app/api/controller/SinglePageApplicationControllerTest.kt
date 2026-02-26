@@ -10,7 +10,6 @@ import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
-import org.junit.jupiter.api.DisplayName
 
 @Tag("Slow")
 @Tag("ManualOnly")
@@ -47,7 +46,7 @@ class SinglePageApplicationControllerTest : IntegrationTestBase() {
     }
 
     @BeforeEach
-        @DisplayName("init Single Page Application")
+    @DisplayName("init Single Page Application")
     fun initSinglePageApplication() {
         Assumptions.assumeTrue { ChatModelFactory.isModelConfigured(session.configuration) }
 
@@ -57,8 +56,8 @@ class SinglePageApplicationControllerTest : IntegrationTestBase() {
 
     @Order(10)
     @Test
-        @DisplayName("navigate to product page")
-    fun navigateToProductPage() {
+    @DisplayName("navigate to product page")
+    fun navigateProductPage() {
         val request = NavigateRequest(TestHelper.PRODUCT_DETAIL_URL)
         val result = client.post().uri("/api/navigate")
             .body(request)
@@ -76,7 +75,7 @@ class SinglePageApplicationControllerTest : IntegrationTestBase() {
 
     @Order(20)
     @Test
-        @DisplayName("act with searching")
+    @DisplayName("act with searching")
     fun actWithSearching() {
         val request = ActionOptions(action = "search latest iphone, give me a summary of the search result")
 
@@ -125,7 +124,7 @@ class SinglePageApplicationControllerTest : IntegrationTestBase() {
 
     @Order(30)
     @Test
-        @DisplayName("take screenshot")
+    @DisplayName("take screenshot")
     fun takeScreenshot() {
         val result = client.post().uri("/api/screenshot")
             .body(emptyMap<String, Any?>())
@@ -144,7 +143,12 @@ class SinglePageApplicationControllerTest : IntegrationTestBase() {
         // Optional: decode and persist for manual inspection
         val exportPath = AppPaths.getRandomProcTmpTmpPath("screenshot-", ".jpg")
         val bytes = java.util.Base64.getDecoder().decode(result.screenshot_base64)
-        java.nio.file.Files.write(exportPath, bytes, java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.WRITE)
+        java.nio.file.Files.write(
+            exportPath,
+            bytes,
+            java.nio.file.StandardOpenOption.CREATE,
+            java.nio.file.StandardOpenOption.WRITE
+        )
         printlnPro("Screenshot saved to: $exportPath")
 
         assertThat(java.nio.file.Files.exists(exportPath)).isTrue()
@@ -153,7 +157,7 @@ class SinglePageApplicationControllerTest : IntegrationTestBase() {
 
     @Order(40)
     @Test
-        @DisplayName("extract with prompt")
+    @DisplayName("extract with prompt")
     fun extractWithPrompt() {
         val requestBody = mapOf(
             "instruction" to "name, price",

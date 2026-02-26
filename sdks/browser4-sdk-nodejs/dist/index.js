@@ -25,7 +25,7 @@
  *   const session = new AgenticSession(client);
  *
  *   // Navigate and interact
- *   await session.driver.navigateTo('https://example.com');
+ *   await session.driver.navigate('https://example.com');
  *   console.log(await session.driver.currentUrl());
  *
  *   // Use AI-powered actions

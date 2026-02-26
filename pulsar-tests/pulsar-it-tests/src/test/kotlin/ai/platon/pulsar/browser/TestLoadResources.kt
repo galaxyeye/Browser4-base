@@ -51,7 +51,7 @@ class TestLoadResources: WebDriverTestBase() {
     fun testLoadResource2() = runEnhancedWebDriverTest(browser) { driver ->
         val resourceUrl = robotsUrl
         val referrer = URLUtils.getOrigin(resourceUrl)
-        driver.navigateTo(referrer)
+        driver.navigate(referrer)
         driver.waitForNavigation()
 
         val response = driver.loadResource(resourceUrl)
@@ -78,7 +78,7 @@ class TestLoadResources: WebDriverTestBase() {
         val resourceUrl = robotsUrl
 
         val referrer = URLUtils.getOrigin(resourceUrl)
-        driver.navigateTo(referrer)
+        driver.navigate(referrer)
         driver.waitForNavigation()
 
         val response = driver.loadJsoupResource(resourceUrl)

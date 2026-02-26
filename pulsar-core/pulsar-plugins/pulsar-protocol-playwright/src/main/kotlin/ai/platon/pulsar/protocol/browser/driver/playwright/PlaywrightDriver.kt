@@ -71,18 +71,18 @@ class PlaywrightDriver(
      * Navigates to a URL without waiting for navigation to complete.
      * @throws RuntimeException if navigation fails
      */
-    override suspend fun navigateTo(entry: NavigateEntry) {
+    override suspend fun navigate(entry: NavigateEntry) {
         navigateHistory.add(entry)
         this.navigateEntry = entry
 
         browser.emit(BrowserEvents.willNavigate, entry)
 
         try {
-            rpc.invokeDeferred("navigateTo") {
-                doNavigateTo(entry)
+            rpc.invokeDeferred("navigate") {
+                donavigate(entry)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "navigateTo", entry.url)
+            rpc.handleWebDriverException(e, "navigate", entry.url)
         }
     }
 
@@ -101,7 +101,7 @@ class PlaywrightDriver(
     /**
      * Navigate to the page and inject scripts.
      * */
-    private fun doNavigateTo(entry: NavigateEntry) {
+    private fun donavigate(entry: NavigateEntry) {
         val url = entry.url
 
         addScriptToEvaluateOnNewDocument()
@@ -1031,7 +1031,7 @@ class PlaywrightDriver(
     override suspend fun stop() {
         try {
             rpc.invokeDeferred("stop") {
-                navigateTo(ChromeImpl.ABOUT_BLANK_PAGE)
+                navigate(ChromeImpl.ABOUT_BLANK_PAGE)
             }
         } catch (e: Exception) {
             logger.warn("Failed to stop: ${e.message}")

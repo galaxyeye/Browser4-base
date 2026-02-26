@@ -19,7 +19,7 @@ class WebDriver {
     /**
      * Navigate to a URL.
      */
-    async navigateTo(url) {
+    async navigate(url) {
         await this.client.post('/session/{sessionId}/url', { url });
         this._navigateHistory.push(url);
     }

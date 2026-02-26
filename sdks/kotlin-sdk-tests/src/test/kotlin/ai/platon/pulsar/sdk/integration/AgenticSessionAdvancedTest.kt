@@ -51,7 +51,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
             eventReceived = true
         }
 
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Trigger an agent action
         val result = session.act("scroll down")
@@ -72,7 +72,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
             events.add("didObserve")
         }
 
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val observation = session.observe("find clickable elements")
 
@@ -85,7 +85,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute act with default parameters")
     suspend fun testShouldExecuteActWithDefaultParameters() {
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val result = session.act("scroll to top")
 
@@ -95,7 +95,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute act with custom timeout")
     suspend fun testShouldExecuteActWithCustomTimeout() {
-        session.driver.navigateTo(TestUrls.PRODUCT_LIST)
+        session.driver.navigate(TestUrls.PRODUCT_LIST)
 
         val result = session.act("find the search box", timeoutMs = 5000L)
 
@@ -130,7 +130,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute observe with default parameters")
     suspend fun testShouldExecuteObserveWithDefaultParameters() {
-        session.driver.navigateTo(TestUrls.INTERACTIVE_1)
+        session.driver.navigate(TestUrls.INTERACTIVE_1)
 
         val observation = session.observe("identify buttons")
 
@@ -141,7 +141,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute observe with custom parameters")
     suspend fun testShouldExecuteObserveWithCustomParameters() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val observation = session.observe(
             instruction = "find product information",
@@ -155,7 +155,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Tag("Failed")
     @DisplayName("should execute agentExtract with instruction and schema")
     suspend fun testShouldExecuteAgentExtractWithInstructionAndSchema() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val schema = mapOf(
             "title" to "string",
@@ -173,7 +173,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute summarize")
     suspend fun testShouldExecuteSummarize() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val summary = session.summarize("provide a brief summary of this page")
 
@@ -185,7 +185,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should track state history")
     suspend fun testShouldTrackStateHistory() {
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         session.act("scroll down")
         session.act("scroll up")
@@ -199,7 +199,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should track process trace")
     suspend fun testShouldTrackProcessTrace() {
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         session.act("scroll to bottom")
 
@@ -211,7 +211,7 @@ class AgenticSessionAdvancedTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should clear state history")
     suspend fun testShouldClearStateHistory() {
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         session.act("scroll down")
 

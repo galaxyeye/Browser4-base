@@ -249,7 +249,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val driver = session.getOrCreateBoundDriver()
 
         // Navigate to a test page first
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Step 4 from example: Execute action
         val result = agent.act("scroll to the bottom")
@@ -264,7 +264,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val driver = session.getOrCreateBoundDriver()
 
         // Navigate to a test page
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Step 5 from example: Capture text from live DOM
         val content = driver.selectFirstTextOrNull("body")
@@ -283,7 +283,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val driver = session.getOrCreateBoundDriver()
 
         // Navigate to a test page first
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Step 10 from example: Run autonomous task
         agent.clearHistory()
@@ -299,7 +299,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val driver = session.getOrCreateBoundDriver()
 
         // Navigate to a test page
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Step 11 from example: Capture live page
         val page = session.capture(driver)
@@ -315,7 +315,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val driver = session.getOrCreateBoundDriver()
 
         // Navigate and perform an action to create history
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
         agent.act("scroll down")
 
         // Step 10 from example: Clear history
@@ -343,7 +343,7 @@ class FusedActsStyleTest : KotlinSdkIntegrationTestBase() {
         val driver = session.getOrCreateBoundDriver()
 
         // Navigate to test page
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Step 4-6 from example: Multiple actions in sequence
         var result = agent.act("scroll to the bottom")

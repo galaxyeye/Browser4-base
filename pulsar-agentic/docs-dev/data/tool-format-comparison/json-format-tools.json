@@ -128,7 +128,7 @@
     },
     {
       "domain": "driver",
-      "method": "navigateTo",
+      "method": "navigate",
       "parameters": [
         {"name": "url", "type": "String"}
       ],

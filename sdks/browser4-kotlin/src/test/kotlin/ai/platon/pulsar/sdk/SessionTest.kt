@@ -42,7 +42,7 @@ class WebDriverTest {
         val driver = WebDriver(client)
 
         // Directly add to history (without actual navigation)
-        // In real usage, navigateTo adds to history
+        // In real usage, navigate adds to history
         assertTrue(driver.navigateHistory.isEmpty())
     }
 

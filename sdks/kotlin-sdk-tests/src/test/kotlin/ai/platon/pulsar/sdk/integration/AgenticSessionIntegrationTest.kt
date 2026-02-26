@@ -46,7 +46,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute single action")
     suspend fun testShouldExecuteSingleAction() {
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val result = session.act("scroll to the bottom")
 
@@ -57,7 +57,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should execute action with parameters")
     suspend fun testShouldExecuteActionWithParameters() {
-        session.driver.navigateTo(TestUrls.PRODUCT_LIST)
+        session.driver.navigate(TestUrls.PRODUCT_LIST)
 
         val result = session.act("click on the first product")
 
@@ -107,7 +107,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should observe page with specific focus")
     suspend fun testShouldObservePageWithSpecificFocus() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val observation = session.observe("find all buttons and links")
 
@@ -117,7 +117,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should extract data with AI")
     suspend fun testShouldExtractDataWithAI() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val extraction = session.agentExtract("extract product name, price, and description")
 
@@ -128,7 +128,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should extract structured data")
     suspend fun testShouldExtractStructuredData() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val extraction = session.agentExtract("extract all product information as structured data")
 
@@ -139,7 +139,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should summarize page")
     suspend fun testShouldSummarizePage() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val summary = session.summarize()
 
@@ -150,7 +150,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should summarize with custom instruction")
     suspend fun testShouldSummarizeWithCustomInstruction() {
-        session.driver.navigateTo(TestUrls.PRODUCT_LIST)
+        session.driver.navigate(TestUrls.PRODUCT_LIST)
 
         val summary = session.summarize("summarize the available products")
 
@@ -162,7 +162,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle complex multi-step workflow")
     suspend fun testShouldHandleComplexMultiStepWorkflow() {
         // Navigate to product list
-        session.driver.navigateTo(TestUrls.PRODUCT_LIST)
+        session.driver.navigate(TestUrls.PRODUCT_LIST)
 
         // Use AI to find and click first product
         session.act("click on the first product")
@@ -221,7 +221,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
         assertNotNull(session.driver, "Driver should be accessible")
 
         // Verify session can perform AI operations
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
         val summary = session.summarize()
         assertNotNull(summary, "Summary should not be null")
     }

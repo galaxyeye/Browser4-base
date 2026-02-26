@@ -13,7 +13,7 @@
 `ToolCall` 是一次“调用某个工具方法”的结构化描述，核心字段用于表达：
 
 - `domain`: 工具域名（如 `driver`、`browser`）
-- `method`: 方法名（如 `navigateTo`、`click`）
+- `method`: 方法名（如 `navigate`、`click`）
 - `arguments`: 参数（键值对，或被转换后的 map）
 
 在运行时，Agent 会把模型产出的 `ToolCall` 填充进 `ActionDescription.toolCall`，然后由 `AgentToolManager.execute(...)` 负责执行并返回 `ToolCallResult`。
@@ -94,7 +94,7 @@
 执行成功后会根据 method 做一些补偿/状态同步：
 
 - `switchTab` → `onDidSwitchTab`：把“切到前台”的 driver 重新绑定到 session
-- `navigateTo` → `onDidNavigateTo`：等待导航完成、等待 `body` 出现，并额外 delay（当前固定 3s）
+- `navigate` → `onDidnavigate`：等待导航完成、等待 `body` 出现，并额外 delay（当前固定 3s）
 
 ### 3.5 统一的导航等待（可能触发导航的动作）
 

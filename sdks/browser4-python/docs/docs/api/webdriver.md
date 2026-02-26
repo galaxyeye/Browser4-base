@@ -42,8 +42,8 @@ driver = WebDriver(client)
 ### Core Methods
 
 ```python
-driver.navigate_to(url: str) -> Any  # Navigate to URL
-driver.open(url: str) -> None  # Convenience wrapper for navigate_to
+driver.navigate(url: str) -> Any  # Navigate to URL
+driver.open(url: str) -> None  # Convenience wrapper for navigate
 driver.reload() -> Any  # Reload current page
 driver.go_back() -> Any  # Navigate back
 driver.go_forward() -> Any  # Navigate forward
@@ -63,7 +63,7 @@ driver.base_uri() -> str  # Get document.baseURI
 **Example:**
 
 ```python
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 print(f"Title: {driver.title()}")
 print(f"URL: {driver.current_url()}")
 ```
@@ -96,7 +96,7 @@ driver.find_elements(using: str, value: str) -> List[Dict]
 ```python
 if driver.exists("button.submit"):
     print("Submit button found")
-    
+
 element = driver.find_element_by_selector("button.submit")
 elements = driver.find_elements_by_selector("a.product-link")
 ```
@@ -314,7 +314,7 @@ client.create_session()
 driver = WebDriver(client)
 
 # Navigate and fill form
-driver.navigate_to("https://example.com/login")
+driver.navigate("https://example.com/login")
 driver.fill("input[name='username']", "user@example.com")
 driver.fill("input[name='password']", "password123")
 driver.check("input#remember-me")
@@ -336,7 +336,7 @@ client = PulsarClient()
 client.create_session()
 driver = WebDriver(client)
 
-driver.navigate_to("https://example.com/products")
+driver.navigate("https://example.com/products")
 
 # Extract product data
 products = driver.extract({
@@ -364,7 +364,7 @@ client = PulsarClient()
 client.create_session()
 driver = WebDriver(client)
 
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Scroll to reveal content
 driver.scroll_down(count=3)
@@ -405,15 +405,15 @@ client.create_session()
 driver = WebDriver(client)
 
 try:
-    driver.navigate_to("https://example.com")
-    
+    driver.navigate("https://example.com")
+
     # Wait for element with timeout
     if driver.wait_for_selector("div.content", timeout=5000):
         text = driver.select_first_text_or_null("div.content")
         print(f"Content: {text}")
     else:
         print("Content not found within timeout")
-        
+
 except requests.exceptions.HTTPError as e:
     print(f"HTTP Error: {e}")
 except Exception as e:

@@ -52,7 +52,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
     @Test
         @DisplayName("When navigate to a HTML page then the navigate state are correct")
-    fun whenNavigateToAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
+    fun whennavigateAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
         openEnhanced(e2eProductUrl, driver, 1)
 
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
@@ -75,7 +75,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
     @Test
         @DisplayName("When navigate to a HTML page then mainRequestCookies are captured")
-    fun whenNavigateToAHtmlPageThenMainrequestcookiesAreCaptured() = runEnhancedWebDriverTest(browser) { driver ->
+    fun whenNavigateAHtmlPageThenMainrequestcookiesAreCaptured() = runEnhancedWebDriverTest(browser) { driver ->
         // Navigate to the page with cookies
         openEnhanced(e2eProductUrl, driver, 1)
 
@@ -157,7 +157,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
     @Test
     fun test_selectAttributeAll() = runEnhancedWebDriverTest(browser) { driver ->
-        driver.navigateTo(e2eProductUrl)
+        driver.navigate(e2eProductUrl)
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
         val title = driver.selectFirstTextOrNull("#productTitle")
         Assumptions.assumeTrue { navbarMain != null || title != null }
@@ -251,7 +251,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
     @Test
     fun testKeyPress() = runEnhancedWebDriverTest(browser) { driver ->
-        driver.navigateTo(e2eProductUrl)
+        driver.navigate(e2eProductUrl)
         delay(1000)
 
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
@@ -316,7 +316,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     @Test
     @Tag("ManualOnly")
     fun testTypeText() = runEnhancedWebDriverTest(browser) { driver ->
-        driver.navigateTo(e2eProductUrl)
+        driver.navigate(e2eProductUrl)
         driver.waitForSelector("#productTitle")
 
         assertTrue { driver.exists("#productTitle") }

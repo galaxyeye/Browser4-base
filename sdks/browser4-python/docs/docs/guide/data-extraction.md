@@ -54,7 +54,7 @@ session_id = client.create_session()
 driver = WebDriver(client)
 
 # Navigate to page
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Extract single text
 title = driver.select_first_text_or_null("h1")
@@ -81,7 +81,7 @@ print(f"Found {len(links)} links")
 
 ```python
 driver = WebDriver(client)
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Select first text (returns None if not found)
 title = driver.select_first_text_or_null("h1.title")
@@ -168,14 +168,14 @@ for key, value in data.items():
 ```python
 def scrape_multiple_pages(session, urls):
     """Scrape data from multiple pages."""
-    
+
     results = []
     fields_to_extract = {
         "title": "h1",
         "description": "p.description",
         "author": ".author-name"
     }
-    
+
     for url in urls:
         print(f"Scraping: {url}")
         data = session.scrape(url, "-expire 1d", fields_to_extract)
@@ -183,7 +183,7 @@ def scrape_multiple_pages(session, urls):
             "url": url,
             "data": data
         })
-    
+
     return results
 
 # Usage
@@ -281,11 +281,11 @@ document = session.parse(page)
 # Or parse HTML directly with BeautifulSoup
 if hasattr(page, 'content'):
     soup = BeautifulSoup(page.content, 'html.parser')
-    
+
     # Use BeautifulSoup methods
     title = soup.find('h1').text if soup.find('h1') else None
     paragraphs = [p.text for p in soup.find_all('p')]
-    
+
     print(f"Title: {title}")
     print(f"Paragraphs: {len(paragraphs)}")
 ```
@@ -295,10 +295,10 @@ if hasattr(page, 'content'):
 ```python
 def extract_with_fallback(session, url):
     """Extract data with BeautifulSoup fallback."""
-    
+
     # Load page
     page = session.open(url)
-    
+
     # Try Browser4 extraction first
     try:
         document = session.parse(page)
@@ -309,7 +309,7 @@ def extract_with_fallback(session, url):
         return data
     except Exception as e:
         print(f"Browser4 extraction failed: {e}")
-        
+
         # Fallback to BeautifulSoup
         if hasattr(page, 'content'):
             soup = BeautifulSoup(page.content, 'html.parser')
@@ -317,7 +317,7 @@ def extract_with_fallback(session, url):
                 "title": soup.find('h1').text if soup.find('h1') else None,
                 "content": soup.find(class_='main-content').text if soup.find(class_='main-content') else None
             }
-    
+
     return {}
 
 # Usage
@@ -331,10 +331,10 @@ data = extract_with_fallback(session, "https://example.com")
 ```python
 def extract_product_data(session, url):
     """Extract structured product information."""
-    
+
     page = session.open(url)
     document = session.parse(page)
-    
+
     # Define extraction schema
     product_fields = {
         "name": "h1.product-name",
@@ -350,16 +350,16 @@ def extract_product_data(session, url):
         "features": ".features li",
         "image": "img.main-image"
     }
-    
+
     product = session.extract(document, product_fields)
-    
+
     # Post-process data
     if product.get('price'):
         product['price'] = float(product['price'].replace('$', '').replace(',', ''))
-    
+
     if product.get('rating'):
         product['rating'] = float(product['rating'])
-    
+
     return product
 
 # Usage
@@ -373,15 +373,15 @@ print(f"Price: ${product['price']}")
 ```python
 def extract_list_items(driver, container_selector, item_fields):
     """Extract data from a list of items."""
-    
+
     # Get number of items
     driver.wait_for_selector(container_selector, timeout=10000)
     items_count = driver.execute_script(f"""
         return document.querySelectorAll('{container_selector}').length;
     """)
-    
+
     print(f"Found {items_count} items")
-    
+
     results = []
     for i in range(items_count):
         item_data = {}
@@ -390,9 +390,9 @@ def extract_list_items(driver, container_selector, item_fields):
             full_selector = f"{container_selector}:nth-child({i+1}) {field_selector}"
             value = driver.select_first_text_or_null(full_selector)
             item_data[field_name] = value
-        
+
         results.append(item_data)
-    
+
     return results
 
 # Usage
@@ -415,31 +415,31 @@ for i, result in enumerate(search_results, 1):
 ```python
 def extract_all_pages(driver, max_pages=10):
     """Extract data from paginated results."""
-    
+
     all_data = []
-    
+
     for page_num in range(1, max_pages + 1):
         print(f"Extracting page {page_num}...")
-        
+
         # Extract data from current page
         items = driver.select_text_all(".item-title")
         all_data.extend(items)
-        
+
         # Check for next page button
         if not driver.exists("button.next-page"):
             print("No more pages")
             break
-        
+
         # Click next page
         driver.click("button.next-page")
         driver.wait_for_selector(".item-title", timeout=10000)
         driver.delay(1000)  # Wait for page to stabilize
-    
+
     print(f"Extracted {len(all_data)} total items")
     return all_data
 
 # Usage
-driver.navigate_to("https://example.com/search?q=python")
+driver.navigate("https://example.com/search?q=python")
 all_items = extract_all_pages(driver, max_pages=5)
 ```
 
@@ -450,12 +450,12 @@ from browser4 import Browser4Driver, PulsarClient, AgenticSession
 
 def comprehensive_extraction_demo():
     """Comprehensive data extraction demonstration."""
-    
+
     with Browser4Driver() as driver_mgr:
         client = PulsarClient(base_url=driver_mgr.base_url)
         session_id = client.create_session()
         session = AgenticSession(client)
-        
+
         try:
             # 1. Simple scrape
             print("1. Simple scrape:")
@@ -465,7 +465,7 @@ def comprehensive_extraction_demo():
                 {"title": "h1", "content": "p"}
             )
             print(f"   Title: {data.get('title')}")
-            
+
             # 2. Load and extract separately
             print("\n2. Load and extract separately:")
             page = session.open("https://example.com")
@@ -476,22 +476,22 @@ def comprehensive_extraction_demo():
                 "links": "a[href]"
             })
             print(f"   Found {len(fields)} fields")
-            
+
             # 3. WebDriver extraction
             print("\n3. WebDriver extraction:")
             driver = session.driver
-            driver.navigate_to("https://example.com")
-            
+            driver.navigate("https://example.com")
+
             # Text extraction
             title = driver.select_first_text_or_null("h1")
             paragraphs = driver.select_text_all("p")
             print(f"   Title: {title}")
             print(f"   Paragraphs: {len(paragraphs)}")
-            
+
             # Attribute extraction
             links = driver.select_attribute_all("a", "href")
             print(f"   Links: {len(links)}")
-            
+
             # Multi-field extraction
             fields = driver.extract({
                 "title": "h1",
@@ -499,7 +499,7 @@ def comprehensive_extraction_demo():
                 "links_count": "a"
             })
             print(f"   Extracted fields: {fields.keys()}")
-            
+
             # 4. Structured extraction
             print("\n4. Structured extraction:")
             structured_data = {
@@ -517,7 +517,7 @@ def comprehensive_extraction_demo():
                 }
             }
             print(f"   Structured data keys: {structured_data.keys()}")
-            
+
         finally:
             session.close()
             client.close()
@@ -625,7 +625,7 @@ else:
 
 ```python
 # Wait for dynamic content
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 driver.wait_for_selector(".dynamic-content", timeout=15000)
 
 # Verify content loaded before extracting

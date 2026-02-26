@@ -38,14 +38,19 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
         return when (functionName) {
             // Navigation
             "open" -> { validateArgs(args, allowed("url"), setOf("url"), functionName); driver.open(paramString(args, "url", functionName)!!) }
-            "navigateTo" -> {
+            "navigate" -> {
                 when {
-                    args.containsKey("url") -> { validateArgs(args, allowed("url"), setOf("url"), functionName); driver.navigateTo(paramString(args, "url", functionName)!!) }
+                    args.containsKey("url") -> { validateArgs(args, allowed("url"), setOf("url"), functionName); driver.navigate(paramString(args, "url", functionName)!!) }
                     args.containsKey("rawUrl") || args.containsKey("pageUrl") -> {
                         validateArgs(args, allowed("rawUrl", "pageUrl"), setOf("rawUrl", "pageUrl"), functionName)
-                        driver.navigateTo(NavigateEntry(paramString(args, "rawUrl", functionName)!!, pageUrl = paramString(args, "pageUrl", functionName)!!))
+                        driver.navigate(
+                            NavigateEntry(
+                                paramString(args, "rawUrl", functionName)!!,
+                                pageUrl = paramString(args, "pageUrl", functionName)!!
+                            )
+                        )
                     }
-                    else -> throw IllegalArgumentException("navigateTo requires 'url' or ('rawUrl','pageUrl')")
+                    else -> throw IllegalArgumentException("navigate requires 'url' or ('rawUrl','pageUrl')")
                 }
             }
             "reload" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.reload() }

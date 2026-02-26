@@ -8,7 +8,7 @@
 - 输出一致性：无页面相关操作时，返回 `{ "version": "0.0.2", "elements": [] }`，不再返回空 `{}`。
 - 步数控制：定义 `max_steps` 的位置、默认值与达标条件。
 - OS 适配：新开标签页修饰键按系统区分（Windows/Linux 用 `Ctrl`，macOS 用 `Meta`）。
-- 刷新策略：无 `reload` 时以 `navigateTo(currentUrl)` 实现刷新。
+- 刷新策略：无 `reload` 时以 `navigate(currentUrl)` 实现刷新。
 - 滚动/缺失元素/验证码 等异常处理策略更健全。
 - 推理块新增“预期 DOM 变化”和“验证条件”。
 - JSON 输出新增 `version` 字段；时间戳单位与单调性要求。
@@ -85,7 +85,7 @@
 ```
 
 // domain: driver
-driver.navigateTo(url: String)
+driver.navigate(url: String)
 driver.waitForSelector(selector: String, timeoutMillis: Long = 3000)
 driver.exists(selector: String): Boolean
 driver.isVisible(selector: String): Boolean
@@ -148,10 +148,10 @@ fs.listFiles(): String
 - 整页文本提取：使用 `selectFirstTextOrNull("document")`（约定：传入字符串常量 "document" 表示整页文本）。
 - 按键操作：仅对特殊按键使用 `press`（例如 `Enter`/`Tab`/`Escape`/`ArrowDown`），字符输入使用 `type` 或 `fill`；不要用 `press` 发送普通字符（如 "A"）。
 - 导航到浏览历史的前一网页 - `goBack`, 后一网页 - `goForward`
-- 刷新页面策略：如需刷新且无专门 API，调用 `navigateTo(currentUrl)`（从浏览器状态中获取当前 URL）
+- 刷新页面策略：如需刷新且无专门 API，调用 `navigate(currentUrl)`（从浏览器状态中获取当前 URL）
 - 如非必要，避免重复点击同一链接，如必须这样做，提供理由
 - 若出现验证码，尽可能尝试解决；若无法解决，则启用备用策略（例如换其他站点、回退上一步、总结可见内容）并在需要时终止任务
-- 若预期元素缺失，按以下顺序尝试：`waitForSelector`(最多 2 次，指数退避)，轻微滚动探测(`scrollBy(200~600px)`)，刷新（`navigateTo(currentUrl)`），`goBack()`，最后尝试替代路径
+- 若预期元素缺失，按以下顺序尝试：`waitForSelector`(最多 2 次，指数退避)，轻微滚动探测(`scrollBy(200~600px)`)，刷新（`navigate(currentUrl)`），`goBack()`，最后尝试替代路径
 - 若填写输入框后操作序列中断，通常是因为页面发生了变化（例如输入框下方弹出了建议选项）；根据视觉与可见元素恢复后续动作
 - 若上一步操作序列因页面变化而中断，需补全未执行的剩余操作。例如，若你尝试输入文本并点击搜索按钮，但点击未执行（因页面变化），应在下一步重试点击操作。
 - 若<user_request>中包含具体页面信息（如商品类型、评分、价格、地点等），尝试使用筛选功能以提高效率。
@@ -260,7 +260,7 @@ fs.listFiles(): String
 
 - 等待：`waitForSelector(selector, timeoutMillis)` 默认 3000ms；可按需提高（建议 3000→5000ms，最多 2 次，指数退避）。
 - 探测：若仍缺失，执行小幅滚动 `scrollBy(200~600)` 并重试一次等待。
-- 刷新：`navigateTo(currentUrl)` 刷新后再次等待一次。
+- 刷新：`navigate(currentUrl)` 刷新后再次等待一次。
 - 退回：`goBack()` 或尝试替代路径（例如上级分类或站内搜索）。
 - 记录：在 `thinking` 中写明采取了哪一步骤与理由。
 
@@ -313,7 +313,7 @@ fs.listFiles(): String
 ## 平台与集成提示
 
 - OS 修饰键：Windows/Linux 使用 `Ctrl`，macOS 使用 `Meta`（Command）。
-- 刷新：使用 `navigateTo(currentUrl)`。
+- 刷新：使用 `navigate(currentUrl)`。
 - Pulsar 概念参考：会话 `AgenticSession`，加载参数 `LoadOptions`（参见 `docs/`）。
 
 ---

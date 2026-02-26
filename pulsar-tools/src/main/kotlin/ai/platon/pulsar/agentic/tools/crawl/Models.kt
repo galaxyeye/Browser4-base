@@ -87,7 +87,7 @@ fun ScrapeResponse.refreshed(lastModifiedTime: Instant): Boolean {
  *
  * @property url The target page URL to process.
  * @property args Optional load arguments to customize page loading behavior.
- * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigateTo").
+ * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigate").
  * @property onPageReadyActions Actions to perform when the document is fully loaded (e.g., "scroll down", "click button").
  * @property pageSummaryPrompt A prompt to analyze or discuss the HTML structure of the page.
  * @property dataExtractionRules Specifications for extracting structured fields from the HTML content.

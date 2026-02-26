@@ -1,6 +1,6 @@
 /**
  * Unit tests for the Browser4 NodeJS SDK.
- * 
+ *
  * These tests use mock responses to verify the SDK behavior without
  * requiring a running Browser4 server.
  */
@@ -431,11 +431,11 @@ describe('WebDriver', () => {
     driver = new WebDriver(client);
   });
 
-  describe('navigateTo', () => {
+  describe('navigate', () => {
     it('should navigate to URL', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
-      await driver.navigateTo('https://example.com');
+      await driver.navigate('https://example.com');
 
       expect(mockAxiosInstance.request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -519,8 +519,8 @@ describe('WebDriver', () => {
     it('should track navigation history', async () => {
       mockAxiosInstance.request.mockResolvedValue({ data: {} });
 
-      await driver.navigateTo('https://example.com');
-      await driver.navigateTo('https://example.com/page2');
+      await driver.navigate('https://example.com');
+      await driver.navigate('https://example.com/page2');
 
       const history = driver.navigateHistory;
       expect(history.length).toBe(2);

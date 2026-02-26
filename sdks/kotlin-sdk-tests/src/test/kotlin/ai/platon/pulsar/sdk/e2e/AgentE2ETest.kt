@@ -190,7 +190,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
     @DisplayName("test agent run task with event streaming")
     suspend fun testAgentRunTaskWithEventStreaming() {
         // Navigate to a test page first
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Run a simple task
         val task = "describe what you see on this page"
@@ -219,7 +219,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
     @DisplayName("test agent act with event streaming")
     suspend fun testAgentActWithEventStreaming() {
         // Navigate to a test page first
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Execute an action
         val action = "scroll to the bottom of the page"
@@ -245,7 +245,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
     @DisplayName("test agent observe with event streaming")
     suspend fun testAgentObserveWithEventStreaming() {
         // Navigate to a test page first
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         // Observe the page
         val instruction = "find all interactive elements"
@@ -321,7 +321,7 @@ class AgentE2ETest : KotlinSdkIntegrationTestBase() {
     @DisplayName("test combined manual and event-driven operations")
     suspend fun testCombinedManualAndEventDrivenOperations() {
         // Manual navigation
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         // Manual element check
         val bodyExists = session.driver.exists("body")

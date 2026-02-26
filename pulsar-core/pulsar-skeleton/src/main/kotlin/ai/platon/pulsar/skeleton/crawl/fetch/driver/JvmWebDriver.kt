@@ -54,7 +54,7 @@ interface JvmWebDriver {
      * @return the new CompletableFuture
      */
     @Throws(WebDriverException::class)
-    fun navigateToAsync(url: String): CompletableFuture<Unit>
+    fun navigateAsync(url: String): CompletableFuture<Unit>
 
     /**
      * Returns the response of the main resource. In case of multiple redirects, the navigation will resolve
@@ -64,7 +64,15 @@ interface JvmWebDriver {
      * @return the new CompletableFuture
      */
     @Throws(WebDriverException::class)
-    fun navigateToAsync(entry: NavigateEntry): CompletableFuture<Unit>
+    fun navigateAsync(entry: NavigateEntry): CompletableFuture<Unit>
+
+    @Deprecated("Use navigateAsync instead", ReplaceWith("navigateAsync(url)"))
+    @Throws(WebDriverException::class)
+    fun navigateAsync(url: String): CompletableFuture<Unit> = navigateAsync(url)
+
+    @Deprecated("Use navigateAsync instead", ReplaceWith("navigateAsync(url)"))
+    @Throws(WebDriverException::class)
+    fun navigateAsync(entry: NavigateEntry): CompletableFuture<Unit> = navigateAsync(entry)
 
     /**
      * Returns a string representing the current URL that the browser is looking at.

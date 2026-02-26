@@ -358,7 +358,7 @@ open class InteractiveBrowserEmulator(
         val page = navigateTask.page
         val referrer = page.referrer
         if (referrer != null && !driver.browser.navigateHistory.contains(referrer)) {
-            driver.navigateTo(referrer)
+            driver.navigate(referrer)
             driver.waitForSelector("body", Duration.ofSeconds(15))
         }
 
@@ -502,7 +502,7 @@ open class InteractiveBrowserEmulator(
 
         checkState(fetchTask, driver)
         try {
-            driver.navigateTo(navigateEntry)
+            driver.navigate(navigateEntry)
         } finally {
             emit1(EmulateEvents.navigated, page, driver)
         }

@@ -16,7 +16,7 @@ This document provides a comprehensive evaluation of the `kotlin-sdk-tests` modu
 The Kotlin SDK provides the following public APIs:
 
 #### WebDriver (40 methods)
-- Navigation: `navigateTo()`, `goBack()`, `goForward()`, `reload()`, `currentUrl()`
+- Navigation: `navigate()`, `goBack()`, `goForward()`, `reload()`, `currentUrl()`
 - Element interaction: `click()`, `check()`, `uncheck()`, `fill()`, `type()`, `sendKeys()`
 - Focus: `focus()`, `hover()`, `press()`
 - Scrolling: `scrollDown()`, `scrollUp()`, `scrollTo()`, `scrollToBottom()`, `scrollToTop()`

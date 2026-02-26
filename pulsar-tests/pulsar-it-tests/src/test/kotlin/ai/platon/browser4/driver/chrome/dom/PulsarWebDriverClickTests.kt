@@ -2,7 +2,6 @@ package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.browser.FastWebDriverService
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -596,7 +594,7 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
         driver.waitForSelector("#dynamicContent.loaded")
 
         // Navigate to same page again (refresh-like)
-        driver.navigateTo(multiScreensInteractiveUrl)
+        driver.navigate(multiScreensInteractiveUrl)
         driver.waitForSelector("h1")
 
         // Click should work after navigation

@@ -77,7 +77,7 @@
 
 ```
 // domain: driver
-driver.navigateTo(url: String)
+driver.navigate(url: String)
 driver.waitForSelector(selector: String, timeoutMillis: Long = 3000)
 driver.exists(selector: String): Boolean
 driver.isVisible(selector: String): Boolean

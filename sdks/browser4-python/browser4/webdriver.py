@@ -6,7 +6,7 @@ REST endpoints. It mirrors the Kotlin WebDriver interface for consistent API des
 across languages.
 
 Key features:
-- Navigation: navigate_to, current_url, go_back, go_forward, reload
+- Navigation: navigate, current_url, go_back, go_forward, reload
 - Element interaction: click, fill, type, press, hover, focus
 - Scrolling: scroll_down, scroll_up, scroll_to, scroll_to_bottom, scroll_to_top
 - Selection: exists, wait_for_selector, select_first_text, select_text_all
@@ -19,7 +19,7 @@ Usage example:
     >>> client = PulsarClient()
     >>> client.create_session()
     >>> driver = WebDriver(client)
-    >>> driver.navigate_to("https://example.com")
+    >>> driver.navigate("https://example.com")
     >>> title = driver.select_first_text_or_null("h1")
 """
 from typing import Any, Dict, List, Optional, Union
@@ -57,7 +57,7 @@ class WebDriver:
     def _encode_path_segment(value: str) -> str:
         """
         URL-encode a string for safe use in URL paths.
-        
+
         Uses quote() with safe='' to encode all special characters for path segments.
         """
         return quote(value, safe='')
@@ -78,14 +78,14 @@ class WebDriver:
         """
         Opens the specified URL and waits for navigation to complete.
 
-        This is a convenience method combining navigate_to and wait_for_navigation.
+        This is a convenience method combining navigate and wait_for_navigation.
 
         Args:
             url: The URL to navigate to.
         """
-        self.navigate_to(url)
+        self.navigate(url)
 
-    def navigate_to(self, url: str) -> Any:
+    def navigate(self, url: str) -> Any:
         """
         Navigate to a URL.
 
@@ -377,12 +377,12 @@ class WebDriver:
         """
         if count == 2:
             return self.dblclick(selector, strategy)
-        
+
         return self.client.post(
             "/session/{sessionId}/selectors/click",
             {"selector": selector, "strategy": strategy, "count": count}
         )
-    
+
     def dblclick(self, selector: str, strategy: str = "css") -> Any:
         """
         Double-click an element identified by selector.
@@ -533,7 +533,7 @@ class WebDriver:
     def send_keys(self, selector: str, text: str, strategy: str = "css") -> Any:
         """
         Send keys to an element.
-        
+
         This method now delegates to fill() for consistency with the selector-based API.
         It provides a familiar WebDriver-compatible method name while using the
         selector-based endpoint internally.
@@ -1172,7 +1172,7 @@ class WebDriver:
         """
         self.execute_script(
             f"""
-            document.querySelectorAll('{selector}').forEach(el => 
+            document.querySelectorAll('{selector}').forEach(el =>
                 el.setAttribute('{attr_name}', '{attr_value}')
             )
             """

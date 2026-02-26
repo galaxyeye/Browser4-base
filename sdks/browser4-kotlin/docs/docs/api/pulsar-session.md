@@ -220,7 +220,7 @@ Capture current browser state.
 
 **Example:**
 ```kotlin
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.click("button.load-more")
 val snapshot = session.capture(driver)
 val document = session.parse(snapshot)

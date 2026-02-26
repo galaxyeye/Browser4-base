@@ -191,7 +191,7 @@ class SinglePageApplicationController(
             val oldUrl = driver.currentUrl()
 
             driver.bringToFront()
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForNavigation(oldUrl)
             driver.waitForSelector("body")
 
@@ -329,7 +329,7 @@ class SinglePageApplicationController(
             val oldUrl = driver.currentUrl()
 
             driver.bringToFront()
-            driver.navigateTo(fileUrl)
+            driver.navigate(fileUrl)
             driver.waitForNavigation(oldUrl)
             driver.waitForSelector("svg")
 

@@ -35,7 +35,7 @@ class ToDoManager(
             appendLine()
             appendLine("## Plan")
             if (config.todoPlanWithLLM) {
-                appendLine("- [ ] Step 1: TBD  #action:navigateTo")
+                appendLine("- [ ] Step 1: TBD  #action:navigate")
                 appendLine("- [ ] Step 2: TBD  #action:click")
             } else {
                 appendLine("(Plan TBD — 将在执行过程中逐步完善，并通过标签进行勾选)")

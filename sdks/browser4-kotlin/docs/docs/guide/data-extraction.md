@@ -49,7 +49,7 @@ val fields = session.scrape(
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Single element
 val title = driver.selectFirstTextOrNull("h1")
@@ -84,7 +84,7 @@ val fields = driver.extract(mapOf(
 
 ```kotlin
 val agent = session.companionAgent
-session.driver.navigateTo("https://example.com/product")
+session.driver.navigate("https://example.com/product")
 
 val result = agent.extract(
     instruction = "Extract product name, price, and description"
@@ -144,11 +144,11 @@ while (true) {
             price: p.querySelector('.price')?.textContent?.trim()
         }));
     """) as List<Map<String, Any?>>
-    
+
     allProducts.addAll(products)
-    
+
     if (!driver.exists(".next-page:not(.disabled)")) break
-    
+
     driver.click(".next-page")
     driver.waitForNavigation()
 }

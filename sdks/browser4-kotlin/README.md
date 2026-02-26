@@ -127,7 +127,7 @@ fun main() {
     println("Loaded page: ${page.url}")
 
     // Navigate and interact using WebDriver
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
     println("Current URL: ${session.driver.currentUrl()}")
 
     // Extract data
@@ -154,7 +154,7 @@ fun main() {
     val session = AgenticSession(client)
 
     // Navigate to a page
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 
     // Use natural language to interact
     val actResult = session.act("click the search button")
@@ -194,7 +194,7 @@ fun main() {
     val driver = WebDriver(client)
 
     // Navigation
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
     println("URL: ${driver.currentUrl()}")
     println("Title: ${driver.title()}")
 
@@ -281,7 +281,7 @@ AI-powered browser automation.
 Browser control and element interaction.
 
 **Navigation:**
-- `navigateTo(url)`, `currentUrl()`, `reload()`, `goBack()`, `goForward()`
+- `navigate(url)`, `currentUrl()`, `reload()`, `goBack()`, `goForward()`
 
 **Element Interaction:**
 - `click(selector)`, `fill(selector, text)`, `type(selector, text)`

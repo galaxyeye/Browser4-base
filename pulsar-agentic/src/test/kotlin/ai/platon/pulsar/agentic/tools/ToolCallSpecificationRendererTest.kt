@@ -275,7 +275,7 @@ class ToolCallSpecificationRendererTest {
 
         // Should include built-in driver tools
         assertTrue(rendered.contains(""""domain": "driver""""), "Should contain driver domain")
-        assertTrue(rendered.contains(""""method": "navigateTo""""), "Should contain navigateTo method")
+        assertTrue(rendered.contains(""""method": "navigate""""), "Should contain navigate method")
         assertTrue(rendered.contains(""""method": "click""""), "Should contain click method")
 
         // Should include built-in browser tools
@@ -372,12 +372,12 @@ class ToolCallSpecificationRendererTest {
     fun testParseBuiltInSpecificationsShouldParseArgumentsCorrectly() {
         val specs = ToolCallSpecificationRenderer.parseBuiltInSpecifications()
 
-        // Find navigateTo method which has a url parameter
-        val navigateTo = specs.find { it.domain == "driver" && it.method == "navigateTo" }
-        assertNotNull(navigateTo, "Should find navigateTo method")
-        assertEquals(1, navigateTo!!.arguments.size, "navigateTo should have 1 argument")
-        assertEquals("url", navigateTo.arguments[0].name, "First argument should be url")
-        assertEquals("String", navigateTo.arguments[0].type, "url should be String type")
+        // Find navigate method which has a url parameter
+        val navigate = specs.find { it.domain == "driver" && it.method == "navigate" }
+        assertNotNull(navigate, "Should find navigate method")
+        assertEquals(1, navigate!!.arguments.size, "navigate should have 1 argument")
+        assertEquals("url", navigate.arguments[0].name, "First argument should be url")
+        assertEquals("String", navigate.arguments[0].type, "url should be String type")
     }
 
     @Test
@@ -402,10 +402,10 @@ class ToolCallSpecificationRendererTest {
         assertNotNull(exists, "Should find exists method")
         assertEquals("Boolean", exists!!.returnType, "exists should return Boolean")
 
-        // Find navigateTo which returns Unit (no return type specified)
-        val navigateTo = specs.find { it.domain == "driver" && it.method == "navigateTo" }
-        assertNotNull(navigateTo, "Should find navigateTo method")
-        assertEquals("Unit", navigateTo!!.returnType, "navigateTo should return Unit")
+        // Find navigate which returns Unit (no return type specified)
+        val navigate = specs.find { it.domain == "driver" && it.method == "navigate" }
+        assertNotNull(navigate, "Should find navigate method")
+        assertEquals("Unit", navigate!!.returnType, "navigate should return Unit")
     }
 
     @Test

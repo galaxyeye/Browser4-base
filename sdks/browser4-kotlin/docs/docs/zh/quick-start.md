@@ -80,7 +80,7 @@ suspend fun main() {
     val driver = session.getOrCreateBoundDriver()
 
     // 导航
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
     println("当前 URL: ${driver.currentUrl()}")
 
     // 点击元素

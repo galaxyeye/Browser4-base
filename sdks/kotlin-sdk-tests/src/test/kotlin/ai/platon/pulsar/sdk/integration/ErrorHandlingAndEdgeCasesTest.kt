@@ -60,7 +60,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle empty selector gracefully")
     @Tag("Fast")
     suspend fun testShouldHandleEmptySelectorGracefully() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Empty selector should not crash
         val result = driver.selectFirstTextOrNull("")
@@ -97,7 +97,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle invalid CSS selector")
     suspend fun testShouldHandleInvalidCSSSelector() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Invalid CSS selector
         try {
@@ -112,7 +112,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle non-existent selector")
     suspend fun testShouldHandleNonExistentSelector() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val result = driver.selectFirstTextOrNull("#thisElementDoesNotExist")
         assertNull(result, "Non-existent selector should return null")
@@ -121,7 +121,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should return empty list for non-existent elements in selectTextAll")
     suspend fun testShouldReturnEmptyListForNonExistentElementsInSelectTextAll() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val results = driver.selectTextAll("#nonExistentElements")
         assertTrue(results.isEmpty(), "Non-existent elements should return empty list")
@@ -208,7 +208,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
         try {
             val navigations = (1..3).map {
                 async {
-                    driver.navigateTo(TestUrls.SIMPLE_PAGE)
+                    driver.navigate(TestUrls.SIMPLE_PAGE)
                 }
             }
             navigations.awaitAll()
@@ -226,7 +226,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle empty text content")
     suspend fun testShouldHandleEmptyTextContent() {
-        driver.navigateTo(TestUrls.ERROR_PAGE)
+        driver.navigate(TestUrls.ERROR_PAGE)
 
         val emptyText = driver.selectFirstTextOrNull("#emptyDiv")
         // Should return null or empty string for empty element
@@ -258,7 +258,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle delayed content loading")
     suspend fun testShouldHandleDelayedContentLoading() {
-        driver.navigateTo(TestUrls.ERROR_PAGE)
+        driver.navigate(TestUrls.ERROR_PAGE)
 
         // Try to get content that appears after delay
         val delayedContent = driver.selectFirstTextOrNull("#delayedDiv")
@@ -299,7 +299,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should handle rapid driver property access")
     @Tag("Fast")
     suspend fun testShouldHandleRapidDriverPropertyAccess() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // Rapidly access driver properties
         repeat(5) {
@@ -313,7 +313,7 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @Test
     @DisplayName("should handle hidden elements")
     suspend fun testShouldHandleHiddenElements() {
-        driver.navigateTo(TestUrls.ERROR_PAGE)
+        driver.navigate(TestUrls.ERROR_PAGE)
 
         val hiddenText = driver.selectFirstTextOrNull("#hiddenDiv")
         // Behavior depends on implementation - might return text or null
@@ -338,13 +338,13 @@ class ErrorHandlingAndEdgeCasesTest : KotlinSdkIntegrationTestBase() {
     @DisplayName("should recover from navigation to invalid URL")
     suspend fun testShouldRecoverFromNavigationToInvalidURL() {
         try {
-            driver.navigateTo("http://invalid-domain-that-does-not-exist-12345.com")
+            driver.navigate("http://invalid-domain-that-does-not-exist-12345.com")
         } catch (e: Exception) {
             // Expected failure
         }
 
         // Should still be able to navigate to valid URL
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
         val url = driver.currentUrl()
         assertNotNull(url, "Should recover and navigate to valid URL")
     }

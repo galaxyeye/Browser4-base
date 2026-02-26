@@ -28,7 +28,7 @@ fun main() {
     val agent = session.companionAgent
     val driver = session.driver
 
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
 
     // Your AI automation code here
 
@@ -60,7 +60,7 @@ Execute single actions described in natural language:
 
 ```kotlin
 val agent = session.companionAgent
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Click an element
 val result = agent.act("click the search button")
@@ -94,7 +94,7 @@ Run autonomous multi-step tasks:
 
 ```kotlin
 val agent = session.companionAgent
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Complex task
 val result = agent.run(
@@ -154,7 +154,7 @@ val observation = agent.observe(
 ### Natural Language Extraction
 
 ```kotlin
-driver.navigateTo("https://example.com/product")
+driver.navigate("https://example.com/product")
 
 val result = agent.extract(
     instruction = "extract the product name, price, and availability"
@@ -207,7 +207,7 @@ val result = agent.extract(
 Generate intelligent summaries:
 
 ```kotlin
-driver.navigateTo("https://example.com/article")
+driver.navigate("https://example.com/article")
 
 // Basic summarization
 val summary = agent.summarize()

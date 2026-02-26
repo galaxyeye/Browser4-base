@@ -37,8 +37,8 @@ Source: sdks/browser4-kotlin/src/main/kotlin/ai/platon/pulsar/sdk/v0/WebDriver.k
 
 | Method | Coverage | Tests | Notes |
 | --- | --- | --- | --- |
-| open(url) | Partial | WebDriverIntegrationTest | indirect via navigateTo |
-| navigateTo(url) | Yes | WebDriverIntegrationTest | |
+| open(url) | Partial | WebDriverIntegrationTest | indirect via navigate |
+| navigate(url) | Yes | WebDriverIntegrationTest | |
 | currentUrl() | Yes | WebDriverIntegrationTest, ErrorHandlingAndEdgeCasesTest | |
 | getCurrentUrl() | No | - | |
 | url() | No | - | |

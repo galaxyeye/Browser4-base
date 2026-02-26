@@ -18,14 +18,14 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
+
     // Navigate to URL
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
     println("Current URL: ${driver.currentUrl()}")
-    
+
     // Get page title
     println("Title: ${driver.title()}")
-    
+
     session.close()
 }
 ```
@@ -57,7 +57,7 @@ session.close()
 val driver = session.driver
 
 // Simple navigation
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Wait for navigation to complete
 driver.waitForNavigation()
@@ -76,7 +76,7 @@ Use `open()` for navigation with waiting:
 driver.open("https://example.com")
 
 // Equivalent to:
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.waitForNavigation()
 ```
 
@@ -86,10 +86,10 @@ driver.waitForNavigation()
 val driver = session.driver
 
 // Navigate to first page
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Navigate to second page
-driver.navigateTo("https://google.com")
+driver.navigate("https://google.com")
 
 // Go back
 driver.goBack()
@@ -109,7 +109,7 @@ println("History: $history")
 ```kotlin
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Reload current page
 driver.reload()
@@ -124,7 +124,7 @@ println("Page reloaded")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/path?query=value")
+driver.navigate("https://example.com/path?query=value")
 
 // Current browser URL
 val url = driver.currentUrl()
@@ -147,7 +147,7 @@ println("Base URI: $baseUri")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 val title = driver.title()
 println("Page title: $title")
@@ -157,7 +157,7 @@ println("Page title: $title")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Get full HTML source
 val html = driver.pageSource()
@@ -182,7 +182,7 @@ println("Navigation complete")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Wait for element to appear (default 30s timeout)
 driver.waitForSelector(".dynamic-content")
@@ -199,7 +199,7 @@ println("Content: $content")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Check if element exists
 if (driver.exists(".modal")) {
@@ -335,12 +335,12 @@ val urls = listOf(
 )
 
 for (url in urls) {
-    driver.navigateTo(url)
+    driver.navigate(url)
     driver.waitForSelector(".content")
-    
+
     val title = driver.title()
     println("Page: $title")
-    
+
     // Extract data
     val content = driver.selectFirstTextOrNull(".main-content")
     println("Content: $content")
@@ -357,26 +357,26 @@ Navigate through paginated content:
 val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
-driver.navigateTo("https://example.com/products")
+driver.navigate("https://example.com/products")
 
 var page = 1
 while (true) {
     println("Processing page $page")
-    
+
     // Extract items from current page
     val items = driver.selectTextAll(".product-item")
     items.forEach { println("Item: $it") }
-    
+
     // Check if next page exists
     if (!driver.exists(".next-page")) {
         break
     }
-    
+
     // Navigate to next page
     driver.click(".next-page")
     driver.waitForNavigation()
     driver.waitForSelector(".product-item")
-    
+
     page++
 }
 
@@ -391,7 +391,7 @@ Follow links from a page:
 val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Extract all links
 val links = driver.selectAttributeAll("a", "href")
@@ -400,12 +400,12 @@ val links = driver.selectAttributeAll("a", "href")
 for (link in links.take(5)) { // Limit to first 5
     if (link.startsWith("http")) {
         println("Visiting: $link")
-        driver.navigateTo(link)
+        driver.navigate(link)
         driver.waitForNavigation()
-        
+
         val title = driver.title()
         println("Title: $title")
-        
+
         // Go back to original page
         driver.goBack()
         driver.waitForNavigation()
@@ -423,7 +423,7 @@ Simulate opening links in new tabs:
 val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Get links to visit
 val links = driver.selectAttributeAll("a.external", "href")
@@ -433,15 +433,15 @@ val originalUrl = driver.currentUrl()
 
 // Visit each link
 for (link in links) {
-    driver.navigateTo(link)
+    driver.navigate(link)
     driver.waitForNavigation()
-    
+
     // Process page
     val title = driver.title()
     println("Link title: $title")
-    
+
     // Return to original page
-    driver.navigateTo(originalUrl)
+    driver.navigate(originalUrl)
     driver.waitForNavigation()
 }
 
@@ -457,7 +457,7 @@ val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
 val startUrl = "https://example.com/redirect"
-driver.navigateTo(startUrl)
+driver.navigate(startUrl)
 driver.waitForNavigation()
 
 val finalUrl = driver.currentUrl()
@@ -489,7 +489,7 @@ session.close()
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Click button that triggers AJAX
 driver.click("button.load-data")
@@ -506,7 +506,7 @@ println("AJAX content: $content")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/infinite-scroll")
+driver.navigate("https://example.com/infinite-scroll")
 
 var previousHeight = 0
 var currentHeight = driver.executeScript("return document.body.scrollHeight") as Int
@@ -514,14 +514,14 @@ var currentHeight = driver.executeScript("return document.body.scrollHeight") as
 while (currentHeight > previousHeight) {
     // Scroll to bottom
     driver.scrollToBottom()
-    
+
     // Wait for new content
     Thread.sleep(2000)
-    
+
     // Check new height
     previousHeight = currentHeight
     currentHeight = driver.executeScript("return document.body.scrollHeight") as Int
-    
+
     println("Loaded more content, height: $currentHeight")
 }
 
@@ -537,7 +537,7 @@ val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
 try {
-    driver.navigateTo("https://invalid-url-does-not-exist.com")
+    driver.navigate("https://invalid-url-does-not-exist.com")
     driver.waitForNavigation()
 } catch (e: Exception) {
     println("Navigation failed: ${e.message}")
@@ -553,11 +553,11 @@ session.close()
 val driver = session.driver
 
 try {
-    driver.navigateTo("https://very-slow-website.com")
-    
+    driver.navigate("https://very-slow-website.com")
+
     // Wait with timeout
     driver.waitForSelector(".content", timeout = 10000) // 10 seconds
-    
+
 } catch (e: Exception) {
     println("Timeout waiting for content: ${e.message}")
     // Continue with alternative action
@@ -574,7 +574,7 @@ fun navigateWithRetry(
 ): Boolean {
     repeat(maxRetries) { attempt ->
         try {
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForNavigation()
             return true
         } catch (e: Exception) {

@@ -164,7 +164,7 @@ Execute a single action described in natural language.
 
 ```python
 session = AgenticSession(client)
-session.driver.navigate_to("https://example.com")
+session.driver.navigate("https://example.com")
 
 # Simple actions
 result = session.act("click the search button")
@@ -249,7 +249,7 @@ Observe the page and return potential actions.
 
 ```python
 session = AgenticSession(client)
-session.driver.navigate_to("https://example.com")
+session.driver.navigate("https://example.com")
 
 # General observation
 observation = session.observe()
@@ -292,7 +292,7 @@ Extract structured data from the page using AI.
 
 ```python
 session = AgenticSession(client)
-session.driver.navigate_to("https://example.com/products")
+session.driver.navigate("https://example.com/products")
 
 # Extract without schema
 result = session.agent_extract(
@@ -346,7 +346,7 @@ Summarize page content using AI.
 
 ```python
 session = AgenticSession(client)
-session.driver.navigate_to("https://example.com/article")
+session.driver.navigate("https://example.com/article")
 
 # General summary
 summary = session.summarize()
@@ -416,7 +416,7 @@ Capture the live page controlled by a WebDriver as a WebPage snapshot.
 
 ```python
 session = AgenticSession(client)
-session.driver.navigate_to("https://example.com")
+session.driver.navigate("https://example.com")
 session.act("scroll to bottom")
 
 # Capture current state
@@ -519,7 +519,7 @@ client.create_session()
 session = AgenticSession(client)
 
 # Navigate and act
-session.driver.navigate_to("https://example.com")
+session.driver.navigate("https://example.com")
 result = session.act("click the login button")
 
 if result.success:
@@ -567,7 +567,7 @@ client.create_session()
 session = AgenticSession(client)
 
 # Navigate to product page
-session.driver.navigate_to("https://example.com/products")
+session.driver.navigate("https://example.com/products")
 
 # Extract with AI (no selectors needed)
 result = session.agent_extract(
@@ -593,7 +593,7 @@ client.create_session()
 session = AgenticSession(client)
 
 # Navigate to page
-session.driver.navigate_to("https://example.com")
+session.driver.navigate("https://example.com")
 
 # Observe available actions
 observation = session.observe("find interactive elements")
@@ -623,7 +623,7 @@ client.create_session()
 session = AgenticSession(client)
 
 # Step 1: Navigate
-session.driver.navigate_to("https://example.com")
+session.driver.navigate("https://example.com")
 
 # Step 2: Execute actions
 session.act("click the search icon")
@@ -658,7 +658,7 @@ client.create_session()
 session = AgenticSession(client)
 
 # Navigate to article
-session.driver.navigate_to("https://example.com/article")
+session.driver.navigate("https://example.com/article")
 
 # Get summary
 summary = session.summarize(

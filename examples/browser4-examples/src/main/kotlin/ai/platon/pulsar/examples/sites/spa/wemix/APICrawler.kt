@@ -9,7 +9,7 @@ import kotlinx.coroutines.runBlocking
 
 private class InitBrowserHandler(val initUrl: String): WebPageWebDriverEventHandler() {
     override suspend fun invoke(page: WebPage, driver: WebDriver): Any? {
-        driver.navigateTo(initUrl)
+        driver.navigate(initUrl)
         delay(10_000)
         return null
     }

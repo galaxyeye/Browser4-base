@@ -11,7 +11,7 @@
 - `AgentToolManager`
   - domain 路由（driver/browser/fs/agent/system + custom domains）
   - 调用执行：`BasicToolCallExecutor.callFunctionOn(...)`
-  - post hooks：`switchTab` / `navigateTo` 等
+  - post hooks：`switchTab` / `navigate` 等
   - 导航统一等待：`ToolSpecification.MAY_NAVIGATE_ACTIONS`
 
 ### 工具规范与 prompt 输出

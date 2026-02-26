@@ -156,7 +156,7 @@ val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
 // Navigate to a page
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 println("Current URL: ${driver.currentUrl()}")
 println("Page title: ${driver.title()}")
 
@@ -234,7 +234,7 @@ session.close()
 val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Extract text from first matching element
 val title = driver.selectFirstTextOrNull("h1")
@@ -280,7 +280,7 @@ Use WebDriver to interact with page elements:
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Click using CSS selector
 driver.click("button.submit")
@@ -329,7 +329,7 @@ Always wait for elements to appear before interacting:
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Wait for element to appear (default 30s timeout)
 driver.waitForSelector(".dynamic-content")
@@ -357,7 +357,7 @@ Control page scrolling for loading dynamic content:
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Scroll down multiple times (loads infinite scroll content)
 driver.scrollDown(count = 3)
@@ -384,7 +384,7 @@ import java.io.File
 import java.util.Base64
 
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Capture viewport screenshot
 val screenshot = driver.screenshot()
@@ -409,7 +409,7 @@ Run custom JavaScript in the browser context:
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Execute JavaScript and get result
 val linkCount = driver.executeScript(
@@ -438,7 +438,7 @@ val session = AgenticSession.getOrCreate()
 val agent = session.companionAgent
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Execute single action
 val actResult = agent.act("click the 'More information' link")
@@ -481,7 +481,7 @@ fun main() {
     try {
         // Navigate to page
         println("Navigating to example.com...")
-        driver.navigateTo("https://example.com")
+        driver.navigate("https://example.com")
 
         // Wait for content
         driver.waitForSelector("h1")

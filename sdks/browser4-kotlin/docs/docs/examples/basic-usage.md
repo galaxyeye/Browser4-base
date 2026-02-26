@@ -48,7 +48,7 @@ session.close()
 val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.waitForSelector(".content")
 
 driver.click("button.show-more")
@@ -64,7 +64,7 @@ session.close()
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/contact")
+driver.navigate("https://example.com/contact")
 
 driver.fill("input[name='name']", "John Doe")
 driver.fill("input[name='email']", "john@example.com")
@@ -85,7 +85,7 @@ import java.io.File
 import java.util.Base64
 
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 val screenshot = driver.screenshot(fullPage = true)
 if (screenshot != null) {
@@ -99,7 +99,7 @@ if (screenshot != null) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/table")
+driver.navigate("https://example.com/table")
 
 val data = driver.executeScript("""
     const rows = Array.from(document.querySelectorAll('tbody tr'));
@@ -116,7 +116,7 @@ data.forEach { println("Row: $it") }
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/products")
+driver.navigate("https://example.com/products")
 
 val allItems = mutableListOf<String>()
 var page = 1

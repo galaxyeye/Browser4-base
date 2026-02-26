@@ -9,7 +9,7 @@ Low-level HTTP client for Browser4 API communication.
 
 **Key responsibilities:**
 - Session management
-- HTTP request/response handling  
+- HTTP request/response handling
 - Local driver management
 
 ### [PulsarSession](pulsar-session.md)
@@ -21,7 +21,7 @@ High-level session for page loading and extraction.
 - HTML parsing
 - CSS selector-based extraction
 
-### [AgenticSession](agentic-session.md)  
+### [AgenticSession](agentic-session.md)
 AI-powered browser automation extending PulsarSession.
 
 **AI capabilities:**
@@ -78,7 +78,7 @@ val page = session.submit("https://example.com")
 ```kotlin
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.goBack()
 driver.goForward()
 driver.reload()

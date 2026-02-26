@@ -156,7 +156,7 @@ Integration Test Execution
 ┌────────────────────────────────────────────────────────────────┐
 │                    Integration Test                             │
 │                                                                 │
-│  test_navigate_to_url(integration_client):                     │
+│  test_navigate_url(integration_client):                     │
 │      client.post(f"/session/{session_id}/url",                 │
 │                  {"url": SIMPLE_PAGE})                         │
 └────────────────────────────────────────────────────────────────┘

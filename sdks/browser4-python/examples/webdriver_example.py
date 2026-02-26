@@ -30,7 +30,7 @@ def main():
 
         # Navigation
         print("1. Navigation")
-        driver.navigate_to("https://example.com")
+        driver.navigate("https://example.com")
         print(f"   Current URL: {driver.current_url()}")
         print(f"   Page title: {driver.title()}\n")
 

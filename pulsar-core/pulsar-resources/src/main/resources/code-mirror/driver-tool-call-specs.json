@@ -32,22 +32,22 @@
   "description" : "    /**\n     * Opens the specified URL in the web driver.\n     *\n     * This function navigates the web driver to the provided URL and waits for the navigation to complete.\n     * It is a suspend function, meaning it can be used within coroutines for asynchronous execution.\n     *\n     * Example usage:\n     * ```kotlin\n     * driver.open(\"https://www.example.com\")\n     * ```\n     *\n     * @param url The URL to which the web driver should navigate. Must be a valid URL string.\n     * @throws WebDriverException If an error occurs during navigation or waiting for the navigation to complete.\n     */\n"
 }, {
   "domain" : "driver",
-  "method" : "navigateTo",
+  "method" : "navigate",
   "arguments" : [ {
     "name" : "url",
     "type" : "String"
   } ],
   "returnType" : "Unit",
-  "description" : "    /**\n     * Navigates current page to the given URL.\n     *\n     * ```kotlin\n     * driver.navigateTo(\"https://www.example.com\")\n     * driver.waitForNavigation()\n     * ```\n     *\n     * @param url URL to navigate page to.\n     */\n"
+  "description" : "    /**\n     * Navigates current page to the given URL.\n     *\n     * ```kotlin\n     * driver.navigate(\"https://www.example.com\")\n     * driver.waitForNavigation()\n     * ```\n     *\n     * @param url URL to navigate page to.\n     */\n"
 }, {
   "domain" : "driver",
-  "method" : "navigateTo",
+  "method" : "navigate",
   "arguments" : [ {
     "name" : "entry",
     "type" : "NavigateEntry"
   } ],
   "returnType" : "Unit",
-  "description" : "    /**\n     * Navigates current page to the given URL.\n     *\n     * ```kotlin\n     * val entry = NavigateEntry(\"https://www.example.com?timestamp=11712067353\", pageUrl = \"https://www.example.com\")\n     * driver.navigateTo(entry)\n     * driver.waitForNavigation()\n     * ```\n     *\n     * @param entry NavigateEntry to navigate page to.\n     */\n"
+  "description" : "    /**\n     * Navigates current page to the given URL.\n     *\n     * ```kotlin\n     * val entry = NavigateEntry(\"https://www.example.com?timestamp=11712067353\", pageUrl = \"https://www.example.com\")\n     * driver.navigate(entry)\n     * driver.waitForNavigation()\n     * ```\n     *\n     * @param entry NavigateEntry to navigate page to.\n     */\n"
 }, {
   "domain" : "driver",
   "method" : "reload",
@@ -228,7 +228,7 @@
     "type" : "String"
   } ],
   "returnType" : "Duration",
-  "description" : "    /**\n     * Wait until the current url changes or timeout.\n     *\n     * ```kotlin\n     * val url = \"https://www.example.com\"\n     * driver.navigateTo(url)\n     * var remainingTime = driver.waitForNavigation()\n     * if (remainingTime > 0) {\n     *   driver.click(\"a[href='/next']\")\n     *   remainingTime = driver.waitForNavigation(url)\n     * }\n     * ```\n     * */\n"
+  "description" : "    /**\n     * Wait until the current url changes or timeout.\n     *\n     * ```kotlin\n     * val url = \"https://www.example.com\"\n     * driver.navigate(url)\n     * var remainingTime = driver.waitForNavigation()\n     * if (remainingTime > 0) {\n     *   driver.click(\"a[href='/next']\")\n     *   remainingTime = driver.waitForNavigation(url)\n     * }\n     * ```\n     * */\n"
 }, {
   "domain" : "driver",
   "method" : "waitForNavigation",
@@ -240,7 +240,7 @@
     "type" : "Long"
   } ],
   "returnType" : "Long",
-  "description" : "    /**\n     * Wait until the current url changes or timeout.\n     *\n     * ```kotlin\n     * val url = \"https://www.example.com\"\n     * driver.navigateTo(url)\n     * var remainingTime = driver.waitForNavigation(1000)\n     * if (remainingTime > 0) {\n     *   driver.click(\"a[href='/next']\")\n     *   remainingTime = driver.waitForNavigation(url, 1000)\n     * }\n     * ```\n     *\n     * @param timeoutMillis The maximum time to wait for the url to change.\n     * */\n"
+  "description" : "    /**\n     * Wait until the current url changes or timeout.\n     *\n     * ```kotlin\n     * val url = \"https://www.example.com\"\n     * driver.navigate(url)\n     * var remainingTime = driver.waitForNavigation(1000)\n     * if (remainingTime > 0) {\n     *   driver.click(\"a[href='/next']\")\n     *   remainingTime = driver.waitForNavigation(url, 1000)\n     * }\n     * ```\n     *\n     * @param timeoutMillis The maximum time to wait for the url to change.\n     * */\n"
 }, {
   "domain" : "driver",
   "method" : "waitForNavigation",
@@ -252,7 +252,7 @@
     "type" : "Duration"
   } ],
   "returnType" : "Duration",
-  "description" : "    /**\n     * Wait until the current url changes or timeout.\n     *\n     * ```kotlin\n     * val timeout = Duration.ofSeconds(30)\n     * val url = \"https://www.example.com\"\n     * driver.navigateTo(url)\n     * var remainingTime = driver.waitForNavigation(timeout)\n     * if (remainingTime > 0) {\n     *   driver.click(\"a[href='/next']\")\n     *   remainingTime = driver.waitForNavigation(url, timeout)\n     * }\n     * ```\n     *\n     * @param timeout The maximum time to wait for the url to change.\n     * */\n"
+  "description" : "    /**\n     * Wait until the current url changes or timeout.\n     *\n     * ```kotlin\n     * val timeout = Duration.ofSeconds(30)\n     * val url = \"https://www.example.com\"\n     * driver.navigate(url)\n     * var remainingTime = driver.waitForNavigation(timeout)\n     * if (remainingTime > 0) {\n     *   driver.click(\"a[href='/next']\")\n     *   remainingTime = driver.waitForNavigation(url, timeout)\n     * }\n     * ```\n     *\n     * @param timeout The maximum time to wait for the url to change.\n     * */\n"
 }, {
   "domain" : "driver",
   "method" : "waitForPage",

@@ -15,8 +15,8 @@ abstract class AbstractJvmWebDriver: JvmWebDriver, WebDriver {
 
     override fun addInitScriptAsync(script: String) = interopScope.future { addInitScript(script) }
     override fun addBlockedURLsAsync(urls: List<String>) = interopScope.future { addBlockedURLs(urls) }
-    override fun navigateToAsync(url: String) = interopScope.future { navigateTo(url) }
-    override fun navigateToAsync(entry: NavigateEntry) = interopScope.future { navigateTo(entry) }
+    override fun navigateAsync(url: String) = interopScope.future { navigate(url) }
+    override fun navigateAsync(entry: NavigateEntry) = interopScope.future { navigate(entry) }
     override fun currentUrlAsync() = interopScope.future { currentUrl() }
     override fun pageSourceAsync() = interopScope.future { pageSource() }
     override fun getCookiesAsync() = interopScope.future { getCookies() }

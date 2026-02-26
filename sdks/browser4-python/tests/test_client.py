@@ -392,7 +392,7 @@ def test_webdriver_navigate(stub_client):
     client.session_id = "test-session-123"
     driver = WebDriver(client)
 
-    driver.navigate_to("https://example.com")
+    driver.navigate("https://example.com")
 
     assert stub.calls[-1]["url"].endswith("/session/test-session-123/url")
     assert json.loads(stub.calls[-1]["data"]) == {"url": "https://example.com"}
@@ -460,8 +460,8 @@ def test_webdriver_navigate_history(stub_client):
     client.session_id = "test-session-123"
     driver = WebDriver(client)
 
-    driver.navigate_to("https://example.com")
-    driver.navigate_to("https://example.com/page2")
+    driver.navigate("https://example.com")
+    driver.navigate("https://example.com/page2")
 
     history = driver.navigate_history
     assert len(history) == 2

@@ -107,7 +107,7 @@ This section summarizes spec metadata. Endpoint lists are in Section 2, and impl
 
 | Method | Path | operationId | W3C | In openapi.yaml | Next Step (human) |
 |---|---|---|---|---|---|
-| POST | `/session/{sessionId}/url` | `navigateTo` | ✓ | ✓ | - |
+| POST | `/session/{sessionId}/url` | `navigate` | ✓ | ✓ | - |
 | GET | `/session/{sessionId}/url` | `getCurrentUrl` | ✓ | ✓ | - |
 | GET | `/session/{sessionId}/documentUri` | `getDocumentUri` | ✗ | ✓ | - |
 | GET | `/session/{sessionId}/baseUri` | `getBaseUri` | ✗ | ✓ | - |

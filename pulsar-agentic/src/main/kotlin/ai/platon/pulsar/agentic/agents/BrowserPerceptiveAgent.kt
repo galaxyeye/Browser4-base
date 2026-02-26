@@ -493,7 +493,7 @@ open class BrowserPerceptiveAgent(
         val url = driver.url()
         if (url.isBlank() || url == "about:blank") {
             val searchURL = if (AppContext.isCN) AppConstants.SEARCH_ENGINE_URL else AppConstants.SEARCH_ENGINE_EN_URL
-            driver.navigateTo(searchURL)
+            driver.navigate(searchURL)
         }
 
         // Only wait for DOM settle just before collection DOM tree data

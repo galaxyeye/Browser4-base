@@ -22,7 +22,7 @@ Quick start:
     ...     session = AgenticSession(client)
     ...
     ...     # Navigate and interact
-    ...     session.driver.navigate_to("https://example.com")
+    ...     session.driver.navigate("https://example.com")
     ...     print(session.driver.get_current_url())
     ...
     ...     # Use AI-powered actions

@@ -139,7 +139,7 @@ client.create_session()
 driver = WebDriver(client)
 
 # Low-level browser control
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 driver.click("button.submit")
 driver.fill("input[name='search']", "query text")
 title = driver.select_first_text_or_null("h1")

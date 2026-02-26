@@ -107,7 +107,7 @@ fun main() {
     val driver = session.driver
 
     // Navigate to a page
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
 
     // Click elements
     driver.click("button.submit")
@@ -134,7 +134,7 @@ fun main() {
     val agent = session.companionAgent
 
     // Navigate to a page
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 
     // Use natural language to interact
     val result = agent.act("click the 'More information' link")
@@ -159,7 +159,7 @@ fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
 
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
 
     // Capture full-page screenshot
     val screenshot = driver.screenshot(fullPage = true)

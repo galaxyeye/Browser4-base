@@ -21,7 +21,7 @@ page = session.open("https://example.com")
 print(f"Loaded: {page.url}")
 ```
 
-**driver.navigate_to()** - Low-level browser navigation:
+**driver.navigate()** - Low-level browser navigation:
 ```python
 from browser4 import PulsarClient, WebDriver
 
@@ -30,7 +30,7 @@ session_id = client.create_session()
 driver = WebDriver(client)
 
 # Direct browser navigation
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 print(f"Current URL: {driver.current_url()}")
 ```
 
@@ -46,7 +46,7 @@ session_id = client.create_session()
 driver = WebDriver(client)
 
 # Navigate to URL
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Or use open() alias
 driver.open("https://example.com")
@@ -81,9 +81,9 @@ print(f"HTML length: {len(html)} characters")
 driver = WebDriver(client)
 
 # Navigate to multiple pages
-driver.navigate_to("https://example.com")
-driver.navigate_to("https://example.com/page1")
-driver.navigate_to("https://example.com/page2")
+driver.navigate("https://example.com")
+driver.navigate("https://example.com/page1")
+driver.navigate("https://example.com/page2")
 
 # Go back
 driver.go_back()
@@ -104,9 +104,9 @@ print(f"After forward: {driver.current_url()}")
 driver = WebDriver(client)
 
 # Navigate to several pages
-driver.navigate_to("https://example.com")
-driver.navigate_to("https://example.com/about")
-driver.navigate_to("https://example.com/contact")
+driver.navigate("https://example.com")
+driver.navigate("https://example.com/about")
+driver.navigate("https://example.com/contact")
 
 # Access navigation history
 history = driver.navigate_history
@@ -123,7 +123,7 @@ for i, url in enumerate(history, 1):
 driver = WebDriver(client)
 
 # Navigate to a page
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Reload the page
 driver.reload()
@@ -227,51 +227,51 @@ from browser4 import Browser4Driver, PulsarClient, AgenticSession
 
 def navigation_demo():
     """Comprehensive navigation demonstration."""
-    
+
     with Browser4Driver() as driver_mgr:
         client = PulsarClient(base_url=driver_mgr.base_url)
         session_id = client.create_session()
         session = AgenticSession(client)
-        
+
         try:
             # 1. Open initial page
             print("1. Opening example.com...")
             page = session.open("https://example.com")
             print(f"   Loaded: {page.url}")
-            
+
             # 2. Navigate with WebDriver
             driver = session.driver
             print("\n2. Navigating to about page...")
-            driver.navigate_to("https://example.com/about")
+            driver.navigate("https://example.com/about")
             print(f"   Current: {driver.current_url()}")
-            
+
             # 3. Get page info
             print("\n3. Page information:")
             print(f"   Title: {driver.title()}")
             print(f"   URL: {driver.current_url()}")
-            
+
             # 4. Navigate to another page
             print("\n4. Navigating to contact...")
-            driver.navigate_to("https://example.com/contact")
-            
+            driver.navigate("https://example.com/contact")
+
             # 5. Use history navigation
             print("\n5. History navigation:")
             driver.go_back()
             print(f"   After back: {driver.current_url()}")
             driver.go_forward()
             print(f"   After forward: {driver.current_url()}")
-            
+
             # 6. Reload page
             print("\n6. Reloading page...")
             driver.reload()
             print("   Page reloaded")
-            
+
             # 7. View navigation history
             print("\n7. Navigation history:")
             history = driver.navigate_history
             for i, url in enumerate(history, 1):
                 print(f"   {i}. {url}")
-            
+
             # 8. Submit URLs for background processing
             print("\n8. Submitting URLs for background...")
             urls = [
@@ -281,7 +281,7 @@ def navigation_demo():
             for url in urls:
                 session.submit(url, args="-expire 1d")
             print(f"   Submitted {len(urls)} URLs")
-            
+
         finally:
             session.close()
             client.close()
@@ -327,17 +327,17 @@ Visit multiple pages in sequence:
 def visit_pages(session, urls):
     """Visit multiple pages sequentially."""
     pages = []
-    
+
     for url in urls:
         print(f"Visiting: {url}")
         page = session.open(url)
         pages.append(page)
-        
+
         # Optional: extract data from each page
         document = session.parse(page)
         title = session.extract(document, {"title": "h1"})
         print(f"  Title: {title.get('title')}")
-    
+
     return pages
 
 # Usage
@@ -357,10 +357,10 @@ Navigate based on page content:
 def navigate_conditionally(session):
     """Navigate based on page content."""
     driver = session.driver
-    
+
     # Open starting page
-    driver.navigate_to("https://example.com")
-    
+    driver.navigate("https://example.com")
+
     # Check if login required
     if driver.exists("button.login"):
         print("Login required, navigating to login page")
@@ -369,7 +369,7 @@ def navigate_conditionally(session):
         print("On login page")
     else:
         print("Already logged in")
-    
+
     # Navigate based on page state
     if driver.exists(".premium-content"):
         print("Premium content available")
@@ -390,20 +390,20 @@ def navigate_with_retry(driver, url, max_retries=3):
     """Navigate with retry on failure."""
     for attempt in range(max_retries):
         try:
-            driver.navigate_to(url)
-            
+            driver.navigate(url)
+
             # Verify navigation succeeded
             if driver.current_url() == url:
                 print(f"Successfully navigated to {url}")
                 return True
-            
+
             print(f"URL mismatch, attempt {attempt + 1}")
-            
+
         except Exception as e:
             print(f"Navigation failed (attempt {attempt + 1}): {e}")
             if attempt < max_retries - 1:
                 time.sleep(2)  # Wait before retry
-    
+
     print(f"Failed to navigate after {max_retries} attempts")
     return False
 
@@ -472,7 +472,7 @@ query = "python programming"
 encoded_query = quote(query)
 url = f"{base_url}?q={encoded_query}"
 
-driver.navigate_to(url)
+driver.navigate(url)
 ```
 
 ## Best Practices
@@ -517,13 +517,13 @@ for url in urls:
 
 ```python
 # Inefficient
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 data1 = driver.select_first_text_or_null("h1")
 driver.reload()
 data2 = driver.select_first_text_or_null("p")
 
 # Better
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 data1 = driver.select_first_text_or_null("h1")
 data2 = driver.select_first_text_or_null("p")
 ```

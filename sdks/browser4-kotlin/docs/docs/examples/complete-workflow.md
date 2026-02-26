@@ -27,7 +27,7 @@ fun main() = runBlocking {
         println("Starting product scraper...")
 
         // Navigate to search page
-        driver.navigateTo("https://example.com/products")
+        driver.navigate("https://example.com/products")
         driver.waitForSelector(".product-list")
 
         // Apply filters
@@ -111,7 +111,7 @@ fun extractProducts(driver: WebDriver): List<Product> {
 
 fun getProductDetails(driver: WebDriver, product: Product): Product {
     // Navigate to detail page
-    driver.navigateTo("https://example.com/product/${product.name.hashCode()}")
+    driver.navigate("https://example.com/product/${product.name.hashCode()}")
     driver.waitForSelector(".product-detail")
 
     // Extract additional details
@@ -165,7 +165,7 @@ fun runAiWorkflow() = runBlocking {
 
     try {
         // Let AI handle the workflow
-        driver.navigateTo("https://example.com")
+        driver.navigate("https://example.com")
 
         val result = agent.run("""
             Navigate to the products page,

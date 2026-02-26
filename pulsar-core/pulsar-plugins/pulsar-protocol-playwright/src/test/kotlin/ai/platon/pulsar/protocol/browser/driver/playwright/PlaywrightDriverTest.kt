@@ -62,7 +62,7 @@ class PlaywrightDriverTest {
     @Test
     fun test_newDriver() {
         runBlocking {
-            driver.navigateTo(url)
+            driver.navigate(url)
             val text = driver.selectFirstTextOrNull("body")
             assertNotNull(text)
             printlnPro(">>>\n" + text.take(100) + "\n<<<")
@@ -70,11 +70,11 @@ class PlaywrightDriverTest {
     }
 
     @Test
-    fun test_navigateTo() {
+    fun test_navigate() {
         runBlocking {
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForNavigation()
-            driver.navigateTo(url2)
+            driver.navigate(url2)
             driver.waitForNavigation()
             val text = driver.selectFirstTextOrNull("body")
             assertNotNull(text)
@@ -83,9 +83,9 @@ class PlaywrightDriverTest {
     }
 
     @Test
-    fun test_navigateTo_ChromeBlank() {
+    fun test_navigate_ChromeBlank() {
         runBlocking {
-            driver.navigateTo("about:blank")
+            driver.navigate("about:blank")
             driver.waitForNavigation()
             val text = driver.selectFirstTextOrNull("body")
             assertNotNull(text)
@@ -94,18 +94,18 @@ class PlaywrightDriverTest {
     }
 
     @Test
-    fun test_navigateTo_InvalidURL() {
+    fun test_navigate_InvalidURL() {
         assertThrows<IllegalWebDriverStateException> {
             runBlocking {
                 // Protocol error (Page.navigate): Cannot navigate to invalid URL
-                driver.navigateTo("    ")
+                driver.navigate("    ")
             }
         }
 
         assertThrows<IllegalWebDriverStateException> {
             runBlocking {
                 // net::ERR_FILE_NOT_FOUND
-                driver.navigateTo("a://b")
+                driver.navigate("a://b")
             }
         }
     }
@@ -118,7 +118,7 @@ class PlaywrightDriverTest {
 
             driver.addInitScript("window.__test_utils__ = { add: (a, b) => a + b }")
 
-            driver.navigateTo(url2)
+            driver.navigate(url2)
             driver.waitForNavigation()
 
             var result = driver.evaluate("1+1")
@@ -151,7 +151,7 @@ class PlaywrightDriverTest {
         val attrName = "href"
         val expression = "__pulsar_utils__.selectAttributeAll('$selector', '$attrName')"
         runBlocking {
-            driver.navigateTo("https://www.hua.com/")
+            driver.navigate("https://www.hua.com/")
             driver.waitForSelector("body")
             val result = driver.evaluate(expression)
             printlnPro(result)
@@ -159,9 +159,9 @@ class PlaywrightDriverTest {
     }
 
     @Test
-    fun test_navigateTo_Parallel() {
+    fun test_navigate_Parallel() {
         runBlocking {
-            driver.navigateTo("https://www.hua.com/")
+            driver.navigate("https://www.hua.com/")
             driver.waitForSelector("body")
 
             val links = driver.selectHyperlinks("a[href*=product]", 0, 10)
@@ -170,16 +170,16 @@ class PlaywrightDriverTest {
             links.map { link ->
                 browser.newDriver().use {
                     // ReferenceError: __pulsar_utils__ is not defined
-                    navigateTo(link.url, it)
+                    navigate(link.url, it)
                 }
             }
         }
     }
 
-    private fun navigateTo(url: String, driver: PlaywrightDriver) {
+    private fun navigate(url: String, driver: PlaywrightDriver) {
         runBlocking {
             printlnPro("Navigating - $url")
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForSelector("body")
             val text = driver.selectFirstTextOrNull("body")?.trim()
                 ?.replace("\\s+".toRegex(), " ")

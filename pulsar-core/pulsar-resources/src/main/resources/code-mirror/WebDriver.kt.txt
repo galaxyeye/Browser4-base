@@ -34,7 +34,7 @@ import java.time.Duration
  * * Interact with the webpage
  *
  * Key methods:
- * * [navigateTo]: navigate to a URL.
+ * * [navigate]: navigate to a URL.
  * * [currentUrl]: get the current URL displayed in the address bar.
  * * [scrollDown]: scroll down on a webpage to fully load the page. Most modern webpages support lazy loading
  * using ajax tech, where the page content only starts to load when it is scrolled into view.
@@ -255,7 +255,7 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     suspend fun open(url: String) {
         // Navigates the web driver to the specified URL.
-        navigateTo(url)
+        navigate(url)
         // Waits for the navigation to complete before proceeding.
         waitForNavigation()
     }
@@ -264,28 +264,28 @@ interface WebDriver : Closeable {
      * Navigates current page to the given URL.
      *
      * ```kotlin
-     * driver.navigateTo("https://www.example.com")
+     * driver.navigate("https://www.example.com")
      * driver.waitForNavigation()
      * ```
      *
      * @param url URL to navigate page to.
      */
     @Throws(WebDriverException::class)
-    suspend fun navigateTo(url: String)
+    suspend fun navigate(url: String)
 
     /**
      * Navigates current page to the given URL.
      *
      * ```kotlin
      * val entry = NavigateEntry("https://www.example.com?timestamp=11712067353", pageUrl = "https://www.example.com")
-     * driver.navigateTo(entry)
+     * driver.navigate(entry)
      * driver.waitForNavigation()
      * ```
      *
      * @param entry NavigateEntry to navigate page to.
      */
     @Throws(WebDriverException::class)
-    suspend fun navigateTo(entry: NavigateEntry)
+    suspend fun navigate(entry: NavigateEntry)
 
     @Throws(WebDriverException::class)
     suspend fun reload()
@@ -574,7 +574,7 @@ interface WebDriver : Closeable {
      *
      * ```kotlin
      * val url = "https://www.example.com"
-     * driver.navigateTo(url)
+     * driver.navigate(url)
      * var remainingTime = driver.waitForNavigation()
      * if (remainingTime > 0) {
      *   driver.click("a[href='/next']")
@@ -590,7 +590,7 @@ interface WebDriver : Closeable {
      *
      * ```kotlin
      * val url = "https://www.example.com"
-     * driver.navigateTo(url)
+     * driver.navigate(url)
      * var remainingTime = driver.waitForNavigation(1000)
      * if (remainingTime > 0) {
      *   driver.click("a[href='/next']")
@@ -610,7 +610,7 @@ interface WebDriver : Closeable {
      * ```kotlin
      * val timeout = Duration.ofSeconds(30)
      * val url = "https://www.example.com"
-     * driver.navigateTo(url)
+     * driver.navigate(url)
      * var remainingTime = driver.waitForNavigation(timeout)
      * if (remainingTime > 0) {
      *   driver.click("a[href='/next']")

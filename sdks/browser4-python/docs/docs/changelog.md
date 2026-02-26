@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `process_trace` - View detailed process trace
 
 - **WebDriver** - Browser control and element interaction
-  - Navigation: `navigate_to()`, `reload()`, `go_back()`, `go_forward()`
+  - Navigation: `navigate()`, `reload()`, `go_back()`, `go_forward()`
   - Page info: `current_url()`, `title()`, `page_source()`
   - Element interaction: `click()`, `fill()`, `type()`, `press()`, `hover()`, `focus()`
   - Checkboxes: `check()`, `uncheck()`

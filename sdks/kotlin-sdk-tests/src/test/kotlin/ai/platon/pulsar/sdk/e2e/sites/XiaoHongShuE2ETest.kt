@@ -40,7 +40,7 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         val driver = session.driver
 
         // 1. 进入发布页，选择 1 张图片并做一次轻量编辑（滤镜/贴纸二选一）
-        driver.navigateTo("https://www.xiaohongshu.com/publish")
+        driver.navigate("https://www.xiaohongshu.com/publish")
         var result = session.run("Select 1 image and apply a filter or sticker")
         assertTrue(result.success, "Failed to select image and apply filter: ${result.message}")
 
@@ -49,7 +49,7 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         assertTrue(result.success, "Failed to publish note: ${result.message}")
 
         // 3. 进入个人主页打开刚发布的笔记，从“更多/…”进入编辑
-        driver.navigateTo("https://www.xiaohongshu.com/user/profile")
+        driver.navigate("https://www.xiaohongshu.com/user/profile")
         result = session.run("Open the latest published note, then go to edit mode from 'More' menu")
         assertTrue(result.success, "Failed to enter edit mode: ${result.message}")
 
@@ -83,7 +83,7 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         val driver = session.driver
 
         // 1. 在首页搜索框输入明确意图关键词（例如“通勤穿搭 小个子”）
-        driver.navigateTo("https://www.xiaohongshu.com/")
+        driver.navigate("https://www.xiaohongshu.com/")
         val searchResult = session.act("Search for '通勤穿搭 小个子'")
         assertTrue(searchResult.success, "Failed to search: ${searchResult.message}")
 
@@ -92,7 +92,7 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         assertTrue(sortResult.success, "Failed to check results and sort: ${sortResult.message}")
 
         // 3. 返回首页连续浏览推荐流 10~15 条内容
-        driver.navigateTo("https://www.xiaohongshu.com/")
+        driver.navigate("https://www.xiaohongshu.com/")
         val browseResult = session.run("Browse 10-15 items in the recommendation feed")
         assertTrue(browseResult.success, "Failed to browse feed: ${browseResult.message}")
 
@@ -126,12 +126,12 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         val driver = session.driver
 
         // 1. 打开任意笔记详情，执行：点赞、收藏、发布一条短评论
-        driver.navigateTo("https://www.xiaohongshu.com/explore")
+        driver.navigate("https://www.xiaohongshu.com/explore")
         var result = session.run("Open any note, like it, collect it, and post a short comment")
         assertTrue(result.success, "Failed to interact with note: ${result.message}")
 
         // 2. 回到个人页，进入“赞过/收藏/评论”相关入口
-        driver.navigateTo("https://www.xiaohongshu.com/user/profile")
+        driver.navigate("https://www.xiaohongshu.com/user/profile")
         result = session.run("Check 'Liked', 'Collected', and 'Commented' lists for the note")
         assertTrue(result.success, "Failed to verify interactions in profile: ${result.message}")
 
@@ -165,17 +165,17 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         val driver = session.driver
 
         // 1. 从作者主页进入“发消息”，发送一条文本
-        driver.navigateTo("https://www.xiaohongshu.com/explore")
+        driver.navigate("https://www.xiaohongshu.com/explore")
         var result = session.run("Find a user profile, click 'Message', and send a text message")
         assertTrue(result.success, "Failed to send message: ${result.message}")
 
         // 2. 进入消息列表确认会话入口与未读状态可理解
-        driver.navigateTo("https://www.xiaohongshu.com/notification")
+        driver.navigate("https://www.xiaohongshu.com/notification")
         result = session.run("Check message list for the conversation")
         assertTrue(result.success, "Failed to check message list: ${result.message}")
 
         // 3. 进入“设置 → 帮助与客服”，搜索一个问题关键词（例如“账号申诉”）
-        driver.navigateTo("https://www.xiaohongshu.com/settings")
+        driver.navigate("https://www.xiaohongshu.com/settings")
         result = session.run("Go to Settings -> Help & Service, and search for 'Account Appeal'")
         assertTrue(result.success, "Failed to search help center: ${result.message}")
 
@@ -209,7 +209,7 @@ class XiaoHongShuE2ETest : KotlinSdkIntegrationTestBase() {
         val driver = session.driver
 
         // 1. 打开一条带商品卡片/商品标签的笔记，点击商品入口
-        driver.navigateTo("https://www.xiaohongshu.com/explore")
+        driver.navigate("https://www.xiaohongshu.com/explore")
         var result = session.run("Find a note with a product link/card and click it")
         assertTrue(result.success, "Failed to find product note: ${result.message}")
 

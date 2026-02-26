@@ -16,15 +16,15 @@ import ai.platon.pulsar.sdk.v0.*
 fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
-    
-    driver.navigateTo("https://example.com")
-    
+
+    driver.navigate("https://example.com")
+
     // Click using CSS selector
     driver.click("button.submit")
-    
+
     // Click using XPath
     driver.click("//button[@type='submit']", strategy = "xpath")
-    
+
     session.close()
 }
 ```
@@ -33,7 +33,7 @@ fun main() {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Wait for element before clicking
 driver.waitForSelector("button.submit")
@@ -49,7 +49,7 @@ if (driver.exists("button.submit")) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Click all matching elements
 val buttons = driver.selectAttributeAll("button.item", "id")
@@ -65,7 +65,7 @@ buttons.forEach { buttonId ->
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/form")
+driver.navigate("https://example.com/form")
 
 // Fill text input
 driver.fill("input[name='username']", "john_doe")
@@ -80,7 +80,7 @@ driver.fill("textarea[name='comment']", "This is a comment")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/search")
+driver.navigate("https://example.com/search")
 
 // Type text (simulates keyboard input)
 driver.type("input[name='search']", "kotlin programming")
@@ -94,7 +94,7 @@ driver.type("input[name='search']", "kotlin programming")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/search")
+driver.navigate("https://example.com/search")
 
 // Fill search box
 driver.fill("input[name='search']", "kotlin")
@@ -114,7 +114,7 @@ driver.press("input[name='field']", "ArrowDown")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/form")
+driver.navigate("https://example.com/form")
 
 // Check checkbox
 driver.check("input[type='checkbox']#terms")
@@ -134,7 +134,7 @@ if (shouldAcceptTerms) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/form")
+driver.navigate("https://example.com/form")
 
 // Select radio button
 driver.click("input[type='radio'][value='option1']")
@@ -149,7 +149,7 @@ driver.click("label[for='radio-option-2']")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/form")
+driver.navigate("https://example.com/form")
 
 // Select by clicking the dropdown and option
 driver.click("select[name='country']")
@@ -166,7 +166,7 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/form")
+driver.navigate("https://example.com/form")
 
 // Select multiple options
 val options = listOf("option1", "option2", "option3")
@@ -181,7 +181,7 @@ for (option in options) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Hover to reveal dropdown
 driver.hover(".menu-item")
@@ -195,7 +195,7 @@ driver.click(".dropdown-item")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/form")
+driver.navigate("https://example.com/form")
 
 // Focus on input field
 driver.focus("input[name='email']")
@@ -210,18 +210,18 @@ driver.type("input[name='email']", "user@example.com")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/drag-drop")
+driver.navigate("https://example.com/drag-drop")
 
 // Drag and drop using JavaScript
 driver.executeScript("""
     const source = document.querySelector('.draggable');
     const target = document.querySelector('.drop-zone');
-    
+
     const dragEvent = new DragEvent('dragstart', {
         dataTransfer: new DataTransfer()
     });
     source.dispatchEvent(dragEvent);
-    
+
     const dropEvent = new DragEvent('drop', {
         dataTransfer: dragEvent.dataTransfer
     });
@@ -233,7 +233,7 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Double click using JavaScript
 driver.executeScript("""
@@ -251,7 +251,7 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Right click using JavaScript
 driver.executeScript("""
@@ -272,7 +272,7 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/upload")
+driver.navigate("https://example.com/upload")
 
 // Set file path using JavaScript
 driver.executeScript("""
@@ -288,15 +288,15 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/upload")
+driver.navigate("https://example.com/upload")
 
 val files = listOf("file1.txt", "file2.txt", "file3.txt")
 
 driver.executeScript("""
     const input = document.querySelector('input[type="file"][multiple]');
     const dataTransfer = new DataTransfer();
-    ${files.joinToString("\n") { 
-        "dataTransfer.items.add(new File(['content'], '$it'));" 
+    ${files.joinToString("\n") {
+        "dataTransfer.items.add(new File(['content'], '$it'));"
     }}
     input.files = dataTransfer.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -309,7 +309,7 @@ driver.executeScript("""
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Wait for element (default 30s timeout)
 driver.waitForSelector(".dynamic-content")
@@ -322,7 +322,7 @@ driver.waitForSelector(".slow-content", timeout = 60000)
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Check visibility
 if (driver.isVisible(".modal")) {
@@ -349,7 +349,7 @@ waitUntilVisible(".notification")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Click button that shows loading indicator
 driver.click("button.load-data")
@@ -374,7 +374,7 @@ waitUntilHidden(".loading-spinner")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 if (driver.exists(".error-message")) {
     val error = driver.selectFirstTextOrNull(".error-message")
@@ -390,7 +390,7 @@ if (!driver.exists(".premium-feature")) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Check visibility
 val isVisible = driver.isVisible(".notification")
@@ -405,7 +405,7 @@ println("Content hidden: $isHidden")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Check if element is enabled
 val isEnabled = driver.executeScript("""
@@ -427,7 +427,7 @@ println("Checkbox checked: $isChecked")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/multi-step-form")
+driver.navigate("https://example.com/multi-step-form")
 
 // Step 1
 driver.fill("input[name='firstName']", "John")
@@ -453,7 +453,7 @@ println("Form submitted successfully")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Click button that opens modal
 driver.click("button.open-modal")
@@ -485,7 +485,7 @@ println("Modal closed")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/search")
+driver.navigate("https://example.com/search")
 
 // Type in autocomplete field
 driver.type("input.autocomplete", "kotlin")
@@ -504,7 +504,7 @@ println("Autocomplete selection made")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/infinite-scroll")
+driver.navigate("https://example.com/infinite-scroll")
 
 var itemCount = 0
 var maxScrolls = 10
@@ -513,19 +513,19 @@ repeat(maxScrolls) { scrollNum ->
     // Get current item count
     val items = driver.selectTextAll(".item")
     val newCount = items.size
-    
+
     if (newCount == itemCount) {
         // No new items loaded, we've reached the end
         println("Reached end of content")
         return@repeat
     }
-    
+
     itemCount = newCount
     println("Scroll $scrollNum: Loaded $itemCount items")
-    
+
     // Scroll to bottom
     driver.scrollToBottom()
-    
+
     // Wait for new content
     Thread.sleep(1000)
 }
@@ -539,7 +539,7 @@ println("Total items: $itemCount")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 try {
     driver.click(".optional-button")
@@ -559,7 +559,7 @@ if (driver.exists(".optional-button")) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 fun safeClick(selector: String, maxAttempts: Int = 3): Boolean {
     repeat(maxAttempts) { attempt ->
@@ -587,7 +587,7 @@ if (!success) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 fun clickWithRefresh(selector: String) {
     var attempts = 0

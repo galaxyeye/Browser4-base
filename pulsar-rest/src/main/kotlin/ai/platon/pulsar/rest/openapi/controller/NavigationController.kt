@@ -32,7 +32,7 @@ class NavigationController(
      * Navigates to a URL.
      */
     @PostMapping("/url", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    suspend fun navigateTo(
+    suspend fun navigate(
         @PathVariable sessionId: String,
         @RequestBody request: SetUrlRequest,
         response: HttpServletResponse
@@ -50,7 +50,7 @@ class NavigationController(
 
         try {
             // Serialize WebDriver operations using mutex to prevent parallel execution
-            session.withLock { driver.navigateTo(request.url) }
+            session.withLock { driver.navigate(request.url) }
             sessionManager.setSessionUrl(sessionId, request.url)
         } catch (e: Exception) {
             logger.error("Error navigating to URL: {}", e.message, e)

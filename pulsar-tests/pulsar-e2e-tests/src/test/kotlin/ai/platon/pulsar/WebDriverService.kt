@@ -96,7 +96,7 @@ open class WebDriverService(
     }
 
     open suspend fun open(url: String, driver: WebDriver, scrollCount: Int = 3) {
-        driver.navigateTo(url)
+        driver.navigate(url)
         driver.waitForNavigation()
         var n = scrollCount
         while (n-- > 0) {
@@ -107,7 +107,7 @@ open class WebDriverService(
     }
 
     open suspend fun openEnhanced(url: String, driver: WebDriver, scrollCount: Int = 3) {
-        driver.navigateTo(url)
+        driver.navigate(url)
         driver.waitForSelector("body")
 //        driver.waitForSelector("input[id]")
 
@@ -135,7 +135,7 @@ open class FastWebDriverService(
     requiredPageSize: Int = 1
 ) : WebDriverService(browserFactory, requiredPageSize) {
     override suspend fun openEnhanced(url: String, driver: WebDriver, scrollCount: Int) {
-        driver.navigateTo(url)
+        driver.navigate(url)
         driver.delay(1000)
 
         // make sure all metadata are available

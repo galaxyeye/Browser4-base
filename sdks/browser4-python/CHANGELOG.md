@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Content summarization
   - Process trace tracking
 - WebDriver for browser control and element interaction
-  - Navigation (navigate_to, reload, go_back, go_forward)
+  - Navigation (navigate, reload, go_back, go_forward)
   - Element interaction (click, fill, type, press, hover, focus)
   - Checkbox operations (check, uncheck)
   - Scrolling (scroll_down, scroll_up, scroll_to, scroll_to_top/bottom/middle)

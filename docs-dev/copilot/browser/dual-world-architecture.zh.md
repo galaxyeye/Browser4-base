@@ -84,7 +84,7 @@ Browser4 默认自动使用双世界架构：
 ```kotlin
 val browser = BrowserFactory.createBrowser()
 val driver = browser.newDriver()
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 // 脚本自动注入到两个世界中
 ```
 

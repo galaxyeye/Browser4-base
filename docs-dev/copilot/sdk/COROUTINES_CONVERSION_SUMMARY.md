@@ -12,8 +12,8 @@ Successfully converted Browser4 REST API controllers and Kotlin SDK to use Kotli
 
 #### Converted Controllers (已转换的控制器):
 - **NavigationController** (1 method)
-  - `navigateTo()` - Navigate to URL
-  
+  - `navigate()` - Navigate to URL
+
 - **AgentController** (6 methods)
   - `run()` - Autonomous agent task execution
   - `observe()` - Page observation
@@ -21,13 +21,13 @@ Successfully converted Browser4 REST API controllers and Kotlin SDK to use Kotli
   - `extract()` - Data extraction
   - `summarize()` - Content summarization
   - `clearHistory()` - Clear agent history
-  
+
 - **ElementController** (4 methods)
   - `clickElement()` - Click element by ID
   - `sendKeysToElement()` - Send keys to element
   - `getElementAttribute()` - Get element attribute
   - `getElementText()` - Get element text
-  
+
 - **SelectorController** (7 methods)
   - `selectorExists()` - Check if selector exists
   - `waitForSelector()` - Wait for selector
@@ -36,11 +36,11 @@ Successfully converted Browser4 REST API controllers and Kotlin SDK to use Kotli
   - `pressBySelector()` - Press key by selector
   - `getOuterHtmlBySelector()` - Get HTML by selector
   - `screenshotBySelector()` - Screenshot by selector
-  
+
 - **ScriptController** (2 methods)
   - `executeSync()` - Execute synchronous script
   - `executeAsync()` - Execute asynchronous script
-  
+
 - **PulsarSessionController** (1 method)
   - `open()` - Open URL in session
 
@@ -51,7 +51,7 @@ Successfully converted Browser4 REST API controllers and Kotlin SDK to use Kotli
 - **SessionController** - Session management only
 - **OpenApiController** - Serves static files
 
-**Total**: 21 controller methods converted to `suspend fun`  
+**Total**: 21 controller methods converted to `suspend fun`
 **runBlocking removed**: 27 occurrences
 
 ### 2. Client Side - Kotlin SDK (客户端 - Kotlin SDK)
@@ -99,7 +99,7 @@ Successfully converted Browser4 REST API controllers and Kotlin SDK to use Kotli
    - Uses Ktor HttpClient instead of Java HttpClient
 
 2. **WebDriver.kt** - Browser automation
-   - All navigation methods: `navigateTo()`, `open()`, `reload()`, etc.
+   - All navigation methods: `navigate()`, `open()`, `reload()`, etc.
    - All interaction methods: `click()`, `fill()`, `type()`, `press()`, etc.
    - All query methods: `currentUrl()`, `title()`, `pageSource()`, etc.
    - Total: ~50+ methods converted
@@ -180,7 +180,7 @@ Only 2 occurrences remain, both in `PulsarClient.kt` initialization code:
 ## Testing (测试)
 
 - ✅ Server code compiles successfully
-- ✅ SDK code compiles successfully  
+- ✅ SDK code compiles successfully
 - ✅ SDK tests pass
 - ✅ No `runBlocking` in controller request handlers
 - ✅ No `runBlocking` in SDK public API methods (except init)

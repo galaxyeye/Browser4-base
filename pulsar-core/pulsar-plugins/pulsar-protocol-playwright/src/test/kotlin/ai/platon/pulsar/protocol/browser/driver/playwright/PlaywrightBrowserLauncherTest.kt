@@ -80,7 +80,7 @@ class PlaywrightBrowserLauncherTest: PlaywrightTestBase() {
         val url = "https://www.baidu.com/"
 
         runBlocking {
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForNavigation()
         }
 

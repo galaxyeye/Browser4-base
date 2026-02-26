@@ -75,7 +75,7 @@ class TestPulsarClientIntegration:
         assert len(session_id) > 0
         client.session_id = session_id
 
-    def test_navigate_to_url(self, integration_client):
+    def test_navigate_url(self, integration_client):
         """Test basic URL navigation."""
         client = integration_client
 
@@ -181,13 +181,13 @@ class TestPulsarSessionIntegration:
 class TestWebDriverIntegration:
     """Integration tests for WebDriver with real server."""
 
-    def test_navigate_to(self, integration_client):
+    def test_navigate(self, integration_client):
         """Test WebDriver navigation."""
         client = integration_client
         driver = WebDriver(client)
 
         try:
-            driver.navigate_to(SIMPLE_PAGE)
+            driver.navigate(SIMPLE_PAGE)
         except Exception as e:
             msg = str(e)
             if "Failed to launch browser" in msg or "navigation error" in msg:
@@ -204,7 +204,7 @@ class TestWebDriverIntegration:
         driver = WebDriver(client)
 
         try:
-            driver.navigate_to(SIMPLE_PAGE)
+            driver.navigate(SIMPLE_PAGE)
         except Exception as e:
             msg = str(e)
             if "Failed to launch browser" in msg or "navigation error" in msg:
@@ -259,8 +259,8 @@ class TestWebDriverIntegration:
 
         # Navigate to multiple pages
         try:
-            driver.navigate_to(SIMPLE_PAGE)
-            driver.navigate_to(PRODUCT_LIST)
+            driver.navigate(SIMPLE_PAGE)
+            driver.navigate(PRODUCT_LIST)
         except Exception as e:
             msg = str(e)
             if "Failed to launch browser" in msg or "navigation error" in msg:
@@ -308,7 +308,7 @@ class TestAgenticSessionIntegration:
 
         # Navigate to another page
         try:
-            driver.navigate_to(PRODUCT_LIST)
+            driver.navigate(PRODUCT_LIST)
         except Exception as e:
             msg = str(e)
             if "Failed to launch browser" in msg or "navigation error" in msg:

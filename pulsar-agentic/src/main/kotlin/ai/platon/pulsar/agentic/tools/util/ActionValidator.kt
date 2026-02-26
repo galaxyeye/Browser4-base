@@ -44,7 +44,7 @@ class ActionValidator(
         val cacheKey = "${toolCall.method}:${toolCall.arguments}"
         return validationCache.getOrPut(cacheKey) {
             when (toolCall.method) {
-                "open", "navigateTo" -> validateNavigateTo(toolCall.arguments)
+                "open", "navigate", "navigateTo" -> validateNavigate(toolCall.arguments)
                 "click", "fill", "press", "check", "uncheck", "exists", "isVisible", "focus", "hover", "scrollTo",
                 "type", "isHidden", "visible", "isChecked", "bringToFront",
                 "selectFirstTextOrNull", "selectTextAll", "selectFirstAttributeOrNull", "selectAttributes", "selectAttributeAll", "selectImages",
@@ -75,7 +75,7 @@ class ActionValidator(
     /**
      * Validates navigation actions
      */
-    private fun validateNavigateTo(args: Map<String, Any?>?): Boolean {
+    private fun validateNavigate(args: Map<String, Any?>?): Boolean {
         args ?: return true
 
         val url = args["url"]?.toString() ?: return false

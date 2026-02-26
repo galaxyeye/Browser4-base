@@ -56,7 +56,7 @@ class PulsarWebDriverProxyTests : WebDriverTestBase() {
 
     @Test
         @DisplayName("When navigate to a HTML page with proxy then success")
-    fun whenNavigateToAHtmlPageWithProxyThenSuccess() = runWebDriverTest(browserId) { driver ->
+    fun whenNavigateAHtmlPageWithProxyThenSuccess() = runWebDriverTest(browserId) { driver ->
         Assumptions.assumeTrue(proxies.isNotEmpty())
 
         openEnhanced(ipTestUrl, driver, 1)
@@ -98,7 +98,7 @@ class PulsarWebDriverProxyTests : WebDriverTestBase() {
         val driver = browser.newDriver()
 
         runBlocking {
-            driver.navigateTo("https://www.baidu.com/")
+            driver.navigate("https://www.baidu.com/")
             driver.waitForNavigation()
             driver.waitForSelector("body")
             delay(1000)

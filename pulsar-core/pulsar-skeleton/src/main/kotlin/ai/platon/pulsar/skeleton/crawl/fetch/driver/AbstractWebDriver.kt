@@ -294,7 +294,7 @@ abstract class AbstractWebDriver(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun navigateTo(url: String) = navigateTo(NavigateEntry(url))
+    override suspend fun navigate(url: String) = navigate(NavigateEntry(url))
 
     @Throws(WebDriverException::class)
     override suspend fun reload() {

@@ -20,7 +20,7 @@ Data models matching Kotlin interfaces:
 
 ### `webdriver.py`
 WebDriver-compatible browser control:
-- Navigation (navigate_to, go_back, go_forward, reload)
+- Navigation (navigate, go_back, go_forward, reload)
 - Element interaction (click, fill, type, press, hover, focus)
 - Scrolling (scroll_down, scroll_up, scroll_to, scroll_to_bottom, scroll_to_top)
 - Selection (exists, wait_for_selector, select_first_text, select_text_all)

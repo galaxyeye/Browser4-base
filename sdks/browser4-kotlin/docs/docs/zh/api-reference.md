@@ -102,7 +102,7 @@ session.context.close()
 
 **导航方法：**
 
-- `navigateTo(url)` - 导航到 URL
+- `navigate(url)` - 导航到 URL
 - `currentUrl()` - 获取当前 URL
 - `reload()` - 重新加载页面
 - `goBack()` - 后退
@@ -170,7 +170,7 @@ session.context.close()
 val driver = session.getOrCreateBoundDriver()
 
 // 导航
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // 交互
 driver.click(".menu-button")

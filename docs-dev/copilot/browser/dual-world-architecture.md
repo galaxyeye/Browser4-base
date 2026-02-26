@@ -122,7 +122,7 @@ class IsolatedWorldManager(
         const val RUNTIME_WORLD_NAME = "__browser4_runtime__"
         const val RUNTIME_VERSION = "1.0.0"
     }
-    
+
     suspend fun createIsolatedWorld(frameId: String? = null): Int
     suspend fun injectRuntime(runtimeScript: String, contextId: Int)
     suspend fun evaluateInIsolatedWorld(script: String, contextId: Int? = null): Any?
@@ -136,11 +136,11 @@ Provides minimal API in the isolated world:
 ```javascript
 const Browser4Runtime = {
     version: '1.0.0',
-    
+
     isIsolatedWorld: function() {
         return typeof __browser4_runtime__ !== 'undefined';
     },
-    
+
     getInfo: function() {
         return {
             version: this.version,
@@ -183,10 +183,10 @@ private suspend fun addDualWorldScripts() {
     // 1. Inject stealth patches into Page World
     val pageWorldJs = settings.dualWorldScriptLoader.getPageWorldJs()
     pageAPI?.addScriptToEvaluateOnNewDocument(pageWorldJs)
-    
+
     // 2. Create isolated world
     val contextId = isolatedWorldManager.createIsolatedWorld()
-    
+
     // 3. Inject runtime into Isolated World
     val isolatedWorldJs = settings.dualWorldScriptLoader.getIsolatedWorldJs()
     isolatedWorldManager.injectRuntime(isolatedWorldJs, contextId)
@@ -204,7 +204,7 @@ By default, Browser4 uses the dual-world architecture automatically:
 ```kotlin
 val browser = BrowserFactory.createBrowser()
 val driver = browser.newDriver()
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 // Scripts are automatically injected into both worlds
 ```
 
@@ -284,13 +284,13 @@ To verify isolated world injection in a real browser:
 @Test
 fun `test isolated world runtime is accessible from CDP`() {
     val driver = browser.newDriver()
-    driver.navigateTo("https://example.com")
-    
+    driver.navigate("https://example.com")
+
     // Access runtime from CDP
     val result = driver.evaluateInIsolatedWorld(
         "__browser4_runtime__.getInfo()"
     )
-    
+
     assertNotNull(result)
     assertEquals("1.0.0", result["version"])
     assertTrue(result["isolated"] as Boolean)
@@ -299,13 +299,13 @@ fun `test isolated world runtime is accessible from CDP`() {
 @Test
 fun `test page world cannot access runtime`() {
     val driver = browser.newDriver()
-    driver.navigateTo("https://example.com")
-    
+    driver.navigate("https://example.com")
+
     // Try to access from page world
     val result = driver.evaluateScript(
         "typeof __browser4_runtime__"
     )
-    
+
     assertEquals("undefined", result)
 }
 ```
@@ -437,6 +437,6 @@ For questions or issues:
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2026-01-22  
+**Version**: 1.0.0
+**Last Updated**: 2026-01-22
 **Status**: Stable

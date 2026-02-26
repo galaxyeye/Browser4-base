@@ -19,7 +19,7 @@ agent.done()
      * */
     const val TOOL_CALL_SPECIFICATION = """
 // domain: driver
-driver.navigateTo(url: String)
+driver.navigate(url: String)
 driver.reload()
 driver.goBack()
 driver.goForward()
@@ -79,5 +79,5 @@ system.help(domain: String, method: String): String        // get help for a too
 
     val SUPPORTED_ACTIONS = SUPPORTED_TOOL_CALLS.map { it.substringBefore("(").trim() }
 
-    val MAY_NAVIGATE_ACTIONS = setOf("navigateTo", "click", "reload", "goBack", "goForward")
+    val MAY_NAVIGATE_ACTIONS = setOf("navigate", "click", "reload", "goBack", "goForward")
 }

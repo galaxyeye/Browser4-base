@@ -16,7 +16,7 @@ session_id = client.create_session()
 driver = WebDriver(client)
 
 # Navigate to page
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Execute simple script
 result = driver.execute_script("return document.title")
@@ -37,7 +37,7 @@ Evaluate JavaScript expressions:
 
 ```python
 driver = WebDriver(client)
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Evaluate simple expression
 scroll_y = driver.evaluate("window.scrollY")
@@ -81,7 +81,7 @@ result = driver.evaluate("document.querySelector('h1')?.textContent")
 
 ```python
 driver = WebDriver(client)
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Count elements
 link_count = driver.execute_script("""
@@ -99,7 +99,7 @@ print(f"Has header: {has_header}")
 element_info = driver.execute_script("""
     const el = document.querySelector('.main-content');
     if (!el) return null;
-    
+
     return {
         tagName: el.tagName,
         className: el.className,
@@ -255,22 +255,22 @@ print(f"Found {len(links)} links")
 table_data = driver.execute_script("""
     const table = document.querySelector('table');
     if (!table) return null;
-    
+
     const headers = Array.from(table.querySelectorAll('th'))
         .map(th => th.textContent.trim());
-    
+
     const rows = Array.from(table.querySelectorAll('tbody tr'))
         .map(tr => {
             const cells = Array.from(tr.querySelectorAll('td'))
                 .map(td => td.textContent.trim());
-            
+
             const rowData = {};
             headers.forEach((header, i) => {
                 rowData[header] = cells[i] || '';
             });
             return rowData;
         });
-    
+
     return {headers, rows};
 """)
 
@@ -298,7 +298,7 @@ print(f"Products: {len(list_items)}")
 # Extract meta tags
 meta_data = driver.execute_script("""
     const metas = {};
-    
+
     // Get all meta tags
     document.querySelectorAll('meta').forEach(meta => {
         const name = meta.getAttribute('name') || meta.getAttribute('property');
@@ -307,12 +307,12 @@ meta_data = driver.execute_script("""
             metas[name] = content;
         }
     });
-    
+
     // Add other metadata
     metas.canonical = document.querySelector('link[rel="canonical"]')?.href;
     metas.description = document.querySelector('meta[name="description"]')?.content;
     metas.keywords = document.querySelector('meta[name="keywords"]')?.content;
-    
+
     return metas;
 """)
 
@@ -371,7 +371,7 @@ driver.execute_script("""
 # Add event listener and capture data
 driver.execute_script("""
     window._eventData = [];
-    
+
     document.addEventListener('click', function(e) {
         window._eventData.push({
             type: 'click',
@@ -398,17 +398,17 @@ from browser4 import Browser4Driver, PulsarClient, WebDriver
 
 def comprehensive_script_demo():
     """Comprehensive script execution demonstration."""
-    
+
     with Browser4Driver() as driver_mgr:
         client = PulsarClient(base_url=driver_mgr.base_url)
         session_id = client.create_session()
         driver = WebDriver(client)
-        
+
         try:
             # Navigate to page
-            driver.navigate_to("https://example.com")
+            driver.navigate("https://example.com")
             driver.wait_for_selector("body", timeout=10000)
-            
+
             # 1. Page information
             print("1. Page Information:")
             page_info = driver.execute_script("""
@@ -421,10 +421,10 @@ def comprehensive_script_demo():
                     scriptCount: document.querySelectorAll('script').length
                 };
             """)
-            
+
             for key, value in page_info.items():
                 print(f"   {key}: {value}")
-            
+
             # 2. Viewport and scroll info
             print("\n2. Viewport Information:")
             viewport = driver.execute_script("""
@@ -436,11 +436,11 @@ def comprehensive_script_demo():
                     devicePixelRatio: window.devicePixelRatio
                 };
             """)
-            
+
             print(f"   Size: {viewport['width']}x{viewport['height']}")
             print(f"   Scroll: {viewport['scrollY']} / {viewport['scrollHeight']}")
             print(f"   DPR: {viewport['devicePixelRatio']}")
-            
+
             # 3. DOM queries
             print("\n3. DOM Queries:")
             heading = driver.execute_script("""
@@ -448,7 +448,7 @@ def comprehensive_script_demo():
                 return h1 ? h1.textContent.trim() : null;
             """)
             print(f"   Main heading: {heading}")
-            
+
             # 4. Extract data
             print("\n4. Data Extraction:")
             data = driver.execute_script("""
@@ -463,10 +463,10 @@ def comprehensive_script_demo():
                         .slice(0, 3)
                 };
             """)
-            
+
             print(f"   Paragraphs: {len(data['paragraphs'])}")
             print(f"   Links: {len(data['links'])}")
-            
+
             # 5. Manipulate page
             print("\n5. Page Manipulation:")
             driver.execute_script("""
@@ -474,26 +474,26 @@ def comprehensive_script_demo():
                 const style = document.createElement('style');
                 style.textContent = '.highlight { background: yellow; }';
                 document.head.appendChild(style);
-                
+
                 // Highlight first paragraph
                 const p = document.querySelector('p');
                 if (p) p.classList.add('highlight');
             """)
             print("   Added highlight style and marked first paragraph")
-            
+
             # 6. Scroll operations
             print("\n6. Scroll Operations:")
-            
+
             # Scroll to bottom
             driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
             bottom_pos = driver.evaluate("window.scrollY")
             print(f"   Scrolled to bottom: {bottom_pos}px")
-            
+
             # Scroll to top
             driver.execute_script("window.scrollTo(0, 0);")
             top_pos = driver.evaluate("window.scrollY")
             print(f"   Scrolled to top: {top_pos}px")
-            
+
             # 7. Form interaction
             print("\n7. Form Interaction:")
             has_form = driver.execute_script("""
@@ -501,7 +501,7 @@ def comprehensive_script_demo():
                 return forms.length > 0;
             """)
             print(f"   Has forms: {has_form}")
-            
+
         finally:
             driver.close()
             client.close()
@@ -517,20 +517,20 @@ if __name__ == "__main__":
 ```python
 def wait_for_condition(driver, condition_script, timeout=10000, interval=500):
     """Wait for a JavaScript condition to be true."""
-    
+
     import time
     start_time = time.time()
-    
+
     while (time.time() - start_time) * 1000 < timeout:
         result = driver.execute_script(f"return {condition_script};")
         if result:
             return True
         time.sleep(interval / 1000)
-    
+
     return False
 
 # Usage
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 
 # Wait for element to appear
 success = wait_for_condition(
@@ -549,7 +549,7 @@ if success:
 # Pass arguments to script (if supported by implementation)
 def set_element_value(driver, selector, value):
     """Set element value using script."""
-    
+
     driver.execute_script(f"""
         const el = document.querySelector('{selector}');
         if (el) {{
@@ -568,23 +568,23 @@ set_element_value(driver, "input#search", "search query")
 # Perform multiple operations in one script
 results = driver.execute_script("""
     const operations = {};
-    
+
     // Operation 1: Count elements
     operations.linkCount = document.querySelectorAll('a').length;
     operations.imageCount = document.querySelectorAll('img').length;
-    
+
     // Operation 2: Extract data
     operations.title = document.title;
     operations.url = document.URL;
-    
+
     // Operation 3: Check conditions
     operations.hasHeader = document.querySelector('header') !== null;
     operations.hasFooter = document.querySelector('footer') !== null;
-    
+
     // Operation 4: Measurements
     operations.scrollHeight = document.documentElement.scrollHeight;
     operations.clientHeight = document.documentElement.clientHeight;
-    
+
     return operations;
 """)
 
@@ -645,7 +645,7 @@ if not ready:
 # Limit data size
 limited_data = driver.execute_script("""
     const links = Array.from(document.querySelectorAll('a'));
-    
+
     // Return only first 100 links
     return links.slice(0, 100).map(a => ({
         text: a.textContent.trim().substring(0, 100),

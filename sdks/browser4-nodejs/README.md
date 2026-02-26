@@ -247,7 +247,7 @@ const session = new PulsarSession(client);
 const driver = session.driver;
 
 // Navigation
-await driver.navigateTo('https://example.com');
+await driver.navigate('https://example.com');
 console.log(await driver.currentUrl());
 await driver.back();
 await driver.forward();

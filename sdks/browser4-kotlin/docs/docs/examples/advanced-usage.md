@@ -11,19 +11,19 @@ import ai.platon.pulsar.sdk.v0.detail.PulsarClient
 
 fun main() = runBlocking {
     val baseUrl = "http://localhost:8182"
-    
+
     val urls = listOf(
         "https://example.com/product/1",
         "https://example.com/product/2",
         "https://example.com/product/3"
     )
-    
+
     val results = urls.map { url ->
         async {
             val client = PulsarClient(baseUrl = baseUrl, useLocalDriver = false)
             client.createSession()
             val session = AgenticSession(client)
-            
+
             try {
                 val page = session.load(url)
                 val doc = session.parse(page)
@@ -35,7 +35,7 @@ fun main() = runBlocking {
             }
         }
     }.awaitAll()
-    
+
     results.forEach { println("Product: $it") }
 }
 ```
@@ -52,22 +52,22 @@ data class Product(
 
 fun extractProduct(driver: WebDriver): Product {
     val name = driver.selectFirstTextOrNull("h1.product-name") ?: ""
-    
+
     val priceText = driver.selectFirstTextOrNull(".price") ?: "0"
     val price = priceText.replace(Regex("[^0-9.]"), "").toDoubleOrNull() ?: 0.0
-    
+
     val ratingText = driver.selectFirstTextOrNull(".rating-value") ?: "0"
     val rating = ratingText.toDoubleOrNull() ?: 0.0
-    
+
     val reviewText = driver.selectFirstTextOrNull(".review-count") ?: "0"
     val reviews = reviewText.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0
-    
+
     return Product(name, price, rating, reviews)
 }
 
 // Usage
 val driver = session.driver
-driver.navigateTo("https://example.com/product")
+driver.navigate("https://example.com/product")
 val product = extractProduct(driver)
 println("Product: $product")
 ```
@@ -76,14 +76,14 @@ println("Product: $product")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Infinite scroll
 var previousCount = 0
 repeat(10) {
     driver.scrollToBottom()
     Thread.sleep(1000)
-    
+
     val items = driver.selectTextAll(".item")
     if (items.size == previousCount) return@repeat
     previousCount = items.size
@@ -101,7 +101,7 @@ val newItems = driver.selectTextAll(".new-content .item")
 fun safeNavigate(driver: WebDriver, url: String, maxRetries: Int = 3): Boolean {
     repeat(maxRetries) { attempt ->
         try {
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForNavigation()
             driver.waitForSelector("body", timeout = 5000)
             return true
@@ -122,7 +122,7 @@ fun safeNavigate(driver: WebDriver, url: String, maxRetries: Int = 3): Boolean {
 class SessionPool(val size: Int = 3) {
     private val sessions = mutableListOf<AgenticSession>()
     private val available = java.util.concurrent.ConcurrentLinkedQueue<AgenticSession>()
-    
+
     suspend fun init() {
         repeat(size) {
             val client = PulsarClient(baseUrl = "http://localhost:8182", useLocalDriver = false)
@@ -132,10 +132,10 @@ class SessionPool(val size: Int = 3) {
             available.offer(session)
         }
     }
-    
+
     fun acquire(): AgenticSession? = available.poll()
     fun release(session: AgenticSession) { available.offer(session) }
-    
+
     fun close() {
         sessions.forEach { it.close() }
     }
@@ -162,7 +162,7 @@ val productData = driver.executeScript("""
             }))
         };
     }
-    
+
     return Array.from(document.querySelectorAll('.product-card')).map(extractProduct);
 """) as List<Map<String, Any>>
 ```

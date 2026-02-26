@@ -24,7 +24,7 @@ export class WebDriver {
   /**
    * Navigate to a URL.
    */
-  async navigateTo(url: string): Promise<void> {
+  async navigate(url: string): Promise<void> {
     await this.client.post('/session/{sessionId}/url', { url });
     this._navigateHistory.push(url);
   }

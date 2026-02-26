@@ -1,7 +1,6 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.dom.ChromeCdpDomService
 import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
@@ -111,7 +110,7 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun navigateTo(entry: NavigateEntry) {
+    override suspend fun navigate(entry: NavigateEntry) {
         userTypedUrl = entry.url
 
         navigateHistory.add(entry)
@@ -123,7 +122,7 @@ class PulsarWebDriver(
             enableAPIAgents()
         }
 
-        driverHelper.invokeOnPage("navigateTo") {
+        driverHelper.invokeOnPage("navigate") {
             navigateInvaded(entry)
         }
     }
@@ -142,7 +141,7 @@ class PulsarWebDriver(
             val targetIndex = currentIndex - 1
             if (targetIndex >= 0 && targetIndex < entries.size) {
                 val entryId = entries[targetIndex].id
-                pageAPI?.navigateToHistoryEntry(entryId)
+                pageAPI?.navigateHistoryEntry(entryId)
             }
         }
     }
@@ -155,7 +154,7 @@ class PulsarWebDriver(
             val targetIndex = currentIndex + 1
             if (targetIndex >= 0 && targetIndex < entries.size) {
                 val entryId = entries[targetIndex].id
-                pageAPI?.navigateToHistoryEntry(entryId)
+                pageAPI?.navigateHistoryEntry(entryId)
             }
         }
     }
@@ -400,7 +399,7 @@ class PulsarWebDriver(
     override suspend fun selectOption(selector: String, values: List<String>): List<String> {
         val mapper = jacksonObjectMapper()
         val jsonValues = mapper.writeValueAsString(values)
-        
+
         val functionDeclaration = """
             function(jsonValues) {
                 const values = JSON.parse(jsonValues);
@@ -432,23 +431,23 @@ class PulsarWebDriver(
                     for (let i = 0; i < element.options.length; i++) {
                         const option = element.options[i];
                         const shouldSelect = optionsToSelect.has(option.value) || optionsToSelect.has(option.label) || optionsToSelect.has(option.text);
-                        
+
                         if (shouldSelect != option.selected) {
                             option.selected = shouldSelect;
                             hasChanged = true;
                         }
-                        
+
                         if (shouldSelect) {
                             selectedValues.push(option.value);
                         }
                     }
                 }
-                
+
                 if (hasChanged) {
                     element.dispatchEvent(new Event('input', { bubbles: true }));
                     element.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-                
+
                 return selectedValues;
             }
         """.trimIndent()
@@ -479,14 +478,14 @@ class PulsarWebDriver(
             }
 
             val resultValue = res?.result?.value
-            
+
             if (resultValue is List<*>) {
                 resultValue.filterIsInstance<String>()
             } else {
                 listOf()
             }
         }
-        
+
         return result ?: listOf()
     }
 
@@ -880,7 +879,7 @@ function() {
                 pageAPI?.stopLoading()
             } else {
                 // go to about:blank, so the browser stops the previous page and releases all resources
-                navigateTo(ChromeImpl.ABOUT_BLANK_PAGE)
+                navigate(ChromeImpl.ABOUT_BLANK_PAGE)
             }
         } catch (e: ChromeIOException) {
             if (!e.isOpen || !devTools.isOpen) {

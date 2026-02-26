@@ -52,7 +52,7 @@ class PulsarWebDriverCDPTests : WebDriverTestBase() {
 
     @Test
     @Ignore("Disabled temporarily")
-    fun whenNavigateToAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
+    fun whennavigateAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
         openEnhanced(interactiveUrl, driver, 1)
 
         val navigateEntry = driver.navigateEntry

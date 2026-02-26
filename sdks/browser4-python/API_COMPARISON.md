@@ -104,7 +104,7 @@ The Python SDK implements the same interfaces as the Kotlin SDK, with naming ada
 
 | Kotlin Method | Python Method | Status |
 |---------------|---------------|--------|
-| `navigateTo()` | `navigate_to()` | ✅ Same |
+| `navigate()` | `navigate()` | ✅ Same |
 | `reload()` | `reload()` | ✅ Same |
 | `goBack()` | `go_back()` | ✅ Same |
 | `goForward()` | `go_forward()` | ✅ Same |
@@ -199,7 +199,7 @@ history = session.run("search for 'kotlin' and extract results")
 **Kotlin:**
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.click("button.submit")
 val text = driver.selectFirstTextOrNull("h1")
 ```
@@ -207,7 +207,7 @@ val text = driver.selectFirstTextOrNull("h1")
 **Python:**
 ```python
 driver = session.driver
-driver.navigate_to("https://example.com")
+driver.navigate("https://example.com")
 driver.click("button.submit")
 text = driver.select_first_text_or_null("h1")
 ```

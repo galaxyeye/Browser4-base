@@ -93,7 +93,7 @@ abstract class KotlinSdkIntegrationTestBase {
 - 错误处理和异常场景
 
 ### 2. WebDriver 测试
-- 导航功能（navigateTo, currentUrl, reload, goBack, goForward）
+- 导航功能（navigate, currentUrl, reload, goBack, goForward）
 - 元素交互（click, fill, type, press, hover）
 - 等待机制（waitForSelector, exists, isVisible）
 - 滚动操作（scrollDown, scrollUp, scrollTo, scrollToBottom）
@@ -280,7 +280,7 @@ fun `should navigate and extract content`() {
     val driver = WebDriver(client)
 
     // 3. 导航到页面
-    driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+    driver.navigate(TestUrls.PRODUCT_DETAIL)
 
     // 4. 提取内容
     val title = driver.selectFirstTextOrNull("#productTitle")

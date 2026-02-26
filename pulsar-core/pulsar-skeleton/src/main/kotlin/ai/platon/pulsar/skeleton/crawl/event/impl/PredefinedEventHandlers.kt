@@ -25,7 +25,7 @@ open class LoginHandler(
     override suspend fun invoke(page: WebPage, driver: WebDriver): Any? {
         logger.info("Navigating to login page ... | {}", loginUrl)
 
-        driver.navigateTo(loginUrl)
+        driver.navigate(loginUrl)
         driver.waitForNavigation()
         if (!driver.currentUrl().contains("login")) {
             logger.info("Already logged in")
@@ -35,7 +35,7 @@ open class LoginHandler(
         driver.waitUntil { driver.evaluate("document.body.scrollHeight", 0) > 1000 }
 
         warnUpUrl?.let {
-            driver.navigateTo(it)
+            driver.navigate(it)
             driver.waitForNavigation(timeout = Duration.ofSeconds(10))
         }
 

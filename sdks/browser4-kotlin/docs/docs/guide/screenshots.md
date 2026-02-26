@@ -19,7 +19,7 @@ fun main() {
     val session = AgenticSession.getOrCreate()
     val driver = session.driver
 
-    driver.navigateTo("https://example.com")
+    driver.navigate("https://example.com")
 
     // Capture visible viewport
     val screenshot = driver.screenshot()
@@ -38,7 +38,7 @@ fun main() {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Capture entire page (scrolls automatically)
 val screenshot = driver.screenshot(fullPage = true)
@@ -53,7 +53,7 @@ if (screenshot != null) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Capture specific element
 val screenshot = driver.screenshot(
@@ -75,7 +75,7 @@ The `screenshot()` method is a convenient alternative:
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Same as screenshot(selector, fullPage=false)
 val screenshot = driver.screenshot(".product-image")
@@ -135,7 +135,7 @@ println("Saved: ${"$"}filename")
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Before action
 val before = driver.screenshot()
@@ -175,7 +175,7 @@ performActionWithScreenshot {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com/products")
+driver.navigate("https://example.com/products")
 
 // Get all product cards
 val productCount = driver.executeScript(
@@ -194,7 +194,7 @@ for (i in 0 until productCount) {
 
 ```kotlin
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Take screenshots while scrolling
 val screenshots = mutableListOf<String>()
@@ -230,7 +230,7 @@ fun getScreenshotHash(screenshot: String): String {
 }
 
 val driver = session.driver
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 val screenshot1 = driver.screenshot()
 Thread.sleep(1000)
@@ -282,7 +282,7 @@ if (isElementVisuallyPresent(driver, ".cookie-banner")) {
 
 ```kotlin
 // Ensure page is fully loaded
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 driver.waitForSelector("body")
 Thread.sleep(1000) // Wait for rendering
 

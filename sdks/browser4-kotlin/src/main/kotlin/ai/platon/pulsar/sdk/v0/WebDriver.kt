@@ -23,7 +23,7 @@ import java.util.*
  *
  * This class provides methods for browser control and automation through
  * the Browser4 REST API. It supports:
- * - Navigation: navigate_to, current_url, go_back, go_forward, reload
+ * - Navigation: navigate, current_url, go_back, go_forward, reload
  * - Element interaction: click, fill, type, press, hover, focus
  * - Scrolling: scrollDown, scrollUp, scrollTo, scrollToBottom, scrollToTop
  * - Selection: exists, waitForSelector, selectFirstText, selectTextAll
@@ -36,7 +36,7 @@ import java.util.*
  * val client = PulsarClient()
  * client.createSession()
  * val driver = WebDriver(client)
- * driver.navigateTo("https://example.com")
+ * driver.navigate("https://example.com")
  * println(driver.currentUrl())
  * driver.click("button.submit")
  * ```
@@ -67,7 +67,7 @@ class WebDriver(
      * @param url The URL to navigate to
      */
     suspend fun open(url: String) {
-        navigateTo(url)
+        navigate(url)
         waitForSelector("body")
     }
 
@@ -77,7 +77,7 @@ class WebDriver(
      * @param url The URL to navigate to
      * @return Navigation result
      */
-    suspend fun navigateTo(url: String): Any? {
+    suspend fun navigate(url: String): Any? {
         val result = client.post("/session/{sessionId}/url", mapOf("url" to url))
         _navigateHistory.add(url)
         return result

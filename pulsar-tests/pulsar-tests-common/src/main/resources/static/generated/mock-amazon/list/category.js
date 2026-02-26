@@ -53,7 +53,7 @@
       input.setAttribute('aria-expanded','false');
     }
 
-    function navigateToProduct(){
+    function navigateProduct(){
       if(currentSuggestions[currentIndex]){
         window.location.href = currentSuggestions[currentIndex].link;
       } else if (currentSuggestions.length){
@@ -98,11 +98,11 @@
           updateActive(items);
         } else if(e.key === 'Enter') {
           e.preventDefault();
-          navigateToProduct();
+          navigateProduct();
         } else if(e.key === 'Escape') hide();
       } else if(e.key === 'Enter' && input.value.trim()) {
         e.preventDefault();
-        navigateToProduct();
+        navigateProduct();
       }
     });
 
@@ -118,13 +118,13 @@
       if(!item) return;
       const idx = Number(item.getAttribute('data-index'));
       currentIndex = idx;
-      navigateToProduct();
+      navigateProduct();
     });
 
     document.addEventListener('click', e=>{ if(!e.target.closest('.autocomplete-container')) hide(); });
 
     const searchBtn = document.querySelector('.search-btn');
-    if(searchBtn){ searchBtn.addEventListener('click', ()=> navigateToProduct()); }
+    if(searchBtn){ searchBtn.addEventListener('click', ()=> navigateProduct()); }
   })();
 })();
 

@@ -16,7 +16,7 @@
 Kotlin SDK 提供以下公共 API：
 
 #### WebDriver（40个方法）
-- 导航：`navigateTo()`、`goBack()`、`goForward()`、`reload()`、`currentUrl()`
+- 导航：`navigate()`、`goBack()`、`goForward()`、`reload()`、`currentUrl()`
 - 元素交互：`click()`、`check()`、`uncheck()`、`fill()`、`type()`、`sendKeys()`
 - 焦点：`focus()`、`hover()`、`press()`
 - 滚动：`scrollDown()`、`scrollUp()`、`scrollTo()`、`scrollToBottom()`、`scrollToTop()`

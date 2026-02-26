@@ -46,7 +46,7 @@ class Browser4MCPServerTest {
     @DisplayName("registers all expected driver navigation tools")
     fun registersDriverNavigationTools() {
         val names = mcpServer.server.tools.keys
-        assertTrue(names.contains("navigate_to"), "Expected navigate_to")
+        assertTrue(names.contains("navigate"), "Expected navigate")
         assertTrue(names.contains("reload"), "Expected reload")
         assertTrue(names.contains("go_back"), "Expected go_back")
         assertTrue(names.contains("go_forward"), "Expected go_forward")
@@ -182,12 +182,12 @@ class Browser4MCPServerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to returns success message when WebDriver succeeds")
-    fun navigateToReturnsSuccessMessage() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } returns Unit
+    @DisplayName("navigate returns success message when WebDriver succeeds")
+    fun navigateReturnsSuccessMessage() = runBlocking {
+        coEvery { driver.navigate(any<String>()) } returns Unit
 
-        val tool = mcpServer.server.tools["navigate_to"]!!
-        val request = buildRequest("navigate_to", mapOf("url" to "https://example.com"))
+        val tool = mcpServer.server.tools["navigate"]!!
+        val request = buildRequest("navigate", mapOf("url" to "https://example.com"))
         val result = tool.handler(request)
 
         assertFalse(result.isError == true, "Expected isError=false")
@@ -276,11 +276,11 @@ class Browser4MCPServerTest {
     @DisplayName("help returns documentation for a specific method")
     fun helpReturnsMethodDocumentation() = runBlocking {
         val tool = mcpServer.server.tools["help"]!!
-        val result = tool.handler(buildRequest("help", mapOf("domain" to "driver", "method" to "navigateTo")))
+        val result = tool.handler(buildRequest("help", mapOf("domain" to "driver", "method" to "navigate")))
 
         assertFalse(result.isError == true)
         val text = (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)?.text
-        assertTrue(text?.contains("navigateTo") == true, "Expected navigateTo in help output")
+        assertTrue(text?.contains("navigate") == true, "Expected navigate in help output")
     }
 
     // -------------------------------------------------------------------------
@@ -288,12 +288,12 @@ class Browser4MCPServerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to returns error result when WebDriver throws")
-    fun navigateToReturnsErrorOnFailure() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } throws RuntimeException("CDP connection lost")
+    @DisplayName("navigate returns error result when WebDriver throws")
+    fun navigateReturnsErrorOnFailure() = runBlocking {
+        coEvery { driver.navigate(any<String>()) } throws RuntimeException("CDP connection lost")
 
-        val tool = mcpServer.server.tools["navigate_to"]!!
-        val request = buildRequest("navigate_to", mapOf("url" to "https://example.com"))
+        val tool = mcpServer.server.tools["navigate"]!!
+        val request = buildRequest("navigate", mapOf("url" to "https://example.com"))
         val result = tool.handler(request)
 
         assertTrue(result.isError == true, "Expected isError=true")
@@ -333,10 +333,10 @@ class Browser4MCPServerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to returns error when url parameter is missing")
-    fun navigateToMissingUrlReturnsError() = runBlocking {
-        val tool = mcpServer.server.tools["navigate_to"]!!
-        val request = buildRequest("navigate_to", emptyMap())
+    @DisplayName("navigate returns error when url parameter is missing")
+    fun navigateMissingUrlReturnsError() = runBlocking {
+        val tool = mcpServer.server.tools["navigate"]!!
+        val request = buildRequest("navigate", emptyMap())
         val result = tool.handler(request)
 
         assertTrue(result.isError == true)

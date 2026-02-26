@@ -457,7 +457,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
     @Test
     fun `should navigate to URL`() {
         val url = TestUrls.SIMPLE_PAGE
-        driver.navigateTo(url)
+        driver.navigate(url)
 
         val currentUrl = driver.currentUrl()
         assertNotNull(currentUrl)
@@ -466,7 +466,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should get page title`() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val title = driver.title()
         assertNotNull(title)
@@ -475,7 +475,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should check element exists`() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // 检查常见元素
         assertTrue(driver.exists("body"))
@@ -484,7 +484,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should extract text content`() {
-        driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val title = driver.selectFirstTextOrNull("#productTitle")
         assertNotNull(title)
@@ -493,7 +493,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should scroll page`() {
-        driver.navigateTo(TestUrls.PRODUCT_LIST)
+        driver.navigate(TestUrls.PRODUCT_LIST)
 
         // 滚动到底部
         driver.scrollToBottom()
@@ -504,7 +504,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should capture screenshot`() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val screenshot = driver.screenshot()
         assertNotNull(screenshot)
@@ -513,7 +513,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should execute script`() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val result = driver.executeScript("return document.title")
         assertNotNull(result)
@@ -521,7 +521,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should wait for selector`() {
-        driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        driver.navigate(TestUrls.SIMPLE_PAGE)
 
         // 等待 body 元素
         driver.waitForSelector("body", timeout = 5000)
@@ -530,7 +530,7 @@ class WebDriverIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should extract multiple fields`() {
-        driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val fields = driver.extract(mapOf(
             "title" to "#productTitle",
@@ -660,7 +660,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should execute single action`() {
-        session.driver.navigateTo(TestUrls.SIMPLE_PAGE)
+        session.driver.navigate(TestUrls.SIMPLE_PAGE)
 
         val result = session.act("scroll to the bottom")
 
@@ -677,7 +677,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should observe page`() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val observation = session.observe("find interactive elements")
 
@@ -687,7 +687,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should extract data with AI`() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val extraction = session.agentExtract("extract product name, price, and description")
 
@@ -697,7 +697,7 @@ class AgenticSessionIntegrationTest : KotlinSdkIntegrationTestBase() {
 
     @Test
     fun `should summarize page`() {
-        session.driver.navigateTo(TestUrls.PRODUCT_DETAIL)
+        session.driver.navigate(TestUrls.PRODUCT_DETAIL)
 
         val summary = session.summarize()
 

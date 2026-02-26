@@ -28,7 +28,7 @@ fun main() {
     val session = AgenticSession.getOrCreate()
 
     // Use session
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 
     // Close when done
     session.close()
@@ -54,7 +54,7 @@ fun main() = runBlocking {
     val session = AgenticSession.create()
 
     // Use session
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 
     // Clean up
     session.close()
@@ -92,7 +92,7 @@ fun main() {
     val session = AgenticSession(client)
 
     // Use session
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 
     // Clean up
     session.close()
@@ -120,7 +120,7 @@ agent.run("search for 'kotlin' and extract the top result")
 
 // WebDriver access
 val driver = session.driver
-driver.navigateTo("https://google.com")
+driver.navigate("https://google.com")
 
 session.close()
 ```
@@ -175,7 +175,7 @@ fun main() {
     val session = AgenticSession(client)
 
     // Use session normally
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 
     session.close()
     client.close()
@@ -192,7 +192,7 @@ val session = AgenticSession.getOrCreate(
 )
 
 // Use session
-session.driver.navigateTo("https://example.com")
+session.driver.navigate("https://example.com")
 
 session.close()
 ```
@@ -230,13 +230,13 @@ import kotlinx.coroutines.runBlocking
 fun main() = runBlocking {
     // First session
     val session1 = AgenticSession.create()
-    session1.driver.navigateTo("https://example.com")
+    session1.driver.navigate("https://example.com")
     val data1 = session1.driver.selectFirstTextOrNull("h1")
     session1.close()
 
     // Second session (fresh state)
     val session2 = AgenticSession.create()
-    session2.driver.navigateTo("https://example.org")
+    session2.driver.navigate("https://example.org")
     val data2 = session2.driver.selectFirstTextOrNull("h1")
     session2.close()
 
@@ -265,7 +265,7 @@ fun main() = runBlocking {
     // Use sessions in parallel
     val results = sessions.mapIndexed { index, session ->
         async {
-            session.driver.navigateTo("https://example.com?id=$index")
+            session.driver.navigate("https://example.com?id=$index")
             val data = session.driver.selectFirstTextOrNull("h1")
             session.close()
             data
@@ -289,7 +289,7 @@ Always close sessions when done:
 val session = AgenticSession.getOrCreate()
 try {
     // Use session
-    session.driver.navigateTo("https://example.com")
+    session.driver.navigate("https://example.com")
 } finally {
     session.close()
 }
@@ -305,7 +305,7 @@ import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
     AgenticSession.create().use { session ->
-        session.driver.navigateTo("https://example.com")
+        session.driver.navigate("https://example.com")
         val title = session.driver.title()
         println("Title: $title")
         // session.close() called automatically
@@ -320,7 +320,7 @@ Clean up the singleton default session:
 ```kotlin
 // Use default session
 val session = AgenticSession.getOrCreate()
-session.driver.navigateTo("https://example.com")
+session.driver.navigate("https://example.com")
 
 // Later, reset it (closes session and stops local driver)
 AgenticSession.resetDefault()
@@ -417,7 +417,7 @@ Capture current browser state:
 val session = AgenticSession.getOrCreate()
 val driver = session.driver
 
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 
 // Interact with page
 driver.click("button.load-more")
@@ -458,7 +458,7 @@ fun main() {
     var session: AgenticSession? = null
     try {
         session = AgenticSession.getOrCreate()
-        session.driver.navigateTo("https://example.com")
+        session.driver.navigate("https://example.com")
 
         // Operations that might fail
         val title = session.driver.selectFirstTextOrNull("h1")
@@ -521,7 +521,7 @@ fun main() = runBlocking {
         val session = pool.acquire()
         if (session != null) {
             try {
-                session.driver.navigateTo("https://example.com")
+                session.driver.navigate("https://example.com")
                 val title = session.driver.title()
                 println("Title: $title")
             } finally {

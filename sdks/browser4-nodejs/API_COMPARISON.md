@@ -159,7 +159,7 @@ session.clearHistory()
 const driver = session.driver;
 
 // Navigation
-await driver.navigateTo('https://example.com');
+await driver.navigate('https://example.com');
 const url = await driver.currentUrl();
 await driver.back();
 await driver.forward();
@@ -188,7 +188,7 @@ await driver.delay(1000);
 driver = session.driver
 
 # Navigation
-driver.navigate_to('https://example.com')
+driver.navigate('https://example.com')
 url = driver.current_url()
 driver.back()
 driver.forward()
@@ -217,7 +217,7 @@ driver.delay(1000)
 val driver = session.driver
 
 // Navigation
-driver.navigateTo("https://example.com")
+driver.navigate("https://example.com")
 val url = driver.currentUrl()
 driver.back()
 driver.forward()

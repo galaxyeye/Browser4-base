@@ -15,7 +15,7 @@ export declare class WebDriver {
     /**
      * Navigate to a URL.
      */
-    navigateTo(url: string): Promise<void>;
+    navigate(url: string): Promise<void>;
     /**
      * Get the current URL.
      */

@@ -183,7 +183,7 @@ paths:
       tags:
         - navigation
       summary: Navigate to a URL
-      operationId: navigateTo
+      operationId: navigate
       parameters:
         - $ref: '#/components/parameters/sessionId'
       requestBody:
