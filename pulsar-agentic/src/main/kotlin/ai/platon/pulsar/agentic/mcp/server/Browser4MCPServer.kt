@@ -63,6 +63,7 @@ class Browser4MCPServer(
 ) {
 
     private val logger = getLogger(this)
+    private val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
 
     val server: Server = Server(
         serverInfo = serverInfo,
@@ -629,10 +630,12 @@ class Browser4MCPServer(
             val tgt = arg(request.params.arguments, "target_selector")
                 ?: return@addTool errorResult("Missing required parameter: target_selector")
             runCatching {
+                val encodedSrc = objectMapper.writeValueAsString(src)
+                val encodedTgt = objectMapper.writeValueAsString(tgt)
                 val script = """
                     (() => {
-                        const s = document.querySelector('${src.replace("'", "\\'")}');
-                        const t = document.querySelector('${tgt.replace("'", "\\'")}');
+                        const s = document.querySelector($encodedSrc);
+                        const t = document.querySelector($encodedTgt);
                         if (!s || !t) return JSON.stringify({dx:0,dy:0});
                         const sr = s.getBoundingClientRect();
                         const tr = t.getBoundingClientRect();
@@ -640,8 +643,7 @@ class Browser4MCPServer(
                     })()
                 """.trimIndent()
                 val result = driver.evaluate(script) as? String ?: """{"dx":0,"dy":0}"""
-                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
-                val parsed = mapper.readTree(result)
+                val parsed = objectMapper.readTree(result)
                 val dx = parsed.get("dx")?.asInt() ?: 0
                 val dy = parsed.get("dy")?.asInt() ?: 0
                 driver.dragAndDrop(src, dx, dy)
@@ -753,9 +755,9 @@ class Browser4MCPServer(
         ) { request ->
             val key = arg(request.params.arguments, "key")
                 ?: return@addTool errorResult("Missing required parameter: key")
-            val safeKey = key.replace("'", "\\'")
+            val encodedKey = objectMapper.writeValueAsString(key)
             runCatching {
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: '$safeKey', bubbles: true}))")
+                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: $encodedKey, bubbles: true}))")
             }
                 .fold(
                     onSuccess = { textResult("Key down: $key") },
@@ -774,9 +776,9 @@ class Browser4MCPServer(
         ) { request ->
             val key = arg(request.params.arguments, "key")
                 ?: return@addTool errorResult("Missing required parameter: key")
-            val safeKey = key.replace("'", "\\'")
+            val encodedKey = objectMapper.writeValueAsString(key)
             runCatching {
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: '$safeKey', bubbles: true}))")
+                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: $encodedKey, bubbles: true}))")
             }
                 .fold(
                     onSuccess = { textResult("Key up: $key") },
@@ -955,9 +957,9 @@ class Browser4MCPServer(
             )
         ) { request ->
             val url = arg(request.params.arguments, "url") ?: "about:blank"
-            val safeUrl = url.replace("'", "\\'")
+            val encodedUrl = objectMapper.writeValueAsString(url)
             runCatching {
-                driver.evaluate("window.open('$safeUrl')")
+                driver.evaluate("window.open($encodedUrl)")
             }
                 .fold(
                     onSuccess = { textResult(if (url == "about:blank") "New tab opened" else "New tab opened: $url") },

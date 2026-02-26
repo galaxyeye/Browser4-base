@@ -67,6 +67,7 @@ class MCPToolController(
 
     /** Cache of MCP server instances keyed by sessionId. */
     private val mcpServers = ConcurrentHashMap<String, Browser4MCPServer>()
+    private val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
 
     // =========================================================================
     // Tool call endpoint
@@ -331,10 +332,12 @@ class MCPToolController(
                 "drag" -> {
                     val src = requireArg(args, "source_selector")
                     val tgt = requireArg(args, "target_selector")
+                    val encodedSrc = objectMapper.writeValueAsString(src)
+                    val encodedTgt = objectMapper.writeValueAsString(tgt)
                     val script = """
                         (() => {
-                            const s = document.querySelector('${src.replace("'", "\\'")}');
-                            const t = document.querySelector('${tgt.replace("'", "\\'")}');
+                            const s = document.querySelector($encodedSrc);
+                            const t = document.querySelector($encodedTgt);
                             if (!s || !t) return JSON.stringify({dx:0,dy:0});
                             const sr = s.getBoundingClientRect();
                             const tr = t.getBoundingClientRect();
@@ -342,8 +345,7 @@ class MCPToolController(
                         })()
                     """.trimIndent()
                     val result = driver.evaluate(script) as? String ?: """{"dx":0,"dy":0}"""
-                    val mapper = com.fasterxml.jackson.databind.ObjectMapper()
-                    val parsed = mapper.readTree(result)
+                    val parsed = objectMapper.readTree(result)
                     val dx = parsed.get("dx")?.asInt() ?: 0
                     val dy = parsed.get("dy")?.asInt() ?: 0
                     driver.dragAndDrop(src, dx, dy)
@@ -439,14 +441,14 @@ class MCPToolController(
                 // Keyboard
                 "keydown" -> {
                     val key = requireArg(args, "key")
-                    val safeKey = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(key)
-                    driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: $safeKey, bubbles: true}))")
+                    val encodedKey = objectMapper.writeValueAsString(key)
+                    driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: $encodedKey, bubbles: true}))")
                     textResponse("Key down: $key")
                 }
                 "keyup" -> {
                     val key = requireArg(args, "key")
-                    val safeKey = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(key)
-                    driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: $safeKey, bubbles: true}))")
+                    val encodedKey = objectMapper.writeValueAsString(key)
+                    driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: $encodedKey, bubbles: true}))")
                     textResponse("Key up: $key")
                 }
 
@@ -489,8 +491,8 @@ class MCPToolController(
                 }
                 "tab_new" -> {
                     val url = args["url"]?.toString() ?: "about:blank"
-                    val safeUrl = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(url)
-                    driver.evaluate("window.open($safeUrl)")
+                    val encodedUrl = objectMapper.writeValueAsString(url)
+                    driver.evaluate("window.open($encodedUrl)")
                     textResponse(if (url == "about:blank") "New tab opened" else "New tab opened: $url")
                 }
                 "tab_close" -> {
