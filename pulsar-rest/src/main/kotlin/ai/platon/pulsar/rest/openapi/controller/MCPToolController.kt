@@ -1,6 +1,9 @@
 package ai.platon.pulsar.rest.openapi.controller
 
+import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.mcp.server.Browser4MCPServer
+import ai.platon.pulsar.agentic.model.ToolCall
+import ai.platon.pulsar.agentic.tools.AgentToolManager
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -199,325 +202,67 @@ class MCPToolController(
     }
 
     // =========================================================================
-    // Dispatch to per-session MCP Server
+    // Dispatch to per-session AgentToolManager
     // =========================================================================
 
     /**
-     * Dispatch a tool call to the appropriate session's MCP Server.
+     * Dispatch a tool call to the session's AgentToolManager.
      *
-     * The MCP Server instance is created lazily and cached for performance.
-     * The tool call is forwarded using [Browser4MCPServer]'s internal dispatching,
-     * which wraps the session's WebDriver.
-     *
-     * Since `Server.callTool` is not directly accessible, we use the session's
-     * WebDriver to execute the operation directly.
+     * This replaces the manual tool implementation by delegating to the central
+     * tool registry in [AgentToolManager].
      */
     private suspend fun dispatchToMCPServer(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
         val sessionId = requireSessionId(request)
         val managed = sessionManager.getSession(sessionId)
             ?: return ResponseEntity.ok(errorResponse("Session not found: $sessionId"))
 
-        val result = managed.withLock {
-            executeDriverTool(request.tool, request.arguments ?: emptyMap(), managed)
+        val agent = managed.pulsarSession.companionAgent as? BasicBrowserAgent
+            ?: return ResponseEntity.ok(errorResponse("Session agent does not support tools"))
+        
+        val toolName = request.tool
+        val args = request.arguments ?: emptyMap()
+        
+        // Find the matching tool in AgentToolManager
+        val toolCall = resolveToolCall(toolName, args, agent)
+            ?: return ResponseEntity.ok(errorResponse("Unknown tool: $toolName"))
+
+        return try {
+            val result = agent.toolManager.executeToolCall(toolCall)
+            val exception = result.exception
+            if (exception != null) {
+                ResponseEntity.ok(errorResponse("${toolName} failed: ${exception.message}"))
+            } else {
+                val value = result.value?.toString() ?: ""
+                ResponseEntity.ok(textResponse(value))
+            }
+        } catch (e: Exception) {
+            logger.error("MCP tool execution failed | tool={} | {}", toolName, e.message, e)
+            ResponseEntity.ok(errorResponse("${toolName} failed: ${e.message}"))
         }
-        return ResponseEntity.ok(result)
+    }
+
+    private fun resolveToolCall(toolName: String, args: Map<String, Any?>, agent: BasicBrowserAgent): ToolCall? {
+        val specs = agent.toolManager.getAllToolSpecs()
+        for ((domain, methods) in specs) {
+            for ((method, _) in methods) {
+                val mcpName = toMcpToolName(domain, method)
+                if (mcpName == toolName) {
+                    return ToolCall(domain, method, args)
+                }
+            }
+        }
+        return null
     }
 
     /**
-     * Execute an MCP tool directly against the session's WebDriver.
-     *
-     * This mirrors the tool implementations in [Browser4MCPServer] but executes
-     * synchronously within the session lock.
+     * Convert domain+method to snake_case MCP tool name.
+     * Must match logic in Browser4MCPServer.
      */
-    private suspend fun executeDriverTool(
-        tool: String,
-        args: Map<String, Any?>,
-        session: SessionManager.ManagedSession
-    ): MCPToolCallResponse {
-        val driver = session.driver
-
-        return try {
-            when (tool) {
-                // Navigation
-                "navigate" -> {
-                    val url = requireArg(args, "url")
-                    driver.navigate(url)
-                    textResponse("Navigated to $url")
-                }
-                "reload" -> {
-                    driver.reload()
-                    textResponse("Page reloaded")
-                }
-                "go_back" -> {
-                    driver.goBack()
-                    textResponse("Navigated back")
-                }
-                "go_forward" -> {
-                    driver.goForward()
-                    textResponse("Navigated forward")
-                }
-
-                // Wait / Query
-                "wait_for_selector" -> {
-                    val selector = requireArg(args, "selector")
-                    val timeoutMs = (args["timeout_ms"] as? Number)?.toLong() ?: 3000L
-                    driver.waitForSelector(selector, timeoutMs)
-                    textResponse("Element '$selector' found")
-                }
-                "exists" -> {
-                    val selector = requireArg(args, "selector")
-                    textResponse(driver.exists(selector).toString())
-                }
-                "is_visible" -> {
-                    val selector = requireArg(args, "selector")
-                    textResponse(driver.isVisible(selector).toString())
-                }
-                "focus" -> {
-                    val selector = requireArg(args, "selector")
-                    driver.focus(selector)
-                    textResponse("Focused '$selector'")
-                }
-
-                // Interaction
-                "hover" -> {
-                    val selector = requireArg(args, "selector")
-                    driver.hover(selector)
-                    textResponse("Hovered over '$selector'")
-                }
-                "click" -> {
-                    val selector = requireArg(args, "selector")
-                    val modifier = args["modifier"]?.toString()
-                    if (modifier != null) driver.click(selector, modifier) else driver.click(selector)
-                    textResponse("Clicked '$selector'${if (modifier != null) " with $modifier" else ""}")
-                }
-                "dblclick" -> {
-                    val selector = requireArg(args, "selector")
-                    driver.dblclick(selector)
-                    textResponse("Double-clicked '$selector'")
-                }
-                "fill" -> {
-                    val selector = requireArg(args, "selector")
-                    val text = requireArg(args, "text")
-                    driver.fill(selector, text)
-                    textResponse("Filled '$selector'")
-                }
-                "type" -> {
-                    val selector = requireArg(args, "selector")
-                    val text = requireArg(args, "text")
-                    driver.type(selector, text)
-                    textResponse("Typed into '$selector'")
-                }
-                "upload" -> {
-                    val selector = requireArg(args, "selector")
-                    val paths = (args["paths"] as? List<*>)?.map { it.toString() }
-                        ?: throw IllegalArgumentException("Missing required parameter: paths")
-                    driver.upload(selector, paths)
-                    textResponse("Uploaded ${paths.size} files to $selector")
-                }
-                "press" -> {
-                    val selector = requireArg(args, "selector")
-                    val key = requireArg(args, "key")
-                    driver.press(selector, key)
-                    textResponse("Pressed '$key' on '$selector'")
-                }
-                "check" -> {
-                    val selector = requireArg(args, "selector")
-                    driver.check(selector)
-                    textResponse("Checked '$selector'")
-                }
-                "uncheck" -> {
-                    val selector = requireArg(args, "selector")
-                    driver.uncheck(selector)
-                    textResponse("Unchecked '$selector'")
-                }
-                "select_option" -> {
-                    val selector = requireArg(args, "selector")
-                    val value = requireArg(args, "value")
-                    driver.selectOption(selector, listOf(value))
-                    textResponse("Selected '$value' in '$selector'")
-                }
-                "drag" -> {
-                    val src = requireArg(args, "source_selector")
-                    val tgt = requireArg(args, "target_selector")
-                    val encodedSrc = objectMapper.writeValueAsString(src)
-                    val encodedTgt = objectMapper.writeValueAsString(tgt)
-                    val script = """
-                        (() => {
-                            const s = document.querySelector($encodedSrc);
-                            const t = document.querySelector($encodedTgt);
-                            if (!s || !t) return JSON.stringify({dx:0,dy:0});
-                            const sr = s.getBoundingClientRect();
-                            const tr = t.getBoundingClientRect();
-                            return JSON.stringify({dx: tr.x - sr.x + tr.width/2 - sr.width/2, dy: tr.y - sr.y + tr.height/2 - sr.height/2});
-                        })()
-                    """.trimIndent()
-                    val result = driver.evaluate(script) as? String ?: """{"dx":0,"dy":0}"""
-                    val parsed = objectMapper.readTree(result)
-                    val dx = parsed.get("dx")?.asInt() ?: 0
-                    val dy = parsed.get("dy")?.asInt() ?: 0
-                    driver.dragAndDrop(src, dx, dy)
-                    textResponse("Dragged '$src' to '$tgt'")
-                }
-
-                // Scrolling
-                "scroll_to" -> {
-                    val selector = requireArg(args, "selector")
-                    driver.scrollTo(selector)
-                    textResponse("Scrolled to '$selector'")
-                }
-                "scroll_to_top" -> {
-                    driver.scrollToTop()
-                    textResponse("Scrolled to top")
-                }
-                "scroll_to_bottom" -> {
-                    driver.scrollToBottom()
-                    textResponse("Scrolled to bottom")
-                }
-                "scroll_to_middle" -> {
-                    val ratio = (args["ratio"] as? Number)?.toDouble() ?: 0.5
-                    driver.scrollToMiddle(ratio)
-                    textResponse("Scrolled to position $ratio")
-                }
-                "scroll_by" -> {
-                    val pixels = (args["pixels"] as? Number)?.toDouble() ?: 200.0
-                    val scrolled = driver.scrollBy(pixels)
-                    textResponse("Scrolled by $scrolled px")
-                }
-
-                // Content
-                "text_content" -> {
-                    textResponse(driver.textContent() ?: "")
-                }
-                "get_text" -> {
-                    val selector = requireArg(args, "selector")
-                    textResponse(driver.selectFirstTextOrNull(selector) ?: "")
-                }
-                "delay" -> {
-                    val millis = (args["millis"] as? Number)?.toLong()
-                        ?: throw IllegalArgumentException("Missing required parameter: millis")
-                    driver.delay(millis)
-                    textResponse("Waited ${millis}ms")
-                }
-
-                // Snapshot & page info
-                "aria_snapshot" -> {
-                    textResponse(driver.ariaSnapshot())
-                }
-                "page_url" -> {
-                    textResponse(driver.currentUrl())
-                }
-                "page_title" -> {
-                    textResponse(driver.title())
-                }
-
-                // Screenshot
-                "screenshot" -> {
-                    val selector = args["selector"]?.toString()
-                    val fullPage = (args["full_page"] as? Boolean) ?: false
-                    val base64 = if (selector != null) driver.screenshot(selector) else driver.screenshot(fullPage)
-                    textResponse(base64 ?: "")
-                }
-
-                // Evaluate
-                "evaluate" -> {
-                    val expression = requireArg(args, "expression")
-                    textResponse(driver.evaluate(expression)?.toString() ?: "null")
-                }
-
-                // Dialog
-                "dialog_accept" -> {
-                    val promptText = args["prompt_text"]?.toString()
-                    driver.dialogAccept(promptText)
-                    textResponse("Dialog accepted")
-                }
-                "dialog_dismiss" -> {
-                    driver.dialogDismiss()
-                    textResponse("Dialog dismissed")
-                }
-
-                // Resize
-                "resize" -> {
-                    val width = (args["width"] as? Number)?.toInt()
-                        ?: throw IllegalArgumentException("Missing required parameter: width")
-                    val height = (args["height"] as? Number)?.toInt()
-                        ?: throw IllegalArgumentException("Missing required parameter: height")
-                    driver.resize(width, height)
-                    textResponse("Resized to ${width}x${height}")
-                }
-
-                // Keyboard
-                "keydown" -> {
-                    val key = requireArg(args, "key")
-                    val encodedKey = objectMapper.writeValueAsString(key)
-                    driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: $encodedKey, bubbles: true}))")
-                    textResponse("Key down: $key")
-                }
-                "keyup" -> {
-                    val key = requireArg(args, "key")
-                    val encodedKey = objectMapper.writeValueAsString(key)
-                    driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: $encodedKey, bubbles: true}))")
-                    textResponse("Key up: $key")
-                }
-
-                // Mouse
-                "mousemove" -> {
-                    val x = (args["x"] as? Number)?.toDouble()
-                        ?: throw IllegalArgumentException("Missing required parameter: x")
-                    val y = (args["y"] as? Number)?.toDouble()
-                        ?: throw IllegalArgumentException("Missing required parameter: y")
-                    driver.moveMouseTo(x, y)
-                    textResponse("Mouse moved to ($x, $y)")
-                }
-                "mousedown" -> {
-                    val button = args["button"]?.toString() ?: "left"
-                    val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
-                    driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mousedown', {button: $btnIndex, bubbles: true}))")
-                    textResponse("Mouse down ($button)")
-                }
-                "mouseup" -> {
-                    val button = args["button"]?.toString() ?: "left"
-                    val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
-                    driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mouseup', {button: $btnIndex, bubbles: true}))")
-                    textResponse("Mouse up ($button)")
-                }
-                "mousewheel" -> {
-                    val deltaX = (args["delta_x"] as? Number)?.toDouble() ?: 0.0
-                    val deltaY = (args["delta_y"] as? Number)?.toDouble() ?: 100.0
-                    if (deltaY > 0) driver.mouseWheelDown(1, deltaX, deltaY) else driver.mouseWheelUp(1, deltaX, deltaY)
-                    textResponse("Mouse wheel ($deltaX, $deltaY)")
-                }
-
-                // Tab management
-                "tab_list" -> {
-                    val result = driver.evaluate("""
-                        (() => {
-                            return JSON.stringify([{index: 0, url: document.URL, title: document.title}]);
-                        })()
-                    """.trimIndent()) as? String ?: "[]"
-                    textResponse(result)
-                }
-                "tab_new" -> {
-                    val url = args["url"]?.toString() ?: "about:blank"
-                    val encodedUrl = objectMapper.writeValueAsString(url)
-                    driver.evaluate("window.open($encodedUrl)")
-                    textResponse(if (url == "about:blank") "New tab opened" else "New tab opened: $url")
-                }
-                "tab_close" -> {
-                    driver.evaluate("window.close()")
-                    textResponse("Tab closed")
-                }
-                "tab_select" -> {
-                    driver.evaluate("window.focus()")
-                    textResponse("Switched to tab ${args["index"] ?: 0}")
-                }
-
-                else -> errorResponse("Unknown tool: ${tool}")
-            }
-        } catch (e: IllegalArgumentException) {
-            errorResponse("${tool}: ${e.message}")
-        } catch (e: Exception) {
-            logger.error("MCP tool execution failed | tool={} | {}", tool, e.message)
-            errorResponse("${tool} failed: ${e.message}")
+    private fun toMcpToolName(domain: String, method: String): String {
+        val snake = method.replace(Regex("([A-Z])")) { "_${it.groupValues[1].lowercase()}" }
+        return when (domain) {
+            "driver", "system" -> snake
+            else -> "${domain}_$snake"
         }
     }
 

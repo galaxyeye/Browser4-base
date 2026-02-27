@@ -6,6 +6,8 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import java.time.Duration
 import kotlin.reflect.KClass
 
+import ai.platon.pulsar.common.serialize.json.Pson
+
 class WebDriverToolExecutor: AbstractToolExecutor() {
     override val domain = "driver"
 
@@ -13,6 +15,18 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
 
     init {
         SourceCodeToToolCallSpec.webDriverToolCallList.associateByTo(toolSpec) { it.method }
+
+        // Add custom drag tool spec which is not in WebDriver interface but supported via JS
+        val dragSpec = ai.platon.pulsar.agentic.model.ToolSpec(
+            domain, "drag",
+            listOf(
+                ai.platon.pulsar.agentic.model.ToolSpec.Arg("sourceSelector", "String", ""),
+                ai.platon.pulsar.agentic.model.ToolSpec.Arg("targetSelector", "String", "")
+            ),
+            "Unit",
+            "Drag an element from source selector to target selector."
+        )
+        toolSpec["drag"] = dragSpec
     }
 
     override fun help(method: String): String {
@@ -130,6 +144,81 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
                     }
                     else -> throw IllegalArgumentException("click requires 'selector' plus optionally one of 'count' or 'modifier'")
                 }
+            }
+            "dblclick" -> {
+                validateArgs(args, if (args.containsKey("modifier")) allowed("selector", "modifier") else allowed("selector"), setOf("selector"), functionName)
+                if (args.containsKey("modifier")) {
+                    driver.dblclick(selector = paramString(args, "selector", functionName)!!, modifier = paramString(args, "modifier", functionName)!!)
+                } else {
+                    driver.dblclick(selector = paramString(args, "selector", functionName)!!)
+                }
+            }
+            "upload" -> {
+                validateArgs(args, allowed("selector", "paths"), setOf("selector", "paths"), functionName)
+                val paths = args["paths"] as? List<String> ?: throw IllegalArgumentException("paths must be a list of strings")
+                driver.upload(selector = paramString(args, "selector", functionName)!!, paths = paths)
+            }
+            "selectOption" -> {
+                validateArgs(args, allowed("selector", "values"), setOf("selector", "values"), functionName)
+                val values = args["values"] as? List<String> ?: throw IllegalArgumentException("values must be a list of strings")
+                driver.selectOption(selector = paramString(args, "selector", functionName)!!, values = values)
+            }
+            "ariaSnapshot" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.ariaSnapshot() }
+            "title" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.title() }
+            "dialogAccept" -> {
+                validateArgs(args, allowed("promptText"), emptySet(), functionName)
+                driver.dialogAccept(paramString(args, "promptText", functionName, required = false))
+            }
+            "dialogDismiss" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.dialogDismiss() }
+            "resize" -> {
+                validateArgs(args, allowed("width", "height"), setOf("width", "height"), functionName)
+                driver.resize(width = paramInt(args, "width", functionName)!!, height = paramInt(args, "height", functionName)!!)
+            }
+            "keydown" -> {
+                validateArgs(args, allowed("key"), setOf("key"), functionName)
+                val key = paramString(args, "key", functionName)!!
+                val encodedKey = Pson.toJson(key)
+                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: ${encodedKey}, bubbles: true}))")
+            }
+            "keyup" -> {
+                validateArgs(args, allowed("key"), setOf("key"), functionName)
+                val key = paramString(args, "key", functionName)!!
+                val encodedKey = Pson.toJson(key)
+                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: ${encodedKey}, bubbles: true}))")
+            }
+            "mousedown" -> {
+                validateArgs(args, allowed("button", "x", "y"), emptySet(), functionName)
+                val button = paramString(args, "button", functionName, required = false) ?: "left"
+                val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
+                driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mousedown', {button: $btnIndex, bubbles: true}))")
+            }
+            "mouseup" -> {
+                validateArgs(args, allowed("button", "x", "y"), emptySet(), functionName)
+                val button = paramString(args, "button", functionName, required = false) ?: "left"
+                val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
+                driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mouseup', {button: $btnIndex, bubbles: true}))")
+            }
+            "drag" -> {
+                validateArgs(args, allowed("sourceSelector", "targetSelector"), setOf("sourceSelector", "targetSelector"), functionName)
+                val src = paramString(args, "sourceSelector", functionName)!!
+                val tgt = paramString(args, "targetSelector", functionName)!!
+                val encodedSrc = Pson.toJson(src)
+                val encodedTgt = Pson.toJson(tgt)
+                val script = """
+                    (() => {
+                        const s = document.querySelector($encodedSrc);
+                        const t = document.querySelector($encodedTgt);
+                        if (!s || !t) return JSON.stringify({dx:0,dy:0});
+                        const sr = s.getBoundingClientRect();
+                        const tr = t.getBoundingClientRect();
+                        return JSON.stringify({dx: tr.x - sr.x + tr.width/2 - sr.width/2, dy: tr.y - sr.y + tr.height/2 - sr.height/2});
+                    })()
+                """.trimIndent()
+                val result = driver.evaluate(script) as? String ?: """{"dx":0,"dy":0}"""
+                val parsed = Pson.mapper.readTree(result)
+                val dx = parsed.get("dx")?.asInt() ?: 0
+                val dy = parsed.get("dy")?.asInt() ?: 0
+                driver.dragAndDrop(src, dx, dy)
             }
             "clickTextMatches" -> {
                 when {
