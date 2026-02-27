@@ -571,6 +571,13 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
+    override suspend fun upload(selector: String, paths: List<String>) {
+        driverHelper.invokeOnElement(selector, "upload", focus = true) { node ->
+            domAPI?.setFileInputFiles(files = paths, nodeId = node.nodeId)
+        }
+    }
+
+    @Throws(WebDriverException::class)
     override suspend fun press(selector: String, key: String) {
         driverHelper.invokeOnElement(selector, "press", focus = true) { _ ->
             keyboard?.press(key, randomDelayMillis("press"))

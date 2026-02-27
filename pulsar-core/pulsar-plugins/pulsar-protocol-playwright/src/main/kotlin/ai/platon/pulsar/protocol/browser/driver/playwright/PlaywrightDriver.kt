@@ -1021,6 +1021,16 @@ class PlaywrightDriver(
         }
     }
 
+    override suspend fun upload(selector: String, paths: List<String>) {
+        try {
+            rpc.invokeDeferred("upload") {
+                page.setInputFiles(selector, paths.map { java.nio.file.Paths.get(it) }.toTypedArray())
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "upload", selector)
+        }
+    }
+
     override suspend fun pause() {
         try {
             rpc.invokeDeferred("pause") {

@@ -275,6 +275,15 @@ interface JvmWebDriver {
     fun loadResourceAsync(url: String): CompletableFuture<NetworkResourceResponse>
 
     /**
+     * Upload files to the element located by [selector].
+     *
+     * @param selector The selector of the file input element.
+     * @param paths The list of file paths to upload.
+     * */
+    @Throws(WebDriverException::class)
+    fun uploadAsync(selector: String, paths: List<String>): CompletableFuture<Unit>
+
+    /**
      * Force the page pauses all navigations and PENDING resource fetches.
      * If the page loading stops, the user can still interact with the page,
      * and therefore resources can continue to load.

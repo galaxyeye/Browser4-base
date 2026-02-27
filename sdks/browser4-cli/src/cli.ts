@@ -20,8 +20,144 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
+import { spawn, ChildProcess } from 'child_process';
+import * as https from 'https';
 import axios, { AxiosInstance } from 'axios';
 import { readState, writeState, clearState, resolveRef, CliState } from './state';
+
+// ---------------------------------------------------------------------------
+// Server Management
+// ---------------------------------------------------------------------------
+
+async function ensureServerRunning(args: string[]): Promise<void> {
+  const state = readState();
+  let baseUrl = state.baseUrl || 'http://localhost:8182';
+  
+  // Check for --server override in args
+  const serverIdx = args.indexOf('--server');
+  if (serverIdx !== -1 && args[serverIdx + 1]) {
+    baseUrl = args[serverIdx + 1];
+  }
+  
+  // Only attempt to start if we're pointing to localhost
+  if (!baseUrl.includes('localhost') && !baseUrl.includes('127.0.0.1')) {
+    return;
+  }
+
+  // Check if already running
+  try {
+    const ax = makeAxios(baseUrl);
+    await ax.get('/actuator/health');
+    return;
+  } catch (error) {
+    // Not running, proceed to start
+  }
+
+  console.log('Browser4 server not running. Starting...');
+
+  const jarPath = await findOrDownloadJar();
+  const port = parseInt(new URL(baseUrl).port) || 8182;
+
+  await startServer(jarPath, port);
+}
+
+async function findOrDownloadJar(): Promise<string> {
+  // Check environment variable
+  if (process.env.BROWSER4_JAR_PATH && fs.existsSync(process.env.BROWSER4_JAR_PATH)) {
+    return process.env.BROWSER4_JAR_PATH;
+  }
+
+  // Check common locations
+  const candidates = [
+    path.join(os.homedir(), '.browser4', 'Browser4.jar'),
+    path.resolve('Browser4.jar'),
+    path.resolve('target', 'Browser4.jar'),
+    path.resolve(__dirname, '..', '..', 'target', 'Browser4.jar'),
+    path.resolve(__dirname, '..', '..', '..', 'browser4', 'browser4-agents', 'target', 'Browser4.jar'), // Monorepo location
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  // Download if not found
+  const downloadPath = path.join(os.homedir(), '.browser4', 'Browser4.jar');
+  await downloadJar(downloadPath);
+  return downloadPath;
+}
+
+async function downloadJar(targetPath: string): Promise<void> {
+  const dir = path.dirname(targetPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  const url = 'https://github.com/platonai/Browser4/releases/latest/download/Browser4.jar';
+  console.log(`Downloading Browser4.jar from ${url}...`);
+
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(targetPath);
+    https.get(url, (response) => {
+      if (response.statusCode === 301 || response.statusCode === 302) {
+        if (!response.headers.location) {
+            reject(new Error('Redirect without location header'));
+            return;
+        }
+        https.get(response.headers.location, (redirectResponse) => {
+          redirectResponse.pipe(file);
+          file.on('finish', () => {
+            file.close();
+            console.log('Download complete');
+            resolve();
+          });
+        }).on('error', (err) => {
+            fs.unlinkSync(targetPath);
+            reject(err);
+        });
+      } else {
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          console.log('Download complete');
+          resolve();
+        });
+      }
+    }).on('error', (err) => {
+      fs.unlinkSync(targetPath);
+      reject(err);
+    });
+  });
+}
+
+async function startServer(jarPath: string, port: number): Promise<void> {
+  console.log(`Starting server from ${jarPath} on port ${port}...`);
+  
+  const child = spawn('java', ['-jar', jarPath, `--server.port=${port}`], {
+    detached: true,
+    stdio: 'ignore' // or 'inherit' for debugging, but 'ignore' keeps it clean
+  });
+
+  child.unref(); // Allow the parent process to exit independently
+
+  // Wait for health check
+  const start = Date.now();
+  const timeout = 60000;
+  
+  while (Date.now() - start < timeout) {
+    try {
+      await axios.get(`http://localhost:${port}/actuator/health`);
+      console.log('Server is up and running.');
+      return;
+    } catch (e) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  throw new Error(`Server failed to start within ${timeout}ms`);
+}
 
 // ---------------------------------------------------------------------------
 // MCP tool call helpers
@@ -345,29 +481,35 @@ async function cmdSelect(args: string[]): Promise<void> {
 }
 
 /**
- * `upload <filePath>` — upload a file to a file input.
+ * `upload <ref> <filePath>` — upload a file to a file input.
  */
 async function cmdUpload(args: string[]): Promise<void> {
-  const filePath = args[0];
-  if (!filePath) {
-    throw new Error('Usage: browser4-cli upload <filePath>');
+  let selector = 'input[type=file]';
+  let filePaths: string[] = [];
+
+  if (args.length === 1) {
+    // browser4-cli upload <file>
+    filePaths = [args[0]];
+  } else if (args.length >= 2) {
+    // browser4-cli upload <ref> <file> [file2...]
+    const rawRef = args[0];
+    selector = resolveRef(rawRef);
+    filePaths = args.slice(1);
+  } else {
+    throw new Error('Usage: browser4-cli upload [<ref>] <filePath> [filePath2...]');
   }
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  const absPath = path.resolve(filePath);
+  const absPaths = filePaths.map(p => path.resolve(p));
 
-  await callTool(ax, 'evaluate', {
+  await callTool(ax, 'upload', {
     sessionId: state.sessionId,
-    expression: `
-      (() => {
-        const input = document.querySelector('input[type=file]');
-        if (input) { input.click(); }
-      })()
-    `,
+    selector,
+    paths: absPaths,
   });
 
-  console.log(`Upload triggered for ${absPath} (file input activated)`);
+  console.log(`Uploaded ${absPaths.join(', ')} to ${selector}`);
 }
 
 /**
@@ -933,6 +1075,11 @@ async function main(): Promise<void> {
   const [command, ...rest] = remaining;
 
   try {
+    if (command !== 'help' && command !== '--help' && command !== '-h' && command !== undefined) {
+      // Pass remaining args to check for --server flag
+      await ensureServerRunning(rest);
+    }
+    
     switch (command) {
       // Core
       case 'open':        await cmdOpen(rest, sessionName); break;

@@ -124,7 +124,7 @@ class MCPToolController(
             // Driver tools
             "navigate", "reload", "go_back", "go_forward",
             "wait_for_selector", "exists", "is_visible", "focus",
-            "hover", "click", "fill", "type", "press",
+            "hover", "click", "fill", "type", "upload", "press",
             "check", "uncheck",
             "scroll_to", "scroll_to_top", "scroll_to_bottom", "scroll_to_middle", "scroll_by",
             "text_content", "get_text", "delay",
@@ -306,6 +306,13 @@ class MCPToolController(
                     val text = requireArg(args, "text")
                     driver.type(selector, text)
                     textResponse("Typed into '$selector'")
+                }
+                "upload" -> {
+                    val selector = requireArg(args, "selector")
+                    val paths = (args["paths"] as? List<*>)?.map { it.toString() }
+                        ?: throw IllegalArgumentException("Missing required parameter: paths")
+                    driver.upload(selector, paths)
+                    textResponse("Uploaded ${paths.size} files to $selector")
                 }
                 "press" -> {
                     val selector = requireArg(args, "selector")

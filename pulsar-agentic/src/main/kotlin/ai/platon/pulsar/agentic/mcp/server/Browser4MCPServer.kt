@@ -102,6 +102,15 @@ class Browser4MCPServer(
     private fun boolProp(description: String): JsonObject =
         JsonObject(mapOf("type" to JsonPrimitive("boolean"), "description" to JsonPrimitive(description)))
 
+    private fun arrayProp(description: String, itemType: String = "string"): JsonObject =
+        JsonObject(
+            mapOf(
+                "type" to JsonPrimitive("array"),
+                "description" to JsonPrimitive(description),
+                "items" to JsonObject(mapOf("type" to JsonPrimitive(itemType)))
+            )
+        )
+
     private fun schemaOf(vararg props: Pair<String, JsonObject>, required: List<String> = emptyList()): ToolSchema =
         ToolSchema(properties = JsonObject(props.toMap()), required = required)
 
@@ -345,6 +354,33 @@ class Browser4MCPServer(
                 .fold(
                     onSuccess = { textResult("Typed into '$selector'") },
                     onFailure = { errorResult("type failed: ${it.message}") }
+                )
+        }
+
+        // driver.upload(selector: String, paths: List<String>)
+        addTool(
+            name = "upload",
+            description = "Upload files to the element located by [selector].",
+            inputSchema = schemaOf(
+                "selector" to stringProp("The selector of the file input element."),
+                "paths" to arrayProp("The list of file paths to upload."),
+                required = listOf("selector", "paths")
+            )
+        ) { request ->
+            val selector = arg(request.params.arguments, "selector")
+                ?: return@addTool errorResult("Missing required parameter: selector")
+
+            val pathsElement = request.params.arguments?.get("paths")
+            val paths = if (pathsElement is kotlinx.serialization.json.JsonArray) {
+                pathsElement.map { it.toString().trim('"') }
+            } else {
+                return@addTool errorResult("Missing required parameter: paths (array)")
+            }
+
+            runCatching { driver.upload(selector, paths) }
+                .fold(
+                    onSuccess = { textResult("Uploaded ${paths.size} files to $selector") },
+                    onFailure = { errorResult("upload failed: ${it.message}") }
                 )
         }
 

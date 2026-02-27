@@ -75,6 +75,7 @@ abstract class AbstractJvmWebDriver: JvmWebDriver, WebDriver {
     override fun boundingBoxAsync(selector: String) = interopScope.future { boundingBox(selector) }
     override fun newJsoupSessionAsync() = interopScope.future { newJsoupSession() }
     override fun loadResourceAsync(url: String) = interopScope.future { loadResource(url) }
+    override fun uploadAsync(selector: String, paths: List<String>) = interopScope.future { upload(selector, paths) }
     override fun pauseAsync() = interopScope.future { pause() }
     override fun stopAsync() = interopScope.future { stop() }
 }

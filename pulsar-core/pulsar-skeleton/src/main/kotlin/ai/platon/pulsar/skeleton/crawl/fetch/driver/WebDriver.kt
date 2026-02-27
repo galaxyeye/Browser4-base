@@ -1613,6 +1613,15 @@ interface WebDriver : Closeable {
     suspend fun delay(duration: kotlin.time.Duration) = kotlinx.coroutines.delay(duration.inWholeMilliseconds)
 
     /**
+     * Upload files to the element located by [selector].
+     *
+     * @param selector The selector of the file input element.
+     * @param paths The list of file paths to upload.
+     */
+    @Throws(WebDriverException::class)
+    suspend fun upload(selector: String, paths: List<String>)
+
+    /**
      * Force the page pauses all navigations and PENDING resource fetches.
      * If the page loading pauses, the user can still interact with the page,
      * and therefore resources can continue to load.
