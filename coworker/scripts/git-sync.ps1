@@ -1,15 +1,25 @@
 #!/usr/bin/env pwsh
 
-# 🔍 Find the repo root using git
-$repoRoot = (git rev-parse --show-toplevel 2>$null)
+# 🔍 Find repo root
+$repoRoot = git rev-parse --show-toplevel 2>$null
 if (-not $repoRoot) {
     Write-Host "Repo root not found. Exiting."
     exit 1
 }
+
 Set-Location $repoRoot
 
-# Call copilot to commit all changes with a message
-$prompt = "Commit all changes in $repoRoot, pull and then push to the remote repository. Resolve conflicts if there is any."
+# 显式为路径添加双引号（用于自然语言提示清晰化）
+$quotedRoot = '"' + $repoRoot + '"'
 
-Write-Host "Running: gh copilot -p '$prompt' --allow-all-tools"
-gh copilot -p "$prompt" --allow-all-tools
+$prompt = @"
+Commit all changes in $quotedRoot.
+Pull from remote.
+Then push to remote.
+If conflicts occur, resolve them automatically.
+"@
+
+Write-Host "Running:"
+Write-Host "gh copilot -p $prompt --allow-all-tools"
+
+gh copilot -p $prompt --allow-all-tools
