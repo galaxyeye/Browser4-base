@@ -285,6 +285,15 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     suspend fun navigateTo(entry: NavigateEntry)
 
+    /**
+     * Reloads the current page, equivalent to pressing F5 or clicking the browser's reload button.
+     *
+     * ```kotlin
+     * driver.reload()
+     * ```
+     *
+     * @throws WebDriverException If an error occurs during the reload.
+     */
     @Throws(WebDriverException::class)
     suspend fun reload()
 
@@ -846,8 +855,20 @@ interface WebDriver : Closeable {
     suspend fun click(selector: String, count: Int = 1)
 
     /**
-     * focus on an element with [selector] and click it with [modifier] pressed
-     * */
+     * Focuses on an element with [selector] and clicks it while holding [modifier] key pressed.
+     *
+     * Typical use case is Ctrl+click (open link in new tab) or Shift+click (extend selection).
+     *
+     * ```kotlin
+     * // Ctrl+click to open a link in a new tab
+     * driver.click("a.product-link", "Meta")
+     * ```
+     *
+     * @param selector A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
+     * of an element to click. If there are multiple elements satisfying the selector, the first will be used.
+     * @param modifier The modifier key to hold while clicking (e.g. `"Alt"`, `"Control"`, `"Meta"`, `"Shift"`).
+     * @throws WebDriverException If an error occurs while interacting with the element.
+     */
     @Throws(WebDriverException::class)
     suspend fun click(selector: String, modifier: String)
 
@@ -1155,6 +1176,25 @@ interface WebDriver : Closeable {
      * */
     suspend fun textContent(selector: String? = null): String?
 
+    /**
+     * Extracts field values from the current page using a map of field names to CSS selectors.
+     *
+     * Each key in [fields] is a logical field name; the corresponding value is a CSS selector
+     * used to locate the element on the page. The text content of the first matching element is
+     * returned for each selector. If no element matches, the result for that field is `null`.
+     *
+     * ```kotlin
+     * val data = driver.extract(mapOf(
+     *     "title"  to "h1.title",
+     *     "price"  to "span.price",
+     *     "rating" to "div.rating"
+     * ))
+     * val title = data["title"]
+     * ```
+     *
+     * @param fields A map from logical field names to CSS selectors.
+     * @return A map from field names to extracted text values, or `null` for fields with no match.
+     */
     suspend fun extract(fields: Map<String, String>): Map<String, String?>
 
     /**
@@ -1414,32 +1454,93 @@ interface WebDriver : Closeable {
 
     /**
      * Executes JavaScript and returns the result or [defaultValue] if evaluation returns null or incompatible type.
+     *
+     * ```kotlin
+     * val count = driver.evaluate("document.querySelectorAll('a').length", 0)
+     * ```
+     *
+     * @param expression JavaScript expression to evaluate.
+     * @param defaultValue The value to return when the result is null or cannot be cast to [T].
+     * @return The evaluation result cast to [T], or [defaultValue] if the result is null or incompatible.
      */
     @Throws(WebDriverException::class)
     suspend fun <T> evaluate(expression: String, defaultValue: T): T
 
-    /** Detailed evaluation metadata (beta). */
+    /**
+     * Executes JavaScript and returns detailed evaluation metadata, including the result and any exception info.
+     *
+     * This is a beta API. Prefer [evaluate] for standard use cases.
+     *
+     * @param expression JavaScript expression to evaluate.
+     * @return A [JsEvaluation] object with evaluation details, or null if unavailable.
+     */
     @Throws(WebDriverException::class)
     suspend fun evaluateDetail(expression: String): JsEvaluation?
 
     /**
-     * Executes JavaScript returning JSON if available value if possible (objects serialized), else primitive/string/null.
+     * Executes JavaScript and returns the result, serializing JavaScript objects to JSON when possible.
+     *
+     * Unlike [evaluate], this method attempts to serialize non-primitive JavaScript objects (arrays,
+     * plain objects, etc.) to their JSON representation. Primitives and strings are returned as-is.
+     * Returns null if the expression evaluates to `undefined` or `null`.
+     *
+     * ```kotlin
+     * val links = driver.evaluateValue("Array.from(document.querySelectorAll('a')).map(a => a.href)")
+     * ```
+     *
+     * @param expression JavaScript expression to evaluate.
+     * @return The evaluation result as a primitive, JSON string, or null.
      */
     @Throws(WebDriverException::class)
     suspend fun evaluateValue(expression: String): Any?
 
-    /** Executes JS returning JSONifiable value or [defaultValue] if null/incompatible. */
+    /**
+     * Executes JavaScript and returns the JSON-serializable result, or [defaultValue] if null or incompatible type.
+     *
+     * ```kotlin
+     * val count = driver.evaluateValue("document.querySelectorAll('a').length", 0)
+     * ```
+     *
+     * @param expression JavaScript expression to evaluate.
+     * @param defaultValue The value to return when the result is null or cannot be cast to [T].
+     * @return The evaluation result cast to [T], or [defaultValue] if the result is null or incompatible.
+     */
     @Throws(WebDriverException::class)
     suspend fun <T> evaluateValue(expression: String, defaultValue: T): T
 
-    /** Detailed value evaluation metadata (beta). */
+    /**
+     * Executes JavaScript and returns detailed evaluation metadata, serializing JavaScript objects to JSON.
+     *
+     * This is a beta API. Prefer [evaluateValue] for standard use cases.
+     *
+     * @param expression JavaScript expression to evaluate.
+     * @return A [JsEvaluation] object with evaluation details, or null if unavailable.
+     */
     @Throws(WebDriverException::class)
     suspend fun evaluateValueDetail(expression: String): JsEvaluation?
 
+    /**
+     * Executes a named function on the element located by [selector] and returns the result as a JSON-serializable value.
+     *
+     * This is an experimental API subject to change.
+     *
+     * @param selector The CSS selector to locate the target element.
+     * @param functionDeclaration A JavaScript function declaration to call on the element.
+     * @return The result of the function call, or null.
+     */
     @Throws(WebDriverException::class)
     @ExperimentalApi
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any?
 
+    /**
+     * Executes a named function on the element located by [selector] and returns detailed evaluation metadata.
+     *
+     * This is an experimental API subject to change.
+     *
+     * @param selector The CSS selector to locate the target element.
+     * @param functionDeclaration A JavaScript function declaration to call on the element.
+     * @return A [JsEvaluation] object with evaluation details, or null if unavailable.
+     */
     @Throws(WebDriverException::class)
     @ExperimentalApi
     suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): JsEvaluation?
