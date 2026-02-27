@@ -8,6 +8,7 @@ import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.model.ToolCallResult
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.builtin.*
 import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
@@ -89,9 +90,9 @@ class AgentToolManager constructor(
     /**
      * Returns all tool specifications from all concrete executors, grouped by domain.
      *
-     * @return A map from domain name to a map of method name to [ai.platon.pulsar.agentic.model.ToolSpec].
+     * @return A map from domain name to a map of method name to [ToolSpec].
      */
-    fun getAllToolSpecs(): Map<String, Map<String, ai.platon.pulsar.agentic.model.ToolSpec>> {
+    fun getAllToolSpecs(): Map<String, Map<String, ToolSpec>> {
         return concreteExecutors.associate { executor -> executor.domain to executor.getToolSpecs() }
     }
 
@@ -100,9 +101,9 @@ class AgentToolManager constructor(
      *
      * @param domain The tool domain (e.g. "driver", "fs").
      * @param method The method name within the domain.
-     * @return The [ai.platon.pulsar.agentic.model.ToolSpec] for the given domain and method, or null.
+     * @return The [ToolSpec] for the given domain and method, or null.
      */
-    fun getToolSpec(domain: String, method: String): ai.platon.pulsar.agentic.model.ToolSpec? {
+    fun getToolSpec(domain: String, method: String): ToolSpec? {
         return concreteExecutors.find { it.domain == domain }?.getToolSpecs()?.get(method)
     }
 

@@ -246,7 +246,7 @@ class Browser4MCPServer(
             arg.name to typeToJsonProp(arg.type, arg.name)
         }
         val required = spec.arguments
-            .filter { it.defaultValue.isNullOrEmpty() }
+            .filter { it.defaultValue == null }
             .map { it.name }
         return ToolSchema(
             properties = if (props.isEmpty()) null else JsonObject(props),
