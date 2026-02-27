@@ -47,6 +47,7 @@ data class ToolSpec constructor(
     val arguments: List<Arg> = listOf(),
     val returnType: String = "Unit",
     val description: String? = null,
+    val help: String? = null,
 ) {
     data class Arg(
         val name: String,

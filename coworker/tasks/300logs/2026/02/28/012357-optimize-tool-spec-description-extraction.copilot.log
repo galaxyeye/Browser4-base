@@ -1,0 +1,160 @@
+● Explore: Locate SourceCodeToToolCallSpec and understand its current implementation
+  ● Read
+    pulsar-agentic\src\main\kotlin\ai\platon\pulsar\agentic\tools\specs\SourceCodeToToolCallSpec.kt
+    └ 528 lines read
+  ● Read pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCal
+    lTest.kt
+    └ 22 lines read
+
+● Glob "**/SourceCodeToToolCallSpec.kt"
+  └ 1 file found
+
+● Glob "**/SourceCodeToToolCallTest.kt"
+  └ 1 file found
+
+● Read pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt
+  └ 22 lines read
+
+● Read
+  pulsar-agentic\src\main\kotlin\ai\platon\pulsar\agentic\tools\specs\SourceCodeToToolCallSpec.kt
+  └ 528 lines read
+
+● Edit pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt (+39)
+
+● Edit pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt (+1)
+
+● Edit
+  pulsar-agentic\src\main\kotlin\ai\platon\pulsar\agentic\tools\specs\SourceCodeToToolCallSpec.kt (+1
+   -2)
+
+● Edit
+  pulsar-agentic\src\main\kotlin\ai\platon\pulsar\agentic\tools\specs\SourceCodeToToolCallSpec.kt
+  (+33 -12)
+
+● Edit
+  pulsar-agentic\src\main\kotlin\ai\platon\pulsar\agentic\tools\specs\SourceCodeToToolCallSpec.kt (+2
+   -2)
+
+● Run the SourceCodeToToolCallTest
+  $ .\mvnw.cmd -pl pulsar-agentic -am test -Dtest=SourceCodeToToolCallTest
+  └ 165 lines...
+
+● Run the SourceCodeToToolCallTest allowing other modules to skip tests
+  $ .\mvnw.cmd -pl pulsar-agentic -am test -Dtest=SourceCodeToToolCallTest
+  -Dsurefire.failIfNoSpecifiedTests=false
+  └ 75 lines...
+
+● Run the test with quoted property
+  $ .\mvnw.cmd -pl pulsar-agentic -am test -Dtest=SourceCodeToToolCallTest
+  -D"surefire.failIfNoSpecifiedTests=false"
+  └ 5 lines...
+
+● read_powershell
+  └ 9 lines...
+
+● Read the last 500 lines of the test output
+  $ Get-Content C:\Users\pereg\AppData\Local\Temp\copilot-tool-output-1772213258980-mim25h.txt -Tail
+   500
+  └ 508 lines...
+
+● Edit pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt (+1)
+
+● Run the test with debug output
+  $ .\mvnw.cmd -pl pulsar-agentic -am test -Dtest=SourceCodeToToolCallTest
+  -D"surefire.failIfNoSpecifiedTests=false"
+  └ 9 lines...
+
+● Find the debug output line
+  $ Get-Content C:\Users\pereg\AppData\Local\Temp\copilot-tool-output-1772213411781-mcy1vm.txt |
+  Select-String "Extracted description for method1" -Context 0,5
+  └ 9 lines...
+
+● Edit pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt (+10 -4)
+
+● Run the test again
+  $ .\mvnw.cmd -pl pulsar-agentic -am test -Dtest=SourceCodeToToolCallTest
+  -D"surefire.failIfNoSpecifiedTests=false"
+  └ 9 lines...
+
+● Check test summary
+  $ Get-Content C:\Users\pereg\AppData\Local\Temp\copilot-tool-output-1772213551374-o785vt.txt |
+  Select-String "Tests run:"
+  └ 4 lines...
+
+● Edit pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt (-46)
+
+● Read pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt
+  └ 23 lines read
+
+● Edit pulsar-agentic\src\test\kotlin\ai\platon\pulsar\agentic\inference\action\SourceCodeToToolCallT
+  est.kt (-1)
+
+● Edit
+  pulsar-agentic\src\main\kotlin\ai\platon\pulsar\agentic\tools\specs\SourceCodeToToolCallSpec.kt (+1
+   -1)
+
+● Task: Final verification of test execution
+  ● Run SourceCodeToToolCallTest with Maven
+    $ .\mvnw.cmd -pl pulsar-agentic -am test -Dtest=SourceCodeToToolCallTest
+    -D"surefire.failIfNoSpecifiedTests=false"
+    └ 9 lines...
+  ● Grep "(BUILD SUCCESS|Tests run:)"
+  (C:\Users\pereg\AppData\Local\Temp\copilot-tool-output-1772213715821-5mzhyi.txt)
+    └ 3 lines found
+
+I have optimized `SourceCodeToToolCallSpec` to extract concise descriptions from KDoc comments as requested.
+
+The implementation now:
+1.  **Extracts Paragraphs**: Splits the KDoc content into paragraphs, removing asterisks and trimming whitespace.
+2.  **Handles `#mcp` Tag**: If a paragraph contains the `#mcp` tag (case-insensitive), that specific paragraph is selected as the description, and the `#mcp` text itself is removed.
+3.  **Default Behavior**: If no `#mcp` tag is found, the first paragraph is used as the description.
+4.  **Ignores Extra Content**: All other paragraphs and content are discarded to keep the description concise.
+
+**Files Changed:**
+- `pulsar-agentic/src/main/kotlin/ai/platon/pulsar/agentic/tools/specs/SourceCodeToToolCallSpec.kt`: Implemented `cleanupKDoc` logic and integrated it into `parseFunctionsWithKDoc`.
+
+**Verification:**
+- Verified the changes with a test case covering both scenarios (with and without `#mcp` tag).
+- Confirmed existing tests pass.
+
+
+=== COPILOT STDERR ===
+
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+error: unknown option '--no-warnings'
+
+Try 'copilot --help' for more information.
+
+Total usage est:        1 Premium request
+API time spent:         3m 36s
+Total session time:     12m 34s
+Total code changes:     +88 -68
+Breakdown by AI model:
+ gemini-3-pro-preview    868.1k in, 6.4k out, 763.8k cached (Est. 1 Premium request)

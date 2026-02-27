@@ -4,11 +4,7 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import ai.platon.pulsar.agentic.common.AgentShell
-import ai.platon.pulsar.agentic.model.ActionDescription
-import ai.platon.pulsar.agentic.model.TcEvaluate
-import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.model.ToolCallResult
-import ai.platon.pulsar.agentic.model.ToolSpec
+import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.agentic.tools.builtin.*
 import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
@@ -24,12 +20,23 @@ class AgentToolManager constructor(
 ) {
     private val logger = getLogger(AgentToolManager::class)
 
+    val session: AgenticSession get() = agent.session
+    val driver: WebDriver get() = session.getOrCreateBoundDriver()
     val fs: AgentFileSystem = AgentFileSystem(baseDir)
     val shell: AgentShell = AgentShell(baseDir)
     val system: SystemToolExecutor = SystemToolExecutor(this)
 
-    val session: AgenticSession get() = agent.session
-    val driver: WebDriver get() = session.getOrCreateBoundDriver()
+    val domainAlias = mapOf(
+        "driver" to "driver",
+        "WebDriver" to "driver",
+
+        "fs" to "fs",
+        "AgentFileSystem" to "fs",
+        "FileSystem" to "fs",
+
+        "shell" to "shell",
+        "AgentShell" to "shell",
+    )
 
     val concreteExecutors: List<ToolExecutor> = listOf(
         WebDriverToolExecutor(),
@@ -119,7 +126,8 @@ class AgentToolManager constructor(
      */
     @Throws(UnsupportedOperationException::class)
     suspend fun executeToolCall(tc: ToolCall): TcEvaluate {
-        val topDomain = tc.domain.split(".").first()
+        var topDomain = tc.domain.split(".").first()
+        topDomain = domainAlias.getOrDefault(topDomain, topDomain)
         return when (topDomain) {
             "driver" -> executor.callFunctionOn(tc, driver)
             "browser" -> executor.callFunctionOn(tc, driver.browser)

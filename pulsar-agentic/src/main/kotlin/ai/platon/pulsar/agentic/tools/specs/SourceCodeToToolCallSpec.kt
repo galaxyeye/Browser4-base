@@ -3,6 +3,7 @@ package ai.platon.pulsar.agentic.tools.specs
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.common.ExperimentalApi
 import ai.platon.pulsar.common.Strings
+import ai.platon.pulsar.common.code.ProjectUtils
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.skeleton.common.llm.LLMUtils
 
@@ -15,17 +16,21 @@ object SourceCodeToToolCallSpec {
     init {
         var sourceCode = LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
         extractInterface("driver", sourceCode, "WebDriver").toCollection(webDriverToolCallList)
+        require(webDriverToolCallList.isNotEmpty()) { "WebDriver's tool call list is empty" }
 
         sourceCode = LLMUtils.readSourceFileFromResource("pulsar-agentic", "PerceptiveAgent.kt")
         extractInterface("agent", sourceCode, "PerceptiveAgent").toCollection(perceptiveAgentToolCallList)
+        require(perceptiveAgentToolCallList.isNotEmpty()) { "PerceptiveAgent's tool call list is empty" }
 
-        var fileName = "driver-tool-call-specs.json"
-        var content = prettyPulsarObjectMapper().writeValueAsString(webDriverToolCallList)
-        LLMUtils.writeAsResource(fileName, content)
+        if (!ProjectUtils.isInJar()) {
+            var fileName = "driver-tool-call-specs.json"
+            var content = prettyPulsarObjectMapper().writeValueAsString(webDriverToolCallList)
+            LLMUtils.writeAsResource(fileName, content)
 
-        fileName = "agent-tool-call-specs.json"
-        content = prettyPulsarObjectMapper().writeValueAsString(perceptiveAgentToolCallList)
-        LLMUtils.writeAsResource(fileName, content)
+            fileName = "agent-tool-call-specs.json"
+            content = prettyPulsarObjectMapper().writeValueAsString(perceptiveAgentToolCallList)
+            LLMUtils.writeAsResource(fileName, content)
+        }
     }
 
     fun extractInterface(domain: String, sourceCode: String, interfaceName: String): List<ToolSpec> {
@@ -49,7 +54,8 @@ object SourceCodeToToolCallSpec {
             // Use parsed return type; default to Unit when absent
             val returnType = m.returnType.ifBlank { "Unit" }
             val description = m.kdoc
-            toolSpec += ToolSpec(domain, method, arguments, returnType, description)
+            val help = m.fullKDoc
+            toolSpec += ToolSpec(domain, method, arguments, returnType, description, help)
         }
 
         return toolSpec
@@ -57,7 +63,7 @@ object SourceCodeToToolCallSpec {
 
     // Helper types and parsers for SourceCodeToToolCall
     private data class ParamSig(val name: String, val type: String, val defaultValue: String?)
-    private data class FuncSig(val name: String, val params: List<ParamSig>, val returnType: String, val kdoc: String?)
+    private data class FuncSig(val name: String, val params: List<ParamSig>, val returnType: String, val kdoc: String?, val fullKDoc: String? = null)
 
     private fun extractInterfaceBody(src: String, interfaceName: String): String? {
         val regex = Regex("interface\\s+$interfaceName")
@@ -86,6 +92,7 @@ object SourceCodeToToolCallSpec {
         var inKDoc = false
         val kdocBuf = StringBuilder()
         var pendingKDoc: String? = null
+        var pendingFullKDoc: String? = null
 
         var collectingSig = false
         val sigBuf = StringBuilder()
@@ -108,9 +115,10 @@ object SourceCodeToToolCallSpec {
             val parsed = parseSignature(sig)
             if (parsed != null) {
                 val (name, params, returnType) = parsed
-                out += FuncSig(name, params, returnType, pendingKDoc)
+                out += FuncSig(name, params, returnType, pendingKDoc, pendingFullKDoc)
             }
             pendingKDoc = null
+            pendingFullKDoc = null
             resetSig()
         }
 
@@ -126,9 +134,10 @@ object SourceCodeToToolCallSpec {
                 kdocBuf.appendLine(line)
                 if (line.contains("*/")) {
                     inKDoc = false
-                    // 2025/11/24: do not clean currently, may improve later
-                    pendingKDoc = kdocBuf.toString()
-                    // pendingKDoc = cleanupKDoc(kdocBuf.toString())
+                    // Clean up KDoc and extract relevant description
+                    val (short, full) = processKDoc(kdocBuf.toString())
+                    pendingKDoc = short
+                    pendingFullKDoc = full
                 }
                 continue
             }
@@ -187,7 +196,7 @@ object SourceCodeToToolCallSpec {
             val parsed = parseSignature(sigBuf.toString())
             if (parsed != null) {
                 val (name, params, returnType) = parsed
-                out += FuncSig(name, params, returnType, pendingKDoc)
+                out += FuncSig(name, params, returnType, pendingKDoc, pendingFullKDoc)
             }
         }
         return out
@@ -489,26 +498,55 @@ object SourceCodeToToolCallSpec {
         return out
     }
 
-    private fun cleanupKDoc(kdocRaw: String): String {
+    private fun processKDoc(kdocRaw: String): Pair<String, String> {
         val inner = kdocRaw
             .replace("\r", "")
-            .substringAfter("/**", "")
-            .substringBefore("*/", "")
+            .substringAfter("/**")
+            .substringBeforeLast("*/")
+            .trim()
+
         val lines = inner.lines()
-        val cleaned = lines.map { it.trim().removePrefix("*").trim() }
-            .filter { it.isNotBlank() && !it.trimStart().startsWith("@") }
-        // keep until first empty line originally (paragraph)
-        val sb = StringBuilder()
-        var firstPara = true
-        for (ln in cleaned) {
-            if (ln.isBlank()) {
-                if (firstPara) break else continue
+            .map { it.trim().removePrefix("*").trim() }
+            // Filter out annotation lines like @param, @return, etc.
+            .filter { !it.startsWith("@") }
+
+        // Group lines into paragraphs
+        val paragraphs = mutableListOf<String>()
+        val currentParagraph = StringBuilder()
+
+        for (line in lines) {
+            if (line.isBlank()) {
+                if (currentParagraph.isNotEmpty()) {
+                    paragraphs.add(currentParagraph.toString().trim())
+                    currentParagraph.setLength(0)
+                }
+            } else {
+                if (currentParagraph.isNotEmpty()) {
+                    currentParagraph.append(" ")
+                }
+                currentParagraph.append(line)
             }
-            if (ln.startsWith("```")) break
-            sb.appendLine(ln)
-            firstPara = false
         }
-        return sb.toString().trim()
+        if (currentParagraph.isNotEmpty()) {
+            paragraphs.add(currentParagraph.toString().trim())
+        }
+
+        // Find paragraph with #mcp tag
+        val mcpParagraph = paragraphs.firstOrNull { it.contains("#mcp", ignoreCase = true) }
+
+        val shortDescription = if (mcpParagraph != null) {
+            mcpParagraph.replace("#mcp", "", ignoreCase = true).trim()
+        } else {
+            paragraphs.firstOrNull() ?: ""
+        }
+
+        val fullDescription = paragraphs.joinToString("\n\n")
+
+        return shortDescription to fullDescription
+    }
+
+    private fun cleanupKDoc(kdocRaw: String): String {
+        return processKDoc(kdocRaw).first
     }
 
     private fun compactDoc(doc: String): String {

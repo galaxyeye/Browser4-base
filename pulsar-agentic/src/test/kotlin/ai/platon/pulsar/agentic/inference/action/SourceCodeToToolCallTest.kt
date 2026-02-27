@@ -19,4 +19,27 @@ class SourceCodeToToolCallTest {
         assertNotNull(click, "Should contain driver.click method")
         assertTrue(click!!.arguments.map { it.name }.contains("selector"), "click should have selector argument")
     }
+
+    @Test
+    @DisplayName("extract KDoc full comment as help")
+    fun extractKDocFullCommentAsHelp() {
+        val sourceCode =
+            LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
+        val tools = SourceCodeToToolCallSpec.extractInterface("driver", sourceCode, "WebDriver")
+        assertTrue(tools.isNotEmpty(), "Tool list should not be empty")
+
+        val click = tools.firstOrNull { it.domain == "driver" && it.method == "click" && it.arguments.any { arg -> arg.name == "count" } }
+        assertNotNull(click, "Should contain driver.click method")
+
+        val help = click!!.help
+        assertNotNull(help, "Help should not be null")
+
+        // Verify full description content
+        assertTrue(help!!.contains("This method focuses an element with [selector] and clicks it."), "Help should contain main description")
+        assertTrue(help.contains("If there's no element matching `selector`, nothing to do."), "Help should contain secondary description")
+        assertTrue(help.contains("driver.click"), "Help should contain code example")
+
+        // Verify annotations are removed
+        assertTrue(!help.contains("@param"), "Help should not contain @param annotations")
+    }
 }

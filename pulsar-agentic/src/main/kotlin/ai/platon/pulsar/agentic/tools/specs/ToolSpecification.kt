@@ -2,18 +2,6 @@ package ai.platon.pulsar.agentic.tools.specs
 
 object ToolSpecification {
 
-    const val AGENT_TOOL_CALL_LIST_RESERVED = """
-// domain: agent
-agent.observe(instruction: String): List<ObserveResult>
-agent.observe(options: ObserveOptions): List<ObserveResult>
-agent.act(action: String): ActResult
-agent.act(action: ActionOptions): ActResult
-agent.act(observe: ObserveResult): ActResult
-agent.extract(instruction: String): ExtractResult
-agent.extract(options: ExtractOptions): ExtractResult
-agent.done()
-    """
-
     /**
      * The `TOOL_CALL_LIST` is written using kotlin syntax to express the tool's `domain`, `method`, `arguments`.
      * */

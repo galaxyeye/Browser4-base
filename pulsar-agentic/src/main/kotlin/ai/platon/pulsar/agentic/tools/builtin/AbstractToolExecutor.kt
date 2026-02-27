@@ -14,9 +14,6 @@ interface ToolExecutor {
 
     suspend fun callFunctionOn(tc: ToolCall, target: Any = Any()): TcEvaluate
 
-    @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(tc, target)"))
-    suspend fun execute(tc: ToolCall, target: Any): TcEvaluate = callFunctionOn(tc, target)
-
     fun help(): String
     fun help(method: String): String
 
@@ -67,10 +64,6 @@ abstract class AbstractToolExecutor : ToolExecutor {
 
     @Throws(IllegalArgumentException::class)
     abstract suspend fun callFunctionOn(domain: String, functionName: String, args: Map<String, Any?>, target: Any): Any?
-
-    @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(domain, functionName, args, target)"))
-    @Throws(IllegalArgumentException::class)
-    open suspend fun execute(domain: String, functionName: String, args: Map<String, Any?>, target: Any): Any? = callFunctionOn(domain, functionName, args, target)
 
     // ---------------- Shared helpers for named parameter executors ----------------
     protected fun validateArgs(

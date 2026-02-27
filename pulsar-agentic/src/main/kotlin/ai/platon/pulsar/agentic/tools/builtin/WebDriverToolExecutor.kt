@@ -16,10 +16,11 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
     }
 
     override fun help(method: String): String {
-        val spec = toolSpec[method] ?: return ""
-        return """
-            ${spec.description}
+        val spec = toolSpec[method] ?: return "No help available for unknown method: $method"
+
+        return spec.help ?: """
             ${spec.expression}
+            ${spec.description}
         """.trimIndent()
     }
 
