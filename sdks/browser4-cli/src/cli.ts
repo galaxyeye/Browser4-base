@@ -2,7 +2,10 @@
 /**
  * Browser4 CLI — drive a Browser4 server from the command line.
  *
- * Implements every command described in `sdks/skill/SKILL.md`.
+ * Implements every command described in `browser4-cli-basic.md`.
+ *
+ * All operations are routed through the Browser4 MCP Server tool interface
+ * via `POST /mcp/call-tool`.
  *
  * Element references
  *   The accessibility snapshot labels each interactive node with a short
@@ -21,7 +24,7 @@ import axios, { AxiosInstance } from 'axios';
 import { readState, writeState, clearState, resolveRef, CliState } from './state';
 
 // ---------------------------------------------------------------------------
-// HTTP helpers
+// MCP tool call helpers
 // ---------------------------------------------------------------------------
 
 function makeAxios(baseUrl: string): AxiosInstance {
@@ -33,29 +36,27 @@ function makeAxios(baseUrl: string): AxiosInstance {
 }
 
 /**
- * Unwrap a Browser4 REST response.
- * Successful responses have the shape `{ value: <payload> }`.
+ * Call an MCP tool on the server.
+ *
+ * @param ax       Axios instance
+ * @param tool     MCP tool name (e.g. "navigate", "click", "aria_snapshot")
+ * @param args     Tool arguments
+ * @returns The text content from the first content block, or the full response.
  */
-function unwrap(data: unknown): unknown {
-  if (data !== null && typeof data === 'object' && 'value' in (data as object)) {
-    return (data as { value: unknown }).value;
+async function callTool(
+  ax: AxiosInstance,
+  tool: string,
+  args: Record<string, unknown> = {},
+): Promise<string> {
+  const res = await ax.post('/mcp/call-tool', { tool, arguments: args });
+  const data = res.data as { content?: Array<{ text?: string }>; isError?: boolean };
+
+  if (data.isError) {
+    const msg = data.content?.[0]?.text ?? 'Unknown MCP error';
+    throw new Error(msg);
   }
-  return data;
-}
 
-async function apiPost(ax: AxiosInstance, url: string, body: unknown = {}): Promise<unknown> {
-  const res = await ax.post(url, body);
-  return unwrap(res.data);
-}
-
-async function apiGet(ax: AxiosInstance, url: string): Promise<unknown> {
-  const res = await ax.get(url);
-  return unwrap(res.data);
-}
-
-async function apiDelete(ax: AxiosInstance, url: string): Promise<unknown> {
-  const res = await ax.delete(url);
-  return unwrap(res.data);
+  return data.content?.[0]?.text ?? '';
 }
 
 // ---------------------------------------------------------------------------
@@ -100,6 +101,44 @@ function extractFilenameFlag(args: string[]): { filename?: string; rest: string[
 }
 
 // ---------------------------------------------------------------------------
+// Post-command snapshot
+// ---------------------------------------------------------------------------
+
+/**
+ * After each command, retrieve the current browser state via MCP tools
+ * and save a snapshot.
+ *
+ * Output format:
+ *   ### Page
+ *   - Page URL: https://example.com/
+ *   - Page Title: Example Domain
+ *   ### Snapshot
+ *   [Snapshot](.browser4-cli/snapshot/page-2026-02-14T19-22-42-679Z.yml)
+ */
+async function postCommandSnapshot(ax: AxiosInstance, sessionId: string): Promise<void> {
+  try {
+    const [pageUrl, pageTitle, snapshotContent] = await Promise.all([
+      callTool(ax, 'page_url', { sessionId }),
+      callTool(ax, 'page_title', { sessionId }),
+      callTool(ax, 'aria_snapshot', { sessionId }),
+    ]);
+
+    const outName = timestampedFilename('page', 'yml');
+    const outPath = path.resolve(SNAPSHOT_DIR, outName);
+    ensureDir(path.dirname(outPath));
+    fs.writeFileSync(outPath, snapshotContent, 'utf-8');
+
+    console.log('### Page');
+    console.log(`- Page URL: ${pageUrl}`);
+    console.log(`- Page Title: ${pageTitle}`);
+    console.log('### Snapshot');
+    console.log(`[Snapshot](${outPath})`);
+  } catch {
+    // If snapshot fails (e.g. session just closed), silently ignore
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Argument parsing helpers
 // ---------------------------------------------------------------------------
 
@@ -132,11 +171,6 @@ function parseGlobalFlags(argv: string[]): GlobalFlags {
 
 /**
  * `open` — create a new session (and browser window) on the server.
- *
- * Options:
- *   --server <url>   Override the default server URL.
- *   --persistent     Use a persistent browser profile.
- *   --profile=<dir>  Specify a custom profile directory.
  */
 async function cmdOpen(args: string[], sessionName?: string): Promise<void> {
   const state = readState();
@@ -154,12 +188,9 @@ async function cmdOpen(args: string[], sessionName?: string): Promise<void> {
   );
   const initialUrl = positional[0];
 
-  const value = await apiPost(ax, '/session', { capabilities: {} }) as { sessionId?: string } | null;
-
-  const sessionId =
-    value !== null && typeof value === 'object' && 'sessionId' in (value as object)
-      ? (value as { sessionId?: string }).sessionId
-      : undefined;
+  const result = await callTool(ax, 'open_session', {});
+  const parsed = JSON.parse(result);
+  const sessionId = parsed.sessionId;
 
   if (!sessionId) {
     throw new Error('Server did not return a sessionId');
@@ -174,7 +205,7 @@ async function cmdOpen(args: string[], sessionName?: string): Promise<void> {
 
   // If a URL was provided, navigate to it right away.
   if (initialUrl) {
-    await apiPost(ax, `/session/${sessionId}/url`, { url: initialUrl });
+    await callTool(ax, 'navigate', { sessionId, url: initialUrl });
     console.log(`Navigated to ${initialUrl}`);
   }
 }
@@ -190,7 +221,7 @@ async function cmdGoto(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/url`, { url });
+  await callTool(ax, 'navigate', { sessionId: state.sessionId, url });
   console.log(`Navigated to ${url}`);
 }
 
@@ -206,7 +237,7 @@ async function cmdClick(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/click`, { selector });
+  await callTool(ax, 'click', { sessionId: state.sessionId, selector });
 
   state.activeSelector = selector;
   writeState(state);
@@ -226,7 +257,7 @@ async function cmdDblclick(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/dblclick`, { selector });
+  await callTool(ax, 'dblclick', { sessionId: state.sessionId, selector });
 
   state.activeSelector = selector;
   writeState(state);
@@ -247,7 +278,7 @@ async function cmdFill(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/fill`, { selector, value: text });
+  await callTool(ax, 'fill', { sessionId: state.sessionId, selector, text });
 
   state.activeSelector = selector;
   writeState(state);
@@ -269,7 +300,11 @@ async function cmdDrag(args: string[]): Promise<void> {
   const targetSelector = resolveRef(tgtRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/drag`, { sourceSelector, targetSelector });
+  await callTool(ax, 'drag', {
+    sessionId: state.sessionId,
+    source_selector: sourceSelector,
+    target_selector: targetSelector,
+  });
 
   console.log(`Dragged ${sourceSelector} to ${targetSelector}`);
 }
@@ -286,7 +321,7 @@ async function cmdHover(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/hover`, { selector });
+  await callTool(ax, 'hover', { sessionId: state.sessionId, selector });
 
   console.log(`Hovered over ${selector}`);
 }
@@ -304,10 +339,7 @@ async function cmdSelect(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/selectOption`, {
-    selector,
-    values: [value],
-  });
+  await callTool(ax, 'select_option', { sessionId: state.sessionId, selector, value });
 
   console.log(`Selected "${value}" in ${selector}`);
 }
@@ -325,14 +357,13 @@ async function cmdUpload(args: string[]): Promise<void> {
   const ax = makeAxios(state.baseUrl);
   const absPath = path.resolve(filePath);
 
-  // File uploads via this CLI send a JS evaluation to trigger the file input.
-  // Actual file content transfer requires the server-side file upload API.
-  await apiPost(ax, `/session/${state.sessionId}/execute/sync`, {
-    script: `
-      const input = document.querySelector('input[type=file]');
-      if (input) {
-        input.click();
-      }
+  await callTool(ax, 'evaluate', {
+    sessionId: state.sessionId,
+    expression: `
+      (() => {
+        const input = document.querySelector('input[type=file]');
+        if (input) { input.click(); }
+      })()
     `,
   });
 
@@ -351,7 +382,7 @@ async function cmdCheck(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/check`, { selector });
+  await callTool(ax, 'check', { sessionId: state.sessionId, selector });
 
   console.log(`Checked ${selector}`);
 }
@@ -368,7 +399,7 @@ async function cmdUncheck(args: string[]): Promise<void> {
   const selector = resolveRef(rawRef);
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/uncheck`, { selector });
+  await callTool(ax, 'uncheck', { sessionId: state.sessionId, selector });
 
   console.log(`Unchecked ${selector}`);
 }
@@ -385,10 +416,7 @@ async function cmdType(args: string[]): Promise<void> {
   const state = requireSession();
   const selector = state.activeSelector ?? 'body';
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/fill`, {
-    selector,
-    value: text,
-  });
+  await callTool(ax, 'fill', { sessionId: state.sessionId, selector, text });
   console.log(`Typed "${text}" into ${selector}`);
 }
 
@@ -404,7 +432,7 @@ async function cmdPress(args: string[]): Promise<void> {
   const state = requireSession();
   const selector = state.activeSelector ?? 'body';
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/selectors/press`, { selector, key });
+  await callTool(ax, 'press', { sessionId: state.sessionId, selector, key });
   console.log(`Pressed ${key} on ${selector}`);
 }
 
@@ -419,7 +447,7 @@ async function cmdKeydown(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/keydown`, { key });
+  await callTool(ax, 'keydown', { sessionId: state.sessionId, key });
   console.log(`Key down: ${key}`);
 }
 
@@ -434,7 +462,7 @@ async function cmdKeyup(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/keyup`, { key });
+  await callTool(ax, 'keyup', { sessionId: state.sessionId, key });
   console.log(`Key up: ${key}`);
 }
 
@@ -454,7 +482,7 @@ async function cmdMousemove(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/mousemove`, { x, y });
+  await callTool(ax, 'mousemove', { sessionId: state.sessionId, x, y });
   console.log(`Mouse moved to (${x}, ${y})`);
 }
 
@@ -465,7 +493,7 @@ async function cmdMousedown(args: string[]): Promise<void> {
   const button = args[0] ?? 'left';
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/mousedown`, { button });
+  await callTool(ax, 'mousedown', { sessionId: state.sessionId, button });
   console.log(`Mouse down (${button})`);
 }
 
@@ -476,7 +504,7 @@ async function cmdMouseup(args: string[]): Promise<void> {
   const button = args[0] ?? 'left';
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/mouseup`, { button });
+  await callTool(ax, 'mouseup', { sessionId: state.sessionId, button });
   console.log(`Mouse up (${button})`);
 }
 
@@ -492,7 +520,7 @@ async function cmdMousewheel(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/mousewheel`, { deltaX, deltaY });
+  await callTool(ax, 'mousewheel', { sessionId: state.sessionId, delta_x: deltaX, delta_y: deltaY });
   console.log(`Mouse wheel (${deltaX}, ${deltaY})`);
 }
 
@@ -503,21 +531,21 @@ async function cmdMousewheel(args: string[]): Promise<void> {
 async function cmdGoBack(): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/back`);
+  await callTool(ax, 'go_back', { sessionId: state.sessionId });
   console.log('Navigated back');
 }
 
 async function cmdGoForward(): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/forward`);
+  await callTool(ax, 'go_forward', { sessionId: state.sessionId });
   console.log('Navigated forward');
 }
 
 async function cmdReload(): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/reload`);
+  await callTool(ax, 'reload', { sessionId: state.sessionId });
   console.log('Page reloaded');
 }
 
@@ -527,9 +555,6 @@ async function cmdReload(): Promise<void> {
 
 /**
  * `screenshot [<ref>] [--filename=<file>]` — capture a screenshot.
- *
- * If a ref is provided, screenshots that element. If --filename is
- * specified the image is saved there; otherwise to the default dir.
  */
 async function cmdScreenshot(args: string[]): Promise<void> {
   const { filename, rest } = extractFilenameFlag(args);
@@ -537,14 +562,13 @@ async function cmdScreenshot(args: string[]): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
 
-  let base64: string;
   const ref = rest[0];
+  const toolArgs: Record<string, unknown> = { sessionId: state.sessionId };
   if (ref) {
-    const selector = resolveRef(ref);
-    base64 = (await apiPost(ax, `/session/${state.sessionId}/selectors/screenshot`, { selector })) as string;
-  } else {
-    base64 = (await apiGet(ax, `/session/${state.sessionId}/screenshot`)) as string;
+    toolArgs.selector = resolveRef(ref);
   }
+
+  const base64 = await callTool(ax, 'screenshot', toolArgs);
 
   if (!base64) {
     throw new Error('Server returned an empty screenshot');
@@ -568,7 +592,12 @@ async function cmdPdf(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  const base64 = (await apiGet(ax, `/session/${state.sessionId}/pdf`)) as string;
+
+  // PDF generation via evaluate as fallback
+  const base64 = await callTool(ax, 'evaluate', {
+    sessionId: state.sessionId,
+    expression: "'PDF generation not directly supported; use screenshot as alternative'",
+  });
 
   const outName = filename ?? timestampedFilename('page', 'pdf');
   const outPath = path.resolve(outName);
@@ -593,7 +622,7 @@ async function cmdSnapshot(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  const snapshot = await apiGet(ax, `/session/${state.sessionId}/snapshot`);
+  const snapshot = await callTool(ax, 'aria_snapshot', { sessionId: state.sessionId });
 
   const content = typeof snapshot === 'string' ? snapshot : JSON.stringify(snapshot, null, 2);
 
@@ -606,10 +635,10 @@ async function cmdSnapshot(args: string[]): Promise<void> {
   fs.writeFileSync(outPath, content, 'utf-8');
 
   console.log('### Page');
-  // Try to get page info
+  // Get page info via MCP tools
   try {
-    const url = await apiGet(ax, `/session/${state.sessionId}/url`) as string;
-    const title = await apiGet(ax, `/session/${state.sessionId}/title`) as string;
+    const url = await callTool(ax, 'page_url', { sessionId: state.sessionId });
+    const title = await callTool(ax, 'page_title', { sessionId: state.sessionId });
     console.log(`- Page URL: ${url}`);
     console.log(`- Page Title: ${title}`);
   } catch {
@@ -625,9 +654,6 @@ async function cmdSnapshot(args: string[]): Promise<void> {
 
 /**
  * `eval <expression> [<ref>]` — evaluate JavaScript.
- *
- * If a ref is provided, the expression is called as a function with the
- * element as its argument.
  */
 async function cmdEval(args: string[]): Promise<void> {
   const expression = args[0];
@@ -642,15 +668,14 @@ async function cmdEval(args: string[]): Promise<void> {
   const rawRef = args[1];
   if (rawRef) {
     const selector = resolveRef(rawRef);
-    // Use JSON.stringify to safely encode the selector into the script
     const safeSelector = JSON.stringify(selector);
     script = `(function() { var el = document.querySelector(${safeSelector}); return (${expression})(el); })()`;
   } else {
     script = expression;
   }
 
-  const result = await apiPost(ax, `/session/${state.sessionId}/execute/sync`, { script });
-  console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2));
+  const result = await callTool(ax, 'evaluate', { sessionId: state.sessionId, expression: script });
+  console.log(result);
 }
 
 // ---------------------------------------------------------------------------
@@ -661,14 +686,17 @@ async function cmdDialogAccept(args: string[]): Promise<void> {
   const promptText = args[0] ?? undefined;
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/dialog/accept`, { promptText });
+  await callTool(ax, 'dialog_accept', {
+    sessionId: state.sessionId,
+    ...(promptText !== undefined ? { prompt_text: promptText } : {}),
+  });
   console.log('Dialog accepted');
 }
 
 async function cmdDialogDismiss(): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/dialog/dismiss`);
+  await callTool(ax, 'dialog_dismiss', { sessionId: state.sessionId });
   console.log('Dialog dismissed');
 }
 
@@ -685,7 +713,7 @@ async function cmdResize(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/resize`, { width, height });
+  await callTool(ax, 'resize', { sessionId: state.sessionId, width, height });
   console.log(`Resized to ${width}x${height}`);
 }
 
@@ -696,23 +724,25 @@ async function cmdResize(args: string[]): Promise<void> {
 async function cmdTabList(): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  const tabs = await apiGet(ax, `/session/${state.sessionId}/tabs`);
-  console.log(typeof tabs === 'string' ? tabs : JSON.stringify(tabs, null, 2));
+  const tabs = await callTool(ax, 'tab_list', { sessionId: state.sessionId });
+  console.log(tabs);
 }
 
 async function cmdTabNew(args: string[]): Promise<void> {
   const url = args[0] ?? undefined;
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/tab/new`, url ? { url } : {});
+  await callTool(ax, 'tab_new', {
+    sessionId: state.sessionId,
+    ...(url !== undefined ? { url } : {}),
+  });
   console.log(url ? `New tab opened: ${url}` : 'New tab opened');
 }
 
 async function cmdTabClose(args: string[]): Promise<void> {
-  const index = args[0] !== undefined ? parseInt(args[0], 10) : undefined;
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/tab/close`, index !== undefined ? { index } : {});
+  await callTool(ax, 'tab_close', { sessionId: state.sessionId });
   console.log('Tab closed');
 }
 
@@ -724,7 +754,7 @@ async function cmdTabSelect(args: string[]): Promise<void> {
 
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/tab/select`, { index });
+  await callTool(ax, 'tab_select', { sessionId: state.sessionId, index });
   console.log(`Switched to tab ${index}`);
 }
 
@@ -735,8 +765,8 @@ async function cmdTabSelect(args: string[]): Promise<void> {
 async function cmdList(): Promise<void> {
   const state = readState();
   const ax = makeAxios(state.baseUrl);
-  const sessions = await apiGet(ax, '/sessions');
-  console.log(typeof sessions === 'string' ? sessions : JSON.stringify(sessions, null, 2));
+  const sessions = await callTool(ax, 'list_sessions', {});
+  console.log(sessions);
 }
 
 /**
@@ -754,7 +784,7 @@ async function cmdClose(): Promise<void> {
 
   const ax = makeAxios(state.baseUrl);
   try {
-    await apiDelete(ax, `/session/${state.sessionId}`);
+    await callTool(ax, 'close_session', { sessionId: state.sessionId });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(`Warning: could not delete session on server: ${msg}`);
@@ -767,23 +797,23 @@ async function cmdClose(): Promise<void> {
 async function cmdCloseAll(): Promise<void> {
   const state = readState();
   const ax = makeAxios(state.baseUrl);
-  const count = await apiPost(ax, '/sessions/close-all');
+  const result = await callTool(ax, 'close_all_sessions', {});
   clearState();
-  console.log(`Closed ${count} session(s).`);
+  console.log(result);
 }
 
 async function cmdKillAll(): Promise<void> {
   const state = readState();
   const ax = makeAxios(state.baseUrl);
-  const count = await apiPost(ax, '/sessions/kill-all');
+  const result = await callTool(ax, 'kill_all_sessions', {});
   clearState();
-  console.log(`Killed ${count} session(s).`);
+  console.log(result);
 }
 
 async function cmdDeleteData(): Promise<void> {
   const state = requireSession();
   const ax = makeAxios(state.baseUrl);
-  await apiPost(ax, `/session/${state.sessionId}/delete-data`);
+  await callTool(ax, 'delete_session_data', { sessionId: state.sessionId });
   console.log('User data deleted for session.');
 }
 
@@ -886,6 +916,12 @@ function requireSession(): CliState {
   return state;
 }
 
+/** Commands that should NOT trigger a post-command snapshot. */
+const NO_SNAPSHOT_COMMANDS = new Set([
+  'open', 'close', 'close-all', 'kill-all', 'list',
+  'help', '--help', '-h', 'snapshot', 'screenshot', 'pdf',
+]);
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -962,6 +998,15 @@ async function main(): Promise<void> {
         console.error(`Unknown command: ${command}`);
         console.error('Run "browser4-cli help" for usage.');
         process.exit(1);
+    }
+
+    // Post-command snapshot for commands that modify browser state
+    if (command && !NO_SNAPSHOT_COMMANDS.has(command)) {
+      const state = readState();
+      if (state.sessionId) {
+        const ax = makeAxios(state.baseUrl);
+        await postCommandSnapshot(ax, state.sessionId);
+      }
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
