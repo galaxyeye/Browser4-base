@@ -8,6 +8,7 @@ import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.model.ToolCallResult
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.builtin.*
 import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
@@ -84,6 +85,61 @@ class AgentToolManager constructor(
         // Check custom executors
         val customExecutor = CustomToolRegistry.instance.get(domain)
         return customExecutor?.help(method) ?: ""
+    }
+
+    /**
+     * Returns all tool specifications from all concrete executors, grouped by domain.
+     *
+     * @return A map from domain name to a map of method name to [ToolSpec].
+     */
+    fun getAllToolSpecs(): Map<String, Map<String, ToolSpec>> {
+        return concreteExecutors.associate { executor -> executor.domain to executor.getToolSpecs() }
+    }
+
+    /**
+     * Returns the tool specification for a specific domain and method, or null if not found.
+     *
+     * @param domain The tool domain (e.g. "driver", "fs").
+     * @param method The method name within the domain.
+     * @return The [ToolSpec] for the given domain and method, or null.
+     */
+    fun getToolSpec(domain: String, method: String): ToolSpec? {
+        return concreteExecutors.find { it.domain == domain }?.getToolSpecs()?.get(method)
+    }
+
+    /**
+     * Execute a tool call directly, bypassing the full [ActionDescription] lifecycle.
+     *
+     * This is the lightweight entry point for callers (e.g. [Browser4MCPServer]) that already
+     * know the domain, method, and arguments and do not need agent-state tracking or
+     * post-navigation hooks.
+     *
+     * @param tc The tool call to execute.
+     * @return A [TcEvaluate] with the execution result or exception.
+     */
+    @Throws(UnsupportedOperationException::class)
+    suspend fun executeToolCall(tc: ToolCall): TcEvaluate {
+        val topDomain = tc.domain.split(".").first()
+        return when (topDomain) {
+            "driver" -> executor.callFunctionOn(tc, driver)
+            "browser" -> executor.callFunctionOn(tc, driver.browser)
+            "fs" -> executor.callFunctionOn(tc, fs)
+            "shell" -> executor.callFunctionOn(tc, shell)
+            "agent" -> executor.callFunctionOn(tc, agent)
+            "system" -> executor.callFunctionOn(tc, system)
+            else -> {
+                val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                if (customExecutor != null) {
+                    val target = customTargets[tc.domain]
+                        ?: throw UnsupportedOperationException(
+                            "Custom domain '${tc.domain}' is registered but no target object is available."
+                        )
+                    customExecutor.callFunctionOn(tc, target)
+                } else {
+                    throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
+                }
+            }
+        }
     }
 
     @Throws(UnsupportedOperationException::class)
