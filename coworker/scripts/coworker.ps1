@@ -166,12 +166,15 @@ Prompt: $promptSample
 "@
 
     try {
+        # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
+        $safeNamingPrompt = $namingPrompt.Replace('"', '\"')
+
         # Pass arguments as an array to avoid fragile manual escaping/quoting.
         # This is more reliable on Windows PowerShell when prompts contain quotes or newlines.
         $nameArgList = @(
             'copilot'
             '-p'
-            $namingPrompt
+            "`"$safeNamingPrompt`""
         )
 
         Write-LogVerbose ("Executing GH Copilot for naming: gh {0}" -f ($nameArgList -join ' '))
@@ -297,6 +300,7 @@ foreach ($taskRoot in $taskRoots) {
     $currentYear = Get-Date -Format "yyyy"
     $currentMonth = Get-Date -Format "MM"
     $currentDay = Get-Date -Format "dd"
+    $currentDate = "$currentMonth$currentDay"
     $currentTime = Get-Date -Format "HHmmss"
 
     # 1. Process 0prepare
@@ -437,7 +441,11 @@ foreach ($taskRoot in $taskRoots) {
         # 3. Parse content for execution (logging purposes)
         $title = $descriptiveName
         $description = "Task from $($file.Name)"
-        $prompt = $content
+        # $prompt = $content
+        $workingBaseName = $finalTaskInfo.FileName -replace [regex]::Escape($file.Extension), ''
+        $prompt = @"
+Finish the task described in file: $workingPath.
+"@
 
         # Try to parse structured content
         if ($content -match "(?ms)^Title:\s*(?<title>.*?)(\r\n|\n)Description:\s*(?<desc>.*?)(\r\n|\n)Prompt:\s*(?<prompt>.*)$") {
@@ -447,7 +455,6 @@ foreach ($taskRoot in $taskRoots) {
         }
 
         # Define log file paths
-        $workingBaseName = $finalTaskInfo.FileName -replace [regex]::Escape($file.Extension), ''
 
         $logsSubDir = Join-Path $logsDir "$currentYear\$currentMonth\$currentDay"
         if (!(Test-Path $logsSubDir)) { New-Item -ItemType Directory -Path $logsSubDir | Out-Null }
@@ -476,12 +483,15 @@ Copilot Execution Output:
 "@ | Out-File -FilePath $taskLogPath -Encoding UTF8
 
         try {
+            # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
+            $safePrompt = $prompt.Replace('"', '\"')
+            
             # Pass arguments as an array to avoid fragile manual escaping/quoting.
             # This keeps quotes/newlines intact in the -p prompt.
             $copilotArgList = @(
                 'copilot'
                 '-p'
-                $prompt
+                "`"$safePrompt`""
                 '--allow-all-tools'
                 '--allow-all-paths'
             )
@@ -519,12 +529,19 @@ Copilot Execution Output:
                 }
 
                 # Check timeout
-                $elapsed = (Get-Date) - $process.StartTime
-                if ($elapsed.TotalSeconds -gt $copilotRunTimeoutSeconds) {
-                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-                    Write-LogMessage "Copilot timed out after ${copilotRunTimeoutSeconds}s" WARN
-                    Write-Host "[TIMEOUT] Copilot execution exceeded ${copilotRunTimeoutSeconds}s timeout" -ForegroundColor Yellow
-                    break
+                try {
+                    $startTime = $process.StartTime
+                    if ($null -ne $startTime) {
+                        $elapsed = (Get-Date) - $startTime
+                        if ($elapsed.TotalSeconds -gt $copilotRunTimeoutSeconds) {
+                            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                            Write-LogMessage "Copilot timed out after ${copilotRunTimeoutSeconds}s" WARN
+                            Write-Host "[TIMEOUT] Copilot execution exceeded ${copilotRunTimeoutSeconds}s timeout" -ForegroundColor Yellow
+                            break
+                        }
+                    }
+                } catch {
+                    # Ignore errors accessing StartTime (process might have just exited or not fully started)
                 }
             }
 
@@ -598,20 +615,27 @@ Copilot Log: $copilotLogPath
             Pop-Location
         }
 
-        # Move completed task from working directory to finished directory
+        # Move completed task from working directory to finished or approved directory
         # Create date-based subdirectory: YYYY/MMDD
-        $currentYear = Get-Date -Format "yyyy"
-        $currentDate = Get-Date -Format "MMdd"
-        $finishedSubDir = Join-Path $finishedDir "$currentYear\$currentDate"
-        if (!(Test-Path $finishedSubDir)) {
-            New-Item -ItemType Directory -Path $finishedSubDir | Out-Null
+
+        # Check for #auto-approve tag in content
+        $targetDir = $finishedDir
+        $targetMessage = "Task moved to finished"
+
+        if ($content -match "#auto-approve") {
+            $targetDir = $approvedDir
+            $targetMessage = "Task AUTO-APPROVED and moved to"
         }
 
-        $finishedInfo = Resolve-UniquePath -Directory $finishedSubDir -BaseName $workingBaseName -Extension $file.Extension
+        $targetSubDir = Join-Path $targetDir "$currentYear\$currentDate"
+        if (!(Test-Path $targetSubDir)) {
+            New-Item -ItemType Directory -Path $targetSubDir | Out-Null
+        }
 
-        Move-Item -Path $workingPath -Destination $finishedInfo.Path -Force
-        Write-LogMessage "Task moved to finished: $($finishedInfo.Path)" INFO
+        $targetInfo = Resolve-UniquePath -Directory $targetSubDir -BaseName $workingBaseName -Extension $file.Extension
 
+        Move-Item -Path $workingPath -Destination $targetInfo.Path -Force
+        Write-LogMessage "$targetMessage : $($targetInfo.Path)" INFO
 
         Write-LogMessage "---" INFO
     }

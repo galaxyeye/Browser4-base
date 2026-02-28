@@ -566,16 +566,27 @@ for file in "${files[@]}"; do
 
     popd > /dev/null
 
-    # Move to finished
+    # Move to finished or approved
     currentYear=$(date +%Y)
     currentDate=$(date +%m%d)
-    finishedSubDir="$finishedDir/$currentYear/$currentDate"
-    mkdir -p "$finishedSubDir"
+    
+    # Check for #auto-approve tag in content
+    targetDir="$finishedDir"
+    targetMessage="Task moved to finished"
+    
+    # Check if content contains #auto-approve
+    if echo "$content" | grep -q "#auto-approve"; then
+        targetDir="$approvedDir"
+        targetMessage="Task AUTO-APPROVED and moved to"
+    fi
+    
+    targetSubDir="$targetDir/$currentYear/$currentDate"
+    mkdir -p "$targetSubDir"
 
-    finishedPath=$(resolve_unique_path "$finishedSubDir" "$workingBaseName" "$fileExt")
+    targetPath=$(resolve_unique_path "$targetSubDir" "$workingBaseName" "$fileExt")
 
-    mv "$workingPath" "$finishedPath"
-    log_message "Task moved to finished: $finishedPath" INFO
+    mv "$workingPath" "$targetPath"
+    log_message "$targetMessage: $targetPath" INFO
 
     log_message "---" INFO
 
