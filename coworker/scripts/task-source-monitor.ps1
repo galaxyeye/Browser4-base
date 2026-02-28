@@ -1,7 +1,7 @@
-# monitor.ps1 — Monitor GitHub issues and a specified URL, dispatch tasks to coworker workflow.
+# task-source-monitor.ps1 — Monitor GitHub issues and a specified URL, dispatch tasks to coworker workflow.
 #
 # Usage:
-#   .\bin\monitor.ps1 [options]
+#   .\bin\task-source-monitor.ps1 [options]
 #
 # Options:
 #   -Repo      GitHub repository in "owner/repo" format  (default: platonai/Browser4)
@@ -12,8 +12,8 @@
 #   -Once      Run once and exit (no loop)
 #
 # Examples:
-#   .\bin\monitor.ps1 -Repo platonai/Browser4 -Url https://example.com/tasks
-#   .\bin\monitor.ps1 -Once
+#   .\bin\task-source-monitor.ps1 -Repo platonai/Browser4 -Url https://example.com/tasks
+#   .\bin\task-source-monitor.ps1 -Once
 
 param(
     [string]$Repo     = "platonai/Browser4",
@@ -67,10 +67,10 @@ function Fetch-GitHubIssues {
         # Use gh CLI
         $jsonText = gh issue list `
             --repo $Repo `
-            --assignee $Assignee `
+            --search "assignee:$Assignee is:open -label:processed" `
             --limit 20 `
             --json number,title,body,url,createdAt,state 2>$null
-    } elseif ($env:GITHUB_TOKEN) {
+    }elseif ($env:GITHUB_TOKEN) {
         # Fall back to REST API via Invoke-RestMethod
         $headers  = @{
             Authorization = "Bearer $($env:GITHUB_TOKEN)"
@@ -91,6 +91,13 @@ function Fetch-GitHubIssues {
     foreach ($issue in $issues) {
         $content = $issue | ConvertTo-Json -Depth 10 -Compress
         Dispatch-Task -Content $content
+
+        # Mark issue as processed
+        if ($ghAvailable) {
+            $number = $issue.number
+            Write-Host "[$([DateTime]::Now.ToString('o'))] Marking issue #$number as processed..."
+            gh issue edit $number --repo $Repo --add-label "processed" 2>$null
+        }
     }
 }
 
@@ -108,8 +115,32 @@ function Fetch-Url {
     }
 
     if ($body -like "*$Keyword*") {
-        Write-Host "[$([DateTime]::Now.ToString('o'))] Keyword '$Keyword' found in URL response."
-        Dispatch-Task -Content $body
+        # Calculate MD5 hash of the content
+        $md5 = [System.BitConverter]::ToString((New-Object System.Security.Cryptography.MD5CryptoServiceProvider).ComputeHash([System.Text.Encoding]::UTF8.GetBytes($body))).Replace("-", "").ToLower()
+        $marker = "<!-- TASK_SOURCE_MONITOR_HASH: $md5 -->"
+
+        # Check if any existing task file contains this hash
+        $existing = $false
+        if (Test-Path $TasksDir) {
+             # Use efficient grep-like search
+             $files = Get-ChildItem -Path $TasksDir -Recurse -File
+             if ($files) {
+                 foreach ($file in $files) {
+                     if (Select-String -Path $file.FullName -Pattern $md5 -SimpleMatch -Quiet) {
+                         $existing = $true
+                         break
+                     }
+                 }
+             }
+        }
+
+        if ($existing) {
+            Write-Host "[$([DateTime]::Now.ToString('o'))] Duplicate task content detected (Hash: $md5). Skipping."
+        } else {
+            Write-Host "[$([DateTime]::Now.ToString('o'))] Keyword '$Keyword' found in URL response."
+            # Append hash to content so it can be detected next time
+            Dispatch-Task -Content "$body`n$marker"
+        }
     } else {
         Write-Host "[$([DateTime]::Now.ToString('o'))] Keyword '$Keyword' not found; nothing to dispatch."
     }

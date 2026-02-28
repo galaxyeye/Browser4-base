@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# monitor.sh — Monitor GitHub issues and a specified URL, dispatch tasks to coworker workflow.
+# task-source-monitor.sh — Monitor GitHub issues and a specified URL, dispatch tasks to coworker workflow.
 #
 # Usage:
-#   ./bin/monitor.sh [options]
+#   ./bin/task-source-monitor.sh [options]
 #
 # Options:
 #   --repo      GitHub repository in "owner/repo" format  (default: platonai/Browser4)
@@ -13,8 +13,8 @@
 #   --once      Run once and exit (no loop)
 #
 # Examples:
-#   ./bin/monitor.sh --repo platonai/Browser4 --url https://example.com/tasks
-#   ./bin/monitor.sh --once
+#   ./bin/task-source-monitor.sh --repo platonai/Browser4 --url https://example.com/tasks
+#   ./bin/task-source-monitor.sh --once
 
 set -euo pipefail
 
@@ -72,7 +72,7 @@ fetch_github_issues() {
     # Use gh CLI
     gh issue list \
       --repo "$GH_REPO" \
-      --assignee "$ASSIGNEE" \
+      --search "assignee:$ASSIGNEE is:open -label:processed" \
       --limit 20 \
       --json number,title,body,url,createdAt,state \
       2>/dev/null
@@ -98,6 +98,15 @@ for issue in data:
 " 2>/dev/null | while IFS= read -r issue_json; do
     # Each line is one issue JSON object
     dispatch_task "$issue_json"
+    
+    # Mark issue as processed
+    if command -v gh &>/dev/null; then
+        issue_number=$(echo "$issue_json" | python3 -c "import sys, json; print(json.load(sys.stdin).get('number', ''))")
+        if [[ -n "$issue_number" ]]; then
+            echo "[$(date -Iseconds)] Marking issue #$issue_number as processed..."
+            gh issue edit "$issue_number" --repo "$GH_REPO" --add-label "processed" >/dev/null 2>&1 || true
+        fi
+    fi
   done
 }
 
@@ -111,8 +120,22 @@ fetch_url() {
     return
   }
   if echo "$response" | grep -qF "$KEYWORD"; then
-    echo "[$(date -Iseconds)] Keyword '$KEYWORD' found in URL response."
-    dispatch_task "$response"
+    # Calculate MD5 hash
+    if command -v md5sum >/dev/null; then
+      md5=$(printf '%s' "$response" | md5sum | awk '{print $1}')
+    else
+      md5=$(printf '%s' "$response" | md5 -q)
+    fi
+    marker="<!-- TASK_SOURCE_MONITOR_HASH: $md5 -->"
+
+    # Check for existing hash in tasks directory
+    if grep -qr "$md5" "$TASKS_DIR" 2>/dev/null; then
+      echo "[$(date -Iseconds)] Duplicate task content detected (Hash: $md5). Skipping."
+    else
+      echo "[$(date -Iseconds)] Keyword '$KEYWORD' found in URL response."
+      # Append hash to content
+      dispatch_task "${response}"$'\n'"${marker}"
+    fi
   else
     echo "[$(date -Iseconds)] Keyword '$KEYWORD' not found; nothing to dispatch."
   fi

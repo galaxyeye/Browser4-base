@@ -1,0 +1,14 @@
+locator: "0,2"
+nodeName: "html"
+attributes:
+  role: "none"
+scrollRects:
+  width: 1683
+  height: 986
+children:
+- locator: "0,16"
+  nodeName: "body"
+  attributes:
+    role: "none"
+  scrollRects:
+    width: 1667

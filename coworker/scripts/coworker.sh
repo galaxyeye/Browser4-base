@@ -55,6 +55,7 @@ reviewDir="$baseDir/4review"
 approvedDir="$baseDir/5approved"
 pushedDir="$baseDir/6git-pushed"
 logsDir="$baseDir/300logs"              # Directory for script and execution logs
+memoryDir="$logsDir"
 scriptsDir="$repoRoot/coworker/scripts"
 
 # Ensure all required directories exist
@@ -182,7 +183,7 @@ get_task_basename() {
     # unless we are evaluating the string or passing it to something that parses it again.
     # However, if the user explicitly mentioned escaping issues, let's revert to standard variable usage
     # but ensure we quote the variable when using it.
-    
+
     local namingPrompt="Create a short, descriptive task name in kebab-case (3-6 words max). Output only the name.
 Title: $title
 Description: $description
@@ -414,8 +415,52 @@ for file in "${files[@]}"; do
     # 4. Parse content for execution
     title="$descriptiveName"
     description="Task from $fileName"
+
+    # --- MEMORY SYSTEM INTEGRATION ---
+    memoryContext=""
+    memoryInstructions=""
+
+    # Define memory file paths
+    memoryAllPath="$memoryDir/MEMORY.md"
+    
+    # Dynamic path construction based on current date
+    memoryYearDir="$memoryDir/$currentYear"
+    memoryMonthDir="$memoryYearDir/$currentMonth"
+    memoryDayDir="$memoryMonthDir/$currentDay"
+
+    # Create directories if they don't exist
+    mkdir -p "$memoryYearDir"
+    mkdir -p "$memoryMonthDir"
+    mkdir -p "$memoryDayDir"
+
+    memoryYearPath="$memoryYearDir/MEMORY.$currentYear.md"
+    memoryMonthPath="$memoryMonthDir/MEMORY.$currentYear$currentMonth.md"
+    memoryDayPath="$memoryDayDir/MEMORY.$currentYear$currentMonth$currentDay.md"
+
+    # Read existing memories (if any)
+    if [[ -f "$memoryAllPath" ]]; then memoryContext+=$'\n[Global Memory]:\n'$(cat "$memoryAllPath")$'\n'; fi
+    if [[ -f "$memoryYearPath" ]]; then memoryContext+=$'\n[Yearly Memory ('$currentYear')]:\n'$(cat "$memoryYearPath")$'\n'; fi
+    if [[ -f "$memoryMonthPath" ]]; then memoryContext+=$'\n[Monthly Memory ('$currentYear'-'$currentMonth')]:\n'$(cat "$memoryMonthPath")$'\n'; fi
+    if [[ -f "$memoryDayPath" ]]; then memoryContext+=$'\n[Daily Memory ('$currentYear'-'$currentMonth'-'$currentDay')]:\n'$(cat "$memoryDayPath")$'\n'; fi
+
+    # Construct instructions for updating memory
+    memoryInstructions="
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: $memoryDir
+
+After completing the task, you MUST update your daily memory file: $memoryDayPath
+1. Append a summary of this task, its outcome, and any lessons learned to $memoryDayPath.
+2. Check if the Monthly Memory file ($memoryMonthPath) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Check if the Yearly Memory file ($memoryYearPath) has been updated with the previous month's summary. If not, summarize all monthly memories from this year into the Yearly Memory.
+4. Check if the Global Memory file ($memoryAllPath) has been updated with the previous year's summary. If not, summarize all yearly memories into the Global Memory.
+5. Ensure you do not overwrite existing content, always append.
+"
+
     prompt="Finish the task described in file: $workingPath.
-Do not move the file, just execute the task based on its content."
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
+"
 
     # Check for @coworker mention
     # If found, use the mention content as the prompt
@@ -437,6 +482,13 @@ Do not move the file, just execute the task based on its content."
             if [[ -n "$parsed_prompt" ]]; then prompt=$(echo "$parsed_prompt" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'); fi
         fi
     fi
+
+    # Append Memory Instructions and Context
+    prompt="$prompt
+
+$memoryInstructions
+
+$memoryContext"
 
     # Define log file paths
     # workingBaseNameNoExt was calculated earlier
@@ -570,17 +622,17 @@ Do not move the file, just execute the task based on its content."
     # Move to finished or approved
     currentYear=$(date +%Y)
     currentDate=$(date +%m%d)
-    
+
     # Check for #auto-approve tag in content
     targetDir="$finishedDir"
     targetMessage="Task moved to finished"
-    
+
     # Check if content contains #auto-approve
     if echo "$content" | grep -q "#auto-approve"; then
         targetDir="$approvedDir"
         targetMessage="Task AUTO-APPROVED and moved to"
     fi
-    
+
     targetSubDir="$targetDir/$currentYear/$currentDate"
     mkdir -p "$targetSubDir"
 

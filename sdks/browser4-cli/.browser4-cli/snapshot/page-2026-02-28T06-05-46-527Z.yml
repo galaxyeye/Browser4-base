@@ -1,0 +1,1034 @@
+locator: "0,2"
+nodeName: "html"
+attributes:
+  role: "none"
+scrollRects:
+  width: 1683
+  height: 11098
+children:
+- locator: "0,16"
+  nodeName: "body"
+  attributes:
+    role: "none"
+  scrollRects:
+    width: 1683
+    height: 11098
+  children:
+  - locator: "0,17"
+    nodeName: "div"
+    attributes:
+      id: "root"
+      role: "generic"
+    scrollRects:
+      width: 1683
+      height: 11098
+    children:
+    - locator: "0,1155"
+      nodeName: "div"
+      attributes:
+        role: "none"
+      scrollRects:
+        width: 1683
+        height: 11098
+      children:
+      - locator: "0,1147"
+        nodeName: "header"
+        attributes:
+          role: "banner"
+        scrollRects:
+          width: 1683
+          height: 80
+        children:
+        - locator: "0,65"
+          nodeName: "div"
+          attributes:
+            role: "none"
+          scrollRects:
+            width: 1280
+            height: 80
+          children:
+          - locator: "0,61"
+            nodeName: "a"
+            attributes:
+              role: "link"
+              ax_name: "Browser4"
+            interactive: true
+            scrollRects:
+              width: 91
+              height: 28
+          - locator: "0,62"
+            nodeName: "nav"
+            attributes:
+              role: "navigation"
+            scrollRects:
+              width: 478
+              height: 20
+            children:
+            - locator: "0,36"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Home"
+              interactive: true
+              scrollRects:
+                width: 41
+                height: 20
+            - locator: "0,37"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Features"
+              interactive: true
+              scrollRects:
+                width: 57
+                height: 20
+            - locator: "0,38"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Capabilities"
+              interactive: true
+              scrollRects:
+                width: 77
+                height: 20
+            - locator: "0,39"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Code"
+              interactive: true
+              scrollRects:
+                width: 35
+                height: 20
+            - locator: "0,40"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Use Cases"
+              interactive: true
+              scrollRects:
+                width: 67
+                height: 20
+            - locator: "0,41"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Vision"
+              interactive: true
+              scrollRects:
+                width: 41
+                height: 20
+          - locator: "0,63"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            scrollRects:
+              width: 328
+              height: 44
+            children:
+            - locator: "0,53"
+              nodeName: "button"
+              attributes:
+                type: "button"
+                title: "Toggle language"
+                invalid: "false"
+              interactive: true
+              scrollRects:
+                width: 43
+                height: 43
+              children:
+              - locator: "0,50"
+                nodeName: "div"
+                attributes:
+                  role: "none"
+                scrollRects:
+                  width: 37
+                  height: 16
+                children:
+                - locator: "0,48"
+                  nodeName: "svg"
+                  attributes:
+                    role: "image"
+                  scrollRects:
+                    width: 16
+                    height: 16
+                - locator: "0,49"
+                  nodeName: "span"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 17
+                    height: 16
+            - locator: "0,54"
+              nodeName: "button"
+              attributes:
+                type: "button"
+                aria-label: "Toggle color theme"
+                invalid: "false"
+              interactive: true
+              scrollRects:
+                width: 43
+                height: 43
+              children:
+              - locator: "0,52"
+                nodeName: "svg"
+                attributes:
+                  role: "image"
+                scrollRects:
+                  width: 20
+                  height: 20
+            - locator: "0,55"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "GitHub"
+              interactive: true
+              scrollRects:
+                width: 83
+                height: 36
+            - locator: "0,56"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "Get Started"
+              interactive: true
+              scrollRects:
+                width: 120
+                height: 36
+      - locator: "0,1148"
+        nodeName: "section"
+        attributes:
+          id: "hero"
+          role: "generic"
+        scrollRects:
+          width: 1683
+          height: 792
+        children:
+        - locator: "0,96"
+          nodeName: "div"
+          attributes:
+            role: "generic"
+          scrollRects:
+            width: 1024
+            height: 792
+          children:
+          - locator: "0,89"
+            nodeName: "div"
+            attributes:
+              role: "generic"
+            scrollRects:
+              width: 409
+              height: 36
+            children:
+            - locator: "0,72"
+              nodeName: "svg"
+              attributes:
+                role: "image"
+              scrollRects:
+                width: 16
+                height: 16
+            - locator: "0,73"
+              nodeName: "span"
+              attributes:
+                role: "none"
+              scrollRects:
+                width: 345
+                height: 20
+          - locator: "0,90"
+            nodeName: "h1"
+            attributes:
+              role: "heading"
+              ax_name: "Enable AI to automate the web."
+              level: "1"
+            scrollRects:
+              width: 976
+              height: 153
+            children:
+            - locator: "0,74"
+              nodeName: "span"
+              attributes:
+                role: "generic"
+                live: "polite"
+              scrollRects:
+                width: 488
+                height: 81
+          - locator: "0,91"
+            nodeName: "p"
+            attributes:
+              role: "paragraph"
+            scrollRects:
+              width: 768
+              height: 65
+            children:
+            - locator: "0,75"
+              nodeName: "span"
+              attributes:
+                role: "generic"
+                live: "polite"
+          - locator: "0,92"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            scrollRects:
+              width: 976
+              height: 57
+            children:
+            - locator: "0,76"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "GET STARTED"
+              interactive: true
+              scrollRects:
+                width: 189
+                height: 56
+            - locator: "0,77"
+              nodeName: "a"
+              attributes:
+                role: "link"
+                ax_name: "GITHUB"
+              interactive: true
+              scrollRects:
+                width: 144
+                height: 56
+          - locator: "0,93"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            scrollRects:
+              width: 975
+              height: 120
+            children:
+            - locator: "0,87"
+              nodeName: "p"
+              attributes:
+                role: "paragraph"
+              scrollRects:
+                width: 927
+                height: 16
+            - locator: "0,88"
+              nodeName: "div"
+              attributes:
+                role: "none"
+              scrollRects:
+                width: 927
+                height: 40
+              children:
+              - locator: "0,84"
+                nodeName: "div"
+                attributes:
+                  role: "none"
+                scrollRects:
+                  width: 305
+                  height: 40
+                children:
+                - locator: "0,78"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 305
+                    height: 20
+                - locator: "0,79"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 305
+                    height: 20
+              - locator: "0,85"
+                nodeName: "div"
+                attributes:
+                  role: "none"
+                scrollRects:
+                  width: 255
+                  height: 40
+                children:
+                - locator: "0,80"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 255
+                    height: 20
+                - locator: "0,81"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 255
+                    height: 20
+              - locator: "0,86"
+                nodeName: "div"
+                attributes:
+                  role: "none"
+                scrollRects:
+                  width: 197
+                  height: 40
+                children:
+                - locator: "0,82"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 197
+                    height: 20
+                - locator: "0,83"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 197
+                    height: 20
+      - locator: "0,1149"
+        nodeName: "section"
+        attributes:
+          id: "features"
+          role: "generic"
+        scrollRects:
+          width: 1683
+          height: 1058
+        children:
+        - locator: "0,180"
+          nodeName: "div"
+          attributes:
+            role: "generic"
+          scrollRects:
+            width: 1280
+            height: 866
+          children:
+          - locator: "0,177"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            scrollRects:
+              width: 1232
+              height: 76
+            children:
+            - locator: "0,97"
+              nodeName: "h2"
+              attributes:
+                role: "heading"
+                ax_name: "Core Capabilities"
+                level: "2"
+              scrollRects:
+                width: 1232
+                height: 54
+            - locator: "0,98"
+              nodeName: "p"
+              attributes:
+                role: "paragraph"
+              scrollRects:
+                width: 1232
+                height: 28
+          - locator: "0,178"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            scrollRects:
+              width: 1232
+              height: 726
+            children:
+            - locator: "0,175"
+              nodeName: "div"
+              attributes:
+                role: "none"
+              scrollRects:
+                width: 660
+                height: 726
+              children:
+              - locator: "0,154"
+                nodeName: "article"
+                scrollRects:
+                  width: 313
+                  height: 343
+                children:
+                - locator: "0,111"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  scrollRects:
+                    width: 56
+                    height: 56
+                  children:
+                  - locator: "0,108"
+                    nodeName: "svg"
+                    attributes:
+                      role: "image"
+                    scrollRects:
+                      width: 32
+                      height: 32
+                - locator: "0,112"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 249
+                    height: 64
+                  children:
+                  - locator: "0,109"
+                    nodeName: "h3"
+                    attributes:
+                      role: "heading"
+                      ax_name: "Browser Agents"
+                      level: "3"
+                    scrollRects:
+                      width: 123
+                      height: 64
+                  - locator: "0,110"
+                    nodeName: "span"
+                    attributes:
+                      role: "none"
+                    scrollRects:
+                      width: 125
+                      height: 40
+                - locator: "0,113"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 249
+                    height: 78
+              - locator: "0,155"
+                nodeName: "article"
+                scrollRects:
+                  width: 313
+                  height: 343
+                children:
+                - locator: "0,131"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  scrollRects:
+                    width: 56
+                    height: 56
+                  children:
+                  - locator: "0,128"
+                    nodeName: "svg"
+                    attributes:
+                      role: "image"
+                    scrollRects:
+                      width: 32
+                      height: 32
+                - locator: "0,132"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 249
+                    height: 64
+                  children:
+                  - locator: "0,129"
+                    nodeName: "h3"
+                    attributes:
+                      role: "heading"
+                      ax_name: "Browser Automation"
+                      level: "3"
+                    scrollRects:
+                      width: 145
+                      height: 64
+                  - locator: "0,130"
+                    nodeName: "span"
+                    attributes:
+                      role: "none"
+                    scrollRects:
+                      width: 104
+                      height: 40
+                - locator: "0,133"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 249
+                    height: 52
+              - locator: "0,156"
+                nodeName: "article"
+                scrollRects:
+                  width: 313
+                  height: 349
+                children:
+                - locator: "0,142"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  scrollRects:
+                    width: 56
+                    height: 56
+                  children:
+                  - locator: "0,139"
+                    nodeName: "svg"
+                    attributes:
+                      role: "image"
+                    scrollRects:
+                      width: 32
+                      height: 32
+                - locator: "0,143"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 249
+                    height: 96
+                  children:
+                  - locator: "0,140"
+                    nodeName: "h3"
+                    attributes:
+                      role: "heading"
+                      ax_name: "Machine Learning Agent"
+                      level: "3"
+                    scrollRects:
+                      width: 159
+                      height: 96
+                  - locator: "0,141"
+                    nodeName: "span"
+                    attributes:
+                      role: "none"
+                    scrollRects:
+                      width: 90
+                      height: 60
+                - locator: "0,144"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 249
+                    height: 52
+              - locator: "0,157"
+                nodeName: "article"
+                scrollRects:
+                  width: 313
+                  height: 349
+                children:
+                - locator: "0,151"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  scrollRects:
+                    width: 56
+                    height: 56
+                  children:
+                  - locator: "0,148"
+                    nodeName: "svg"
+                    attributes:
+                      role: "image"
+                    scrollRects:
+                      width: 32
+                      height: 32
+                - locator: "0,152"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 278
+                    height: 64
+                  children:
+                  - locator: "0,149"
+                    nodeName: "h3"
+                    attributes:
+                      role: "heading"
+                      ax_name: "Web Understanding"
+                      level: "3"
+                    scrollRects:
+                      width: 180
+                      height: 64
+                  - locator: "0,150"
+                    nodeName: "span"
+                    attributes:
+                      role: "none"
+                    scrollRects:
+                      width: 98
+                      height: 40
+                - locator: "0,153"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 249
+                    height: 52
+            - locator: "0,176"
+              nodeName: "div"
+              attributes:
+                role: "none"
+              scrollRects:
+                width: 540
+                height: 726
+              children:
+              - locator: "0,173"
+                nodeName: "article"
+                scrollRects:
+                  width: 539
+                  height: 248
+                children:
+                - locator: "0,165"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 475
+                    height: 72
+                  children:
+                  - locator: "0,163"
+                    nodeName: "div"
+                    attributes:
+                      role: "none"
+                    scrollRects:
+                      width: 72
+                      height: 72
+                    children:
+                    - locator: "0,160"
+                      nodeName: "svg"
+                      attributes:
+                        role: "image"
+                      scrollRects:
+                        width: 40
+                        height: 40
+                  - locator: "0,164"
+                    nodeName: "div"
+                    attributes:
+                      role: "none"
+                    scrollRects:
+                      width: 115
+                      height: 60
+                    children:
+                    - locator: "0,161"
+                      nodeName: "p"
+                      attributes:
+                        role: "paragraph"
+                      scrollRects:
+                        width: 115
+                        height: 43
+                    - locator: "0,162"
+                      nodeName: "p"
+                      attributes:
+                        role: "paragraph"
+                      scrollRects:
+                        width: 115
+                        height: 20
+                - locator: "0,166"
+                  nodeName: "h3"
+                  attributes:
+                    role: "heading"
+                    ax_name: "Extreme Performance"
+                    level: "3"
+                  scrollRects:
+                    width: 475
+                    height: 32
+                - locator: "0,167"
+                  nodeName: "p"
+                  attributes:
+                    role: "paragraph"
+                  scrollRects:
+                    width: 475
+                    height: 48
+              - locator: "0,174"
+                nodeName: "article"
+                scrollRects:
+                  width: 539
+                  height: 443
+                children:
+                - locator: "0,171"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 475
+                    height: 88
+                  children:
+                  - locator: "0,168"
+                    nodeName: "h3"
+                    attributes:
+                      role: "heading"
+                      ax_name: "See Browser Agents in Action"
+                      level: "3"
+                    scrollRects:
+                      width: 475
+                      height: 32
+                  - locator: "0,169"
+                    nodeName: "p"
+                    attributes:
+                      role: "paragraph"
+                    scrollRects:
+                      width: 475
+                      height: 48
+                - locator: "0,172"
+                  nodeName: "div"
+                  attributes:
+                    role: "none"
+                  scrollRects:
+                    width: 473
+                    height: 266
+      - locator: "0,1150"
+        nodeName: "section"
+        attributes:
+          id: "capabilities"
+          role: "generic"
+        scrollRects:
+          width: 1683
+          height: 1989
+        children:
+        - locator: "0,370"
+          nodeName: "div"
+          attributes:
+            role: "generic"
+          invisible: true
+          scrollRects:
+            width: 1280
+            height: 1797
+          children:
+          - locator: "0,368"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            invisible: true
+            scrollRects:
+              width: 1232
+              height: 1605
+            children:
+            - locator: "0,366"
+              nodeName: "aside"
+              attributes:
+                role: "generic"
+              invisible: true
+              scrollRects:
+                width: 475
+                height: 837
+              children:
+              - locator: "0,363"
+                nodeName: "div"
+                attributes:
+                  role: "none"
+                invisible: true
+                scrollRects:
+                  width: 427
+                  height: 25
+      - locator: "0,1151"
+        nodeName: "section"
+        attributes:
+          id: "code-examples"
+          role: "generic"
+        invisible: true
+        scrollRects:
+          width: 1683
+          height: 2552
+        children:
+        - locator: "0,822"
+          nodeName: "div"
+          attributes:
+            role: "generic"
+          invisible: true
+          scrollRects:
+            width: 1280
+            height: 2360
+          children:
+          - locator: "0,820"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            invisible: true
+            scrollRects:
+              width: 1232
+              height: 2143
+            children:
+            - locator: "0,816"
+              nodeName: "div"
+              attributes:
+                role: "none"
+              invisible: true
+              scrollRects:
+                width: 1232
+                height: 1168
+              children:
+              - locator: "0,765"
+                nodeName: "article"
+                invisible: true
+                scrollRects:
+                  width: 599
+                  height: 553
+                children:
+                - locator: "0,436"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  invisible: true
+                  scrollRects:
+                    width: 599
+                    height: 553
+                  children:
+                  - locator: "0,434"
+                    nodeName: "div"
+                    attributes:
+                      role: "none"
+                    invisible: true
+                    scrollRects:
+                      width: 599
+                      height: 436
+                    children:
+                    - locator: "0,431"
+                      nodeName: "div"
+                      attributes:
+                        role: "none"
+                      invisible: true
+                      scrollRects:
+                        width: 551
+                        height: 25
+              - locator: "0,766"
+                nodeName: "article"
+                invisible: true
+                scrollRects:
+                  width: 599
+                  height: 553
+                children:
+                - locator: "0,560"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  invisible: true
+                  scrollRects:
+                    width: 599
+                    height: 553
+                  children:
+                  - locator: "0,558"
+                    nodeName: "div"
+                    attributes:
+                      role: "none"
+                    invisible: true
+                    scrollRects:
+                      width: 599
+                      height: 464
+                    children:
+                    - locator: "0,555"
+                      nodeName: "div"
+                      attributes:
+                        role: "none"
+                      invisible: true
+                      scrollRects:
+                        width: 551
+                        height: 25
+              - locator: "0,767"
+                nodeName: "article"
+                invisible: true
+                scrollRects:
+                  width: 599
+                  height: 581
+                children:
+                - locator: "0,637"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  invisible: true
+                  scrollRects:
+                    width: 599
+                    height: 581
+                  children:
+                  - locator: "0,635"
+                    nodeName: "div"
+                    attributes:
+                      role: "none"
+                    invisible: true
+                    scrollRects:
+                      width: 599
+                      height: 464
+                    children:
+                    - locator: "0,632"
+                      nodeName: "div"
+                      attributes:
+                        role: "none"
+                      invisible: true
+                      scrollRects:
+                        width: 551
+                        height: 25
+              - locator: "0,768"
+                nodeName: "article"
+                invisible: true
+                scrollRects:
+                  width: 599
+                  height: 581
+                children:
+                - locator: "0,764"
+                  nodeName: "div"
+                  attributes:
+                    role: "generic"
+                  invisible: true
+                  scrollRects:
+                    width: 599
+                    height: 581
+                  children:
+                  - locator: "0,762"
+                    nodeName: "div"
+                    attributes:
+                      role: "none"
+                    invisible: true
+                    scrollRects:
+                      width: 599
+                      height: 464
+                    children:
+                    - locator: "0,759"
+                      nodeName: "div"
+                      attributes:
+                        role: "none"
+                      invisible: true
+                      scrollRects:
+                        width: 551
+                        height: 25
+      - locator: "0,1152"
+        nodeName: "section"
+        attributes:
+          id: "use-cases"
+          role: "generic"
+        invisible: true
+        scrollRects:
+          width: 1683
+          height: 2283
+        children:
+        - locator: "0,930"
+          nodeName: "div"
+          attributes:
+            role: "generic"
+          invisible: true
+          scrollRects:
+            width: 1280
+            height: 2091
+          children:
+          - locator: "0,925"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            invisible: true
+            scrollRects:
+              width: 1232
+              height: 87
+      - locator: "0,1154"
+        nodeName: "footer"
+        attributes:
+          role: "contentinfo"
+        invisible: true
+        scrollRects:
+          width: 1683
+          height: 728
+        children:
+        - locator: "0,1146"
+          nodeName: "div"
+          attributes:
+            role: "none"
+          invisible: true
+          scrollRects:
+            width: 1280
+            height: 728
+          children:
+          - locator: "0,1142"
+            nodeName: "div"
+            attributes:
+              role: "none"
+            invisible: true
+            scrollRects:
+              width: 1231
+              height: 160
+            children:
+            - locator: "0,1024"
+              nodeName: "div"
+              attributes:
+                role: "none"
+              invisible: true
+              scrollRects:
+                width: 394
+                height: 49

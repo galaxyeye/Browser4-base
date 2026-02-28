@@ -61,6 +61,7 @@ $taskRoots = @(
 )
 
 $logsDir = $taskRoots[0].Logs
+$memoryDir = $logsDir
 
 # Ensure all required directories exist
 # Create them if they don't already exist
@@ -443,9 +444,52 @@ foreach ($taskRoot in $taskRoots) {
         $description = "Task from $($file.Name)"
         # $prompt = $content
         $workingBaseName = $finalTaskInfo.FileName -replace [regex]::Escape($file.Extension), ''
+
+        # --- MEMORY SYSTEM INTEGRATION ---
+        $memoryContext = ""
+        $memoryInstructions = ""
+
+        # Define memory file paths
+        $memoryAllPath = Join-Path $memoryDir "MEMORY.md"
+        
+        # Dynamic path construction based on current date
+        $memoryYearDir = Join-Path $memoryDir $currentYear
+        $memoryMonthDir = Join-Path $memoryYearDir $currentMonth
+        $memoryDayDir = Join-Path $memoryMonthDir $currentDay
+
+        # Create directories if they don't exist
+        if (!(Test-Path $memoryYearDir)) { New-Item -ItemType Directory -Path $memoryYearDir | Out-Null }
+        if (!(Test-Path $memoryMonthDir)) { New-Item -ItemType Directory -Path $memoryMonthDir | Out-Null }
+        if (!(Test-Path $memoryDayDir)) { New-Item -ItemType Directory -Path $memoryDayDir | Out-Null }
+
+        $memoryYearPath = Join-Path $memoryYearDir "MEMORY.$currentYear.md"
+        $memoryMonthPath = Join-Path $memoryMonthDir "MEMORY.$currentYear$currentMonth.md"
+        $memoryDayPath = Join-Path $memoryDayDir "MEMORY.$currentYear$currentMonth$currentDay.md"
+
+        # Read existing memories (if any)
+        if (Test-Path $memoryAllPath) { $memoryContext += "`n[Global Memory]:`n" + (Get-Content $memoryAllPath -Raw -Encoding UTF8) + "`n" }
+        if (Test-Path $memoryYearPath) { $memoryContext += "`n[Yearly Memory ($currentYear)]:`n" + (Get-Content $memoryYearPath -Raw -Encoding UTF8) + "`n" }
+        if (Test-Path $memoryMonthPath) { $memoryContext += "`n[Monthly Memory ($currentYear-$currentMonth)]:`n" + (Get-Content $memoryMonthPath -Raw -Encoding UTF8) + "`n" }
+        if (Test-Path $memoryDayPath) { $memoryContext += "`n[Daily Memory ($currentYear-$currentMonth-$currentDay)]:`n" + (Get-Content $memoryDayPath -Raw -Encoding UTF8) + "`n" }
+
+        # Construct instructions for updating memory
+        $memoryInstructions = @"
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: $memoryDir
+
+After completing the task, you MUST update your daily memory file: $memoryDayPath
+1. Append a summary of this task, its outcome, and any lessons learned to $memoryDayPath.
+2. Check if the Monthly Memory file ($memoryMonthPath) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Check if the Yearly Memory file ($memoryYearPath) has been updated with the previous month's summary. If not, summarize all monthly memories from this year into the Yearly Memory.
+4. Check if the Global Memory file ($memoryAllPath) has been updated with the previous year's summary. If not, summarize all yearly memories into the Global Memory.
+5. Ensure you do not overwrite existing content, always append.
+"@
+
         $prompt = @"
 Finish the task described in file: $workingPath.
-Do not move the file, just execute the task based on its content.
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
 "@
 
         # Try to parse structured content
@@ -454,6 +498,9 @@ Do not move the file, just execute the task based on its content.
             $description = $Matches['desc'].Trim()
             $prompt = $Matches['prompt'].Trim()
         }
+
+        # Append Memory Instructions and Context
+        $prompt += "`n`n$memoryInstructions`n`n$memoryContext"
 
         # Define log file paths
 
