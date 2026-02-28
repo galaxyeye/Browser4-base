@@ -19,14 +19,14 @@ Then push to remote.
 If conflicts occur, resolve them automatically.
 "@
 
-Write-Host "Running:"
-Write-Host "gh-copilot.ps1 -p '$prompt' --allow-all-tools"
-
 # Invoke gh-copilot.ps1 with the prompt
 # . coworker\scripts\gh-copilot.ps1 $prompt
 
 # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
 $safePrompt = $prompt.Replace('"', '\"')
+
+Write-Host "Running:"
+Write-Host "gh-copilot.ps1 -p '$safePrompt' --allow-all-tools"
 
 # Pass arguments as an array to avoid fragile manual escaping/quoting.
 $copilotArgList = @(
