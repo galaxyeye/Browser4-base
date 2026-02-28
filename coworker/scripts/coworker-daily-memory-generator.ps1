@@ -7,7 +7,7 @@
     The date to generate memory for (format: YYYY-MM-DD). Defaults to today.
 #>
 param(
-    [string]$Date = (Get-Date -Format "yyyy-MM-dd")
+    [string]$Date = ((Get-Date).ToUniversalTime().ToString("yyyy-MM-dd"))
 )
 
 $ErrorActionPreference = "Stop"
@@ -74,10 +74,34 @@ Get-ChildItem -Path $logDir -Filter "*.task.log" | ForEach-Object {
     
     $logContent += "--- RESULT (Snippet) ---`n"
     if (Test-Path $copilotLogPath) {
-        $copilotOutput = Get-Content $copilotLogPath -Raw
-        # Truncate output to 3000 chars
-        if ($copilotOutput.Length -gt 3000) {
-            $copilotOutput = $copilotOutput.Substring(0, 3000) + "... [Truncated]"
+        $copilotContent = @(Get-Content $copilotLogPath)
+        
+        $lastToolIndex = -1
+        for ($i = $copilotContent.Count - 1; $i -ge 0; $i--) {
+            if ($copilotContent[$i] -match "^● (Read|Edit|Run)") {
+                $lastToolIndex = $i
+                break
+            }
+        }
+
+        $head = $copilotContent | Select-Object -First 10
+        $tailContent = ""
+
+        if ($lastToolIndex -ge 0) {
+             # Take from the last tool execution to the end
+             $tailLines = $copilotContent | Select-Object -Skip $lastToolIndex
+             $tailContent = $tailLines -join "`n"
+        } else {
+             # Fallback: take last 100 lines if no tool found
+             $tailLines = $copilotContent | Select-Object -Last 100
+             $tailContent = $tailLines -join "`n"
+        }
+
+        $copilotOutput = ($head -join "`n") + "`n... [Intermediate logs skipped] ...`n" + $tailContent
+
+        # Truncate output to 20000 chars to avoid token limit if lines are very long
+        if ($copilotOutput.Length -gt 20000) {
+            $copilotOutput = $copilotOutput.Substring(0, 20000) + "... [Truncated]"
         }
         $logContent += "$copilotOutput`n"
     } else {

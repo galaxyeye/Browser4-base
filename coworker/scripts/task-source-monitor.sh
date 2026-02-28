@@ -60,13 +60,13 @@ dispatch_task() {
   local tmp_file; tmp_file="$(mktemp)"
   printf '%s\n' "$content" > "$tmp_file"
   mv "$tmp_file" "$TASKS_DIR/$ts"
-  echo "[$(date -Iseconds)] Dispatched task file: $TASKS_DIR/$ts"
+  echo "[$(date -u -Iseconds)] Dispatched task file: $TASKS_DIR/$ts"
 }
 
 # ── GitHub issues monitor ──────────────────────────────────────────────────────
 # Requires: gh CLI (https://cli.github.com/) authenticated, OR curl + GITHUB_TOKEN env var.
 fetch_github_issues() {
-  echo "[$(date -Iseconds)] Fetching latest issues from $GH_REPO assigned to $ASSIGNEE ..."
+  echo "[$(date -u -Iseconds)] Fetching latest issues from $GH_REPO assigned to $ASSIGNEE ..."
 
   if command -v gh &>/dev/null; then
     # Use gh CLI
@@ -103,7 +103,7 @@ for issue in data:
     if command -v gh &>/dev/null; then
         issue_number=$(echo "$issue_json" | python3 -c "import sys, json; print(json.load(sys.stdin).get('number', ''))")
         if [[ -n "$issue_number" ]]; then
-            echo "[$(date -Iseconds)] Marking issue #$issue_number as processed..."
+            echo "[$(date -u -Iseconds)] Marking issue #$issue_number as processed..."
             gh issue edit "$issue_number" --repo "$GH_REPO" --add-label "processed" >/dev/null 2>&1 || true
         fi
     fi
@@ -113,7 +113,7 @@ for issue in data:
 # ── URL monitor ────────────────────────────────────────────────────────────────
 fetch_url() {
   [[ -z "$POLL_URL" ]] && return
-  echo "[$(date -Iseconds)] Polling URL: $POLL_URL ..."
+  echo "[$(date -u -Iseconds)] Polling URL: $POLL_URL ..."
   local response
   response="$(curl -fsSL --max-time 30 "$POLL_URL" 2>/dev/null)" || {
     echo "WARNING: Failed to fetch $POLL_URL" >&2
@@ -130,24 +130,24 @@ fetch_url() {
 
     # Check for existing hash in tasks directory
     if grep -qr "$md5" "$TASKS_DIR" 2>/dev/null; then
-      echo "[$(date -Iseconds)] Duplicate task content detected (Hash: $md5). Skipping."
+      echo "[$(date -u -Iseconds)] Duplicate task content detected (Hash: $md5). Skipping."
     else
-      echo "[$(date -Iseconds)] Keyword '$KEYWORD' found in URL response."
+      echo "[$(date -u -Iseconds)] Keyword '$KEYWORD' found in URL response."
       # Append hash to content
       dispatch_task "${response}"$'\n'"${marker}"
     fi
   else
-    echo "[$(date -Iseconds)] Keyword '$KEYWORD' not found; nothing to dispatch."
+    echo "[$(date -u -Iseconds)] Keyword '$KEYWORD' not found; nothing to dispatch."
   fi
 }
 
 # ── main loop ──────────────────────────────────────────────────────────────────
-echo "[$(date -Iseconds)] Monitor started. repo=$GH_REPO assignee=$ASSIGNEE url=${POLL_URL:-<none>} keyword=$KEYWORD interval=${INTERVAL}s"
+echo "[$(date -u -Iseconds)] Monitor started. repo=$GH_REPO assignee=$ASSIGNEE url=${POLL_URL:-<none>} keyword=$KEYWORD interval=${INTERVAL}s"
 
 while true; do
   fetch_github_issues
   fetch_url
   "$RUN_ONCE" && break
-  echo "[$(date -Iseconds)] Sleeping ${INTERVAL}s ..."
+  echo "[$(date -u -Iseconds)] Sleeping ${INTERVAL}s ..."
   sleep "$INTERVAL"
 done

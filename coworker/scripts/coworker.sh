@@ -90,15 +90,15 @@ fi
 
 # Initialize script-level logging
 # Main log file for all script output
-currentYear=$(date +%Y)
-currentMonth=$(date +%m)
-currentDay=$(date +%d)
-currentTime=$(date +%H%M%S)
+currentYear=$(date -u +%Y)
+currentMonth=$(date -u +%m)
+currentDay=$(date -u +%d)
+currentTime=$(date -u +%H%M%S)
 logsSubDir="$logsDir/$currentYear/$currentMonth/$currentDay"
 mkdir -p "$logsSubDir"
 
 scriptLogPath="$logsSubDir/${currentTime}-coworker.log"
-scriptStartTime=$(date '+%Y-%m-%d %H:%M:%S')
+scriptStartTime=$(date -u '+%Y-%m-%d %H:%M:%S')
 
 # ============================================================================
 # Logging Functions
@@ -110,7 +110,7 @@ scriptStartTime=$(date '+%Y-%m-%d %H:%M:%S')
 log_message() {
     local message="$1"
     local level="${2:-INFO}"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp=$(date -u '+%Y-%m-%d %H:%M:%S')
     local logEntry="[$timestamp] [$level] $message"
 
     # Write to console
@@ -134,7 +134,7 @@ log_message() {
 # Usage: log_verbose "debug message"
 log_verbose() {
     local message="$1"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp=$(date -u '+%Y-%m-%d %H:%M:%S')
     local logEntry="[$timestamp] [DEBUG] $message"
 
     # Append to script log file only (not console)
@@ -275,8 +275,8 @@ if [[ -d "$approvedDir" ]]; then
     # Check if there are any files first to avoid running logic if empty
     if [[ -n $(find "$approvedDir" -type f -print -quit) ]]; then
         # Move files to pushed directory
-        currentYear=$(date +%Y)
-        currentDate=$(date +%m%d)
+        currentYear=$(date -u +%Y)
+        currentDate=$(date -u +%m%d)
         pushedSubDir="$pushedDir/$currentYear/$currentDate"
         mkdir -p "$pushedSubDir"
 
@@ -493,10 +493,10 @@ $memoryContext"
     # Define log file paths
     # workingBaseNameNoExt was calculated earlier
 
-    currentYear=$(date +%Y)
-    currentMonth=$(date +%m)
-    currentDay=$(date +%d)
-    currentTime=$(date +%H%M%S)
+    currentYear=$(date -u +%Y)
+    currentMonth=$(date -u +%m)
+    currentDay=$(date -u +%d)
+    currentTime=$(date -u +%H%M%S)
     logsSubDir="$logsDir/$currentYear/$currentMonth/$currentDay"
     mkdir -p "$logsSubDir"
 
@@ -516,7 +516,7 @@ $memoryContext"
         echo "Task: $title"
         echo "Description: $description"
         echo "Original File: $fileName"
-        echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "Started: $(date -u '+%Y-%m-%d %H:%M:%S')"
         echo "Prompt:"
         echo "$prompt"
         echo "---"
@@ -537,7 +537,7 @@ $memoryContext"
     ) &
     copilotPid=$!
 
-    startTime=$(date +%s)
+    startTime=$(date -u +%s)
     lastOutputLineCount=0
 
     # Monitor loop
@@ -558,7 +558,7 @@ $memoryContext"
         fi
 
         # Check timeout
-        currentTime=$(date +%s)
+        currentTime=$(date -u +%s)
         elapsed=$((currentTime - startTime))
 
         if [[ "$elapsed" -gt "$COPILOT_RUN_TIMEOUT_SECONDS" ]]; then
@@ -620,8 +620,8 @@ $memoryContext"
     popd > /dev/null
 
     # Move to finished or approved
-    currentYear=$(date +%Y)
-    currentDate=$(date +%m%d)
+    currentYear=$(date -u +%Y)
+    currentDate=$(date -u +%m%d)
 
     # Check for #auto-approve tag in content
     targetDir="$finishedDir"
@@ -646,7 +646,7 @@ $memoryContext"
 done
 
 # Log script completion
-scriptEndTime=$(date '+%Y-%m-%d %H:%M:%S')
+scriptEndTime=$(date -u '+%Y-%m-%d %H:%M:%S')
 log_message "===========================================================================" INFO
 log_message "All tasks completed" INFO
 log_message "Ended at: $scriptEndTime" INFO

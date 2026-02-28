@@ -88,15 +88,15 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
 
 # Initialize script-level logging
 # Main log file for all script output
-$currentYear = Get-Date -Format "yyyy"
-$currentMonth = Get-Date -Format "MM"
-$currentDay = Get-Date -Format "dd"
-$currentTime = Get-Date -Format "HHmmss"
+$currentYear = (Get-Date).ToUniversalTime().ToString("yyyy")
+$currentMonth = (Get-Date).ToUniversalTime().ToString("MM")
+$currentDay = (Get-Date).ToUniversalTime().ToString("dd")
+$currentTime = (Get-Date).ToUniversalTime().ToString("HHmmss")
 $logsSubDir = Join-Path $logsDir "$currentYear\$currentMonth\$currentDay"
 if (!(Test-Path $logsSubDir)) { New-Item -ItemType Directory -Path $logsSubDir | Out-Null }
 
 $scriptLogPath = Join-Path $logsSubDir "${currentTime}-coworker.log"
-$scriptStartTime = Get-Date
+$scriptStartTime = (Get-Date).ToUniversalTime()
 
 $copilotNameTimeoutSeconds = 60
 $copilotRunTimeoutSeconds = 6000
@@ -114,7 +114,7 @@ function Write-LogMessage {
         [string]$Level = 'INFO'
     )
 
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $timestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')
     $logEntry = "[$timestamp] [$Level] $Message"
 
     # Write to console
@@ -135,7 +135,7 @@ function Write-LogVerbose {
         [string]$Message
     )
 
-    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $timestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')
     $logEntry = "[$timestamp] [DEBUG] $Message"
 
     # Append to script log file only (not console)
@@ -298,11 +298,11 @@ foreach ($taskRoot in $taskRoots) {
     $pushedDir = $taskRoot.Pushed
     $logsDir = $taskRoot.Logs
 
-    $currentYear = Get-Date -Format "yyyy"
-    $currentMonth = Get-Date -Format "MM"
-    $currentDay = Get-Date -Format "dd"
+    $currentYear = (Get-Date).ToUniversalTime().ToString("yyyy")
+    $currentMonth = (Get-Date).ToUniversalTime().ToString("MM")
+    $currentDay = (Get-Date).ToUniversalTime().ToString("dd")
     $currentDate = "$currentMonth$currentDay"
-    $currentTime = Get-Date -Format "HHmmss"
+    $currentTime = (Get-Date).ToUniversalTime().ToString("HHmmss")
 
     # 1. Process 0prepare
     $prepareFiles = Get-ChildItem -Path $prepareDir -File
@@ -315,7 +315,7 @@ foreach ($taskRoot in $taskRoots) {
         $finishedFiles = Get-ChildItem -Path $finishedDir -Recurse -File
         foreach ($file in $finishedFiles) {
             # Only show files from the last 24 hours to avoid noise
-            if ($file.LastWriteTime -ge (Get-Date).AddDays(-1)) {
+            if ($file.LastWriteTimeUtc -ge (Get-Date).ToUniversalTime().AddDays(-1)) {
                 Write-LogMessage "[COMPLETE] Task waiting for review: $($file.Name)" INFO
             }
         }
@@ -367,9 +367,9 @@ foreach ($taskRoot in $taskRoots) {
     # Recursively find files in 6git-pushed
     if (Test-Path $pushedDir) {
         $pushedFiles = Get-ChildItem -Path $pushedDir -Recurse -File
-        $twoDaysAgo = (Get-Date).AddDays(-2)
+        $twoDaysAgo = (Get-Date).ToUniversalTime().AddDays(-2)
         foreach ($file in $pushedFiles) {
-            if ($file.LastWriteTime -ge $twoDaysAgo) {
+            if ($file.LastWriteTimeUtc -ge $twoDaysAgo) {
                 Write-LogMessage "[PUSHED] Task: $($file.Name) (updated $($file.LastWriteTime))" INFO
             }
         }
@@ -523,7 +523,7 @@ Do not move **this** task file, just execute the task based on its content, the 
 Task: $title
 Description: $description
 Original File: $($file.Name)
-Started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+Started: $((Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss'))
 Prompt:
 $prompt
 ---
@@ -687,7 +687,7 @@ Copilot Log: $copilotLogPath
 }
 
 # Log script completion
-$scriptEndTime = Get-Date
+$scriptEndTime = (Get-Date).ToUniversalTime()
 Write-LogMessage "===========================================================================" INFO
 Write-LogMessage "All tasks completed" INFO
 Write-LogMessage "Ended at: $scriptEndTime" INFO

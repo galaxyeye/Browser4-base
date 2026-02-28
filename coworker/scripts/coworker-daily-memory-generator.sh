@@ -9,7 +9,7 @@ set -e
 if [ -n "$1" ]; then
     DATE="$1"
 else
-    DATE=$(date +%Y-%m-%d)
+    DATE=$(date -u +%Y-%m-%d)
 fi
 
 YEAR=$(date -d "$DATE" +%Y)
@@ -44,8 +44,23 @@ extract_clean_prompt() {
 extract_copilot_output() {
     local copilot_log="$1"
     if [ -f "$copilot_log" ]; then
-        # Limit output length per task to 3000 chars
-        cat "$copilot_log" | head -c 3000
+        # Head 10 lines
+        head -n 10 "$copilot_log"
+        echo ""
+        echo "... [Intermediate logs skipped] ..."
+        echo ""
+
+        # Find line number of the LAST tool execution
+        # We use grep with line numbers, filter for the pattern, take the last one, extract the number
+        local last_tool_line=$(grep -nE "^● (Read|Edit|Run)" "$copilot_log" | tail -n 1 | cut -d: -f1)
+
+        if [ -n "$last_tool_line" ]; then
+             # Extract from that line to the end
+             tail -n "+$last_tool_line" "$copilot_log"
+        else
+             # Fallback if no tool execution found (e.g. just chat), take last 100 lines
+             tail -n 100 "$copilot_log"
+        fi | head -c 20000
     else
         echo "[Copilot log not found]"
     fi

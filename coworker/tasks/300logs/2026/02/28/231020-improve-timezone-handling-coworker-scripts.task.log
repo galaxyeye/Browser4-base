@@ -1,3 +1,107 @@
+Task: improve-timezone-handling-coworker-scripts
+Description: Task from improve-timezone-handling-coworker-scripts.md
+Original File: improve-timezone-handling-coworker-scripts.md
+Started: 2026-02-28 23:10:45
+Prompt:
+Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\improve-timezone-handling-coworker-scripts.md.
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
+
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
+
+After completing the task, you MUST update your daily memory file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\02\28\MEMORY.20260228.md
+1. Append a summary of this task, its outcome, and any lessons learned to D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\02\28\MEMORY.20260228.md.
+2. Check if the Monthly Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\02\MEMORY.202602.md) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Check if the Yearly Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\MEMORY.2026.md) has been updated with the previous month's summary. If not, summarize all monthly memories from this year into the Yearly Memory.
+4. Check if the Global Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\MEMORY.md) has been updated with the previous year's summary. If not, summarize all yearly memories into the Global Memory.
+5. Ensure you do not overwrite existing content, always append.
+
+
+[Global Memory]:
+# MEMORY.md
+
+## Mission & Vision
+- Create a fully autonomous, self-improving browser agent ecosystem.
+
+## Core Principles
+- Minimize repetition.
+- Continuous improvement.
+- Structural thinking.
+
+## Evolution Phases
+- Phase 1: Basic functionality.
+- Phase 2: Memory and self-improvement.
+
+## Major Turning Points
+- 2026-02-28: Implementation of Coworker Memory System.
+
+## Long-Term Structural Challenges
+- (None recorded yet)
+
+## Opportunity Landscape
+- High-performance browser automation.
+- Intelligent agentic workflows.
+
+## Three Strategic Priorities Now
+- 1. Stabilize memory system.
+- 2. Enhance agent capabilities.
+- 3. Expand test coverage.
+
+
+[Yearly Memory (2026)]:
+# MEMORY.2026.md
+## Annual Strategic Review - 2026
+
+### Project State Evolution
+- Started Memory System implementation.
+
+### Major Achievements
+- Implemented Coworker Memory System.
+
+### Major Failures
+- (None recorded yet)
+
+### Structural Problems (Solved / Unsolved)
+- (None recorded yet)
+
+### Capability Upgrades
+- Coworker now has persistent memory capabilities.
+
+### Strategic Risks
+- (None recorded yet)
+
+### Project Trajectory Forecast
+- Improved task execution consistency expected.
+
+### Three Immediate Strategic Actions
+- 1. Monitor memory system usage.
+- 2. Refine memory prompt instructions based on feedback.
+- 3. Ensure consistent memory updates.
+
+
+[Monthly Memory (2026-02)]:
+# MEMORY.202602.md
+## Monthly Memory - 2026-02
+
+### Work Themes
+- Memory System Implementation
+
+### Recurring Issues
+- (None recorded yet)
+
+### Structural Bottlenecks
+- (None recorded yet)
+
+### Efficiency Trend
+- N/A
+
+### System Adjustments Proposed
+- Initialized Memory System to start tracking daily activities.
+
+
+[Daily Memory (2026-02-28)]:
 # MEMORY.20260228.md
 ## Daily Memory - 2026-02-28
 
@@ -41,38 +145,10 @@
     - `gh copilot explain` is not a valid command in the current environment; use `gh copilot -p` instead.
     - Capturing large output from `gh copilot` via stdout is unreliable; instructing the agent to use tools (like `create`) is more robust.
     - PowerShell's `Rename-Item` does not overwrite existing files even with `-Force`; use `Move-Item` instead.
-### Task: Improve TimeZone Handling in Coworker Scripts
-- **Description**: Updated coworker scripts to use UTC time for all date-time operations to avoid timezone discrepancies.
-- **Changes**:
-    - Modified `coworker.ps1`, `coworker.sh`, `coworker-daily-memory-generator.ps1`, `coworker-daily-memory-generator.sh`, `run_coworker_periodically.ps1`, `run_coworker_periodically.sh`, `task-source-monitor.ps1`, and `task-source-monitor.sh`.
-    - Replaced `Get-Date` with `(Get-Date).ToUniversalTime()` in PowerShell scripts.
-    - Replaced `date` with `date -u` in Bash scripts.
-    - Ensured consistent ISO 8601 formatting using UTC.
-- **Outcome**: Scripts now generate timestamps and date-based paths using UTC, ensuring consistency across environments.
-- **Lessons Learned**:
-    - Always specify timezone handling explicitly in scripts intended for distributed or cross-region use.
-    - `date -u` is the standard way to get UTC in Bash.
-    - `(Get-Date).ToUniversalTime()` is the standard way to get UTC in PowerShell.
-### Task: Improve Coworker Daily Memory Generator Logic
-- **Description**: Refined `coworker-daily-memory-generator` scripts to intelligently extract log content, specifically prioritizing the head (10 lines) and tail (300 lines) of Copilot logs to capture key information while saving tokens.
-- **Changes**:
-    - Updated `coworker-daily-memory-generator.ps1` to use a logic that checks line count. If > 310 lines, it takes the first 10 and last 300, with a separator.
-    - Updated `coworker-daily-memory-generator.sh` with equivalent logic using `head`, `tail`, and `wc -l`.
-    - Added safety truncation (20k chars) to extracted content to prevent token overflow.
-- **Outcome**: The memory generator now produces more focused prompts for the AI, discarding the middle of long logs which usually contains intermediate steps, while preserving the final summary and initial context.
-- **Lessons Learned**:
-    - When processing logs for LLM consumption, "Head + Tail" is a robust heuristic for capturing context + result without consuming excessive context window.
-### Task: Implement Coworker Loop Detection
-- **Description**: Implemented a loop detection mechanism in `run_coworker_periodically.ps1` and `run_coworker_periodically.sh` to prevent coworker from getting stuck in infinite loops.
-- **Changes**:
-    - Modified `run_coworker_periodically.ps1` to run `coworker.ps1` in the background and monitor its output.
-    - Modified `run_coworker_periodically.sh` to run `coworker.sh` in the background and monitor its output.
-    - Implemented logic to check the last 500 lines of logs every 10 seconds.
-    - Calculates the ratio of action lines (containing `● `) to total lines.
-    - If ratio < 5% for 3 consecutive minutes (18 checks), the process is killed and the task file is moved to `3_5aborted`.
-- **Outcome**: Verified loop detection with a test script simulating low-activity logs. The monitor successfully detected the loop, killed the process, and attempted to abort the task.
-- **Lessons Learned**:
-    - Monitoring a subprocess requires running it asynchronously (`Start-Process` in PowerShell, `&` in Bash) and tracking its PID.
-    - PowerShell's `Get-Content` returns a string for single lines and an array for multiple lines; always wrap in `@()` for consistent array operations.
-    - Bash arithmetic with `awk` is necessary for floating-point calculations like ratios.
 
+
+---
+Copilot Execution Output:
+
+Copilot Exit Code: 0
+Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\02\28\231020-improve-timezone-handling-coworker-scripts.copilot.log

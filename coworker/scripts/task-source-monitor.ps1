@@ -54,12 +54,12 @@ function Dispatch-Task {
     $tmp = [System.IO.Path]::GetTempFileName()
     [System.IO.File]::WriteAllText($tmp, $Content, [System.Text.Encoding]::UTF8)
     Move-Item -Path $tmp -Destination $dst -Force
-    Write-Host "[$([DateTime]::Now.ToString('o'))] Dispatched task file: $dst"
+    Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Dispatched task file: $dst"
 }
 
 # ── GitHub issues monitor ──────────────────────────────────────────────────────
 function Fetch-GitHubIssues {
-    Write-Host "[$([DateTime]::Now.ToString('o'))] Fetching latest issues from $Repo assigned to $Assignee ..."
+    Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Fetching latest issues from $Repo assigned to $Assignee ..."
 
     $ghAvailable = $null -ne (Get-Command gh -ErrorAction SilentlyContinue)
 
@@ -95,7 +95,7 @@ function Fetch-GitHubIssues {
         # Mark issue as processed
         if ($ghAvailable) {
             $number = $issue.number
-            Write-Host "[$([DateTime]::Now.ToString('o'))] Marking issue #$number as processed..."
+            Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Marking issue #$number as processed..."
             gh issue edit $number --repo $Repo --add-label "processed" 2>$null
         }
     }
@@ -104,7 +104,7 @@ function Fetch-GitHubIssues {
 # ── URL monitor ────────────────────────────────────────────────────────────────
 function Fetch-Url {
     if ([string]::IsNullOrWhiteSpace($Url)) { return }
-    Write-Host "[$([DateTime]::Now.ToString('o'))] Polling URL: $Url ..."
+    Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Polling URL: $Url ..."
 
     try {
         $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
@@ -135,25 +135,25 @@ function Fetch-Url {
         }
 
         if ($existing) {
-            Write-Host "[$([DateTime]::Now.ToString('o'))] Duplicate task content detected (Hash: $md5). Skipping."
+            Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Duplicate task content detected (Hash: $md5). Skipping."
         } else {
-            Write-Host "[$([DateTime]::Now.ToString('o'))] Keyword '$Keyword' found in URL response."
+            Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Keyword '$Keyword' found in URL response."
             # Append hash to content so it can be detected next time
             Dispatch-Task -Content "$body`n$marker"
         }
     } else {
-        Write-Host "[$([DateTime]::Now.ToString('o'))] Keyword '$Keyword' not found; nothing to dispatch."
+        Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Keyword '$Keyword' not found; nothing to dispatch."
     }
 }
 
 # ── main loop ──────────────────────────────────────────────────────────────────
-Write-Host "[$([DateTime]::Now.ToString('o'))] Monitor started. repo=$Repo assignee=$Assignee url=$(if ($Url) { $Url } else { '<none>' }) keyword=$Keyword interval=${Interval}s"
+Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Monitor started. repo=$Repo assignee=$Assignee url=$(if ($Url) { $Url } else { '<none>' }) keyword=$Keyword interval=${Interval}s"
 
 do {
     Fetch-GitHubIssues
     Fetch-Url
     if (-not $Once) {
-        Write-Host "[$([DateTime]::Now.ToString('o'))] Sleeping ${Interval}s ..."
+        Write-Host "[$([DateTime]::UtcNow.ToString('o'))] Sleeping ${Interval}s ..."
         Start-Sleep -Seconds $Interval
     }
 } while (-not $Once)
