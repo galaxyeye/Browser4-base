@@ -124,62 +124,67 @@ import java.time.Duration
  */
 interface WebDriver : Closeable {
     /**
-     * The driver id. #mcp
+     * The driver id, starts with 1. The id is unique in process scope.
      * */
     val id: Int
 
     /**
-     * The parent driver id. #mcp
+     * The parent driver id. The id is unique in process scope.
      * */
     val parentSid: Int
 
     /**
-     * The browser of the driver. #mcp
+     * The guid of the driver.
+     * */
+    val guid: String
+
+    /**
+     * The browser of the driver.
      * The browser defines methods and events to manipulate a real browser.
      * */
     val browser: Browser
 
     /**
-     * Web pages for the page open from the current page, via window.open(), link click, form submission, etc. #mcp
+     * Web pages for the page open from the current page, via window.open(), link click, form submission, etc.
      *
      * TODO: NOT IMPLEMENTED
      * */
     val frames: List<WebDriver>
 
     /**
-     * The driver from whom opens the current page. #mcp
+     * The driver from whom opens the current page.
      * */
     val opener: WebDriver?
 
     /**
-     * Web pages for the page open from the current page, via window.open(), link click, form submission, etc. #mcp
+     * Web pages for the page open from the current page, via window.open(), link click, form submission, etc.
      * */
     val outgoingPages: Set<WebDriver>
 
     /**
-     * The browser type. #mcp
+     * The browser type.
      * BrowserType.PULSAR_CHROME is the only fully supported browser type currently.
      * BrowserType.PLAYWRIGHT_CHROME is a partially supported browser type since Playwright is not thread safe.
      * */
     val browserType: BrowserType
 
     /**
-     * The current navigation entry. #mcp
+     * The current navigation entry.
      * */
     var navigateEntry: NavigateEntry
 
     /**
-     * The navigation history. #mcp
+     * The navigation history.
      * */
     val navigateHistory: NavigateHistory
 
     /**
-     * The associated data of the driver. #mcp
+     * The associated data of the driver.
      * */
     val data: MutableMap<String, Any?>
 
     /**
-     * The delay policy of the driver. The delay policy is a map of delay ranges in milliseconds for different actions. #mcp
+     * The delay policy of the driver. The delay policy is a map of delay ranges in milliseconds for different actions.
      *
      * The delay policy is used to simulate human behaviors, such as typing, clicking, scrolling, etc.
      *
@@ -190,7 +195,7 @@ interface WebDriver : Closeable {
     val delayPolicy: Map<String, IntRange>
 
     /**
-     * The timeout policy of the driver. The timeout policy is a map of timeout durations for different actions. #mcp
+     * The timeout policy of the driver. The timeout policy is a map of timeout durations for different actions.
      *
      * The timeout policy is used to set the maximum time to wait for an action to complete.
      *
@@ -201,13 +206,13 @@ interface WebDriver : Closeable {
     val timeoutPolicy: Map<String, Duration>
 
     /**
-     * Returns a JvmWebDriver to support other JVM languages, such as java, clojure, scala, and so on. #mcp
+     * Returns a JvmWebDriver to support other JVM languages, such as java, clojure, scala, and so on.
      *
      * JvmWebDriver is not recommended, use Kotlin native suspend methods instead, or use SDK instead.
      *
      * @see JvmWebDriver
+     * @mcp
      * */
-    @ExperimentalApi
     fun jvm(): JvmWebDriver
 
     /**

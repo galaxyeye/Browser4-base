@@ -29,7 +29,7 @@ import kotlin.random.nextInt
 
 @Suppress("unused")
 abstract class AbstractWebDriver(
-    val guid: String,
+    override val guid: String,
     override val browser: AbstractBrowser,
     override val id: Int = ID_SUPPLIER.incrementAndGet()
 ) : Comparable<AbstractWebDriver>, AbstractJvmWebDriver(), WebDriver, JvmWebDriver {

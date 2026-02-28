@@ -1,7 +1,6 @@
 package ai.platon.pulsar.rest.openapi.controller
 
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
-import ai.platon.pulsar.agentic.mcp.server.Browser4MCPServer
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.AgentToolManager
 import ai.platon.pulsar.rest.openapi.service.SessionManager
@@ -13,7 +12,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.concurrent.ConcurrentHashMap
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -68,8 +66,6 @@ class MCPToolController(
 ) {
     private val logger = LoggerFactory.getLogger(MCPToolController::class.java)
 
-    /** Cache of MCP server instances keyed by sessionId. */
-    private val mcpServers = ConcurrentHashMap<String, Browser4MCPServer>()
     private val objectMapper = com.fasterxml.jackson.databind.ObjectMapper()
 
     // =========================================================================
@@ -161,7 +157,6 @@ class MCPToolController(
 
     private fun handleCloseSession(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
         val sessionId = requireSessionId(request)
-        mcpServers.remove(sessionId)
         val deleted = sessionManager.deleteSession(sessionId)
         return if (deleted) {
             ResponseEntity.ok(textResponse("Session closed"))
@@ -178,13 +173,11 @@ class MCPToolController(
     }
 
     private fun handleCloseAllSessions(): ResponseEntity<MCPToolCallResponse> {
-        mcpServers.clear()
         val count = sessionManager.deleteAllSessions()
         return ResponseEntity.ok(textResponse("Closed $count session(s)"))
     }
 
     private fun handleKillAllSessions(): ResponseEntity<MCPToolCallResponse> {
-        mcpServers.clear()
         val count = sessionManager.deleteAllSessions()
         return ResponseEntity.ok(textResponse("Killed $count session(s)"))
     }
@@ -218,10 +211,10 @@ class MCPToolController(
 
         val agent = managed.pulsarSession.companionAgent as? BasicBrowserAgent
             ?: return ResponseEntity.ok(errorResponse("Session agent does not support tools"))
-        
+
         val toolName = request.tool
         val args = request.arguments ?: emptyMap()
-        
+
         // Find the matching tool in AgentToolManager
         val toolCall = resolveToolCall(toolName, args, agent)
             ?: return ResponseEntity.ok(errorResponse("Unknown tool: $toolName"))
@@ -230,7 +223,7 @@ class MCPToolController(
             val result = agent.toolManager.executeToolCall(toolCall)
             val exception = result.exception
             if (exception != null) {
-                ResponseEntity.ok(errorResponse("${toolName} failed: ${exception.message}"))
+                ResponseEntity.ok(errorResponse("${toolName} failed: ${exception.cause?.message} help: ${exception.help}"))
             } else {
                 val value = result.value?.toString() ?: ""
                 ResponseEntity.ok(textResponse(value))
@@ -242,15 +235,29 @@ class MCPToolController(
     }
 
     private fun resolveToolCall(toolName: String, args: Map<String, Any?>, agent: BasicBrowserAgent): ToolCall? {
+        val args1 = args.toMutableMap()
+
+        // 1. Explicit mapping for legacy/special names
+        when (toolName) {
+            "page_title" -> return ToolCall("driver", "title", args1)
+            "page_url" -> return ToolCall("driver", "currentUrl", args1) // or just rely on pageUrl if it exists
+            "switch_tab", "tab_select" -> return ToolCall("browser", "switchTab", args1)
+            "tab_new" -> return ToolCall("browser", "newTab", args1)
+            "tab_list" -> return ToolCall("browser", "listTabs", args1)
+            "tab_close", "close_tab" -> return ToolCall("browser", "closeTab", args1)
+        }
+
+        // 2. Generic mapping
         val specs = agent.toolManager.getAllToolSpecs()
         for ((domain, methods) in specs) {
             for ((method, _) in methods) {
                 val mcpName = toMcpToolName(domain, method)
                 if (mcpName == toolName) {
-                    return ToolCall(domain, method, args)
+                    return ToolCall(domain, method, args1)
                 }
             }
         }
+
         return null
     }
 

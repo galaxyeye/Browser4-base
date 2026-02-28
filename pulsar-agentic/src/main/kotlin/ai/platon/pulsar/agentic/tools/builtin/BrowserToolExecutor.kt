@@ -24,6 +24,27 @@ class BrowserToolExecutor : AbstractToolExecutor() {
             returnType = "WebDriver",
             description = "Switch to a specific browser tab by its ID"
         )
+        toolSpec["newTab"] = ToolSpec(
+            domain = domain,
+            method = "newTab",
+            arguments = listOf(ToolSpec.Arg("url", "String", "about:blank")),
+            returnType = "Map<String, String>",
+            description = "Create a new tab"
+        )
+        toolSpec["closeTab"] = ToolSpec(
+            domain = domain,
+            method = "closeTab",
+            arguments = listOf(ToolSpec.Arg("tabId", "String", null)),
+            returnType = "Boolean",
+            description = "Close a tab"
+        )
+        toolSpec["listTabs"] = ToolSpec(
+            domain = domain,
+            method = "listTabs",
+            arguments = emptyList(),
+            returnType = "List<Map<String, String>>",
+            description = "List all tabs"
+        )
     }
 
     /**
@@ -49,6 +70,31 @@ class BrowserToolExecutor : AbstractToolExecutor() {
                 driver.bringToFront()
                 logger.info("""👀 Switched to tab {} (driver {}/{})""", tabId, driver.id, driver.guid)
                 driver
+            }
+            "newTab" -> {
+                val url = paramString(args, "url", functionName) ?: "about:blank"
+                val driver = browser.newDriver(url)
+                mapOf("id" to driver.id.toString(), "url" to driver.currentUrl())
+            }
+            "closeTab" -> {
+                val tabId = paramString(args, "tabId", functionName)!!
+                val driver = tabId.toIntOrNull()?.let { browser.findDriverById(it) } ?: browser.drivers[tabId]
+                if (driver != null) {
+                    browser.destroyDriver(driver)
+                    true
+                } else {
+                    false
+                }
+            }
+            "listTabs" -> {
+                browser.listDrivers().map { driver ->
+                    mapOf(
+                        "id" to driver.id.toString(),
+                        "guid" to driver.guid,
+                        "title" to driver.title(),
+                        "url" to driver.currentUrl()
+                    )
+                }
             }
 
             else -> throw IllegalArgumentException("Unsupported browser method: $functionName(${args.keys})")
