@@ -507,7 +507,6 @@ Copilot Execution Output:
             # Capture both standard output and error output to separate files
             $process = Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
 
-            $runWaited = $false
             $lastOutputLineCount = 0
 
             # Monitor output in real-time while process is running
