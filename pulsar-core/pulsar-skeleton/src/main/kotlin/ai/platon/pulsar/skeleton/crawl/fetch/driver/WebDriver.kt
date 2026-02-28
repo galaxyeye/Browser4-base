@@ -50,8 +50,8 @@ import java.time.Duration
  * In the Document Object Model (DOM), the relationship between `document.URL`, `document.documentURI`,
  * `document.location`, and the URL displayed in the browser's address bar is as follows:
  * * `driver.currentUrl()`:
- *    - This ready-only property displayed in the browser's address bar is what users see and can edit directly.
- *    - This ready-only property can be either navigated or not.
+ *    - This read-only property displayed in the browser's address bar is what users see and can edit directly.
+ *    - This read-only property can be either navigated or not.
  *    - When the page is loaded or when `document.location` is modified, the address bar is updated to reflect the new URL.
  *    - It is typically synchronized with `document.URL` and `document.location.href` (a property of `document.location`).
  * * `driver.url()`, `document.URL`:
@@ -430,22 +430,23 @@ interface WebDriver : Closeable {
     suspend fun title(): String
 
     /**
-     * Retrieve a nano version of the DOM tree, which is based on the accessibility tree, enhanced by DOM and document snapshot. @mcp
+     * Retrieves a lightweight version of the DOM tree (NanoDOMTree). @mcp
      *
-     * References:
+     * The NanoDOMTree is based on the accessibility tree and enhanced with DOM and document snapshot information.
+     * It is designed to be a compact representation suitable for AI processing and analysis.
      *
-     * - [ai.platon.cdt.kt.protocol.commands.Accessibility.getFullAXTree]
-     * - [ai.platon.cdt.kt.protocol.commands.DOM.getDocument]
-     * - [ai.platon.cdt.kt.protocol.types.domsnapshot.DocumentSnapshot]
+     * @return A [NanoDOMTree] representing the current page state, or null if retrieval fails.
      * */
     suspend fun nanoDOMTree(): NanoDOMTree?
 
     /**
-     * Chat with the AI model about the specified element. @mcp
+     * Interact with an AI model using the context of the element selected by [selector]. @mcp
      *
-     * @param prompt The prompt to chat with
-     * @param selector The selector to find the element
-     * @return The response from the model
+     * The AI model receives the element's content and structure as context along with the provided prompt.
+     *
+     * @param prompt The question or instruction for the AI model.
+     * @param selector The CSS selector of the element to use as context.
+     * @return A [ModelResponse] containing the model's answer.
      */
     suspend fun chat(prompt: String, selector: String): ModelResponse
 
@@ -869,15 +870,26 @@ interface WebDriver : Closeable {
 
     /**
      * Focus on an element with [selector] and click it with [modifier] pressed. @mcp
+     *
+     * @param selector The selector of the element to click.
+     * @param modifier The keyboard modifier to press while clicking (e.g., "Shift", "Control", "Alt").
      * */
     @Throws(WebDriverException::class)
     suspend fun click(selector: String, modifier: String)
 
+    /**
+     * Focus on an element with [selector] and double-click it. @mcp
+     *
+     * @param selector The selector of the element to double-click.
+     * */
     @Throws(WebDriverException::class)
     suspend fun dblclick(selector: String)
 
     /**
-     * Focus on an element with [selector] and dblclick it with [modifier] pressed. @mcp
+     * Focus on an element with [selector] and double-click it with [modifier] pressed. @mcp
+     *
+     * @param selector The selector of the element to double-click.
+     * @param modifier The keyboard modifier to press while double-clicking.
      * */
     @Throws(WebDriverException::class)
     suspend fun dblclick(selector: String, modifier: String)
@@ -929,7 +941,7 @@ interface WebDriver : Closeable {
      * of an element to focus. If there are multiple elements satisfying the
      * selector, the first will be focused.
      * @param attrName The attribute name to match.
-     * @param pattern The pattern to match the text content.
+     * @param pattern The pattern to match the attribute value.
      * @param count The number of times to click.
      * */
     @Throws(WebDriverException::class)
@@ -1213,20 +1225,28 @@ interface WebDriver : Closeable {
     suspend fun outerHTML(selector: String): String?
 
     /**
-     * Returns the document's text content. @mcp
+     * Returns the text content of the document or a specific element. @mcp
      *
-     * If the document does not exist, returns null.
+     * If [selector] is null, returns the text content of the entire document (usually `document.body.innerText`).
+     * If [selector] is provided, returns the text content of the first matching element.
+     *
+     * If the document or element does not exist, returns null.
      *
      * ```kotlin
-     * val text = driver.textContent()
+     * val bodyText = driver.textContent()
+     * val titleText = driver.textContent("h1.title")
      * ```
      *
-     * @return The text content of the document.
+     * @param selector The CSS selector of the element. If null, targets the document body.
+     * @return The text content, or null if not found.
      * */
     suspend fun textContent(selector: String? = null): String?
 
     /**
-     * Extracts fields from the page. @mcp
+     * Extracts multiple fields from the page using CSS selectors. @mcp
+     *
+     * @param fields A map where keys are field names and values are CSS selectors.
+     * @return A map containing the extracted text content for each field. Values are null if the selector matches nothing.
      * */
     suspend fun extract(fields: Map<String, String>): Map<String, String?>
 
@@ -1501,31 +1521,52 @@ interface WebDriver : Closeable {
     suspend fun evaluate(expression: String): Any?
 
     /**
-     * Executes JavaScript and returns the result or [defaultValue] if evaluation returns null or incompatible type. @mcp
+     * Executes JavaScript and returns the result, or [defaultValue] if the result is null or incompatible. @mcp
+     *
+     * @param expression The JavaScript expression to evaluate.
+     * @param defaultValue The value to return if evaluation fails or returns null.
+     * @return The evaluation result or [defaultValue].
      */
     @Throws(WebDriverException::class)
     suspend fun <T> evaluate(expression: String, defaultValue: T): T
 
     /**
-     * Detailed evaluation metadata (beta). @mcp
+     * returns detailed evaluation metadata (beta). @mcp
+     *
+     * @param expression The JavaScript expression to evaluate.
+     * @return A [JsEvaluation] object containing the result and metadata.
      * */
     @Throws(WebDriverException::class)
     suspend fun evaluateDetail(expression: String): JsEvaluation?
 
     /**
-     * Executes JavaScript returning JSON if available value if possible (objects serialized), else primitive/string/null. @mcp
+     * Executes JavaScript and returns the result as a JSON-serializable value. @mcp
+     *
+     * If the result is an object, it is serialized to a Map or List.
+     * If the result is a primitive, it is returned as is.
+     * If the result is null or undefined, null is returned.
+     *
+     * @param expression The JavaScript expression to evaluate.
+     * @return The result as a JSON-compatible object (Map, List, String, Number, Boolean, or null).
      */
     @Throws(WebDriverException::class)
     suspend fun evaluateValue(expression: String): Any?
 
     /**
-     * Executes JS returning JSONifiable value or [defaultValue] if null/incompatible. @mcp
+     * Executes JavaScript and returns the result as a JSON-serializable value, or [defaultValue] if null/incompatible. @mcp
+     *
+     * @param expression The JavaScript expression to evaluate.
+     * @param defaultValue The value to return if evaluation fails or returns null.
+     * @return The evaluation result or [defaultValue].
      * */
     @Throws(WebDriverException::class)
     suspend fun <T> evaluateValue(expression: String, defaultValue: T): T
 
     /**
-     * Detailed value evaluation metadata (beta). @mcp
+     * Returns detailed value evaluation metadata (beta). @mcp
+     *
+     * @param expression The JavaScript expression to evaluate.
+     * @return A [JsEvaluation] object containing the result value and metadata.
      * */
     @Throws(WebDriverException::class)
     suspend fun evaluateValueDetail(expression: String): JsEvaluation?

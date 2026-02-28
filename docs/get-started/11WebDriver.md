@@ -3,19 +3,39 @@ WebDriver
 
 [Prev](10RPA.md) | [Home](1home.md) | [Next](12massive-crawling.md)
 
-[WebDriver](/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/crawl/fetch/driver/WebDriver.kt) provides a concise interface for accessing and interacting with web pages, with all actions and behaviors optimized to mimic real humans as closely as possible, such as scrolling, clicking, typing text, dragging and dropping, etc.
+[WebDriver](/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/crawl/fetch/driver/WebDriver.kt) defines a concise interface to visit and manipulate webpages. The webpage is rendered to a Document Object Model (DOM) in a real browser, and the interface provides methods to control the browser, select text content and attributes of Elements, and interact with the webpage.
 
-The methods in this interface are mainly divided into three categories:
+All actions and behaviors are optimized to mimic real people as closely as possible, such as scrolling, clicking, typing text, dragging and dropping, etc.
 
-1. Control over the browser itself.
-2. Selecting elements, extracting text content, and attributes.
-3. Interacting with web pages.
+## Key Capabilities
 
-The main methods include:
+The methods in this interface fall into several categories:
 
-- `.navigate()`: Load a new web page.
-- `.scrollDown()`: Scroll down on the web page to fully load the page. Most modern web pages support lazy loading using AJAX technology, meaning that web page content only begins to load when it scrolls into view.
+### 1. Browser Control
+- `.navigate(url)`: Load a new web page.
+- `.goBack()`, `.goForward()`, `.reload()`: Navigation history control.
+- `.stop()`, `.pause()`: Lifecycle management.
+
+### 2. Page Interaction
+- `.click(selector)`: Click an element.
+- `.type(selector, text)`: Type text into an input field.
+- `.scrollDown()`, `.scrollTo(selector)`: Scroll the page or to an element.
+- `.mouseWheelDown()`: Simulate mouse wheel scrolling.
+- `.dragAndDrop()`: Perform drag and drop operations.
+
+### 3. Data Extraction & State Checking
+- `.textContent(selector)`: Get text content of the document or an element.
+- `.extract(fields)`: Extract multiple fields using CSS selectors.
 - `.pageSource()`: Obtain the web page source code.
+- `.exists(selector)`, `.isVisible(selector)`: Check element state.
+- `.screenshot()`: Capture screenshots of the page or elements.
+
+### 4. Advanced & AI Features
+- `.evaluate(expression)`: Execute JavaScript in the browser context.
+- `.chat(prompt, selector)`: Interact with an AI model using element context.
+- `.nanoDOMTree()`: Retrieve a lightweight DOM structure for AI analysis.
+
+## Example
 
 ```kotlin
 class WebDriverDemo(private val session: PulsarSession) {

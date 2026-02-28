@@ -25,9 +25,6 @@ If conflicts occur, resolve them automatically.
 # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
 $safePrompt = $prompt.Replace('"', '\"')
 
-Write-Host "Running:"
-Write-Host "gh copilot -p '$safePrompt' --allow-all-tools"
-
 # Pass arguments as an array to avoid fragile manual escaping/quoting.
 $copilotArgList = @(
     'copilot'
@@ -36,5 +33,8 @@ $copilotArgList = @(
     "`"$safePrompt`""
     '--allow-all-tools'
 )
+
+Write-Host "Running:"
+Write-Host "gh $copilotArgList"
 
 Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
