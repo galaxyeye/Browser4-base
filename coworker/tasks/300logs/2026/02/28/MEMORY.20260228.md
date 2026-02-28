@@ -2,77 +2,43 @@
 ## Daily Memory - 2026-02-28
 
 ### Tasks Executed
-- **WebDriver Documentation for MCP**: Optimized `WebDriver` KDoc comments to serve as better MCP tool descriptions. Standardized on using the first paragraph for descriptions and introduced `@mcp` annotations (replacing `#mcp`) for tool discovery.
-- **Tool Spec Extraction Logic**: Refined `SourceCodeToToolCallSpec` to intelligently extract tool descriptions. Implemented logic to prioritize paragraphs marked with `#mcp`/`@mcp` or default to the first paragraph, reducing noise in tool context.
-- **Browser4 Node.js SDK**: Built and verified the `browser4-nodejs` SDK. Created a comprehensive test suite (`sdk-comprehensive.test.ts`) covering all methods and edge cases, ensuring robust error handling.
-- **Coworker Workflow Automation**: Attempted to implement auto-approval logic for tasks tagged with `#auto-approve`.
-- **Documentation Refinement**: Updated `coworker/README.md` to reflect the complete 9-stage task pipeline and corrected script paths.
+- **MCP Documentation Optimization**:
+  - Refined `WebDriver` KDoc to serve as MCP tool descriptions.
+  - Implemented `#mcp` (later `@mcp`) tagging strategy for precise description extraction.
+  - Updated `SourceCodeToToolCallSpec` to split documentation into concise `description` (first paragraph/tagged) and detailed `help` (full KDoc).
+- **SDK Development**:
+  - Built and verified `browser4-nodejs` SDK.
+  - Added comprehensive test suite (197 tests) covering Session, Agent, and WebDriver functionality.
+  - Fixed a crash in `createSession` regarding null handling.
+- **Coworker Automation**:
+  - Implemented task monitoring scripts (`monitor.sh`/`monitor.ps1`) to ingest tasks from GitHub issues and URL polling.
+  - Refined `coworker/README.md` to accurately reflect the task pipeline and script locations.
+- **Workflow Automation**:
+  - Attempted to implement `#auto-approve` logic for the coworker pipeline (moving completed tasks to `4approved`).
 
 ### Execution Quality Review
 - **What worked well**:
-    - The iterative testing approach for `SourceCodeToToolCallSpec` was effective. Using debug output to verify the extraction logic before finalizing the code ensured correctness.
-    - Large-scale KDoc updates were handled efficiently using `awk` and regex patterns, avoiding manual error-prone editing.
-    - The Node.js SDK build and test process was smooth, with a very comprehensive test file generated in one go.
+  - The iterative approach to MCP tool specification was effective; starting with KDoc modification, then parser logic, then separating description vs. help created a robust system.
+  - The Node.js SDK build and test generation was highly productive, achieving high coverage in a single session.
 - **What was inefficient**:
-    - The shell interaction in task `013745` faced state management issues (invalid shell ID), leading to wasted cycles trying to read output from a non-existent session.
-    - The `coworker-auto-approve-support` task failed completely due to a command argument error ("too many arguments"), indicating a lack of validation before execution.
+  - The `#auto-approve` implementation failed due to command-line argument errors, wasting a cycle without delivering the feature.
 
 ### Issues Encountered
-- **Shell Session Management**: In task `013745`, a `read_powershell` call failed with "Invalid shell ID: grep_shell", disrupting the workflow.
-- **Argument Overflow**: Task `035344` failed with "too many arguments" (got 69, expected 0), likely due to improper quoting or glob expansion in a shell script or tool call.
-- **Tag Consistency**: Initial confusion between `#mcp` and `@mcp` tags required a cleanup pass in task `134801` to standardize on `@mcp` for method-level annotations.
+- **Script Argument Error**: The `coworker-auto-approve-support` task failed with "too many arguments" (Exit Code 1), indicating a breakdown in how the script or tool was invoked during that specific task.
 
 ### Root Cause Analysis
-- **Shell ID Persistence**: The agent assumed a shell session ID (`grep_shell`) existed or persisted across tool calls without verifying its active status or correct ID generation from a previous `powershell` call.
-- **Script Argument Handling**: The "too many arguments" error suggests a script or command was invoked where a wildcard (like `*`) expanded into a file list, but the receiving command expected a single argument or no arguments.
-- **Spec Ambiguity**: The shift from `#mcp` to `@mcp` suggests the initial specification or convention wasn't fully settled before implementation started, leading to rework.
+- **Auto-approve Failure**: The error message "Expected 0 arguments but got 69" suggests a shell expansion issue or a malformed command string was passed to a PowerShell/Bash script, likely treating a long string or file list as individual arguments instead of a single input.
 
 ### Process Improvement Insight
-- **Validate Shell State**: Before attempting to read from a shell session, ensure the session ID is valid and tracked. If a session might have timed out or closed, restart it rather than assuming persistence.
-### Task: Optimize Coworker Daily Memory Generator
-- **Description**: Optimized `coworker-daily-memory-generator.ps1` and `.sh` to efficiently parse logs and generate memory summaries using `gh copilot`.
-- **Changes**:
-    - Parsing `.task.log` to extract clean prompts (removing boilerplate memory instructions) and `.copilot.log` for output.
-    - Updated PowerShell script to use `Move-Item` instead of `Rename-Item` for backups (fixing "file exists" error).
-    - Updated `gh copilot` command to use `-p` (non-interactive) and instructed the agent to use the `create` tool directly, bypassing stdout capture issues.
-    - Added truncation logic for long logs (20k chars).
-- **Outcome**: Verified the generator successfully creates a structured daily memory file (`MEMORY.YYYYMMDD.md`).
-- **Lessons Learned**:
-    - `gh copilot explain` is not a valid command in the current environment; use `gh copilot -p` instead.
-    - Capturing large output from `gh copilot` via stdout is unreliable; instructing the agent to use tools (like `create`) is more robust.
-    - PowerShell's `Rename-Item` does not overwrite existing files even with `-Force`; use `Move-Item` instead.
-### Task: Improve TimeZone Handling in Coworker Scripts
-- **Description**: Updated coworker scripts to use UTC time for all date-time operations to avoid timezone discrepancies.
-- **Changes**:
-    - Modified `coworker.ps1`, `coworker.sh`, `coworker-daily-memory-generator.ps1`, `coworker-daily-memory-generator.sh`, `run_coworker_periodically.ps1`, `run_coworker_periodically.sh`, `task-source-monitor.ps1`, and `task-source-monitor.sh`.
-    - Replaced `Get-Date` with `(Get-Date).ToUniversalTime()` in PowerShell scripts.
-    - Replaced `date` with `date -u` in Bash scripts.
-    - Ensured consistent ISO 8601 formatting using UTC.
-- **Outcome**: Scripts now generate timestamps and date-based paths using UTC, ensuring consistency across environments.
-- **Lessons Learned**:
-    - Always specify timezone handling explicitly in scripts intended for distributed or cross-region use.
-    - `date -u` is the standard way to get UTC in Bash.
-    - `(Get-Date).ToUniversalTime()` is the standard way to get UTC in PowerShell.
-### Task: Improve Coworker Daily Memory Generator Logic
-- **Description**: Refined `coworker-daily-memory-generator` scripts to intelligently extract log content, specifically prioritizing the head (10 lines) and tail (300 lines) of Copilot logs to capture key information while saving tokens.
-- **Changes**:
-    - Updated `coworker-daily-memory-generator.ps1` to use a logic that checks line count. If > 310 lines, it takes the first 10 and last 300, with a separator.
-    - Updated `coworker-daily-memory-generator.sh` with equivalent logic using `head`, `tail`, and `wc -l`.
-    - Added safety truncation (20k chars) to extracted content to prevent token overflow.
-- **Outcome**: The memory generator now produces more focused prompts for the AI, discarding the middle of long logs which usually contains intermediate steps, while preserving the final summary and initial context.
-- **Lessons Learned**:
-    - When processing logs for LLM consumption, "Head + Tail" is a robust heuristic for capturing context + result without consuming excessive context window.
-### Task: Implement Coworker Loop Detection
-- **Description**: Implemented a loop detection mechanism in `run_coworker_periodically.ps1` and `run_coworker_periodically.sh` to prevent coworker from getting stuck in infinite loops.
-- **Changes**:
-    - Modified `run_coworker_periodically.ps1` to run `coworker.ps1` in the background and monitor its output.
-    - Modified `run_coworker_periodically.sh` to run `coworker.sh` in the background and monitor its output.
-    - Implemented logic to check the last 500 lines of logs every 10 seconds.
-    - Calculates the ratio of action lines (containing `● `) to total lines.
-    - If ratio < 5% for 3 consecutive minutes (18 checks), the process is killed and the task file is moved to `3_5aborted`.
-- **Outcome**: Verified loop detection with a test script simulating low-activity logs. The monitor successfully detected the loop, killed the process, and attempted to abort the task.
-- **Lessons Learned**:
-    - Monitoring a subprocess requires running it asynchronously (`Start-Process` in PowerShell, `&` in Bash) and tracking its PID.
-    - PowerShell's `Get-Content` returns a string for single lines and an array for multiple lines; always wrap in `@()` for consistent array operations.
-    - Bash arithmetic with `awk` is necessary for floating-point calculations like ratios.
+- **Validate Script Inputs**: When modifying shell scripts (especially PowerShell), explicitly validate argument handling and quoting to prevent glob expansion or whitespace splitting from causing argument overflow errors.
 
+### Task: Fix coworker-daily-memory-generator
+- **Goal**: Fix the `coworker-daily-memory-generator.ps1` script which was failing with "too many arguments".
+- **Outcome**: Success. Identified that unescaped double quotes in the prompt string were causing argument parsing issues in the `gh copilot` call.
+- **Fix**: Escaped double quotes in the prompt string before passing it to `gh copilot`.
+- **Verification**: Ran the script successfully, generating this memory file.
+
+### Task: Rename 3complete to 3_1complete
+- **Goal**: Rename the 3complete task folder to 3_1complete to allow inserting intermediate steps (like 3_5aborted) and update all references.
+- **Outcome**: Success. Renamed 3complete -> 3_1complete. Updated coworker.sh, coworker.ps1, README.md, and README.zh.md to reflect the change.
+- **Lessons Learned**: Comprehensive grep search is crucial when renaming folders referenced in scripts and documentation. Manual review of localized documentation (zh.md) is necessary as key terms might not match simple find/replace patterns.

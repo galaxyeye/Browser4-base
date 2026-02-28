@@ -12,7 +12,7 @@
 | 队列   | `1created`     | 准备执行时移入此文件夹   |
 | 规划   | `200plan`      | 代理规划阶段（自动管理） |
 | 执行   | `2working`     | 代理正在执行任务         |
-| 完成   | `3complete`    | 执行结束，可审查更改     |
+| 完成   | `3_1complete`    | 执行结束，可审查更改     |
 | 审查   | `4review`      | 可选的人工审查阶段       |
 | 已批准 | `5approved`    | 已批准任务，等待提交推送 |
 | 已推送 | `6git-pushed`  | 已成功提交并推送         |
@@ -25,7 +25,7 @@
 3. **执行** — 运行协作助手脚本处理任务：
    - Windows: `./coworker/scripts/coworker.ps1`
    - Linux/macOS: `./coworker/scripts/coworker.sh`
-4. **审查** — 任务执行后会进入 `3complete`，可审查更改。
+4. **审查** — 任务执行后会进入 `3_1complete`，可审查更改。
 5. **批准** — 将任务移至 `5approved`，定时任务会自动提交并推送。
 
 ## 前置条件

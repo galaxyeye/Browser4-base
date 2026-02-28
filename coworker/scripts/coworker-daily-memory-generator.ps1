@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 <#
 .SYNOPSIS
     Coworker Daily Memory Generator
@@ -56,14 +58,14 @@ Get-ChildItem -Path $logDir -Filter "*.task.log" | ForEach-Object {
     $taskLog = $_
     $baseName = $taskLog.Name -replace ".task.log$", ""
     $copilotLogPath = Join-Path $logDir "$baseName.copilot.log"
-    
+
     $logContent += "`n`n=== TASK: $baseName ===`n"
-    
+
     # Extract metadata
     $lines = Get-Content $taskLog.FullName -TotalCount 10
     $titleLine = $lines | Where-Object { $_ -match "^Task:" } | Select-Object -First 1
     if ($titleLine) { $logContent += "$titleLine`n" }
-    
+
     $logContent += "--- PROMPT (Snippet) ---`n"
     $cleanPrompt = Get-CleanPrompt -TaskLogPath $taskLog.FullName
     # Truncate prompt to 2000 chars
@@ -71,11 +73,11 @@ Get-ChildItem -Path $logDir -Filter "*.task.log" | ForEach-Object {
         $cleanPrompt = $cleanPrompt.Substring(0, 2000) + "... [Truncated]"
     }
     $logContent += "$cleanPrompt`n"
-    
+
     $logContent += "--- RESULT (Snippet) ---`n"
     if (Test-Path $copilotLogPath) {
         $copilotContent = @(Get-Content $copilotLogPath)
-        
+
         $lastToolIndex = -1
         for ($i = $copilotContent.Count - 1; $i -ge 0; $i--) {
             if ($copilotContent[$i] -match "^● (Read|Edit|Run)") {
@@ -167,9 +169,8 @@ if (Test-Path $memoryFile) {
 
 Write-Host "Calling gh copilot..."
 
-# Call gh copilot
-# We use -p for prompt and --allow-all-tools to let it use create tool
-# Note: Ensure gh cli and copilot extension are installed and authenticated.
-gh copilot -p "$prompt" --allow-all-tools
+# Escape double quotes in prompt for safe command line passing
+$promptArg = $prompt.Replace('"', '\"')
+gh copilot -p "$promptArg" --allow-all-tools
 
 Write-Host "Memory generation task completed."

@@ -12,7 +12,7 @@ Task files flow through a pipeline of numbered folders inside `coworker/tasks/`:
 | Queue | `1created` | Move tasks here when ready for execution |
 | Plan | `200plan` | Agent planning phase (managed automatically) |
 | Work | `2working` | Agent is actively executing the task |
-| Complete | `3complete` | Execution finished — review the changes |
+| Complete | `3_1complete` | Execution finished — review the changes |
 | Review | `4review` | Optional manual review stage |
 | Approved | `5approved` | Approved tasks awaiting commit/push |
 | Pushed | `6git-pushed` | Successfully committed and pushed |
@@ -25,7 +25,7 @@ Task files flow through a pipeline of numbered folders inside `coworker/tasks/`:
 3. **Execute** — Run the coworker script to process the task:
    - Windows: `.\coworker\scripts\coworker.ps1`
    - Linux/macOS: `./coworker/scripts/coworker.sh`
-4. **Review** — Task moves to `3complete` after execution. Review the changes.
+4. **Review** — Task moves to `3_1complete` after execution. Review the changes.
 5. **Approve** — Move the task to `5approved` to have it automatically committed and pushed by the periodic runner.
 
 ## Prerequisites
@@ -40,7 +40,7 @@ You can use tags in task files to provide additional context or control behavior
 
 Supported tags:
 
-- `#auto-approve` — Automatically move the task to `5approved` after completion instead of `3complete`. Useful for trusted, low-risk tasks that can be committed without manual review.
+- `#auto-approve` — Automatically move the task to `5approved` after completion instead of `3_1complete`. Useful for trusted, low-risk tasks that can be committed without manual review.
 
 ## Mentions
 

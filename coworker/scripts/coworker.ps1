@@ -51,7 +51,7 @@ $taskRoots = @(
         Prepare = (Join-Path $tasksRoot "0prepare")
         Created = (Join-Path $tasksRoot "1created")
         Working = (Join-Path $tasksRoot "2working")
-        Finished = (Join-Path $tasksRoot "3complete")
+        Finished = (Join-Path $tasksRoot "3_1complete")
         Review = (Join-Path $tasksRoot "4review")
         Approved = (Join-Path $tasksRoot "5approved")
         Pushed = (Join-Path $tasksRoot "6git-pushed")
@@ -310,7 +310,7 @@ foreach ($taskRoot in $taskRoots) {
         Write-LogMessage "[PREPARE] Task: $($file.Name)" INFO
     }
 
-    # 2. Process 3complete (newly added to show pending reviews)
+    # 2. Process 3_1complete (newly added to show pending reviews)
     if (Test-Path $finishedDir) {
         $finishedFiles = Get-ChildItem -Path $finishedDir -Recurse -File
         foreach ($file in $finishedFiles) {

@@ -50,7 +50,7 @@ baseDir="$repoRoot/coworker/tasks"
 prepareDir="$baseDir/0prepare"
 createdDir="$baseDir/1created"        # Input directory for new tasks
 workingDir="$baseDir/2working"        # Processing directory for current tasks
-finishedDir="$baseDir/3complete"      # Output directory for completed tasks
+finishedDir="$baseDir/3_1complete"      # Output directory for completed tasks
 reviewDir="$baseDir/4review"
 approvedDir="$baseDir/5approved"
 pushedDir="$baseDir/6git-pushed"
@@ -246,7 +246,7 @@ for file in "${prepare_files[@]}"; do
     log_message "[PREPARE] Task: $(basename "$file")" INFO
 done
 
-# 2. Process 3complete (newly added to show pending reviews)
+# 2. Process 3_1complete (newly added to show pending reviews)
 if [[ -d "$finishedDir" ]]; then
     # Use find to locate files modified in the last 24 hours
     if command -v find >/dev/null 2>&1; then
