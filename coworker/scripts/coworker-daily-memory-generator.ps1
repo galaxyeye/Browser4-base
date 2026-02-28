@@ -116,6 +116,112 @@ if ([string]::IsNullOrWhiteSpace($logContent)) {
     exit 0
 }
 
+# --- BATCH PROCESSING LOGIC ---
+
+# Split logs into chunks based on character count
+# A simple way is to split by "=== TASK:" delimiter
+$tasks = $logContent -split "(?m)^=== TASK: " | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+$batches = @()
+$currentBatch = ""
+$maxBatchSize = 15000 # Adjust as needed for token limits
+
+foreach ($task in $tasks) {
+    # Re-add the delimiter removed by split
+    $taskStr = "=== TASK: $task"
+    
+    if (($currentBatch.Length + $taskStr.Length) -gt $maxBatchSize -and $currentBatch.Length -gt 0) {
+        $batches += $currentBatch
+        $currentBatch = $taskStr
+    } else {
+        $currentBatch += $taskStr
+    }
+}
+if ($currentBatch.Length -gt 0) {
+    $batches += $currentBatch
+}
+
+Write-Host "Split logs into $($batches.Count) batches."
+
+for ($i = 0; $i -lt $batches.Count; $i++) {
+    $batchContent = $batches[$i]
+    $isFirstBatch = ($i -eq 0)
+    $batchNum = $i + 1
+    
+    Write-Host "Processing batch $batchNum of $($batches.Count)..."
+
+    if ($isFirstBatch) {
+        $instruction = @"
+You are an AI assistant helping to generate a daily memory summary for a developer coworker.
+Based on the following development logs, generate the content for the daily memory file and save it to: $memoryFile
+
+SPECIFICATION:
+# MEMORY.$compactDate.md
+## Daily Memory - $dateStr
+
+### Tasks Executed
+- ...
+
+### Execution Quality Review
+- What worked well
+- What was inefficient
+
+### Issues Encountered
+- ...
+
+### Root Cause Analysis
+- ...
+
+### Process Improvement Insight
+- At least one concrete improvement for future execution
+
+CONSTRAINTS:
+- Use English only.
+- Be concise but insightful.
+- Focus on structural issues and improvements.
+- Do NOT just list logs, synthesize them.
+- Use the `create` tool to write the file directly. If the file exists, overwrite it (I have already backed it up).
+"@
+    } else {
+        $instruction = @"
+You are continuing to generate the daily memory summary for $dateStr.
+The memory file '$memoryFile' has already been created with the summary of previous tasks.
+
+YOUR TASK:
+1. READ the existing content of '$memoryFile'.
+2. ANALYZE the NEW logs provided below.
+3. UPDATE '$memoryFile' to include the summary of these NEW logs:
+    - Append the new tasks to 'Tasks Executed'.
+    - Update 'Execution Quality Review', 'Issues Encountered', etc., if the new logs provide additional insights.
+    - Consolidate similar points if possible.
+4. Ensure the final file maintains the markdown structure.
+
+CONSTRAINTS:
+- Use the `edit` tool (or `read` then `create` if needed) to update the file.
+- Do NOT overwrite the entire file with just the new logs; you must MERGE/APPEND.
+- Keep the existing summary valid while adding new information.
+"@
+    }
+
+    $prompt = "$instruction`n`nLOGS (Batch $batchNum):`n$batchContent"
+
+    # Use Start-Process to handle arguments safely
+    $safePrompt = $prompt.Replace('"', '\"')
+    $copilotArgList = @(
+        'copilot',
+        '--',
+        '-p',
+        "`"$safePrompt`"",
+        '--allow-all-tools'
+    )
+    
+    Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
+}
+
+Write-Host "Memory generation task completed."
+exit 0
+
+# Original code commented out for reference (can be removed later)
+<#
 # Construct Prompt
 $prompt = @"
 You are an AI assistant helping to generate a daily memory summary for a developer coworker.
@@ -184,3 +290,4 @@ $copilotArgList = @(
 Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
 
 Write-Host "Memory generation task completed."
+#>

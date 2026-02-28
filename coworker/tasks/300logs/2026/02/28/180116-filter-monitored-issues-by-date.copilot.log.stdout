@@ -5946,4 +5946,2585 @@ Okay.
 Go.
 
 Wait, `powershell` description.
-"Check strict mode behavior
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $obj = [PSCustomObject]@{ a = 1 }; Write-Output "Direct:"; try { $obj.b } catch { "Error: $_" }; Write-Output "PSObject:"; try { $p = $obj.PSObject.Properties['b']; if ($p) { "Found" } else { "Null" } } catch { "Error: $_" }`
+
+Okay.
+Go.
+
+Wait, `report_intent`.
+"Verifying strict mode and reading files"
+
+Okay.
+Go.
+
+Wait, `powershell` description.
+"Check strict mode behavior"
+
+Okay.
+Go.
+
+Wait, `view` calls.
+4 calls.
+
+Okay.
+Go.
+
+Wait, `powershell` command.
+`Set-StrictMode -Version Latest; $
+
