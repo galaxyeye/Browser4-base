@@ -1,4 +1,4 @@
-package ai.platon.pulsar.test.mcp
+package ai.platon.pulsar.test.mcp.legacy
 
 import ai.platon.pulsar.common.getLogger
 import org.springframework.boot.builder.SpringApplicationBuilder

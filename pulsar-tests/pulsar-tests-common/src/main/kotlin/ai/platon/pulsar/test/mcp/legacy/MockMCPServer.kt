@@ -1,4 +1,4 @@
-package ai.platon.pulsar.test.mcp
+package ai.platon.pulsar.test.mcp.legacy
 
 import ai.platon.pulsar.common.getLogger
 import com.fasterxml.jackson.core.type.TypeReference
@@ -103,10 +103,10 @@ class MockMCPServer(
 
         val toolName = request["name"] as? String
             ?: throw IllegalArgumentException("Tool name is required")
-        
+
         @Suppress("UNCHECKED_CAST")
-        val arguments = (request["arguments"] as? Map<String, Any>)?.let { 
-             objectMapper.valueToTree<JsonNode>(it) 
+        val arguments = (request["arguments"] as? Map<String, Any>)?.let {
+             objectMapper.valueToTree<JsonNode>(it)
         } ?: objectMapper.createObjectNode()
 
         logger.debug("Received call_tool request for tool: {}", toolName)

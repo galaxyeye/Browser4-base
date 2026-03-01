@@ -1,4 +1,4 @@
-package ai.platon.pulsar.test.mcp
+package ai.platon.pulsar.test.mcp.legacy
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper

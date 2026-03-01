@@ -1,4 +1,4 @@
-package ai.platon.pulsar.test.mcp
+package ai.platon.pulsar.test.mcp.legacy
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.test.mcp.MockMCPServer
+import ai.platon.pulsar.test.mcp.legacy.MockMCPServer
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.AfterEach

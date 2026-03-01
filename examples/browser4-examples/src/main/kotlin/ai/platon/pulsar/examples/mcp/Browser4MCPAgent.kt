@@ -5,7 +5,7 @@ import ai.platon.pulsar.agentic.mcp.MCPBootstrap
 import ai.platon.pulsar.agentic.mcp.MCPConfig
 import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
 import ai.platon.pulsar.agentic.mcp.MCPTransportType
-import ai.platon.pulsar.test.mcp.MCPServerStarter
+import ai.platon.pulsar.test.mcp.legacy.MCPServerStarter
 
 /**
  * # Browser4 MCP Agent Example

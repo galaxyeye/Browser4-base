@@ -1,10 +1,11 @@
-package ai.platon.pulsar.test.mcp
+package ai.platon.pulsar.test.mcp.legacy
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
+import kotlin.collections.get
 
 /**
  * Comprehensive tests demonstrating how TestMCPServer can be used for MCP plugin testing.

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.test.mcp.MockMCPServer
+import ai.platon.pulsar.test.mcp.legacy.MockMCPServer
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
