@@ -95,7 +95,7 @@ class CommandControllerE2ETest : RestAPITestBase() {
 
     @Test
         @DisplayName("test executeCommand with X-SQL + sync mode")
-    fun testExecutecommandWithXSqlSyncMode() {
+    fun testExecuteCommandWithXSqlSyncMode() {
         val sqlTemplate = sqlTemplates["productDetailPage"]!!.template
         val request = CommandRequest(
             MOCK_PRODUCT_DETAIL_URL,

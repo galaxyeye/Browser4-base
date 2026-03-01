@@ -1,9 +1,9 @@
 package ai.platon.pulsar.agentic.mcp
 
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.DisplayName
 
 /**
  * Tests for MCPConfig data class.
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.DisplayName
 class MCPConfigTest {
 
     @Test
-        @DisplayName("test STDIO config requires command")
+    @DisplayName("test STDIO config requires command")
     fun testStdioConfigRequiresCommand() {
         assertThrows<IllegalArgumentException> {
             MCPConfig(
@@ -23,7 +23,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test STDIO config with command succeeds")
+    @DisplayName("test STDIO config with command succeeds")
     fun testStdioConfigWithCommandSucceeds() {
         val config = MCPConfig(
             serverName = "test-server",
@@ -40,7 +40,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test SSE config requires URL")
+    @DisplayName("test SSE config requires URL")
     fun testSseConfigRequiresUrl() {
         assertThrows<IllegalArgumentException> {
             MCPConfig(
@@ -52,7 +52,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test SSE config with URL succeeds")
+    @DisplayName("test SSE config with URL succeeds")
     fun testSseConfigWithUrlSucceeds() {
         val config = MCPConfig(
             serverName = "test-server",
@@ -67,7 +67,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test WebSocket config requires URL")
+    @DisplayName("test WebSocket config requires URL")
     fun testWebsocketConfigRequiresUrl() {
         assertThrows<IllegalArgumentException> {
             MCPConfig(
@@ -79,7 +79,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test WebSocket config with URL succeeds")
+    @DisplayName("test WebSocket config with URL succeeds")
     fun testWebsocketConfigWithUrlSucceeds() {
         val config = MCPConfig(
             serverName = "test-server",
@@ -94,7 +94,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test config can be disabled")
+    @DisplayName("test config can be disabled")
     fun testConfigCanBeDisabled() {
         val config = MCPConfig(
             serverName = "test-server",
@@ -107,7 +107,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test config with empty command string fails")
+    @DisplayName("test config with empty command string fails")
     fun testConfigWithEmptyCommandStringFails() {
         assertThrows<IllegalArgumentException> {
             MCPConfig(
@@ -119,7 +119,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test config with blank command string fails")
+    @DisplayName("test config with blank command string fails")
     fun testConfigWithBlankCommandStringFails() {
         assertThrows<IllegalArgumentException> {
             MCPConfig(
@@ -131,7 +131,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test config with empty URL string fails")
+    @DisplayName("test config with empty URL string fails")
     fun testConfigWithEmptyUrlStringFails() {
         assertThrows<IllegalArgumentException> {
             MCPConfig(
@@ -143,7 +143,7 @@ class MCPConfigTest {
     }
 
     @Test
-        @DisplayName("test all transport types are supported")
+    @DisplayName("test all transport types are supported")
     fun testAllTransportTypesAreSupported() {
         val stdioConfig = MCPConfig(
             serverName = "stdio-server",

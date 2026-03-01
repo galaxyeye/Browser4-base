@@ -2,7 +2,7 @@
 
 Draft your tasks here. This area is for tasks under preparation and not yet ready for execution.
 
-Once a task is clearly defined and actionable, move it to the `1created` directory. The coworker will automatically process tasks in that directory.
+Once a task is clearly defined and actionable, copy it to the `1created` directory. The coworker will automatically process tasks in that directory.
 
 To start processing, run `run_coworker_periodically.ps1`. The coworker will pick up tasks from the `1created` directory.
 

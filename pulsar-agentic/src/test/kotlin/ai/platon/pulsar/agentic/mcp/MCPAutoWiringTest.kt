@@ -8,8 +8,8 @@ import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 
 /**
  * Contract test: if `mcp.<serverName>` is registered, a PerceptiveAgent should have the
@@ -35,8 +35,8 @@ class MCPAutoWiringTest {
     }
 
     @Test
-        @DisplayName("BrowserAgentActor auto-wires MCPClientManager as target for mcp domain")
-    fun browseragentactorAutoWiresMcpclientmanagerAsTargetForMcpDomain() {
+    @DisplayName("BrowserAgentActor auto-wires MCPClientManager as target for mcp domain")
+    fun browserAgentActorAutoWiresMcpClientManagerAsTargetForMcpDomain() {
         // Arrange: inject a dummy MCPClientManager into the registry (no connect required)
         val config = MCPConfig(
             serverName = serverName,
@@ -48,6 +48,7 @@ class MCPAutoWiringTest {
 
         val registry = MCPPluginRegistry.instance
         val clientManagersField = registry.javaClass.getDeclaredField("clientManagers").apply { isAccessible = true }
+
         @Suppress("UNCHECKED_CAST")
         val clientManagers = clientManagersField.get(registry) as MutableMap<String, MCPClientManager>
         clientManagers[serverName] = cm
@@ -66,6 +67,7 @@ class MCPAutoWiringTest {
 
         // Assert: customTargets contains domain -> cm
         val customTargetsField = tm.javaClass.getDeclaredField("customTargets").apply { isAccessible = true }
+
         @Suppress("UNCHECKED_CAST")
         val customTargets = customTargetsField.get(tm) as Map<String, Any>
         assertSame(cm, customTargets[domain])

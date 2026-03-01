@@ -2,7 +2,7 @@
 
 请在此处撰写你的任务草稿。本区用于准备中的任务，尚未准备好进入正式执行阶段。
 
-一旦任务定义完整且可执行，请将其移动到 `1created` 目录，Coworker 会自动开始处理该目录下的任务。
+一旦任务定义完整且可执行，请将其复制到 `1created` 目录，Coworker 会自动开始处理该目录下的任务。
 
 运行 `run_coworker_periodically.ps1`，Coworker 将自动处理 `1created` 目录中的任务。
 

@@ -3,10 +3,10 @@ package ai.platon.pulsar.test.server
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import org.junit.jupiter.api.DisplayName
 
 @Tag("TestInfraCheck")
 class MockSiteLauncherPortTest {
@@ -17,7 +17,7 @@ class MockSiteLauncherPortTest {
     }
 
     @Test
-        @DisplayName("start with explicit port enforces that port")
+    @DisplayName("start with explicit port enforces that port")
     fun startWithExplicitPortEnforcesThatPort() {
         val port = 19091
         MockSiteLauncher.start(port = port, enforcePort = true)
@@ -27,7 +27,7 @@ class MockSiteLauncherPortTest {
     }
 
     @Test
-        @DisplayName("demo site starter extracts port from url and starts server")
+    @DisplayName("demo site starter extracts port from url and starts server")
     fun demoSiteStarterExtractsPortFromUrlAndStartsServer() {
         val port = 19092
         val url = "http://localhost:$port/generated/tta/act/act-demo.html"
