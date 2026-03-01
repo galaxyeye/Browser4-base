@@ -1,7 +1,6 @@
-package ai.platon.pulsar.e2e
+package ai.platon.pulsar.stealth
 
 import ai.platon.pulsar.WebDriverTestBase
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
@@ -29,9 +28,9 @@ class BotDetectionE2ETest : WebDriverTestBase() {
             driver.delay(10000)
             val pageSource = driver.pageSource() ?: ""
             // Check for success indicators (case insensitive)
-            val isHuman = pageSource.contains("You are human", ignoreCase = true) || 
+            val isHuman = pageSource.contains("You are human", ignoreCase = true) ||
                           pageSource.contains("not a bot", ignoreCase = true)
-            
+
             if (!isHuman) {
                 val title = driver.evaluate("document.title")
                 System.err.println(">>> testDeviceAndBrowserInfo FAILED. Title: $title")

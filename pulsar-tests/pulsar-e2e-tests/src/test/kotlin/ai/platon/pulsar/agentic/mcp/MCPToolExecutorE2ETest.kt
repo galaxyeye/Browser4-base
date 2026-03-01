@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.mcp
 
-import ai.platon.pulsar.test.mcp.legacy.MockMCPServer
+import ai.platon.pulsar.test.mcp.MockMCPServer
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.AfterEach
@@ -81,15 +81,22 @@ class MCPToolExecutorE2ETest {
             .returnResult()
             .responseBody!!
 
-    private fun callTool(request: ObjectNode): Map<String, Any> =
-        client.post().uri("/mcp/call_tool")
+    private fun callTool(request: Any): Map<String, Any> {
+        val requestBody = if (request is ObjectNode) {
+            jacksonObjectMapper().convertValue(request, Map::class.java)
+        } else {
+            request
+        }
+
+        return client.post().uri("/mcp/call_tool")
             .contentType(MediaType.APPLICATION_JSON)
-            .body(request)
+            .body(requestBody)
             .exchange()
             .expectStatus().is2xxSuccessful
             .expectBody<Map<String, Any>>()
             .returnResult()
             .responseBody!!
+    }
 
     // ========== Server Connectivity Tests ==========
 
