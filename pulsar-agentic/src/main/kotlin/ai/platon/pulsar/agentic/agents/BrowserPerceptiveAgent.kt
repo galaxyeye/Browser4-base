@@ -108,7 +108,7 @@ open class BrowserPerceptiveAgent(
     protected val agentJob = SupervisorJob()
     protected val agentScope = CoroutineScope(Dispatchers.Default + agentJob)
 
-    protected val todo: ToDoManager by lazy { ToDoManager(toolExecutor.fs, config, uuid, slogger) }
+    protected val todo: ToDoManager by lazy { ToDoManager(lazyToolManager.fs, config, uuid, slogger) }
     protected val actionValidator = ActionValidator()
 
     protected val performanceMetrics = PerformanceMetrics()
@@ -741,7 +741,7 @@ open class BrowserPerceptiveAgent(
                 toolCall.arguments
             )
 
-            val toolCallResult = toolExecutor.execute(actionDescription, "resolve, #$step")
+            val toolCallResult = lazyToolManager.execute(actionDescription, "resolve, #$step")
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 

@@ -18,7 +18,7 @@ import ai.platon.pulsar.agentic.skills.SkillContext
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
 import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
-import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.alwaysTrue
@@ -51,8 +51,8 @@ open class BasicBrowserAgent(
     protected val domService get() = inference.domService
     protected val promptBuilder = PromptBuilder()
 
-    protected val toolExecutor by lazy {
-        AgentToolManager(_baseDir, this).also { tm ->
+    protected val lazyToolManager by lazy {
+        AgentToolExecutor(_baseDir, this).also { tm ->
             // Auto-wire MCP servers (pure library mode): domain -> MCPClientManager
             // This ensures that when MCPToolExecutor is registered in CustomToolRegistry under domain
             // "mcp.<serverName>", the AgentToolManager has the corresponding target object.
@@ -90,9 +90,9 @@ open class BasicBrowserAgent(
         }
     }
 
-    /** The [AgentToolManager] used by this agent for tool discovery and execution. */
-    val toolManager: AgentToolManager get() = toolExecutor
-    protected val fs get() = toolExecutor.fs
+    /** The [AgentToolExecutor] used by this agent for tool discovery and execution. */
+    val toolExtractor: AgentToolExecutor get() = lazyToolManager
+    protected val fs get() = lazyToolManager.fs
 
     protected val pageStateTracker = PageStateTracker(session, config)
     protected val stateManager by lazy { AgentStateManager(this, pageStateTracker) }
@@ -229,7 +229,7 @@ open class BasicBrowserAgent(
         logger.info("🛠️ tool.exec sid={} step={} tool={}", context.sid, context.step, toolCall.pseudoExpression)
 
         return try {
-            val result = toolExecutor.execute(actionDescription, "resolve, #$step")
+            val result = lazyToolManager.execute(actionDescription, "resolve, #$step")
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 

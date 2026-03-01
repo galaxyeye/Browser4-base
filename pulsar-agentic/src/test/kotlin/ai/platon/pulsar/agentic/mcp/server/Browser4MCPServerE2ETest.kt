@@ -2,7 +2,7 @@ package ai.platon.pulsar.agentic.mcp.server
 
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolSpec
-import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
 import io.mockk.coEvery
 import io.mockk.every
@@ -38,7 +38,7 @@ import java.io.PipedOutputStream
  * End-to-end tests for [Browser4MCPServer].
  *
  * These tests exercise the **full MCP protocol stack** by connecting a real MCP client
- * to a [Browser4MCPServer] (constructed from a mocked [AgentToolManager]) over in-process
+ * to a [Browser4MCPServer] (constructed from a mocked [AgentToolExecutor]) over in-process
  * STDIO pipes.  Unlike the unit tests in [Browser4MCPServerTest] (which call tool handlers
  * directly), these tests go through:
  *
@@ -46,8 +46,8 @@ import java.io.PipedOutputStream
  * 2. `tools/list` request → response
  * 3. `tools/call` request → response (success and error cases)
  *
- * The [AgentToolManager] is mocked: executor specs drive tool registration, and
- * [AgentToolManager.executeToolCall] is mocked to simulate tool execution results.
+ * The [AgentToolExecutor] is mocked: executor specs drive tool registration, and
+ * [AgentToolExecutor.executeToolCall] is mocked to simulate tool execution results.
  *
  * ## Transport
  * Two `PipedInputStream`/`PipedOutputStream` pairs create a bidirectional channel:
@@ -62,7 +62,7 @@ import java.io.PipedOutputStream
 @DisplayName("Browser4MCPServer E2E (full MCP protocol, AgentToolManager-based)")
 class Browser4MCPServerE2ETest {
 
-    private lateinit var toolManager: AgentToolManager
+    private lateinit var toolManager: AgentToolExecutor
     private lateinit var driverExecutor: ToolExecutor
     private lateinit var mcpServer: Browser4MCPServer
     private lateinit var client: Client

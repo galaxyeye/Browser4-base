@@ -2,7 +2,7 @@ package ai.platon.pulsar.rest.openapi.controller
 
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -202,7 +202,7 @@ class MCPToolController(
      * Dispatch a tool call to the session's AgentToolManager.
      *
      * This replaces the manual tool implementation by delegating to the central
-     * tool registry in [AgentToolManager].
+     * tool registry in [AgentToolExecutor].
      */
     private suspend fun dispatchToMCPServer(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
         val sessionId = requireSessionId(request)
@@ -220,7 +220,7 @@ class MCPToolController(
             ?: return ResponseEntity.ok(errorResponse("Unknown tool: $toolName"))
 
         return try {
-            val result = agent.toolManager.executeToolCall(toolCall)
+            val result = agent.toolExtractor.executeToolCall(toolCall)
             val exception = result.exception
             if (exception != null) {
                 ResponseEntity.ok(errorResponse("${toolName} failed: ${exception.cause?.message} help: ${exception.help}"))
@@ -248,7 +248,7 @@ class MCPToolController(
         }
 
         // 2. Generic mapping
-        val specs = agent.toolManager.getAllToolSpecs()
+        val specs = agent.toolExtractor.getAllToolSpecs()
         for ((domain, methods) in specs) {
             for ((method, _) in methods) {
                 val mcpName = toMcpToolName(domain, method)

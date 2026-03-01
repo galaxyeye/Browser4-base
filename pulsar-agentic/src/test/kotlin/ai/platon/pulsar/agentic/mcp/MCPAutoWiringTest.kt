@@ -62,14 +62,6 @@ class MCPAutoWiringTest {
         val actor = object : BasicBrowserAgent(session, AgentConfig()) {}
 
         // Force tool manager init by invoking the protected getter via reflection
-        val getter = actor.javaClass.superclass.getDeclaredMethod("getToolExecutor").apply { isAccessible = true }
-        val tm = getter.invoke(actor)
-
-        // Assert: customTargets contains domain -> cm
-        val customTargetsField = tm.javaClass.getDeclaredField("customTargets").apply { isAccessible = true }
-
-        @Suppress("UNCHECKED_CAST")
-        val customTargets = customTargetsField.get(tm) as Map<String, Any>
-        assertSame(cm, customTargets[domain])
+        assertSame(cm, actor.toolExtractor.customTargets[domain])
     }
 }

@@ -14,11 +14,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.nio.file.Path
 
-class AgentToolManager constructor(
+class AgentToolExecutor constructor(
     val baseDir: Path,
     val agent: BasicBrowserAgent,
 ) {
-    private val logger = getLogger(AgentToolManager::class)
+    private val logger = getLogger(AgentToolExecutor::class)
+
+    /**
+     * Custom tool targets registry, mapping domain names to their corresponding target objects.
+     * Users can register custom targets here for their custom tool executors.
+     */
+    private val _customTargets = mutableMapOf<String, Any>()
 
     val session: AgenticSession get() = agent.session
     val driver: WebDriver get() = session.getOrCreateBoundDriver()
@@ -49,11 +55,7 @@ class AgentToolManager constructor(
 
     val executor = BasicToolCallExecutor(concreteExecutors)
 
-    /**
-     * Custom tool targets registry, mapping domain names to their corresponding target objects.
-     * Users can register custom targets here for their custom tool executors.
-     */
-    private val customTargets = mutableMapOf<String, Any>()
+    val customTargets: Map<String, Any> get() = _customTargets
 
     /**
      * Register a custom target object for a specific domain.
@@ -63,7 +65,7 @@ class AgentToolManager constructor(
      * @param target The target object to be used by the custom tool executor.
      */
     fun registerCustomTarget(domain: String, target: Any) {
-        customTargets[domain] = target
+        _customTargets[domain] = target
         logger.info("✓ Registered custom target for domain: {}", domain)
     }
 
@@ -74,7 +76,7 @@ class AgentToolManager constructor(
      * @return true if a target was removed, false otherwise.
      */
     fun unregisterCustomTarget(domain: String): Boolean {
-        val removed = customTargets.remove(domain)
+        val removed = _customTargets.remove(domain)
         if (removed != null) {
             logger.info("✓ Unregistered custom target for domain: {}", domain)
             return true
@@ -138,7 +140,7 @@ class AgentToolManager constructor(
             else -> {
                 val customExecutor = CustomToolRegistry.instance.get(tc.domain)
                 if (customExecutor != null) {
-                    val target = customTargets[tc.domain]
+                    val target = _customTargets[tc.domain]
                         ?: throw UnsupportedOperationException(
                             "Custom domain '${tc.domain}' is registered but no target object is available."
                         )
@@ -179,7 +181,7 @@ class AgentToolManager constructor(
                     // Check if this is a custom tool domain
                     val customExecutor = CustomToolRegistry.instance.get(tc.domain)
                     if (customExecutor != null) {
-                        val target = customTargets[tc.domain]
+                        val target = _customTargets[tc.domain]
                             ?: throw UnsupportedOperationException(
                                 "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
                                 "Use registerCustomTarget() to provide the target object."

@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic.tools.builtin
 
 import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -12,13 +12,13 @@ import org.junit.jupiter.api.DisplayName
 
 class SystemToolExecutorTest {
 
-    private lateinit var agentToolManager: AgentToolManager
+    private lateinit var agentToolExecutor: AgentToolExecutor
     private lateinit var executor: SystemToolExecutor
 
     @BeforeEach
     fun setUp() {
-        agentToolManager = mockk(relaxed = true)
-        executor = SystemToolExecutor(agentToolManager)
+        agentToolExecutor = mockk(relaxed = true)
+        executor = SystemToolExecutor(agentToolExecutor)
     }
 
     @Test
@@ -34,7 +34,7 @@ class SystemToolExecutorTest {
     @Test
         @DisplayName("help with domain and method delegates to agent tool manager")
     fun helpWithDomainAndMethodDelegatesToAgentToolManager() = runBlocking {
-        every { agentToolManager.help("fs", "writeString") } returns "File system help"
+        every { agentToolExecutor.help("fs", "writeString") } returns "File system help"
 
         val result = executor.help("fs", "writeString")
 
@@ -44,7 +44,7 @@ class SystemToolExecutorTest {
     @Test
         @DisplayName("system help method executes correctly")
     fun systemHelpMethodExecutesCorrectly() = runBlocking {
-        every { agentToolManager.help("driver", "click") } returns "Click help text"
+        every { agentToolExecutor.help("driver", "click") } returns "Click help text"
 
         val tc = ToolCall(
             domain = "system",

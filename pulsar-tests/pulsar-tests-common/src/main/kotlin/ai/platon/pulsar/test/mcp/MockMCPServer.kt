@@ -36,14 +36,13 @@ class MockMCPServer(
 ) : Closeable {
 
     private val logger = getLogger(this)
-    private val objectMapper: ObjectMapper = jacksonObjectMapper()
     private val isRunning = AtomicBoolean(false)
 
     // We keep a local map of handlers to support the legacy REST API pattern which invokes tools by name.
     // In a pure MCP transport (Stdio/SSE), the Server class would handle dispatching.
     // However, since we must preserve the REST API contract for existing tests, we bridge the gap here.
     private val toolHandlers = ConcurrentHashMap<String, suspend (CallToolRequest) -> CallToolResult>()
-    
+
     // We also keep schemas for list_tools endpoint
     private val toolSchemas = ConcurrentHashMap<String, ToolSchema>()
     private val toolDescriptions = ConcurrentHashMap<String, String>()
@@ -88,7 +87,7 @@ class MockMCPServer(
     @ResponseBody
     fun listTools(): Map<String, Any> {
         logger.debug("Received list_tools request")
-        
+
         // We reconstruct the response format expected by legacy tests
         val toolsList = toolHandlers.keys.map { name ->
             mapOf(
@@ -111,7 +110,7 @@ class MockMCPServer(
             ?: throw IllegalArgumentException("Tool name is required")
 
         logger.debug("Received call_tool request for tool: {}", toolName)
-        
+
         val handler = toolHandlers[toolName]
             ?: throw IllegalArgumentException("Tool not found: $toolName")
 
@@ -120,7 +119,7 @@ class MockMCPServer(
             @Suppress("UNCHECKED_CAST")
             val argsMap = request["arguments"] as? Map<String, Any?> ?: emptyMap()
             val arguments = mapToJsonObject(argsMap)
-            
+
             // Create SDK request object
             val callToolRequest = CallToolRequest(
                 params = CallToolRequestParams(
@@ -133,7 +132,7 @@ class MockMCPServer(
             val result = kotlinx.coroutines.runBlocking {
                 handler(callToolRequest)
             }
-            
+
             if (result.isError == true) {
                 // Map SDK error result to legacy error response
                 val errorText = result.content.joinToString("") { (it as? TextContent)?.text ?: "" }
@@ -243,7 +242,7 @@ class MockMCPServer(
     ) {
         // Register with SDK Server
         addTool(name = name, description = description, inputSchema = inputSchema, handler = handler)
-        
+
         // Store locally for REST API access
         toolHandlers[name] = handler
         toolSchemas[name] = inputSchema
@@ -268,7 +267,7 @@ class MockMCPServer(
     // Helper to convert ToolSchema to Map for JSON serialization
     private fun schemaToJsonMap(schema: ToolSchema): Map<String, Any> {
         val map = mutableMapOf<String, Any>("type" to "object")
-        
+
         val propsMap = mutableMapOf<String, Any>()
         schema.properties?.forEach { (key, value) ->
              val propDetails = mutableMapOf<String, Any>()
@@ -279,12 +278,12 @@ class MockMCPServer(
              propsMap[key] = propDetails
         }
         map["properties"] = propsMap
-        
+
         val required = schema.required
         if (required != null) {
             map["required"] = required
         }
-        
+
         return map
     }
 }

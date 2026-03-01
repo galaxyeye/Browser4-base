@@ -1,9 +1,8 @@
 package ai.platon.pulsar.agentic.mcp.server
 
 import ai.platon.pulsar.agentic.model.TcEvaluate
-import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.model.ToolSpec
-import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,19 +17,19 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
- * Tests for [Browser4MCPServer] when constructed from [AgentToolManager].
+ * Tests for [Browser4MCPServer] when constructed from [AgentToolExecutor].
  *
  * Validates that:
- * - Tools are discovered dynamically from [AgentToolManager.concreteExecutors] and their
+ * - Tools are discovered dynamically from [AgentToolExecutor.concreteExecutors] and their
  *   [ToolSpec] metadata, rather than being registered with hard-coded schemas.
- * - Every MCP tool handler routes its call through [AgentToolManager.executeToolCall].
+ * - Every MCP tool handler routes its call through [AgentToolExecutor.executeToolCall].
  * - The snake_case MCP tool names are derived correctly from domain + method.
  * - Tools with and without optional arguments are registered correctly.
  */
 @DisplayName("Browser4MCPServer - AgentToolManager-based tool registration")
 class Browser4MCPServerToolManagerTest {
 
-    private lateinit var toolManager: AgentToolManager
+    private lateinit var toolManager: AgentToolExecutor
     private lateinit var driverExecutor: ToolExecutor
     private lateinit var fsExecutor: ToolExecutor
     private lateinit var mcpServer: Browser4MCPServer
