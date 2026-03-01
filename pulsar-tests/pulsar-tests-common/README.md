@@ -62,46 +62,11 @@ Environment variable alternatives:
 
 Pass `--block` (program args) to keep the process alive if needed.
 
-## DemoSiteProber (shared readiness utility)
-A lightweight reusable probe extracted from example code so any demo/test can wait for the mock (or custom) site to be ready.
-
 ### Key points
 - Tries health endpoint first (default `/actuator/health` or overridden by `mock.site.healthPath` JVM property)
 - Falls back to `/` if health path fails (unless disabled)
 - Configurable timeout, interval, verbosity, connect/read timeouts
 - Returns `true` on first 2xx/3xx response
-
-### Kotlin usage
-```kotlin
-val up = DemoSiteProber.wait("http://localhost:8080/generated/tta/instructions/instructions-demo.html")
-if (!up) error("Demo site not available")
-```
-Custom options:
-```kotlin
-val ok = DemoSiteProber.wait(
-    "http://localhost:9090/any/path",
-    DemoSiteProber.Options(
-        timeout = Duration.ofSeconds(6),
-        interval = Duration.ofMillis(300),
-        healthPath = "/actuator/health",
-        fallbackRoot = true,
-        verbose = true
-    )
-)
-```
-Disable fallback root probing:
-```kotlin
-DemoSiteProber.wait(url, DemoSiteProber.Options(fallbackRoot = false))
-```
-Override health path:
-```bash
--Dmock.site.healthPath=/healthz
-```
-
-### When to use
-- Before running browser automation steps
-- In integration tests that rely on deterministic static pages
-- As a lightweight alternative to adding testcontainers just for an HTTP ready check
 
 ## Integration Notes
 - Include this module as a dependency to access `MockSiteLauncher`.
