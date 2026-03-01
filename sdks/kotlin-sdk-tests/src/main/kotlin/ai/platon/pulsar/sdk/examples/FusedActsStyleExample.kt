@@ -13,7 +13,7 @@
 package ai.platon.pulsar.sdk.examples
 
 import ai.platon.pulsar.sdk.v0.AgenticContexts
-import ai.platon.pulsar.test.server.DemoSiteStarter
+import ai.platon.pulsar.test.server.MockSiteStarter
 
 /**
  * Example demonstrating FusedActs-style usage of the Kotlin SDK.
@@ -32,7 +32,7 @@ class FusedActsStyleExample {
         // Use local mock site instead of external site so actions are deterministic.
         val url = "http://localhost:18080/generated/tta/act/act-demo.html"
         // one more short wait after potential start (shorter, less verbose)
-        val starter = DemoSiteStarter()
+        val starter = MockSiteStarter()
         starter.start(url)
         session.registerClosable(starter)
 

@@ -1,14 +1,14 @@
 package ai.platon.pulsar.examples.fuse
 
 import ai.platon.pulsar.agentic.context.AgenticContexts
-import ai.platon.pulsar.test.server.DemoSiteStarter
+import ai.platon.pulsar.test.server.MockSiteStarter
 
 suspend fun main() {
     val session = AgenticContexts.getOrCreateSession()
 
     // Use local mock site instead of external site so actions are deterministic.
     val url = "http://localhost:18080/generated/tta/act/act-demo.html"
-    val starter = DemoSiteStarter()
+    val starter = MockSiteStarter()
     starter.start(url)
     session.registerClosable(starter)
 

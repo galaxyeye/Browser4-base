@@ -31,7 +31,7 @@ class MockSiteLauncherPortTest {
     fun demoSiteStarterExtractsPortFromUrlAndStartsServer() {
         val port = 19092
         val url = "http://localhost:$port/generated/tta/act/act-demo.html"
-        DemoSiteStarter().start(url)
+        MockSiteStarter().start(url)
         val ready = MockSiteLauncher.awaitReady(Duration.ofSeconds(6))
         assertTrue(ready, "Mock site not ready on extracted port $port")
         assertEquals(port, MockSiteLauncher.port(), "DemoSiteStarter should start server on extracted port")

@@ -1,6 +1,5 @@
 package ai.platon.pulsar.test.server
 
-import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.getLogger
 import java.net.HttpURLConnection
 import java.net.URI
@@ -18,7 +17,7 @@ import java.time.Instant
  *
  * This logic was extracted from SessionInstructionsExample so other demos/examples can share it.
  */
-class DemoSiteStarter: AutoCloseable {
+class MockSiteStarter: AutoCloseable {
     private val logger = getLogger(this)
 
     data class Options(

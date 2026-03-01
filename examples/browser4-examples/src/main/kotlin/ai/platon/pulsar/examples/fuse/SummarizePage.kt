@@ -4,7 +4,7 @@ import ai.platon.pulsar.agentic.context.AgenticContexts
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.printlnPro
-import ai.platon.pulsar.test.server.DemoSiteStarter
+import ai.platon.pulsar.test.server.MockSiteStarter
 
 class SummarizePage {
     private val logger = getLogger(this)
@@ -16,7 +16,7 @@ class SummarizePage {
         // Use local mock site instead of external site so actions are deterministic.
         val url = "http://localhost:18080/generated/tta/act/act-demo.html"
         // one more short wait after potential start (shorter, less verbose)
-        val starter = DemoSiteStarter()
+        val starter = MockSiteStarter()
         starter.start(url)
         session.registerClosable(starter)
 
