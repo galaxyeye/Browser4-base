@@ -61,7 +61,7 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
 - **implement-daily-memory-batching**: Enhanced the memory generator to process logs in batches (approx. 15k chars) to avoid token limits, merging results into the daily memory file.
 - **optimize-coworker-memory-generator**: Further optimized the generator to target `*.task.log`, filter out boilerplate instructions, include `*.copilot.log` output, and truncate excessive content.
 - **improve-timezone-handling-coworker-scripts**: Updated 8 coworker scripts (`.ps1`/`.sh`) to enforce UTC for all date/time operations, replacing `Get-Date` with `(Get-Date).ToUniversalTime()` and `date` with `date -u`.
-- **count-total-token-usage**: Created `coworker/scripts/count-total-token-usage.py` (and wrappers) to aggregate token usage stats from `*.copilot.log` files. The tool calculates total API time, session time, code changes, and estimated costs (Total Est: $135.36 for Feb 25-28).
+- **count-total-token-usage**: Created `coworker/scripts/workers/count-total-token-usage.py` (and wrappers) to aggregate token usage stats from `*.copilot.log` files. The tool calculates total API time, session time, code changes, and estimated costs (Total Est: $135.36 for Feb 25-28).
 
 ### Execution Quality Review
 - **What worked well**: 

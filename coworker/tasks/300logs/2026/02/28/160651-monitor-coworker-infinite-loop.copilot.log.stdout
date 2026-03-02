@@ -70,41 +70,41 @@ while ($true) {
                 # Optimization: Read only end? No, we need total counts.
                 # For infinite loop, file can grow large.
                 # "count(\n)" implies total lines.
-                
+
                 $lines = $content.Count
                 if ($lines -eq 0) { continue }
-                
+
                 $actions = ($content | Select-String "● ").Count
-                
+
                 $currentStatus = [PSCustomObject]@{
                     Time = Get-Date
                     Lines = $lines
                     Actions = $actions
                 }
                 $history += $currentStatus
-                
+
                 # Check condition: 3 minutes window
                 # Filter history for items > 3 mins ago
                 $threeMinsAgo = (Get-Date).AddMinutes(-3)
                 $oldStatuses = $history | Where-Object { $_.Time -lt $threeMinsAgo }
-                
+
                 if ($oldStatuses) {
                    $old = $oldStatuses[-1] # closest to 3 mins ago boundary (or oldest kept)
-                   
+
                    # "Infinite loop" definition:
                    # 1. Output is growing ($lines > $old.Lines)
                    # 2. No new actions ($actions == $old.Actions)
-                   
+
                    if ($lines -gt ($old.Lines + 50) -and $actions -eq $old.Actions) {
                        Write-Host "Infinite loop detected! Aborting..."
                        Stop-Process -Id $process.Id -Force
-                       
+
                        # Move tasks from 2working to 3_5aborted
                        # ...
                        break
                    }
                 }
-                
+
                 # Prune history (keep last 5 mins)
                 $history = $history | Where-Object { $_.Time -gt (Get-Date).AddMinutes(-5) }
             }
@@ -136,44 +136,44 @@ This is much better! No file locking issues, no disk I/O for logs.
 
         while ($job.State -eq 'Running') {
             Start-Sleep -Seconds 30
-            
+
             # Receive new output
             $newOutput = Receive-Job -Job $job
             if ($newOutput) {
                 # $newOutput is array of strings (lines) or objects
                 $newLinesCount = $newOutput.Count
                 $newActionsCount = ($newOutput | Select-String "● ").Count
-                
+
                 $totalLines += $newLinesCount
                 $totalActions += $newActionsCount
-                
+
                 # Also echo to host so we can see it?
                 $newOutput | Write-Host
             }
-            
+
             $currentStatus = [PSCustomObject]@{
                 Time = Get-Date
                 Lines = $totalLines
                 Actions = $totalActions
             }
             $history += $currentStatus
-            
+
             # Check 3 min condition
             $threeMinsAgo = (Get-Date).AddMinutes(-3)
             $oldPoint = $history | Where-Object { $_.Time -le $threeMinsAgo } | Select-Object -Last 1
-            
+
             if ($oldPoint) {
                  # Criterion: Lines grew, Actions didn't
                  if ($totalLines -gt ($oldPoint.Lines + 20) -and $totalActions -eq $oldPoint.Actions) {
                       Write-Warning "Coworker infinite loop detected! (Lines: $totalLines, Actions: $totalActions vs Old: $($oldPoint.Lines), $($oldPoint.Actions))"
                       Stop-Job -Job $job
                       Remove-Job -Job $job -Force
-                      
+
                       # Move task
                       $workingDir = Join-Path $repoRoot "coworker\tasks\2working"
                       $abortedDir = Join-Path $repoRoot "coworker\tasks\3_5aborted"
                       if (!(Test-Path $abortedDir)) { New-Item -ItemType Directory -Path $abortedDir }
-                      
+
                       Get-ChildItem $workingDir -File | ForEach-Object {
                           Write-Warning "Aborting task: $($_.Name)"
                           Move-Item $_.FullName $abortedDir -Force
@@ -181,11 +181,11 @@ This is much better! No file locking issues, no disk I/O for logs.
                       break
                  }
             }
-            
+
              # Prune history
             $history = $history | Where-Object { $_.Time -gt (Get-Date).AddMinutes(-10) }
         }
-        
+
         # Ensure job is removed if it finished normally
         Receive-Job -Job $job | Write-Host
         Remove-Job -Job $job -Force
@@ -206,13 +206,13 @@ while kill -0 $PID 2>/dev/null; do
     # analyze log
     LINES=$(wc -l < "$MONITOR_LOG")
     ACTIONS=$(grep -c "● " "$MONITOR_LOG")
-    
+
     # Store history in arrays or temp file?
     # Bash variables simpler.
     # HISTORY_LINES+=($LINES)
     # HISTORY_ACTIONS+=($ACTIONS)
     # HISTORY_TIMES+=($(date +%s))
-    
+
     # Check 3 mins ago
     # ...
 done
@@ -281,14 +281,14 @@ I'll also need to handle the cleanup of `3_5aborted`. The task says "move to `3_
         try {
             # Start the process as a job to allow monitoring
             $job = Start-Job -FilePath $ScriptPath -WorkingDirectory $repoRoot
-            
+
             $history = @()
             $totalLines = 0
             $totalActions = 0
 
             while ($job.State -eq 'Running') {
                 Start-Sleep -Seconds 30
-                
+
                 # Receive new output
                 $newOutput = Receive-Job -Job $job
                 if ($newOutput) {
@@ -296,14 +296,14 @@ I'll also need to handle the cleanup of `3_5aborted`. The task says "move to `3_
                     # Convert to string array to safely grep
                     $newOutputStrings = $newOutput | ForEach-Object { $_.ToString() }
                     $newActionsCount = ($newOutputStrings | Select-String "● ").Count
-                    
+
                     $totalLines += $newLinesCount
                     $totalActions += $newActionsCount
-                    
+
                     # Output to host to maintain visibility
                     $newOutputStrings | Write-Host
                 }
-                
+
                 $now = Get-Date
                 $currentStatus = [PSCustomObject]@{
                     Time = $now
@@ -311,41 +311,41 @@ I'll also need to handle the cleanup of `3_5aborted`. The task says "move to `3_
                     Actions = $totalActions
                 }
                 $history += $currentStatus
-                
+
                 # Monitor logic: Check 3 minutes window
                 $threeMinsAgo = $now.AddMinutes(-3)
                 $oldPoint = $history | Where-Object { $_.Time -le $threeMinsAgo } | Select-Object -Last 1
-                
+
                 if ($oldPoint) {
                     # If lines are increasing but actions are stagnant for 3 minutes
                     if ($totalLines -gt ($oldPoint.Lines + 50) -and $totalActions -eq $oldPoint.Actions) {
                         $msg = "Coworker infinite loop detected! Aborting... (Lines: $totalLines, Actions: $totalActions; 3 mins ago: Lines $($oldPoint.Lines), Actions $($oldPoint.Actions))"
                         Write-Warning $msg
-                        
+
                         Stop-Job -Job $job
-                        
+
                         # Move task to aborted
                         $workingDir = Join-Path $repoRoot "coworker\tasks\2working"
                         $abortedDir = Join-Path $repoRoot "coworker\tasks\3_5aborted"
                         if (!(Test-Path $abortedDir)) { New-Item -ItemType Directory -Path $abortedDir -Force | Out-Null }
-                        
+
                         Get-ChildItem $workingDir -File | ForEach-Object {
                             Write-Warning "Aborting task: $($_.Name)"
                             Move-Item $_.FullName $abortedDir -Force
                         }
-                        
+
                         break # Exit the monitoring loop
                     }
                 }
-                
+
                 # Prune history (keep last 5 mins)
                 $history = $history | Where-Object { $_.Time -gt $now.AddMinutes(-5) }
             }
-            
+
             # Retrieve any remaining output
             Receive-Job -Job $job | Write-Host
             Remove-Job -Job $job -Force
-            
+
             Write-Host "Finished $ScriptName."
         } catch {
             Write-Error "Failed to start ${ScriptName}: $_"
@@ -433,7 +433,7 @@ I'll clean up the code in the replacement to be concise.
             $job = Start-Job -FilePath $ScriptPath -WorkingDirectory $repoRoot
             $history = @()
             $totalLines = 0; $totalActions = 0
-            
+
             while ($job.State -eq 'Running') {
                 Start-Sleep -Seconds 30
                 $newOutput = Receive-Job -Job $job
@@ -444,18 +444,18 @@ I'll clean up the code in the replacement to be concise.
                     $totalLines += $newLines; $totalActions += $newActions
                     $strs | Write-Host # Echo output
                 }
-                
+
                 $now = Get-Date
                 $history += [PSCustomObject]@{ Time = $now; Lines = $totalLines; Actions = $totalActions }
-                
+
                 # Check for infinite loop (3 min window)
                 $threeMinsAgo = $now.AddMinutes(-3)
                 $oldPoint = $history | Where-Object { $_.Time -le $threeMinsAgo } | Select-Object -Last 1
-                
+
                 if ($oldPoint -and ($totalLines -gt ($oldPoint.Lines + 50)) -and ($totalActions -eq $oldPoint.Actions)) {
                     Write-Warning "Coworker infinite loop detected! (Lines: $totalLines, Actions: $totalActions)"
                     Stop-Job -Job $job
-                    
+
                     $workingDir = Join-Path $repoRoot "coworker\tasks\2working"
                     $abortedDir = Join-Path $repoRoot "coworker\tasks\3_5aborted"
                     if (!(Test-Path $abortedDir)) { New-Item -ItemType Directory -Path $abortedDir -Force | Out-Null }
@@ -512,19 +512,19 @@ New block:
             TEMP_LOG=$(mktemp)
             "$SCRIPT_PATH" > "$TEMP_LOG" 2>&1 &
             JOB_PID=$!
-            
+
             # History tracking
             declare -a TIMES
             declare -a LINES_HIST
             declare -a ACTIONS_HIST
-            
+
             while kill -0 $JOB_PID 2>/dev/null; do
                 sleep 30
-                
+
                 CUR_LINES=$(wc -l < "$TEMP_LOG")
                 CUR_ACTIONS=$(grep -c "● " "$TEMP_LOG")
                 NOW=$(date +%s)
-                
+
                 # Echo new content?
                 # Complex to echo only new lines without seeking.
                 # Simplest: just monitor silently, maybe tail?
@@ -532,19 +532,19 @@ New block:
                 # For now, let's skip echoing to stdout to keep it simple, or `cat` at the end.
                 # Actually, user might want to see output.
                 # But infinite loop prevention is the goal.
-                
+
                 TIMES+=($NOW)
                 LINES_HIST+=($CUR_LINES)
                 ACTIONS_HIST+=($CUR_ACTIONS)
-                
+
                 # Check 3 mins ago (180 seconds)
                 THREE_MINS_AGO=$((NOW - 180))
-                
+
                 # Iterate history to find old point
                 FOUND_OLD=false
                 OLD_LINES=0
                 OLD_ACTIONS=0
-                
+
                 for i in "${!TIMES[@]}"; do
                     if [ "${TIMES[$i]}" -le "$THREE_MINS_AGO" ]; then
                         OLD_LINES=${LINES_HIST[$i]}
@@ -554,16 +554,16 @@ New block:
                         # Since we append, the last one matching is the closest.
                     fi
                 done
-                
+
                 if [ "$FOUND_OLD" = true ]; then
                     if [ "$CUR_LINES" -gt $((OLD_LINES + 50)) ] && [ "$CUR_ACTIONS" -eq "$OLD_ACTIONS" ]; then
                         echo "Coworker infinite loop detected! Aborting... (Lines: $CUR_LINES, Actions: $CUR_ACTIONS)"
                         kill $JOB_PID
-                        
+
                         ABORTED_DIR="coworker/tasks/3_5aborted"
                         mkdir -p "$ABORTED_DIR"
                         WORKING_DIR="coworker/tasks/2working"
-                        
+
                         if [ -d "$WORKING_DIR" ]; then
                              find "$WORKING_DIR" -maxdepth 1 -type f -print0 | xargs -0 -I {} mv {} "$ABORTED_DIR/"
                              echo "Moved tasks to $ABORTED_DIR"
@@ -571,11 +571,11 @@ New block:
                         break
                     fi
                 fi
-                
+
                 # Optional: Prune history? Bash arrays grow.
                 # Assuming task doesn't run for days, it's fine.
             done
-            
+
             wait $JOB_PID 2>/dev/null
             cat "$TEMP_LOG" # Show output at end
             rm "$TEMP_LOG"
@@ -623,45 +623,45 @@ Wait, `run_coworker_periodically.ps1` replacement block:
         try {
             # Start the process as a job to allow monitoring
             $job = Start-Job -FilePath $ScriptPath -WorkingDirectory $repoRoot
-            
+
             $history = @()
             $totalLines = 0
             $totalActions = 0
-            
+
             while ($job.State -eq 'Running') {
                 Start-Sleep -Seconds 30
-                
+
                 # Receive new output
                 $newOutput = Receive-Job -Job $job
                 if ($newOutput) {
                     $strs = $newOutput | ForEach-Object { $_.ToString() }
                     $newLines = $strs.Count
                     $newActions = ($strs | Select-String "● ").Count
-                    
+
                     $totalLines += $newLines
                     $totalActions += $newActions
-                    
+
                     # Echo output to host
                     $strs | Write-Host
                 }
-                
+
                 $now = Get-Date
                 $history += [PSCustomObject]@{ Time = $now; Lines = $totalLines; Actions = $totalActions }
-                
+
                 # Check for infinite loop (3 min window)
                 $threeMinsAgo = $now.AddMinutes(-3)
                 $oldPoint = $history | Where-Object { $_.Time -le $threeMinsAgo } | Select-Object -Last 1
-                
+
                 if ($oldPoint) {
                     # If logs growing significantly but no new actions
                     if ($totalLines -gt ($oldPoint.Lines + 50) -and $totalActions -eq $oldPoint.Actions) {
                         Write-Warning "Coworker infinite loop detected! (Lines: $totalLines, Actions: $totalActions)"
                         Stop-Job -Job $job
-                        
+
                         $workingDir = Join-Path $repoRoot "coworker\tasks\2working"
                         $abortedDir = Join-Path $repoRoot "coworker\tasks\3_5aborted"
                         if (!(Test-Path $abortedDir)) { New-Item -ItemType Directory -Path $abortedDir -Force | Out-Null }
-                        
+
                         Get-ChildItem $workingDir -File | ForEach-Object {
                             Write-Warning "Aborting task: $($_.Name)"
                             Move-Item $_.FullName $abortedDir -Force
@@ -669,11 +669,11 @@ Wait, `run_coworker_periodically.ps1` replacement block:
                         break
                     }
                 }
-                
+
                 # Prune history
                 $history = $history | Where-Object { $_.Time -gt $now.AddMinutes(-5) }
             }
-            
+
             Receive-Job -Job $job | Write-Host
             Remove-Job -Job $job -Force
             Write-Host "Finished $ScriptName."
@@ -744,32 +744,32 @@ Replacement:
             TEMP_LOG=$(mktemp)
             "$SCRIPT_PATH" > "$TEMP_LOG" 2>&1 &
             JOB_PID=$!
-            
+
             declare -a TIMES
             declare -a LINES_HIST
             declare -a ACTIONS_HIST
-            
+
             while kill -0 $JOB_PID 2>/dev/null; do
                 sleep 30
                 CUR_LINES=$(wc -l < "$TEMP_LOG")
                 CUR_ACTIONS=$(grep -c "● " "$TEMP_LOG")
                 NOW=$(date +%s)
-                
+
                 TIMES+=($NOW)
                 LINES_HIST+=($CUR_LINES)
                 ACTIONS_HIST+=($CUR_ACTIONS)
-                
+
                 THREE_MINS_AGO=$((NOW - 180))
-                
+
                 for i in "${!TIMES[@]}"; do
                     if [ "${TIMES[$i]}" -le "$THREE_MINS_AGO" ]; then
                         OLD_LINES=${LINES_HIST[$i]}
                         OLD_ACTIONS=${ACTIONS_HIST[$i]}
-                        
+
                         if [ "$CUR_LINES" -gt $((OLD_LINES + 50)) ] && [ "$CUR_ACTIONS" -eq "$OLD_ACTIONS" ]; then
                             echo "Coworker infinite loop detected! Aborting..."
                             kill $JOB_PID
-                            
+
                             ABORTED_DIR="coworker/tasks/3_5aborted"
                             mkdir -p "$ABORTED_DIR"
                             WORKING_DIR="coworker/tasks/2working"
@@ -781,7 +781,7 @@ Replacement:
                     fi
                 done
             done
-            
+
             wait $JOB_PID 2>/dev/null
             rm "$TEMP_LOG"
             echo "Finished $SCRIPT_NAME execution."
@@ -865,10 +865,10 @@ Corrected PS logic:
                     $strs = @($newOutput) | ForEach-Object { $_.ToString() }
                     $newLines = $strs.Count
                     $newActions = ($strs | Select-String "● ").Count
-                    
+
                     $totalLines += $newLines
                     $totalActions += $newActions
-                    
+
                     # Echo output to host
                     $strs | Write-Host
                 }
@@ -965,7 +965,7 @@ Wait, I forgot to declare `TIMES=()` inside the `else` block (before starting jo
 In my draft I have:
 ```bash
             # Start in background...
-            
+
             declare -a TIMES
             # ...
 ```
@@ -1096,7 +1096,7 @@ I'll use `TIMES=()` explicitly.
             TIMES=()
             LINES_HIST=()
             ACTIONS_HIST=()
-            
+
             while kill -0 $JOB_PID ...
 ```
 This is safe.
@@ -1524,32 +1524,32 @@ I'll format it carefully.
             TEMP_LOG=$(mktemp)
             "$SCRIPT_PATH" > "$TEMP_LOG" 2>&1 &
             JOB_PID=$!
-            
+
             TIMES=()
             LINES_HIST=()
             ACTIONS_HIST=()
-            
+
             while kill -0 $JOB_PID 2>/dev/null; do
                 sleep 30
                 CUR_LINES=$(wc -l < "$TEMP_LOG")
                 CUR_ACTIONS=$(grep -c "● " "$TEMP_LOG" || echo 0)
                 NOW=$(date +%s)
-                
+
                 TIMES+=($NOW)
                 LINES_HIST+=($CUR_LINES)
                 ACTIONS_HIST+=($CUR_ACTIONS)
-                
+
                 THREE_MINS_AGO=$((NOW - 180))
-                
+
                 for i in "${!TIMES[@]}"; do
                     if [ "${TIMES[$i]}" -le "$THREE_MINS_AGO" ]; then
                         OLD_LINES=${LINES_HIST[$i]}
                         OLD_ACTIONS=${ACTIONS_HIST[$i]}
-                        
+
                         if [ "$CUR_LINES" -gt $((OLD_LINES + 50)) ] && [ "$CUR_ACTIONS" -eq "$OLD_ACTIONS" ]; then
                             echo "Coworker infinite loop detected! Aborting..."
                             kill $JOB_PID
-                            
+
                             ABORTED_DIR="coworker/tasks/3_5aborted"
                             mkdir -p "$ABORTED_DIR"
                             WORKING_DIR="coworker/tasks/2working"
@@ -1561,7 +1561,7 @@ I'll format it carefully.
                     fi
                 done
             done
-            
+
             wait $JOB_PID 2>/dev/null
             rm "$TEMP_LOG"
             echo "Finished $SCRIPT_NAME execution."
@@ -2765,32 +2765,32 @@ I'll format it.
             TEMP_LOG=$(mktemp)
             "$SCRIPT_PATH" > "$TEMP_LOG" 2>&1 &
             JOB_PID=$!
-            
+
             TIMES=()
             LINES_HIST=()
             ACTIONS_HIST=()
-            
+
             while kill -0 $JOB_PID 2>/dev/null; do
                 sleep 30
                 CUR_LINES=$(wc -l < "$TEMP_LOG")
                 CUR_ACTIONS=$(grep -c "● " "$TEMP_LOG" || echo 0)
                 NOW=$(date +%s)
-                
+
                 TIMES+=($NOW)
                 LINES_HIST+=($CUR_LINES)
                 ACTIONS_HIST+=($CUR_ACTIONS)
-                
+
                 THREE_MINS_AGO=$((NOW - 180))
-                
+
                 for i in "${!TIMES[@]}"; do
                     if [ "${TIMES[$i]}" -le "$THREE_MINS_AGO" ]; then
                         OLD_LINES=${LINES_HIST[$i]}
                         OLD_ACTIONS=${ACTIONS_HIST[$i]}
-                        
+
                         if [ "$CUR_LINES" -gt $((OLD_LINES + 50)) ] && [ "$CUR_ACTIONS" -eq "$OLD_ACTIONS" ]; then
                             echo "Coworker infinite loop detected! Aborting..."
                             kill $JOB_PID
-                            
+
                             ABORTED_DIR="coworker/tasks/3_5aborted"
                             mkdir -p "$ABORTED_DIR"
                             WORKING_DIR="coworker/tasks/2working"
@@ -2802,7 +2802,7 @@ I'll format it.
                     fi
                 done
             done
-            
+
             wait $JOB_PID 2>/dev/null
             rm "$TEMP_LOG"
             echo "Finished $SCRIPT_NAME execution."

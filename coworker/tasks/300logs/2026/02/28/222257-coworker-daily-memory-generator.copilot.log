@@ -71,14 +71,14 @@
 I have completed the task described in `coworker/tasks/2working/coworker-daily-memory-generator.md`.
 
 **Implemented Actions:**
-1.  **Created `coworker/scripts/coworker-daily-memory-generator.sh`:** A Bash script that:
+1.  **Created `coworker/scripts/workers/coworker-daily-memory-generator.sh`:** A Bash script that:
     -   Locates daily logs based on date (defaults to today).
     -   Aggregates log content.
     -   Uses `gh copilot explain` to generate a memory summary following the specification in `docs-dev/copilot/coworker/memory-specification.md`.
     -   Handles large log files by truncating if necessary.
     -   Backs up existing memory files before overwriting/regenerating.
 
-2.  **Created `coworker/scripts/coworker-daily-memory-generator.ps1`:** A PowerShell equivalent of the script for Windows environments.
+2.  **Created `coworker/scripts/workers/coworker-daily-memory-generator.ps1`:** A PowerShell equivalent of the script for Windows environments.
 
 3.  **Updated Daily Memory:** Appended the summary of this task to `coworker/tasks/300logs/2026/02/28/MEMORY.20260228.md` as instructed.
 

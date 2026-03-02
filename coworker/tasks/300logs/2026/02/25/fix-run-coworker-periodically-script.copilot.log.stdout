@@ -456,7 +456,7 @@ Then run `check_mutex.ps1` in parallel.
 Actually, I don't need parallel.
 I can just try to modify `coworker.ps1` and `run_coworker_periodically.ps1` directly if I'm confident.
 
-Wait, I have `coworker/scripts/coworker.ps1` and `coworker/scripts/run_coworker_periodically.ps1`.
+Wait, I have `coworker/scripts/workers/coworker.ps1` and `coworker/scripts/run_coworker_periodically.ps1`.
 I will modify `coworker.ps1` first to add Mutex support.
 Then I will modify `run_coworker_periodically.ps1` to check Mutex.
 

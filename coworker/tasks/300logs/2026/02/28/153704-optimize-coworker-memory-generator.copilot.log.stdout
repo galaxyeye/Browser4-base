@@ -109,7 +109,7 @@ extract_copilot_output() {
     local copilot_log="$1"
     if [ -f "$copilot_log" ]; then
         local line_count=$(wc -l < "$copilot_log")
-        
+
         if [ "$line_count" -le 50 ]; then
              cat "$copilot_log"
         else
@@ -118,10 +118,10 @@ extract_copilot_output() {
             echo ""
             echo "... [Intermediate logs skipped] ..."
             echo ""
-    
+
             # Find line number of the LAST tool execution
             local last_tool_line=$(grep -nE "^● (Read|Edit|Run)" "$copilot_log" | tail -n 1 | cut -d: -f1)
-    
+
             if [ -n "$last_tool_line" ]; then
                  # Extract from that line to the end
                  tail -n "+$last_tool_line" "$copilot_log"
@@ -140,16 +140,16 @@ PowerShell update:
 ```powershell
     if (Test-Path $copilotLogPath) {
         $copilotContent = @(Get-Content $copilotLogPath)
-        
+
         if ($copilotContent.Count -le 50) {
             $copilotOutput = $copilotContent -join "`n"
         } else {
             $lastToolIndex = -1
             # ... find index ...
-            
+
             $head = $copilotContent | Select-Object -First 10
             # ... tail logic ...
-            
+
             $copilotOutput = ($head -join "`n") + "`n... [Intermediate logs skipped] ...`n" + $tailContent
         }
 
@@ -198,7 +198,7 @@ extract_copilot_output() {
     local copilot_log="$1"
     if [ -f "$copilot_log" ]; then
         local line_count=$(wc -l < "$copilot_log")
-        
+
         if [ "$line_count" -le 50 ]; then
             cat "$copilot_log"
         else
@@ -243,7 +243,7 @@ PowerShell:
 ```powershell
     if (Test-Path $copilotLogPath) {
         $copilotContent = @(Get-Content $copilotLogPath)
-        
+
         if ($copilotContent.Count -le 50) {
              $copilotOutput = $copilotContent -join "`n"
         } else {
@@ -343,10 +343,10 @@ Let's check `coworker.ps1` and logs.
 And check `gh` version.
 And read the scripts.
 All in parallel.
-I will check `coworker/scripts/coworker.ps1` specifically.
+I will check `coworker/scripts/workers/coworker.ps1` specifically.
 Also check if there are logs in `coworker/tasks/300logs/2026/02/28`.
 And `coworker/tasks/300logs` contents.
-Wait, `coworker.ps1` is likely in `coworker/scripts/coworker.ps1`. I saw `coworker.ps1` in the root environment list? No, `bin\` `browser4\` `coworker\` etc.
+Wait, `coworker.ps1` is likely in `coworker/scripts/workers/coworker.ps1`. I saw `coworker.ps1` in the root environment list? No, `bin\` `browser4\` `coworker\` etc.
 Let's check `coworker/scripts`.
 Actually, I'll just use `ls -R coworker` (or similar) or `Get-ChildItem -Recurse coworker`.
 Better: `Get-ChildItem coworker -Recurse -Depth 2`
@@ -356,7 +356,7 @@ I'll use `read_powershell` for `gh --version`.
 Wait, the environment context says `coworker\` directory.
 And `bin\` directory.
 Let's find `coworker.ps1`.
-It might be `bin/coworker.ps1`? Or `coworker/scripts/coworker.ps1`.
+It might be `bin/coworker.ps1`? Or `coworker/scripts/workers/coworker.ps1`.
 Previous `view` of `coworker/scripts` showed `coworker-daily-memory-generator.ps1`.
 It did NOT show `coworker.ps1`.
 So `coworker.ps1` might be elsewhere.
@@ -391,7 +391,7 @@ Actually, I can just do `grep` on `coworker.ps1` if I knew where it was.
 Also, I'll check `gh` command in a separate `powershell` call (async).
 I'll read the scripts in `view`.
 
-Wait, the prompt said: "- [coworker-daily-memory-generator.ps1](/coworker/scripts/coworker-daily-memory-generator.ps1)"
+Wait, the prompt said: "- [coworker-daily-memory-generator.ps1](/coworker/scripts/workers/coworker-daily-memory-generator.ps1)"
 This confirms the path.
 It implies `coworker.ps1` is likely nearby or in a logical place.
 Maybe `coworker/coworker.ps1`?
@@ -460,7 +460,7 @@ Unless I use `read_powershell` to cat them. `view` is better.
 
 So:
 1. `glob` `**/coworker.ps1`
-2. `view` `coworker/scripts/coworker-daily-memory-generator.ps1` and `coworker/scripts/coworker-daily-memory-generator.sh`
+2. `view` `coworker/scripts/workers/coworker-daily-memory-generator.ps1` and `coworker/scripts/workers/coworker-daily-memory-generator.sh`
 3. `powershell` check `gh` and logs.
 4. `powershell` check `coworker.ps1` content for "●". (Once I find it).
 
@@ -474,14 +474,14 @@ I'll just do `glob` and `view` now.
 And `powershell` to check `gh`.
 
 Wait, `view` `coworker.ps1` if I knew the path.
-I'll just guess it's in `coworker/scripts/coworker.ps1` or `coworker/coworker.ps1`.
-I'll try `view`ing `coworker/scripts/coworker.ps1` and `coworker/coworker.ps1` (if they fail, fine).
+I'll just guess it's in `coworker/scripts/workers/coworker.ps1` or `coworker/coworker.ps1`.
+I'll try `view`ing `coworker/scripts/workers/coworker.ps1` and `coworker/coworker.ps1` (if they fail, fine).
 And the generator scripts.
 
 Actually, `glob` is fast.
 `glob` `**/coworker.ps1`
-`view` `coworker/scripts/coworker-daily-memory-generator.ps1`
-`view` `coworker/scripts/coworker-daily-memory-generator.sh`
+`view` `coworker/scripts/workers/coworker-daily-memory-generator.ps1`
+`view` `coworker/scripts/workers/coworker-daily-memory-generator.sh`
 `powershell` `gh --version`
 `powershell` `if (Test-Path coworker/tasks/300logs/2026/02/28) { ls coworker/tasks/300logs/2026/02/28 }`
 
@@ -532,8 +532,8 @@ This effectively finds the file AND verifies it contains the symbol. Efficient.
 
 So:
 1. `grep` pattern `●` path `coworker` (to find `coworker.ps1` and verify symbol).
-2. `view` `coworker/scripts/coworker-daily-memory-generator.ps1`
-3. `view` `coworker/scripts/coworker-daily-memory-generator.sh`
+2. `view` `coworker/scripts/workers/coworker-daily-memory-generator.ps1`
+3. `view` `coworker/scripts/workers/coworker-daily-memory-generator.sh`
 4. `powershell` check `gh`.
 
 I'll use `read_powershell` later if needed.

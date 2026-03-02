@@ -10,5 +10,5 @@
 
 ## References
 
-- [coworker-daily-memory-generator.ps1](/coworker/scripts/coworker-daily-memory-generator.ps1)
-- [coworker-daily-memory-generator.sh](/coworker/scripts/coworker-daily-memory-generator.sh)
+- [coworker-daily-memory-generator.ps1](/coworker/scripts/workers/coworker-daily-memory-generator.ps1)
+- [coworker-daily-memory-generator.sh](/coworker/scripts/workers/coworker-daily-memory-generator.sh)

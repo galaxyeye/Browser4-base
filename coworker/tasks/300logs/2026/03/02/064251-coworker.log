@@ -44,7 +44,7 @@
 [2026-03-02 06:42:52] [INFO] [PUSHED] Task: verify-daily-memory-generation.md (updated 03/01/2026 01:03:19)
 [2026-03-02 06:42:52] [INFO] [PUSHED] Task: write-ai-coworker-article.md (updated 03/01/2026 03:39:04)
 [2026-03-02 06:42:52] [INFO] [PUSHED] Task: reimplement-mock-mcp-server.md (updated 03/01/2026 12:16:19)
-[2026-03-02 06:42:52] [DEBUG] renameScript path: D:\workspace\Browser4\Browser4-4.6\coworker\scripts\rename.ps1
+[2026-03-02 06:42:52] [DEBUG] renameScript path: D:\workspace\Browser4\Browser4-4.6\coworker\scripts\workers\rename.ps1
 [2026-03-02 06:42:52] [DEBUG] Test-Path renameScript: True
 [2026-03-02 06:44:52] [INFO] Moved to working: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\1.md
 [2026-03-02 06:44:52] [DEBUG] Task log will be written to: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\02\064251-1.task.log

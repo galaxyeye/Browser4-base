@@ -24,7 +24,7 @@ Task files flow through a pipeline of numbered folders inside `coworker/tasks/`:
 2. **Queue** — Move it to `coworker/tasks/1created/` when ready.
 3. **Execute** — Run the coworker script to process the task:
    - Windows: `.\coworker\scripts\coworker.ps1`
-   - Linux/macOS: `./coworker/scripts/coworker.sh`
+   - Linux/macOS: `./coworker/scripts/workers/coworker.sh`
 4. **Review** — Task moves to `3_1complete` after execution. Review the changes.
 5. **Approve** — Move the task to `5approved` to have it automatically committed and pushed by the periodic runner.
 
@@ -55,13 +55,13 @@ After tasks are approved, push changes to your repository using the git-sync scr
 **Windows (PowerShell):**
 
 ```powershell
-.\coworker\scripts\git-sync.ps1
+.\coworker\scripts\workers\git-sync.ps1
 ```
 
 **Linux/macOS (Bash):**
 
 ```bash
-./coworker/scripts/git-sync.sh
+./coworker/scripts/workers/git-sync.sh
 ```
 
 ## Periodic Runner

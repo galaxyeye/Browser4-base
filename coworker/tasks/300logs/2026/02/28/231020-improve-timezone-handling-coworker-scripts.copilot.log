@@ -126,16 +126,16 @@
 
 ● Edit coworker\scripts\task-source-monitor.sh (+1 -1)
 
-● Read coworker\scripts\git-sync.sh
+● Read coworker\scripts\workers\git-sync.sh
   └ 14 lines read
 
-● Read coworker\scripts\git-sync.ps1
+● Read coworker\scripts\workers\git-sync.ps1
   └ 25 lines read
 
-● Read coworker\scripts\rename.ps1
+● Read coworker\scripts\workers\rename.ps1
   └ 176 lines read
 
-● Read coworker\scripts\rename.sh
+● Read coworker\scripts\workers\rename.sh
   └ 144 lines read
 
 ✗ read_powershell

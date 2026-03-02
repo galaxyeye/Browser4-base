@@ -99,8 +99,8 @@ The task described in `coworker/tasks/2working/rename-3complete-folder.md` has b
 
 **Actions taken:**
 1.  Renamed the folder `coworker/tasks/3complete` to `coworker/tasks/3_1complete`.
-2.  Updated `coworker/scripts/coworker.sh` to reference the new folder name `3_1complete`.
-3.  Updated `coworker/scripts/coworker.ps1` to reference the new folder name `3_1complete`.
+2.  Updated `coworker/scripts/workers/coworker.sh` to reference the new folder name `3_1complete`.
+3.  Updated `coworker/scripts/workers/coworker.ps1` to reference the new folder name `3_1complete`.
 4.  Updated `coworker/README.md` to reflect the folder name change and update the task flow documentation.
 5.  Updated `coworker/README.zh.md` to reflect the folder name change in the Chinese documentation.
 6.  Verified that other scripts (`task-source-monitor.ps1`, `coworker-daily-memory-generator.ps1`) do not reference the old folder name.

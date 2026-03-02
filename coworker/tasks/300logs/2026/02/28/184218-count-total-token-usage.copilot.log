@@ -25,32 +25,32 @@
   $ python --version
   └ 2 lines...
 
-● Create coworker\scripts\count-total-token-usage.py (+261)
+● Create coworker\scripts\workers\count-total-token-usage.py (+261)
 
-● Edit coworker\scripts\count-total-token-usage.py (+15 -6)
+● Edit coworker\scripts\workers\count-total-token-usage.py (+15 -6)
 
-● Create coworker\scripts\count-total-token-usage.sh (+13)
+● Create coworker\scripts\workers\count-total-token-usage.sh (+13)
 
-● Create coworker\scripts\count-total-token-usage.ps1 (+10)
+● Create coworker\scripts\workers\count-total-token-usage.ps1 (+10)
 
 ● Run token usage analysis
-  $ python D:\workspace\Browser4\Browser4-4.6\coworker\scripts\count-total-token-usage.py
+  $ python D:\workspace\Browser4\Browser4-4.6\coworker\scripts\workers\count-total-token-usage.py
   D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
   └ 5 lines...
 
-● Edit coworker\scripts\count-total-token-usage.py (+4)
+● Edit coworker\scripts\workers\count-total-token-usage.py (+4)
 
 ● Run token usage analysis again
-  $ python D:\workspace\Browser4\Browser4-4.6\coworker\scripts\count-total-token-usage.py
+  $ python D:\workspace\Browser4\Browser4-4.6\coworker\scripts\workers\count-total-token-usage.py
   D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
   └ 13 lines...
 
-● Edit coworker\scripts\count-total-token-usage.py (+1)
+● Edit coworker\scripts\workers\count-total-token-usage.py (+1)
 
-● Edit coworker\scripts\count-total-token-usage.py (+11 -2)
+● Edit coworker\scripts\workers\count-total-token-usage.py (+11 -2)
 
 ● Run token usage analysis again
-  $ python D:\workspace\Browser4\Browser4-4.6\coworker\scripts\count-total-token-usage.py
+  $ python D:\workspace\Browser4\Browser4-4.6\coworker\scripts\workers\count-total-token-usage.py
   D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
   └ 12 lines...
 
@@ -72,7 +72,7 @@
 
 The task "count-total-token-usage" is complete.
 
-I have created a Python script `coworker/scripts/count-total-token-usage.py` (along with `sh`/`ps1` wrappers) that aggregates token usage data from `*.copilot.log` files, calculates costs based on a pricing model, and generates a tabular report.
+I have created a Python script `coworker/scripts/workers/count-total-token-usage.py` (along with `sh`/`ps1` wrappers) that aggregates token usage data from `*.copilot.log` files, calculates costs based on a pricing model, and generates a tabular report.
 
 **Report Summary (Feb 25-28, 2026):**
 *   **Total Estimated Cost:** ~$135.36

@@ -1,20 +1,20 @@
 ● Glob "**/rename.*"
   └ 2 files found
 
-● Read coworker\scripts\rename.sh
+● Read coworker\scripts\workers\rename.sh
   └ 71 lines read
 
-● Read coworker\scripts\rename.ps1
+● Read coworker\scripts\workers\rename.ps1
   └ 163 lines read
 
-● Edit coworker\scripts\rename.sh (+76 -3)
+● Edit coworker\scripts\workers\rename.sh (+76 -3)
 
-● Read coworker\scripts\rename.sh
+● Read coworker\scripts\workers\rename.sh
   └ 144 lines read
 
-● Edit coworker\scripts\rename.ps1 (+125 -114)
+● Edit coworker\scripts\workers\rename.ps1 (+125 -114)
 
-● Read coworker\scripts\rename.ps1
+● Read coworker\scripts\workers\rename.ps1
   └ 173 lines read
 
 ● Create test directory and files
@@ -30,7 +30,7 @@
   └ 3 lines...
 
 ● Run rename script on test directory
-  $ .\coworker\scripts\rename.ps1 ".\test_rename"
+  $ .\coworker\scripts\workers\rename.ps1 ".\test_rename"
   └ 4 lines...
 
 ● read_powershell
@@ -50,7 +50,7 @@
   └ 1 line...
 
 ● Run rename script on single file
-  $ .\coworker\scripts\rename.ps1 ".\test_rename\3.txt"
+  $ .\coworker\scripts\workers\rename.ps1 ".\test_rename\3.txt"
   └ 2 lines...
 
 ● Check if 3.txt still exists
@@ -61,9 +61,9 @@
   $ Remove-Item -Path ".\test_rename" -Recurse -Force
   └ 2 lines...
 
-● Edit coworker\scripts\rename.ps1 (+4 -1)
+● Edit coworker\scripts\workers\rename.ps1 (+4 -1)
 
-● Read coworker\scripts\rename.sh
+● Read coworker\scripts\workers\rename.sh
   └ 144 lines read
 
 I have improved both `rename.ps1` and `rename.sh` scripts to support a directory as an argument.
@@ -92,16 +92,16 @@ I have improved both `rename.ps1` and `rename.sh` scripts to support a directory
 
 *   **Rename all digit-named files in a directory:**
     ```powershell
-    .\coworker\scripts\rename.ps1 ".\path\to\directory"
+    .\coworker\scripts\workers\rename.ps1 ".\path\to\directory"
     # or
-    ./coworker/scripts/rename.sh "./path/to/directory"
+    ./coworker/scripts/workers/rename.sh "./path/to/directory"
     ```
 
 *   **Generate name for a single file (existing behavior):**
     ```powershell
-    .\coworker\scripts\rename.ps1 ".\path\to\file.txt"
+    .\coworker\scripts\workers\rename.ps1 ".\path\to\file.txt"
     # or
-    ./coworker/scripts/rename.sh "./path/to/file.txt"
+    ./coworker/scripts/workers/rename.sh "./path/to/file.txt"
     ```
 
 

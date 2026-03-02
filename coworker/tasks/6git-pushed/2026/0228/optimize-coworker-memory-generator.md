@@ -9,8 +9,8 @@
 
 ## References
 
-- [coworker-daily-memory-generator.ps1](/coworker/scripts/coworker-daily-memory-generator.ps1)
-- [coworker-daily-memory-generator.sh](/coworker/scripts/coworker-daily-memory-generator.sh)
+- [coworker-daily-memory-generator.ps1](/coworker/scripts/workers/coworker-daily-memory-generator.ps1)
+- [coworker-daily-memory-generator.sh](/coworker/scripts/workers/coworker-daily-memory-generator.sh)
 - [coworker.ps1](../../scripts/coworker.ps1)
 - [docs-dev/copilot/coworker/memory-specification.md](/docs-dev/copilot/coworker/memory-specification.md)
 

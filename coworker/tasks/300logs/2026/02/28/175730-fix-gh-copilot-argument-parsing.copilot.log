@@ -28,7 +28,7 @@
 ● Read coworker\scripts\coworker-daily-memory-generator.ps1 lines 170-187
   └ 17 lines read
 
-● Read coworker\scripts\git-sync.ps1
+● Read coworker\scripts\workers\git-sync.ps1
   └ 25 lines read
 
 ● Read coworker\scripts\task-source-monitor.ps1
@@ -39,14 +39,14 @@
 
 ● Edit coworker\scripts\coworker-memory-generator.ps1 (+15 -2)
 
-● Read coworker\scripts\git-sync.ps1
+● Read coworker\scripts\workers\git-sync.ps1
   └ 25 lines read
 
 ● Check gh copilot help
   $ gh copilot --help
   └ 24 lines...
 
-● Edit coworker\scripts\git-sync.ps1 (+14 -2)
+● Edit coworker\scripts\workers\git-sync.ps1 (+14 -2)
 
 ● Edit coworker\scripts\coworker.ps1 (+1)
 
@@ -58,12 +58,12 @@
 ● Read coworker\scripts\coworker-memory-generator.sh
   └ 245 lines read
 
-● Read coworker\scripts\git-sync.sh
+● Read coworker\scripts\workers\git-sync.sh
   └ 14 lines read
 
 ● Edit coworker\scripts\coworker.sh (+1 -1)
 
-● Edit coworker\scripts\git-sync.sh (+2 -2)
+● Edit coworker\scripts\workers\git-sync.sh (+2 -2)
 
 ● Edit coworker\scripts\coworker.sh (+1 -1)
 
@@ -93,13 +93,13 @@ The task "Fix copilot command argument parsing" is complete.
 I have updated the following scripts to use robust argument parsing for `gh copilot` calls:
 
 1.  **PowerShell Scripts (`.ps1`)**:
-    -   `coworker/scripts/coworker.ps1`: Updated `Start-Process` calls to include the `--` separator and ensure argument lists are correctly formed.
-    -   `coworker/scripts/coworker-memory-generator.ps1`: Replaced direct `& gh` invocation with `Start-Process -ArgumentList` and added proper escaping and `--` separator.
-    -   `coworker/scripts/git-sync.ps1`: Replaced direct `gh copilot` invocation with `Start-Process -ArgumentList` and added proper escaping and `--` separator.
+    -   `coworker/scripts/workers/coworker.ps1`: Updated `Start-Process` calls to include the `--` separator and ensure argument lists are correctly formed.
+    -   `coworker/scripts/workers/coworker-memory-generator.ps1`: Replaced direct `& gh` invocation with `Start-Process -ArgumentList` and added proper escaping and `--` separator.
+    -   `coworker/scripts/workers/git-sync.ps1`: Replaced direct `gh copilot` invocation with `Start-Process -ArgumentList` and added proper escaping and `--` separator.
 
 2.  **Bash Scripts (`.sh`)**:
-    -   `coworker/scripts/coworker.sh`: Added `--` separator before `-p` flag in all `gh copilot` calls.
-    -   `coworker/scripts/git-sync.sh`: Added `--` separator before `-p` flag.
+    -   `coworker/scripts/workers/coworker.sh`: Added `--` separator before `-p` flag in all `gh copilot` calls.
+    -   `coworker/scripts/workers/git-sync.sh`: Added `--` separator before `-p` flag.
 
 I have also updated the daily memory file `D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\02\28\MEMORY.20260228.md` with the details of this task execution.
 

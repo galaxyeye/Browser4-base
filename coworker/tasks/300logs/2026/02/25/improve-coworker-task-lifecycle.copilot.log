@@ -48,7 +48,7 @@
   └ 2 lines...
 
 ● Check bash script syntax with forward slashes
-  $ bash -n "D:/workspace/Browser4/Browser4-4.6/coworker/scripts/coworker.sh"
+  $ bash -n "D:/workspace/Browser4/Browser4-4.6/coworker/scripts/workers/coworker.sh"
   └ 2 lines...
 
 ● Create coworker\tasks\4review\test_review.md (+1)

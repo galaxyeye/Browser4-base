@@ -38,7 +38,7 @@ invoke_gh_copilot() {
 }
 
 if [ "$TYPE" == "daily" ]; then
-    DAILY_SCRIPT="coworker/scripts/coworker-daily-memory-generator.sh"
+    DAILY_SCRIPT="coworker/scripts/workers/coworker-daily-memory-generator.sh"
     if [ -f "$DAILY_SCRIPT" ]; then
         "$DAILY_SCRIPT" "$DATE"
     else

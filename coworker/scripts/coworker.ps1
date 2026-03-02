@@ -349,7 +349,7 @@ foreach ($taskRoot in $taskRoots) {
             }
 
             # Call commit script
-            $commitScript = Join-Path $scriptsDir "git-sync.ps1"
+            $commitScript = Join-Path $scriptsDir "workers/git-sync.ps1"
             if (Test-Path $commitScript) {
                 Write-LogMessage "Executing commit script for approved tasks..." INFO
                 & $commitScript

@@ -15,7 +15,7 @@
 param(
     [ValidateSet("daily", "monthly", "yearly", "all")]
     [string]$Type = "daily",
-    
+
     [string]$Date = ((Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")),
 
     [switch]$Force
@@ -41,7 +41,7 @@ $logsBaseDir = "coworker\tasks\300logs"
 # Function to run gh copilot
 function Invoke-GhCopilot {
     param($Prompt)
-    
+
     # Truncate if too long (approx check, limit depends on OS/shell but 20k is safeish)
     if ($Prompt.Length -gt 25000) {
         Write-Warning "Prompt is too long ($($Prompt.Length) chars). Truncating..."
@@ -49,10 +49,10 @@ function Invoke-GhCopilot {
     }
 
     Write-Host "Calling gh copilot..."
-    
+
     # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
     $safePrompt = $Prompt.Replace('"', '\"')
-    
+
     # Pass arguments as an array to avoid fragile manual escaping/quoting.
     $copilotArgList = @(
         'copilot'
@@ -71,7 +71,7 @@ if ($Type -eq "daily") {
     # Better to keep logic self-contained if we want this to be the main entry point.
     # For now, let's call the existing script to avoid duplication if it exists, or reimplement.
     # The existing script is specific to daily. Let's call it.
-    
+
     $dailyScript = "coworker\scripts\coworker-daily-memory-generator.ps1"
     if (Test-Path $dailyScript) {
         & $dailyScript -Date $Date
@@ -82,7 +82,7 @@ if ($Type -eq "daily") {
 elseif ($Type -eq "monthly") {
     $targetDir = "$logsBaseDir\$year\$month"
     $targetFile = "$targetDir\MEMORY.$year$month.md"
-    
+
     if (-not (Test-Path $targetDir)) {
         Write-Error "Directory $targetDir does not exist. No daily memories to summarize."
         exit 1
@@ -90,7 +90,7 @@ elseif ($Type -eq "monthly") {
 
     # Gather all daily memories for the month
     $dailyMemories = Get-ChildItem -Path "$targetDir\*\MEMORY.*.md" -Recurse
-    
+
     if ($dailyMemories.Count -eq 0) {
         Write-Warning "No daily memories found for $year-$month."
         exit 0
@@ -134,17 +134,17 @@ CONSTRAINTS:
 DAILY MEMORIES:
 $combinedContent
 "@
-    
+
     Invoke-GhCopilot -Prompt $prompt
 }
 elseif ($Type -eq "yearly") {
     $targetDir = "$logsBaseDir\$year"
     $targetFile = "$targetDir\MEMORY.$year.md"
-    
+
     # Gather all monthly memories for the year
     # Monthly memories are at logs/YYYY/MM/MEMORY.YYYYMM.md
     $monthlyMemories = Get-ChildItem -Path "$logsBaseDir\$year\*\MEMORY.$year*.md"
-    
+
     if ($monthlyMemories.Count -eq 0) {
         Write-Warning "No monthly memories found for $year."
         exit 0
@@ -202,11 +202,11 @@ $combinedContent
 }
 elseif ($Type -eq "all") {
     $targetFile = "$logsBaseDir\MEMORY.md"
-    
+
     # Gather all yearly memories
     # Yearly memories are at logs/YYYY/MEMORY.YYYY.md
     $yearlyMemories = Get-ChildItem -Path "$logsBaseDir\*\MEMORY.*.md" | Where-Object { $_.Name -match "MEMORY\.\d{4}\.md" }
-    
+
     if ($yearlyMemories.Count -eq 0) {
         # Fallback to monthly if no yearly? Or just warn?
         Write-Warning "No yearly memories found. Trying monthly..."

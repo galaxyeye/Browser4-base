@@ -165,7 +165,7 @@ If `gh copilot` is a node app, maybe it's node adding it?
 
 The error `error: unknown option '---'` in the task description is the one I need to fix.
 
-Let's try to run the script `D:/workspace/Browser4/Browser4-4.6/coworker/scripts/coworker-daily-memory-generator.ps1` again, but first I'll try to apply the fix because `Start-Process` is definitely suspicious with that error.
+Let's try to run the script `D:/workspace/Browser4/Browser4-4.6/coworker/scripts/workers/coworker-daily-memory-generator.ps1` again, but first I'll try to apply the fix because `Start-Process` is definitely suspicious with that error.
 
 I will modify the script to use `& gh` and also add `--` before arguments.
 
@@ -173,7 +173,7 @@ But before applying the fix, I'll confirm that `gh` is available and works.
 `gh --version`
 
 Also, I should check if I can execute the task as requested.
-The task file says: `(base) PS D:\workspace\Browser4\Browser4-4.6> D:/workspace/Browser4/Browser4-4.6/coworker/scripts/coworker-daily-memory-generator.ps1`
+The task file says: `(base) PS D:\workspace\Browser4\Browser4-4.6> D:/workspace/Browser4/Browser4-4.6/coworker/scripts/workers/coworker-daily-memory-generator.ps1`
 It failed.
 
 I'll apply the fix to `D:\workspace\Browser4\Browser4-4.6\coworker\scripts\coworker-daily-memory-generator.ps1`.
@@ -418,7 +418,7 @@ I'll also remove the `Write-Host "Calling gh copilot..."` line if I want to clea
 I'll perform the edit.
 
 Then I'll run the script.
-`powershell -File D:/workspace/Browser4/Browser4-4.6/coworker/scripts/coworker-daily-memory-generator.ps1`
+`powershell -File D:/workspace/Browser4/Browser4-4.6/coworker/scripts/workers/coworker-daily-memory-generator.ps1`
 
 I'll need to capture the output.
 If `gh copilot` asks for confirmation, the script might hang.
@@ -659,7 +659,7 @@ I'll copy paste from my previous `view` output.
 176.     $prompt,
 177.     '--allow-all-tools'
 178. )
-179. 
+179.
 180. $process = Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -PassThru -Wait
 ```
 The indentation is 4 spaces? No, looks like 0 spaces for `$copilotArgList`.
@@ -719,7 +719,7 @@ I'll create the plan file.
 
 I'll do all in one turn.
 1. Create `files/plan.md`.
-2. Edit `coworker/scripts/coworker-daily-memory-generator.ps1`.
+2. Edit `coworker/scripts/workers/coworker-daily-memory-generator.ps1`.
 3. Verify environment (`gh copilot --help`, logs).
 
 Wait, I should verify first before editing?
@@ -803,7 +803,7 @@ In `view` output:
 176.     $prompt,
 177.     '--allow-all-tools'
 178. )
-179. 
+179.
 180. $process = Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -PassThru -Wait
 ```
 Line 173 has no indentation.

@@ -9,7 +9,7 @@ fi
 
 cd "$REPO_ROOT" || exit 1
 
-SCRIPT_PATH="$REPO_ROOT/coworker/scripts/coworker.sh"
+SCRIPT_PATH="$REPO_ROOT/coworker/scripts/workers/coworker.sh"
 SCRIPT_NAME="coworker.sh"
 WRAPPER_NAME="run_coworker_periodically.sh"
 MONITOR_SCRIPT_PATH="$REPO_ROOT/coworker/scripts/task-source-monitor.sh"

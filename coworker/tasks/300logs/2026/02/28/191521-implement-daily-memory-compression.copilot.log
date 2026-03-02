@@ -52,16 +52,16 @@
 
 ● Edit coworker\tasks\300logs\2026\02\28\MEMORY.20260228.md (+1)
 
-I have completed the task "Implement Daily Memory Compression" by modifying `coworker/scripts/coworker.ps1` and `coworker/scripts/coworker.sh`.
+I have completed the task "Implement Daily Memory Compression" by modifying `coworker/scripts/workers/coworker.ps1` and `coworker/scripts/workers/coworker.sh`.
 
 **Summary of changes:**
-1.  **Modified `coworker/scripts/coworker.ps1`**:
+1.  **Modified `coworker/scripts/workers/coworker.ps1`**:
     *   Added logic to check the size of the daily memory file when loading it.
     *   If the file size exceeds 3000 characters:
         *   Backs up the original content to `MEMORY.YYYYMMDD.long.md`.
         *   Uses `gh copilot` to compress the content based on specific rules (shorten descriptions, combine tasks, remove redundancy).
         *   Overwrites the daily memory file with the compressed content.
-2.  **Modified `coworker/scripts/coworker.sh`**:
+2.  **Modified `coworker/scripts/workers/coworker.sh`**:
     *   Implemented equivalent logic in Bash for Linux/macOS environments.
     *   Ensured safe handling of newlines and arguments when invoking `gh copilot`.
 

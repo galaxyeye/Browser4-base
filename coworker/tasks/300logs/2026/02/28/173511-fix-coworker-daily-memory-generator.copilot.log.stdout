@@ -103,11 +103,11 @@ But `&` is usually safe.
 Let's try replacing `---` first.
 
 The plan:
-1. Edit `coworker/scripts/coworker-daily-memory-generator.ps1` to replace `---` with `===` in the log content generation.
+1. Edit `coworker/scripts/workers/coworker-daily-memory-generator.ps1` to replace `---` with `===` in the log content generation.
 2. Add quotes around `$prompt` in the `gh copilot` call just in case.
 3. Test the script.
 
-Wait, I should also check the bash script `coworker/scripts/coworker-daily-memory-generator.sh` mentioned in the memory entry, just in case it exists and needs fixing too.
+Wait, I should also check the bash script `coworker/scripts/workers/coworker-daily-memory-generator.sh` mentioned in the memory entry, just in case it exists and needs fixing too.
 The memory entry says: "Implemented coworker-daily-memory-generator.ps1 and .sh".
 Let's check if the .sh file exists.
 (I don't see it in the file list in environment context, but I can check.)
@@ -213,7 +213,7 @@ If I cannot reproduce it easily, I should apply a safe fix:
 Replacing `---` with `===` is a good first step.
 Also, I should verify the encoding.
 
-Let's edit `coworker/scripts/coworker-daily-memory-generator.ps1`.
+Let's edit `coworker/scripts/workers/coworker-daily-memory-generator.ps1`.
 
 I will also add `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` at the top, just in case.
 

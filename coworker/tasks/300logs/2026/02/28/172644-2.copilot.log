@@ -102,8 +102,8 @@ The task is complete.
 I have created the `coworker-memory-generator` scripts in both PowerShell and Bash to support the generation of daily, monthly, yearly, and global memory summaries as requested.
 
 ### Created Files
-- `coworker/scripts/coworker-memory-generator.ps1`
-- `coworker/scripts/coworker-memory-generator.sh`
+- `coworker/scripts/workers/coworker-memory-generator.ps1`
+- `coworker/scripts/workers/coworker-memory-generator.sh`
 
 These scripts support the following usage:
 - `daily`: Wraps the existing daily generator (default).

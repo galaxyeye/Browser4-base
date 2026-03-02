@@ -20,7 +20,7 @@ If conflicts occur, resolve them automatically.
 "@
 
 # Invoke gh-copilot.ps1 with the prompt
-# . coworker\scripts\gh-copilot.ps1 $prompt
+# . coworker\scripts\workers\gh-copilot.ps1 $prompt
 
 # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
 $safePrompt = $prompt.Replace('"', '\"')

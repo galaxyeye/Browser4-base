@@ -7,10 +7,10 @@
 ● Read coworker\scripts\coworker.ps1
   └ 586 lines read
 
-● Read coworker\scripts\git-sync.sh
+● Read coworker\scripts\workers\git-sync.sh
   └ 14 lines read
 
-● Read coworker\scripts\git-sync.ps1
+● Read coworker\scripts\workers\git-sync.ps1
   └ 15 lines read
 
 ● Read coworker\scripts\coworker.sh
@@ -38,12 +38,12 @@ I have updated `coworker.ps1` and `coworker.sh` to move files from `5approved` t
 
 **Summary of changes:**
 
-1.  **Modified `coworker/scripts/coworker.ps1`**:
+1.  **Modified `coworker/scripts/workers/coworker.ps1`**:
     *   Reordered the logic in the "Process 5approved" section.
     *   Files are now moved to `6git-pushed/$currentYear/$currentDate` immediately if found in `5approved`.
     *   The commit script (`git-sync.ps1`) is called *after* all files have been moved.
 
-2.  **Modified `coworker/scripts/coworker.sh`**:
+2.  **Modified `coworker/scripts/workers/coworker.sh`**:
     *   Reordered the logic in the "Process 5approved" section.
     *   Files are now moved to `6git-pushed/$currentYear/$currentDate` immediately if found in `5approved`.
     *   The commit script (`git-sync.sh`) is called *after* all files have been moved.

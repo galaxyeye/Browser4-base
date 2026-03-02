@@ -139,7 +139,7 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
 - **Fixed Bug:** Updated `task-source-monitor.ps1` and `task-source-monitor.sh` to output tasks to `coworker/tasks/1created` instead of `coworker/tasks/2working`. This ensures `coworker` script (which only scans `1created`) picks up the generated tasks.
 
 ### Task: Coworker Daily Memory Generator
-- Created `coworker/scripts/coworker-daily-memory-generator.ps1` and `.sh` to automate daily memory generation from logs.
+- Created `coworker/scripts/workers/coworker-daily-memory-generator.ps1` and `.sh` to automate daily memory generation from logs.
 - The scripts aggregate daily logs and use `gh copilot explain` to generate a summary following the memory specification.
 - Included logic to backup existing memory files before generation to prevent data loss.
 - Included truncation logic for large logs to avoid command line limits.

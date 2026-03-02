@@ -23,8 +23,8 @@
   └ 8 lines read
 
 ● Renaming commit scripts to git-sync scripts
-  $ Move-Item -Path "coworker/scripts/commit.ps1" -Destination "coworker/scripts/git-sync.ps1"
-  Move-Item -Path "coworker/scripts/commit.sh" -Destination "coworker/scripts/git-sync.sh"
+  $ Move-Item -Path "coworker/scripts/commit.ps1" -Destination "coworker/scripts/workers/git-sync.ps1"
+  Move-Item -Path "coworker/scripts/commit.sh" -Destination "coworker/scripts/workers/git-sync.sh"
   └ 1 line...
 
 ● Edit coworker\README.md (+1 -1)
@@ -47,10 +47,10 @@
 ● Read coworker\tasks\2working\rename-commit-scripts-to-git-sync.md
   └ 8 lines read
 
-● Read coworker\scripts\git-sync.ps1
+● Read coworker\scripts\workers\git-sync.ps1
   └ 14 lines read
 
-● Read coworker\scripts\git-sync.sh
+● Read coworker\scripts\workers\git-sync.sh
   └ 14 lines read
 
 ● Grep "coworker/scripts/commit"
@@ -63,11 +63,11 @@
 
 ● Create ~\.copilot\session-state\06e3a7e1-21da-45ca-aad3-22194be97828\plan.md (+11)
 
-The `coworker/scripts/commit.ps1` and `coworker/scripts/commit.sh` files have been renamed to `coworker/scripts/git-sync.ps1` and `coworker/scripts/git-sync.sh` respectively.
+The `coworker/scripts/commit.ps1` and `coworker/scripts/commit.sh` files have been renamed to `coworker/scripts/workers/git-sync.ps1` and `coworker/scripts/workers/git-sync.sh` respectively.
 
 All references to these files have been updated in:
-- `coworker/scripts/coworker.ps1`
-- `coworker/scripts/coworker.sh`
+- `coworker/scripts/workers/coworker.ps1`
+- `coworker/scripts/workers/coworker.sh`
 - `coworker/README.md`
 
 

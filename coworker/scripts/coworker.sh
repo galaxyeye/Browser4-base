@@ -299,7 +299,7 @@ if [[ -d "$approvedDir" ]]; then
 
         if [[ $found_files -eq 1 ]]; then
             # Call commit script
-            commitScript="$scriptsDir/git-sync.sh"
+            commitScript="$scriptsDir/workers/git-sync.sh"
             if [[ -f "$commitScript" ]]; then
                 log_message "Executing commit script for approved tasks..." INFO
                 bash "$commitScript"

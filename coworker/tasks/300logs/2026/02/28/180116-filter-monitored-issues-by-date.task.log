@@ -135,11 +135,11 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
     - Updated `coworker.sh` and `git-sync.sh` to use `--` separator before the prompt argument.
     - This ensures prompts with special characters are passed correctly to the copilot extension.
 - **Files Modified**:
-    - `coworker/scripts/coworker.ps1`
-    - `coworker/scripts/coworker-memory-generator.ps1`
-    - `coworker/scripts/git-sync.ps1`
-    - `coworker/scripts/coworker.sh`
-    - `coworker/scripts/git-sync.sh`
+    - `coworker/scripts/workers/coworker.ps1`
+    - `coworker/scripts/workers/coworker-memory-generator.ps1`
+    - `coworker/scripts/workers/git-sync.ps1`
+    - `coworker/scripts/workers/coworker.sh`
+    - `coworker/scripts/workers/git-sync.sh`
 
 
 ---

@@ -47,8 +47,8 @@ I have updated `coworker.sh` and `coworker.ps1` to improve the logging structure
         *   Script logs (`.log`)
 
 ### Verified Files:
-*   `coworker/scripts/coworker.sh`: Updated lines 93-96 and 418-422.
-*   `coworker/scripts/coworker.ps1`: Updated lines 94-97 and 433-437.
+*   `coworker/scripts/workers/coworker.sh`: Updated lines 93-96 and 418-422.
+*   `coworker/scripts/workers/coworker.ps1`: Updated lines 94-97 and 433-437.
 
 
 === COPILOT STDERR ===
