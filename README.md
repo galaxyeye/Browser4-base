@@ -91,7 +91,7 @@ val result = agent.run("""
    ```
    If you have encoding problem on Windows:
    ```shell
-   ./bin/run-examples.ps1
+   ./bin/run-agent-examples.ps1
    ```
 
    Explore and run examples in the `browser4-examples` module to see Browser4 in action.

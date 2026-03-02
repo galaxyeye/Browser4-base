@@ -175,7 +175,9 @@ $systemTemp = [System.IO.Path]::GetTempPath()
 $userTemp = $env:LOCALAPPDATA + "\Temp"
 
 # Define patterns to match
-$patterns = @('tomcat', 'chrome', 'test', 'pkg-', '.jar', 'koltin', '.tmp', '.ps', '.ps1')
+$patterns = @('tomcat', 'chrome', 'test', 'pkg-', '.jar', 'koltin', '.tmp', '.ps', '.ps1',
+'tsServerCancellationPipes', 'pulsar-skill-', 'playwright-'
+)
 
 Write-Host "Starting targeted temporary file cleanup..." -ForegroundColor Cyan
 Write-Host "MinAgeHours: $MinAgeHours; WhatIf: $WhatIf" -ForegroundColor Cyan

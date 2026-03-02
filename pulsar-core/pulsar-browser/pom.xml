@@ -93,10 +93,6 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-        </dependency>
 
         <!-- Kotlin-friendly mocking -->
         <!-- (intentionally not used in this module; kept minimal) -->

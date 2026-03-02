@@ -102,7 +102,7 @@ val result = agent.run("""
    ```
    如有乱码问题（Windows）：
    ```shell
-   ./bin/run-examples.ps1
+   ./bin/run-agent-examples.ps1
    ```
 
    在 `browser4-examples` 模块中探索并运行示例，直观了解 Browser4 的能力。

@@ -55,6 +55,21 @@
                     <target>11</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>ai.platon.pulsar.examples.agent.Browser4AgentKt</mainClass>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -92,5 +107,6 @@
         <kotlin.version>2.2.21</kotlin.version>
         <spring-boot.version>4.0.1</spring-boot.version>
         <pulsar.version>4.6.0-SNAPSHOT</pulsar.version>
+        <exec.mainClass>ai.platon.pulsar.examples.agent.Browser4AgentKt</exec.mainClass>
     </properties>
 </project>
