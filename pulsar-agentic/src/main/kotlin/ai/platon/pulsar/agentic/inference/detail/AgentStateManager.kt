@@ -15,6 +15,9 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import kotlinx.coroutines.withTimeout
 import java.nio.file.Path
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 /**
@@ -51,6 +54,16 @@ class AgentStateManager(
 
     // for non-logback logs
     val auxLogDir: Path get() = AppPaths.detectAuxiliaryLogDir().resolve("agent")
+
+    private fun getRunLogDir(sessionId: String): Path {
+        val now = LocalDate.now()
+        val year = now.year.toString()
+        val month = String.format("%02d", now.monthValue)
+        val day = String.format("%02d", now.dayOfMonth)
+        val agentId = agent.uuid.toString()
+        // base log dir for each run: logs/agent/{year}/{month}/{day}/{agentId}/{runId}/
+        return auxLogDir.resolve(year).resolve(month).resolve(day).resolve(agentId).resolve(sessionId)
+    }
 
     private val _stateHistory = AgentHistory()
     private val _processTrace = mutableListOf<ProcessTrace>()
@@ -148,6 +161,15 @@ class AgentStateManager(
         return context
     }
 
+    /**
+     * Build the initial execution context for an observe event. This is used when an observe event is triggered without a prior act context (e.g., from an external trigger or at the start of a session).
+     * The instruction is taken from the ObserveOptions, and the step is set to 1. The event name can be used to differentiate this context from act contexts. An optional base context can be provided for inheritance, but it's not required for the initial observe context.
+     * @param options The observe options containing the instruction and other parameters
+     * @param event The event name for this context (e.g., "observe-init")
+     * @param baseContext An optional base context that the new context can inherit from. Not
+     * required for the initial observe context, but can be used if this observe context is triggered from an existing context and wants to inherit properties from it.
+     * @return A new ExecutionContext instance for the observe event, initialized with the instruction from the options and step set to 1.
+     * */
     suspend fun buildInitExecutionContext(
         options: ObserveOptions,
         event: String,
@@ -155,10 +177,20 @@ class AgentStateManager(
     ): ExecutionContext {
         val instruction = options.instruction ?: ""
         val context = buildExecutionContext(instruction, 1, event, baseContext = baseContext)
-        // options.setContext(context)
         return context
     }
 
+    /**
+     * Build a new execution context based on the provided instruction, step, event, and optional base context.
+     *
+     * The instruction should remain consistent across steps in the same session to maintain a clear goal. The step number should increment by 1 for each new context derived from the same base context. The event name can be used to differentiate between different types of contexts (e.g., "act", "observe", etc.) but should also follow a consistent naming convention for clarity.
+     *
+     * @param instruction The user's instruction (should be the same for all steps in the session)
+     * @param step The current step number (starting from 1)
+     * @param event The event name for this context (e.g., "act", "observe", "extract", etc.)
+     * @param baseContext An optional base context that the new context can inherit from. If provided, the new context will validate that the instruction is the same and the step is incremented by 1 compared to the base context.
+     * @return A new ExecutionContext instance with the provided parameters and inherited properties from the base context if applicable.
+     * */
     suspend fun buildExecutionContext(
         /**
          * The user's instruction
@@ -175,26 +207,22 @@ class AgentStateManager(
         return context
     }
 
-    suspend fun buildIndependentExecutionContext(
-        /**
-         * The user's instruction
-         * */
-        instruction: String,
-        step: Int,
-        event: String,
-        /**
-         * A base context that the new context can inherit from
-         * */
-        baseContext: ExecutionContext? = null
-    ): ExecutionContext {
-        val context = buildExecutionContext0(instruction, step, event, baseContext = baseContext)
+    suspend fun buildIndependentExecutionContext(instruction: String, event: String): ExecutionContext {
+        val context = buildExecutionContext0(instruction, 0, event)
         return context
     }
 
+    /**
+     * The user's original instruction should be only one instruction for the whole session, and should not be
+     * changed in different steps. The reason is that we want to keep the original instruction as the main goal
+     * of the session, and use the step and event to track the progress.
+     * If we change the instruction in different steps, it may cause confusion and make it harder to track the progress.
+     *
+     * @param instruction The user's instruction (should be the same for all steps in the session)
+     * @param step The current step number (starting from 1)
+     * @param event The event name for this context (e.g., "act", "observe", "extract", etc.)
+     * */
     private suspend fun buildExecutionContext0(
-        /**
-         * The user's instruction
-         * */
         instruction: String,
         step: Int,
         event: String,
@@ -210,7 +238,9 @@ class AgentStateManager(
         val currentAgentState = getAgentState(instruction, step, prevAgentState)
 
         if (baseContext != null) {
-            return ExecutionContext(
+            require(instruction == baseContext.instruction) { "Instruction should be the same as base context. instruction=$instruction vs baseInstruction=${baseContext.instruction}" }
+            require(step == baseContext.step + 1) { "Step should be incremented by 1 from base context. step=$step vs baseStep=${baseContext.step}" }
+            val context = ExecutionContext(
                 instruction = baseContext.instruction,
                 step = step,
                 event = event,
@@ -221,17 +251,23 @@ class AgentStateManager(
                 config = baseContext.config,
                 stateHistory = _stateHistory
             )
+            writeExecutionContext(context)
+            writeAgentState(currentAgentState, context.sessionId)
+            return context
         }
 
-        return ExecutionContext(
+        val context = ExecutionContext(
             instruction = instruction,
             step = step,
-            event = "init",
+            event = event,
             sessionId = sessionId,
             agentState = currentAgentState,
             config = config,
             stateHistory = _stateHistory,
         )
+        writeExecutionContext(context)
+        writeAgentState(currentAgentState, context.sessionId)
+        return context
     }
 
     suspend fun getAgentState(instruction: String, step: Int, prevAgentState: AgentState? = null): AgentState {
@@ -245,7 +281,7 @@ class AgentStateManager(
         return agentState
     }
 
-    suspend fun syncBrowserUseState(context: ExecutionContext): BrowserUseState {
+    suspend fun updateBrowserUseState(context: ExecutionContext): BrowserUseState {
         val browserUseState = getBrowserUseState()
         context.agentState.browserUseState = browserUseState
         return browserUseState
@@ -259,6 +295,9 @@ class AgentStateManager(
         val description = detailedActResult.description
 
         updateAgentState(context, observeElement, toolCall, toolCallResult, description)
+
+        writeActionResult(context, detailedActResult)
+        writeAgentState(context.agentState, context.sessionId)
     }
 
     fun updateAgentState(
@@ -337,10 +376,69 @@ class AgentStateManager(
         }
 
         _processTrace.add(trace)
+        writeProcessTrace(trace)
     }
 
-    fun writeProcessTrace() {
-        val path = auxLogDir.resolve("processTrace").resolve("processTrace_${AppPaths.fromNow()}.log")
+    fun writeExecutionContext(context: ExecutionContext) {
+        val runLogDir = getRunLogDir(context.sessionId)
+        val fileName = "${context.step}.context.log"
+        val jsonFileName = "${context.step}.context.jsonl"
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), context.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), context.toJson())
+    }
+
+    fun writeAgentState(state: AgentState, sessionId: String) {
+        val runLogDir = getRunLogDir(sessionId)
+
+        val fileName = "${state.step}.state.log"
+        val jsonFileName = "${state.step}.state.jsonl"
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), state.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), state.toJson())
+    }
+
+    fun writeActionResult(context: ExecutionContext, result: DetailedActResult) {
+        val runLogDir = getRunLogDir(context.sessionId)
+        val fileName = "${context.step}.result.log"
+        val jsonFileName = "${context.step}.result.jsonl"
+
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), result.toString())
+        // MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), Pson.toJson(result))
+    }
+
+    fun writeChatLog(step: Int, actionType: String, messageType: String, content: String, timestamp: Instant = Instant.now()) {
+        val sessionId = contexts.findLast { it.step == step }?.sessionId
+            ?: _activeContext?.sessionId
+            ?: "unknown-session"
+        val runLogDir = getRunLogDir(sessionId)
+
+        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss")
+            .withZone(ZoneId.systemDefault())
+        val ts = formatter.format(timestamp)
+
+        // Format: {runLogDir}/{step}.chat.{yyyyMMdd.HHmmss}.{actionType}.{messageType}.log
+        // Example: 2.chat.20260302.220354.chat.user.log
+        val fileName = "$step.chat.$ts.$actionType.$messageType.log"
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), content)
+    }
+
+    fun writeProcessTrace(trace: ProcessTrace) {
+        val sessionId = contexts.findLast { it.step == trace.step }?.sessionId
+            ?: _activeContext?.sessionId
+            ?: "unknown-session"
+        val runLogDir = getRunLogDir(sessionId)
+
+        val event = trace.event ?: "unknown"
+        val fileName = "${trace.step}.$event.trace.log"
+        val jsonFileName = "${trace.step}.$event.trace.jsonl"
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), trace.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), trace.toJson())
+    }
+
+    fun writeAllProcessTrace() {
+        val now = AppPaths.fromNow()
+        val sessionId = _activeContext?.sessionId ?: "unknown-session"
+        val runLogDir = getRunLogDir(sessionId)
+        val path = runLogDir.resolve("process_trace_$now.log")
         MessageWriter.writeOnce(path, processTrace.joinToString("\n") { """🚩$it""" })
     }
 
@@ -413,6 +511,7 @@ class AgentStateManager(
             includeVisibility = true,
             includeInteractivity = true
         )
+
         // Add timeout to prevent hanging on DOM snapshot operations
         return withTimeout(30_000) {
             val baseState = driver.domService.getBrowserUseState(snapshotOptions = snapshotOptions)

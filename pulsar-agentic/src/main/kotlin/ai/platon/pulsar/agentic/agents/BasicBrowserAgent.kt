@@ -273,7 +273,7 @@ open class BasicBrowserAgent(
         onWillExtract(options)
 
         val instruction = promptBuilder.initExtractUserInstruction(options.instruction)
-        val context = stateManager.buildIndependentExecutionContext(instruction, 1, "extract")
+        val context = stateManager.buildIndependentExecutionContext(instruction, "extract")
 
         val result = try {
             val params = context.createExtractParams(options.schema)
@@ -643,7 +643,7 @@ open class BasicBrowserAgent(
         }
 
         // Sync browser state just before observe
-        stateManager.syncBrowserUseState(context)
+        stateManager.updateBrowserUseState(context)
         val interactiveElements = context.agentState.browserUseState.getAllInteractiveElements()
         try {
             if (drawOverlay) {

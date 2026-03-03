@@ -7,6 +7,8 @@ import ai.platon.pulsar.agentic.inference.ExtractParams
 import ai.platon.pulsar.agentic.inference.ObserveParams
 import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.common.Strings
+import ai.platon.pulsar.common.serialize.json.Pson
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.time.Instant
 import java.util.*
 
@@ -98,24 +100,30 @@ data class ExecutionContext constructor(
     var step: Int,
 
     var instruction: String = "",
+    @get:JsonIgnore
     var screenshotB64: String? = null,
 
     var event: String,
     var targetUrl: String? = null,
 
+    @get:JsonIgnore
     val agentState: AgentState,
+    @get:JsonIgnore
     val stateHistory: AgentHistory,
 
+    @get:JsonIgnore
     val config: AgentConfig,
 
     val sessionId: String,
     val stepStartTime: Instant = Instant.now(),
+    @get:JsonIgnore
     val additionalContext: Map<String, Any> = emptyMap()
 ) {
     val sid get() = sessionId.take(8)
 
     val uuid = UUID.randomUUID().toString()
 
+    @get:JsonIgnore
     val prevAgentState: AgentState? get() = agentState.prevState
 
     fun createObserveParams(
@@ -149,5 +157,13 @@ data class ExecutionContext constructor(
             schema = schema,
             requestId = uuid,
         )
+    }
+
+    fun toJson() {
+        Pson.toJson(this)
+    }
+
+    override fun toString(): String {
+        return "step=$step, instruction='$instruction', event='$event', targetUrl=$targetUrl, sessionId='$sessionId'"
     }
 }

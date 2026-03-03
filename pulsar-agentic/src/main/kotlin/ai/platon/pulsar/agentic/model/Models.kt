@@ -6,6 +6,7 @@ import ai.platon.pulsar.agentic.ActResult
 import ai.platon.pulsar.agentic.ObserveResult
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.compactedBrief
+import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.external.ModelResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.StringUtils
@@ -231,6 +232,10 @@ data class AgentState constructor(
     val isDone: Boolean get() = isComplete == true
     val hasErrors: Boolean get() = exception != null
 
+    fun toJson(): String {
+        return Pson.toJson(this)
+    }
+
     override fun toString(): String {
         if (step == 0) {
             return "step=0, N/A"
@@ -295,6 +300,10 @@ data class AgentHistory(
     fun firstOrNull() = states.firstOrNull()
     fun lastOrNull() = states.lastOrNull()
 
+    fun toJson(): String {
+        return Pson.toJson(this)
+    }
+
     override fun toString(): String {
         return states.joinToString("\n") { it.toString() }
     }
@@ -305,7 +314,10 @@ data class AgentHistory(
  * */
 data class ActionDescription constructor(
     /**
-     * The original instruction.
+     * The user's original instruction, should be only one instruction for the whole session, and should not be
+     * changed in different steps. The reason is that we want to keep the original instruction as the main goal
+     * of the session, and use the step and event to track the progress.
+     * If we change the instruction in different steps, it may cause confusion and make it harder to track the progress.
      * */
     val instruction: String,
 
@@ -403,6 +415,10 @@ data class ActionDescription constructor(
         return results ?: emptyList()
     }
 
+    fun toJson(): String {
+        return Pson.toJson(this)
+    }
+
     override fun toString(): String {
         return if (isComplete) "Completed. Summary: $summary"
         else (cssFriendlyExpression ?: modelResponse?.toString() ?: "")
@@ -421,6 +437,10 @@ data class ProcessTrace constructor(
     val items: Map<String, Any?> = emptyMap(),
     val timestamp: Instant = Instant.now(),
 ) {
+    fun toJson(): String {
+        return Pson.toJson(this)
+    }
+
     override fun toString(): String {
         fun format(v: Any?): String? {
             return when (v) {

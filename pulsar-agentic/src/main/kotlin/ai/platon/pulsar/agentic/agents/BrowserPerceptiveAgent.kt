@@ -185,7 +185,7 @@ open class BrowserPerceptiveAgent(
             logger.info("🛑 run.cancelled reason={}", e.message ?: "user cancellation")
             throw e // Always re-throw CancellationException
         } finally {
-            stateManager.writeProcessTrace()
+            stateManager.writeAllProcessTrace()
         }
 
         return stateHistory

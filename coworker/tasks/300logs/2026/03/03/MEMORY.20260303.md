@@ -9,3 +9,13 @@
 - **Goal**: Replace the placeholder `Invoke-Copilot` function in `coworker/scripts/architect/orchestrator.ps1` with actual calls to the `gh copilot` CLI.
 - **Outcome**: Updated `orchestrator.ps1` to use `gh copilot` with proper argument handling, timeout logic (600s), and logging, mirroring the implementation in `coworker.ps1`.
 - **Lessons**: Reusing patterns from existing scripts (`coworker.ps1`) ensures consistency and reliability in tool invocation.
+
+## Task: Create Refine Draft Script
+- **Goal**: Create `refine-last-draft.ps1` and `refine-last-draft.sh` to scan `coworker/tasks/0draft` for the latest modified markdown draft and refine it using `gh copilot`.
+- **Outcome**: Created `coworker/scripts/workers/refine-last-draft.ps1` and `coworker/scripts/workers/refine-last-draft.sh`. The scripts automatically identify the latest `.md` file in `0draft` and launch `gh copilot` with a prompt to improve the writing, clarity, and structure.
+- **Lessons**: `gh copilot` accepts `-p` prompt argument which can include file paths for context.
+
+## Task: Enhance Agent Context Logging
+- **Goal**: Reorganize agent logs into a structured directory hierarchy and specific file naming conventions as per `context-recorder.md`.
+- **Outcome**: Updated `AgentStateManager.kt` to write logs to `logs/agent/{year}/{month}/{day}/{agentId}/{runId}/`. Implemented specific file naming for context (`{step}.context.log`), state (`{step}.state.log`), result (`{step}.result.log`), and trace (`{step}.{event}.trace.log`). Added `writeActionResult` and `writeChatLog` methods.
+- **Lessons**: Use `contexts` list to retrieve `sessionId` for logging when state object lacks it. Ensure file operations use correct path resolution.
