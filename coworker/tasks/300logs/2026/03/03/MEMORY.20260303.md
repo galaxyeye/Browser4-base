@@ -19,3 +19,9 @@
 - **Goal**: Reorganize agent logs into a structured directory hierarchy and specific file naming conventions as per `context-recorder.md`.
 - **Outcome**: Updated `AgentStateManager.kt` to write logs to `logs/agent/{year}/{month}/{day}/{agentId}/{runId}/`. Implemented specific file naming for context (`{step}.context.log`), state (`{step}.state.log`), result (`{step}.result.log`), and trace (`{step}.{event}.trace.log`). Added `writeActionResult` and `writeChatLog` methods.
 - **Lessons**: Use `contexts` list to retrieve `sessionId` for logging when state object lacks it. Ensure file operations use correct path resolution.
+
+## Task: Draw Agent State Transformation Diagram
+- **Goal**: Document the state transformation process of the agent, including `ExecutionContext` and `AgentState`, and create a visual diagram.
+- **Outcome**: Created `coworker/docs/agent/state-transformation.md` with a Mermaid state diagram and detailed analysis of `AgentStateManager`, `ExecutionContext`, and `AgentState` lifecycles and transitions.
+- **Lessons**: `AgentStateManager` orchestrates the sequential flow of states, linking immutable instructions (`ExecutionContext`) with mutable world states (`AgentState`).
+

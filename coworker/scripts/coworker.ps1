@@ -24,6 +24,9 @@ param(
     [string]$TaskFile
 )
 
+GH_DEBUG=api      # 打印 API 请求
+# GH_DEBUG=1        # 打印调试信息
+
 # Handle specified TaskFile
 if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
     # Resolve full path before changing location

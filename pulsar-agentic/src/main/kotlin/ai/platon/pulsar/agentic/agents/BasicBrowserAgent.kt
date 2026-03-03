@@ -273,7 +273,7 @@ open class BasicBrowserAgent(
         onWillExtract(options)
 
         val instruction = promptBuilder.initExtractUserInstruction(options.instruction)
-        val context = stateManager.buildIndependentExecutionContext(instruction, "extract")
+        val context = stateManager.buildStandaloneExecutionContext(instruction, "extract")
 
         val result = try {
             val params = context.createExtractParams(options.schema)

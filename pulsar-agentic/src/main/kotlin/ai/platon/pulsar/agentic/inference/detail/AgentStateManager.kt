@@ -207,7 +207,14 @@ class AgentStateManager(
         return context
     }
 
-    suspend fun buildIndependentExecutionContext(instruction: String, event: String): ExecutionContext {
+    /**
+     * Build a standalone execution context for an instruction that is not part of a multistep process. This is used for
+     * one-off instructions that don't require step tracking or inheritance from a base context.
+     *
+     * The step is set to 0 to indicate that it's a standalone context, and the event name can be used to differentiate
+     * it from multistep contexts.
+     * */
+    suspend fun buildStandaloneExecutionContext(instruction: String, event: String): ExecutionContext {
         val context = buildExecutionContext0(instruction, 0, event)
         return context
     }

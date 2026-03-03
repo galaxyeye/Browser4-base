@@ -27,6 +27,9 @@
 COPILOT_NAME_TIMEOUT_SECONDS=60
 COPILOT_RUN_TIMEOUT_SECONDS=6000
 
+# GH_DEBUG=api      # 打印 API 请求
+# GH_DEBUG=1        # 打印调试信息
+
 # Handle optional TaskFile argument
 taskFile="$1"
 
