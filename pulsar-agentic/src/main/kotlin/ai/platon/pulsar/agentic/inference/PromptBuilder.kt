@@ -327,9 +327,7 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 
 ## 视觉信息说明
 
-- 如果你之前使用过截图，你将获得当前页面的截图。
-- 视觉信息是首要事实依据（GROUND TRUTH）：在推理中利用图像来评估你的进展。
-- 当不确定或想获取更多信息时使用截图。
+- 视觉信息如存在，作为首要事实依据（GROUND TRUTH）
 
 ---
 
@@ -530,9 +528,6 @@ $historyJsonl
         val visionInfo = """
 ## 视觉信息
 
-- 在推理中利用图像来评估你的进展。
-- 当不确定或想获取更多信息时使用截图。
-
 [Current page screenshot provided as base64 image]
 
 ---
@@ -633,7 +628,13 @@ ${params.instruction}
         // The 1-based viewport to see.
         val processingViewport = scrollState.processingViewport
         val viewportsTotal = scrollState.viewportsTotal
-
+        val viewPortJson = Pson.toJson(
+            "processingViewport" to processingViewport,
+            "viewportHeight" to viewportHeight,
+            "viewportsTotal" to viewportsTotal,
+            "hiddenTopHeight" to hiddenTopHeight,
+            "hiddenBottomHeight" to hiddenBottomHeight
+        )
         val startY = scrollState.y.coerceAtLeast(0.0)
         val endY = (scrollState.y + viewportHeight).coerceAtLeast(0.0)
         val nanoTree = domState.microTree.toNanoTreeInRange(startY, endY)
@@ -643,11 +644,7 @@ ${params.instruction}
         val content = """
 ## 视口信息
 
-序号: $processingViewport
-视口高度：$viewportHeight
-估算视口总数: $viewportsTotal
-视口之上像素高度: $hiddenTopHeight
-视口之下像素高度: $hiddenBottomHeight
+$viewPortJson
 
 ---
 
@@ -809,7 +806,13 @@ $newTabsJson
         val viewportsTotal = scrollState.viewportsTotal
 
         val interactiveElements = context.agentState.browserUseState.getInteractiveElements()
-
+        val viewPortJson = Pson.toJson(
+            "processingViewport" to processingViewport,
+            "viewportHeight" to viewportHeight,
+            "viewportsTotal" to viewportsTotal,
+            "hiddenTopHeight" to hiddenTopHeight,
+            "hiddenBottomHeight" to hiddenBottomHeight
+        )
         val delta = viewportHeight * 0.5
         val startY = (scrollState.y - delta).coerceAtLeast(0.0)
         val endY = (scrollState.y + viewportHeight + delta).coerceAtLeast(0.0)
@@ -828,11 +831,7 @@ $newTabsMessage
 
 ## 视口信息
 
-序号: $processingViewport
-视口高度：$viewportHeight
-估算视口总数: $viewportsTotal
-视口之上像素高度: $hiddenTopHeight
-视口之下像素高度: $hiddenBottomHeight
+$viewPortJson
 
 - 默认每次查看一个视口高度(viewport height)内的所有 DOM 节点
 - 注意：网页内容变化可能导致视口位置和视口序号随时发生变化。

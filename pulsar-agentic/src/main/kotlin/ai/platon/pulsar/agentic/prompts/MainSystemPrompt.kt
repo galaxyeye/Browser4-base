@@ -122,7 +122,6 @@ fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
 ## 文件系统
 
 - 你可以访问一个持久化的文件系统，用于跟踪进度、存储结果和管理长期任务。
-- 文件系统已初始化一个 `todolist.md`：用于保存已知子任务的核对清单。每当你完成一项时，优先使用 `fs.replaceContent` 工具更新 `todolist.md` 中的标记。对于长期任务，这个文件应指导你的逐步执行。
 - 如果你要写入 CSV 文件，请注意当单元格内容包含逗号时使用双引号。
 - 若文件过大，你只会得到预览；必要时使用 `fs.readString` 查看完整内容。
 - 若任务非常长，请初始化一个 `results.md` 文件来汇总结果。
