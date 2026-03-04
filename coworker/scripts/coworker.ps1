@@ -384,7 +384,7 @@ foreach ($taskRoot in $taskRoots) {
     # Process each task file found in the created directory
     foreach ($file in $files) {
         # 1. Determine the descriptive name based on content (while still in created dir)
-        $renameScript = Join-Path $scriptsDir "rename.ps1"
+        $renameScript = Join-Path $scriptsDir "workers\rename.ps1"
         $descriptiveName = ""
 
         # Read content for fallback title
@@ -401,10 +401,35 @@ foreach ($taskRoot in $taskRoots) {
         Write-LogVerbose "Test-Path renameScript: $(Test-Path $renameScript)"
 
         if (Test-Path $renameScript) {
-            # Execute rename.ps1 script
-            $generatedName = & $renameScript -FilePath $file.FullName
-            if (-not [string]::IsNullOrWhiteSpace($generatedName) -and $generatedName -notmatch "Error") {
-                $descriptiveName = $generatedName
+            # Execute rename.ps1 script with retry
+            $maxRetries = 3
+            $retryCount = 0
+            $success = $false
+            
+            while (-not $success -and $retryCount -lt $maxRetries) {
+                try {
+                    $generatedName = & $renameScript -FilePath $file.FullName
+                    
+                    # check for common failure patterns in output
+                    if (-not [string]::IsNullOrWhiteSpace($generatedName) -and 
+                        $generatedName -notmatch "Error" -and 
+                        $generatedName -notmatch "Timeout") {
+                        $descriptiveName = $generatedName
+                        $success = $true
+                    } else {
+                        Write-LogVerbose "Rename returned invalid name: $generatedName"
+                        $retryCount++
+                        if ($retryCount -lt $maxRetries) { Start-Sleep -Seconds 2 }
+                    }
+                } catch {
+                    $retryCount++
+                    Write-LogMessage "Rename script failed (Attempt $retryCount/$maxRetries): $_" WARN
+                    if ($retryCount -lt $maxRetries) { Start-Sleep -Seconds 2 }
+                }
+            }
+            
+            if (-not $success) {
+                Write-LogMessage "Renaming failed after $maxRetries attempts. Using fallback safe title." WARN
             }
         } else {
             # Fallback to internal function if rename.ps1 is missing

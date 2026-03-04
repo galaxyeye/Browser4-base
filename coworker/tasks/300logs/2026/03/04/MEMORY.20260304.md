@@ -23,3 +23,12 @@
   - Updated `BasicBrowserAgent.kt` to remove the manual `registerCustomTarget` wiring for Skills and MCP, simplifying the `lazyToolManager` initialization.
   - Verified changes by successfully compiling `pulsar-agentic`.
 - **Lessons**: Making frequently used tools native simplifies the agent initialization code and centralizes tool management in the executor. When refactoring tool execution, ensure target object requirements (like `SkillToolTarget`) are correctly met.
+
+## Task: Fix rename logic in coworker
+- **Goal**: Fix the issue where task files in `1created` are not renamed, causing "GH Copilot naming timed out" errors. Implement retry logic for robustness.
+- **Outcome**: 
+  - Updated `coworker/scripts/coworker.ps1` to correct the path to `rename.ps1` (from `scripts/rename.ps1` to `scripts/workers/rename.ps1`).
+  - Added retry logic (3 attempts) in `coworker.ps1` when calling `rename.ps1`.
+  - Updated `coworker/scripts/workers/rename.ps1` to use array arguments for `gh copilot` call to fix quoting issues with prompts containing spaces/newlines.
+  - Updated `coworker/scripts/coworker.sh` to correct the path to `rename.sh`.
+- **Lessons**: Incorrect paths to helper scripts can cause fallbacks to less robust internal logic. Using array arguments in `Start-Process` is safer than string concatenation for complex CLI arguments.

@@ -341,7 +341,7 @@ for file in "${files[@]}"; do
     log_message "Processing $(basename "$file")..." INFO
 
     # 1. Determine the descriptive name based on content
-    renameScript="$scriptsDir/rename.sh"
+    renameScript="$scriptsDir/workers/rename.sh"
     descriptiveName=""
 
     # Read content

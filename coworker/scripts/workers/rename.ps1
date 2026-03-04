@@ -66,14 +66,20 @@ Prompt: $promptSample
     }
 
     try {
-        $promptEscaped = $namingPrompt -replace '"', '\"'
-        $nameArgs = "-- -p `"$promptEscaped`""
+        # Use array for arguments to avoid quoting issues
+        # The prompt might contain special characters, so we should rely on PowerShell's argument handling
+        $copilotArgs = @(
+            'copilot',
+            '--',
+            '-p',
+            $namingPrompt
+        )
 
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
         
         try {
-            $nameProcess = Start-Process -FilePath "gh" -ArgumentList "copilot $nameArgs" -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+            $nameProcess = Start-Process -FilePath "gh" -ArgumentList $copilotArgs -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
         } catch {
             Write-Host "DEBUG: Start-Process failed: $_"
             return $Fallback

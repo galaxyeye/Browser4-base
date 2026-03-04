@@ -3,8 +3,7 @@
 ## Visit-and-Extract Skill
 
 ```shell
-
-browser4-cli agent run --skill=visit-and-extract '
+browser4-cli agent run --skill=visit-and-extract @"
 Go to https://www.amazon.com/dp/B08PP5MSVB
 
 After browser launch:
@@ -17,5 +16,5 @@ After page load: scroll to the middle.
 Summarize the product.
 Extract: product name, price, ratings.
 Find all links containing /dp/.
-'
+"@
 ```
