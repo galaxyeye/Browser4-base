@@ -12,14 +12,8 @@ import ai.platon.pulsar.agentic.inference.detail.ActResultHelper
 import ai.platon.pulsar.agentic.inference.AgentStateManager
 import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.inference.detail.PageStateTracker
-import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
 import ai.platon.pulsar.agentic.model.*
-import ai.platon.pulsar.agentic.skills.SkillContext
-import ai.platon.pulsar.agentic.skills.SkillRegistry
-import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
-import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
-import ai.platon.pulsar.agentic.tools.CustomToolRegistry
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.alwaysTrue
 import ai.platon.pulsar.common.event.EventBus
@@ -51,48 +45,13 @@ open class BasicBrowserAgent(
     protected val domService get() = inference.domService
     protected val promptBuilder = PromptBuilder()
 
-    protected val lazyToolManager by lazy {
-        AgentToolExecutor(_baseDir, this).also { tm ->
-            // Auto-wire MCP servers (pure library mode): domain -> MCPClientManager
-            // This ensures that when MCPToolExecutor is registered in CustomToolRegistry under domain
-            // "mcp.<serverName>", the AgentToolManager has the corresponding target object.
-            runCatching {
-                val registry = MCPPluginRegistry.instance
-                registry.getRegisteredServers().forEach { serverName ->
-                    val domain = "mcp.$serverName"
-                    registry.getClientManager(serverName)?.let { tm.registerCustomTarget(domain, it) }
-                }
-            }.onFailure {
-                // Make wiring best-effort and non-fatal; MCP may be unused.
-                logger.debug("Failed to auto-wire MCP targets: {}", it.message)
-            }
-
-            // Auto-wire Skills as a custom tool domain: skill.run(id, params)
-            runCatching {
-                val skillDomain = "skill"
-                val customRegistry = CustomToolRegistry.instance
-                if (!customRegistry.contains(skillDomain)) {
-                    customRegistry.register(SkillToolExecutor())
-                }
-
-                val ctx = SkillContext(
-                    sessionId = uuid.toString(),
-                    sharedResources = mutableMapOf(
-                        "session" to session,
-                        "agent" to this,
-                        "driver" to activeDriver,
-                    ),
-                )
-                tm.registerCustomTarget(skillDomain, SkillToolTarget(ctx, SkillRegistry.instance))
-            }.onFailure {
-                logger.debug("Failed to auto-wire skill tools: {}", it.message)
-            }
-        }
+    private val lazyToolManager by lazy {
+        AgentToolExecutor(_baseDir, this)
     }
 
     /** The [AgentToolExecutor] used by this agent for tool discovery and execution. */
     val toolExtractor: AgentToolExecutor get() = lazyToolManager
-    protected val fs get() = lazyToolManager.fs
+    protected val fs get() = toolExtractor.fs
 
     protected val pageStateTracker = PageStateTracker(session, config)
     protected val stateManager by lazy { AgentStateManager(this, pageStateTracker) }
@@ -229,7 +188,7 @@ open class BasicBrowserAgent(
         logger.info("🛠️ tool.exec sid={} step={} tool={}", context.sid, context.step, toolCall.pseudoExpression)
 
         return try {
-            val result = lazyToolManager.execute(actionDescription, "resolve, #$step")
+            val result = toolExtractor.execute(actionDescription, "resolve, #$step")
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 

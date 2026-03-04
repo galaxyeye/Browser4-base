@@ -4,7 +4,13 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import ai.platon.pulsar.agentic.common.AgentShell
+import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
+import ai.platon.pulsar.agentic.mcp.MCPToolExecutor
 import ai.platon.pulsar.agentic.model.*
+import ai.platon.pulsar.agentic.skills.SkillContext
+import ai.platon.pulsar.agentic.skills.SkillRegistry
+import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
+import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
 import ai.platon.pulsar.agentic.tools.builtin.*
 import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
@@ -32,6 +38,26 @@ class AgentToolExecutor constructor(
     val shell: AgentShell = AgentShell(baseDir)
     val system: SystemToolExecutor = SystemToolExecutor(this)
 
+    val skillContext: SkillContext by lazy {
+        SkillContext(
+            sessionId = agent.uuid.toString(),
+            sharedResources = mutableMapOf(
+                "session" to session,
+                "agent" to agent,
+                "driver" to driver,
+            ),
+        )
+    }
+    val skillTarget: SkillToolTarget by lazy { SkillToolTarget(skillContext, SkillRegistry.instance) }
+    val skills: SkillToolExecutor = SkillToolExecutor()
+
+    val mcpExecutors: List<MCPToolExecutor> by lazy {
+        val registry = MCPPluginRegistry.instance
+        registry.getRegisteredServers().mapNotNull { serverName ->
+            registry.getClientManager(serverName)?.let { MCPToolExecutor(it) }
+        }
+    }
+
     val domainAlias = mapOf(
         "driver" to "driver",
         "WebDriver" to "driver",
@@ -44,16 +70,19 @@ class AgentToolExecutor constructor(
         "AgentShell" to "shell",
     )
 
-    val concreteExecutors: List<ToolExecutor> = listOf(
-        WebDriverToolExecutor(),
-        BrowserToolExecutor(),
-        FileSystemToolExecutor(),
-        ShellToolExecutor(),
-        AgentToolExecutor(),
-        system
-    )
+    val concreteExecutors: List<ToolExecutor> by lazy {
+        listOf(
+            WebDriverToolExecutor(),
+            BrowserToolExecutor(),
+            FileSystemToolExecutor(),
+            ShellToolExecutor(),
+            AgentToolExecutor(),
+            system,
+            skills
+        ) + mcpExecutors
+    }
 
-    val executor = BasicToolCallExecutor(concreteExecutors)
+    val executor by lazy { BasicToolCallExecutor(concreteExecutors) }
 
     val customTargets: Map<String, Any> get() = _customTargets
 
@@ -137,16 +166,22 @@ class AgentToolExecutor constructor(
             "shell" -> executor.callFunctionOn(tc, shell)
             "agent" -> executor.callFunctionOn(tc, agent)
             "system" -> executor.callFunctionOn(tc, system)
+            "skill" -> executor.callFunctionOn(tc, skillTarget)
             else -> {
-                val customExecutor = CustomToolRegistry.instance.get(tc.domain)
-                if (customExecutor != null) {
-                    val target = _customTargets[tc.domain]
-                        ?: throw UnsupportedOperationException(
-                            "Custom domain '${tc.domain}' is registered but no target object is available."
-                        )
-                    customExecutor.callFunctionOn(tc, target)
+                if (topDomain == "mcp") {
+                    // MCP tools ignore the target object, so we can pass Any()
+                    executor.callFunctionOn(tc, Any())
                 } else {
-                    throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
+                    val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                    if (customExecutor != null) {
+                        val target = _customTargets[tc.domain]
+                            ?: throw UnsupportedOperationException(
+                                "Custom domain '${tc.domain}' is registered but no target object is available."
+                            )
+                        customExecutor.callFunctionOn(tc, target)
+                    } else {
+                        throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
+                    }
                 }
             }
         }
@@ -177,18 +212,24 @@ class AgentToolExecutor constructor(
                 "shell" -> executor.callFunctionOn(tc, shell)
                 "agent" -> executor.callFunctionOn(tc, agent)
                 "system" -> executor.callFunctionOn(tc, system)
+                "skill" -> executor.callFunctionOn(tc, skillTarget)
                 else -> {
-                    // Check if this is a custom tool domain
-                    val customExecutor = CustomToolRegistry.instance.get(tc.domain)
-                    if (customExecutor != null) {
-                        val target = _customTargets[tc.domain]
-                            ?: throw UnsupportedOperationException(
-                                "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
-                                "Use registerCustomTarget() to provide the target object."
-                            )
-                        customExecutor.callFunctionOn(tc, target)
+                    if (topDomain == "mcp") {
+                        // MCP tools ignore the target object, so we can pass Any()
+                        executor.callFunctionOn(tc, Any())
                     } else {
-                        throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
+                        // Check if this is a custom tool domain
+                        val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                        if (customExecutor != null) {
+                            val target = _customTargets[tc.domain]
+                                ?: throw UnsupportedOperationException(
+                                    "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
+                                            "Use registerCustomTarget() to provide the target object."
+                                )
+                            customExecutor.callFunctionOn(tc, target)
+                        } else {
+                            throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
+                        }
                     }
                 }
             }

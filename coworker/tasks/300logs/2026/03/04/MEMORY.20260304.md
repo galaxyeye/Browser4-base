@@ -13,3 +13,13 @@
   - Verified `AgentConfig` in `BrowserPerceptiveAgent.kt` contains no `todo` related configurations.
   - Validated changes by successfully compiling `pulsar-agentic`.
 - **Lessons**: When removing code, always compile dependent modules to catch residual usages that IDEs or simple greps might miss. Check for empty directories after deleting files.
+
+## Task: Native Integration of MCP and Skills in AgentToolExecutor
+- **Goal**: Refactor `AgentToolExecutor` to natively support MCP (Model Context Protocol) and Skills, replacing the previous `registerCustomTarget` wiring mechanism.
+- **Outcome**: 
+  - Updated `AgentToolExecutor.kt` to include `skills` (`SkillToolExecutor`) and `mcpExecutors` (`List<MCPToolExecutor>`) as native properties.
+  - Modified `concreteExecutors` to include these new executors.
+  - Updated `executeToolCall` in `AgentToolExecutor.kt` to handle `skill` and `mcp.*` domains natively, passing `Any()` as target for MCP (since it's ignored) and `skillTarget` for Skills.
+  - Updated `BasicBrowserAgent.kt` to remove the manual `registerCustomTarget` wiring for Skills and MCP, simplifying the `lazyToolManager` initialization.
+  - Verified changes by successfully compiling `pulsar-agentic`.
+- **Lessons**: Making frequently used tools native simplifies the agent initialization code and centralizes tool management in the executor. When refactoring tool execution, ensure target object requirements (like `SkillToolTarget`) are correctly met.
