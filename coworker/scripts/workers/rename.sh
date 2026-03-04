@@ -39,10 +39,7 @@ rename_file() {
     # Truncate prompt if too long for the naming request
     promptSample="${prompt:0:600}"
     
-    namingPrompt="Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name.
-    Title: $title
-    Description: $description
-    Prompt: $promptSample"
+    namingPrompt="Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name. Title: $title Description: $description Prompt: $promptSample"
     
     # Call gh copilot to generate name
     generatedName=$(gh copilot -p "$namingPrompt" --allow-all-tools --allow-all-paths 2>/dev/null)
@@ -110,10 +107,7 @@ fi
 # Truncate prompt if too long for the naming request
 promptSample="${prompt:0:600}"
 
-namingPrompt="Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name.
-Title: $title
-Description: $description
-Prompt: $promptSample"
+namingPrompt="Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name. Title: $title Description: $description Prompt: $promptSample"
 
 # Call gh copilot to generate name
 # We match the syntax used in coworker.sh: gh copilot -p "..."

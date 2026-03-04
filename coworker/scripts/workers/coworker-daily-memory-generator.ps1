@@ -128,7 +128,7 @@ $maxBatchSize = 15000 # Adjust as needed for token limits
 foreach ($task in $tasks) {
     # Re-add the delimiter removed by split
     $taskStr = "=== TASK: $task"
-    
+
     if (($currentBatch.Length + $taskStr.Length) -gt $maxBatchSize -and $currentBatch.Length -gt 0) {
         $batches += $currentBatch
         $currentBatch = $taskStr
@@ -146,7 +146,7 @@ for ($i = 0; $i -lt $batches.Count; $i++) {
     $batchContent = $batches[$i]
     $isFirstBatch = ($i -eq 0)
     $batchNum = $i + 1
-    
+
     Write-Host "Processing batch $batchNum of $($batches.Count)..."
 
     if ($isFirstBatch) {
@@ -213,81 +213,6 @@ CONSTRAINTS:
         "`"$safePrompt`"",
         '--allow-all-tools'
     )
-    
+
     Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
 }
-
-Write-Host "Memory generation task completed."
-exit 0
-
-# Original code commented out for reference (can be removed later)
-<#
-# Construct Prompt
-$prompt = @"
-You are an AI assistant helping to generate a daily memory summary for a developer coworker.
-Based on the following development logs, generate the content for the daily memory file and save it to: $memoryFile
-
-SPECIFICATION:
-# MEMORY.$compactDate.md
-## Daily Memory - $dateStr
-
-### Tasks Executed
-- ...
-
-### Execution Quality Review
-- What worked well
-- What was inefficient
-
-### Issues Encountered
-- ...
-
-### Root Cause Analysis
-- ...
-
-### Process Improvement Insight
-- At least one concrete improvement for future execution
-
-CONSTRAINTS:
-- Use English only.
-- Be concise but insightful.
-- Focus on structural issues and improvements.
-- Do NOT just list logs, synthesize them.
-- Use the `create` tool to write the file directly. If the file exists, overwrite it (I have already backed it up).
-
-LOGS:
-$logContent
-"@
-
-# Truncate if too long (approx check, limit depends on OS/shell but 20k is safeish)
-if ($prompt.Length -gt 20000) {
-    Write-Warning "Logs are too long ($($prompt.Length) chars). Truncating..."
-    $prompt = $prompt.Substring(0, 20000) + " ... [Truncated]"
-}
-
-# Check if memory file exists
-if (Test-Path $memoryFile) {
-    Write-Warning "Memory file $memoryFile already exists."
-    # Backup existing
-    $backupPath = "$memoryFile.bak"
-    Move-Item -Path $memoryFile -Destination $backupPath -Force
-    Write-Host "Backed up existing memory file to $backupPath"
-}
-
-Write-Host "Calling gh copilot..."
-
-# Use Start-Process to handle arguments safely, similar to coworker.ps1
-$safePrompt = $prompt.Replace('"', '\"')
-$copilotArgList = @(
-    'copilot',
-    '--',
-    '-p',
-    "`"$safePrompt`"",
-    '--allow-all-tools'
-)
-
-# Use direct invocation with -- to separate flags
-# & gh copilot -- -p $prompt --allow-all-tools
-Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
-
-Write-Host "Memory generation task completed."
-#>

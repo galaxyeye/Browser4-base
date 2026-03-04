@@ -1,34 +1,29 @@
 # Daily Memory - 2026-03-04
 
-## Task: Remove ToDoManager
-- **Goal**: Remove `ToDoManager` class and its usages from `BrowserPerceptiveAgent` and documentation, as it is no longer needed.
-- **Outcome**: Deleted `pulsar-agentic/src/main/kotlin/ai/platon/pulsar/agentic/inference/todo/ToDoManager.kt`. Removed `ToDoManager` usage and related code blocks (initialization, progress updates, task completion) from `BrowserPerceptiveAgent.kt`. Removed `todo*` configuration flags from `AgentConfig` in `BrowserPerceptiveAgent.kt`. Updated `docs-dev/agentic/AgentFileSystem-Review-2026-02-09.md` to remove reference.
-- **Lessons**: Careful code removal requires checking for side effects (compilation errors) and verifying all usages, including documentation.
+## Task: Remove ToDoManager & Cleanup
+- **Goal**: Remove `ToDoManager` class, usages, and configuration from codebase and documentation.
+- **Outcome**: Deleted `ToDoManager.kt` and empty `todo` directory. Removed all references, initialization, and `todo*` config flags from `BrowserPerceptiveAgent.kt`. Fixed residual compilation error in `ObserveActBrowserAgent.kt` (removed `updateTodo` call). Updated `docs-dev/agentic/AgentFileSystem-Review-2026-02-09.md`. Validated via `pulsar-agentic` compilation.
+- **Lessons**: Large refactors require compilation to catch residual usages that static analysis might miss.
 
-## Task: Cleanup and Verify ToDoManager Removal
-- **Goal**: Complete the removal of `ToDoManager` by deleting empty directories and fixing residual build errors.
-- **Outcome**: 
-  - Removed empty directory `pulsar-agentic/src/main/kotlin/ai/platon/pulsar/agentic/inference/todo`.
-  - Fixed compilation error in `ObserveActBrowserAgent.kt` by removing call to deleted method `updateTodo`.
-  - Verified `AgentConfig` in `BrowserPerceptiveAgent.kt` contains no `todo` related configurations.
-  - Validated changes by successfully compiling `pulsar-agentic`.
-- **Lessons**: When removing code, always compile dependent modules to catch residual usages that IDEs or simple greps might miss. Check for empty directories after deleting files.
+## Task: Native MCP & Skills in AgentToolExecutor
+- **Goal**: Refactor `AgentToolExecutor` to natively support MCP and Skills, replacing `registerCustomTarget` wiring.
+- **Outcome**: Updated `AgentToolExecutor.kt` to include `skills` (`SkillToolExecutor`) and `mcpExecutors` as native properties. Modified `executeToolCall` to handle `skill` and `mcp.*` domains directly. Simplified `BasicBrowserAgent.kt` by removing manual registration code. Verified via build.
+- **Lessons**: Native integration simplifies agent initialization and centralizes tool management.
 
-## Task: Native Integration of MCP and Skills in AgentToolExecutor
-- **Goal**: Refactor `AgentToolExecutor` to natively support MCP (Model Context Protocol) and Skills, replacing the previous `registerCustomTarget` wiring mechanism.
-- **Outcome**: 
-  - Updated `AgentToolExecutor.kt` to include `skills` (`SkillToolExecutor`) and `mcpExecutors` (`List<MCPToolExecutor>`) as native properties.
-  - Modified `concreteExecutors` to include these new executors.
-  - Updated `executeToolCall` in `AgentToolExecutor.kt` to handle `skill` and `mcp.*` domains natively, passing `Any()` as target for MCP (since it's ignored) and `skillTarget` for Skills.
-  - Updated `BasicBrowserAgent.kt` to remove the manual `registerCustomTarget` wiring for Skills and MCP, simplifying the `lazyToolManager` initialization.
-  - Verified changes by successfully compiling `pulsar-agentic`.
-- **Lessons**: Making frequently used tools native simplifies the agent initialization code and centralizes tool management in the executor. When refactoring tool execution, ensure target object requirements (like `SkillToolTarget`) are correctly met.
+## Task: Fix Coworker Rename Logic
+- **Goal**: Fix `1created` task file renaming timeouts and script paths.
+- **Outcome**: Corrected paths to `rename.ps1`/`rename.sh` in `coworker.ps1`/`coworker.sh` (pointed to `workers/` subdir). Added retry logic (3 attempts) for renaming operations. Updated `rename.ps1` to use array arguments for `gh copilot` calls to resolve quoting issues with complex prompts.
+- **Lessons**: Verify relative paths for helper scripts; use array arguments for PowerShell CLI commands to handle special characters safely.
 
-## Task: Fix rename logic in coworker
-- **Goal**: Fix the issue where task files in `1created` are not renamed, causing "GH Copilot naming timed out" errors. Implement retry logic for robustness.
-- **Outcome**: 
-  - Updated `coworker/scripts/coworker.ps1` to correct the path to `rename.ps1` (from `scripts/rename.ps1` to `scripts/workers/rename.ps1`).
-  - Added retry logic (3 attempts) in `coworker.ps1` when calling `rename.ps1`.
-  - Updated `coworker/scripts/workers/rename.ps1` to use array arguments for `gh copilot` call to fix quoting issues with prompts containing spaces/newlines.
-  - Updated `coworker/scripts/coworker.sh` to correct the path to `rename.sh`.
-- **Lessons**: Incorrect paths to helper scripts can cause fallbacks to less robust internal logic. Using array arguments in `Start-Process` is safer than string concatenation for complex CLI arguments.
+## Task: Create MCPToolController Integration Tests
+- **Goal**: Create comprehensive tests for `MCPToolController` covering all commands in the CLI switch statement.
+- **Outcome**: Created `pulsar-rest/src/test/kotlin/ai/platon/pulsar/rest/openapi/controller/MCPToolControllerTest.kt`. Implemented tests for session management (`open_session`, `close_session`, `delete_session_data`, etc.), generic driver commands (`click`, `fill`, `navigate`, etc.), and explicit tool mappings (`page_title`, `switch_tab`, `tab_new`, etc.). Verified 16 tests pass successfully using `mvnw`.
+- **Lessons**: When testing Kotlin with Mockito, handle non-nullable parameters carefully by creating custom helpers like `anyToolCall()` or `capture()` that return dummy non-null values, as standard `any()` returns null and causes Kotlin NPEs before Mockito interception. Also, mocking properties of data classes (like `val driver`) works if the class is mockable (open or mockito-inline).
+
+## Task: Fix Coworker Rename Logic (Correction)
+- **Goal**: Fix regression in `rename.ps1` where `gh copilot` failed with "too many arguments" due to incorrect array argument handling in previous attempt.
+- **Outcome**: Refactored `rename.ps1` to pass the prompt as a single string with explicit quoting and flattened the prompt to a single line. This resolved the argument parsing issue. Also updated `rename.sh` to flatten the prompt for consistency. Verified `rename.ps1` execution with a test file.
+- **Lessons**: PowerShell's `Start-Process -ArgumentList` with arrays can behave unexpectedly with complex strings; passing a pre-quoted string is more robust for CLI tools like `gh`.
+
+
+

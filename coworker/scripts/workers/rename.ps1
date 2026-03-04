@@ -51,13 +51,7 @@ function Get-GeneratedTaskName {
         $promptSample = $promptSample.Substring(0, 600)
     }
 
-    $namingPrompt = @"
-Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name.
-DO NOT use any tools. DO NOT search for files. Just use the provided text.
-Title: $title
-Description: $description
-Prompt: $promptSample
-"@
+    $namingPrompt = "Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name. DO NOT use any tools. DO NOT search for files. Just use the provided text. Title: $title Description: $description Prompt: $promptSample"
 
     $copilotNameTimeoutSeconds = 120
     $Fallback = $title -replace '[\\/*?:"<>|]', '_'
@@ -66,23 +60,20 @@ Prompt: $promptSample
     }
 
     try {
-        # Use array for arguments to avoid quoting issues
-        # The prompt might contain special characters, so we should rely on PowerShell's argument handling
-        $copilotArgs = @(
-            'copilot',
-            '--',
-            '-p',
-            $namingPrompt
-        )
+        # Escape double quotes in the prompt
+        $safePrompt = $namingPrompt.Replace('"', '\"')
+        
+        # Use single string for arguments to ensure correct quoting
+        $argsString = "copilot -- -p `"$safePrompt`""
 
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
         
         try {
-            $nameProcess = Start-Process -FilePath "gh" -ArgumentList $copilotArgs -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+            $nameProcess = Start-Process -FilePath "gh" -ArgumentList $argsString -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
         } catch {
             Write-Host "DEBUG: Start-Process failed: $_"
-            return $Fallback
+            return "Error: Start-Process failed"
         }
         
         try {
@@ -91,7 +82,7 @@ Prompt: $promptSample
             if (-not $nameProcess.HasExited) {
                  & "Stop-Process" -Id $nameProcess.Id -Force -ErrorAction SilentlyContinue
                  Write-Host "DEBUG: Timeout waiting for process"
-                 return $Fallback
+                 return "Error: Timeout"
             }
         }
 
@@ -126,11 +117,18 @@ Prompt: $promptSample
             }
         }
 
+        if (Test-Path $nameStdErr) {
+             $errContent = Get-Content $nameStdErr
+             if ($errContent) {
+                 Write-Host "DEBUG: GH Stderr: $errContent"
+             }
+        }
+
         Remove-Item $nameStdOut -ErrorAction SilentlyContinue
         Remove-Item $nameStdErr -ErrorAction SilentlyContinue
 
         if ([string]::IsNullOrWhiteSpace($rawName)) {
-            return $Fallback
+            return "Error: Empty output"
         }
 
         $normalized = $rawName.Trim()
@@ -143,14 +141,14 @@ Prompt: $promptSample
         }
 
         if ([string]::IsNullOrWhiteSpace($normalized)) {
-            return $Fallback
+            return "Error: Empty normalized name"
         } else {
             return $normalized
         }
     }
     catch {
         Write-Host "DEBUG: Exception: $_"
-        return $Fallback
+        return "Error: Exception $_"
     }
 }
 
