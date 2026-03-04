@@ -20,27 +20,14 @@ class ObserveActBrowserAgent constructor(
         // Execute the tool call with enhanced error handling
         val actResult = act(action)
 
-        val sid = context.sid
-        val step = context.step
-        val stepStartTime = context.stepStartTime
-        val tcResult = actResult.detail?.toolCallResult
-        val method = actResult.detail?.actionDescription?.toolCall?.method
-        val preview = tcResult?.evaluate?.preview
-
         if (actResult.isComplete) {
             onTaskCompletion(actResult, context)
             return StepProcessingResult(context, consecutiveNoOps, true)
         }
 
-        if (actResult.success) {
-
-            updatePerformanceMetrics(step, stepStartTime, true)
-
-            logger.info("🏁 step.done sid={} step={} method={} result={}", sid, step, method, preview)
-        } else {
+        if (!actResult.success) {
             consecutiveNoOps++
             val stop = handleConsecutiveNoOps(consecutiveNoOps, context)
-            updatePerformanceMetrics(step, stepStartTime, false)
             if (stop) {
                 return StepProcessingResult(context, consecutiveNoOps, true)
             }

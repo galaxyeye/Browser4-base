@@ -60,7 +60,6 @@ data class AgentConfig(
     val logInferenceToFile: Boolean = true,
     val enableDebugMode: Boolean = false,
     val enablePerformanceMetrics: Boolean = true,
-    val memoryCleanupIntervalSteps: Int = 50,
     val maxHistorySize: Int = 100,
     val enableAdaptiveDelays: Boolean = true,
     val enablePreActionValidation: Boolean = true,
@@ -101,7 +100,6 @@ open class BrowserPerceptiveAgent(
 
     protected val actionValidator = ActionValidator()
 
-    protected val performanceMetrics = PerformanceMetrics()
     protected val stepExecutionTimes = ConcurrentHashMap<Int, Long>()
 
     // New components for better separation of concerns
@@ -114,7 +112,6 @@ open class BrowserPerceptiveAgent(
         maxRetries = config.maxRetries, baseDelayMs = config.baseRetryDelayMs, maxDelayMs = config.maxRetryDelayMs
     )
     protected val retryCounter = AtomicInteger(0)
-    protected val checkpointManager = CheckpointManager(baseDir.resolve("checkpoints"))
 
     // Mutex for memory cleanup operations to replace synchronized blocks
     private val memoryCleanupMutex = Mutex()
@@ -458,20 +455,6 @@ open class BrowserPerceptiveAgent(
         if (logger.isDebugEnabled) {
             logger.debug("🧩 dom={}", DomDebug.summarizeStr(browserUseState.domState, 5))
         }
-        if (step % config.memoryCleanupIntervalSteps == 0) {
-            performMemoryCleanup(context)
-        }
-        if (config.enableCheckpointing && step % config.checkpointIntervalSteps == 0) {
-            runCatching { saveCheckpoint(context) }.onFailure { e ->
-                    logger.warn(
-                        "💾❌ checkpoint.save.fail sid={} step={} msg={}",
-                        sid,
-                        step,
-                        e.message
-                    )
-                }
-        }
-
         return context
     }
 
@@ -613,9 +596,6 @@ open class BrowserPerceptiveAgent(
     ): StepProcessingResult {
         var consecutiveNoOps = noOpsIn
 
-        // val context = prepareStep(action, ctxIn, consecutiveNoOps)
-
-        // Observe
         val actionDescription = generateActions(context)
 
         if (actionDescription.isReallyComplete) {
@@ -629,11 +609,9 @@ open class BrowserPerceptiveAgent(
 
         val sid = context.sid
         val step = context.step
-        val stepStartTime = context.stepStartTime
 
         if (detailedActResult != null) {
             stateManager.updateAgentState(context, detailedActResult)
-            updatePerformanceMetrics(step, context.stepStartTime, true)
 
             val tcResult = detailedActResult.toolCallResult
             val method = detailedActResult.actionDescription.toolCall?.method
@@ -642,7 +620,6 @@ open class BrowserPerceptiveAgent(
         } else {
             consecutiveNoOps++
             val stop = handleConsecutiveNoOps(consecutiveNoOps, context)
-            updatePerformanceMetrics(step, stepStartTime, false)
             if (stop) return StepProcessingResult(context, consecutiveNoOps, true)
         }
 
@@ -840,10 +817,6 @@ open class BrowserPerceptiveAgent(
             sb.appendLine("FINAL_SUMMARY:")
             sb.appendLine(finalResp.content)
             sb.appendLine()
-            sb.appendLine("PERFORMANCE_METRICS:")
-            sb.appendLine("Total steps: ${performanceMetrics.totalSteps}")
-            sb.appendLine("Successful actions: ${performanceMetrics.successfulActions}")
-            sb.appendLine("Failed actions: ${performanceMetrics.failedActions}")
             sb.appendLine("Retry count: ${retryCounter.get()}")
             val failureCounts = circuitBreaker.getFailureCounts()
             sb.appendLine("Circuit breaker - LLM failures: ${failureCounts[CircuitBreaker.FailureType.LLM_FAILURE]}")
@@ -888,13 +861,6 @@ open class BrowserPerceptiveAgent(
         return min(exponentialDelay, 5000L)
     }
 
-    protected fun updatePerformanceMetrics(step: Int, stepStartTime: Instant, success: Boolean) {
-        val stepTime = Duration.between(stepStartTime, Instant.now()).toMillis()
-        stepExecutionTimes[step] = stepTime
-        performanceMetrics.totalSteps += 1
-        if (success) performanceMetrics.successfulActions += 1 else performanceMetrics.failedActions += 1
-    }
-
     protected fun calculateAdaptiveDelay(): Long {
         if (!config.enableAdaptiveDelays) return 100L
         val avgStepTime = stepExecutionTimes.values.takeIf { it.isNotEmpty() }?.average() ?: 0.0
@@ -902,42 +868,6 @@ open class BrowserPerceptiveAgent(
             avgStepTime < 500 -> 50L
             avgStepTime < 2000 -> 100L
             else -> 200L
-        }
-    }
-
-    protected fun saveCheckpoint(context: ExecutionContext) {
-        if (!config.enableCheckpointing) return
-        val checkpoint = AgentCheckpoint(
-            sessionId = context.sessionId,
-            currentStep = context.step,
-            instruction = context.instruction,
-            targetUrl = context.targetUrl,
-            recentStateHistory = stateHistory.states.takeLast(RECENT_STATE_HISTORY_SIZE)
-                .map { AgentStateSnapshot.from(it) },
-            totalSteps = performanceMetrics.totalSteps,
-            successfulActions = performanceMetrics.successfulActions,
-            failedActions = performanceMetrics.failedActions,
-            failureCounts = circuitBreaker.getFailureCounts().mapKeys { it.key.name },
-            configSnapshot = mapOf(
-                "maxSteps" to config.maxSteps,
-                "maxRetries" to config.maxRetries,
-                "consecutiveNoOpLimit" to config.consecutiveNoOpLimit
-            ),
-            metadata = mapOf(
-                "agentUuid" to uuid, "startTime" to startTime
-            )
-        )
-        val path = checkpointManager.save(checkpoint)
-        logger.info("💾 checkpoint.saved sid={} step={} path={}", context.sid, context.step, path)
-        checkpointManager.pruneOldCheckpoints(context.sessionId, config.maxCheckpointsPerSession)
-    }
-
-    protected fun shouldTerminate(actionDescription: ActionDescription? = null): Boolean {
-        return when {
-            actionDescription == null -> false
-            actionDescription.isComplete -> true
-            actionDescription.expression?.contains("agent.done") == true -> true
-            else -> false
         }
     }
 
