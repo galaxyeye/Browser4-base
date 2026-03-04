@@ -542,27 +542,28 @@ $userInstructions
         val headingSize = 2
         val tailingSize = 8
         val totalSize = headingSize + tailingSize
-        val result = when {
+        val stateHistory = when {
             history.size <= totalSize -> history
             else -> history.take(headingSize) + history.takeLast(tailingSize)
         }
 
-        fun compactAgentState(agentState: AgentState): AgentState {
-            return agentState.copy(
-                instruction = Strings.compactInline(agentState.instruction, 20)
-            )
-        }
-
-        val historyJsonList = result
-            .map { compactAgentState(it) }
-            .joinToString("\n") { pulsarObjectMapper().writeValueAsString(it) }
+        val historyJsonl = stateHistory.joinToString("\n") { Pson.toJson(mapOf(
+                "step" to it.step,
+                "toolCall" to it.actionDescription?.pseudoExpression,
+                "nextGoal" to it.nextGoal,
+                "thinking" to it.thinking,
+                "exception" to it.exception?.message,
+                "summary" to it.summary,
+                "keyFindings" to it.keyFindings
+            )) }
 
         val msg = """
-## 智能体历史
+## 执行轨迹（按序）
+
 (仅保留 $totalSize 步骤)
 
 <agent_history>
-$historyJsonList
+$historyJsonl
 </agent_history>
 
 ---
@@ -948,10 +949,10 @@ ${nanoTree.lazyJson}
         return instruction
     }
 
-    fun buildSummaryPrompt(goal: String, stateHistory: AgentHistory): Pair<String, String> {
+    fun buildSummaryPrompt(goal: String, agentHistory: AgentHistory): Pair<String, String> {
         val system = "你是总结助理，请基于执行轨迹对原始目标进行总结，输出 JSON。"
 
-        val history = stateHistory.states.joinToString("\n") { Pson.toJson(it) }
+        val history = buildAgentStateHistoryMessage(agentHistory)
 
         val user = """
 ## 原始目标
@@ -959,11 +960,7 @@ $goal
 
 ---
 
-## 执行轨迹（按序）
-
 $history
-
----
 
 ## 输出要求
 
