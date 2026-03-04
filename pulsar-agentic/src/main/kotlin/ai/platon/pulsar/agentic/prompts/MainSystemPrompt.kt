@@ -171,7 +171,7 @@ fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
 - arguments 必须按工具方法声明顺序排列
 
 输出格式：
-${buildResponseSchema(legacy = true)}
+${buildResponseSchema()}
 
 ### 任务完成输出
 

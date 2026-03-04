@@ -64,9 +64,9 @@ class PromptBuilder() {
         }
 
         val TOOL_CALL_RULE_CONTENT = """
- 遵循以下规则使用浏览器和浏览网页：
+浏览器使用指南：
 
-- domain: 方法域，如 driver, browser, skill.debug.scraping 等，可以用点号区分子域
+- domain: 工具域，如 driver, browser, skill.debug.scraping 等，可用点号区分子域
 - method: 方法名，如 click, fill, extract 等
 - 输出结果中，定位节点时 `selector` 字段始终填入 `locator` 的值
 - 确保 `locator` 与对应的可交互元素列表中的 `locator` 完全匹配，或者与无障碍树节点属性完全匹配，准确定位该节点
@@ -94,47 +94,44 @@ class PromptBuilder() {
     """.trimIndent()
 
         val TOOL_CALL_RULE_CONTENT_EN = """
-Follow the rules below when using the browser and browsing web pages:
+Browser use guidelines:
 
-* **domain**: the method domain, such as `driver`, `browser`, etc.
-* In the output, when locating a node, always set the `selector` field to the value of `locator`. Do not provide parameters that cannot be determined.
-* Ensure that the `locator` exactly matches the `locator` of the corresponding interactive element in the element list, or exactly matches the attributes of the accessibility tree node, so that the node is located precisely.
-* When outputting in JSON format, do **not** include any extra text.
-* Obtain information about all open tabs from the **`## Browser State`** section.
-* When information retrieval is required, open a **new tab** instead of reusing the current one.
-* Use `click(selector, "Ctrl")` to open a link in a **new tab**. On macOS, the system will automatically map `Ctrl` to `Meta`.
-* If the target page opens in a **new tab**, switch to it using `browser.switchTab(tabId: String)`. Obtain the `tabId` from the **`## Browser State`** section.
-* For keyboard actions (e.g., “press Enter”), use the `press` method (parameters such as `"A"`, `"Enter"`, `"Space"`). Capitalize the first letter of special keys. Do not simulate clicking keys on an on-screen keyboard.
-* Only capitalize the first letter for special keys (e.g., Enter, Tab, Escape).
-* Note: users may have difficulty distinguishing between buttons and links.
-* If an expected element is missing, try refreshing the page, scrolling, or going back to the previous page.
+* **domain**: Method domain, such as `driver`, `browser`, `skill.debug.scraping`, etc. Subdomains may be separated by dots.
+* **method**: Method name, such as `click`, `fill`, `extract`, etc.
+* In output results, when locating a node, always set the `selector` field to the value of `locator`.
+* Ensure the `locator` exactly matches the corresponding `locator` in the interactive element list, or fully matches the accessibility tree node attributes, to precisely identify the target node.
+* When outputting JSON, do not include any additional text.
+* Obtain information about all open tabs from the `## Browser State` section.
+* When searching for information, open a new tab instead of reusing the current one.
+* Use `click(selector, "Ctrl")` to open links in a **new tab**. On macOS, `Ctrl` is automatically mapped to `Meta`.
+* If the target page opens in a **new tab**, use `browser.switchTab(tabId: String)` to switch to it. Retrieve `tabId` from the `## Browser State` section.
+* If an expected element is missing, attempt to refresh the page, scroll, or navigate back.
 * When entering text into a field:
 
-  1. No need to scroll or focus first (handled internally by the tool).
-  2. You may need to complete the action by:
-
-     1. pressing Enter,
-     2. clicking an explicit search button, or
-     3. selecting an option from a dropdown.
-* If the operation sequence is interrupted after filling an input field, it is usually because the page has changed (e.g., suggestion options appear below the input).
-* If a CAPTCHA appears, try to solve it if possible; if it cannot be solved, activate a fallback strategy (e.g., switch to another site or revert to the previous step).
-* If the page changes due to actions such as text input, determine whether newly appeared elements need to be interacted with (e.g., selecting the correct option from a list).
-* If the previous operation sequence is interrupted due to a page change, complete the remaining unexecuted steps. For example, if you attempted to enter text and click a search button but the click did not execute due to a page change, retry the click in the next step.
-* Always keep the final goal in mind: the content specified in `<user_request>`. If the user specifies explicit steps, those steps always have the highest priority.
-* If `<user_request>` contains specific page information (such as product type, rating, price, location, etc.), try to use filtering features to improve efficiency.
-* Do not log in unless necessary. If credentials are not provided, **never** attempt to log in.
+  1. No need to scroll or focus first (handled internally).
+  2. You may need to: (1) press Enter, (2) explicitly click a search button, or (3) select from a dropdown to complete the action.
+* If the operation sequence is interrupted after filling an input field, it is typically due to page changes (e.g., suggestion options appearing below the field).
+* If a CAPTCHA appears, attempt to resolve it whenever possible; if unsuccessful, apply fallback strategies (e.g., switch sites or go back).
+* If the page changes due to text input or other actions, determine whether interaction with newly appeared elements is required (e.g., selecting the correct option from a list).
+* If a previous operation sequence was interrupted due to page changes, complete the remaining steps. For example, if you attempted to input text and click the search button but the click was not executed (due to page changes), retry the click in the next step.
+* Always keep the ultimate objective in mind: the content within `<user_request>`. If explicit steps are provided, they take highest priority.
+* If `<user_request>` includes specific page criteria (e.g., product type, rating, price, location), use filtering features whenever possible to improve efficiency.
+* Do not log in unless necessary. Never attempt to log in without credentials.
 * Always first determine which of the following two categories the task belongs to:
 
-  1. **Very specific step-by-step instructions**
+  1. **Highly specific step-by-step instructions**
 
-     * Follow these steps precisely, do not skip any, and make every effort to fulfill each requirement.
+     * Follow the steps precisely. Do not skip any. Fulfill each requirement to the best of your ability.
   2. **Open-ended tasks**
 
-     * Plan and complete the task independently and creatively.
-     * If you get stuck in an open-ended task (e.g., due to login or CAPTCHA), reassess the task and try alternative approaches. For example, even if a login pop-up appears, some parts of the page may still be accessible, or the information may be obtained through web search.
+     * Plan autonomously and complete the task creatively.
+     * If blocked during an open-ended task (e.g., login prompt or CAPTCHA), reassess and attempt alternative approaches. For example, even if a login modal appears, parts of the page may still be accessible, or the required information may be obtainable via web search.
 
         """.trimIndent()
 
+        /**
+         * TODO: move to skill
+         * */
         val EXTRACTION_TOOL_NOTE_CONTENT = """
 使用 `agent.extract` 满足高级数据提取要求，仅当 `textContent`, `selectFirstTextOrNull` 不能满足要求时使用。
 
