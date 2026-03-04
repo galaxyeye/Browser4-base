@@ -561,8 +561,6 @@ open class RobustBrowserAgent(
 
     protected fun classifyError(e: Exception, step: Int) = retryStrategy.classifyError(e, "step $step")
 
-    protected fun shouldRetryError(e: Exception) = retryStrategy.shouldRetry(e)
-
     protected fun calculateRetryDelay(attempt: Int) = retryStrategy.calculateDelay(attempt)
 
     protected fun cleanupPartialState(context: ExecutionContext) {
@@ -573,117 +571,6 @@ open class RobustBrowserAgent(
             // pageStateTracker.waitForDOMSettle(1000, 100)
         } catch (e: Exception) {
             logger.warn("⚠️ cleanup.partial.fail sid={} msg={}", context.sid, e.message)
-        }
-    }
-
-    private suspend fun executeToolCall(
-        actionDescription: ActionDescription, context: ExecutionContext
-    ): DetailedActResult? {
-        context.agentState.event = "toolExec"
-
-        val step = context.step
-        val toolCall = actionDescription.toolCall ?: return null
-
-        if (config.enablePreActionValidation && !actionValidator.validateToolCall(toolCall)) {
-            val failures = try {
-                circuitBreaker.recordFailure(CircuitBreaker.FailureType.VALIDATION_FAILURE)
-            } catch (cbError: CircuitBreakerTrippedException) {
-                throw PerceptiveAgentError.PermanentError(cbError.message ?: "Circuit breaker tripped", cbError)
-            }
-            logger.info(
-                "🛑 tool.validate.fail sid={} step={} failures={} locator={} | {}({}) | {}",
-                context.sid,
-                context.step,
-                failures,
-                actionDescription.locator,
-                toolCall.method,
-                toolCall.arguments,
-                actionDescription.cssFriendlyExpression
-            )
-            stateManager.addTrace(
-                context.agentState,
-                event = "validationFailed",
-                items = mapOf("step" to step, "tool" to toolCall.method),
-                message = "🛑 validation-failed"
-            )
-            return null
-        }
-
-        circuitBreaker.recordSuccess(CircuitBreaker.FailureType.VALIDATION_FAILURE)
-
-        return try {
-            logger.info(
-                "🛠️ tool.exec sid={} step={} tool={} args={}",
-                context.sid,
-                context.step,
-                toolCall.method,
-                toolCall.arguments
-            )
-
-            val toolCallResult = lazyToolManager.execute(actionDescription, "resolve, #$step")
-            // Discuss: should we sync browser state after tool call immediately? probably not.
-            // stateManager.syncBrowserUseState(context)
-
-            circuitBreaker.recordSuccess(CircuitBreaker.FailureType.EXECUTION_FAILURE)
-            val summary = "✅ ${toolCall.method} executed successfully"
-
-            stateManager.addTrace(
-                context.agentState, event = "toolExecOk", items = mapOf("tool" to toolCall.method), message = summary
-            )
-            DetailedActResult(actionDescription, toolCallResult, success = true, summary)
-        } catch (e: Exception) {
-            val failures = try {
-                circuitBreaker.recordFailure(CircuitBreaker.FailureType.EXECUTION_FAILURE)
-            } catch (cbError: CircuitBreakerTrippedException) {
-                throw PerceptiveAgentError.PermanentError(cbError.message ?: "Circuit breaker tripped", cbError)
-            }
-            logger.error(
-                "🛠️❌ tool.exec.fail sid={} step={} failures={} msg={}",
-                context.sid,
-                context.step,
-                failures,
-                e.message,
-                e
-            )
-            stateManager.addTrace(
-                context.agentState,
-                event = "toolExecUnexpectedFail",
-                items = mapOf("tool" to toolCall.method),
-                message = "💥 unexpected failure"
-            )
-            null
-        }
-    }
-
-
-
-    protected suspend fun performMemoryCleanup(context: ExecutionContext) {
-        try {
-            memoryCleanupMutex.withLock {
-                // Clean up state history
-                if (stateHistory.states.size > config.maxHistorySize) {
-                    val toRemove = stateHistory.states.size - config.maxHistorySize + HISTORY_CLEANUP_BUFFER
-                    stateManager.clearUpHistory(toRemove)
-                }
-
-                // Clean up step execution times map to prevent unbounded growth
-                if (stepExecutionTimes.size > MAX_STEP_EXECUTION_TIMES_SIZE) {
-                    val sortedSteps = stepExecutionTimes.keys.sorted()
-                    val toRemoveCount = stepExecutionTimes.size - MAX_STEP_EXECUTION_TIMES_SIZE / 2
-                    sortedSteps.take(toRemoveCount).forEach { stepExecutionTimes.remove(it) }
-                }
-            }
-
-            actionValidator.clearCache()
-            logger.info(
-                "🧹 mem.cleanup sid={} step={} historySize={} stepTimesSize={}",
-                context.sid,
-                context.step,
-                stateHistory.size,
-                stepExecutionTimes.size
-            )
-        } catch (e: Exception) {
-            logger.error("🧹❌ mem.cleanup.fail sid={} msg={}", context.sid, e.message, e)
         }
     }
 
