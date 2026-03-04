@@ -225,7 +225,7 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 无障碍树包含页面 DOM 关键节点的主要信息，包括节点文本内容，可见性，可交互性，坐标和尺寸等。
 
 - 除非特别指定，无障碍树仅包含网页当前视口内的节点信息，并包含少量视口外节点，以保证信息充分。
-- 节点唯一定位符 `locator` 由两个整数组成。
+- 节点唯一定位符 `locator`。
 - 对所有节点：`invisible` 默认为 `false`，`scrollable` 默认为 `false`, `interactive` 默认为 `false`。
 - 对于坐标和尺寸，若未显式赋值，则视为 `0`。涉及属性：`clientRects`, `scrollRects`, `bounds`。
 
@@ -273,7 +273,7 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 {
   "elements": [
     {
-      "locator": "Web page node locator, composed of two numbers, such as `0,4`",
+      "locator": "Web page node locator",
       "description": "Description of the current locator and tool selection",
       "screenshotContentSummary": "Summary of the current screenshot content",
       "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
@@ -288,7 +288,7 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 {
   "elements": [
     {
-      "locator": "Web page node locator, composed of two numbers, such as `0,4`",
+      "locator": "Web page node locator",
       "description": "Description of the current locator and tool selection",
       "domain": "Tool domain, such as `driver`",
       "method": "Method name, such as `click`",
