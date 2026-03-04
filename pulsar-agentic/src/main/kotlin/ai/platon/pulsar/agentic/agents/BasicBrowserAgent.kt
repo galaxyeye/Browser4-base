@@ -168,7 +168,7 @@ open class BasicBrowserAgent(
     }
 
     protected suspend fun doObserve(options: ObserveOptions): ObserveActResult {
-        val context = stateManager.getOrCreateActiveContext(options)
+        val context = stateManager.getOrCreateActiveContext(options, "observe")
 
         val result = doObserveActObserve(options, context, options.fromResolve)
 

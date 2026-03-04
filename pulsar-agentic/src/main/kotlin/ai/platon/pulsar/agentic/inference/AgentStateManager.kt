@@ -81,6 +81,13 @@ class AgentStateManager(
     val stateHistory: AgentHistory get() = _stateHistory
     val processTrace: List<ProcessTrace> get() = _processTrace
 
+    suspend fun buildBaseExecutionContext(action: ActionOptions, event: String): ExecutionContext {
+        val context = buildExecutionContext(action.action, 0, event)
+        _baseContext = context
+        setActiveContext(context)
+        return context
+    }
+
     /**
      * Get the currently active context, or create one if it doesn't exist.
      *
@@ -101,7 +108,7 @@ class AgentStateManager(
             val lastActiveContext = getActiveContext()
             val step = lastActiveContext.step + 1
             val context = buildExecutionContext(
-                action.action, step, event = "act-$step",
+                action.action, step, event = event,
                 baseContext = lastActiveContext
             )
             setActiveContext(context)
@@ -110,9 +117,9 @@ class AgentStateManager(
         return _activeContext!!
     }
 
-    suspend fun getOrCreateActiveContext(options: ObserveOptions): ExecutionContext {
+    suspend fun getOrCreateActiveContext(options: ObserveOptions, event: String): ExecutionContext {
         if (_activeContext == null) {
-            _baseContext = buildInitExecutionContext(options, "observe")
+            _baseContext = buildInitExecutionContext(options, event)
             setActiveContext(_baseContext)
         }
         return _activeContext!!
@@ -147,13 +154,7 @@ class AgentStateManager(
         contexts.add(context)
     }
 
-    suspend fun buildBaseExecutionContext(action: ActionOptions, event: String): ExecutionContext {
-        val context = buildExecutionContext(action.action, 0, event)
-        _baseContext = context
-        return context
-    }
-
-    suspend fun buildInitExecutionContext(action: ActionOptions, event: String): ExecutionContext {
+    private suspend fun buildInitExecutionContext(action: ActionOptions, event: String): ExecutionContext {
         val context = buildExecutionContext(action.action, 1, event)
         return context
     }
@@ -165,7 +166,7 @@ class AgentStateManager(
      * @param event The event name for this context (e.g., "observe-init")
      * @return A new ExecutionContext instance initialized with the instruction from the options, step set to 1, and the provided event name.
      * */
-    suspend fun buildInitExecutionContext(
+    private suspend fun buildInitExecutionContext(
         options: ObserveOptions,
         event: String
     ): ExecutionContext {

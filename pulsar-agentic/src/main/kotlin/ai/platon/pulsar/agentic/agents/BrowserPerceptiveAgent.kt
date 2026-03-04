@@ -281,7 +281,7 @@ open class BrowserPerceptiveAgent(
 
 //        val context = options.getContext() ?: stateManager.buildInitExecutionContext(options, "observe")
 //        options.setContext(context)
-        val context = stateManager.getOrCreateActiveContext(options)
+        val context = stateManager.getOrCreateActiveContext(options, "observe")
 
         val ctx = agentScope.coroutineContext.minusKey(Job)
 
@@ -350,7 +350,6 @@ open class BrowserPerceptiveAgent(
     private suspend fun resolveProblemInCoroutine(action: ActionOptions): ResolveResult {
         val instruction = action.action
         val baseContext = stateManager.buildBaseExecutionContext(action, "resolve-init")
-        stateManager.setActiveContext(baseContext)
         val sessionStartTime = baseContext.stepStartTime
 
         // Add start history for better traceability (meta record only)
@@ -582,10 +581,7 @@ open class BrowserPerceptiveAgent(
                 logger.error("💥 resolve.unexpected attempt={} sid={} msg={}", attempt + 1, sid, e.message, e)
 
                 cleanupPartialState(activeContext)
-//                baseContext = stateManager.buildBaseExecutionContext(action, "resolve-init-recovery")
-//                activeContext = baseContext
-                val baseContext = stateManager.buildBaseExecutionContext(action, "resolve-init-recovery")
-                stateManager.setActiveContext(baseContext)
+                stateManager.buildBaseExecutionContext(action, "resolve-init-recovery")
             }
         }
 
