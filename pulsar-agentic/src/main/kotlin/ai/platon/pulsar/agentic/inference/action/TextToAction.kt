@@ -75,7 +75,7 @@ open class TextToAction(
 
         val mapper = jacksonObjectMapper()
         val content = response.content
-        val elements: ObserveResponseElements = mapper.readValue(content)
+        val elements: ModelObserveResponseElements = mapper.readValue(content)
 
         return toActionDescription(actionDescriptions, elements, agentState, response).toActionDescriptions()
     }
@@ -120,20 +120,8 @@ open class TextToAction(
                 )
             }
 
-            contentStart.contains("\"toolCalls\"") -> {
-                val toolCallElements: ToolCallElements = mapper.readValue(content)
-                val observeElements =
-                    toolCallElements.toolCalls.map { toObserveElement(it, modelResponse) } ?: emptyList()
-                ActionDescription(
-                    instruction,
-                    observeElements = observeElements,
-                    agentState = agentState,
-                    modelResponse = modelResponse
-                )
-            }
-
             contentStart.contains("\"elements\"") -> {
-                val elements: ObserveResponseElements = mapper.readValue(content)
+                val elements: ModelObserveResponseElements = mapper.readValue(content)
                 toActionDescription(instruction, elements, agentState, modelResponse)
             }
 
@@ -271,7 +259,7 @@ open class TextToAction(
 
         fun toActionDescription(
             instruction: String,
-            elements: ObserveResponseElements,
+            elements: ModelObserveResponseElements,
             agentState: AgentState,
             response: ModelResponse
         ): ActionDescription {
@@ -284,30 +272,7 @@ open class TextToAction(
             )
         }
 
-        fun toObserveElement(ele: ToolCallElement, response: ModelResponse): ObserveElement {
-            val arguments = ele.arguments
-                ?.mapNotNull { arg -> arg?.get("name") to arg?.get("value") }
-                ?.filter { it.first != null }
-                ?.associate { it.first.toString() to it.second }
-
-            val observeElement = ObserveElement(
-                evaluationPreviousGoal = ele.evaluationPreviousGoal,
-                nextGoal = ele.nextGoal,
-                thinking = ele.thinking,
-
-                toolCall = ToolCall(
-                    domain = ele.domain ?: "",
-                    method = ele.method ?: "",
-                    arguments = arguments?.toMutableMap() ?: mutableMapOf(),
-                ),
-
-                modelResponse = response.content,
-            )
-
-            return observeElement
-        }
-
-        fun toObserveElement(ele: ObserveResponseElement, response: ModelResponse): ObserveElement {
+        fun toObserveElement(ele: ModelObserveResponseElement, response: ModelResponse): ObserveElement {
             val arguments = ele.arguments
                 ?.mapNotNull { arg -> arg?.get("name") to arg?.get("value") }
                 ?.filter { it.first != null }

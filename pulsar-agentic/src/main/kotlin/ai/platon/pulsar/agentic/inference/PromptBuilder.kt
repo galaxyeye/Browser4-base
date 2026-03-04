@@ -2,12 +2,11 @@ package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
-import ai.platon.pulsar.agentic.inference.action.GENERAL_TOOL_CALL_RESULT_PROMPT
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT
 import ai.platon.pulsar.agentic.inference.action.TASK_COMPLETE_SCHEMA_PROMPT
-import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
+import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.prompts.buildMainSystemPromptV1
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
 import ai.platon.pulsar.common.KStrings
@@ -15,8 +14,6 @@ import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.serialize.json.Pson
-import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
-import java.time.LocalDate
 import java.util.*
 
 /**
@@ -39,17 +36,14 @@ class PromptBuilder() {
 
         const val MAX_ACTIONS = 1
 
-        fun buildResponseSchema(legacy: Boolean = true): String {
-            return when {
-                legacy -> buildObserveResultSchema(returnAction = true)
-                else -> GENERAL_TOOL_CALL_RESULT_PROMPT
-            }
+        fun buildResponseSchema(): String {
+            return buildObserveResultSchema(returnAction = true)
         }
 
         /**
          * Build the JSON schema for observing results.
          *
-         * See [ai.platon.pulsar.agentic.inference.action.ObserveResponseElements]
+         * See [ai.platon.pulsar.agentic.inference.action.ModelObserveResponseElements]
          * */
         fun buildObserveResultSchema(returnAction: Boolean): String {
             // English is better for LLM to understand JSON
@@ -69,7 +63,7 @@ class PromptBuilder() {
             return if (returnAction) schema1 else schema2
         }
 
-         val TOOL_CALL_RULE_CONTENT = """
+        val TOOL_CALL_RULE_CONTENT = """
  遵循以下规则使用浏览器和浏览网页：
 
 - domain: 方法域，如 driver, browser, skill.debug.scraping 等，可以用点号区分子域
@@ -498,15 +492,19 @@ $userInstructions
             else -> history.take(headingSize) + history.takeLast(tailingSize)
         }
 
-        val historyJsonl = stateHistory.joinToString("\n") { Pson.toJson(mapOf(
-                "step" to it.step,
-                "toolCall" to it.actionDescription?.pseudoExpression,
-                "nextGoal" to it.nextGoal,
-                "thinking" to it.thinking,
-                "exception" to it.exception?.message,
-                "summary" to it.summary,
-                "keyFindings" to it.keyFindings
-            )) }
+        val historyJsonl = stateHistory.joinToString("\n") {
+            Pson.toJson(
+                mapOf(
+                    "step" to it.step,
+                    "toolCall" to it.actionDescription?.pseudoExpression,
+                    "nextGoal" to it.nextGoal,
+                    "thinking" to it.thinking,
+                    "exception" to it.exception?.message,
+                    "summary" to it.summary,
+                    "keyFindings" to it.keyFindings
+                )
+            )
+        }
 
         val msg = """
 ## 执行轨迹（按序）
@@ -756,7 +754,10 @@ $extractedJson
         }
     }
 
-    fun initObserveUserInstruction(instruction: String?, messages: AgentMessageList = AgentMessageList()): AgentMessageList {
+    fun initObserveUserInstruction(
+        instruction: String?,
+        messages: AgentMessageList = AgentMessageList()
+    ): AgentMessageList {
         val instruction2 = when {
             !instruction.isNullOrBlank() -> instruction
             isZH -> """

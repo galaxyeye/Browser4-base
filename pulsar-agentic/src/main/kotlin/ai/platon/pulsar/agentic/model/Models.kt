@@ -156,8 +156,9 @@ data class ToolCallResult constructor(
 }
 
 data class ObserveElement constructor(
+    val modelResponse: String? = null,
+
     // the DOM node locator, format is `frameIndex,backendNodeId`
-    @Deprecated("Locator is deprecated and will be removed in future versions. Use backendNodeId directly for element identification.")
     val locator: String? = null,
 
     val screenshotContentSummary: String? = null,
@@ -165,8 +166,6 @@ data class ObserveElement constructor(
     val evaluationPreviousGoal: String? = null,
     val nextGoal: String? = null,
     val thinking: String? = null,
-
-    val modelResponse: String? = null,
 
     // Revised fields
     val toolCall: ToolCall? = null,
@@ -224,16 +223,18 @@ data class AgentHistory(
     fun lastOrNull() = states.lastOrNull()
 
     fun toJson(): String {
-        return Pson.toJson(mapOf(
-            "size" to size,
-            "isDone" to isDone,
-            "isSuccess" to isSuccess,
-            "totalSteps" to totalSteps,
-            "hasErrors" to hasErrors,
-            "urls" to urls,
-            "modelOutputs" to modelOutputs,
-            "modelThoughts" to modelThoughts,
-        ))
+        return Pson.toJson(
+            mapOf(
+                "size" to size,
+                "isDone" to isDone,
+                "isSuccess" to isSuccess,
+                "totalSteps" to totalSteps,
+                "hasErrors" to hasErrors,
+                "urls" to urls,
+                "modelOutputs" to modelOutputs,
+                "modelThoughts" to modelThoughts,
+            )
+        )
     }
 
     override fun toString(): String {
@@ -348,16 +349,18 @@ data class ActionDescription constructor(
     }
 
     fun toJson(): String {
-        return Pson.toJson(mapOf(
-            "instruction" to instruction,
-            "isComplete" to isComplete,
-            "errorCause" to errorCause,
-            "summary" to summary,
-            "keyFindings" to keyFindings,
-            "nextSuggestions" to nextSuggestions,
-            "modelResponse" to modelResponse?.content,
-            "exception" to exception?.compactedBrief(),
-        ))
+        return Pson.toJson(
+            mapOf(
+                "instruction" to instruction,
+                "isComplete" to isComplete,
+                "errorCause" to errorCause,
+                "summary" to summary,
+                "keyFindings" to keyFindings,
+                "nextSuggestions" to nextSuggestions,
+                "modelResponse" to modelResponse?.content,
+                "exception" to exception?.compactedBrief(),
+            )
+        )
     }
 
     override fun toString(): String {
