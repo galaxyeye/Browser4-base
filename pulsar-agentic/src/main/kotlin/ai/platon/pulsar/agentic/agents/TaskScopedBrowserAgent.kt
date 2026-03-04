@@ -9,12 +9,12 @@ import java.util.*
 /**
  * An agent delegate that creates a new agent every time starts a new resolve loop.
  * */
-class TaskScopedBrowserPerceptiveAgent(
+class TaskScopedBrowserAgent(
     override val session: AgenticSession
 ) : PerceptiveAgent {
     private val historyAgents = mutableListOf<PerceptiveAgent>()
 
-    private var agent: PerceptiveAgent = BrowserPerceptiveAgent(session)
+    private var agent: PerceptiveAgent = RobustBrowserAgent(session)
 
     override val uuid: UUID = UUID.randomUUID()
 
@@ -79,6 +79,6 @@ class TaskScopedBrowserPerceptiveAgent(
     private fun newContext() {
         agent.close()
         historyAgents.add(agent)
-        agent = BrowserPerceptiveAgent(session)
+        agent = RobustBrowserAgent(session)
     }
 }

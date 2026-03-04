@@ -23,7 +23,7 @@ import kotlinx.serialization.json.JsonPrimitive
  * Tools are discovered dynamically from the [AgentToolExecutor]'s registered executors and their
  * [ai.platon.pulsar.agentic.model.ToolSpec] metadata, keeping registration in sync with the
  * internal agent tool-call infrastructure
- * ([ai.platon.pulsar.agentic.agents.BrowserPerceptiveAgent.executeToolCall] →
+ * ([ai.platon.pulsar.agentic.agents.RobustBrowserAgent.executeToolCall] →
  * [AgentToolExecutor.execute]).
  *
  * @param toolManager The [AgentToolExecutor] to use for tool discovery and execution.

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic
 
-import ai.platon.pulsar.agentic.agents.BrowserPerceptiveAgent
+import ai.platon.pulsar.agentic.agents.RobustBrowserAgent
 import ai.platon.pulsar.agentic.context.AbstractAgenticContext
 import ai.platon.pulsar.agentic.inference.SessionActExecutor
 import ai.platon.pulsar.agentic.model.ActionDescription
@@ -57,9 +57,9 @@ open class BasicAgenticSession(
     override suspend fun plainActs(actionDescriptions: String) = executor.performActs(actionDescriptions)
 
     @Synchronized
-    private fun createCompanionAgent(): BrowserPerceptiveAgent {
+    private fun createCompanionAgent(): RobustBrowserAgent {
         getOrCreateBoundDriver()
-        return BrowserPerceptiveAgent(this).also { registerClosable(it) }
+        return RobustBrowserAgent(this).also { registerClosable(it) }
     }
 }
 
@@ -78,9 +78,9 @@ open class AbstractAgenticQLSession(
     override suspend fun plainActs(actionDescriptions: String) = executor.performActs(actionDescriptions)
 
     @Synchronized
-    private fun createCompanionAgent(): BrowserPerceptiveAgent {
+    private fun createCompanionAgent(): RobustBrowserAgent {
         getOrCreateBoundDriver()
-        return BrowserPerceptiveAgent(this).also { registerClosable(it) }
+        return RobustBrowserAgent(this).also { registerClosable(it) }
     }
 }
 

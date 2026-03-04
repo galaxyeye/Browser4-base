@@ -14,7 +14,6 @@ import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.external.ResponseState
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -85,10 +84,10 @@ data class AgentConfig(
     val maxCheckpointsPerSession: Int = 5,
 )
 
-open class BrowserPerceptiveAgent(
+open class RobustBrowserAgent(
     session: AgenticSession, val maxSteps: Int = 100, config: AgentConfig = AgentConfig(maxSteps = maxSteps)
 ) : BasicBrowserAgent(session, config) {
-    private val logger = getLogger(BrowserPerceptiveAgent::class)
+    private val logger = getLogger(RobustBrowserAgent::class)
     private val slogger = StructuredAgentLogger(logger, config)
 
     protected val closed = AtomicBoolean(false)
@@ -123,15 +122,6 @@ open class BrowserPerceptiveAgent(
         private const val HISTORY_CLEANUP_BUFFER = 10
         private const val RECENT_STATE_HISTORY_SIZE = 20
         private const val MAX_STEP_EXECUTION_TIMES_SIZE = 200
-    }
-
-    constructor(
-        driver: WebDriver,
-        session: AgenticSession,
-        maxSteps: Int = 100,
-        config: AgentConfig = AgentConfig(maxSteps = maxSteps)
-    ) : this(session, maxSteps = maxSteps, config = config) {
-        session.bindDriver(driver)
     }
 
     /**
@@ -210,10 +200,6 @@ open class BrowserPerceptiveAgent(
      * @return Result of the action execution
      */
     override suspend fun act(observe: ObserveResult): ActResult {
-        if (isClosed) {
-            return ActResult(false, "closed", action = observe.agentState.instruction)
-        }
-
         return try {
             val ctx = agentScope.coroutineContext.minusKey(Job)
             withContext(ctx) {
