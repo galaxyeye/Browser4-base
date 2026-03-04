@@ -14,7 +14,7 @@ class TaskScopedBrowserPerceptiveAgent(
 ) : PerceptiveAgent {
     private val historyAgents = mutableListOf<PerceptiveAgent>()
 
-    private var agent: PerceptiveAgent = ObserveActBrowserAgent(session)
+    private var agent: PerceptiveAgent = BrowserPerceptiveAgent(session)
 
     override val uuid: UUID = UUID.randomUUID()
 

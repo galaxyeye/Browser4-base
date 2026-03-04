@@ -577,50 +577,23 @@ open class BrowserPerceptiveAgent(
         val context: ExecutionContext, val consecutiveNoOps: Int, val shouldStop: Boolean
     )
 
-    /**
-     * Execute a single step in the observe-act loop.
-     *
-     * This method represents one iteration of the autonomous agent cycle:
-     * 1. Observe the current page state
-     * 2. Generate an action based on the observation
-     * 3. Execute the action (tool call)
-     * 4. Update state and metrics
-     *
-     * @param action The action options containing the overall goal
-     * @param context The current execution context
-     * @param noOpsIn Number of consecutive no-op steps before this one
-     * @return StepProcessingResult containing updated context and whether to stop
-     */
-    protected open suspend fun step(
-        action: ActionOptions, context: ExecutionContext, noOpsIn: Int
-    ): StepProcessingResult {
+    suspend fun step(action: ActionOptions, context: ExecutionContext, noOpsIn: Int): StepProcessingResult {
         var consecutiveNoOps = noOpsIn
 
-        val actionDescription = generateActions(context)
+        // Execute the tool call with enhanced error handling
+        val actResult = act(action)
 
-        if (actionDescription.isReallyComplete) {
-            onTaskCompletion(actionDescription, context)
+        if (actResult.isComplete) {
+            onTaskCompletion(actResult, context)
             return StepProcessingResult(context, consecutiveNoOps, true)
         }
 
-        consecutiveNoOps = 0
-        // Act
-        val detailedActResult = executeToolCall(actionDescription, context)
-
-        val sid = context.sid
-        val step = context.step
-
-        if (detailedActResult != null) {
-            stateManager.updateAgentState(context, detailedActResult)
-
-            val tcResult = detailedActResult.toolCallResult
-            val method = detailedActResult.actionDescription.toolCall?.method
-            val preview = tcResult?.evaluate?.preview
-            logger.info("🏁 step.done sid={} step={} method={} result={}", sid, step, method, preview)
-        } else {
+        if (!actResult.success) {
             consecutiveNoOps++
             val stop = handleConsecutiveNoOps(consecutiveNoOps, context)
-            if (stop) return StepProcessingResult(context, consecutiveNoOps, true)
+            if (stop) {
+                return StepProcessingResult(context, consecutiveNoOps, true)
+            }
         }
 
         delay(calculateAdaptiveDelay())
