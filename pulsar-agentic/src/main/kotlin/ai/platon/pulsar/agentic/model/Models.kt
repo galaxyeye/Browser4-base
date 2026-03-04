@@ -371,7 +371,7 @@ data class ProcessTrace constructor(
     val agentState: String? = null,
     val expression: String? = null,
     val isComplete: Boolean = false,
-    val tcEvalResult: Any? = null,
+    val tcEvalResult: String? = null,
     val message: String? = null,
     val items: Map<String, Any?> = emptyMap(),
     val timestamp: Instant = Instant.now(),

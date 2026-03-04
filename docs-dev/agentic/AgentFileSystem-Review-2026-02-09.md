@@ -37,7 +37,7 @@
 
 ### 1.2 Consider an event / listener mechanism
 
-Operations such as `writeString`, `deleteFile`, `moveFile` could emit events (e.g., `FileCreated`, `FileDeleted`, `FileMoved`). Consumers like `ToDoManager` could subscribe instead of being tightly coupled. This aligns with the existing `EventBus` / `PulsarEventBus` patterns in the project.
+Operations such as `writeString`, `deleteFile`, `moveFile` could emit events (e.g., `FileCreated`, `FileDeleted`, `FileMoved`). Consumers could subscribe instead of being tightly coupled. This aligns with the existing `EventBus` / `PulsarEventBus` patterns in the project.
 
 ### 1.3 Extract filename-validation logic into a reusable utility
 

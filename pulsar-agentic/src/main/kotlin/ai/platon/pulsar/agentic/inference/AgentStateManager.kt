@@ -376,7 +376,7 @@ class AgentStateManager(
                 isComplete = false,
                 agentState = state.toString(),
                 expression = state?.toolCallResult?.actionDescription?.pseudoExpression,
-                tcEvalResult = state?.toolCallResult?.evaluate?.value,
+                tcEvalResult = state?.toolCallResult?.evaluate?.value?.toString(),
                 items = items,
                 message = msg
             )

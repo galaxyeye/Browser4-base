@@ -4,7 +4,6 @@ import ai.platon.browser4.driver.chrome.dom.util.DomDebug
 import ai.platon.pulsar.agentic.*
 import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.inference.detail.*
-import ai.platon.pulsar.agentic.inference.todo.ToDoManager
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.DetailedActResult
@@ -48,7 +47,6 @@ import kotlin.time.Duration.Companion.minutes
  * - domSettleTimeoutMs / domSettleCheckIntervalMs: Stabilization of DOM before each step.
  * - allowLocalhost / allowedPorts: URL safety policy.
  * - maxSelectorLength / denyUnknownActions: Selector validation & unknown action policy.
- * - todo* flags: Control integration with persistent todolist.md planning & progress.
  */
 data class AgentConfig(
     val maxSteps: Int = 100,
@@ -86,14 +84,6 @@ data class AgentConfig(
     val enableCheckpointing: Boolean = false,
     val checkpointIntervalSteps: Int = 10,
     val maxCheckpointsPerSession: Int = 5,
-    // --- todolist.md integration flags ---
-    val enableTodoWrites: Boolean = true,
-    val todoPlanWithLLM: Boolean = true,
-    val todoWriteProgressEveryStep: Boolean = true,
-    val todoProgressWriteEveryNSteps: Int = 1,
-    val todoMaxProgressLines: Int = 200,
-    val todoEnableAutoCheck: Boolean = true,
-    val todoTagsFromToolCall: Boolean = true,
 )
 
 open class BrowserPerceptiveAgent(
@@ -109,7 +99,6 @@ open class BrowserPerceptiveAgent(
     protected val agentJob = SupervisorJob()
     protected val agentScope = CoroutineScope(Dispatchers.Default + agentJob)
 
-    protected val todo: ToDoManager by lazy { ToDoManager(lazyToolManager.fs, config, uuid, slogger) }
     protected val actionValidator = ActionValidator()
 
     protected val performanceMetrics = PerformanceMetrics()
@@ -496,22 +485,15 @@ open class BrowserPerceptiveAgent(
             driver.navigate(searchURL)
         }
 
-        // Only wait for DOM settle just before collection DOM tree data
-//        val settleMs = action.domSettleTimeoutMs?.toLong()?.coerceAtLeast(0L) ?: config.domSettleTimeoutMs
-//        if (settleMs > 0) {
-//            pageStateTracker.waitForDOMSettle(settleMs, config.domSettleCheckIntervalMs)
-//        }
-
         val instruction = action.action
         val step = ctxIn.step + 1
         val activeContext = stateManager.buildExecutionContext(instruction, step, event, baseContext = ctxIn)
-        // action.setContext(activeContext!!)
         stateManager.setActiveContext(activeContext)
 
         return activeContext
     }
 
-    private suspend fun doResolveProblem(
+    private suspend fun doRunAgentLoop(
         initActionOptions: ActionOptions, initContext: ExecutionContext, attempt: Int
     ): ResolveResult {
         initializeResolution(initContext, attempt)
@@ -571,7 +553,7 @@ open class BrowserPerceptiveAgent(
 
         for (attempt in 0..config.maxRetries) {
             try {
-                val result = doResolveProblem(action, activeContext, attempt)
+                val result = doRunAgentLoop(action, activeContext, attempt)
                 // activeContext = result.context
                 // stateManager.setActiveContext(result.context)
 
@@ -606,14 +588,6 @@ open class BrowserPerceptiveAgent(
             config.maxSteps,
             config.maxRetries
         )
-        if (config.enableTodoWrites) {
-            runCatching {
-                todo.primeIfEmpty(
-                    initContext.instruction,
-                    initContext.targetUrl
-                )
-            }.onFailure { e -> slogger.logError("📝❌ todo.prime.fail", e, sid) }
-        }
     }
 
     data class StepProcessingResult(
@@ -659,7 +633,6 @@ open class BrowserPerceptiveAgent(
 
         if (detailedActResult != null) {
             stateManager.updateAgentState(context, detailedActResult)
-            updateTodo(context, detailedActResult.actionDescription)
             updatePerformanceMetrics(step, context.stepStartTime, true)
 
             val tcResult = detailedActResult.toolCallResult
@@ -773,34 +746,7 @@ open class BrowserPerceptiveAgent(
         }
     }
 
-    protected suspend fun updateTodo(context: ExecutionContext, actResult: ActResult) {
-        val actionDescription = actResult.detail?.actionDescription
-        requireNotNull(actionDescription) { "actionDescription should be set in actResult.additionalVariables" }
-        updateTodo(context, actionDescription)
-    }
 
-    protected suspend fun updateTodo(context: ExecutionContext, actionDescription: ActionDescription) {
-        if (!config.enableTodoWrites) return
-        val sid = context.sessionId
-        val step = context.step
-        val toolCall = actionDescription.toolCall
-        val observeElement = actionDescription.observeElement
-        val progressInterval = config.todoProgressWriteEveryNSteps.coerceAtLeast(1)
-        val writeEveryNStepsHit = progressInterval == 1 || step % progressInterval == 0
-        val shouldWrite = config.todoWriteProgressEveryStep || writeEveryNStepsHit
-        if (!shouldWrite) return
-        val urlNow0 = activeDriver.currentUrl()
-        runCatching {
-            val appended = todo.appendProgress(step, toolCall, observeElement, urlNow0, actionDescription.summary)
-            if (appended) {
-                todo.updateProgressCounter()
-            }
-            if (config.todoEnableAutoCheck && config.todoTagsFromToolCall) {
-                val tags = todo.buildTags(toolCall, urlNow0)
-                if (tags.isNotEmpty()) todo.markPlanItemDoneByTags(tags)
-            }
-        }.onFailure { e -> slogger.logError("📝❌ todo.progress.fail", e, sid) }
-    }
 
     protected suspend fun performMemoryCleanup(context: ExecutionContext) {
         try {
@@ -1016,22 +962,12 @@ open class BrowserPerceptiveAgent(
         logger.info("✅ task.complete sid={} step={} complete={}", sid.take(8), step, true)
         stateManager.addTrace(context.agentState, event = "complete", message = "#${step} complete")
 
-        val files = fs.listOSFiles().filterNot { it.fileName.toString().contains("todolist.md") }
+        val files = fs.listOSFiles()
         if (files.isNotEmpty()) {
             logger.info("Agent data dir: \n{}", fs.dataDir.toUri())
             logger.info("Agent files: \n{}", files.joinToString("\n") { it.toUri().toString() })
         } else {
             logger.info("No files used by this agent")
-        }
-
-        if (config.enableTodoWrites) {
-            runCatching { todo.onTaskCompletion(context.instruction) }.onFailure { e ->
-                    slogger.logError(
-                        "📝❌ todo.complete.fail",
-                        e,
-                        sid
-                    )
-                }
         }
     }
 
