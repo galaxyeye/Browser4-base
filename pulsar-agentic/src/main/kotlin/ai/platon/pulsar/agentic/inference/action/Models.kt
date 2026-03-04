@@ -152,7 +152,7 @@ const val OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT = """
       "screenshotContentSummary": "Summary of the current screenshot content",
       "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
       "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-      "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`.",
+      "thinking": "A structured <think>-style reasoning block.",
       "evaluationPreviousGoal": "A concise one-sentence analysis of the previous action, clearly stating success, failure, or uncertainty.",
       "nextGoal": "A clear one-sentence statement of the next direct goal and action to take."
     }

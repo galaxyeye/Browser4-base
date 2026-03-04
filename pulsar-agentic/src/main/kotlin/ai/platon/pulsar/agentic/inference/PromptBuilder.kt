@@ -262,11 +262,11 @@ class ExtractionSchema(val fields: List<ExtractionField>)
   "elements": [
     {
       "locator": "Web page node locator",
-  "description": "Description of the current locator and tool selection",
-  "screenshotContentSummary": "Summary of the current screenshot content",
-  "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
-  "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-  "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`."
+      "description": "Description of the current locator and tool selection",
+      "screenshotContentSummary": "Summary of the current screenshot content",
+      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
+      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+      "thinking": "A structured <think>-style reasoning block."
     }
   ]
 }
@@ -278,18 +278,18 @@ class ExtractionSchema(val fields: List<ExtractionField>)
     {
       "locator": "Web page node locator",
       "description": "Description of the current locator and tool selection",
-  "domain": "Tool domain, such as `driver`",
-  "method": "Method name, such as `click`",
-  "arguments": [
-    {
-      "name": "Parameter name, such as `selector`",
-      "value": "Parameter value, such as `0,4`"
-    }
-  ],
-  "screenshotContentSummary": "Summary of the current screenshot content",
-  "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
-  "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-  "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`."
+      "domain": "Tool domain, such as `driver`",
+      "method": "Method name, such as `click`",
+      "arguments": [
+        {
+          "name": "Parameter name, such as `selector`",
+          "value": "Parameter value, such as `0,4`"
+        }
+      ],
+      "screenshotContentSummary": "Summary of the current screenshot content",
+      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
+      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+      "thinking": "A structured <think>-style reasoning block."
     }
   ]
 }
