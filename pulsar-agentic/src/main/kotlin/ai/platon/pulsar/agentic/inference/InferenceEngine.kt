@@ -179,13 +179,6 @@ class InferenceEngine(
         // 2) Metadata call -------------------------------------------------------------------
         val metadataMessages = InferencePromptBuilder.buildMetadataPrompt(params, extractedNode)
 
-        val metadataInputFile = log(
-            subdirectory = "extract",
-            filename = filename,
-            requestId = params.requestId,
-            messages = metadataMessages.messages
-        )
-
         val metadataStartTime = Instant.now()
         val metadataResponse = cta.generateResponseRaw(metadataMessages)
 
@@ -195,17 +188,6 @@ class InferenceEngine(
         }.getOrElse { JsonNodeFactory.instance.objectNode() }
         val progress = metaNode.path("progress").asText("")
         val completed = metaNode.path("completed").asBoolean(false)
-
-        val metadataOutputFile: Path = log(
-            subdirectory = "extract",
-            filename = filename,
-            payload = mapOf(
-                "requestId" to params.requestId,
-                "modelResponse" to Pson.toJsonOrNull(metadataResponse.content),
-                "completed" to completed,
-                "progress" to progress,
-            )
-        )
 
         logSummary(
             filename = "extract.jsonl",

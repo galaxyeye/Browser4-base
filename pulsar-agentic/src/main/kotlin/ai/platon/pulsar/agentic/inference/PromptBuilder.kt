@@ -271,11 +271,11 @@ class ExtractionSchema(val fields: List<ExtractionField>)
   "elements": [
     {
       "locator": "Web page node locator",
-      "description": "Description of the current locator and tool selection",
-      "screenshotContentSummary": "Summary of the current screenshot content",
-      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
-      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-      "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`."
+  "description": "Description of the current locator and tool selection",
+  "screenshotContentSummary": "Summary of the current screenshot content",
+  "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
+  "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+  "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`."
     }
   ]
 }
@@ -287,18 +287,18 @@ class ExtractionSchema(val fields: List<ExtractionField>)
     {
       "locator": "Web page node locator",
       "description": "Description of the current locator and tool selection",
-      "domain": "Tool domain, such as `driver`",
-      "method": "Method name, such as `click`",
-      "arguments": [
-        {
-          "name": "Parameter name, such as `selector`",
-          "value": "Parameter value, such as `0,4`"
-        }
-      ],
-      "screenshotContentSummary": "Summary of the current screenshot content",
-      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
-      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-      "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`."
+  "domain": "Tool domain, such as `driver`",
+  "method": "Method name, such as `click`",
+  "arguments": [
+    {
+      "name": "Parameter name, such as `selector`",
+      "value": "Parameter value, such as `0,4`"
+    }
+  ],
+  "screenshotContentSummary": "Summary of the current screenshot content",
+  "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
+  "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+  "thinking": "A structured <think>-style reasoning block that applies the `## 推理规则`."
     }
   ]
 }
@@ -760,14 +760,11 @@ $extractedJson
         val instruction2 = when {
             !instruction.isNullOrBlank() -> instruction
             isZH -> """
-查找页面中可用于后续任何操作的元素，包括导航链接、相关页面链接、章节/子章节链接、按钮或其他交互元素。
-请尽可能全面：如果存在多个可能与未来操作相关的元素，需全部返回。
+根据上下文和当前进展，选择最适合工具推进任务执行，最终目标是完成用户任务。
                 """.trimIndent()
 
             else -> """
-Find elements that can be used for any future actions in the page. These may be navigation links,
-related pages, section/subsection links, buttons, or other interactive elements.
-Be comprehensive: if there are multiple elements that may be relevant for future actions, return all of them.
+Based on the context and current progress, select the most appropriate tool to advance the task toward user completion.
                 """.trimIndent()
         }
 

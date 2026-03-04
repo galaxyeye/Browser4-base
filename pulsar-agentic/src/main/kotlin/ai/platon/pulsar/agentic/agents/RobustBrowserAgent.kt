@@ -218,7 +218,7 @@ open class RobustBrowserAgent(
             }
         } catch (e: CancellationException) {
             logger.info(
-                "🛑 extract.cancelled instruction={}", options.instruction?.take(50) ?: ""
+                "🛑 extract.cancelled instruction={}", options.instruction.take(50)
             )
             ExtractResult(
                 success = false,
