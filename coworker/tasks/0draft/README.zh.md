@@ -1,12 +1,15 @@
 # Coworker Task Drafting Area
 
-请在此处撰写你的任务草稿。本区用于准备中的任务，尚未准备好进入正式执行阶段。
+在此处起草您的任务。本区域用于尚未准备就绪的任务草稿，不供执行。
 
-一旦任务定义完整且可执行，请将其复制到 `1created` 目录，Coworker 会自动开始处理该目录下的任务。
+1. 运行 run_coworker_periodically.ps1以启动
+2. 在此处起草任务
+3. 将已完成草稿的任务复制到 1created目录以执行
+4. 执行后，您可以在 3_1complete中找到结果，在 300logs中找到详细日志
+5. 如有需要，复核结果
+6. 将任务文件从 3_1complete移动到 5approved以便自动进行 git 推送
 
-运行 `run_coworker_periodically.ps1`，Coworker 将自动处理 `1created` 目录中的任务。
-
-任务文件内容格式不限，推荐使用以下模板来规范任务描述：
+任何提示语都可以用来描述一项任务，但为求清晰明了，建议使用以下模板：
 
 ```markdown
 # 任务标题
