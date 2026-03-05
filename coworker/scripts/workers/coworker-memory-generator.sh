@@ -22,23 +22,34 @@ YEAR=$(date -d "$DATE" +%Y)
 MONTH=$(date -d "$DATE" +%m)
 DAY=$(date -d "$DATE" +%d)
 
-LOGS_BASE_DIR="coworker/tasks/300logs"
+LOGS_BASE_DIR="$REPO_ROOT/coworker/tasks/300logs"
 
 invoke_gh_copilot() {
     local PROMPT="$1"
+    local CAPTURE="$2"
     
     # Truncate if too long (approx check)
     if [ ${#PROMPT} -gt 25000 ]; then
-        echo "Warning: Prompt is too long (${#PROMPT} chars). Truncating..."
+        >&2 echo "Warning: Prompt is too long (${#PROMPT} chars). Truncating..."
         PROMPT="${PROMPT:0:25000} ... [Truncated]"
     fi
 
-    echo "Calling gh copilot..."
-    gh copilot -- -p "$PROMPT" --allow-all-tools
+    if [ "$CAPTURE" != "true" ]; then
+        >&2 echo "Calling gh copilot..."
+    fi
+    
+    # We use eval or simple execution?
+    # gh copilot -- -p "..."
+    if [ "$CAPTURE" == "true" ]; then
+        gh copilot -- -p "$PROMPT" --allow-all-tools
+    else
+        gh copilot -- -p "$PROMPT" --allow-all-tools
+    fi
 }
 
+
 if [ "$TYPE" == "daily" ]; then
-    DAILY_SCRIPT="coworker/scripts/workers/coworker-daily-memory-generator.sh"
+    DAILY_SCRIPT="$REPO_ROOT/coworker/scripts/workers/coworker-daily-memory-generator.sh"
     if [ -f "$DAILY_SCRIPT" ]; then
         "$DAILY_SCRIPT" "$DATE"
     else
@@ -238,6 +249,80 @@ PAST MEMORIES:
 $COMBINED_CONTENT
 "
     invoke_gh_copilot "$PROMPT"
+
+elif [ "$TYPE" == "init" ]; then
+    # 1. Define paths
+    MEMORY_DIR="$LOGS_BASE_DIR"
+    MEMORY_YEAR_DIR="$MEMORY_DIR/$YEAR"
+    MEMORY_MONTH_DIR="$MEMORY_YEAR_DIR/$MONTH"
+    MEMORY_DAY_DIR="$MEMORY_MONTH_DIR/$DAY"
+
+    mkdir -p "$MEMORY_YEAR_DIR"
+    mkdir -p "$MEMORY_MONTH_DIR"
+    mkdir -p "$MEMORY_DAY_DIR"
+
+    MEMORY_YEAR_PATH="$MEMORY_YEAR_DIR/MEMORY.$YEAR.md"
+    MEMORY_MONTH_PATH="$MEMORY_MONTH_DIR/MEMORY.$YEAR$MONTH.md"
+    MEMORY_DAY_PATH="$MEMORY_DAY_DIR/MEMORY.$YEAR$MONTH$DAY.md"
+    MEMORY_DAY_LONG_PATH="$MEMORY_DAY_DIR/MEMORY.$YEAR$MONTH$DAY.long.md"
+
+    # 3. Check Daily Memory Size and Compress if needed
+    if [ -f "$MEMORY_DAY_PATH" ]; then
+        # Check size in bytes
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+             SIZE=$(stat -f%z "$MEMORY_DAY_PATH")
+        else
+             SIZE=$(stat -c%s "$MEMORY_DAY_PATH")
+        fi
+        
+        if [ "$SIZE" -gt 3000 ]; then
+             >&2 echo "Daily memory exceeds 3000 chars ($SIZE). Initiating compression..."
+             
+             cp "$MEMORY_DAY_PATH" "$MEMORY_DAY_LONG_PATH"
+             >&2 echo "Original memory backed up to: $MEMORY_DAY_LONG_PATH"
+             
+             DAILY_CONTENT=$(cat "$MEMORY_DAY_PATH")
+             COMPRESS_PROMPT="Compress the following daily memory content to under 3000 characters. Preserve key insights and structural learnings. Content:\n$DAILY_CONTENT"
+             
+             # Capture output
+             COMPRESSED_CONTENT=$(invoke_gh_copilot "$COMPRESS_PROMPT" "true")
+             
+             if [ -n "$COMPRESSED_CONTENT" ]; then
+                 echo "$COMPRESSED_CONTENT" > "$MEMORY_DAY_PATH"
+                 NEW_SIZE=${#COMPRESSED_CONTENT}
+                 >&2 echo "Daily memory compressed to $NEW_SIZE chars."
+             fi
+        fi
+    fi
+
+    # 4. Construct Context String
+    MEMORY_CONTEXT=""
+    if [ -f "$MEMORY_MONTH_PATH" ]; then
+        MONTH_CONTENT=$(cat "$MEMORY_MONTH_PATH")
+        MEMORY_CONTEXT+=$'\n[Monthly Memory ('$YEAR'-'$MONTH')]:\n'$MONTH_CONTENT$'\n'
+    fi
+    
+    if [ -f "$MEMORY_DAY_PATH" ]; then
+        DAY_CONTENT=$(cat "$MEMORY_DAY_PATH")
+        MEMORY_CONTEXT+=$'\n[Daily Memory ('$YEAR'-'$MONTH'-'$DAY')]:\n'$DAY_CONTENT$'\n'
+    fi
+
+    # 5. Construct Instructions String
+    MEMORY_INSTRUCTIONS="
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: $LOGS_BASE_DIR
+
+After completing the task, you MUST update your daily memory file: $MEMORY_DAY_PATH
+1. Append a summary of this task, its outcome, and any lessons learned to $MEMORY_DAY_PATH.
+2. Check if the Monthly Memory file ($MEMORY_MONTH_PATH) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Ensure you do not overwrite existing content, always append.
+"
+
+    # 6. Output JSON using python for safe escaping
+    export CTX="$MEMORY_CONTEXT"
+    export INST="$MEMORY_INSTRUCTIONS"
+    python3 -c "import json, os; print(json.dumps({'context': os.environ.get('CTX', ''), 'instructions': os.environ.get('INST', '')}))"
 
 else
     echo "Unknown type: $TYPE. Use daily, monthly, yearly, or all."

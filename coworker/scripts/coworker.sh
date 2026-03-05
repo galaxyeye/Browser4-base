@@ -423,94 +423,33 @@ for file in "${files[@]}"; do
     memoryContext=""
     memoryInstructions=""
 
-    # Define memory file paths
-    memoryAllPath="$memoryDir/MEMORY.md"
-
-    # Dynamic path construction based on current date
-    memoryYearDir="$memoryDir/$currentYear"
-    memoryMonthDir="$memoryYearDir/$currentMonth"
-    memoryDayDir="$memoryMonthDir/$currentDay"
-
-    # Create directories if they don't exist
-    mkdir -p "$memoryYearDir"
-    mkdir -p "$memoryMonthDir"
-    mkdir -p "$memoryDayDir"
-
-    memoryYearPath="$memoryYearDir/MEMORY.$currentYear.md"
-    memoryMonthPath="$memoryMonthDir/MEMORY.$currentYear$currentMonth.md"
-    memoryDayPath="$memoryDayDir/MEMORY.$currentYear$currentMonth$currentDay.md"
-
-    # Read existing memories (if any)
-    if [[ -f "$memoryMonthPath" ]]; then memoryContext+=$'\n[Monthly Memory ('$currentYear'-'$currentMonth')]:\n'$(cat "$memoryMonthPath")$'\n'; fi
-    if [[ -f "$memoryDayPath" ]]; then
-        dailyMemoryContent=$(cat "$memoryDayPath")
-
-        # Check length (approximate chars)
-        contentLength=${#dailyMemoryContent}
-
-        if [[ $contentLength -gt 3000 ]]; then
-            log_message "Daily memory exceeds 3000 chars ($contentLength). Initiating compression..." INFO
-
-            # Backup original
-            backupPath="$memoryDayDir/MEMORY.$currentYear$currentMonth$currentDay.long.md"
-            echo "$dailyMemoryContent" > "$backupPath"
-            log_message "Original memory backed up to: $backupPath" INFO
-
-            # Compress using Copilot
-            compressionPrompt="Compress the following daily memory content to under 3000 characters.
-Rules:
-- shorten descriptions for all points.
-- shorten task descriptions, can be very brief, just keep the keywords.
-- combine similar tasks into one entry.
-- remove redundant information.
-- output ONLY the compressed content.
-
-Content to compress:
-$dailyMemoryContent"
-
-            # Run compression
-            # Use gh copilot to compress
-             if command -v gh >/dev/null 2>&1; then
-                # Create temp file for prompt to handle newlines correctly
-                tempPromptFile=$(mktemp)
-                echo "$compressionPrompt" > "$tempPromptFile"
-
-                # We need to cat the file into the prompt argument or just pass it directly if supported.
-                # gh copilot -p takes a string.
-                # Let's try to just pass the string but careful with newlines.
-                # Actually, reading from file is safer if possible, but gh copilot doesn't support -f for prompt.
-                # So we stick to string but ensure variable is quoted.
-
-                compressedContent=$(gh copilot -- -p "$compressionPrompt" 2>/dev/null)
-
-                if [[ -n "$compressedContent" ]]; then
-                    echo "$compressedContent" > "$memoryDayPath"
-                    dailyMemoryContent="$compressedContent"
-                    log_message "Daily memory compressed to ${#dailyMemoryContent} chars." INFO
-                else
-                    log_message "Memory compression returned empty result." WARN
-                fi
-                rm -f "$tempPromptFile"
-             else
-                log_message "gh command not found, skipping compression." WARN
-             fi
-        fi
-
-        memoryContext+=$'\n[Daily Memory ('$currentYear'-'$currentMonth'-'$currentDay')]:\n'$dailyMemoryContent$'\n'
+    # Call coworker-memory-generator to initialize memory context
+    MEMORY_GENERATOR_SCRIPT="$AppHome/workers/coworker-memory-generator.sh"
+    
+    # Check if script exists and is executable
+    if [ -f "$MEMORY_GENERATOR_SCRIPT" ]; then
+         chmod +x "$MEMORY_GENERATOR_SCRIPT"
+         
+         # Capture JSON output from init command
+         # We need to make sure we don't capture stderr into the variable
+         # By default $(...) captures stdout. Stderr goes to terminal unless redirected.
+         # coworker-memory-generator.sh writes logs to stderr.
+         
+         MEMORY_RESULT_JSON=$("$MEMORY_GENERATOR_SCRIPT" init "$currentYear-$currentMonth-$currentDay")
+         
+         if [ -n "$MEMORY_RESULT_JSON" ]; then
+             export MEM_JSON="$MEMORY_RESULT_JSON"
+             
+             memoryContext=$(python3 -c "import json, os; data=json.loads(os.environ.get('MEM_JSON', '{}')); print(data.get('context',''))")
+             memoryInstructions=$(python3 -c "import json, os; data=json.loads(os.environ.get('MEM_JSON', '{}')); print(data.get('instructions',''))")
+             
+             log_message "Memory context initialized via generator." INFO
+         else
+             log_message "Memory generator returned empty result." WARN
+         fi
+    else
+         log_message "Memory generator script not found: $MEMORY_GENERATOR_SCRIPT" ERROR
     fi
-
-    # Construct instructions for updating memory
-    memoryInstructions="
-
-*** MEMORY UPDATE INSTRUCTIONS ***
-You have a memory system to help you learn and improve.
-Your memory files are located in: $memoryDir
-
-After completing the task, you MUST update your daily memory file: $memoryDayPath
-1. Append a summary of this task, its outcome, and any lessons learned to $memoryDayPath.
-2. Check if the Monthly Memory file ($memoryMonthPath) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
-3. Ensure you do not overwrite existing content, always append.
-"
 
     prompt="Finish the task described in file: $workingPath.
 Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.

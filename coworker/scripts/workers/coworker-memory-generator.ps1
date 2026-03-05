@@ -4,16 +4,16 @@
 .SYNOPSIS
     Coworker Memory Generator
 .DESCRIPTION
-    Generates memory summaries (daily, monthly, yearly, all) based on logs or previous summaries.
+    Generates memory summaries (daily, monthly, yearly, global) based on logs or previous summaries.
 .PARAMETER Type
-    The type of memory to generate: "daily", "monthly", "yearly", "all". Defaults to "daily".
+    The type of memory to generate: "daily", "monthly", "yearly", "global". Defaults to "daily".
 .PARAMETER Date
     The date to generate memory for (format: YYYY-MM-DD). Defaults to today.
 .PARAMETER Force
     Force generation even if file exists (overwrites).
 #>
 param(
-    [ValidateSet("daily", "monthly", "yearly", "all")]
+    [ValidateSet("daily", "monthly", "yearly", "global", "init")]
     [string]$Type = "daily",
 
     [string]$Date = ((Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")),
@@ -36,11 +36,14 @@ $year = $parsedDate.ToString("yyyy")
 $month = $parsedDate.ToString("MM")
 $day = $parsedDate.ToString("dd")
 
-$logsBaseDir = "coworker\tasks\300logs"
+$logsBaseDir = Join-Path $repoRoot "coworker\tasks\300logs"
 
 # Function to run gh copilot
 function Invoke-GhCopilot {
-    param($Prompt)
+    param(
+        [string]$Prompt,
+        [switch]$CaptureOutput
+    )
 
     # Truncate if too long (approx check, limit depends on OS/shell but 20k is safeish)
     if ($Prompt.Length -gt 25000) {
@@ -48,22 +51,38 @@ function Invoke-GhCopilot {
         $Prompt = $Prompt.Substring(0, 25000) + " ... [Truncated]"
     }
 
-    Write-Host "Calling gh copilot..."
+    if ($CaptureOutput) {
+        # Arguments for direct invocation (no extra quotes needed for array elements)
+        $directArgs = @(
+            'copilot',
+            '--',
+            '-p',
+            $Prompt,
+            '--allow-all-tools'
+        )
 
-    # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-    $safePrompt = $Prompt.Replace('"', '\"')
+        # Executing directly to capture output
+        # Note: gh copilot output might include ANSI codes, we might need to strip them?
+        # Typically gh copilot outputs markdown.
 
-    # Pass arguments as an array to avoid fragile manual escaping/quoting.
-    $copilotArgList = @(
-        'copilot'
-        '--'
-        '-p'
-        "`"$safePrompt`""
-        '--allow-all-tools'
-    )
+        $output = & gh $directArgs 2>&1 | Out-String
+        return $output
+    } else {
+        # Arguments for Start-Process (might need quotes for complex strings depending on PS version/OS)
+        # But generally, Start-Process ArgumentList array is safe.
+        # The original code added quotes, let's keep it for safety in the Start-Process path.
+        $safePrompt = $Prompt.Replace('"', '\"')
+        $processArgs = @(
+            'copilot',
+            '--',
+            '-p',
+            "`"$safePrompt`"",
+            '--allow-all-tools'
+        )
 
-    # Use Start-Process to handle arguments safely
-    Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
+        # Use Start-Process to handle arguments safely and stream to console
+        Start-Process -FilePath 'gh' -ArgumentList $processArgs -NoNewWindow -Wait
+    }
 }
 
 if ($Type -eq "daily") {
@@ -72,7 +91,7 @@ if ($Type -eq "daily") {
     # For now, let's call the existing script to avoid duplication if it exists, or reimplement.
     # The existing script is specific to daily. Let's call it.
 
-    $dailyScript = "coworker\scripts\coworker-daily-memory-generator.ps1"
+    $dailyScript = Join-Path $repoRoot "coworker\scripts\workers\coworker-daily-memory-generator.ps1"
     if (Test-Path $dailyScript) {
         & $dailyScript -Date $Date
     } else {
@@ -200,7 +219,7 @@ $combinedContent
 
     Invoke-GhCopilot -Prompt $prompt
 }
-elseif ($Type -eq "all") {
+elseif ($Type -eq "global") {
     $targetFile = "$logsBaseDir\MEMORY.md"
 
     # Gather all yearly memories
@@ -224,43 +243,91 @@ elseif ($Type -eq "all") {
         $combinedContent += "`n`n=== MEMORY: $($file.Name) ===`n$content"
     }
 
-    $prompt = @"
-You are an AI assistant helping to generate a GLOBAL memory summary for a developer coworker.
-Based on the following past memories, generate the content for the GLOBAL memory file and save it to: $targetFile
+    Invoke-GhCopilot -Prompt $prompt
+}
+elseif ($Type -eq "init") {
+    $year = $parsedDate.ToString("yyyy")
+    $month = $parsedDate.ToString("MM")
+    $day = $parsedDate.ToString("dd")
 
-SPECIFICATION:
-# MEMORY.md
+    # 1. Define paths
+    $memoryDir = $logsBaseDir
+    $memoryYearDir = Join-Path $memoryDir $year
+    $memoryMonthDir = Join-Path $memoryYearDir $month
+    $memoryDayDir = Join-Path $memoryMonthDir $day
 
-## Mission & Vision
-- Long-term goals
+    # 2. Ensure directories exist
+    if (-not (Test-Path $memoryYearDir)) { New-Item -ItemType Directory -Path $memoryYearDir -Force | Out-Null }
+    if (-not (Test-Path $memoryMonthDir)) { New-Item -ItemType Directory -Path $memoryMonthDir -Force | Out-Null }
+    if (-not (Test-Path $memoryDayDir)) { New-Item -ItemType Directory -Path $memoryDayDir -Force | Out-Null }
 
-## Core Principles
-- Guiding philosophies derived from experience
+    $memoryYearPath = Join-Path $memoryYearDir "MEMORY.$year.md"
+    $memoryMonthPath = Join-Path $memoryMonthDir "MEMORY.$year$month.md"
+    $memoryDayPath = Join-Path $memoryDayDir "MEMORY.$year$month$day.md"
+    $memoryDayLongPath = Join-Path $memoryDayDir "MEMORY.$year$month$day.long.md"
 
-## Evolution Phases
-- History of project phases
+    # 3. Check Daily Memory Size and Compress if needed
+    if (Test-Path $memoryDayPath) {
+        $dailyContent = Get-Content $memoryDayPath -Raw -Encoding UTF8
+        if ($dailyContent.Length -gt 3000) {
+            Write-Warning "Daily memory exceeds 3000 chars ($($dailyContent.Length)). Initiating compression..."
 
-## Major Turning Points
-- Key decisions or events
+            # Backup
+            Copy-Item -Path $memoryDayPath -Destination $memoryDayLongPath -Force
+            Write-Warning "Original memory backed up to: $memoryDayLongPath"
 
-## Long-Term Structural Challenges
-- Deep-rooted issues
+            # Compress
+            $compressPrompt = "Compress the following daily memory content to under 3000 characters. Preserve key insights and structural learnings. content:`n$dailyContent"
 
-## Opportunity Landscape
-- Potential areas for growth
+            # Compress using gh copilot
+            # We need to capture the output here.
+            # But wait, Invoke-GhCopilot prints to host by default unless I use -CaptureOutput
+            $compressedContent = Invoke-GhCopilot -Prompt $compressPrompt -CaptureOutput
 
-## Three Strategic Priorities Now
-- Current focus
+            if (-not [string]::IsNullOrWhiteSpace($compressedContent)) {
+                 # The output might contain explanation text. Copilot CLI usually just answers if prompted correctly.
+                 # But sometimes it chats.
+                 # Assuming it returns markdown.
+                 $compressedContent | Out-File -FilePath $memoryDayPath -Encoding UTF8 -Force
+                 Write-Warning "Daily memory compressed to $($compressedContent.Length) chars."
+            }
+        }
+    } else {
+        # Create empty daily memory if not exists?
+        # Maybe unnecessary, Agent will create it.
+        # But for context string, it's good to know.
+    }
 
-CONSTRAINTS:
-- Use English only.
-- Synthesize, don't just list.
-- Use the `create` tool to write the file directly.
-- Overwrite if exists.
+    # 4. Construct Context String
+    $memoryContext = ""
+    if (Test-Path $memoryMonthPath) {
+        $monthContent = Get-Content $memoryMonthPath -Raw -Encoding UTF8
+        $memoryContext += "`n[Monthly Memory ($year-$month)]:`n$monthContent`n"
+    }
 
-PAST MEMORIES:
-$combinedContent
+    if (Test-Path $memoryDayPath) {
+        $dayContent = Get-Content $memoryDayPath -Raw -Encoding UTF8
+        $memoryContext += "`n[Daily Memory ($year-$month-$day)]:`n$dayContent`n"
+    }
+
+    # 5. Construct Instructions String
+    $memoryInstructions = @"
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: $logsBaseDir
+
+After completing the task, you MUST update your daily memory file: $memoryDayPath
+1. Append a summary of this task, its outcome, and any lessons learned to $memoryDayPath.
+2. Check if the Monthly Memory file ($memoryMonthPath) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Ensure you do not overwrite existing content, always append.
 "@
 
-    Invoke-GhCopilot -Prompt $prompt
+    # 6. Output JSON
+    $result = @{
+        context = $memoryContext
+        instructions = $memoryInstructions
+    }
+
+    $json = $result | ConvertTo-Json -Depth 2
+    Write-Output $json
 }

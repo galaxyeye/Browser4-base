@@ -16,12 +16,20 @@ YEAR=$(date -d "$DATE" +%Y)
 MONTH=$(date -d "$DATE" +%m)
 DAY=$(date -d "$DATE" +%d)
 
-LOG_DIR="coworker/tasks/300logs/$YEAR/$MONTH/$DAY"
+# Find repo root
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ -z "$REPO_ROOT" ]; then
+    echo "Repo root not found. Exiting."
+    exit 1
+fi
+cd "$REPO_ROOT"
+
+LOG_DIR="$REPO_ROOT/coworker/tasks/300logs/$YEAR/$MONTH/$DAY"
 MEMORY_FILE="$LOG_DIR/MEMORY.$YEAR$MONTH$DAY.md"
 
 if [ ! -d "$LOG_DIR" ]; then
-    echo "Error: Log directory $LOG_DIR does not exist."
-    exit 1
+  # Create the directory if it doesn't exist
+  mkdir -p "$LOG_DIR"
 fi
 
 echo "Generating daily memory for $DATE from logs in $LOG_DIR..."
@@ -130,7 +138,7 @@ CONSTRAINTS:
 LOGS (Batch):
 $content
 "
-    
+
     # Truncate prompt if it's insanely long (safety net)
     if [ ${#prompt} -gt 25000 ]; then
         echo "Warning: Batch prompt is too long (${#prompt} chars). Truncating..."
@@ -152,19 +160,19 @@ for task_log in "$LOG_DIR"/*.task.log; do
     if [ -f "$task_log" ]; then
         BASE_NAME=$(basename "$task_log" .task.log)
         COPILOT_LOG="$LOG_DIR/$BASE_NAME.copilot.log"
-        
+
         TASK_CONTENT=$'\n\n=== TASK: '
         TASK_CONTENT+="$BASE_NAME"
         TASK_CONTENT+=$' ===\n'
-        
+
         # Extract metadata
         TITLE=$(grep "^Task:" "$task_log" | head -n 1 | cut -d: -f2- | xargs)
         TASK_CONTENT+="Title: $TITLE"$'\n'
-        
+
         TASK_CONTENT+="--- PROMPT (Snippet) ---\n"
         TASK_CONTENT+=$(extract_clean_prompt "$task_log")
         TASK_CONTENT+=$'\n'
-        
+
         TASK_CONTENT+="--- RESULT (Snippet) ---\n"
         TASK_CONTENT+=$(extract_copilot_output "$COPILOT_LOG")
         TASK_CONTENT+=$'\n'
@@ -172,13 +180,13 @@ for task_log in "$LOG_DIR"/*.task.log; do
         # Check if adding this task exceeds batch size
         CURRENT_LEN=${#CURRENT_BATCH}
         TASK_LEN=${#TASK_CONTENT}
-        
+
         if [ $((CURRENT_LEN + TASK_LEN)) -gt $BATCH_SIZE ] && [ $CURRENT_LEN -gt 0 ]; then
             process_batch "$CURRENT_BATCH" "$FIRST_BATCH"
             CURRENT_BATCH=""
             FIRST_BATCH=false
         fi
-        
+
         CURRENT_BATCH+="$TASK_CONTENT"
     fi
 done

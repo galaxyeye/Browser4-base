@@ -1,3 +1,23 @@
+Task: fix-coworker-memory-generator-paths
+Description: Task from fix-coworker-memory-generator-paths.md
+Original File: fix-coworker-memory-generator-paths.md
+Started: 2026-03-05 03:54:44
+Prompt:
+Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\fix-coworker-memory-generator-paths.md.
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
+
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
+
+After completing the task, you MUST update your daily memory file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\05\MEMORY.20260305.md
+1. Append a summary of this task, its outcome, and any lessons learned to D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\05\MEMORY.20260305.md.
+2. Check if the Monthly Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\MEMORY.202603.md) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Ensure you do not overwrite existing content, always append.
+
+
+[Monthly Memory (2026-03)]:
 # MEMORY.202603.md
 ## Monthly Memory - 2026-03
 
@@ -24,3 +44,10 @@
 - **Robust Script Invocation**:Standardize PowerShell argument passing (prefer explicit quoting) and strictly verify relative paths for helper scripts.
 - **Unified Build Practices**: consistently use `-am` (also make) or `mvn install` when working with cross-module dependencies to ensure local repo consistency.
 - **Directory-Based Architectures**: Expand the use of directory-based state machines (validated by the Orchestrator and Agent Logging work) for managing complex asynchronous workflows.
+
+
+---
+Copilot Execution Output:
+
+Copilot Exit Code: 0
+Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\05\035227-fix-coworker-memory-generator-paths.copilot.log

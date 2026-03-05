@@ -478,102 +478,24 @@ foreach ($taskRoot in $taskRoots) {
         $memoryContext = ""
         $memoryInstructions = ""
 
-        # Define memory file paths
-        $memoryAllPath = Join-Path $memoryDir "MEMORY.md"
-
-        # Dynamic path construction based on current date
-        $memoryYearDir = Join-Path $memoryDir $currentYear
-        $memoryMonthDir = Join-Path $memoryYearDir $currentMonth
-        $memoryDayDir = Join-Path $memoryMonthDir $currentDay
-
-        # Create directories if they don't exist
-        if (!(Test-Path $memoryYearDir)) { New-Item -ItemType Directory -Path $memoryYearDir | Out-Null }
-        if (!(Test-Path $memoryMonthDir)) { New-Item -ItemType Directory -Path $memoryMonthDir | Out-Null }
-        if (!(Test-Path $memoryDayDir)) { New-Item -ItemType Directory -Path $memoryDayDir | Out-Null }
-
-        $memoryYearPath = Join-Path $memoryYearDir "MEMORY.$currentYear.md"
-        $memoryMonthPath = Join-Path $memoryMonthDir "MEMORY.$currentYear$currentMonth.md"
-        $memoryDayPath = Join-Path $memoryDayDir "MEMORY.$currentYear$currentMonth$currentDay.md"
-
-        # Read existing memories (if any)
-        if (Test-Path $memoryMonthPath) { $memoryContext += "`n[Monthly Memory ($currentYear-$currentMonth)]:`n" + (Get-Content $memoryMonthPath -Raw -Encoding UTF8) + "`n" }
-        if (Test-Path $memoryDayPath) {
-            $dailyMemoryContent = Get-Content $memoryDayPath -Raw -Encoding UTF8
-
-            # Check for compression need
-            if ($dailyMemoryContent.Length -gt 3000) {
-                Write-LogMessage "Daily memory exceeds 3000 chars ($($dailyMemoryContent.Length)). Initiating compression..." INFO
-
-                # Backup original
-                $backupPath = Join-Path $memoryDayDir "MEMORY.$currentYear$currentMonth$currentDay.long.md"
-                $dailyMemoryContent | Out-File -FilePath $backupPath -Encoding UTF8
-                Write-LogMessage "Original memory backed up to: $backupPath" INFO
-
-                # Compress using Copilot
-                $compressionPrompt = @"
-Compress the following daily memory content to under 3000 characters.
-Rules:
-- shorten descriptions for all points.
-- shorten task descriptions, can be very brief, just keep the keywords.
-- combine similar tasks into one entry.
-- remove redundant information.
-- output ONLY the compressed content.
-
-Content to compress:
-$dailyMemoryContent
-"@
-
-                # Run compression
-                # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-                $safeCompressionPrompt = $compressionPrompt.Replace('"', '\"')
-
-                $compressionArgList = @(
-                    'copilot'
-                    '--'
-                    '-p'
-                    "`"$safeCompressionPrompt`""
-                )
-
-                $compressStdOut = [System.IO.Path]::GetTempFileName()
-                $compressStdErr = [System.IO.Path]::GetTempFileName()
-
-                $compressProcess = Start-Process -FilePath 'gh' -ArgumentList $compressionArgList -NoNewWindow -PassThru -RedirectStandardOutput $compressStdOut -RedirectStandardError $compressStdErr
-                $compressProcess.WaitForExit()
-
-                if ($compressProcess.ExitCode -eq 0 -and (Test-Path $compressStdOut)) {
-                     $compressedContent = Get-Content $compressStdOut -Raw -Encoding UTF8
-                     if (-not [string]::IsNullOrWhiteSpace($compressedContent)) {
-                         $compressedContent | Out-File -FilePath $memoryDayPath -Encoding UTF8
-                         $dailyMemoryContent = $compressedContent
-                         Write-LogMessage "Daily memory compressed to $($dailyMemoryContent.Length) chars." INFO
-                     }
-                } else {
-                     Write-LogMessage "Memory compression failed." WARN
-                     if (Test-Path $compressStdErr) {
-                        $err = Get-Content $compressStdErr -Raw
-                        Write-LogVerbose $err
-                     }
-                }
-
-                Remove-Item $compressStdOut -ErrorAction SilentlyContinue
-                Remove-Item $compressStdErr -ErrorAction SilentlyContinue
+        # Call coworker-memory-generator to initialize memory context
+        $memoryGeneratorScript = Join-Path $PSScriptRoot "workers\coworker-memory-generator.ps1"
+        try {
+            $memoryResultJson = & $memoryGeneratorScript -Type init -Date "$currentYear-$currentMonth-$currentDay" | Out-String
+            
+            if (-not [string]::IsNullOrWhiteSpace($memoryResultJson)) {
+                $memoryResult = $memoryResultJson | ConvertFrom-Json
+                $memoryContext = $memoryResult.context
+                $memoryInstructions = $memoryResult.instructions
+                Write-LogMessage "Memory context initialized via generator." INFO
+            } else {
+                 Write-LogMessage "Memory generator returned empty result." WARN
             }
-
-            $memoryContext += "`n[Daily Memory ($currentYear-$currentMonth-$currentDay)]:`n" + $dailyMemoryContent + "`n"
+        } catch {
+            Write-LogMessage "Failed to initialize memory context: $_" ERROR
+            $memoryContext = ""
+            $memoryInstructions = ""
         }
-
-        # Construct instructions for updating memory
-        $memoryInstructions = @"
-
-*** MEMORY UPDATE INSTRUCTIONS ***
-You have a memory system to help you learn and improve.
-Your memory files are located in: $memoryDir
-
-After completing the task, you MUST update your daily memory file: $memoryDayPath
-1. Append a summary of this task, its outcome, and any lessons learned to $memoryDayPath.
-2. Check if the Monthly Memory file ($memoryMonthPath) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
-3. Ensure you do not overwrite existing content, always append.
-"@
 
         $prompt = @"
 Finish the task described in file: $workingPath.

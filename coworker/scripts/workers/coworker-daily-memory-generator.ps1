@@ -30,11 +30,11 @@ $day = $parsedDate.ToString("dd")
 $dateStr = $parsedDate.ToString("yyyy-MM-dd")
 $compactDate = $parsedDate.ToString("yyyyMMdd")
 
-$logDir = "coworker\tasks\300logs\$year\$month\$day"
-$memoryFile = "$logDir\MEMORY.$compactDate.md"
+$logDir = Join-Path $repoRoot "coworker\tasks\300logs\$year\$month\$day"
+$memoryFile = Join-Path $logDir "MEMORY.$compactDate.md"
 
 if (-not (Test-Path $logDir)) {
-    Write-Error "Log directory $logDir does not exist."
+    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
 
 Write-Host "Generating daily memory for $dateStr from logs in $logDir..."
