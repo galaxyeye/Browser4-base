@@ -5,6 +5,7 @@ import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.client.expectBody
@@ -12,7 +13,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
 @Tag("E2ETest")
 class CommandControllerE2ETest : RestAPITestBase() {
@@ -21,8 +21,8 @@ class CommandControllerE2ETest : RestAPITestBase() {
      * Test [CommandController.submitCommand]
      * */
     @Test
-        @DisplayName("Test submitCommand with pageSummaryPrompt + sync mode")
-    fun testSubmitcommandWithPagesummarypromptSyncMode() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt + sync mode")
+    fun testSubmitCommandWithPageSummaryPromptSyncMode() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -42,6 +42,8 @@ class CommandControllerE2ETest : RestAPITestBase() {
             .responseBody
         assertNotNull(status)
 
+        readln()
+
         assertEquals(200, status.pageStatusCode)
         assertTrue(status.isDone)
         assertEquals(200, status.statusCode)
@@ -59,8 +61,8 @@ class CommandControllerE2ETest : RestAPITestBase() {
      * Test [CommandController.streamEvents]
      * */
     @Test
-        @DisplayName("Test submitCommand with pageSummaryPrompt, dataExtractionRules + sync mode")
-    fun testSubmitcommandWithPagesummarypromptDataextractionrulesSyncMode() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt, dataExtractionRules + sync mode")
+    fun testSubmitCommandWithPageSummaryPromptDataExtractionRulesSyncMode() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -94,7 +96,7 @@ class CommandControllerE2ETest : RestAPITestBase() {
     }
 
     @Test
-        @DisplayName("test executeCommand with X-SQL + sync mode")
+    @DisplayName("test executeCommand with X-SQL + sync mode")
     fun testExecuteCommandWithXSqlSyncMode() {
         val sqlTemplate = sqlTemplates["productDetailPage"]!!.template
         val request = CommandRequest(

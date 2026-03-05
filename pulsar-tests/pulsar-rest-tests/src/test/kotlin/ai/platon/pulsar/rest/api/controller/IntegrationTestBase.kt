@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @Import(PulsarContextConfiguration::class)
-class IntegrationTestBase {
+open class IntegrationTestBase {
 
     @LocalServerPort
     var serverPort: Int = 0
@@ -40,6 +40,14 @@ class IntegrationTestBase {
     protected val client get() = RestTestClient.bindToServer().baseUrl(baseUri).build()
 
     protected fun getHtml(path: String): ResponseEntity<String> =
+        client.get().uri(path)
+            .exchange()
+            .expectStatus().is2xxSuccessful
+            .expectBody<String>()
+            .returnResult()
+            .let { result -> ResponseEntity(result.responseBody!!, result.responseHeaders, result.status) }
+
+    protected fun getJson(path: String): ResponseEntity<String> =
         client.get().uri(path)
             .exchange()
             .expectStatus().is2xxSuccessful

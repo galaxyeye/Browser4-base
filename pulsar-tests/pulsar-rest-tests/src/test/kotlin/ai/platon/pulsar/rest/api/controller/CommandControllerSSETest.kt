@@ -3,12 +3,12 @@ package ai.platon.pulsar.rest.api.controller
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertNotNull
-import org.junit.jupiter.api.DisplayName
 
 @Tag("Slow")
 class CommandControllerSSETest : RestAPITestBase() {
@@ -18,8 +18,8 @@ class CommandControllerSSETest : RestAPITestBase() {
      * Test [CommandController.streamEvents]
      * */
     @Test
-        @DisplayName("Test submitCommand with pageSummaryPrompt + SSE")
-    fun testSubmitcommandWithPagesummarypromptSse() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt + SSE")
+    fun testSubmitCommandWithPageSummaryPromptSse() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -41,8 +41,8 @@ class CommandControllerSSETest : RestAPITestBase() {
      * Test [CommandController.streamEvents]
      * */
     @Test
-        @DisplayName("Test submitCommand with pageSummaryPrompt, dataExtractionRules + SSE")
-    fun testSubmitcommandWithPagesummarypromptDataextractionrulesSse() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt, dataExtractionRules + SSE")
+    fun testSubmitCommandWithPageSummaryPromptDataExtractionRulesSse() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -106,7 +106,7 @@ class CommandControllerSSETest : RestAPITestBase() {
         // Don’t overfit here: different environments may emit different JSON structures.
         // The contract we enforce is just: it’s an SSE stream and contains data frames.
         check(lines.any { it.startsWith("data:") }) {
-            "Expected SSE data frames for command $id but got: ${lines.take(20).joinToString("\\n") }"
+            "Expected SSE data frames for command $id but got: ${lines.take(20).joinToString("\\n")}"
         }
     }
 }
