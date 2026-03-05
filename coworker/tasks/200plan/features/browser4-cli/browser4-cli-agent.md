@@ -29,13 +29,4 @@ Find all links containing /dp/.
 
 ## Implementation Notes
 
-- 当执行长时间任务时，需要提供实时反馈和进度更新，以便用户了解任务的执行状态
-  - agent.run()
-
-## Acceptance Criteria
-
-- [ ] Implement `browser4-cli agent` command with subcommands for acting, summarizing, extracting, and running complex instructions.
-- [ ] Support natural language instructions for the agent to perform multi-step tasks.
-- [ ] Ensure the agent can interact with web pages, extract information, and summarize content effectively.
-- [ ] Provide clear documentation and examples for using the agent mode.
-- [ ] Implement error handling and feedback for the agent's actions and outputs.
+agent run 是长时操作，需要提供接口反馈和进度更新，以便用户了解任务的执行状态

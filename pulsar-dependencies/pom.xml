@@ -420,8 +420,8 @@
         <oshi-trove4j-core.version>6.6.6</oshi-trove4j-core.version>
 
         <xercesImpl.version>2.12.2</xercesImpl.version>
-        <trove4j-core.version>3.0.3</trove4j-core.version>
-        <trove4j.version>3.0.3</trove4j.version>
+        <trove4j-core.version>3.3.1</trove4j-core.version>
+        <trove4j.version>3.3.1</trove4j.version>
         <jodd-trove4j-core.version>3.5.2</jodd-trove4j-core.version>
 
         <!--  HTML parsing  -->

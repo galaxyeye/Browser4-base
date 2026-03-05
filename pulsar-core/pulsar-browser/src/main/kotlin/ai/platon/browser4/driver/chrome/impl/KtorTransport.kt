@@ -58,7 +58,7 @@ class KtorTransport : Transport {
         try {
             client = HttpClient(CIO) {
                 install(WebSockets) {
-                    pingInterval = DEFAULT_PING_INTERVAL
+                    pingInterval = DEFAULT_PING_INTERVAL_MS.milliseconds
                 }
                 install(HttpTimeout) {
                     connectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MS
@@ -173,7 +173,7 @@ class KtorTransport : Transport {
         private const val DEFAULT_CONNECT_TIMEOUT_MS: Long = 10_000
         private const val DEFAULT_REQUEST_TIMEOUT_MS: Long = 20_000
         private const val DEFAULT_SOCKET_TIMEOUT_MS: Long = 20_000
-        private val DEFAULT_PING_INTERVAL: Duration = 15_000.milliseconds
+        private const val DEFAULT_PING_INTERVAL_MS: Long = 15_000
         private const val DEFAULT_KEEP_ALIVE_TIME_MS: Long = 5_000
         private const val CLOSE_TIMEOUT_MS: Long = 3_000
 

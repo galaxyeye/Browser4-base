@@ -323,7 +323,7 @@
 
         <spring-boot.version>4.0.1</spring-boot.version>
 
-        <ktor.version>2.3.11</ktor.version>
+        <ktor.version>3.3.1</ktor.version>
         <springmockk.version>4.0.2</springmockk.version>
 
         <langchain4j.version>1.5.0</langchain4j.version>

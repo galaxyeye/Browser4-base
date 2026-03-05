@@ -42,8 +42,6 @@ class CommandControllerE2ETest : RestAPITestBase() {
             .responseBody
         assertNotNull(status)
 
-        readln()
-
         assertEquals(200, status.pageStatusCode)
         assertTrue(status.isDone)
         assertEquals(200, status.statusCode)
