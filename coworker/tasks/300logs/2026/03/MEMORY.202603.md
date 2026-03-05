@@ -24,3 +24,10 @@
 - **Robust Script Invocation**:Standardize PowerShell argument passing (prefer explicit quoting) and strictly verify relative paths for helper scripts.
 - **Unified Build Practices**: consistently use `-am` (also make) or `mvn install` when working with cross-module dependencies to ensure local repo consistency.
 - **Directory-Based Architectures**: Expand the use of directory-based state machines (validated by the Orchestrator and Agent Logging work) for managing complex asynchronous workflows.
+
+### Daily Rollup (2026-03-01 to 2026-03-04)
+- Rebuilt Mock MCP server using the official Kotlin SDK and aligned request handling/tests to Map-based payloads for reliable serialization.
+- Delivered automation/tooling improvements across coworker scripts (branch cleanup, orchestrator/copilot integration, draft refinement, link filtering, script relocation, and token usage reporting).
+- Advanced AI Software Factory architecture and documentation with orchestrator workflows, templates, and directory-based execution/state patterns.
+- Refactored agent/tool internals by removing obsolete ToDoManager logic, integrating native MCP/Skills execution in `AgentToolExecutor`, and adding broad MCP controller test coverage.
+- Recurring execution insight: use robust absolute paths, reliable PowerShell argument quoting, and `-am`/local installs to avoid cross-module and invocation-context failures.

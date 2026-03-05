@@ -3,7 +3,7 @@
 Draft your tasks here. This area is for tasks under preparation and not yet ready for execution.
 
 1. run `run_coworker_periodically.ps1` to start
-2. draft tasks here
+2. draft tasks here (or anywhere)
 3. copy ready tasks to `1created` for execution
 4. once executed, you can find results in `3_1complete` and detailed logs in `300logs`
 5. review results if needed

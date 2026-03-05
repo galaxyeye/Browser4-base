@@ -6,5 +6,5 @@ Write tests in `MCPToolControllerE2ETest`.
 
 ## References
 
-- [CommandControllerE2ETest.kt](/pulsar-tests/pulsar-rest-tests/src/test/kotlin/ai/platon/pulsar/rest/api/controller/CommandControllerE2ETest.kt)
-- [cli.ts](/sdks/browser4-cli/src/cli.ts)
+- [CommandControllerE2ETest.kt](/ai/platon/pulsar/rest/api/controller/CommandControllerE2ETest.kt)
+- [cli.ts](/browser4-cli/src/cli.ts)
