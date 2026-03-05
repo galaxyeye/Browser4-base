@@ -26,9 +26,10 @@ $ErrorActionPreference = "Stop"
 # 🔍 Find repo root
 $repoRoot = git rev-parse --show-toplevel 2>$null
 if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
+    $repoRoot = Get-Location
 }
+# Ensure absolute path
+$repoRoot = (Resolve-Path $repoRoot).Path
 Set-Location $repoRoot
 
 $parsedDate = Get-Date $Date
@@ -123,7 +124,7 @@ elseif ($Type -eq "monthly") {
 
     $prompt = @"
 You are an AI assistant helping to generate a MONTHLY memory summary for a developer coworker.
-Based on the following DAILY memories, generate the content for the MONTHLY memory file and save it to: $targetFile
+Based on the following DAILY memories, generate the content for the MONTHLY memory file and save it to the ABSOLUTE path: $targetFile
 
 SPECIFICATION:
 # MEMORY.$year$month.md
@@ -147,7 +148,7 @@ SPECIFICATION:
 CONSTRAINTS:
 - Use English only.
 - Synthesize, don't just list.
-- Use the `create` tool to write the file directly.
+- Use the `create` tool to write the file directly using the ABSOLUTE path: $targetFile
 - Overwrite if exists.
 
 DAILY MEMORIES:
@@ -177,7 +178,7 @@ elseif ($Type -eq "yearly") {
 
     $prompt = @"
 You are an AI assistant helping to generate a YEARLY memory summary for a developer coworker.
-Based on the following MONTHLY memories, generate the content for the YEARLY memory file and save it to: $targetFile
+Based on the following MONTHLY memories, generate the content for the YEARLY memory file and save it to the ABSOLUTE path: $targetFile
 
 SPECIFICATION:
 # MEMORY.$year.md
@@ -210,7 +211,7 @@ SPECIFICATION:
 CONSTRAINTS:
 - Use English only.
 - Synthesize, don't just list.
-- Use the `create` tool to write the file directly.
+- Use the `create` tool to write the file directly using the ABSOLUTE path: $targetFile
 - Overwrite if exists.
 
 MONTHLY MEMORIES:

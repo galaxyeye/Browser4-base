@@ -17,9 +17,9 @@ $ErrorActionPreference = "Stop"
 # 🔍 Find repo root
 $repoRoot = git rev-parse --show-toplevel 2>$null
 if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
+    $repoRoot = Get-Location
 }
+$repoRoot = (Resolve-Path $repoRoot).Path
 Set-Location $repoRoot
 
 $parsedDate = Get-Date $Date
@@ -152,7 +152,7 @@ for ($i = 0; $i -lt $batches.Count; $i++) {
     if ($isFirstBatch) {
         $instruction = @"
 You are an AI assistant helping to generate a daily memory summary for a developer coworker.
-Based on the following development logs, generate the content for the daily memory file and save it to: $memoryFile
+Based on the following development logs, generate the content for the daily memory file and save it to the ABSOLUTE path: $memoryFile
 
 SPECIFICATION:
 # MEMORY.$compactDate.md
@@ -179,7 +179,7 @@ CONSTRAINTS:
 - Be concise but insightful.
 - Focus on structural issues and improvements.
 - Do NOT just list logs, synthesize them.
-- Use the `create` tool to write the file directly. If the file exists, overwrite it (I have already backed it up).
+- Use the `create` tool to write the file directly using the ABSOLUTE path: $memoryFile. If the file exists, overwrite it (I have already backed it up).
 "@
     } else {
         $instruction = @"
@@ -187,7 +187,7 @@ You are continuing to generate the daily memory summary for $dateStr.
 The memory file '$memoryFile' has already been created with the summary of previous tasks.
 
 YOUR TASK:
-1. READ the existing content of '$memoryFile'.
+1. READ the existing content of '$memoryFile' (using ABSOLUTE path).
 2. ANALYZE the NEW logs provided below.
 3. UPDATE '$memoryFile' to include the summary of these NEW logs:
     - Append the new tasks to 'Tasks Executed'.
@@ -196,7 +196,7 @@ YOUR TASK:
 4. Ensure the final file maintains the markdown structure.
 
 CONSTRAINTS:
-- Use the `edit` tool (or `read` then `create` if needed) to update the file.
+- Use the `edit` tool (or `read` then `create` if needed) to update the file using the ABSOLUTE path: $memoryFile.
 - Do NOT overwrite the entire file with just the new logs; you must MERGE/APPEND.
 - Keep the existing summary valid while adding new information.
 "@

@@ -22,6 +22,14 @@ if [ -z "$REPO_ROOT" ]; then
     echo "Repo root not found. Exiting."
     exit 1
 fi
+
+# Ensure absolute path
+if command -v realpath >/dev/null 2>&1; then
+    REPO_ROOT=$(realpath "$REPO_ROOT")
+else
+    cd "$REPO_ROOT" && REPO_ROOT=$(pwd)
+fi
+
 cd "$REPO_ROOT"
 
 LOG_DIR="$REPO_ROOT/coworker/tasks/300logs/$YEAR/$MONTH/$DAY"
@@ -83,7 +91,7 @@ process_batch() {
     if [ "$is_first" = "true" ]; then
         instruction="
 You are an AI assistant helping to generate a daily memory summary for a developer coworker.
-Based on the following development logs, generate the content for the daily memory file and save it to: $MEMORY_FILE
+Based on the following development logs, generate the content for the daily memory file and save it to the ABSOLUTE path: $MEMORY_FILE
 
 SPECIFICATION:
 # MEMORY.$YEAR$MONTH$DAY.md
@@ -110,7 +118,7 @@ CONSTRAINTS:
 - Be concise but insightful.
 - Focus on structural issues and improvements.
 - Do NOT just list logs, synthesize them.
-- Use the \`create\` tool to write the file directly. If the file exists, overwrite it (I have already backed it up).
+- Use the \`create\` tool to write the file directly using the ABSOLUTE path: $MEMORY_FILE. If the file exists, overwrite it (I have already backed it up).
 "
     else
         instruction="
@@ -118,7 +126,7 @@ You are continuing to generate the daily memory summary for $DATE.
 The memory file '$MEMORY_FILE' has already been created with the summary of previous tasks.
 
 YOUR TASK:
-1. READ the existing content of '$MEMORY_FILE'.
+1. READ the existing content of '$MEMORY_FILE' (using ABSOLUTE path).
 2. ANALYZE the NEW logs provided below.
 3. UPDATE '$MEMORY_FILE' to include the summary of these NEW logs:
     - Append the new tasks to 'Tasks Executed'.
@@ -127,7 +135,7 @@ YOUR TASK:
 4. Ensure the final file maintains the markdown structure.
 
 CONSTRAINTS:
-- Use the \`edit\` tool (or \`read\` then \`create\` if needed) to update the file.
+- Use the \`edit\` tool (or \`read\` then \`create\` if needed) to update the file using the ABSOLUTE path: $MEMORY_FILE.
 - Do NOT overwrite the entire file with just the new logs; you must MERGE/APPEND.
 - Keep the existing summary valid while adding new information.
 "

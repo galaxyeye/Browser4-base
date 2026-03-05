@@ -16,6 +16,14 @@ if [ -z "$REPO_ROOT" ]; then
     echo "Repo root not found. Exiting."
     exit 1
 fi
+
+# Ensure absolute path
+if command -v realpath >/dev/null 2>&1; then
+    REPO_ROOT=$(realpath "$REPO_ROOT")
+else
+    cd "$REPO_ROOT" && REPO_ROOT=$(pwd)
+fi
+
 cd "$REPO_ROOT"
 
 YEAR=$(date -d "$DATE" +%Y)
@@ -84,7 +92,7 @@ elif [ "$TYPE" == "monthly" ]; then
 
     PROMPT="
 You are an AI assistant helping to generate a MONTHLY memory summary for a developer coworker.
-Based on the following DAILY memories, generate the content for the MONTHLY memory file and save it to: $TARGET_FILE
+Based on the following DAILY memories, generate the content for the MONTHLY memory file and save it to the ABSOLUTE path: $TARGET_FILE
 
 SPECIFICATION:
 # MEMORY.$YEAR$MONTH.md
@@ -108,7 +116,7 @@ SPECIFICATION:
 CONSTRAINTS:
 - Use English only.
 - Synthesize, don't just list.
-- Use the \`create\` tool to write the file directly.
+- Use the \`create\` tool to write the file directly using the ABSOLUTE path: $TARGET_FILE
 - Overwrite if exists.
 
 DAILY MEMORIES:
@@ -138,7 +146,7 @@ elif [ "$TYPE" == "yearly" ]; then
 
     PROMPT="
 You are an AI assistant helping to generate a YEARLY memory summary for a developer coworker.
-Based on the following MONTHLY memories, generate the content for the YEARLY memory file and save it to: $TARGET_FILE
+Based on the following MONTHLY memories, generate the content for the YEARLY memory file and save it to the ABSOLUTE path: $TARGET_FILE
 
 SPECIFICATION:
 # MEMORY.$YEAR.md
@@ -171,7 +179,7 @@ SPECIFICATION:
 CONSTRAINTS:
 - Use English only.
 - Synthesize, don't just list.
-- Use the \`create\` tool to write the file directly.
+- Use the \`create\` tool to write the file directly using the ABSOLUTE path: $TARGET_FILE
 - Overwrite if exists.
 
 MONTHLY MEMORIES:
@@ -213,7 +221,7 @@ elif [ "$TYPE" == "all" ]; then
 
     PROMPT="
 You are an AI assistant helping to generate a GLOBAL memory summary for a developer coworker.
-Based on the following past memories, generate the content for the GLOBAL memory file and save it to: $TARGET_FILE
+Based on the following past memories, generate the content for the GLOBAL memory file and save it to the ABSOLUTE path: $TARGET_FILE
 
 SPECIFICATION:
 # MEMORY.md
@@ -242,7 +250,7 @@ SPECIFICATION:
 CONSTRAINTS:
 - Use English only.
 - Synthesize, don't just list.
-- Use the \`create\` tool to write the file directly.
+- Use the \`create\` tool to write the file directly using the ABSOLUTE path: $TARGET_FILE
 - Overwrite if exists.
 
 PAST MEMORIES:
