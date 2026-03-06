@@ -101,6 +101,17 @@ class MockMCPServer(
     }
 
     /**
+     * Executes a tool with the given arguments. Accepts a Jackson [JsonNode] directly,
+     * which is useful in tests that build requests using the Jackson ObjectMapper API.
+     */
+    fun callTool(requestNode: com.fasterxml.jackson.databind.JsonNode): Map<String, Any> {
+        val objectMapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+        @Suppress("UNCHECKED_CAST")
+        val requestMap = objectMapper.convertValue(requestNode, Map::class.java) as Map<String, Any>
+        return callTool(requestMap)
+    }
+
+    /**
      * Executes a tool with the given arguments.
      */
     @PostMapping("/call_tool", produces = [MediaType.APPLICATION_JSON_VALUE], consumes = [MediaType.APPLICATION_JSON_VALUE])
