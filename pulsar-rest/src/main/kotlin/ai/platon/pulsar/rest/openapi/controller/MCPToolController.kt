@@ -223,7 +223,7 @@ class MCPToolController(
             if (exception != null) {
                 ResponseEntity.ok(errorResponse("$toolName failed: ${exception.cause?.message} help: ${exception.help}"))
             } else {
-                ResponseEntity.ok(textResponse(result.preview))
+                ResponseEntity.ok(textResponse(result.toString()))
             }
         } catch (e: Exception) {
             logger.error("MCP tool execution failed | tool={} | {}", toolName, e.message, e)

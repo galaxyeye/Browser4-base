@@ -1,5 +1,6 @@
 package ai.platon.pulsar.agentic.tools.builtin
 
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.specs.SourceCodeToToolCallSpec
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.NavigateEntry
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
@@ -18,11 +19,11 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
         SourceCodeToToolCallSpec.webDriverToolCallList.associateByTo(toolSpec) { it.method }
 
         // Add custom drag tool spec which is not in WebDriver interface but supported via JS
-        val dragSpec = ai.platon.pulsar.agentic.model.ToolSpec(
+        val dragSpec = ToolSpec(
             domain, "drag",
             listOf(
-                ai.platon.pulsar.agentic.model.ToolSpec.Arg("sourceSelector", "String", ""),
-                ai.platon.pulsar.agentic.model.ToolSpec.Arg("targetSelector", "String", "")
+                ToolSpec.Arg("sourceSelector", "String", ""),
+                ToolSpec.Arg("targetSelector", "String", "")
             ),
             "Unit",
             "Drag an element from source selector to target selector."

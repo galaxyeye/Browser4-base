@@ -113,6 +113,7 @@ class Browser4MCPServer(
                 val description = spec.description?.trim()?.ifBlank { null }
                     ?: "${executor.domain}.$method"
                 val inputSchema = buildSchemaFromSpec(spec)
+
                 addTool(name = mcpName, description = description, inputSchema = inputSchema) { request ->
                     val args = buildArgsMap(request.params.arguments, spec)
                     val tc = ToolCall(
@@ -135,6 +136,7 @@ class Browser4MCPServer(
                 }
             }
         }
+
         logger.info("Registered {} MCP tools from AgentToolManager", toolManager.concreteExecutors.sumOf { it.getToolSpecs().size })
     }
 

@@ -96,7 +96,7 @@ data class AgentState constructor(
                 .joinToString("\n") { (k, s) -> "\t- $k: ${Strings.compactInline(s)}" }
 
             val pseudoExpression = actionDescription?.pseudoExpression
-            val resultPreview = toolCallResult?.evaluate?.preview ?: "(absent)"
+            val resultPreview = toolCallResult?.evaluate?.toString() ?: "(absent)"
             val toolCallState = if (isSuccess) "✅OK" else "❌FAIL"
             return "$state, event=$event0, tool=`$pseudoExpression`, resultPreview=`$resultPreview`, $toolCallState\n$finalSummary"
         }

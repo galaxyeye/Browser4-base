@@ -167,21 +167,16 @@ class AgentToolExecutor constructor(
             "agent" -> executor.callFunctionOn(tc, agent)
             "system" -> executor.callFunctionOn(tc, system)
             "skill" -> executor.callFunctionOn(tc, skillTarget)
+            "mcp" -> executor.callFunctionOn(tc, Any())
             else -> {
-                if (topDomain == "mcp") {
-                    // MCP tools ignore the target object, so we can pass Any()
-                    executor.callFunctionOn(tc, Any())
+                val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                if (customExecutor != null) {
+                    val target = _customTargets[tc.domain]
+                        ?: throw UnsupportedOperationException(
+                            "Custom domain '${tc.domain}' is registered but no target object is available.")
+                    customExecutor.callFunctionOn(tc, target)
                 } else {
-                    val customExecutor = CustomToolRegistry.instance.get(tc.domain)
-                    if (customExecutor != null) {
-                        val target = _customTargets[tc.domain]
-                            ?: throw UnsupportedOperationException(
-                                "Custom domain '${tc.domain}' is registered but no target object is available."
-                            )
-                        customExecutor.callFunctionOn(tc, target)
-                    } else {
-                        throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
-                    }
+                    throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
                 }
             }
         }
@@ -213,23 +208,19 @@ class AgentToolExecutor constructor(
                 "agent" -> executor.callFunctionOn(tc, agent)
                 "system" -> executor.callFunctionOn(tc, system)
                 "skill" -> executor.callFunctionOn(tc, skillTarget)
+                "mcp" -> executor.callFunctionOn(tc, Any())
                 else -> {
-                    if (topDomain == "mcp") {
-                        // MCP tools ignore the target object, so we can pass Any()
-                        executor.callFunctionOn(tc, Any())
+                    // Check if this is a custom tool domain
+                    val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                    if (customExecutor != null) {
+                        val target = _customTargets[tc.domain]
+                            ?: throw UnsupportedOperationException(
+                                "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
+                                        "Use registerCustomTarget() to provide the target object."
+                            )
+                        customExecutor.callFunctionOn(tc, target)
                     } else {
-                        // Check if this is a custom tool domain
-                        val customExecutor = CustomToolRegistry.instance.get(tc.domain)
-                        if (customExecutor != null) {
-                            val target = _customTargets[tc.domain]
-                                ?: throw UnsupportedOperationException(
-                                    "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
-                                            "Use registerCustomTarget() to provide the target object."
-                                )
-                            customExecutor.callFunctionOn(tc, target)
-                        } else {
-                            throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
-                        }
+                        throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
                     }
                 }
             }
