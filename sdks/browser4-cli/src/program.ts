@@ -435,7 +435,10 @@ async function main(): Promise<void> {
 
 // Only run when invoked directly (not when imported for testing)
 if (require.main === module) {
-    main().then(() => {});
+    main().catch((err) => {
+        console.error(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+    });
 }
 
-export {parseRawArgs, parseGlobalFlags, parseRawArgs as _parseRawArgs};
+export {parseRawArgs, parseGlobalFlags};
