@@ -22,11 +22,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import axios, {AxiosInstance} from 'axios';
 import {clearState, CliState, readState, writeState} from './state';
-import {ensureServerRunning} from "./cli/daemon/daemon";
-
-// ---------------------------------------------------------------------------
-// Server Management
-// ---------------------------------------------------------------------------
+import {ensureServerRunning} from './cli/daemon/daemon';
+import {commands} from './cli/daemon/commands';
+import {parseCommand} from './cli/daemon/command';
+import {generateHelp, generateHelpJSON} from './cli/daemon/helpGenerator';
 
 // ---------------------------------------------------------------------------
 // MCP tool call helpers
@@ -87,23 +86,6 @@ function timestampedFilename(prefix: string, ext: string): string {
     return `${prefix}-${now}.${ext}`;
 }
 
-/**
- * Parse --filename=<value> from the args list.
- * Returns the filename value (or undefined) and the remaining args.
- */
-function extractFilenameFlag(args: string[]): { filename?: string; rest: string[] } {
-    const rest: string[] = [];
-    let filename: string | undefined;
-    for (const arg of args) {
-        if (arg.startsWith('--filename=')) {
-            filename = arg.slice('--filename='.length);
-        } else {
-            rest.push(arg);
-        }
-    }
-    return {filename, rest};
-}
-
 // ---------------------------------------------------------------------------
 // Post-command snapshot
 // ---------------------------------------------------------------------------
@@ -148,30 +130,62 @@ async function postCommandSnapshot(ax: AxiosInstance, sessionId: string): Promis
 
 /**
  * Parse global flags that appear before the command.
- * Currently supports: -s=<sessionName>, --server=<url>
+ * Supports: -s=<sessionName>, --server=<url>
  */
 interface GlobalFlags {
     sessionName?: string;
+    serverUrl?: string;
     args: string[];
 }
 
 function parseGlobalFlags(argv: string[]): GlobalFlags {
     const args: string[] = [];
     let sessionName: string | undefined;
+    let serverUrl: string | undefined;
 
-    for (const arg of argv) {
+    for (let i = 0; i < argv.length; i++) {
+        const arg = argv[i];
         if (arg.startsWith('-s=')) {
             sessionName = arg.slice('-s='.length);
+        } else if (arg.startsWith('--server=')) {
+            serverUrl = arg.slice('--server='.length);
+        } else if (arg === '--server' && i + 1 < argv.length && !argv[i + 1].startsWith('-')) {
+            serverUrl = argv[++i];
         } else {
             args.push(arg);
         }
     }
-    return {sessionName, args};
+    return {sessionName, serverUrl, args};
 }
 
-// ---------------------------------------------------------------------------
-// Command implementations
-// ---------------------------------------------------------------------------
+/**
+ * Parse raw CLI arguments into a structure compatible with `parseCommand`.
+ *
+ * Positional arguments go into `_`.
+ * `--key=value` is parsed as a named option.
+ * `--flag` (no value) is parsed as boolean `true`.
+ * Values `"true"` and `"false"` are coerced to booleans.
+ */
+function parseRawArgs(rawArgs: string[]): Record<string, unknown> & { _: string[] } {
+    const result: Record<string, unknown> & { _: string[] } = {_: []};
+    for (const arg of rawArgs) {
+        if (arg.startsWith('--')) {
+            const eqIdx = arg.indexOf('=');
+            if (eqIdx !== -1) {
+                const key = arg.slice(2, eqIdx);
+                const val = arg.slice(eqIdx + 1);
+                if (val === 'true') result[key] = true;
+                else if (val === 'false') result[key] = false;
+                else result[key] = val;
+            } else {
+                result[arg.slice(2)] = true;
+            }
+        } else {
+            result._.push(arg);
+        }
+    }
+    return result;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -193,30 +207,222 @@ const NO_SNAPSHOT_COMMANDS = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// Help
+// ---------------------------------------------------------------------------
+
+function printHelp(commandName?: string): void {
+    if (commandName && commandName !== '--help') {
+        const helpData = generateHelpJSON();
+        const cmdHelp = helpData.commands[commandName];
+        if (cmdHelp) {
+            console.log(cmdHelp);
+        } else {
+            console.error(`Unknown command: ${commandName}`);
+            console.log(helpData.global);
+        }
+    } else {
+        console.log(generateHelp());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Command handlers
+// ---------------------------------------------------------------------------
+
+/** Handle the `open` command: create a session and optionally navigate. */
+async function handleOpen(
+    ax: AxiosInstance,
+    baseUrl: string,
+    toolParams: Record<string, unknown>,
+    sessionName?: string,
+): Promise<void> {
+    const sessionResult = await callTool(ax, 'open_session', {});
+    let sessionId: string;
+    try {
+        const parsed = JSON.parse(sessionResult);
+        sessionId = parsed.sessionId;
+    } catch {
+        sessionId = sessionResult;
+    }
+
+    writeState({sessionId, baseUrl, sessionName});
+
+    if (toolParams.url && toolParams.url !== 'about:blank') {
+        const result = await callTool(ax, 'browser_navigate', {
+            ...toolParams,
+            sessionId,
+        });
+        if (result) console.log(result);
+    } else {
+        console.log(`Session opened: ${sessionId}`);
+    }
+}
+
+/** Handle the `close` command: close the active session. */
+async function handleClose(ax: AxiosInstance): Promise<void> {
+    const state = requireSession();
+    try {
+        await callTool(ax, 'close_session', {sessionId: state.sessionId});
+    } catch {
+        // Session might already be closed
+    }
+    clearState();
+    console.log('Session closed.');
+}
+
+/** Handle the `close-all` command: close all sessions. */
+async function handleCloseAll(ax: AxiosInstance): Promise<void> {
+    const result = await callTool(ax, 'close_all_sessions', {});
+    clearState();
+    console.log(result || 'All sessions closed.');
+}
+
+/** Handle the `kill-all` command: forcefully kill all sessions. */
+async function handleKillAll(ax: AxiosInstance): Promise<void> {
+    const result = await callTool(ax, 'kill_all_sessions', {});
+    clearState();
+    console.log(result || 'All sessions killed.');
+}
+
+/** Handle the `list` command: list all active sessions. */
+async function handleList(ax: AxiosInstance): Promise<void> {
+    const result = await callTool(ax, 'list_sessions', {});
+    console.log(result);
+}
+
+/** Handle the `delete-data` command: delete session data. */
+async function handleDeleteData(ax: AxiosInstance): Promise<void> {
+    const state = requireSession();
+    const result = await callTool(ax, 'delete_session_data', {sessionId: state.sessionId});
+    console.log(result || 'Session data deleted.');
+}
+
+/**
+ * Handle the `snapshot` command: capture page snapshot and save to file.
+ * Produces the same output format as `postCommandSnapshot`.
+ */
+async function handleSnapshot(
+    ax: AxiosInstance,
+    toolParams: Record<string, unknown>,
+): Promise<void> {
+    const state = requireSession();
+    const sid = state.sessionId;
+    const [pageUrl, pageTitle, snapshotContent] = await Promise.all([
+        callTool(ax, 'page_url', {sessionId: sid}),
+        callTool(ax, 'page_title', {sessionId: sid}),
+        callTool(ax, 'browser_snapshot', {sessionId: sid}),
+    ]);
+
+    const outName = (toolParams.filename as string) || timestampedFilename('snapshot', 'yml');
+    const outPath = path.resolve(SNAPSHOT_DIR, outName);
+    ensureDir(path.dirname(outPath));
+    fs.writeFileSync(outPath, snapshotContent, 'utf-8');
+
+    console.log('### Page');
+    console.log(`- Page URL: ${pageUrl}`);
+    console.log(`- Page Title: ${pageTitle}`);
+    console.log('### Snapshot');
+    console.log(`[Snapshot](${outPath})`);
+}
+
+/**
+ * Generic command handler: call an MCP tool with the session ID and print the result.
+ */
+async function handleToolCommand(
+    ax: AxiosInstance,
+    toolName: string,
+    toolParams: Record<string, unknown>,
+): Promise<void> {
+    const state = requireSession();
+    const result = await callTool(ax, toolName, {
+        ...toolParams,
+        sessionId: state.sessionId,
+    });
+    if (result) {
+        console.log(result);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-    // Parse global flags from raw process.argv (skip node + script path)
     const rawArgs = process.argv.slice(2);
-    const {sessionName, args: remaining} = parseGlobalFlags(rawArgs);
-    const [command, ...rest] = remaining;
+    const {sessionName, serverUrl, args: remaining} = parseGlobalFlags(rawArgs);
+    const [command] = remaining;
 
     try {
-        if (command !== 'help' && command !== '--help' && command !== '-h' && command !== undefined) {
-            // Pass remaining args to check for --server flag
-            await ensureServerRunning(rest);
+        // Handle help or no command
+        if (!command || command === 'help' || command === '--help' || command === '-h') {
+            printHelp(remaining[1]);
+            return;
         }
 
-        // Use files in cli/daemon to implement the client commands, which will call MCP tools and manage state as needed.
-        // For example, "open" will start a new session and save the session ID to state; "click" will read the session ID from state and call the click tool; etc.
-        // Each command implementation should be in its own function for clarity.
+        // Resolve base URL: --server flag > persisted state > default
+        const currentState = readState();
+        const baseUrl = serverUrl || currentState.baseUrl;
+        if (serverUrl && serverUrl !== currentState.baseUrl) {
+            writeState({...currentState, baseUrl: serverUrl});
+        }
+
+        // Ensure the Browser4 server is running
+        await ensureServerRunning(remaining.slice(1));
+
+        const ax = makeAxios(baseUrl);
+
+        // Look up the command definition
+        const cmdDef = commands[command];
+        if (!cmdDef) {
+            console.error(`Unknown command: ${command}. Run 'browser4-cli help' for usage.`);
+            process.exit(1);
+        }
+
+        // Parse positional + named arguments using the command schema
+        const parsed = parseRawArgs(remaining);
+        // Type assertion: parseCommand uses Zod for runtime validation which
+        // handles booleans/numbers even though the signature says string values.
+        const {toolName, toolParams} = parseCommand(
+            cmdDef,
+            parsed as unknown as Record<string, string> & { _: string[] },
+        );
+
+        // Dispatch the command
+        switch (command) {
+            case 'open':
+                await handleOpen(ax, baseUrl, toolParams, sessionName);
+                break;
+            case 'close':
+                await handleClose(ax);
+                break;
+            case 'close-all':
+                await handleCloseAll(ax);
+                break;
+            case 'kill-all':
+                await handleKillAll(ax);
+                break;
+            case 'list':
+                await handleList(ax);
+                break;
+            case 'delete-data':
+                await handleDeleteData(ax);
+                break;
+            case 'snapshot':
+                await handleSnapshot(ax, toolParams);
+                break;
+            default:
+                if (!toolName) {
+                    console.log(`Command '${command}' is not yet implemented.`);
+                    break;
+                }
+                await handleToolCommand(ax, toolName, toolParams);
+                break;
+        }
 
         // Post-command snapshot for commands that modify browser state
-        if (command && !NO_SNAPSHOT_COMMANDS.has(command)) {
+        if (!NO_SNAPSHOT_COMMANDS.has(command)) {
             const state = readState();
             if (state.sessionId) {
-                const ax = makeAxios(state.baseUrl);
                 await postCommandSnapshot(ax, state.sessionId);
             }
         }
@@ -227,4 +433,4 @@ async function main(): Promise<void> {
     }
 }
 
-main().then(r => "");
+main().then(() => {});
