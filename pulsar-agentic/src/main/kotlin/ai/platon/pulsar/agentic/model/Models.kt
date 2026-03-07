@@ -130,9 +130,6 @@ data class TcEvaluate constructor(
     val expression: String? = null,
     var exception: TcException? = null
 ) {
-    @Deprecated("Use toString() instead", ReplaceWith("toString()"))
-    val preview get() = doGetPreview()
-
     constructor(expression: String, cause: Exception, help: String? = null) :
             this(expression = expression, exception = TcException(expression, cause, help))
 

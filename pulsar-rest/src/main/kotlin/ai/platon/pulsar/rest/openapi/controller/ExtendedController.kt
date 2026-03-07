@@ -305,8 +305,7 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                val encodedKey = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(request.key)
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: $encodedKey, bubbles: true}))")
+                driver.keyDown(request.key)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -332,8 +331,7 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                val encodedKey = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(request.key)
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: $encodedKey, bubbles: true}))")
+                driver.keyUp(request.key)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -363,7 +361,7 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                driver.moveMouseTo(request.x, request.y)
+                driver.mouseMove(request.x, request.y)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -390,8 +388,7 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
-                driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mousedown', {button: $btnIndex, bubbles: true}))")
+                driver.mouseDown(button)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -418,8 +415,7 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
-                driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mouseup', {button: $btnIndex, bubbles: true}))")
+                driver.mouseUp(button)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {
@@ -445,11 +441,7 @@ class ExtendedController(
 
         return try {
             managed.withLock {
-                if (request.deltaY > 0) {
-                    driver.mouseWheelDown(1, request.deltaX, request.deltaY)
-                } else {
-                    driver.mouseWheelUp(1, request.deltaX, request.deltaY)
-                }
+                driver.mouseWheel(request.deltaX, request.deltaY)
             }
             ResponseEntity.ok(WebDriverResponse<Any?>(value = null))
         } catch (e: Exception) {

@@ -450,6 +450,26 @@
   "help" : "Shortcut for keyboard down and keyboard up. @mcp\n\nThe key is specified as a string, which can be a single character, a key name, or a combination of both. For example, 'a', 'A', 'KeyA', 'Enter', 'Shift+A', and 'Control+Shift+Tab' are all valid keys.\n\n```kotlin driver.press(\"input[name='q']\", \"Enter\") ```\n\nof an element to focus, and then press a key. If there are multiple elements satisfying the selector, the first will be focused. See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)"
 }, {
   "domain" : "driver",
+  "method" : "keyDown",
+  "arguments" : [ {
+    "name" : "key",
+    "type" : "String"
+  } ],
+  "returnType" : "Unit",
+  "description" : "Presses and holds a keyboard key on the currently focused element. @mcp",
+  "help" : "Presses and holds a keyboard key on the currently focused element. @mcp\n\n```kotlin driver.keyDown(\"Shift\") ```"
+}, {
+  "domain" : "driver",
+  "method" : "keyUp",
+  "arguments" : [ {
+    "name" : "key",
+    "type" : "String"
+  } ],
+  "returnType" : "Unit",
+  "description" : "Releases a previously pressed keyboard key on the currently focused element. @mcp",
+  "help" : "Releases a previously pressed keyboard key on the currently focused element. @mcp\n\n```kotlin driver.keyUp(\"Shift\") ```"
+}, {
+  "domain" : "driver",
   "method" : "click",
   "arguments" : [ {
     "name" : "selector",
@@ -756,6 +776,21 @@
   "help" : "The mouse wheels up for [count] times. @mcp\n\n```kotlin driver.mouseWheelUp(3) ```"
 }, {
   "domain" : "driver",
+  "method" : "mouseWheel",
+  "arguments" : [ {
+    "name" : "deltaX",
+    "type" : "Double",
+    "defaultValue" : "0.0"
+  }, {
+    "name" : "deltaY",
+    "type" : "Double",
+    "defaultValue" : "150.0"
+  } ],
+  "returnType" : "Unit",
+  "description" : "Scrolls the mouse wheel by the provided deltas. @mcp",
+  "help" : "Scrolls the mouse wheel by the provided deltas. @mcp\n\n```kotlin driver.mouseWheel(0.0, 150.0) ```"
+}, {
+  "domain" : "driver",
   "method" : "moveMouseTo",
   "arguments" : [ {
     "name" : "x",
@@ -767,6 +802,49 @@
   "returnType" : "Unit",
   "description" : "The mouse moves to the position specified by [x] and [y]. @mcp",
   "help" : "The mouse moves to the position specified by [x] and [y]. @mcp\n\n```kotlin driver.moveMouseTo(100.0, 200.0) ```"
+}, {
+  "domain" : "driver",
+  "method" : "mouseMove",
+  "arguments" : [ {
+    "name" : "x",
+    "type" : "Double"
+  }, {
+    "name" : "y",
+    "type" : "Double"
+  } ],
+  "returnType" : "Unit",
+  "description" : "The mouse moves to the position specified by [x] and [y]. @mcp",
+  "help" : "The mouse moves to the position specified by [x] and [y]. @mcp\n\n```kotlin driver.mouseMove(100.0, 200.0) ```"
+}, {
+  "domain" : "driver",
+  "method" : "mouseDown",
+  "arguments" : [ {
+    "name" : "button",
+    "type" : "String",
+    "defaultValue" : "left"
+  }, {
+    "name" : "clickCount",
+    "type" : "Int",
+    "defaultValue" : "1"
+  } ],
+  "returnType" : "Unit",
+  "description" : "Presses a mouse button at the current mouse position. @mcp",
+  "help" : "Presses a mouse button at the current mouse position. @mcp\n\n```kotlin driver.mouseDown() ```"
+}, {
+  "domain" : "driver",
+  "method" : "mouseUp",
+  "arguments" : [ {
+    "name" : "button",
+    "type" : "String",
+    "defaultValue" : "left"
+  }, {
+    "name" : "clickCount",
+    "type" : "Int",
+    "defaultValue" : "1"
+  } ],
+  "returnType" : "Unit",
+  "description" : "Releases a mouse button at the current mouse position. @mcp",
+  "help" : "Releases a mouse button at the current mouse position. @mcp\n\n```kotlin driver.mouseUp() ```"
 }, {
   "domain" : "driver",
   "method" : "moveMouseTo",

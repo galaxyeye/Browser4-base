@@ -38,6 +38,12 @@ browser4-cli <command> [options]
 | `click <ref>` | Click an element |
 | `type <text>` | Type text into the active element |
 | `press <key>` | Press a keyboard key |
+| `keydown <key>` | Press and hold a keyboard key |
+| `keyup <key>` | Release a keyboard key |
+| `mousemove <x> <y>` | Move the mouse to viewport coordinates |
+| `mousedown [button]` | Press a mouse button at the current cursor position |
+| `mouseup [button]` | Release a mouse button at the current cursor position |
+| `mousewheel <dx> <dy>` | Scroll the mouse wheel by deltas |
 | `screenshot [<file>]` | Take a screenshot |
 | `snapshot` | Print the accessibility snapshot |
 | `close` | Close the active session |
@@ -70,6 +76,10 @@ browser4-cli snapshot
 browser4-cli click e15
 browser4-cli type "page.click"
 browser4-cli press Enter
+browser4-cli keydown Shift
+browser4-cli mousemove 150 300
+browser4-cli mousewheel 0 100
+browser4-cli keyup Shift
 
 # Take a screenshot and save it to disk
 browser4-cli screenshot output.png

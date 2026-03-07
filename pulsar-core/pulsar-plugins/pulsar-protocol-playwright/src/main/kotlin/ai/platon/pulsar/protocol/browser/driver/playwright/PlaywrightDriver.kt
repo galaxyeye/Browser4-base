@@ -14,8 +14,10 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.microsoft.playwright.ElementHandle
+import com.microsoft.playwright.Mouse
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.KeyboardModifier
+import com.microsoft.playwright.options.MouseButton
 import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Connection
 import java.time.Duration
@@ -467,6 +469,26 @@ class PlaywrightDriver(
         }
     }
 
+    override suspend fun keyDown(key: String) {
+        try {
+            rpc.invokeDeferred("keyDown") {
+                page.keyboard().down(key)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "keyDown", "key: $key")
+        }
+    }
+
+    override suspend fun keyUp(key: String) {
+        try {
+            rpc.invokeDeferred("keyUp") {
+                page.keyboard().up(key)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "keyUp", "key: $key")
+        }
+    }
+
     override suspend fun click(selector: String, count: Int) {
         try {
             rpc.invokeDeferred("click") {
@@ -734,6 +756,16 @@ class PlaywrightDriver(
         }
     }
 
+    override suspend fun mouseWheel(deltaX: Double, deltaY: Double) {
+        try {
+            rpc.invokeDeferred("mouseWheel") {
+                page.mouse().wheel(deltaX, deltaY)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseWheel", "deltaX: $deltaX, deltaY: $deltaY")
+        }
+    }
+
     override suspend fun moveMouseTo(x: Double, y: Double) {
         try {
             rpc.invokeDeferred("moveMouseTo") {
@@ -741,6 +773,46 @@ class PlaywrightDriver(
             }
         } catch (e: Exception) {
             rpc.handleWebDriverException(e, "moveMouseTo", "x: $x, y: $y")
+        }
+    }
+
+    override suspend fun mouseMove(x: Double, y: Double) {
+        try {
+            rpc.invokeDeferred("mouseMove") {
+                page.mouse().move(x, y)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseMove", "x: $x, y: $y")
+        }
+    }
+
+    override suspend fun mouseDown(button: String, clickCount: Int) {
+        try {
+            rpc.invokeDeferred("mouseDown") {
+                val mouseButton = when (button.lowercase()) {
+                    "right" -> MouseButton.RIGHT
+                    "middle" -> MouseButton.MIDDLE
+                    else -> MouseButton.LEFT
+                }
+                page.mouse().down(Mouse.DownOptions().setButton(mouseButton).setClickCount(clickCount))
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseDown", "button: $button, clickCount: $clickCount")
+        }
+    }
+
+    override suspend fun mouseUp(button: String, clickCount: Int) {
+        try {
+            rpc.invokeDeferred("mouseUp") {
+                val mouseButton = when (button.lowercase()) {
+                    "right" -> MouseButton.RIGHT
+                    "middle" -> MouseButton.MIDDLE
+                    else -> MouseButton.LEFT
+                }
+                page.mouse().up(Mouse.UpOptions().setButton(mouseButton).setClickCount(clickCount))
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseUp", "button: $button, clickCount: $clickCount")
         }
     }
 

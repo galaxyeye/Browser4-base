@@ -843,6 +843,34 @@ interface WebDriver : Closeable {
     suspend fun press(selector: String, key: String)
 
     /**
+     * Presses and holds a keyboard key on the currently focused element. @mcp
+     *
+     * ```kotlin
+     * driver.keyDown("Shift")
+     * driver.keyDown("Control")
+     * ```
+     *
+     * @param key A key to press and hold. The key can be a single character, a key name, or a combination of both.
+     *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
+     */
+    @Throws(WebDriverException::class)
+    suspend fun keyDown(key: String)
+
+    /**
+     * Releases a previously pressed keyboard key on the currently focused element. @mcp
+     *
+     * ```kotlin
+     * driver.keyUp("Shift")
+     * driver.keyUp("Control")
+     * ```
+     *
+     * @param key A key to release. The key can be a single character, a key name, or a combination of both.
+     *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
+     */
+    @Throws(WebDriverException::class)
+    suspend fun keyUp(key: String)
+
+    /**
      * This method focuses an element with [selector] and clicks it. @mcp
      *
      * If there's no element matching `selector`, nothing to do.
@@ -1132,6 +1160,7 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to wheel vertically.
      * @param delayMillis The delay time in milliseconds.
      */
+    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
     @Throws(WebDriverException::class)
     suspend fun mouseWheelDown(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = 150.0, delayMillis: Long = 0)
 
@@ -1147,8 +1176,25 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to wheel vertically.
      * @param delayMillis The delay time in milliseconds.
      */
+    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
     @Throws(WebDriverException::class)
     suspend fun mouseWheelUp(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = -150.0, delayMillis: Long = 0)
+
+    /**
+     * Scrolls the mouse wheel by the provided deltas. @mcp
+     *
+     * Positive [deltaY] scrolls down and negative [deltaY] scrolls up.
+     *
+     * ```kotlin
+     * driver.mouseWheel(0.0, 150.0)
+     * driver.mouseWheel(0.0, -150.0)
+     * ```
+     *
+     * @param deltaX The distance to wheel horizontally.
+     * @param deltaY The distance to wheel vertically.
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseWheel(deltaX: Double = 0.0, deltaY: Double = 150.0)
 
     /**
      * The mouse moves to the position specified by [x] and [y]. @mcp
@@ -1160,8 +1206,50 @@ interface WebDriver : Closeable {
      * @param x The x coordinate to move to.
      * @param y The y coordinate to move to.
      */
+    @Deprecated("Use mouseMove instead", replaceWith = ReplaceWith("mouseMove(x, y)"))
     @Throws(WebDriverException::class)
     suspend fun moveMouseTo(x: Double, y: Double)
+
+    /**
+     * Moves the mouse to the position specified by [x] and [y]. @mcp
+     *
+     * ```kotlin
+     * driver.mouseMove(100.0, 200.0)
+     * ```
+     *
+     * @param x The x coordinate to move to.
+     * @param y The y coordinate to move to.
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseMove(x: Double, y: Double)
+
+    /**
+     * Presses a mouse button at the current mouse position. @mcp
+     *
+     * ```kotlin
+     * driver.mouseDown()
+     * driver.mouseDown("right")
+     * ```
+     *
+     * @param button The mouse button to press. Supported values are `left`, `middle`, and `right`.
+     * @param clickCount The click count associated with the press event.
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
+
+    /**
+     * Releases a mouse button at the current mouse position. @mcp
+     *
+     * ```kotlin
+     * driver.mouseUp()
+     * driver.mouseUp("right")
+     * ```
+     *
+     * @param button The mouse button to release. Supported values are `left`, `middle`, and `right`.
+     * @param clickCount The click count associated with the release event.
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseUp(button: String = "left", clickCount: Int = 1)
 
     /**
      * The mouse moves to the element with [selector]. @mcp

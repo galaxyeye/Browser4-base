@@ -843,6 +843,28 @@ interface WebDriver : Closeable {
     suspend fun press(selector: String, key: String)
 
     /**
+     * Presses and holds a keyboard key on the currently focused element. @mcp
+     *
+     * ```kotlin
+     * driver.keyDown("Shift")
+     * driver.keyDown("Control")
+     * ```
+     */
+    @Throws(WebDriverException::class)
+    suspend fun keyDown(key: String)
+
+    /**
+     * Releases a previously pressed keyboard key on the currently focused element. @mcp
+     *
+     * ```kotlin
+     * driver.keyUp("Shift")
+     * driver.keyUp("Control")
+     * ```
+     */
+    @Throws(WebDriverException::class)
+    suspend fun keyUp(key: String)
+
+    /**
      * This method focuses an element with [selector] and clicks it. @mcp
      *
      * If there's no element matching `selector`, nothing to do.
@@ -1132,6 +1154,7 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to wheel vertically.
      * @param delayMillis The delay time in milliseconds.
      */
+    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
     @Throws(WebDriverException::class)
     suspend fun mouseWheelDown(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = 150.0, delayMillis: Long = 0)
 
@@ -1147,8 +1170,20 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to wheel vertically.
      * @param delayMillis The delay time in milliseconds.
      */
+    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
     @Throws(WebDriverException::class)
     suspend fun mouseWheelUp(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = -150.0, delayMillis: Long = 0)
+
+    /**
+     * Scrolls the mouse wheel by the provided deltas. @mcp
+     *
+     * ```kotlin
+     * driver.mouseWheel(0.0, 150.0)
+     * driver.mouseWheel(0.0, -150.0)
+     * ```
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseWheel(deltaX: Double = 0.0, deltaY: Double = 150.0)
 
     /**
      * The mouse moves to the position specified by [x] and [y]. @mcp
@@ -1160,8 +1195,41 @@ interface WebDriver : Closeable {
      * @param x The x coordinate to move to.
      * @param y The y coordinate to move to.
      */
+    @Deprecated("Use mouseMove instead", replaceWith = ReplaceWith("mouseMove(x, y)"))
     @Throws(WebDriverException::class)
     suspend fun moveMouseTo(x: Double, y: Double)
+
+    /**
+     * Moves the mouse to the position specified by [x] and [y]. @mcp
+     *
+     * ```kotlin
+     * driver.mouseMove(100.0, 200.0)
+     * ```
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseMove(x: Double, y: Double)
+
+    /**
+     * Presses a mouse button at the current mouse position. @mcp
+     *
+     * ```kotlin
+     * driver.mouseDown()
+     * driver.mouseDown("right")
+     * ```
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
+
+    /**
+     * Releases a mouse button at the current mouse position. @mcp
+     *
+     * ```kotlin
+     * driver.mouseUp()
+     * driver.mouseUp("right")
+     * ```
+     */
+    @Throws(WebDriverException::class)
+    suspend fun mouseUp(button: String = "left", clickCount: Int = 1)
 
     /**
      * The mouse moves to the element with [selector]. @mcp
@@ -1429,7 +1497,6 @@ interface WebDriver : Closeable {
      * */
     @Throws(WebDriverException::class)
     suspend fun setPropertyAll(selector: String, propName: String, propValue: String)
-
 
     /**
      * Find hyperlinks in elements matching the CSS query. @mcp

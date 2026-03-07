@@ -242,6 +242,12 @@ class MCPToolController(
             "tab_new" -> return ToolCall("browser", "newTab", args1)
             "tab_list" -> return ToolCall("browser", "listTabs", args1)
             "tab_close", "close_tab" -> return ToolCall("browser", "closeTab", args1)
+            "keydown", "browser_keydown" -> return ToolCall("driver", "keyDown", args1)
+            "keyup", "browser_keyup" -> return ToolCall("driver", "keyUp", args1)
+            "mousemove", "browser_mouse_move_xy" -> return ToolCall("driver", "mouseMove", args1)
+            "mousedown", "browser_mouse_down" -> return ToolCall("driver", "mouseDown", args1)
+            "mouseup", "browser_mouse_up" -> return ToolCall("driver", "mouseUp", args1)
+            "mousewheel", "browser_mouse_wheel" -> return ToolCall("driver", "mouseWheel", args1)
         }
 
         // 2. Generic mapping

@@ -28,7 +28,9 @@ import org.slf4j.LoggerFactory
  * - `scrollToTop()` - Scroll to page top
  * - `scrollToMiddle(ratio)` - Scroll to percentage of page height
  * - `scrollToBottom()` - Scroll to page bottom
- * - `mouseWheelDown(count, delay)` - Simulate mouse wheel scrolling
+ * - `mouseWheel(deltaX, deltaY)` - Simulate Playwright-style mouse wheel scrolling
+ * - `mouseMove(x, y)` / `mouseDown()` / `mouseUp()` - Simulate low-level mouse input
+ * - `keyDown(key)` / `keyUp(key)` - Simulate low-level keyboard input
  *
  * ### Element Interaction
  * - `exists(selector)` - Check if element exists
@@ -214,11 +216,18 @@ internal class WebDriverDemo(private val session: AgenticSession = AgenticContex
         // Simulate smooth scrolling with mouse wheel
         // AI Note: More natural than instant scroll, useful for lazy-loading pages
         println("wheel down for 5 times ...")
-        driver.mouseWheelDown(5, delayMillis = 2000)
+        repeat(5) { driver.mouseWheel(0.0, 150.0) }
+
+        println("hold Shift while moving the pointer ...")
+        driver.keyDown("Shift")
+        driver.mouseMove(100.0, 200.0)
+        driver.mouseDown()
+        driver.mouseUp()
+        driver.keyUp("Shift")
 
         // Return to top
         println("scroll to top ...")
-        driver.mouseWheelDown(5, delayMillis = 2000)
+        repeat(5) { driver.mouseWheel(0.0, 150.0) }
         driver.scrollToTop()
 
         // =====================================================================

@@ -327,8 +327,72 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
+    override suspend fun mouseWheel(deltaX: Double, deltaY: Double) {
+        driverHelper.invokeOnPage("mouseWheel") { mouse?.wheel(deltaX, deltaY) }
+    }
+
+    @Throws(WebDriverException::class)
     override suspend fun moveMouseTo(x: Double, y: Double) {
         driverHelper.invokeOnPage("moveMouseTo") { mouse?.moveTo(x, y) }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun mouseMove(x: Double, y: Double) {
+        driverHelper.invokeOnPage("mouseMove") { mouse?.moveTo(x, y) }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun mouseDown(button: String, clickCount: Int) {
+        if (button == "left") {
+            driverHelper.invokeOnPage("mouseDown") { mouse?.down(clickCount = clickCount) }
+            return
+        }
+
+        val btnIndex = when (button) {
+            "right" -> 2
+            "middle" -> 1
+            else -> 0
+        }
+        val currentX = mouse?.currentX ?: 0.0
+        val currentY = mouse?.currentY ?: 0.0
+        val script = """
+            (() => {
+                const x = $currentX;
+                const y = $currentY;
+                const target = document.elementFromPoint(x, y);
+                if (!target) return;
+                target.dispatchEvent(new MouseEvent('mousedown', { button: $btnIndex, buttons: 1, bubbles: true, clientX: x, clientY: y, detail: $clickCount }));
+            })()
+        """.trimIndent()
+        driverHelper.invokeOnPage("mouseDown") { evaluate(script) }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun mouseUp(button: String, clickCount: Int) {
+        if (button == "left") {
+            driverHelper.invokeOnPage("mouseUp") {
+                mouse?.up(mouse?.currentX ?: 0.0, mouse?.currentY ?: 0.0, clickCount = clickCount)
+            }
+            return
+        }
+
+        val btnIndex = when (button) {
+            "right" -> 2
+            "middle" -> 1
+            else -> 0
+        }
+        val currentX = mouse?.currentX ?: 0.0
+        val currentY = mouse?.currentY ?: 0.0
+        val script = """
+            (() => {
+                const x = $currentX;
+                const y = $currentY;
+                const target = document.elementFromPoint(x, y);
+                if (!target) return;
+                target.dispatchEvent(new MouseEvent('mouseup', { button: $btnIndex, bubbles: true, clientX: x, clientY: y, detail: $clickCount }));
+            })()
+        """.trimIndent()
+        driverHelper.invokeOnPage("mouseUp") { evaluate(script) }
     }
 
     @Throws(WebDriverException::class)
@@ -581,6 +645,20 @@ class PulsarWebDriver(
     override suspend fun press(selector: String, key: String) {
         driverHelper.invokeOnElement(selector, "press", focus = true) { _ ->
             keyboard?.press(key, randomDelayMillis("press"))
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun keyDown(key: String) {
+        driverHelper.invokeOnPage("keyDown") {
+            keyboard?.down(key)
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun keyUp(key: String) {
+        driverHelper.invokeOnPage("keyUp") {
+            keyboard?.up(key)
         }
     }
 
@@ -1270,4 +1348,3 @@ function() {
         )
     }
 }
-

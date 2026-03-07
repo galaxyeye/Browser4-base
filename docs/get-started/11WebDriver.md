@@ -20,7 +20,9 @@ The methods in this interface fall into several categories:
 - `.click(selector)`: Click an element.
 - `.type(selector, text)`: Type text into an input field.
 - `.scrollDown()`, `.scrollTo(selector)`: Scroll the page or to an element.
-- `.mouseWheelDown()`: Simulate mouse wheel scrolling.
+- `.mouseWheel()`: Simulate mouse wheel scrolling.
+- `.mouseDown()` / `.mouseUp()` / `.mouseMove()`: Simulate low-level mouse input.
+- `.keyDown()` / `.keyUp()`: Simulate low-level keyboard input on the focused element.
 - `.dragAndDrop()`: Perform drag and drop operations.
 
 ### 3. Data Extraction & State Checking
@@ -115,10 +117,10 @@ class WebDriverDemo(private val session: PulsarSession) {
         println("evaluate 1 + 1 returns $result")
 
         println("wheel down for 5 times ...")
-        driver.mouseWheelDown(5, delayMillis = 2000)
+        repeat(5) { driver.mouseWheel(0.0, 150.0) }
 
         println("scroll to top ...")
-        driver.mouseWheelDown(5, delayMillis = 2000)
+        repeat(5) { driver.mouseWheel(0.0, 150.0) }
         driver.scrollToTop()
 
         println("search ...")

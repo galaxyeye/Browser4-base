@@ -179,29 +179,27 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
                 validateArgs(args, allowed("width", "height"), setOf("width", "height"), functionName)
                 driver.resize(width = paramInt(args, "width", functionName)!!, height = paramInt(args, "height", functionName)!!)
             }
-            "keydown" -> {
+            "keydown", "keyDown" -> {
                 validateArgs(args, allowed("key"), setOf("key"), functionName)
-                val key = paramString(args, "key", functionName)!!
-                val encodedKey = Pson.toJson(key)
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {key: ${encodedKey}, bubbles: true}))")
+                driver.keyDown(paramString(args, "key", functionName)!!)
             }
-            "keyup" -> {
+            "keyup", "keyUp" -> {
                 validateArgs(args, allowed("key"), setOf("key"), functionName)
-                val key = paramString(args, "key", functionName)!!
-                val encodedKey = Pson.toJson(key)
-                driver.evaluate("document.activeElement.dispatchEvent(new KeyboardEvent('keyup', {key: ${encodedKey}, bubbles: true}))")
+                driver.keyUp(paramString(args, "key", functionName)!!)
             }
-            "mousedown" -> {
-                validateArgs(args, allowed("button", "x", "y"), emptySet(), functionName)
-                val button = paramString(args, "button", functionName, required = false) ?: "left"
-                val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
-                driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mousedown', {button: $btnIndex, bubbles: true}))")
+            "mousedown", "mouseDown" -> {
+                validateArgs(args, allowed("button", "clickCount"), emptySet(), functionName)
+                driver.mouseDown(
+                    button = paramString(args, "button", functionName, required = false) ?: "left",
+                    clickCount = paramInt(args, "clickCount", functionName, required = false, default = 1)!!
+                )
             }
-            "mouseup" -> {
-                validateArgs(args, allowed("button", "x", "y"), emptySet(), functionName)
-                val button = paramString(args, "button", functionName, required = false) ?: "left"
-                val btnIndex = when (button) { "right" -> 2; "middle" -> 1; else -> 0 }
-                driver.evaluate("document.elementFromPoint(window.__browser4MouseX||0, window.__browser4MouseY||0)?.dispatchEvent(new MouseEvent('mouseup', {button: $btnIndex, bubbles: true}))")
+            "mouseup", "mouseUp" -> {
+                validateArgs(args, allowed("button", "clickCount"), emptySet(), functionName)
+                driver.mouseUp(
+                    button = paramString(args, "button", functionName, required = false) ?: "left",
+                    clickCount = paramInt(args, "clickCount", functionName, required = false, default = 1)!!
+                )
             }
             "drag" -> {
                 validateArgs(args, allowed("sourceSelector", "targetSelector"), setOf("sourceSelector", "targetSelector"), functionName)
@@ -283,9 +281,23 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
             // Mouse wheel / movement
             "mouseWheelDown" -> { validateArgs(args, allowed("count", "deltaX", "deltaY", "delayMillis"), emptySet(), functionName); driver.mouseWheelDown(count = args["count"]?.toString()?.toIntOrNull() ?: 1, deltaX = args["deltaX"]?.toString()?.toDoubleOrNull() ?: 0.0, deltaY = args["deltaY"]?.toString()?.toDoubleOrNull() ?: 150.0, delayMillis = args["delayMillis"]?.toString()?.toLongOrNull() ?: 0L) }
             "mouseWheelUp" -> { validateArgs(args, allowed("count", "deltaX", "deltaY", "delayMillis"), emptySet(), functionName); driver.mouseWheelUp(count = args["count"]?.toString()?.toIntOrNull() ?: 1, deltaX = args["deltaX"]?.toString()?.toDoubleOrNull() ?: 0.0, deltaY = args["deltaY"]?.toString()?.toDoubleOrNull() ?: -150.0, delayMillis = args["delayMillis"]?.toString()?.toLongOrNull() ?: 0L) }
-            "moveMouseTo" -> {
+            "mouseWheel" -> {
+                validateArgs(args, allowed("deltaX", "deltaY"), emptySet(), functionName)
+                driver.mouseWheel(
+                    deltaX = args["deltaX"]?.toString()?.toDoubleOrNull() ?: 0.0,
+                    deltaY = args["deltaY"]?.toString()?.toDoubleOrNull() ?: 150.0
+                )
+            }
+            "moveMouseTo", "mouseMove" -> {
                 when {
-                    args.containsKey("x") && args.containsKey("y") -> { validateArgs(args, allowed("x", "y"), setOf("x", "y"), functionName); driver.moveMouseTo(paramDouble(args, "x", functionName)!!, paramDouble(args, "y", functionName)!!) }
+                    args.containsKey("x") && args.containsKey("y") -> {
+                        validateArgs(args, allowed("x", "y"), setOf("x", "y"), functionName)
+                        if (functionName == "mouseMove") {
+                            driver.mouseMove(paramDouble(args, "x", functionName)!!, paramDouble(args, "y", functionName)!!)
+                        } else {
+                            driver.moveMouseTo(paramDouble(args, "x", functionName)!!, paramDouble(args, "y", functionName)!!)
+                        }
+                    }
                     args.containsKey("selector") -> { validateArgs(args, allowed("selector", "deltaX", "deltaY"), setOf("selector"), functionName); driver.moveMouseTo(paramString(args, "selector", functionName)!!, paramInt(args, "deltaX", functionName, required = false, default = 0)!!, paramInt(args, "deltaY", functionName, required = false, default = 0)!!) }
                     else -> throw IllegalArgumentException("moveMouseTo requires ('x','y') or 'selector' (+ optional deltaX, deltaY)")
                 }

@@ -492,6 +492,32 @@ class WebDriver(
     }
 
     /**
+     * Presses and holds a key on the currently focused element.
+     *
+     * @param key Key to press down
+     * @return Result of the key down action
+     */
+    suspend fun keyDown(key: String): Any? {
+        return client.post(
+            "/session/{sessionId}/keydown",
+            mapOf("key" to key)
+        )
+    }
+
+    /**
+     * Releases a previously pressed key on the currently focused element.
+     *
+     * @param key Key to release
+     * @return Result of the key up action
+     */
+    suspend fun keyUp(key: String): Any? {
+        return client.post(
+            "/session/{sessionId}/keyup",
+            mapOf("key" to key)
+        )
+    }
+
+    /**
      * Sends keys to an element.
      *
      * This method now delegates to [fill] for consistency with the selector-based API.
@@ -1049,14 +1075,63 @@ class WebDriver(
     }
 
     /**
+     * Scrolls using the mouse wheel.
+     *
+     * @param deltaX Horizontal scroll delta
+     * @param deltaY Vertical scroll delta
+     */
+    suspend fun mouseWheel(deltaX: Double = 0.0, deltaY: Double = 150.0): Any? {
+        return client.post(
+            "/session/{sessionId}/mousewheel",
+            mapOf("deltaX" to deltaX, "deltaY" to deltaY)
+        )
+    }
+
+    /**
      * Moves mouse to coordinates.
      *
      * @param x X coordinate
      * @param y Y coordinate
      */
     suspend fun moveMouseTo(x: Double, y: Double) {
-        // Implement via JavaScript evaluation
-        executeScript("window.dispatchEvent(new MouseEvent('mousemove', {clientX: $x, clientY: $y}))")
+        mouseMove(x, y)
+    }
+
+    /**
+     * Moves mouse to coordinates.
+     *
+     * @param x X coordinate
+     * @param y Y coordinate
+     */
+    suspend fun mouseMove(x: Double, y: Double): Any? {
+        return client.post(
+            "/session/{sessionId}/mousemove",
+            mapOf("x" to x, "y" to y)
+        )
+    }
+
+    /**
+     * Presses a mouse button at the current cursor position.
+     *
+     * @param button Button name, defaults to left
+     */
+    suspend fun mouseDown(button: String = "left"): Any? {
+        return client.post(
+            "/session/{sessionId}/mousedown",
+            mapOf("button" to button)
+        )
+    }
+
+    /**
+     * Releases a mouse button at the current cursor position.
+     *
+     * @param button Button name, defaults to left
+     */
+    suspend fun mouseUp(button: String = "left"): Any? {
+        return client.post(
+            "/session/{sessionId}/mouseup",
+            mapOf("button" to button)
+        )
     }
 
     /**

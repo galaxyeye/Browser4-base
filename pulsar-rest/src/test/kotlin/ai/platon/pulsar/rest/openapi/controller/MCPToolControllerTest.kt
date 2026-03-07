@@ -264,32 +264,32 @@ class MCPToolControllerTest {
     @Test
     fun `test generic commands`() = runBlocking {
         val commands = listOf(
-            "go_back" to "driver",
-            "reload" to "driver",
-            "press" to "driver",
-            "hover" to "driver",
-            "screenshot" to "driver",
-            "dblclick" to "driver",
-            "drag" to "driver",
-            "select_option" to "driver",
-            "upload" to "driver",
-            "check" to "driver",
-            "uncheck" to "driver",
-            "type" to "driver",
-            "evaluate" to "driver",
-            "dialog_accept" to "driver",
-            "dialog_dismiss" to "driver",
-            "resize" to "driver",
-            "keydown" to "driver",
-            "keyup" to "driver",
-            "mousemove" to "driver",
-            "mousedown" to "driver",
-            "mouseup" to "driver",
-            "mousewheel" to "driver"
+            Triple("go_back", "driver", "go_back"),
+            Triple("reload", "driver", "reload"),
+            Triple("press", "driver", "press"),
+            Triple("hover", "driver", "hover"),
+            Triple("screenshot", "driver", "screenshot"),
+            Triple("dblclick", "driver", "dblclick"),
+            Triple("drag", "driver", "drag"),
+            Triple("select_option", "driver", "select_option"),
+            Triple("upload", "driver", "upload"),
+            Triple("check", "driver", "check"),
+            Triple("uncheck", "driver", "uncheck"),
+            Triple("type", "driver", "type"),
+            Triple("evaluate", "driver", "evaluate"),
+            Triple("dialog_accept", "driver", "dialog_accept"),
+            Triple("dialog_dismiss", "driver", "dialog_dismiss"),
+            Triple("resize", "driver", "resize"),
+            Triple("keydown", "driver", "keyDown"),
+            Triple("keyup", "driver", "keyUp"),
+            Triple("mousemove", "driver", "mouseMove"),
+            Triple("mousedown", "driver", "mouseDown"),
+            Triple("mouseup", "driver", "mouseUp"),
+            Triple("mousewheel", "driver", "mouseWheel")
         )
 
-        for ((tool, domain) in commands) {
-            mockTool(domain, tool)
+        for ((tool, domain, method) in commands) {
+            mockTool(domain, method)
             
             val request = MCPToolCallRequest(
                 tool = tool,
@@ -298,7 +298,7 @@ class MCPToolControllerTest {
 
             // Reset mocks for each iteration to avoid interference or strict stubbing issues
             Mockito.reset(agentToolExecutor)
-            mockTool(domain, tool) // Re-apply stubbing
+            mockTool(domain, method) // Re-apply stubbing
             
             val result = controller.callTool(request, response)
 
@@ -309,7 +309,42 @@ class MCPToolControllerTest {
             val toolCall = captor.value
 
             assertEquals(domain, toolCall.domain)
-            assertEquals(tool, toolCall.method)
+            assertEquals(method, toolCall.method)
+        }
+    }
+
+    @Test
+    fun `test browser4 cli input aliases`() = runBlocking {
+        val commands = listOf(
+            "browser_keydown" to "keyDown",
+            "browser_keyup" to "keyUp",
+            "browser_mouse_move_xy" to "mouseMove",
+            "browser_mouse_down" to "mouseDown",
+            "browser_mouse_up" to "mouseUp",
+            "browser_mouse_wheel" to "mouseWheel"
+        )
+
+        for ((tool, method) in commands) {
+            mockTool("driver", method)
+
+            val request = MCPToolCallRequest(
+                tool = tool,
+                arguments = mapOf("sessionId" to sessionId, "arg" to "val")
+            )
+
+            Mockito.reset(agentToolExecutor)
+            mockTool("driver", method)
+
+            val result = controller.callTool(request, response)
+
+            assertEquals(HttpStatus.OK, result.statusCode, "Failed for tool: $tool")
+
+            val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+            Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+            val toolCall = captor.value
+
+            assertEquals("driver", toolCall.domain)
+            assertEquals(method, toolCall.method)
         }
     }
 
