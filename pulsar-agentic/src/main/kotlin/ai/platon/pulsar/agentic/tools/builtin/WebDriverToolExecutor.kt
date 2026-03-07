@@ -1,7 +1,7 @@
 package ai.platon.pulsar.agentic.tools.builtin
 
 import ai.platon.pulsar.agentic.model.ToolSpec
-import ai.platon.pulsar.agentic.tools.specs.SourceCodeToToolCallSpec
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecGenerator
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.NavigateEntry
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import java.time.Duration
@@ -16,7 +16,10 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
     override val targetClass: KClass<*> = WebDriver::class
 
     init {
-        SourceCodeToToolCallSpec.webDriverToolCallList.associateByTo(toolSpec) { it.method }
+        val generator = ToolSpecGenerator
+        generator.generate()
+
+        generator.webDriverToolSpecs.associateByTo(toolSpec) { it.method }
 
         // Add custom drag tool spec which is not in WebDriver interface but supported via JS
         val dragSpec = ToolSpec(
@@ -201,6 +204,7 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
                     clickCount = paramInt(args, "clickCount", functionName, required = false, default = 1)!!
                 )
             }
+            "dragAndDrop" -> { validateArgs(args, allowed("selector", "deltaX", "deltaY"), setOf("selector", "deltaX"), functionName); driver.dragAndDrop(paramString(args, "selector", functionName)!!, paramInt(args, "deltaX", functionName)!!, paramInt(args, "deltaY", functionName, required = false, default = 0)!!) }
             "drag" -> {
                 validateArgs(args, allowed("sourceSelector", "targetSelector"), setOf("sourceSelector", "targetSelector"), functionName)
                 val src = paramString(args, "sourceSelector", functionName)!!
@@ -302,7 +306,6 @@ class WebDriverToolExecutor: AbstractToolExecutor() {
                     else -> throw IllegalArgumentException("moveMouseTo requires ('x','y') or 'selector' (+ optional deltaX, deltaY)")
                 }
             }
-            "dragAndDrop" -> { validateArgs(args, allowed("selector", "deltaX", "deltaY"), setOf("selector", "deltaX"), functionName); driver.dragAndDrop(paramString(args, "selector", functionName)!!, paramInt(args, "deltaX", functionName)!!, paramInt(args, "deltaY", functionName, required = false, default = 0)!!) }
             "screenshot" -> {
                 when {
                     args.isEmpty() -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.screenshot() }

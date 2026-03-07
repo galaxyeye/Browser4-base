@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.inference.action
 
-import ai.platon.pulsar.agentic.tools.specs.SourceCodeToToolCallSpec
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecGenerator
 import ai.platon.pulsar.skeleton.common.llm.LLMUtils
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -13,7 +13,7 @@ class SourceCodeToToolCallTest {
     fun extractMethodsFromWebdriverResource() {
         val sourceCode =
             LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
-        val tools = SourceCodeToToolCallSpec.extractInterface("driver", sourceCode, "WebDriver")
+        val tools = ToolSpecGenerator.extractInterface("driver", sourceCode, "WebDriver")
         assertTrue(tools.isNotEmpty(), "Tool list should not be empty")
         val click = tools.firstOrNull { it.domain == "driver" && it.method == "click" }
         assertNotNull(click, "Should contain driver.click method")
@@ -25,7 +25,7 @@ class SourceCodeToToolCallTest {
     fun extractKDocFullCommentAsHelp() {
         val sourceCode =
             LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
-        val tools = SourceCodeToToolCallSpec.extractInterface("driver", sourceCode, "WebDriver")
+        val tools = ToolSpecGenerator.extractInterface("driver", sourceCode, "WebDriver")
         assertTrue(tools.isNotEmpty(), "Tool list should not be empty")
 
         val click = tools.firstOrNull { it.domain == "driver" && it.method == "click" && it.arguments.any { arg -> arg.name == "count" } }

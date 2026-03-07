@@ -984,4 +984,54 @@ const commandsArray: AnyCommandSchema[] = [
   tray,
 ];
 
-export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));
+const supportedCommandsArray: AnyCommandSchema[] = [
+    // core category
+    open,
+    close,
+    goto,
+    type,
+    click,
+    doubleClick,
+    fill,
+    drag,
+    hover,
+    select,
+    fileUpload,
+    check,
+    uncheck,
+    snapshot,
+    evaluate,
+    consoleList,
+    dialogAccept,
+    dialogDismiss,
+    resize,
+    deleteData,
+
+    // navigation category
+    goBack,
+    goForward,
+    reload,
+
+    // keyboard category
+    pressKey,
+    keydown,
+    keyup,
+
+    // mouse category
+    mouseMove,
+    mouseDown,
+    mouseUp,
+    mouseWheel,
+
+    // export category
+    screenshot,
+    pdfSave,
+
+    // tabs category
+    tabList,
+    tabNew,
+    tabClose,
+    tabSelect
+]
+
+export const commands = Object.fromEntries(supportedCommandsArray.map(cmd => [cmd.name, cmd]));

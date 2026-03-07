@@ -4,21 +4,11 @@
 
 Add new WebDriver API to make it compatible with Playwright.
 
-- mouseDown
-- mouseUp
-- mouseMove
-- mouseWheel
-- keyDown
-- keyUp
+- drag
 
 ## Browser4 CLI Commands
 
-- mousedown
-- mouseup
-- mousemove
-- mousewheel
-- keydown
-- keyup
+- drag
 
 ## References
 

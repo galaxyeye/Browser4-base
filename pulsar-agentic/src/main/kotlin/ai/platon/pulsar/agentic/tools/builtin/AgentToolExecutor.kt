@@ -2,7 +2,7 @@ package ai.platon.pulsar.agentic.tools.builtin
 
 import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.model.ExtractionSchema
-import ai.platon.pulsar.agentic.tools.specs.SourceCodeToToolCallSpec
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecGenerator
 import ai.platon.pulsar.common.getLogger
 import kotlin.reflect.KClass
 
@@ -14,7 +14,7 @@ class AgentToolExecutor : AbstractToolExecutor() {
     override val targetClass: KClass<*> = PerceptiveAgent::class
 
     init {
-        SourceCodeToToolCallSpec.perceptiveAgentToolCallList.associateByTo(toolSpec) { it.method }
+        ToolSpecGenerator.agentToolSpecs.associateByTo(toolSpec) { it.method }
     }
 
     override fun help(method: String): String {

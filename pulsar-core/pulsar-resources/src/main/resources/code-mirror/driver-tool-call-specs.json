@@ -457,7 +457,7 @@
   } ],
   "returnType" : "Unit",
   "description" : "Presses and holds a keyboard key on the currently focused element. @mcp",
-  "help" : "Presses and holds a keyboard key on the currently focused element. @mcp\n\n```kotlin driver.keyDown(\"Shift\") ```"
+  "help" : "Presses and holds a keyboard key on the currently focused element. @mcp\n\n```kotlin driver.keyDown(\"Shift\") driver.keyDown(\"Control\") ```"
 }, {
   "domain" : "driver",
   "method" : "keyUp",
@@ -467,7 +467,7 @@
   } ],
   "returnType" : "Unit",
   "description" : "Releases a previously pressed keyboard key on the currently focused element. @mcp",
-  "help" : "Releases a previously pressed keyboard key on the currently focused element. @mcp\n\n```kotlin driver.keyUp(\"Shift\") ```"
+  "help" : "Releases a previously pressed keyboard key on the currently focused element. @mcp\n\n```kotlin driver.keyUp(\"Shift\") driver.keyUp(\"Control\") ```"
 }, {
   "domain" : "driver",
   "method" : "click",
@@ -788,7 +788,7 @@
   } ],
   "returnType" : "Unit",
   "description" : "Scrolls the mouse wheel by the provided deltas. @mcp",
-  "help" : "Scrolls the mouse wheel by the provided deltas. @mcp\n\n```kotlin driver.mouseWheel(0.0, 150.0) ```"
+  "help" : "Scrolls the mouse wheel by the provided deltas. @mcp\n\n```kotlin driver.mouseWheel(0.0, 150.0) driver.mouseWheel(0.0, -150.0) ```"
 }, {
   "domain" : "driver",
   "method" : "moveMouseTo",
@@ -813,8 +813,8 @@
     "type" : "Double"
   } ],
   "returnType" : "Unit",
-  "description" : "The mouse moves to the position specified by [x] and [y]. @mcp",
-  "help" : "The mouse moves to the position specified by [x] and [y]. @mcp\n\n```kotlin driver.mouseMove(100.0, 200.0) ```"
+  "description" : "Moves the mouse to the position specified by [x] and [y]. @mcp",
+  "help" : "Moves the mouse to the position specified by [x] and [y]. @mcp\n\n```kotlin driver.mouseMove(100.0, 200.0) ```"
 }, {
   "domain" : "driver",
   "method" : "mouseDown",
@@ -829,7 +829,7 @@
   } ],
   "returnType" : "Unit",
   "description" : "Presses a mouse button at the current mouse position. @mcp",
-  "help" : "Presses a mouse button at the current mouse position. @mcp\n\n```kotlin driver.mouseDown() ```"
+  "help" : "Presses a mouse button at the current mouse position. @mcp\n\n```kotlin driver.mouseDown() driver.mouseDown(\"right\") ```"
 }, {
   "domain" : "driver",
   "method" : "mouseUp",
@@ -844,7 +844,7 @@
   } ],
   "returnType" : "Unit",
   "description" : "Releases a mouse button at the current mouse position. @mcp",
-  "help" : "Releases a mouse button at the current mouse position. @mcp\n\n```kotlin driver.mouseUp() ```"
+  "help" : "Releases a mouse button at the current mouse position. @mcp\n\n```kotlin driver.mouseUp() driver.mouseUp(\"right\") ```"
 }, {
   "domain" : "driver",
   "method" : "moveMouseTo",

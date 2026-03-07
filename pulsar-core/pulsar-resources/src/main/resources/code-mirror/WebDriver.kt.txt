@@ -849,6 +849,9 @@ interface WebDriver : Closeable {
      * driver.keyDown("Shift")
      * driver.keyDown("Control")
      * ```
+     *
+     * @param key A key to press and hold. The key can be a single character, a key name, or a combination of both.
+     *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
      */
     @Throws(WebDriverException::class)
     suspend fun keyDown(key: String)
@@ -860,6 +863,9 @@ interface WebDriver : Closeable {
      * driver.keyUp("Shift")
      * driver.keyUp("Control")
      * ```
+     *
+     * @param key A key to release. The key can be a single character, a key name, or a combination of both.
+     *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
      */
     @Throws(WebDriverException::class)
     suspend fun keyUp(key: String)
@@ -1177,10 +1183,15 @@ interface WebDriver : Closeable {
     /**
      * Scrolls the mouse wheel by the provided deltas. @mcp
      *
+     * Positive [deltaY] scrolls down and negative [deltaY] scrolls up.
+     *
      * ```kotlin
      * driver.mouseWheel(0.0, 150.0)
      * driver.mouseWheel(0.0, -150.0)
      * ```
+     *
+     * @param deltaX The distance to wheel horizontally.
+     * @param deltaY The distance to wheel vertically.
      */
     @Throws(WebDriverException::class)
     suspend fun mouseWheel(deltaX: Double = 0.0, deltaY: Double = 150.0)
@@ -1205,6 +1216,9 @@ interface WebDriver : Closeable {
      * ```kotlin
      * driver.mouseMove(100.0, 200.0)
      * ```
+     *
+     * @param x The x coordinate to move to.
+     * @param y The y coordinate to move to.
      */
     @Throws(WebDriverException::class)
     suspend fun mouseMove(x: Double, y: Double)
@@ -1216,6 +1230,9 @@ interface WebDriver : Closeable {
      * driver.mouseDown()
      * driver.mouseDown("right")
      * ```
+     *
+     * @param button The mouse button to press. Supported values are `left`, `middle`, and `right`.
+     * @param clickCount The click count associated with the press event.
      */
     @Throws(WebDriverException::class)
     suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
@@ -1227,6 +1244,9 @@ interface WebDriver : Closeable {
      * driver.mouseUp()
      * driver.mouseUp("right")
      * ```
+     *
+     * @param button The mouse button to release. Supported values are `left`, `middle`, and `right`.
+     * @param clickCount The click count associated with the release event.
      */
     @Throws(WebDriverException::class)
     suspend fun mouseUp(button: String = "left", clickCount: Int = 1)

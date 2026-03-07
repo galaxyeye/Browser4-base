@@ -6,34 +6,39 @@ import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.code.ProjectUtils
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.skeleton.common.llm.LLMUtils
+import java.util.concurrent.atomic.AtomicBoolean
 
 @ExperimentalApi
-object SourceCodeToToolCallSpec {
+object ToolSpecGenerator {
+    private val isGenerated: AtomicBoolean = AtomicBoolean()
 
-    val webDriverToolCallList = mutableListOf<ToolSpec>()
-    val perceptiveAgentToolCallList = mutableListOf<ToolSpec>()
+    val webDriverToolSpecs = mutableListOf<ToolSpec>()
+    val agentToolSpecs = mutableListOf<ToolSpec>()
 
-    init {
-        var sourceCode = LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
-        extractInterface("driver", sourceCode, "WebDriver").toCollection(webDriverToolCallList)
-        require(webDriverToolCallList.isNotEmpty()) { "WebDriver's tool call list is empty" }
+    @Synchronized
+    fun generate() {
+        if (isGenerated.compareAndSet(false, true)) {
+            var sourceCode = LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
+            extractInterface("driver", sourceCode, "WebDriver").toCollection(webDriverToolSpecs)
+            require(webDriverToolSpecs.isNotEmpty()) { "WebDriver's tool call list is empty" }
 
-        sourceCode = LLMUtils.readSourceFileFromResource("pulsar-agentic", "PerceptiveAgent.kt")
-        extractInterface("agent", sourceCode, "PerceptiveAgent").toCollection(perceptiveAgentToolCallList)
-        require(perceptiveAgentToolCallList.isNotEmpty()) { "PerceptiveAgent's tool call list is empty" }
+            sourceCode = LLMUtils.readSourceFileFromResource("pulsar-agentic", "PerceptiveAgent.kt")
+            extractInterface("agent", sourceCode, "PerceptiveAgent").toCollection(agentToolSpecs)
+            require(agentToolSpecs.isNotEmpty()) { "PerceptiveAgent's tool call list is empty" }
 
-        if (!ProjectUtils.isInJar()) {
-            var fileName = "driver-tool-call-specs.json"
-            var content = prettyPulsarObjectMapper().writeValueAsString(webDriverToolCallList)
-            LLMUtils.writeAsResource(fileName, content)
+            if (!ProjectUtils.isInJar()) {
+                var fileName = "driver-tool-call-specs.json"
+                var content = prettyPulsarObjectMapper().writeValueAsString(webDriverToolSpecs)
+                LLMUtils.writeAsResource(fileName, content)
 
-            fileName = "agent-tool-call-specs.json"
-            content = prettyPulsarObjectMapper().writeValueAsString(perceptiveAgentToolCallList)
-            LLMUtils.writeAsResource(fileName, content)
+                fileName = "agent-tool-call-specs.json"
+                content = prettyPulsarObjectMapper().writeValueAsString(agentToolSpecs)
+                LLMUtils.writeAsResource(fileName, content)
+            }
         }
     }
 
-    fun extractInterface(domain: String, sourceCode: String, interfaceName: String): List<ToolSpec> {
+    private fun extractInterface(domain: String, sourceCode: String, interfaceName: String): List<ToolSpec> {
         // Parse WebDriver interface methods and build ToolCall specs
         val interfaceBody = extractInterfaceBody(sourceCode, interfaceName) ?: sourceCode
         val methods = parseFunctionsWithKDoc(interfaceBody)
