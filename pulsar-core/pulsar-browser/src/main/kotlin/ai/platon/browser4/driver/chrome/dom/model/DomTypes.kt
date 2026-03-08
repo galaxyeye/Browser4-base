@@ -13,7 +13,7 @@ data class PageTarget(
  * Options controlling snapshot breadth/depth and expensive fields.
  */
 data class SnapshotOptions(
-    val maxDepth: Int = 1000, // 0 means full tree TODO: it seems a bug with 0 for full tree logic
+    val maxDepth: Int = 1000, // maxDepth < 0 means full tree
     val includeAX: Boolean = true,
     val includeSnapshot: Boolean = true,
     val includeStyles: Boolean = true,

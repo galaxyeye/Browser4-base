@@ -33,6 +33,7 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
      * @return Enhanced DOM tree root node; returns an empty root on failure
      */
     suspend fun getDocument(target: PageTarget?, maxDepth: Int = 0): DOMTreeNodeEx {
+        val maxDepth = if (maxDepth > 0) maxDepth else 999999
         val dom = devTools.dom
         val depth = maxDepth.takeIf { it > 0 }
         val document = try {

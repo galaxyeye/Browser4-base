@@ -44,14 +44,13 @@ class ChromeSnapshotServiceE2ETest : WebDriverTestBase() {
 
     @Test
     @DisplayName("Given interactive page When collecting all trees Then get DOM AX and Snapshot with timings")
-    fun givenInteractivePageWhenCollectingAllTreesThenGetDomAxAndSnapshotWithTimings() =
-        runEnhancedWebDriverTest(testURL) { driver ->
+    fun testGetDomAxAndSnapshot() = runEnhancedWebDriverTest(testURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
             val service = ChromeCdpSnapshotService(devTools)
 
             val options = SnapshotOptions(
-                maxDepth = 0,
+                maxDepth = 1000,
                 includeAX = true,
                 includeSnapshot = true,
                 includeStyles = true,
@@ -118,7 +117,6 @@ class ChromeSnapshotServiceE2ETest : WebDriverTestBase() {
     }
 
     private fun writeDOMState(domState: DOMState) {
-        val ident = AppPaths.fromUri(testURL)
         var path = reportDir.resolve("dom-state-micro-$ident.yaml")
         path.parent.createDirectories()
         Files.writeString(path, domState.microTree.toYaml())

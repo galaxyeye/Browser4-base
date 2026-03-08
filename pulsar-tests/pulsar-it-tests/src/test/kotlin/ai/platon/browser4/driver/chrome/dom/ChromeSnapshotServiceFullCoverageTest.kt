@@ -421,7 +421,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
         runCatching { devTools.runtime.evaluate("generateLargeList(100)") }
 
         val options = SnapshotOptions(
-            maxDepth = 100,
+            maxDepth = -1,
             includeAX = true,
             includeSnapshot = true,
             includeStyles = true,
