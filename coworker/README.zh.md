@@ -6,7 +6,7 @@
 
 启动助理 -> 批量起草任务 -> 复制到执行目录 [ -> 查看结果 - > 审查 ] -> 移动到批准目录 -> 自动提交推送
 
-1. 运行 `run_coworker_periodically.ps1` 以启动
+1. 运行 `coworker-scheduler.ps1`（推荐）或 `run_coworker_periodically.ps1`（兼容旧流程）以启动
 2. 在 `0draft` 下起草任务（或者任何地方）
 3. 将已完成草稿的任务复制到 `1created` 目录以执行
 4. 执行后，您可以在 `3_1complete` 中找到结果，在 300logs 中找到详细日志
@@ -77,14 +77,34 @@
 ./coworker/scripts/workers/git-sync.sh
 ```
 
-## 定时运行器
+## 统一调度器（PowerShell）
 
-定时运行器会自动监控 `1created` 和 `5approved` 文件夹并处理任务。
+如果你希望只配置一个 Windows Task Scheduler 触发器，请使用统一调度器。它会按配置分别启动各个 PowerShell 子进程，保存 stdout/stderr 日志，并持续把任务状态写入 `coworker/tasks/300logs/scheduler/scheduled-tasks.status.json`。
+
+任务定义位于 `coworker/scripts/coworker-scheduler.config.psd1`。每个任务都可以独立启用或禁用，并单独设置 `IntervalSeconds`、脚本路径、参数，以及可选的 `DependsOn` 依赖顺序。
+
+**Windows (PowerShell)：**
+
+```powershell
+.\coworker\scripts\coworker-scheduler.ps1
+.\coworker\scripts\coworker-scheduler.ps1 -Once
+```
+
+默认调度任务：
+
+- `coworker` — 运行 `run_coworker_periodically.ps1 -Once`
+- `draft-refinement` — 运行 `run_draft_refinement_periodically.ps1 -Once`
+- `task-source-monitor` — 运行 `task-source-monitor.ps1 -Once`
+
+## 定时运行器（兼容旧流程）
+
+旧版定时运行器仍会自动监控 `1created` 和 `5approved` 文件夹并处理任务。
 
 **Windows (PowerShell)：**
 
 ```powershell
 .\coworker\scripts\run_coworker_periodically.ps1
+.\coworker\scripts\run_coworker_periodically.ps1 -Once
 ```
 
 **Linux/macOS (Bash)：**

@@ -4,7 +4,7 @@ The Builtin AI Coworker is an agent that assists you with various tasks in your 
 
 ## How to Use
 
-1. run `run_coworker_periodically.ps1` to start
+1. run `coworker-scheduler.ps1` (recommended) or `run_coworker_periodically.ps1` (legacy) to start
 2. draft tasks in `0draft` (or anywhere)
 3. copy ready tasks to `1created` for execution
 4. once executed, you can find results in `3_1complete` and detailed logs in `300logs`
@@ -75,14 +75,34 @@ After tasks are approved, push changes to your repository using the git-sync scr
 ./coworker/scripts/workers/git-sync.sh
 ```
 
-## Periodic Runner
+## Unified Scheduler (PowerShell)
 
-The periodic runner monitors `1created` and `5approved` folders and processes tasks automatically.
+Use the unified scheduler when you want a single Windows Task Scheduler trigger to manage all recurring coworker jobs. The scheduler launches each configured task in its own PowerShell process, records stdout/stderr logs, and continuously writes task status to `coworker/tasks/300logs/scheduler/scheduled-tasks.status.json`.
+
+Task definitions live in `coworker/scripts/coworker-scheduler.config.psd1`. Each entry can be enabled or disabled independently and sets its own `IntervalSeconds`, script path, arguments, and optional `DependsOn` task ordering.
+
+**Windows (PowerShell):**
+
+```powershell
+.\coworker\scripts\coworker-scheduler.ps1
+.\coworker\scripts\coworker-scheduler.ps1 -Once
+```
+
+Default scheduled tasks:
+
+- `coworker` — runs `run_coworker_periodically.ps1 -Once`
+- `draft-refinement` — runs `run_draft_refinement_periodically.ps1 -Once`
+- `task-source-monitor` — runs `task-source-monitor.ps1 -Once`
+
+## Periodic Runner (Legacy)
+
+The legacy periodic runner still monitors `1created` and `5approved` folders and processes tasks automatically.
 
 **Windows (PowerShell):**
 
 ```powershell
 .\coworker\scripts\run_coworker_periodically.ps1
+.\coworker\scripts\run_coworker_periodically.ps1 -Once
 ```
 
 **Linux/macOS (Bash):**

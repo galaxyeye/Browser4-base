@@ -8,8 +8,9 @@ We need to design a complete, production-ready PowerShell-based scheduler with t
 - Support concurrent execution
 - Provide centralized scheduling
 - Record logs and execution status
-- Require only a single Windows Task Scheduler trigger
+- Require only a single Task Scheduler trigger
 - Allow task settings such as enablement and execution frequency to be configured through a configuration file
+- Keep current implementation running, not breaking existing functionality
 
 The scheduler must periodically run coworker, draft refinement, task source monitoring, and similar jobs in separate processes.
 
@@ -24,8 +25,8 @@ The scheduler must periodically run coworker, draft refinement, task source moni
 
 ## Proposed Improvements
 
-1. **Unified Scheduler**  
+1. **Unified Scheduler**
    Create a single scheduler that manages all recurring tasks, instead of maintaining separate scripts and timers for each one.
 
-2. **Configuration-Driven Tasks**  
+2. **Configuration-Driven Tasks**
    Use a single configuration file to define task behavior, including whether a task is enabled, how often it runs, and other runtime parameters. This will simplify maintenance and make task management more consistent.

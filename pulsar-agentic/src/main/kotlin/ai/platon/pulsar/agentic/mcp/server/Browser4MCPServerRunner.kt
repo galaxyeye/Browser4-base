@@ -29,7 +29,7 @@ import kotlinx.io.buffered
  *   "mcpServers": {
  *     "browser4": {
  *       "command": "java",
- *       "args": ["-cp", "/path/to/browser4-all.jar",
+ *       "args": ["-cp", "/path/to/browser4.jar",
  *                "ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt"]
  *     }
  *   }
