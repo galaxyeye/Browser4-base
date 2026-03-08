@@ -91,3 +91,29 @@
 ./coworker/scripts/run_coworker_periodically.sh
 ```
 
+## 草稿润色
+
+草稿润色使用 `coworker/tasks/0draft/refine/` 下的专用流程：
+
+- `1ready` — 等待润色的草稿
+- `2working` — 正在润色的草稿
+- `3done` — 已完成润色、等待审阅的草稿
+
+你可以润色单个文件，也可以传入一个文件夹批量处理；传入文件夹时会逐个文件执行。
+
+**Windows (PowerShell)：**
+
+```powershell
+.\coworker\scripts\workers\refine-drafts.ps1
+.\coworker\scripts\workers\refine-drafts.ps1 -Path .\coworker\tasks\0draft\refine\1ready
+.\coworker\scripts\run_draft_refinement_periodically.ps1 -Once
+```
+
+**Linux/macOS (Bash)：**
+
+```bash
+./coworker/scripts/workers/refine-drafts.sh
+./coworker/scripts/workers/refine-drafts.sh ./coworker/tasks/0draft/refine/1ready
+./coworker/scripts/run_draft_refinement_periodically.sh --once
+```
+

@@ -88,3 +88,29 @@ The periodic runner monitors `1created` and `5approved` folders and processes ta
 ```bash
 ./coworker/scripts/run_coworker_periodically.sh
 ```
+
+## Draft Refinement
+
+Draft refinement uses a dedicated pipeline under `coworker/tasks/0draft/refine/`:
+
+- `1ready` — drafts waiting to be refined
+- `2working` — drafts currently being refined
+- `3done` — refined drafts ready for review
+
+You can refine a single file or every file in a folder. When a folder is provided, files are processed one by one.
+
+**Windows (PowerShell):**
+
+```powershell
+.\coworker\scripts\workers\refine-drafts.ps1
+.\coworker\scripts\workers\refine-drafts.ps1 -Path .\coworker\tasks\0draft\refine\1ready
+.\coworker\scripts\run_draft_refinement_periodically.ps1 -Once
+```
+
+**Linux/macOS (Bash):**
+
+```bash
+./coworker/scripts/workers/refine-drafts.sh
+./coworker/scripts/workers/refine-drafts.sh ./coworker/tasks/0draft/refine/1ready
+./coworker/scripts/run_draft_refinement_periodically.sh --once
+```
