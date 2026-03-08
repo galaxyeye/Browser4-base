@@ -459,7 +459,9 @@ $userProvidedInstructions
 - 从 DOM 元素中原样打印精确文本，包含所有符号、字符和换行。
 - 如果没有发现新的信息，打印 null 或空字符串。
 
+<user_request>
 $userInstructions
+</user_request>
 
 """
 
@@ -569,8 +571,8 @@ $lastModelMessage
 
 ## 用户输入
 <user_request>
-
 $userRequest
+</user_request>
 
 ---
 
