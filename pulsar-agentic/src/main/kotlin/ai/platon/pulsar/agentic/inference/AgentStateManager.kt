@@ -501,7 +501,7 @@ class AgentStateManager(
 
         // Add timeout to prevent hanging on DOM snapshot operations
         return withTimeout(30_000) {
-            val baseState = driver.domService.getBrowserUseState(snapshotOptions = snapshotOptions)
+            val baseState = driver.snapshotService.getBrowserUseState(snapshotOptions = snapshotOptions)
             injectTabsInfo(baseState)
         }
     }

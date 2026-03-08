@@ -47,7 +47,7 @@ class ChromeDomBoundsParityTest : WebDriverTestBase() {
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
+            val service = ChromeCdpSnapshotService(devTools)
 
             // Inject a simple layout with a known CSS box size
             devTools.runtime.evaluate(
@@ -89,11 +89,11 @@ class ChromeDomBoundsParityTest : WebDriverTestBase() {
     @Test
     @Ignore("inner iframe features are postponed")
     @DisplayName("iframe offsets and scroll are reflected in absolutePosition and visibility true when within viewport")
-    fun iframeOffsetsAndScrollAreReflectedInAbsolutepositionAndVisibilityTrueWhenWithinViewport() =
+    fun iframeOffsetsAndScrollAreReflectedInAbsolutePositionAndVisibilityTrueWhenWithinViewport() =
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = driver.domService as ChromeCdpDomService
+            val service = driver.snapshotService as ChromeCdpSnapshotService
 
             // Build parent with an iframe using srcdoc (same-origin), scroll iframe content to 400
             devTools.runtime.evaluate(
@@ -175,7 +175,7 @@ class ChromeDomBoundsParityTest : WebDriverTestBase() {
     fun iframeContentOutsideViewportIsNotVisible() = runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
         assertIs<ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         // Large content inside iframe without sufficient scroll to reveal inner2
         devTools.runtime.evaluate(

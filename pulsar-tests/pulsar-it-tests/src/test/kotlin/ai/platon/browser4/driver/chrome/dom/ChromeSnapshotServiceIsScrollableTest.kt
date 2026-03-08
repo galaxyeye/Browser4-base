@@ -1,27 +1,27 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import kotlin.test.Ignore
 import kotlin.test.assertIs
 import kotlin.test.fail
-import org.junit.jupiter.api.DisplayName
 
-class ChromeDomServiceIsScrollableTest : WebDriverTestBase() {
+class ChromeSnapshotServiceIsScrollableTest : WebDriverTestBase() {
     private val testURL get() = "$generatedAssetsBaseURL/interactive-dynamic.html"
 
     @Test
     @Ignore("Disabled temporarily")
-        @DisplayName("isScrollable basics - regular elements and overflow hidden")
+    @DisplayName("isScrollable basics - regular elements and overflow hidden")
     fun isscrollableBasicsRegularElementsAndOverflowHidden() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         // Create a basic scrollable DIV and a non-scrollable (overflow hidden) DIV
         runCatching {
@@ -101,11 +101,11 @@ class ChromeDomServiceIsScrollableTest : WebDriverTestBase() {
 
     @Test
     @Ignore("Disabled temporarily")
-        @DisplayName("isScrollable special - body html and toggle overflow")
-    fun isscrollableSpecialBodyHtmlAndToggleOverflow() = runEnhancedWebDriverTest(testURL) { driver ->
+    @DisplayName("isScrollable special - body html and toggle overflow")
+    fun isScrollableSpecialBodyHtmlAndToggleOverflow() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         // Ensure the page has large content and explicitly set overflow on body/html
         runCatching {
@@ -145,12 +145,17 @@ class ChromeDomServiceIsScrollableTest : WebDriverTestBase() {
         var body = service.findElement(ElementRefCriteria(cssSelector = "body"))
             ?: findNodeById(root, "body")
         assertNotNull(body)
-        assertEquals(false, body!!.isScrollable, "Body should not be scrollable without overflow:auto/scroll even if content is large")
+        assertEquals(
+            false,
+            body!!.isScrollable,
+            "Body should not be scrollable without overflow:auto/scroll even if content is large"
+        )
 
         // Case 2: Set overflow:auto on documentElement and body => expect at least one scrollable (html or body)
         runCatching {
             devTools.runtime.evaluate(
-                "document.documentElement.style.overflow='auto'; document.body.style.overflow='auto'; true;")
+                "document.documentElement.style.overflow='auto'; document.body.style.overflow='auto'; true;"
+            )
         }
         root = collectEnhancedRoot(service, baseOptions)
         body = service.findElement(ElementRefCriteria(cssSelector = "body"))
@@ -161,16 +166,19 @@ class ChromeDomServiceIsScrollableTest : WebDriverTestBase() {
         assertNotNull(html)
         val bodyScrollable = body!!.isScrollable == true
         val htmlScrollable = html!!.isScrollable == true
-        assertTrue(bodyScrollable || htmlScrollable, "Either <body> or <html> should be scrollable when overflow:auto and content larger than viewport")
+        assertTrue(
+            bodyScrollable || htmlScrollable,
+            "Either <body> or <html> should be scrollable when overflow:auto and content larger than viewport"
+        )
     }
 
     @Test
     @Ignore("Disabled temporarily")
-        @DisplayName("isScrollable dedup - nested containers similar vs distinct areas")
-    fun isscrollableDedupNestedContainersSimilarVsDistinctAreas() = runEnhancedWebDriverTest(testURL) { driver ->
+    @DisplayName("isScrollable dedup - nested containers similar vs distinct areas")
+    fun isScrollableDedupNestedContainersSimilarVsDistinctAreas() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         // Build nested scroll containers
         runCatching {
@@ -264,7 +272,7 @@ class ChromeDomServiceIsScrollableTest : WebDriverTestBase() {
             }
             fail("Element #$id not found in time")
         }
-        listOf("outer_same","inner_same","outer_diff","inner_diff").forEach { waitExists(it) }
+        listOf("outer_same", "inner_same", "outer_diff", "inner_diff").forEach { waitExists(it) }
 
         val root = collectEnhancedRoot(service, options)
 
@@ -290,11 +298,11 @@ class ChromeDomServiceIsScrollableTest : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("isScrollable null when scroll analysis disabled")
-    fun isscrollableNullWhenScrollAnalysisDisabled() = runEnhancedWebDriverTest(testURL) { driver ->
+    @DisplayName("isScrollable null when scroll analysis disabled")
+    fun isScrollableNullWhenScrollAnalysisDisabled() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         // Create a basic scrollable DIV
         runCatching {

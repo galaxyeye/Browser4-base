@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.dom.ChromeCdpDomService
-import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.ChromeCdpSnapshotService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
@@ -9,8 +9,6 @@ import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.util.CDPReturnError
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException
-import ai.platon.cdt.kt.protocol.support.annotations.Experimental
-import ai.platon.cdt.kt.protocol.support.annotations.Optional
 import ai.platon.cdt.kt.protocol.support.annotations.ParamName
 import ai.platon.cdt.kt.protocol.types.dom.Rect
 import ai.platon.cdt.kt.protocol.types.page.Navigate
@@ -42,7 +40,7 @@ class PageHandler(
     private var lastBrowserUseState: BrowserUseState? = null
     private var lastAriaSnapshot: String? = null
 
-    val domService: DomService by lazy { ChromeCdpDomService(devTools) }
+    val snapshotService: SnapshotService by lazy { ChromeCdpSnapshotService(devTools) }
 
     val jsHandler: JsHandler = JsHandler(devTools, this, isolatedWorldManager)
 
@@ -104,7 +102,7 @@ class PageHandler(
     /**
      * Queries for a list of elements using a selector.
      *
-     * Supports two selector formats:
+     * Supports four selector formats:
      * - CSS selector: "div.class", "#id", etc.
      * - XPath selector: "//div[@class='class']", etc.
      * - Backend node ID: "backend:123", "e1233"
@@ -122,7 +120,7 @@ class PageHandler(
      * Fetches the current ARIA snapshot of the page, which is a YAML representation of the accessibility tree.
      * */
     suspend fun ariaSnapshot(): String {
-        val buState = domService.getBrowserUseState(PageTarget(), SnapshotOptions())
+        val buState = snapshotService.getBrowserUseState(PageTarget(), SnapshotOptions())
         val snapshot = buState.domState.nanoTreeLazyYaml
         lastBrowserUseState = buState
         return snapshot

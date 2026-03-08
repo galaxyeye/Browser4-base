@@ -15,9 +15,9 @@ import java.util.*
 /**
  * CDP-backed implementation of DomService using RemoteDevTools.
  */
-class ChromeCdpDomService(
+class ChromeCdpSnapshotService(
     private val devTools: RemoteDevTools,
-) : DomService {
+) : SnapshotService {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 

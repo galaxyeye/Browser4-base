@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.inference
 
-import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.event.AgentEventBus
 import ai.platon.pulsar.agentic.event.AgenticEvents
@@ -13,7 +13,6 @@ import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.MultiSinkMessageWriter
 import ai.platon.pulsar.common.event.EventBus
-import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
@@ -67,8 +66,8 @@ class InferenceEngine(
     private val auxRunLogDir: Path by lazy { getRunLogDir0() }
     private val auxLogger by lazy { MultiSinkMessageWriter(auxRunLogDir) }
 
-    val domService: DomService
-        get() = (session.getOrCreateBoundDriver() as? AbstractWebDriver)?.domService
+    val snapshotService: SnapshotService
+        get() = (session.getOrCreateBoundDriver() as? AbstractWebDriver)?.snapshotService
             ?: throw IllegalStateException("Bound driver is not AbstractWebDriver")
 
     suspend fun observe(params: ObserveParams, context: ExecutionContext): ActionDescription {

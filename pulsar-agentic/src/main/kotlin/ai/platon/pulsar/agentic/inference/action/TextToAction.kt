@@ -44,11 +44,11 @@ open class TextToAction(
         actionDescriptions: String, driver: WebDriver, screenshotB64: String? = null
     ): List<ActionDescription> {
         require(driver is AbstractWebDriver)
-        val domService = requireNotNull(driver.domService)
+        val snapshotService = requireNotNull(driver.snapshotService)
 
         val options = SnapshotOptions()
-        val domState = domService.getDOMState(snapshotOptions = options)
-        val browserUseState = domService.getBrowserUseState()
+        val domState = snapshotService.getDOMState(snapshotOptions = options)
+        val browserUseState = snapshotService.getBrowserUseState()
         val agentState = AgentState(1, "", browserUseState = browserUseState)
         val toolCallExpressions = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 

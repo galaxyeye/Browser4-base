@@ -28,11 +28,11 @@ class TinyTreeTest : WebDriverTestBase() {
 
     @Test
         @DisplayName("DOMTinyTreeBuilder invariants on interactive-dynamic page")
-    fun domtinytreebuilderInvariantsOnInteractiveDynamicPage() =
+    fun domTinyTreeBuilderInvariantsOnInteractiveDynamicPage() =
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
+            val service = ChromeCdpSnapshotService(devTools)
 
             val options = SnapshotOptions(
                 maxDepth = 100,
@@ -116,10 +116,10 @@ class TinyTreeTest : WebDriverTestBase() {
 
     @Test
         @DisplayName("isNew flag respects previous backend node ids")
-    fun isnewFlagRespectsPreviousBackendNodeIds() = runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
+    fun isNewFlagRespectsPreviousBackendNodeIds() = runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         val options = SnapshotOptions(
             maxDepth = 100,
@@ -169,7 +169,7 @@ class TinyTreeTest : WebDriverTestBase() {
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpDomService(devTools)
+            val service = ChromeCdpSnapshotService(devTools)
 
             // Inject an invisible wrapper with trivial content; children will be pruned first, then wrapper by optimizeTree
             runCatching {

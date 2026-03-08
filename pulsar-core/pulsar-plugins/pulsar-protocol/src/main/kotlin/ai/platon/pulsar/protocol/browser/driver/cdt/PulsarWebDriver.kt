@@ -1,7 +1,7 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
@@ -99,7 +99,7 @@ class PulsarWebDriver(
      * */
     override val implementation: Any get() = devTools
 
-    override val domService: DomService get() = page.domService
+    override val snapshotService: SnapshotService get() = page.snapshotService
 
     init {
         fingerprintApplier?.invoke(this)
@@ -728,7 +728,7 @@ class PulsarWebDriver(
         return driverHelper.invokeOnElement(selector, "outerHTML") { node ->
             when {
                 node.isNull() -> null
-                // TODO: performance issue for large HTML
+                // TODO: performance issue for large HTML (memory copy)
                 else -> domAPI?.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
             }
         }
@@ -803,7 +803,7 @@ function() {
                             objectId = nd.objectId,
                             returnByValue = true
                         )
-                        // TODO: performance issue for large text
+                        // TODO: performance issue for large text (memory copy)
                         remoteObject?.result?.value?.toString()
                     } else null
                 }
@@ -898,7 +898,7 @@ function() {
     override suspend fun nanoDOMTree(): NanoDOMTree? {
         return rpc.invokeWithRetry("nanoDOMTree") {
             val snapshotOptions = SnapshotOptions()
-            val domState = domService.getDOMState(snapshotOptions = snapshotOptions)
+            val domState = snapshotService.getDOMState(snapshotOptions = snapshotOptions)
             domState.microTree.toNanoTreeInRange()
         }
     }

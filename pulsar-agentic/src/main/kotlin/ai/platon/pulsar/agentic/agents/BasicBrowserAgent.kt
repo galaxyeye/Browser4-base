@@ -42,7 +42,7 @@ open class BasicBrowserAgent(
 
     protected val cta by lazy { ContextToAction(session.sessionConfig) }
     protected val inference by lazy { InferenceEngine(this) }
-    protected val domService get() = inference.domService
+    protected val snapshotService get() = inference.snapshotService
     protected val promptBuilder = PromptBuilder()
 
     private val lazyToolManager by lazy {
@@ -606,7 +606,7 @@ open class BasicBrowserAgent(
         val interactiveElements = context.agentState.browserUseState.getAllInteractiveElements()
         try {
             if (drawOverlay) {
-                domService.addHighlights(interactiveElements)
+                snapshotService.addHighlights(interactiveElements)
             }
 
             context.screenshotB64 = activeDriver.screenshot()
@@ -621,7 +621,7 @@ open class BasicBrowserAgent(
             return ObserveActResult(observeResults, actionDescription)
         } finally {
             if (drawOverlay) {
-                domService.removeHighlights()
+                snapshotService.removeHighlights()
             }
         }
     }

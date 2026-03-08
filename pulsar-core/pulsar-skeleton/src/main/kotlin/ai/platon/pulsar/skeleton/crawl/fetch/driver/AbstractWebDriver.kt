@@ -1,7 +1,7 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
-import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.common.urls.URLUtils
@@ -152,7 +152,7 @@ abstract class AbstractWebDriver(
 
     // TODO: Will move to WebDriver
     @Beta
-    open val domService: DomService? = null
+    open val snapshotService: SnapshotService? = null
 
     /** Idle timeout before a READY driver is considered stale and eligible for recycling/retirement. */
     var idleTimeout: Duration = Duration.ofMinutes(10)

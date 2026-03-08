@@ -18,7 +18,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 
 @Tag("E2ETest")
-class ChromeDomServiceE2ETest : WebDriverTestBase() {
+class ChromeSnapshotServiceE2ETest : WebDriverTestBase() {
     private val testURL get() = "$generatedAssetsBaseURL/interactive-dynamic.html"
 
     private data class Metrics(
@@ -59,7 +59,7 @@ class ChromeDomServiceE2ETest : WebDriverTestBase() {
     fun givenInteractivePageWhenCollectingAllTreesThenGetDomAxAndSnapshotWithTimings() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpDomService(devTools)
+        val service = ChromeCdpSnapshotService(devTools)
 
         val options = SnapshotOptions(
             maxDepth = 0,

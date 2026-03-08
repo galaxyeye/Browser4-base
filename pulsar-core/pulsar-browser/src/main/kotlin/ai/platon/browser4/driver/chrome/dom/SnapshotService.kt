@@ -3,9 +3,9 @@ package ai.platon.browser4.driver.chrome.dom
 import ai.platon.browser4.driver.chrome.dom.model.*
 
 /**
- * Kotlin-native DOM service interface.
+ * Kotlin-native snapshot service interface.
  */
-interface DomService {
+interface SnapshotService {
 
     suspend fun getBrowserUseState(target: PageTarget = PageTarget(), snapshotOptions: SnapshotOptions = SnapshotOptions()): BrowserUseState
 
