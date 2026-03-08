@@ -35,7 +35,8 @@ class ChromeCdpSnapshotService(
     private var lastDomByBackend: Map<Int, DOMTreeNodeEx> = emptyMap()
 
     override suspend fun getBrowserUseState(target: PageTarget, snapshotOptions: SnapshotOptions): BrowserUseState {
-        return buildBrowserState(getDOMState(target, snapshotOptions))
+        val domState = getDOMState(target, snapshotOptions)
+        return buildBrowserState(domState)
     }
 
     override suspend fun getDOMState(target: PageTarget, snapshotOptions: SnapshotOptions): DOMState {
@@ -64,33 +65,33 @@ class ChromeCdpSnapshotService(
         options: SnapshotOptions = SnapshotOptions()
     ): TargetTrees {
         val startTime = System.currentTimeMillis()
-        val timings = mutableMapOf<String, Long>()
+        val cdpTiming = mutableMapOf<String, Long>()
 
         // Fetch AX tree (resilient)
         val axStart = System.currentTimeMillis()
-        val axResult = getAccessibilityTree(target, options)
-        timings["ax_tree"] = System.currentTimeMillis() - axStart
+        val axTree = getAccessibilityTree(target, options)
+        cdpTiming["ax_tree"] = System.currentTimeMillis() - axStart
 
         // Fetch DOM tree (resilient)
         val domStart = System.currentTimeMillis()
-        val dom = runCatching { domTree.getDocument(target, options.maxDepth) }
+        val domTree = runCatching { this.domTree.getDocument(target, options.maxDepth) }
             .onFailure { e ->
                 logger.warn("DOM tree collection failed | frameId={} | err={}", target.frameId, e.toString())
                 tracer?.trace("DOM tree exception", e)
             }.getOrElse { DOMTreeNodeEx() }
-        val domByBackend = runCatching { domTree.lastBackendNodeLookup() }.getOrDefault(emptyMap())
-        timings["dom_tree"] = System.currentTimeMillis() - domStart
+        val domByBackendId = runCatching { this.domTree.lastBackendNodeLookup() }.getOrDefault(emptyMap())
+        cdpTiming["dom_tree"] = System.currentTimeMillis() - domStart
 
         // Get device pixel ratio first for snapshot scaling
         val dprStart = System.currentTimeMillis()
         val devicePixelRatio = runCatching { getDevicePixelRatio() }.getOrDefault(1.0)
-        timings["dpr"] = System.currentTimeMillis() - dprStart
+        cdpTiming["dpr"] = System.currentTimeMillis() - dprStart
 
         // Fetch snapshot (resilient)
         val snapshotStart = System.currentTimeMillis()
         val snapshotByBackendId = if (options.includeSnapshot) {
             runCatching {
-                snapshot.capture(
+                snapshot.captureSnapshot(
                     includeStyles = options.includeStyles,
                     includePaintOrder = options.includePaintOrder,
                     includeDomRects = options.includeDOMRects,
@@ -104,37 +105,38 @@ class ChromeCdpSnapshotService(
         } else {
             emptyMap()
         }
-        timings["snapshot"] = System.currentTimeMillis() - snapshotStart
+        cdpTiming["snapshot"] = System.currentTimeMillis() - snapshotStart
 
         // Build AX mappings
-        val enhancedAx = axResult.nodes.map { it.toEnhanced() }
+        val enhancedAXTree = axTree.nodes.map { it.toEnhanced() }
         val axByBackendId: Map<Int, AXNodeEx> = buildMap {
-            axResult.nodesByBackendNodeId.forEach { (backendId, nodes) ->
+            axTree.nodesByBackendNodeId.forEach { (backendId, nodes) ->
                 val first = nodes.firstOrNull() ?: return@forEach
                 put(backendId, first.toEnhanced())
             }
         }
-        val axTreeByFrame: Map<String, List<AXNodeEx>> = axResult.nodesByFrameId.mapValues { (_, list) ->
+
+        val axTreeByFrameId: Map<String, List<AXNodeEx>> = axTree.nodesByFrameId.mapValues { (_, list) ->
             list.map { it.toEnhanced() }
         }
 
-        timings["total"] = System.currentTimeMillis() - startTime
+        cdpTiming["total"] = System.currentTimeMillis() - startTime
 
         tracer?.trace(
             "Trees collected | axNodes={} snapEntries={} dpr={} timingsMs={} ",
-            enhancedAx.size, snapshotByBackendId.size, devicePixelRatio, timings
+            enhancedAXTree.size, snapshotByBackendId.size, devicePixelRatio, cdpTiming
         )
 
         return TargetTrees(
-            domTree = dom,
-            axTree = enhancedAx,
+            domTree = domTree,
+            axTree = enhancedAXTree,
             snapshotByBackendId = snapshotByBackendId,
             axByBackendId = axByBackendId,
-            axTreeByFrameId = axTreeByFrame,
+            axTreeByFrameId = axTreeByFrameId,
             devicePixelRatio = devicePixelRatio,
-            cdpTiming = timings,
+            cdpTiming = cdpTiming,
             options = options,
-            domByBackendId = domByBackend
+            domByBackendId = domByBackendId
         )
     }
 
@@ -156,17 +158,23 @@ class ChromeCdpSnapshotService(
 //
 //        data class FrameNode(val node: DOMTreeNodeEx)
 
-        fun visibilityStyleCheck(snap: SnapshotNodeEx?): Boolean? {
-            snap ?: return null
-            val styles = snap.computedStyles ?: return null
+        fun visibilityStyleCheck(snapshotNode: SnapshotNodeEx?): Boolean? {
+            snapshotNode ?: return null
+
+            val styles = snapshotNode.computedStyles ?: return null
+
             val display = styles["display"]
             if (display != null && display.equals("none", true)) return false
+
             val visibility = styles["visibility"]
             if (visibility != null && visibility.equals("hidden", true)) return false
+
             val opacity = styles["opacity"]?.toDoubleOrNull()
             if (opacity != null && opacity <= 0.0) return false
+
             val pointerEvents = styles["pointer-events"]
             if (pointerEvents != null && pointerEvents.equals("none", true)) return false
+
             return true
         }
 
@@ -216,35 +224,35 @@ class ChromeCdpSnapshotService(
             offsetY: Double,
             depth: Int = 0
         ): DOMTreeNodeEx {
-            val backendId = node.backendNodeId
+            val backendNodeId = node.backendNodeId
 
             // Get snapshot and AX
-            val snap = if (options.includeSnapshot && backendId != null) trees.snapshotByBackendId[backendId] else null
-            val ax = if (options.includeAX && backendId != null) trees.axByBackendId[backendId] else null
+            val snapshot = if (options.includeSnapshot && backendNodeId != null) trees.snapshotByBackendId[backendNodeId] else null
+            val ax = if (options.includeAX && backendNodeId != null) trees.axByBackendId[backendNodeId] else null
 
             // Calculate absolute position based on accumulated offsets
-            val absolutePosition = snap?.bounds?.roundTo(1)
+            val absolutePosition = snapshot?.bounds?.roundTo(1)
                 ?.let { DOMRect(it.x + offsetX, it.y + offsetY, it.width, it.height) }
 
             // Visibility: style check first, then frame viewport check
             val isVisible = if (options.includeVisibility) {
-                val styleVisible = visibilityStyleCheck(snap)
+                val styleVisible = visibilityStyleCheck(snapshot)
                 if (styleVisible == false) false else isElementVisibleAccordingToAllParents(
-                    node.copy(snapshotNode = snap), htmlFrames
+                    node.copy(snapshotNode = snapshot), htmlFrames
                 )
             } else null
 
             // Interactivity and indices
             val isScrollable = if (options.includeScrollAnalysis) {
-                calculateScalability(node, snap, ancestors)
+                calculateScalability(node, snapshot, ancestors)
             } else null
 
             val isInteractable = if (options.includeInteractivity) {
-                calculateInteractivity(node, snap, null)
+                calculateInteractivity(node, snapshot, null)
             } else null
 
-            val interactiveIndex = if (options.includeInteractivity && snap?.paintOrder != null) {
-                calculateInteractiveIndex(snap, null, snap.paintOrder)
+            val interactiveIndex = if (options.includeInteractivity && snapshot?.paintOrder != null) {
+                calculateInteractiveIndex(snapshot, null, snapshot.paintOrder)
             } else null
 
             // XPath and hashes
@@ -254,13 +262,7 @@ class ChromeCdpSnapshotService(
 
             val parentBranchHash = if (ancestors.isNotEmpty()) {
                 runCatching { HashUtils.parentBranchHash(ancestors) }
-                    .onFailure {
-                        tracer?.trace(
-                            "Parent branch hash failed | nodeId={} | {} ",
-                            node.nodeId,
-                            it.toString()
-                        )
-                    }
+                    .onFailure { tracer?.trace("Parent branch hash failed | nodeId={} | {} ", node.nodeId, it.toString()) }
                     .getOrNull()
             } else null
 
@@ -269,7 +271,7 @@ class ChromeCdpSnapshotService(
                 .getOrNull()
 
             val mergedNode = node.copy(
-                snapshotNode = snap,
+                snapshotNode = snapshot,
                 axNode = ax,
                 isScrollable = isScrollable,
                 isVisible = isVisible,
@@ -291,9 +293,9 @@ class ChromeCdpSnapshotService(
             val tag = node.nodeName.uppercase()
             if (tag == "HTML") {
                 nextHtmlFrames = htmlFrames + mergedNode
-                if (snap?.scrollRects != null) {
-                    nextOffsetX -= snap.scrollRects.x
-                    nextOffsetY -= snap.scrollRects.y
+                if (snapshot?.scrollRects != null) {
+                    nextOffsetX -= snapshot.scrollRects.x
+                    nextOffsetY -= snapshot.scrollRects.y
                 }
             }
 
@@ -313,7 +315,7 @@ class ChromeCdpSnapshotService(
                 var cOffsetY = nextOffsetY
                 if (tag == "IFRAME" || tag == "FRAME") {
                     cFrames = nextHtmlFrames + mergedNode
-                    val b = snap?.bounds?.roundTo(1)
+                    val b = snapshot?.bounds?.roundTo(1)
                     if (b != null) {
                         cOffsetX += b.x
                         cOffsetY += b.y
@@ -333,11 +335,6 @@ class ChromeCdpSnapshotService(
         val merged = merge(trees.domTree, emptyList(), emptyList(), 0.0, 0.0)
         lastEnhancedRoot = merged
         return merged
-    }
-
-    internal suspend fun buildTinyTree(): TinyTree {
-        val trees = buildMultiDOMTrees()
-        return buildTinyTree(trees)
     }
 
     internal fun buildTinyTree(trees: TargetTrees): TinyTree {
@@ -381,7 +378,7 @@ class ChromeCdpSnapshotService(
         return DOMStateBuilder.build(root, includeAttributes, options)
     }
 
-    override suspend fun buildBrowserState(domState: DOMState): BrowserUseState {
+    private suspend fun buildBrowserState(domState: DOMState): BrowserUseState {
         // URL from DOM domain (resilient)
         val url: String = runCatching { devTools.dom.getDocument().documentURL }.getOrNull() ?: ""
 

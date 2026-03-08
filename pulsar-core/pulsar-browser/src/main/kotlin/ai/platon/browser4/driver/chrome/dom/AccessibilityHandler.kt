@@ -14,25 +14,9 @@ class AccessibilityHandler(
     private val isActive get() = devTools.isOpen
     private val pageAPI get() = devTools.page.takeIf { isActive }
     private val accessibilityAPI get() = devTools.accessibility.takeIf { isActive }
-    private val domAPI get() = devTools.dom.takeIf { isActive }
-    private val runtimeAPI get() = devTools.runtime.takeIf { isActive }
 
     @Volatile
     private var accessibilityEnabled = false
-
-    private suspend fun ensureEnabled() {
-        if (!isActive) return
-        // Enable Page/DOM domains to stabilize frame tree & AX associations
-        runCatching { devTools.page.enable() }
-        runCatching { devTools.dom.enable() }
-
-        val a11y = accessibilityAPI ?: return
-        if (!accessibilityEnabled) {
-            runCatching { a11y.enable() }
-                .onFailure { e -> logger.warn("Accessibility.enable failed | err={}", e.toString()) }
-            accessibilityEnabled = true
-        }
-    }
 
     /**
      * Recursively collects AX trees for the target frame or every frame/iframe reachable from the
@@ -165,4 +149,17 @@ class AccessibilityHandler(
         )
     }
 
+    private suspend fun ensureEnabled() {
+        if (!isActive) return
+        // Enable Page/DOM domains to stabilize frame tree & AX associations
+        runCatching { devTools.page.enable() }
+        runCatching { devTools.dom.enable() }
+
+        val a11y = accessibilityAPI ?: return
+        if (!accessibilityEnabled) {
+            runCatching { a11y.enable() }
+                .onFailure { e -> logger.warn("Accessibility.enable failed | err={}", e.toString()) }
+            accessibilityEnabled = true
+        }
+    }
 }

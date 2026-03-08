@@ -16,8 +16,6 @@ interface SnapshotService {
      */
     fun findElement(ref: ElementRefCriteria): DOMTreeNodeEx?
 
-    suspend fun buildBrowserState(domState: DOMState): BrowserUseState
-
     suspend fun addHighlights(elements: InteractiveDOMTreeNodeList)
 
     suspend fun removeHighlights(elements: InteractiveDOMTreeNodeList)
