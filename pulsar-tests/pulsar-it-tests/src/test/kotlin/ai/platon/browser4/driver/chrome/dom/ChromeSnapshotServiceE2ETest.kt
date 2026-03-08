@@ -73,7 +73,7 @@ class ChromeSnapshotServiceE2ETest : WebDriverTestBase() {
             includeInteractivity = true
         )
 
-        val trees = service.buildMultiDOMTrees(target = PageTarget(), options = options)
+        val trees = service.buildTargetTrees(target = PageTarget(), options = options)
         assertTrue(trees.devicePixelRatio > 0.1, "devicePixelRatio should be positive")
         assertTrue(trees.cdpTiming.isNotEmpty(), "cdpTiming should record phases")
 

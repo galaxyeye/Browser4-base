@@ -34,13 +34,19 @@ class ChromeCdpSnapshotService(
     @Volatile
     private var lastDomByBackend: Map<Int, DOMTreeNodeEx> = emptyMap()
 
-    override suspend fun getBrowserUseState(target: PageTarget, snapshotOptions: SnapshotOptions): BrowserUseState {
+    override suspend fun getBrowserUseState(
+        target: PageTarget,
+        snapshotOptions: SnapshotOptions
+    ): BrowserUseState {
         val domState = getDOMState(target, snapshotOptions)
         return buildBrowserState(domState)
     }
 
-    override suspend fun getDOMState(target: PageTarget, snapshotOptions: SnapshotOptions): DOMState {
-        val allTrees = buildMultiDOMTrees(options = snapshotOptions)
+    override suspend fun getDOMState(
+        target: PageTarget,
+        snapshotOptions: SnapshotOptions
+    ): DOMState {
+        val allTrees = buildTargetTrees(options = snapshotOptions)
         if (logger.isDebugEnabled) {
             logger.debug("allTrees summary: \n{}", DomDebug.summarize(allTrees))
         }
@@ -60,7 +66,7 @@ class ChromeCdpSnapshotService(
         return domState
     }
 
-    suspend fun buildMultiDOMTrees(
+    suspend fun buildTargetTrees(
         target: PageTarget = PageTarget(),
         options: SnapshotOptions = SnapshotOptions()
     ): TargetTrees {

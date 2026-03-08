@@ -111,13 +111,13 @@ open class WebDriverTestBase : TestWebSiteAccess() {
 
     protected suspend fun collectEnhancedRoot(service: ChromeCdpSnapshotService, options: SnapshotOptions): DOMTreeNodeEx {
         repeat(3) { attempt ->
-            val t = service.buildMultiDOMTrees(target = PageTarget(), options = options)
+            val t = service.buildTargetTrees(target = PageTarget(), options = options)
             // Best-effort summary for diagnostics
             printlnPro(DomDebug.summarize(t))
             val r = service.buildEnhancedDomTree(t)
             if (r.children.isNotEmpty() || attempt == 2) return r
             Thread.sleep(300)
         }
-        return service.buildEnhancedDomTree(service.buildMultiDOMTrees(PageTarget(), options))
+        return service.buildEnhancedDomTree(service.buildTargetTrees(PageTarget(), options))
     }
 }
