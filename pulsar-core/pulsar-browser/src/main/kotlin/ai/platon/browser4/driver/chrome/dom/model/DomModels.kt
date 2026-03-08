@@ -513,17 +513,6 @@ data class MicroDOMTreeNode(
         val helper = MicroToNanoTreeHelper(this, seenChunks)
         return helper.toNanoTreeInRange(startY, endY)
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as MicroDOMTreeNode
-
-        return toJson() == other.toJson()
-    }
-
-    override fun hashCode(): Int = toJson().hashCode()
 }
 
 typealias MicroDOMTree = MicroDOMTreeNode
@@ -568,25 +557,52 @@ data class NanoDOMTreeNode(
     @get:JsonIgnore
     val lazyYaml: String by lazy { DOMSerializer.toYaml(this) }
 
+    @get:JsonIgnore
+    val ref: Int get() = FBNLocator.parseRelaxed(locator)?.backendNodeId ?: 0
+
     fun toJson() = lazyJson
 
     fun toYaml() = lazyYaml
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as NanoDOMTreeNode
-
-        return lazyYaml == other.lazyYaml
-    }
-
-    override fun hashCode(): Int {
-        return lazyYaml.hashCode()
+    fun toPicoDOMTreeNode(): PicoDOMTreeNode {
+        return PicoDOMTreeNode(
+            ref = ref,
+            nodeName = nodeName,
+            nodeValue = nodeValue,
+            attributes = attributes,
+            children = children?.map { it.toPicoDOMTreeNode() }
+        )
     }
 }
 
 typealias NanoDOMTree = NanoDOMTreeNode
+
+/**
+ * Serializable DOMTreeNode structure.
+ * Enhanced with compound component marking and paint order information.
+ *
+ * Naming conversion to compress the tree for LLM input:
+ * mini -> tiny -> micro -> nano -> pico -> femto -> atto -> zepto -> yocto
+ * */
+data class PicoDOMTreeNode(
+    val ref: Int,
+    val nodeName: String? = null,
+    val nodeValue: String? = null,
+    val attributes: Map<String, Any>? = null,
+    val children: List<PicoDOMTreeNode>? = null,
+) {
+    @get:JsonIgnore
+    val lazyJson: String by lazy { Pson.toJson(this) }
+
+    @get:JsonIgnore
+    val lazyYaml: String by lazy { Pson.toYaml(this) }
+
+    fun toJson() = lazyJson
+
+    fun toYaml() = lazyYaml
+}
+
+typealias PicoDOMTree = PicoDOMTreeNode
 
 data class DOMState constructor(
     val microTree: MicroDOMTree,
