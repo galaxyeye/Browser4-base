@@ -2,6 +2,15 @@
 
 The Builtin AI Coworker is an agent that assists you with various tasks in your repository. It processes task files that you create, executes them, and can commit changes back to your repository.
 
+## How to Use
+
+1. run `run_coworker_periodically.ps1` to start
+2. draft tasks in `0draft` (or anywhere)
+3. copy ready tasks to `1created` for execution
+4. once executed, you can find results in `3_1complete` and detailed logs in `300logs`
+5. review results if needed
+6. move task file from `3_1complete` to `5approved` to trigger git pushing
+
 ## How It Works
 
 Task files flow through a pipeline of numbered folders inside `coworker/tasks/`:
