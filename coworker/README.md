@@ -4,7 +4,7 @@ The Builtin AI Coworker is an agent that assists you with various tasks in your 
 
 ## How to Use
 
-1. run `coworker-scheduler.ps1` (recommended) or `run_coworker_periodically.ps1` (legacy) to start
+1. run `coworker-scheduler.ps1` to start recurring automation
 2. draft tasks in `0draft` (or anywhere)
 3. copy ready tasks to `1created` for execution
 4. once executed, you can find results in `3_1complete` and detailed logs in `300logs`
@@ -69,6 +69,7 @@ After tasks are approved, push changes to your repository using the git-sync scr
 .\coworker\scripts\workers\git-sync.ps1
 ```
 
+
 **Linux/macOS (Bash):**
 
 ```bash
@@ -90,25 +91,35 @@ Task definitions live in `coworker/scripts/coworker-scheduler.config.psd1`. Each
 
 Default scheduled tasks:
 
-- `coworker` — runs `run_coworker_periodically.ps1 -Once`
-- `draft-refinement` — runs `run_draft_refinement_periodically.ps1 -Once`
-- `task-source-monitor` — runs `task-source-monitor.ps1 -Once`
+- `coworker` — processes queued coworker tasks after task-source monitoring
+- `draft-refinement` — processes the draft refinement queue
+- `task-source-monitor` — polls configured task sources and dispatches new tasks when enabled
 
-## Periodic Runner (Legacy)
+The scheduler invokes the legacy one-shot implementations from `coworker/scripts/deprecated/`. The original `coworker/scripts/*.ps1` and `.sh` entry points remain as compatibility shims and print a deprecation warning before delegating.
 
-The legacy periodic runner still monitors `1created` and `5approved` folders and processes tasks automatically.
+## Deprecated Legacy Schedulers
+
+The legacy schedulers are preserved for backward compatibility, but new automation should use `coworker-scheduler.ps1`. The deprecated implementations now live in:
+
+- `coworker/scripts/deprecated/run_coworker_periodically.ps1`
+- `coworker/scripts/deprecated/run_coworker_periodically.sh`
+- `coworker/scripts/deprecated/run_draft_refinement_periodically.ps1`
+- `coworker/scripts/deprecated/run_draft_refinement_periodically.sh`
+- `coworker/scripts/deprecated/task-source-monitor.ps1`
+- `coworker/scripts/deprecated/task-source-monitor.sh`
+
 
 **Windows (PowerShell):**
 
 ```powershell
-.\coworker\scripts\run_coworker_periodically.ps1
-.\coworker\scripts\run_coworker_periodically.ps1 -Once
+.\coworker\scripts\deprecated\run_coworker_periodically.ps1
+.\coworker\scripts\deprecated\run_coworker_periodically.ps1 -Once
 ```
 
 **Linux/macOS (Bash):**
 
 ```bash
-./coworker/scripts/run_coworker_periodically.sh
+./coworker/scripts/deprecated/run_coworker_periodically.sh
 ```
 
 ## Draft Refinement
@@ -126,7 +137,7 @@ You can refine a single file or every file in a folder. When a folder is provide
 ```powershell
 .\coworker\scripts\workers\refine-drafts.ps1
 .\coworker\scripts\workers\refine-drafts.ps1 -Path .\coworker\tasks\0draft\refine\1ready
-.\coworker\scripts\run_draft_refinement_periodically.ps1 -Once
+.\coworker\scripts\coworker-scheduler.ps1
 ```
 
 **Linux/macOS (Bash):**
@@ -134,5 +145,6 @@ You can refine a single file or every file in a folder. When a folder is provide
 ```bash
 ./coworker/scripts/workers/refine-drafts.sh
 ./coworker/scripts/workers/refine-drafts.sh ./coworker/tasks/0draft/refine/1ready
-./coworker/scripts/run_draft_refinement_periodically.sh --once
+./coworker/scripts/deprecated/run_draft_refinement_periodically.sh --once
 ```
+

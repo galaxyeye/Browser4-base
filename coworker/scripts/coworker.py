@@ -110,7 +110,7 @@ def parse_powershell_copilot_config(config_path: Path) -> list[str]:
     if not config_path.exists():
         return []
     content = config_path.read_text(encoding="utf-8")
-    match = re.search(r"\$COPILOT\s*=\s*@\((?P<body>.*?)\)", content, re.DOTALL)
+    match = re.search(r"(?:\$)?COPILOT\s*=\s*@\((?P<body>.*?)\)", content, re.DOTALL)
     if not match:
         return []
     body = match.group("body")
@@ -143,10 +143,15 @@ def parse_bash_copilot_config(config_path: Path) -> list[str]:
 
 
 def load_copilot_command(repo_root: Path) -> CopilotCommand:
+    config_psd1 = repo_root / "coworker" / "scripts" / "config.psd1"
     config_ps1 = repo_root / "coworker" / "scripts" / "config.ps1"
     config_sh = repo_root / "coworker" / "scripts" / "config.sh"
-    tokens = parse_powershell_copilot_config(config_ps1)
-    config_path: Path | None = config_ps1 if tokens else None
+    tokens = parse_powershell_copilot_config(config_psd1)
+    config_path: Path | None = config_psd1 if tokens else None
+    if not tokens:
+        tokens = parse_powershell_copilot_config(config_ps1)
+        if tokens:
+            config_path = config_ps1
     if not tokens:
         tokens = parse_bash_copilot_config(config_sh)
         if tokens:

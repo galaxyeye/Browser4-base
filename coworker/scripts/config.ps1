@@ -1,10 +1,11 @@
-$COPILOT = @(
-    'gh'
-    'copilot'
-    '--model'
-    'gpt-5.4'
-    '--no-ask-user'
-    '--log-level'
-    'info'
-    '--allow-all'
-)
+$configDataPath = Join-Path $PSScriptRoot 'config.psd1'
+if (-not (Test-Path $configDataPath)) {
+    throw "Config data file not found: $configDataPath"
+}
+
+$configData = Import-PowerShellDataFile -Path $configDataPath
+if (-not $configData.ContainsKey('COPILOT')) {
+    throw "COPILOT is not defined in $configDataPath"
+}
+
+$COPILOT = @($configData['COPILOT'])

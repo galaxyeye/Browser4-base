@@ -13,7 +13,7 @@
             Enabled         = $true
             IntervalSeconds = 15
             DependsOn       = @('task-source-monitor')
-            ScriptPath      = 'coworker\scripts\run_coworker_periodically.ps1'
+            ScriptPath      = 'coworker\scripts\deprecated\run_coworker_periodically.ps1'
             Arguments       = @('-Once')
         }
         @{
@@ -21,7 +21,7 @@
             Description     = 'Process the draft refinement queue.'
             Enabled         = $true
             IntervalSeconds = 15
-            ScriptPath      = 'coworker\scripts\run_draft_refinement_periodically.ps1'
+            ScriptPath      = 'coworker\scripts\deprecated\run_draft_refinement_periodically.ps1'
             Arguments       = @('-Once')
         }
         @{
@@ -29,8 +29,9 @@
             Description     = 'Poll configured task sources and dispatch new tasks.'
             Enabled         = $false
             IntervalSeconds = 60
-            ScriptPath      = 'coworker\scripts\task-source-monitor.ps1'
+            ScriptPath      = 'coworker\scripts\deprecated\task-source-monitor.ps1'
             Arguments       = @('-Once')
         }
     )
 }
+

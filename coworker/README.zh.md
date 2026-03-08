@@ -6,7 +6,7 @@
 
 启动助理 -> 批量起草任务 -> 复制到执行目录 [ -> 查看结果 - > 审查 ] -> 移动到批准目录 -> 自动提交推送
 
-1. 运行 `coworker-scheduler.ps1`（推荐）或 `run_coworker_periodically.ps1`（兼容旧流程）以启动
+1. 运行 `coworker-scheduler.ps1` 以启动定时自动化
 2. 在 `0draft` 下起草任务（或者任何地方）
 3. 将已完成草稿的任务复制到 `1created` 目录以执行
 4. 执行后，您可以在 `3_1complete` 中找到结果，在 300logs 中找到详细日志
@@ -71,6 +71,7 @@
 .\coworker\scripts\workers\git-sync.ps1
 ```
 
+
 **Linux/macOS (Bash)：**
 
 ```bash
@@ -92,25 +93,35 @@
 
 默认调度任务：
 
-- `coworker` — 运行 `run_coworker_periodically.ps1 -Once`
-- `draft-refinement` — 运行 `run_draft_refinement_periodically.ps1 -Once`
-- `task-source-monitor` — 运行 `task-source-monitor.ps1 -Once`
+- `coworker` — 在任务源监控之后处理排队中的 coworker 任务
+- `draft-refinement` — 处理草稿润色队列
+- `task-source-monitor` — 启用后轮询配置的任务源并分发新任务
 
-## 定时运行器（兼容旧流程）
+统一调度器会调用 `coworker/scripts/deprecated/` 中保留的旧版一次性实现。原来的 `coworker/scripts/*.ps1` 和 `.sh` 入口仍然保留为兼容包装器，但会先输出弃用警告再转发。
 
-旧版定时运行器仍会自动监控 `1created` 和 `5approved` 文件夹并处理任务。
+## 已弃用的旧版调度脚本
+
+旧版调度脚本仍然保留以兼容现有流程，但新的自动化应改用 `coworker-scheduler.ps1`。旧版实现现已统一移动到：
+
+- `coworker/scripts/deprecated/run_coworker_periodically.ps1`
+- `coworker/scripts/deprecated/run_coworker_periodically.sh`
+- `coworker/scripts/deprecated/run_draft_refinement_periodically.ps1`
+- `coworker/scripts/deprecated/run_draft_refinement_periodically.sh`
+- `coworker/scripts/deprecated/task-source-monitor.ps1`
+- `coworker/scripts/deprecated/task-source-monitor.sh`
+
 
 **Windows (PowerShell)：**
 
 ```powershell
-.\coworker\scripts\run_coworker_periodically.ps1
-.\coworker\scripts\run_coworker_periodically.ps1 -Once
+.\coworker\scripts\deprecated\run_coworker_periodically.ps1
+.\coworker\scripts\deprecated\run_coworker_periodically.ps1 -Once
 ```
 
 **Linux/macOS (Bash)：**
 
 ```bash
-./coworker/scripts/run_coworker_periodically.sh
+./coworker/scripts/deprecated/run_coworker_periodically.sh
 ```
 
 ## 草稿润色
@@ -128,7 +139,7 @@
 ```powershell
 .\coworker\scripts\workers\refine-drafts.ps1
 .\coworker\scripts\workers\refine-drafts.ps1 -Path .\coworker\tasks\0draft\refine\1ready
-.\coworker\scripts\run_draft_refinement_periodically.ps1 -Once
+.\coworker\scripts\coworker-scheduler.ps1
 ```
 
 **Linux/macOS (Bash)：**
@@ -136,6 +147,7 @@
 ```bash
 ./coworker/scripts/workers/refine-drafts.sh
 ./coworker/scripts/workers/refine-drafts.sh ./coworker/tasks/0draft/refine/1ready
-./coworker/scripts/run_draft_refinement_periodically.sh --once
+./coworker/scripts/deprecated/run_draft_refinement_periodically.sh --once
 ```
+
 

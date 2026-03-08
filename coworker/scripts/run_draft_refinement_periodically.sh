@@ -19,81 +19,12 @@ find_repo_root() {
 }
 
 REPO_ROOT="$(find_repo_root)"
+TARGET="$REPO_ROOT/coworker/scripts/deprecated/run_draft_refinement_periodically.sh"
 
-SCAN_PATH="$REPO_ROOT/coworker/tasks/0draft/refine/1ready"
-INTERVAL_SECONDS=15
-ONCE=false
+echo "WARNING: run_draft_refinement_periodically.sh is deprecated. Use coworker/scripts/coworker-scheduler.ps1 instead." >&2
+if [[ -x "$TARGET" ]]; then
+    exec "$TARGET" "$@"
+fi
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --path)
-            SCAN_PATH="$2"
-            shift 2
-            ;;
-        --interval)
-            INTERVAL_SECONDS="$2"
-            shift 2
-            ;;
-        --once)
-            ONCE=true
-            shift
-            ;;
-        *)
-            echo "Unknown argument: $1" >&2
-            exit 1
-            ;;
-    esac
-done
+exec bash "$TARGET" "$@"
 
-REFINE_SCRIPT="$REPO_ROOT/coworker/scripts/workers/refine-drafts.sh"
-
-echo "Monitoring draft refinement path: $SCAN_PATH"
-echo "Refine script: $REFINE_SCRIPT"
-
-while true; do
-    pending_count=0
-
-    if [[ -e "$SCAN_PATH" ]]; then
-        if [[ -d "$SCAN_PATH" ]]; then
-            pending_count=$(find "$SCAN_PATH" -maxdepth 1 -type f | wc -l | tr -d ' ')
-        else
-            pending_count=1
-        fi
-    fi
-
-    timestamp=$(date -u '+%Y-%m-%d %H:%M:%S')
-    if [[ "$pending_count" -eq 0 ]]; then
-        echo "$timestamp - No draft files found for refinement."
-        if [[ "$ONCE" == true ]]; then
-            exit 0
-        fi
-
-        sleep "$INTERVAL_SECONDS"
-        continue
-    fi
-
-    echo "$timestamp - Refining $pending_count draft file(s)..."
-    if [[ -x "$REFINE_SCRIPT" ]]; then
-        if "$REFINE_SCRIPT" "$SCAN_PATH"; then
-            exit_code=0
-        else
-            exit_code=$?
-        fi
-    else
-        if bash "$REFINE_SCRIPT" "$SCAN_PATH"; then
-            exit_code=0
-        else
-            exit_code=$?
-        fi
-    fi
-
-    if [[ "$exit_code" -ne 0 ]]; then
-        echo "$timestamp - Draft refinement finished with exit code $exit_code." >&2
-    fi
-
-    if [[ "$ONCE" == true ]]; then
-        exit "$exit_code"
-    fi
-
-    sleep "$INTERVAL_SECONDS"
-done
