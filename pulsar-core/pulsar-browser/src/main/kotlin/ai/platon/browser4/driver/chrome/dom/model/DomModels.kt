@@ -296,6 +296,10 @@ data class DOMTreeNodeEx constructor(
      * - Else, return the lowercase tag name (or "*")
      */
     fun cssSelector(): String = CSSSelectorUtils.generateCSSSelector(this)
+
+    fun toJson() = Pson.toJson(this)
+
+    fun toYaml() = Pson.toYaml(this)
 }
 
 typealias DOMTreeEx = DOMTreeNodeEx
