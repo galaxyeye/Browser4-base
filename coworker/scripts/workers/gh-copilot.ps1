@@ -1,41 +1,247 @@
 #!/usr/bin/env pwsh
 
 param(
-    [Parameter(Position=0)]
-    [string]$Task
+    [string]$Prompt,
+    [string[]]$AdditionalArguments = @(),
+    [switch]$AllowAllTools,
+    [switch]$AllowAllPaths,
+    [switch]$CaptureOutput
 )
 
-$repoRoot = (git rev-parse --show-toplevel 2>$null)
-if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
+function Get-GHCopilotRepoRoot {
+    param(
+        [string]$StartDirectory = $PSScriptRoot
+    )
+
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($repoRoot) {
+        return (Resolve-Path $repoRoot).Path
+    }
+
+    $currentDirectory = $StartDirectory
+    while ($currentDirectory) {
+        if (Test-Path (Join-Path $currentDirectory 'ROOT.md')) {
+            return (Resolve-Path $currentDirectory).Path
+        }
+
+        $parentDirectory = Split-Path -Parent $currentDirectory
+        if ($parentDirectory -eq $currentDirectory) {
+            break
+        }
+        $currentDirectory = $parentDirectory
+    }
+
+    throw 'Repo root not found.'
 }
-Set-Location $repoRoot
 
-# Write the task description to a temporary file to avoid issues with newlines and quotes in the prompt
-# The temporary file name to make it easier to identify and clean up later if needed.
-# - located in $env:TEMP/browser4/coworker/
-# - starts with "cw-prompt-"
-$tempDir = Join-Path -Path $env:TEMP -ChildPath "browser4\coworker"
-if (-not (Test-Path -Path $tempDir)) {
-    New-Item -Path $tempDir -ItemType Directory | Out-Null
+function Get-GHCopilotCommand {
+    param(
+        [string]$RepoRoot = (Get-GHCopilotRepoRoot)
+    )
+
+    $configPath = Join-Path $RepoRoot 'coworker\scripts\config.ps1'
+    if (Test-Path $configPath) {
+        . $configPath
+    }
+
+    if (-not $COPILOT) {
+        $COPILOT = @('gh', 'copilot')
+    }
+
+    if ($COPILOT -is [string]) {
+        throw "COPILOT must be defined as a PowerShell array in $configPath"
+    }
+
+    if ($COPILOT.Count -lt 2) {
+        throw 'COPILOT must include an executable and at least one argument'
+    }
+
+    return [pscustomobject]@{
+        RepoRoot   = $RepoRoot
+        ConfigPath = $configPath
+        Executable = $COPILOT[0]
+        BaseArgs   = @($COPILOT | Select-Object -Skip 1)
+    }
 }
-$tempFilePath = Join-Path -Path $tempDir -ChildPath "cw-prompt-$(Get-Date -Format 'yyyyMMdd-HHmmss').txt"
-Set-Content -Path $tempFilePath -Value $taskDescription -Encoding UTF8
 
-$prompt = "Finish the task described in file: $tempFilePath."
-# Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-$safePrompt = $prompt.Replace('"', '\"')
+function New-GHCopilotArguments {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$BaseArgs,
+        [string]$Prompt,
+        [string[]]$AdditionalArguments = @()
+    )
 
-# Pass arguments as an array to avoid fragile manual escaping/quoting.
-# This keeps quotes/newlines intact in the -p prompt.
-$copilotArgList = @(
-    'copilot'
-    '--'
-    '-p'
-    "`"$safePrompt`""
-    '--allow-all-tools'
-    '--allow-all-paths'
-)
+    $arguments = @($BaseArgs)
+    if ($PSBoundParameters.ContainsKey('Prompt')) {
+        $arguments += '--'
+        $arguments += '-p'
+        $arguments += $Prompt
+    }
 
-$process = Start-Process -FilePath 'gh' -ArgumentList $copilotArgList
+    if ($AdditionalArguments) {
+        $arguments += $AdditionalArguments
+    }
+
+    return @($arguments)
+}
+
+function Format-GHCopilotCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Executable,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments
+    )
+
+    $formattedArguments = foreach ($argument in $Arguments) {
+        if ([string]::IsNullOrEmpty($argument)) {
+            "''"
+        }
+        elseif ($argument -match '[\s"`]') {
+            "'" + ($argument -replace "'", "''") + "'"
+        }
+        else {
+            $argument
+        }
+    }
+
+    return ('{0} {1}' -f $Executable, ($formattedArguments -join ' ')).Trim()
+}
+
+function ConvertTo-WindowsCommandLineArgument {
+    param(
+        [AllowEmptyString()]
+        [string]$Argument
+    )
+
+    if ($null -eq $Argument -or $Argument.Length -eq 0) {
+        return '""'
+    }
+
+    if ($Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+
+    $builder = [System.Text.StringBuilder]::new()
+    [void]$builder.Append('"')
+
+    $backslashCount = 0
+    foreach ($character in $Argument.ToCharArray()) {
+        if ($character -eq '\') {
+            $backslashCount++
+            continue
+        }
+
+        if ($character -eq '"') {
+            if ($backslashCount -gt 0) {
+                [void]$builder.Append('\' * ($backslashCount * 2))
+                $backslashCount = 0
+            }
+            [void]$builder.Append('\"')
+            continue
+        }
+
+        if ($backslashCount -gt 0) {
+            [void]$builder.Append('\' * $backslashCount)
+            $backslashCount = 0
+        }
+
+        [void]$builder.Append($character)
+    }
+
+    if ($backslashCount -gt 0) {
+        [void]$builder.Append('\' * ($backslashCount * 2))
+    }
+
+    [void]$builder.Append('"')
+    return $builder.ToString()
+}
+
+function Start-GHCopilotProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Executable,
+        [Parameter(Mandatory = $true)]
+        [string[]]$BaseArgs,
+        [string]$Prompt,
+        [string[]]$AdditionalArguments = @(),
+        [string]$StdOutPath,
+        [string]$StdErrPath,
+        [switch]$NoNewWindow
+    )
+
+    $arguments = New-GHCopilotArguments -BaseArgs $BaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments
+    $startProcessArgs = @{
+        FilePath = $Executable
+        PassThru = $true
+    }
+
+    $isWindowsPlatform = $false
+    if ($null -ne $PSVersionTable -and $PSVersionTable.PSEdition -eq 'Desktop') {
+        $isWindowsPlatform = $true
+    }
+    elseif ($null -ne (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
+        $isWindowsPlatform = [bool]$IsWindows
+    }
+
+    if ($isWindowsPlatform) {
+        # Use one escaped command line on Windows to preserve multiline/quoted prompt text.
+        $escapedArguments = foreach ($argument in $arguments) {
+            ConvertTo-WindowsCommandLineArgument -Argument $argument
+        }
+        $startProcessArgs.ArgumentList = ($escapedArguments -join ' ')
+    }
+    else {
+        $startProcessArgs.ArgumentList = $arguments
+    }
+
+    if ($NoNewWindow) {
+        $startProcessArgs.NoNewWindow = $true
+    }
+    if ($PSBoundParameters.ContainsKey('StdOutPath')) {
+        $startProcessArgs.RedirectStandardOutput = $StdOutPath
+    }
+    if ($PSBoundParameters.ContainsKey('StdErrPath')) {
+        $startProcessArgs.RedirectStandardError = $StdErrPath
+    }
+
+    return Start-Process @startProcessArgs
+}
+
+function Invoke-GHCopilot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Prompt,
+        [string[]]$AdditionalArguments = @(),
+        [string]$RepoRoot = (Get-GHCopilotRepoRoot)
+    )
+
+    $command = Get-GHCopilotCommand -RepoRoot $RepoRoot
+    $arguments = New-GHCopilotArguments -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments
+    & $command.Executable @arguments
+}
+
+if ($MyInvocation.InvocationName -ne '.') {
+    if ([string]::IsNullOrWhiteSpace($Prompt)) {
+        throw 'Prompt is required when executing gh-copilot.ps1 directly.'
+    }
+
+    $directArguments = @($AdditionalArguments)
+    if ($AllowAllTools) {
+        $directArguments += '--allow-all-tools'
+    }
+    if ($AllowAllPaths) {
+        $directArguments += '--allow-all-paths'
+    }
+
+    if ($CaptureOutput) {
+        Invoke-GHCopilot -Prompt $Prompt -AdditionalArguments $directArguments
+        exit $LASTEXITCODE
+    }
+
+    $command = Get-GHCopilotCommand
+    $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $directArguments -NoNewWindow
+    $process.WaitForExit()
+    exit $process.ExitCode
+}

@@ -24,8 +24,8 @@ param(
     [string]$TaskFile
 )
 
-GH_DEBUG=api      # 打印 API 请求
-# GH_DEBUG=1        # 打印调试信息
+# $env:GH_DEBUG = 'api'      # 打印 API 请求
+# $env:GH_DEBUG = '1'        # 打印调试信息
 
 # Handle specified TaskFile
 if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
@@ -49,21 +49,11 @@ Fix-Encoding-UTF8
 
 $tasksRoot = Join-Path $repoRoot "coworker\tasks"
 $scriptsDir = Join-Path $repoRoot "coworker\scripts"
-$configPath = Join-Path $scriptsDir "config.ps1"
-if (Test-Path $configPath) {
-    . $configPath
-}
-if (-not $COPILOT) {
-    $COPILOT = @('gh', 'copilot')
-}
-if ($COPILOT -is [string]) {
-    throw "COPILOT must be defined as a PowerShell array in $configPath"
-}
-if ($COPILOT.Count -lt 2) {
-    throw "COPILOT must include an executable and at least one argument"
-}
-$copilotExecutable = $COPILOT[0]
-$copilotBaseArgs = @($COPILOT | Select-Object -Skip 1)
+$ghCopilotHelper = Join-Path $scriptsDir "workers\gh-copilot.ps1"
+. $ghCopilotHelper
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
+$copilotExecutable = $copilotCommand.Executable
+$copilotBaseArgs = $copilotCommand.BaseArgs
 $taskRoots = @(
     @{
         Prepare = (Join-Path $tasksRoot "0draft")
@@ -119,22 +109,23 @@ $scriptStartTime = (Get-Date).ToUniversalTime()
 $copilotNameTimeoutSeconds = 60
 $copilotRunTimeoutSeconds = 6000
 
-function New-CopilotArgumentList {
+function New-CopilotPromptArguments {
     param(
-        [Parameter(Mandatory=$true)]
-        [string[]]$Arguments
+        [Parameter(Mandatory = $true)]
+        [string]$Prompt,
+        [string[]]$AdditionalArguments = @()
     )
 
-    return @($script:copilotBaseArgs + $Arguments)
+    return @(New-GHCopilotArguments -BaseArgs $script:copilotBaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments)
 }
 
 function Format-CopilotCommand {
     param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string[]]$Arguments
     )
 
-    return "{0} {1}" -f $script:copilotExecutable, ((New-CopilotArgumentList -Arguments $Arguments) -join ' ')
+    return Format-GHCopilotCommand -Executable $script:copilotExecutable -Arguments $Arguments
 }
 
 # ============================================================================
@@ -218,23 +209,13 @@ Prompt: $promptSample
 "@
 
     try {
-        # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-        $safeNamingPrompt = $namingPrompt.Replace('"', '\"')
+        $nameArguments = New-CopilotPromptArguments -Prompt $namingPrompt
 
-        # Pass arguments as an array to avoid fragile manual escaping/quoting.
-        # This is more reliable on Windows PowerShell when prompts contain quotes or newlines.
-        $nameArgList = @(
-            'copilot'
-            '--'
-            '-p'
-            "`"$safeNamingPrompt`""
-        )
-
-        Write-LogVerbose ("Executing GH Copilot for naming: {0}" -f (Format-CopilotCommand -Arguments $nameArgList))
+        Write-LogVerbose ("Executing GH Copilot for naming: {0}" -f (Format-CopilotCommand -Arguments $nameArguments))
 
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
-        $nameProcess = Start-Process -FilePath $copilotExecutable -ArgumentList (New-CopilotArgumentList -Arguments $nameArgList) -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+        $nameProcess = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $namingPrompt -StdOutPath $nameStdOut -StdErrPath $nameStdErr -NoNewWindow
 
         $waited = $false
         try {
@@ -591,18 +572,7 @@ Copilot Execution Output:
 "@ | Out-File -FilePath $taskLogPath -Encoding UTF8
 
         try {
-            # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-            $safePrompt = $prompt.Replace('"', '\"')
-
-            # Pass arguments as an array to avoid fragile manual escaping/quoting.
-            # This keeps quotes/newlines intact in the -p prompt.
-            $copilotArgList = @(
-                '--'
-                '-p'
-                "`"$safePrompt`""
-                '--allow-all-tools'
-                '--allow-all-paths'
-            )
+            $copilotArguments = New-CopilotPromptArguments -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths')
 
             # Define paths for temporary output and error logs (for copilot external tool)
             $stdOutLog = $copilotLogPath + ".stdout"
@@ -612,7 +582,7 @@ Copilot Execution Output:
 
             # Execute Copilot tool with the task prompt
             # Capture both standard output and error output to separate files
-            $process = Start-Process -FilePath $copilotExecutable -ArgumentList (New-CopilotArgumentList -Arguments $copilotArgList) -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+            $process = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths') -StdOutPath $stdOutLog -StdErrPath $stdErrLog -NoNewWindow
 
             $lastOutputLineCount = 0
 

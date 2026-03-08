@@ -211,7 +211,7 @@ class MCPToolController(
             ?: return ResponseEntity.ok(errorResponse("Session agent does not support tools"))
 
         val toolName = request.tool
-        val args = request.arguments ?: emptyMap()
+        val args = normalizeToolArguments(toolName, request.arguments ?: emptyMap())
 
         // Find the matching tool in AgentToolManager
         val toolCall = resolveToolCall(toolName, args, agent)
@@ -273,6 +273,44 @@ class MCPToolController(
         return when (domain) {
             "driver", "system" -> snake
             else -> "${domain}_$snake"
+        }
+    }
+
+    private fun normalizeToolArguments(toolName: String, args: Map<String, Any?>): Map<String, Any?> {
+        val normalized = args.mapKeys { (key, _) -> snakeToCamel(key) }.toMutableMap()
+
+        when (toolName) {
+            "switch_tab", "tab_select", "close_tab", "tab_close" -> {
+                val legacyTabId = normalized.remove("index") ?: normalized.remove("id")
+                if (!normalized.containsKey("tabId") && legacyTabId != null) {
+                    normalized["tabId"] = legacyTabId.toString()
+                }
+            }
+
+            "select_option" -> {
+                val legacyValue = normalized.remove("value")
+                if (!normalized.containsKey("values") && legacyValue != null) {
+                    normalized["values"] = listOf(legacyValue.toString())
+                }
+            }
+        }
+
+        return normalized
+    }
+
+    private fun snakeToCamel(key: String): String {
+        if (!key.contains("_")) {
+            return key
+        }
+
+        val parts = key.split("_").filter { it.isNotEmpty() }
+        if (parts.isEmpty()) {
+            return key
+        }
+
+        return buildString {
+            append(parts.first())
+            parts.drop(1).forEach { append(it.replaceFirstChar { c -> c.uppercase() }) }
         }
     }
 

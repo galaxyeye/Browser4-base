@@ -4,6 +4,12 @@
 # Usage: ./rename.sh <file_path>
 
 file="$1"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR/../../..")"
+GH_COPILOT_HELPER="$REPO_ROOT/coworker/scripts/workers/gh-copilot.sh"
+# shellcheck disable=SC1090
+source "$GH_COPILOT_HELPER"
+load_gh_copilot_command "$REPO_ROOT"
 
 # Function to rename a single file
 rename_file() {
@@ -42,7 +48,7 @@ rename_file() {
     namingPrompt="Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name. Title: $title Description: $description Prompt: $promptSample"
     
     # Call gh copilot to generate name
-    generatedName=$(gh copilot -p "$namingPrompt" --allow-all-tools --allow-all-paths 2>/dev/null)
+    generatedName=$(invoke_gh_copilot "$namingPrompt" --allow-all-tools --allow-all-paths 2>/dev/null)
     
     # Clean up the generated name
     cleanedName=$(echo "$generatedName" | grep -E "^[a-z0-9]+(-[a-z0-9]+)*$" | head -n 1)
@@ -109,9 +115,7 @@ promptSample="${prompt:0:600}"
 
 namingPrompt="Create a short, descriptive task name in English kebab-case (3-6 words max). Output only the name. Title: $title Description: $description Prompt: $promptSample"
 
-# Call gh copilot to generate name
-# We match the syntax used in coworker.sh: gh copilot -p "..."
-generatedName=$(gh copilot -p "$namingPrompt" --allow-all-tools --allow-all-paths 2>/dev/null)
+generatedName=$(invoke_gh_copilot "$namingPrompt" --allow-all-tools --allow-all-paths 2>/dev/null)
 
 
 # Clean up the generated name

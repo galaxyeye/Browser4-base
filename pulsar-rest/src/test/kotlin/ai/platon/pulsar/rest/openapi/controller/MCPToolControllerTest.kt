@@ -199,7 +199,7 @@ class MCPToolControllerTest {
         
         val request = MCPToolCallRequest(
             tool = "fill",
-            arguments = mapOf("sessionId" to sessionId, "selector" to "#input", "value" to "text")
+            arguments = mapOf("sessionId" to sessionId, "selector" to "#input", "text" to "text")
         )
 
         val result = controller.callTool(request, response)
@@ -212,7 +212,7 @@ class MCPToolControllerTest {
 
         assertEquals("driver", toolCall.domain)
         assertEquals("fill", toolCall.method)
-        assertEquals("text", toolCall.arguments["value"])
+        assertEquals("text", toolCall.arguments["text"])
     }
 
     @Test
@@ -258,7 +258,29 @@ class MCPToolControllerTest {
 
         assertEquals("browser", toolCall.domain)
         assertEquals("switchTab", toolCall.method)
-        assertEquals(1, toolCall.arguments["index"])
+        assertEquals("1", toolCall.arguments["tabId"])
+    }
+
+    @Test
+    fun `test snake case arguments normalize for drag`() = runBlocking {
+        mockTool("driver", "drag")
+
+        val request = MCPToolCallRequest(
+            tool = "drag",
+            arguments = mapOf("sessionId" to sessionId, "source_selector" to "#a", "target_selector" to "#b")
+        )
+
+        val result = controller.callTool(request, response)
+        assertEquals(HttpStatus.OK, result.statusCode)
+
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        val toolCall = captor.value
+
+        assertEquals("driver", toolCall.domain)
+        assertEquals("drag", toolCall.method)
+        assertEquals("#a", toolCall.arguments["sourceSelector"])
+        assertEquals("#b", toolCall.arguments["targetSelector"])
     }
     
     @Test

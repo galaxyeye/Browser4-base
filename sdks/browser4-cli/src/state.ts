@@ -14,11 +14,7 @@ export interface CliState {
   sessionId?: string;
   /** Base URL of the Browser4 REST server. */
   baseUrl: string;
-  /**
-   * CSS selector (or `backend:<id>` ref) of the last element that was
-   * clicked.  Used as the default target for subsequent `type` / `press`
-   * commands.
-   */
+  /** Reserved selector slot for future CLI workflows. */
   activeSelector?: string;
   /** Named session label for the `-s=<name>` flag. */
   sessionName?: string;

@@ -7,15 +7,15 @@
  * All operations are routed through the Browser4 MCP Server tool interface
  * via `POST /mcp/call-tool`.
  *
- * Element references
- *   The accessibility snapshot labels each interactive node with a short
- *   identifier such as `e15`.  Pass this directly to `click`, `type`, or
- *   `press`; the CLI will translate it to `backend:15` before contacting
- *   the server.  Plain CSS selectors are also accepted.
+ * Element selectors
+ *   Browser4 CLI forwards selector-oriented WebDriver commands directly to
+ *   the MCP server. Use CSS selectors (or backend node IDs already supported
+ *   by the server) for element-targeting commands such as `click`, `type`,
+ *   `fill`, `press`, and `upload`.
  *
  * State persistence
- *   The active session ID and the last-focused element ref are kept in
- *   ~/.browser4/cli-state.json between invocations.
+ *   The active session ID and server URL are kept in ~/.browser4/cli-state.json
+ *   between invocations.
  */
 
 import * as fs from 'fs';
@@ -248,7 +248,7 @@ async function handleOpen(
     writeState({sessionId, baseUrl, sessionName});
 
     if (toolParams.url && toolParams.url !== 'about:blank') {
-        const result = await callTool(ax, 'browser_navigate', {
+        const result = await callTool(ax, 'open', {
             ...toolParams,
             sessionId,
         });
@@ -310,7 +310,7 @@ async function handleSnapshot(
     const [pageUrl, pageTitle, snapshotContent] = await Promise.all([
         callTool(ax, 'page_url', {sessionId: sid}),
         callTool(ax, 'page_title', {sessionId: sid}),
-        callTool(ax, 'browser_snapshot', {sessionId: sid}),
+        callTool(ax, 'aria_snapshot', {sessionId: sid}),
     ]);
 
     const outName = (toolParams.filename as string) || timestampedFilename('snapshot', 'yml');
@@ -323,6 +323,25 @@ async function handleSnapshot(
     console.log(`- Page Title: ${pageTitle}`);
     console.log('### Snapshot');
     console.log(`[Snapshot](${outPath})`);
+}
+
+async function handleScreenshot(
+    ax: AxiosInstance,
+    toolParams: Record<string, unknown>,
+): Promise<void> {
+    const state = requireSession();
+    const sid = state.sessionId;
+    const { filename, ...captureArgs } = toolParams;
+    const base64 = await callTool(ax, 'screenshot', {
+        ...captureArgs,
+        sessionId: sid,
+    });
+
+    const outName = (filename as string) || timestampedFilename('screenshot', 'png');
+    const outPath = path.resolve(SNAPSHOT_DIR, outName);
+    ensureDir(path.dirname(outPath));
+    fs.writeFileSync(outPath, Buffer.from(base64, 'base64'));
+    console.log(`[Screenshot](${outPath})`);
 }
 
 /**
@@ -409,6 +428,9 @@ async function main(): Promise<void> {
                 break;
             case 'snapshot':
                 await handleSnapshot(ax, toolParams);
+                break;
+            case 'screenshot':
+                await handleScreenshot(ax, toolParams);
                 break;
             default:
                 if (!toolName) {

@@ -60,21 +60,10 @@ pushedDir="$baseDir/6git-pushed"
 logsDir="$baseDir/300logs"              # Directory for script and execution logs
 memoryDir="$logsDir"
 scriptsDir="$repoRoot/coworker/scripts"
-configSh="$scriptsDir/config.sh"
-
-if [[ -f "$configSh" ]]; then
-    # shellcheck disable=SC1090
-    source "$configSh"
-fi
-
-if ! declare -p COPILOT >/dev/null 2>&1; then
-    COPILOT=(gh copilot)
-fi
-
-if [[ "$(declare -p COPILOT 2>/dev/null)" != declare\ -a* ]]; then
-    echo "Error: COPILOT must be defined as a bash array in $configSh" >&2
-    exit 1
-fi
+ghCopilotHelper="$scriptsDir/workers/gh-copilot.sh"
+# shellcheck disable=SC1090
+source "$ghCopilotHelper"
+load_gh_copilot_command "$repoRoot"
 
 # Ensure all required directories exist
 mkdir -p "$draftDir"
@@ -225,13 +214,14 @@ Prompt: $promptSample"
     # Using timeout command if available, otherwise just run
     local rawName=""
     if command -v timeout >/dev/null 2>&1; then
-        rawName=$(timeout "$COPILOT_NAME_TIMEOUT_SECONDS" "${COPILOT[@]}" -- -p "$namingPrompt" 2>/dev/null | head -n 1)
+        new_gh_copilot_args "$namingPrompt"
+        rawName=$(timeout "$COPILOT_NAME_TIMEOUT_SECONDS" "$GHCOPILOT_EXECUTABLE" "${GHCOPILOT_LAST_ARGS[@]}" 2>/dev/null | head -n 1)
         exitCode=$?
         if [[ $exitCode -eq 124 ]]; then # Timeout exit code
              return 1 # Fail triggers fallback
         fi
     else
-        rawName=$("${COPILOT[@]}" -- -p "$namingPrompt" 2>/dev/null | head -n 1)
+        rawName=$(invoke_gh_copilot "$namingPrompt" 2>/dev/null | head -n 1)
     fi
 
     if [[ -z "$rawName" ]]; then
@@ -556,8 +546,9 @@ $memoryContext"
     # Start Copilot in background to allow monitoring
     # We use a subshell to redirect outputs
 
+    new_gh_copilot_args "$prompt" --allow-all-tools --allow-all-paths
     (
-        "${COPILOT[@]}" -- -p "$prompt" --allow-all-tools --allow-all-paths > "$stdOutLog" 2> "$stdErrLog"
+        "$GHCOPILOT_EXECUTABLE" "${GHCOPILOT_LAST_ARGS[@]}" > "$stdOutLog" 2> "$stdErrLog"
     ) &
     copilotPid=$!
 

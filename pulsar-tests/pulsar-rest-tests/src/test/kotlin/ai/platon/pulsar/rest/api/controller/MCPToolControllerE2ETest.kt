@@ -23,13 +23,13 @@ import kotlin.test.assertTrue
  *
  * CLI command → MCP tool mapping:
  * - Core: open→open_session, goto→navigate, click, dblclick, fill, drag, hover,
- *         select→select_option, upload, check, uncheck, type→fill, snapshot→aria_snapshot,
+ *         select→select_option, upload, check, uncheck, type, snapshot→aria_snapshot,
  *         eval→evaluate, dialog-accept→dialog_accept, dialog-dismiss→dialog_dismiss,
  *         resize, close→close_session
  * - Navigation: go-back→go_back, go-forward→go_forward, reload
  * - Keyboard: press, keydown, keyup
  * - Mouse: mousemove, mousedown, mouseup, mousewheel
- * - Save as: screenshot, pdf→evaluate
+ * - Save as: screenshot
  * - Tabs: tab-list→tab_list, tab-new→tab_new, tab-close→tab_close, tab-select→tab_select
  * - Session management: list→list_sessions, close-all→close_all_sessions,
  *                       kill-all→kill_all_sessions, delete-data→delete_session_data
@@ -56,7 +56,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
         "upload" to "upload",
         "check" to "check",
         "uncheck" to "uncheck",
-        "type" to "fill",
+        "type" to "type",
         "snapshot" to "aria_snapshot",
         "eval" to "evaluate",
         "dialog-accept" to "dialog_accept",
@@ -78,7 +78,6 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
         "mousewheel" to "mousewheel",
         // Save as
         "screenshot" to "screenshot",
-        "pdf" to "evaluate",
         // Tabs
         "tab-list" to "tab_list",
         "tab-new" to "tab_new",
@@ -330,10 +329,17 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     }
 
     @Test
-    @DisplayName("fill types text into an input (cli: fill, type)")
+    @DisplayName("fill types text into an input (cli: fill)")
     fun testFill() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
         assertToolRecognized("fill", mapOf("sessionId" to sid, "selector" to "#productTitle", "text" to "Browser4"))
+    }
+
+    @Test
+    @DisplayName("type appends text into an input (cli: type)")
+    fun testType() {
+        val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
+        assertToolRecognized("type", mapOf("sessionId" to sid, "selector" to "#productTitle", "text" to "Browser4"))
     }
 
     @Test
@@ -349,7 +355,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
         assertToolRecognized(
             "drag",
-            mapOf("sessionId" to sid, "source_selector" to "body", "target_selector" to "body")
+            mapOf("sessionId" to sid, "sourceSelector" to "body", "targetSelector" to "body")
         )
     }
 
@@ -357,7 +363,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("select_option selects a dropdown value (cli: select)")
     fun testSelectOption() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("select_option", mapOf("sessionId" to sid, "selector" to "body", "value" to "1"))
+        assertToolRecognized("select_option", mapOf("sessionId" to sid, "selector" to "body", "values" to listOf("1")))
     }
 
     @Test
@@ -385,7 +391,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     }
 
     // =========================================================================
-    // 5. Content & state — cli: snapshot, eval, screenshot, pdf
+    // 5. Content & state — cli: snapshot, eval, screenshot
     // =========================================================================
 
     @Test
@@ -407,20 +413,6 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     fun testScreenshot() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
         assertToolRecognized("screenshot", mapOf("sessionId" to sid))
-    }
-
-    @Test
-    @DisplayName("evaluate used as pdf fallback (cli: pdf)")
-    fun testPdfFallback() {
-        val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        // pdf in cli.ts calls evaluate with a string expression
-        assertToolRecognized(
-            "evaluate",
-            mapOf(
-                "sessionId" to sid,
-                "expression" to "'PDF generation not directly supported; use screenshot as alternative'"
-            )
-        )
     }
 
     @Test
@@ -491,7 +483,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("mousewheel dispatches a mouse wheel event (cli: mousewheel)")
     fun testMousewheel() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("mousewheel", mapOf("sessionId" to sid, "delta_x" to 0, "delta_y" to 120))
+        assertToolRecognized("mousewheel", mapOf("sessionId" to sid, "deltaX" to 0, "deltaY" to 120))
     }
 
     // =========================================================================
@@ -502,7 +494,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("dialog_accept accepts the current dialog (cli: dialog-accept)")
     fun testDialogAccept() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("dialog_accept", mapOf("sessionId" to sid, "prompt_text" to "ok"))
+        assertToolRecognized("dialog_accept", mapOf("sessionId" to sid, "promptText" to "ok"))
     }
 
     @Test
@@ -545,14 +537,14 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("tab_close closes a tab (cli: tab-close)")
     fun testTabClose() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("tab_close", mapOf("sessionId" to sid))
+        assertToolRecognized("tab_close", mapOf("sessionId" to sid, "tabId" to "0"))
     }
 
     @Test
-    @DisplayName("tab_select switches to a tab by index (cli: tab-select)")
+    @DisplayName("tab_select switches to a tab by id (cli: tab-select)")
     fun testTabSelect() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("tab_select", mapOf("sessionId" to sid, "index" to 0))
+        assertToolRecognized("tab_select", mapOf("sessionId" to sid, "tabId" to "0"))
     }
 
     // =========================================================================

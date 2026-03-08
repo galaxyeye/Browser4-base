@@ -23,6 +23,10 @@ if (-not $repoRoot) {
 }
 Set-Location $repoRoot
 
+$ghCopilotHelper = Join-Path $repoRoot "coworker\scripts\workers\gh-copilot.ps1"
+. $ghCopilotHelper
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
+
 function Get-GeneratedTaskName {
     param (
         [string]$Content,
@@ -60,17 +64,11 @@ function Get-GeneratedTaskName {
     }
 
     try {
-        # Escape double quotes in the prompt
-        $safePrompt = $namingPrompt.Replace('"', '\"')
-        
-        # Use single string for arguments to ensure correct quoting
-        $argsString = "copilot -- -p `"$safePrompt`""
-
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
         
         try {
-            $nameProcess = Start-Process -FilePath "gh" -ArgumentList $argsString -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+            $nameProcess = Start-GHCopilotProcess -Executable $copilotCommand.Executable -BaseArgs $copilotCommand.BaseArgs -Prompt $namingPrompt -StdOutPath $nameStdOut -StdErrPath $nameStdErr -NoNewWindow
         } catch {
             Write-Host "DEBUG: Start-Process failed: $_"
             return "Error: Start-Process failed"
