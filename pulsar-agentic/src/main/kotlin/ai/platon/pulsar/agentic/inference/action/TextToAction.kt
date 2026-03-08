@@ -46,9 +46,20 @@ open class TextToAction(
         require(driver is AbstractWebDriver)
         val snapshotService = requireNotNull(driver.snapshotService)
 
-        val options = SnapshotOptions()
-        val domState = snapshotService.getDOMState(snapshotOptions = options)
-        val browserUseState = snapshotService.getBrowserUseState()
+        val snapshotOptions = SnapshotOptions(
+            maxDepth = 1000,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
+
+        val browserUseState = snapshotService.getBrowserUseState(snapshotOptions = snapshotOptions)
+        val domState = browserUseState.domState
         val agentState = AgentState(1, "", browserUseState = browserUseState)
         val toolCallExpressions = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 

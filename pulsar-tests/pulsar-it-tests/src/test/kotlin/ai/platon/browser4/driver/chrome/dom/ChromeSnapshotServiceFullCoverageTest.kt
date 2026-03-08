@@ -63,9 +63,9 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
         val nanoTreeSummary = DomDebug.summarize(nanoTree)
         printlnPro(nanoTreeSummary)
 
-        val path = Paths.get("logs").resolve("nano.tree.json")
+        val path = Paths.get("logs").resolve("tests").resolve("nano.tree.yaml")
         path.parent.createDirectories()
-        Files.writeString(path, domState.microTree.toNanoTreeInRange().lazyJson)
+        Files.writeString(path, domState.microTree.toNanoTreeInRange().lazyYaml)
 
         // Selector map should include at least node: and possibly xpath: keys for some nodes
         val anySelectorKey = domState.selectorMap.keys.any { it.startsWith("node:") || it.startsWith("xpath:") }

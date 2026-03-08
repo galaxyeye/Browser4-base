@@ -636,7 +636,9 @@ $viewPortJson
 
 ## 无障碍树
 （仅当前视口范围内）
-${nanoTree.lazyJson}
+```yaml
+${nanoTree.lazyYaml}
+```
 
 ---
 
@@ -834,8 +836,8 @@ ${interactiveElements.lazyString}
 
 聚焦第${processingViewport}视口节点。
 
-```json
-${nanoTree.lazyJson}
+```yaml
+${nanoTree.lazyYaml}
 ```
 
 ---
