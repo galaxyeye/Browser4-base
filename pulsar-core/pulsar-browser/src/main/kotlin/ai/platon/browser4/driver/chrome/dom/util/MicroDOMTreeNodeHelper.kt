@@ -1,5 +1,6 @@
-package ai.platon.browser4.driver.chrome.dom.model
+package ai.platon.browser4.driver.chrome.dom.util
 
+import ai.platon.browser4.driver.chrome.dom.model.*
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.math.roundTo
