@@ -6,19 +6,21 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Tag
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
+@Tag("E2ETest")
 class PulsarWebDriverScrollTests : WebDriverTestBase() {
 
     override val webDriverService get() = FastWebDriverService(browserFactory)
 
     @Test
-        @DisplayName("test scrollBy")
-    fun testScrollby() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("test scrollBy")
+    fun testScrollBy() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         val scrollY = driver.scrollBy(200.0, smooth = true)
 
         assertEquals(200.0, scrollY, 1.0)
@@ -83,8 +85,8 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     // Extended test cases for scrollBy covering edge conditions and behavior nuances
 
     @Test
-        @DisplayName("scrollBy zero delta at top is idempotent")
-    fun scrollbyZeroDeltaAtTopIsIdempotent() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy zero delta at top is idempotent")
+    fun scrollByZeroDeltaAtTopIsIdempotent() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         val m0 = getScrollMetrics(driver)
         assertEquals(0.0, m0.scrollY, SMALL_TOL)
         val y = driver.scrollBy(0.0, smooth = true)
@@ -95,8 +97,8 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy small positive single step")
-    fun scrollbySmallPositiveSingleStep() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy small positive single step")
+    fun scrollBySmallPositiveSingleStep() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         val m0 = getScrollMetrics(driver)
         assertEquals(0.0, m0.scrollY, MEDIUM_TOL)
         val delta = 5.0
@@ -107,8 +109,8 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy negative at top clamps to zero")
-    fun scrollbyNegativeAtTopClampsToZero() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy negative at top clamps to zero")
+    fun scrollByNegativeAtTopClampsToZero() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         val m0 = getScrollMetrics(driver)
         assertEquals(0.0, m0.scrollY, SMALL_TOL)
         val y = driver.scrollBy(-200.0, smooth = true)
@@ -118,20 +120,21 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy negative mid page decreases position")
-    fun scrollbyNegativeMidPageDecreasesPosition() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 3000.0)
-        driver.scrollBy(800.0, smooth = true)
-        val mBefore = getScrollMetrics(driver)
-        val y2 = driver.scrollBy(-400.0, smooth = true)
-        val mAfter = getScrollMetrics(driver)
-        assertTrue(mAfter.scrollY < mBefore.scrollY + SMALL_TOL)
-        assertAlmostEquals(mBefore.scrollY - 400.0, y2, LARGE_TOL)
-    }
+    @DisplayName("scrollBy negative mid page decreases position")
+    fun scrollByNegativeMidPageDecreasesPosition() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 3000.0)
+            driver.scrollBy(800.0, smooth = true)
+            val mBefore = getScrollMetrics(driver)
+            val y2 = driver.scrollBy(-400.0, smooth = true)
+            val mAfter = getScrollMetrics(driver)
+            assertTrue(mAfter.scrollY < mBefore.scrollY + SMALL_TOL)
+            assertAlmostEquals(mBefore.scrollY - 400.0, y2, LARGE_TOL)
+        }
 
     @Test
-        @DisplayName("scrollBy overscroll bottom clamps")
-    fun scrollbyOverscrollBottomClamps() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy overscroll bottom clamps")
+    fun scrollByOverscrollBottomClamps() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         ensureTallPage(driver, 4000.0)
         val y = driver.scrollBy(20000.0, smooth = true)
         val m = getScrollMetrics(driver)
@@ -140,58 +143,62 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy overscroll upward from bottom clamps to zero")
-    fun scrollbyOverscrollUpwardFromBottomClampsToZero() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 4000.0)
-        driver.scrollBy(20000.0, smooth = true)
-        val y = driver.scrollBy(-20000.0, smooth = true)
-        assertAlmostEquals(0.0, y, SMALL_TOL)
-        val m = getScrollMetrics(driver)
-        assertAlmostEquals(0.0, m.scrollY, SMALL_TOL)
-    }
-
-    @Test
-        @DisplayName("scrollBy smooth vs instant produce similar final position")
-    fun scrollbySmoothVsInstantProduceSimilarFinalPosition() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 3000.0)
-        // Compare from the same baseline; reset to top between runs
-        val ySmooth = driver.scrollBy(600.0, smooth = true)
-        driver.scrollToTop()
-        val yInstant = driver.scrollBy(600.0, smooth = false)
-        assertTrue(abs(yInstant - ySmooth) <= LARGE_TOL, "Difference ${abs(yInstant - ySmooth)} too large")
-    }
-
-    @Test
-        @DisplayName("scrollBy sequential cumulative small deltas")
-    fun scrollbySequentialCumulativeSmallDeltas() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 3000.0)
-        var expected = 0.0
-        repeat(5) {
-            expected += 120.0
-            val y = driver.scrollBy(120.0, smooth = true)
-            assertAlmostEquals(expected, y, LARGE_TOL)
+    @DisplayName("scrollBy overscroll upward from bottom clamps to zero")
+    fun scrollByOverscrollUpwardFromBottomClampsToZero() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 4000.0)
+            driver.scrollBy(20000.0, smooth = true)
+            val y = driver.scrollBy(-20000.0, smooth = true)
+            assertAlmostEquals(0.0, y, SMALL_TOL)
+            val m = getScrollMetrics(driver)
+            assertAlmostEquals(0.0, m.scrollY, SMALL_TOL)
         }
-        val m = getScrollMetrics(driver)
-        assertAlmostEquals(expected, m.scrollY, LARGE_TOL)
-    }
 
     @Test
-        @DisplayName("scrollBy clamp boundary equality near bottom")
-    fun scrollbyClampBoundaryEqualityNearBottom() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 5000.0)
-        val m0 = getScrollMetrics(driver)
-        val targetDelta = m0.maxScrollY * 0.9
-        driver.scrollBy(targetDelta, smooth = true)
-        val mMid = getScrollMetrics(driver)
-        val y2 = driver.scrollBy(mMid.maxScrollY * 0.5, smooth = true) // should clamp
-        val m2 = getScrollMetrics(driver)
-        assertAlmostEquals(m2.maxScrollY, y2, LARGE_TOL)
-        assertAlmostEquals(m2.maxScrollY, m2.scrollY, LARGE_TOL)
-    }
+    @DisplayName("scrollBy smooth vs instant produce similar final position")
+    fun scrollBySmoothVsInstantProduceSimilarFinalPosition() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 3000.0)
+            // Compare from the same baseline; reset to top between runs
+            val ySmooth = driver.scrollBy(600.0, smooth = true)
+            driver.scrollToTop()
+            val yInstant = driver.scrollBy(600.0, smooth = false)
+            assertTrue(abs(yInstant - ySmooth) <= LARGE_TOL, "Difference ${abs(yInstant - ySmooth)} too large")
+        }
 
     @Test
-        @DisplayName("scrollBy negative single pixel")
-    fun scrollbyNegativeSinglePixel() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy sequential cumulative small deltas")
+    fun scrollBySequentialCumulativeSmallDeltas() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 3000.0)
+            var expected = 0.0
+            repeat(5) {
+                expected += 120.0
+                val y = driver.scrollBy(120.0, smooth = true)
+                assertAlmostEquals(expected, y, LARGE_TOL)
+            }
+            val m = getScrollMetrics(driver)
+            assertAlmostEquals(expected, m.scrollY, LARGE_TOL)
+        }
+
+    @Test
+    @DisplayName("scrollBy clamp boundary equality near bottom")
+    fun scrollByClampBoundaryEqualityNearBottom() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 5000.0)
+            val m0 = getScrollMetrics(driver)
+            val targetDelta = m0.maxScrollY * 0.9
+            driver.scrollBy(targetDelta, smooth = true)
+            val mMid = getScrollMetrics(driver)
+            val y2 = driver.scrollBy(mMid.maxScrollY * 0.5, smooth = true) // should clamp
+            val m2 = getScrollMetrics(driver)
+            assertAlmostEquals(m2.maxScrollY, y2, LARGE_TOL)
+            assertAlmostEquals(m2.maxScrollY, m2.scrollY, LARGE_TOL)
+        }
+
+    @Test
+    @DisplayName("scrollBy negative single pixel")
+    fun scrollByNegativeSinglePixel() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         ensureTallPage(driver, 3000.0)
         driver.scrollBy(300.0, smooth = true)
         val before = getScrollMetrics(driver)
@@ -202,24 +209,25 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy rapid smooth sequence stability")
-    fun scrollbyRapidSmoothSequenceStability() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 3000.0)
-        val deltas = listOf(50.0, 75.0, 100.0, -30.0, 60.0)
-        var expected = 0.0
-        deltas.forEach { d ->
-            expected += d
-            expected = expected.coerceIn(0.0, getScrollMetrics(driver).maxScrollY)
-            val y = driver.scrollBy(d, smooth = true)
-            assertAlmostEquals(expected, y, LARGE_TOL)
+    @DisplayName("scrollBy rapid smooth sequence stability")
+    fun scrollByRapidSmoothSequenceStability() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 3000.0)
+            val deltas = listOf(50.0, 75.0, 100.0, -30.0, 60.0)
+            var expected = 0.0
+            deltas.forEach { d ->
+                expected += d
+                expected = expected.coerceIn(0.0, getScrollMetrics(driver).maxScrollY)
+                val y = driver.scrollBy(d, smooth = true)
+                assertAlmostEquals(expected, y, LARGE_TOL)
+            }
+            val m = getScrollMetrics(driver)
+            assertAlmostEquals(expected, m.scrollY, LARGE_TOL)
         }
-        val m = getScrollMetrics(driver)
-        assertAlmostEquals(expected, m.scrollY, LARGE_TOL)
-    }
 
     @Test
-        @DisplayName("scrollBy return value consistency")
-    fun scrollbyReturnValueConsistency() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy return value consistency")
+    fun scrollByReturnValueConsistency() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         ensureTallPage(driver, 3000.0)
         val y = driver.scrollBy(450.0, smooth = true)
         val reported = driver.evaluate("window.scrollY", 0.0)
@@ -227,26 +235,27 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy concurrent smooth calls final equals one of targets")
-    fun scrollbyConcurrentSmoothCallsFinalEqualsOneOfTargets() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 3000.0)
-        val deltas = listOf(150.0, 200.0, 250.0)
-        val results = coroutineScope {
-            val deferred = deltas.map { d -> async { driver.scrollBy(d, smooth = true) } }
-            deferred.awaitAll()
+    @DisplayName("scrollBy concurrent smooth calls final equals one of targets")
+    fun scrollByConcurrentSmoothCallsFinalEqualsOneOfTargets() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 3000.0)
+            val deltas = listOf(150.0, 200.0, 250.0)
+            val results = coroutineScope {
+                val deferred = deltas.map { d -> async { driver.scrollBy(d, smooth = true) } }
+                deferred.awaitAll()
+            }
+            val m = getScrollMetrics(driver)
+            // Concurrent smooth scrolls are not serialized; last-wins behavior sets a final target
+            assertTrue(
+                results.any { abs(it - m.scrollY) <= LARGE_TOL },
+                "Final scrollY ${m.scrollY} should match one of concurrent targets ${results}"
+            )
+            assertTrue(m.scrollY in 0.0..m.maxScrollY + SMALL_TOL)
         }
-        val m = getScrollMetrics(driver)
-        // Concurrent smooth scrolls are not serialized; last-wins behavior sets a final target
-        assertTrue(
-            results.any { abs(it - m.scrollY) <= LARGE_TOL },
-            "Final scrollY ${m.scrollY} should match one of concurrent targets ${results}"
-        )
-        assertTrue(m.scrollY in 0.0..m.maxScrollY + SMALL_TOL)
-    }
 
     @Test
-        @DisplayName("scrollBy on short page has no effect")
-    fun scrollbyOnShortPageHasNoEffect() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy on short page has no effect")
+    fun scrollByOnShortPageHasNoEffect() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         // Shrink page content to be shorter than viewport
         driver.evaluate("document.body.innerHTML='<div style=\"height:50px\">Short</div>'", 0.0)
         val m0 = getScrollMetrics(driver)
@@ -262,8 +271,8 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy default parameters move 200px")
-    fun scrollbyDefaultParametersMove200px() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy default parameters move 200px")
+    fun scrollByDefaultParametersMove200px() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         ensureTallPage(driver, 1200.0)
         val m0 = getScrollMetrics(driver)
         assertAlmostEquals(0.0, m0.scrollY, SMALL_TOL)
@@ -274,53 +283,56 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy extremely tall page clamps to 15000")
-    fun scrollbyExtremelyTallPageClampsTo15000() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        // Create a page taller than 15000 to trigger internal clamp logic
-        ensureTallPage(driver, 17000.0)
-        val rawTotal = getRawTotalHeight(driver)
-        assertTrue(rawTotal > 15000.0, "Raw total height should exceed clamp threshold: $rawTotal")
-        val y = driver.scrollBy(50000.0, smooth = true) // attempt far overscroll
-        val m1 = getScrollMetrics(driver)
-        val viewportH = m1.viewportHeight
-        val expectedClampedMax = (15000.0 - viewportH).coerceAtLeast(0.0)
-        assertAlmostEquals(expectedClampedMax, y, LARGE_TOL)
-        assertAlmostEquals(expectedClampedMax, m1.scrollY, LARGE_TOL)
-        // Ensure raw possible max (rawTotal - viewportH) is greater, proving clamp applied
-        assertTrue(
-            (rawTotal - viewportH) - expectedClampedMax > 10.0,
-            "Clamp difference too small: rawTotal=$rawTotal viewport=$viewportH"
-        )
-    }
+    @DisplayName("scrollBy extremely tall page clamps to 15000")
+    fun scrollByExtremelyTallPageClampsTo15000() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            // Create a page taller than 15000 to trigger internal clamp logic
+            ensureTallPage(driver, 17000.0)
+            val rawTotal = getRawTotalHeight(driver)
+            assertTrue(rawTotal > 15000.0, "Raw total height should exceed clamp threshold: $rawTotal")
+            val y = driver.scrollBy(50000.0, smooth = true) // attempt far overscroll
+            val m1 = getScrollMetrics(driver)
+            val viewportH = m1.viewportHeight
+            val expectedClampedMax = (15000.0 - viewportH).coerceAtLeast(0.0)
+            assertAlmostEquals(expectedClampedMax, y, LARGE_TOL)
+            assertAlmostEquals(expectedClampedMax, m1.scrollY, LARGE_TOL)
+            // Ensure raw possible max (rawTotal - viewportH) is greater, proving clamp applied
+            assertTrue(
+                (rawTotal - viewportH) - expectedClampedMax > 10.0,
+                "Clamp difference too small: rawTotal=$rawTotal viewport=$viewportH"
+            )
+        }
 
     @Test
-        @DisplayName("scrollBy bottom small positive delta no-op")
-    fun scrollbyBottomSmallPositiveDeltaNoOp() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 4000.0)
-        driver.scrollBy(100000.0, smooth = true) // go to bottom
-        val mBottom = getScrollMetrics(driver)
-        val y2 = driver.scrollBy(50.0, smooth = true) // small positive should remain
-        val mAfter = getScrollMetrics(driver)
-        assertAlmostEquals(mBottom.scrollY, y2, SMALL_TOL)
-        assertAlmostEquals(mBottom.scrollY, mAfter.scrollY, SMALL_TOL)
-    }
+    @DisplayName("scrollBy bottom small positive delta no-op")
+    fun scrollByBottomSmallPositiveDeltaNoOp() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 4000.0)
+            driver.scrollBy(100000.0, smooth = true) // go to bottom
+            val mBottom = getScrollMetrics(driver)
+            val y2 = driver.scrollBy(50.0, smooth = true) // small positive should remain
+            val mAfter = getScrollMetrics(driver)
+            assertAlmostEquals(mBottom.scrollY, y2, SMALL_TOL)
+            assertAlmostEquals(mBottom.scrollY, mAfter.scrollY, SMALL_TOL)
+        }
 
     @Test
-        @DisplayName("scrollBy mid page large negative overscroll clamps to zero")
-    fun scrollbyMidPageLargeNegativeOverscrollClampsToZero() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 3000.0)
-        driver.scrollBy(1200.0, smooth = true)
-        val mMid = getScrollMetrics(driver)
-        assertTrue(mMid.scrollY > 0.0)
-        val y = driver.scrollBy(-5000.0, smooth = true) // big negative overscroll
-        val mAfter = getScrollMetrics(driver)
-        assertAlmostEquals(0.0, y, SMALL_TOL)
-        assertAlmostEquals(0.0, mAfter.scrollY, SMALL_TOL)
-    }
+    @DisplayName("scrollBy mid page large negative overscroll clamps to zero")
+    fun scrollByMidPageLargeNegativeOverscrollClampsToZero() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 3000.0)
+            driver.scrollBy(1200.0, smooth = true)
+            val mMid = getScrollMetrics(driver)
+            assertTrue(mMid.scrollY > 0.0)
+            val y = driver.scrollBy(-5000.0, smooth = true) // big negative overscroll
+            val mAfter = getScrollMetrics(driver)
+            assertAlmostEquals(0.0, y, SMALL_TOL)
+            assertAlmostEquals(0.0, mAfter.scrollY, SMALL_TOL)
+        }
 
     @Test
-        @DisplayName("scrollBy zero delta mid page unchanged")
-    fun scrollbyZeroDeltaMidPageUnchanged() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+    @DisplayName("scrollBy zero delta mid page unchanged")
+    fun scrollByZeroDeltaMidPageUnchanged() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
         ensureTallPage(driver, 2500.0)
         driver.scrollBy(800.0, smooth = true)
         val mBefore = getScrollMetrics(driver)
@@ -331,26 +343,27 @@ class PulsarWebDriverScrollTests : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("scrollBy cumulative beyond clamp stops increasing")
-    fun scrollbyCumulativeBeyondClampStopsIncreasing() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        ensureTallPage(driver, 20000.0) // raw height > 15000 triggers clamp
-        var last = getScrollMetrics(driver).scrollY
-        var iterations = 0
-        var stopped = false
-        while (iterations < 60 && !stopped) { // safety cap
-            driver.scrollBy(800.0, smooth = false)
-            val m = getScrollMetrics(driver)
-            if (m.scrollY <= last + SMALL_TOL) {
-                // No significant increase -> reached clamp
-                stopped = true
-                val viewportH = m.viewportHeight
-                val expectedClampedMax = (15000.0 - viewportH).coerceAtLeast(0.0)
-                assertAlmostEquals(expectedClampedMax, m.scrollY, LARGE_TOL)
-            } else {
-                last = m.scrollY
+    @DisplayName("scrollBy cumulative beyond clamp stops increasing")
+    fun scrollByCumulativeBeyondClampStopsIncreasing() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            ensureTallPage(driver, 20000.0) // raw height > 15000 triggers clamp
+            var last = getScrollMetrics(driver).scrollY
+            var iterations = 0
+            var stopped = false
+            while (iterations < 60 && !stopped) { // safety cap
+                driver.scrollBy(800.0, smooth = false)
+                val m = getScrollMetrics(driver)
+                if (m.scrollY <= last + SMALL_TOL) {
+                    // No significant increase -> reached clamp
+                    stopped = true
+                    val viewportH = m.viewportHeight
+                    val expectedClampedMax = (15000.0 - viewportH).coerceAtLeast(0.0)
+                    assertAlmostEquals(expectedClampedMax, m.scrollY, LARGE_TOL)
+                } else {
+                    last = m.scrollY
+                }
+                iterations++
             }
-            iterations++
+            assertTrue(stopped, "Did not reach clamp within iterations=$iterations last=$last")
         }
-        assertTrue(stopped, "Did not reach clamp within iterations=$iterations last=$last")
-    }
 }
