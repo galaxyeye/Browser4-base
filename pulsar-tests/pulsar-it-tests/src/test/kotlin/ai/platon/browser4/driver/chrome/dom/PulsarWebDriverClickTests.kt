@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
  * Test page: interactive-dynamic.html with various interactive elements
  */
 @Tag("E2ETest")
-@Disabled("PulsarWebDriverClickTests is disabled temporarily due to very slow execution.")
+@Disabled("PulsarWebDriverClickTests is disabled temporarily due to target page does not suitable to the tests")
 class PulsarWebDriverClickTests : WebDriverTestBase() {
 
     override val webDriverService get() = FastWebDriverService(browserFactory)
