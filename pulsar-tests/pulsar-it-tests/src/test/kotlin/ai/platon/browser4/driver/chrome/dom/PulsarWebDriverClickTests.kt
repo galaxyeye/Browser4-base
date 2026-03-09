@@ -36,6 +36,7 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
     // Tests for click(selector: String, count: Int)
     // ==================================================
 
+
     @Test
     @DisplayName("click single count on button loads content")
     fun testClickSingleCount() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
