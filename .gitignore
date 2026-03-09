@@ -90,6 +90,7 @@ buildNumber.properties
 
 #.idea/markdown-navigator/
 logs/
+coworker/tasks/300logs/scheduler/scheduled-tasks.status.json
 lib/
 repo/
 derby.log

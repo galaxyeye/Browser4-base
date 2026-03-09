@@ -78,7 +78,7 @@ After tasks are approved, push changes to your repository using the git-sync scr
 
 ## Unified Scheduler (PowerShell)
 
-Use the unified scheduler when you want a single Windows Task Scheduler trigger to manage all recurring coworker jobs. The scheduler launches each configured task in its own PowerShell process, records stdout/stderr logs, and continuously writes task status to `coworker/tasks/300logs/scheduler/scheduled-tasks.status.json`.
+Use the unified scheduler when you want a single Windows Task Scheduler trigger to manage all recurring coworker jobs. The scheduler launches each configured task in its own PowerShell process, records stdout/stderr logs, and continuously writes task status to `logs/scheduled-tasks.status.json`.
 
 Task definitions live in `coworker/scripts/coworker-scheduler.config.psd1`. Each entry can be enabled or disabled independently and sets its own `IntervalSeconds`, script path, arguments, optional `DependsOn` task ordering, and optional `PendingPaths` input queues. When `PendingPaths` is configured, the scheduler checks those files/folders and skips spawning a PowerShell child process until work is actually present.
 

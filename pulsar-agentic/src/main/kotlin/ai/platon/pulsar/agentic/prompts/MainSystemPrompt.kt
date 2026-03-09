@@ -16,32 +16,32 @@ import ai.platon.pulsar.agentic.tools.specs.ToolSpecFormat
  */
 val SKILL_TOOL_TYPE_DEFINITIONS = """
 ```kotlin
-// 技能摘要，用于发现和匹配阶段
+// Skill summary used during discovery and matching
 data class SkillSummary(
-    val id: String,          // 技能唯一标识符
-    val name: String,        // 技能显示名称
-    val description: String, // 技能功能描述
-    val version: String,     // 语义化版本号
-    val tags: Set<String>    // 分类标签
+    val id: String,          // Unique skill identifier
+    val name: String,        // Display name
+    val description: String, // Capability summary
+    val version: String,     // Semantic version
+    val tags: Set<String>    // Classification tags
 )
 
-// 技能激活信息，包含完整的 SKILL.md 内容和资源路径
+// Activated skill payload, including full SKILL.md content and resource paths
 data class SkillActivation(
-    val id: String,             // 技能唯一标识符
-    val name: String,           // 技能显示名称
-    val version: String,        // 语义化版本号
-    val skillMd: String,        // 完整的 SKILL.md 文档内容
-    val scriptsPath: String?,   // 脚本目录路径（可选）
-    val referencesPath: String?, // 参考文档目录路径（可选）
-    val assetsPath: String?     // 资源目录路径（可选）
+    val id: String,              // Unique skill identifier
+    val name: String,            // Display name
+    val version: String,         // Semantic version
+    val skillMd: String,         // Full SKILL.md content
+    val scriptsPath: String?,    // Script directory path (optional)
+    val referencesPath: String?, // Reference docs path (optional)
+    val assetsPath: String?      // Asset directory path (optional)
 )
 
-// 技能执行结果
+// Skill execution result
 data class SkillResult(
-    val success: Boolean,            // 执行是否成功
-    val data: Any?,                  // 执行结果数据
-    val message: String?,            // 结果描述信息
-    val metadata: Map<String, Any>   // 附加元数据
+    val success: Boolean,          // Whether execution succeeded
+    val data: Any?,                // Result payload
+    val message: String?,          // Result summary
+    val metadata: Map<String, Any> // Extra metadata
 )
 ```
 """.trimIndent()
@@ -63,7 +63,10 @@ fun buildSkillSummariesSection(): String {
     }
 
     return """
-以下是当前已注册的技能列表。使用 `skill.list()` 获取完整列表，使用 `skill.activate(id)` 激活特定技能以获取完整文档，使用 `skill.run(id, params)` 执行技能。
+Registered skills:
+- Use `skill.list()` to refresh the full list.
+- Use `skill.activate(id)` to load the complete skill documentation.
+- Use `skill.run(id, params)` to execute a skill.
 
 $summaryLines
 
@@ -98,23 +101,23 @@ ${ToolCallSpecificationRenderer.renderJson(includeCustomDomains = true)}
 
 fun buildToolUseSections(toolFormat: ToolSpecFormat = ToolSpecFormat.KOTLIN): String {
     return """
-## 工具使用指南
+## Tool Usage
 
 $TOOL_CALL_RULE_CONTENT
 
-### Skill 工具类型定义
+### Skill Tool Types
 
 $SKILL_TOOL_TYPE_DEFINITIONS
 
-### `agent.extract` 数据提取工具类型定义
+### `agent.extract` Data Types
 
 $EXTRACTION_TOOL_NOTE_CONTENT
 
-### 工具列表
+### Tool List
 
 ${buildToolSpecContent(toolFormat)}
 
-### 可用技能概要
+### Available Skills
 
 ${buildSkillSummariesSection()}
 
@@ -133,63 +136,63 @@ ${buildSkillSummariesSection()}
  */
 fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
     return """
-# 系统指南
+# System Instructions
 
-## 语言设置
+## Language
 
-- 默认工作语言：**$language**
-- 始终以与用户请求相同的语言回复
-
----
-
-## 文件系统
-
-- 优先使用 fs.* 工具管理文件。
-- 使用 `results.md` 文件汇总结果。
+- Default output language: **$language**
+- Always reply in the same language as the user request.
 
 ---
 
-## 任务完成规则
+## File Handling
 
-你必须在以下三种情况之一结束任务，按照`任务完成输出`格式要求输出相应 json 格式：
-- 用户指定的任务已完全完成。
-- 任务执行过程中发生了无法恢复的错误。
-- 任务执行过程中用户明确要求停止。
+- Prefer `fs.*` tools for file operations.
+- Use `results.md` to summarize task results.
 
 ---
 
-### 推理模式
+## When to Finish
 
-为成功完成 `<user_request>` 请遵循以下推理模式：
+End the task only when one of the following is true, and output the `Task Completion Output` JSON format:
+- The requested task is fully complete.
+- An unrecoverable error prevents further progress.
+- The user explicitly asks you to stop.
+
+---
+
+### Reasoning Pattern
+
+To complete `<user_request>`, follow this reasoning pattern:
 
 ```
 <thinking>
-[1] 目标分析: 明确当前子目标与总体任务的关系。
-[2] 状态评估: 检查当前页面状态、截图与上一步执行结果。
-[3] 事实依据: 仅依据视觉信息、页面结构与过往记录。
-[4] 问题识别: 找出阻碍任务进展的原因。
-[5] 策略规划: 制定下一步最小可行行动。
+[1] Goal analysis: Relate the current sub-goal to the overall objective.
+[2] State check: Review the current page, screenshot, and previous result.
+[3] Evidence: Ground decisions in visible content, page structure, and prior observations.
+[4] Blockers: Identify what is preventing progress.
+[5] Plan: Choose the smallest effective next action.
 </thinking>
 ```
 
 ---
 
-## 输出要求
+## Output Requirements
 
-- 输出严格使用下面两种 JSON 格式之一
-- 仅输出 JSON 内容，无多余文字
+- Output must match exactly one of the JSON formats below.
+- Output JSON only, with no extra text.
 
-### 动作输出
+### Action Output
 
-- 最多一个元素
-- arguments 必须按工具方法声明顺序排列
+- Return at most one element.
+- `arguments` must follow the tool method parameter order.
 
-输出格式：
+Output format:
 ${buildResponseSchema()}
 
-### 任务完成输出
+### Task Completion Output
 
-输出格式：
+Output format:
 $OBSERVE_RESPONSE_COMPLETE_SCHEMA
 
 ---

@@ -319,7 +319,7 @@ $schedulerConfig = Get-ConfigValue -Map $config -Key 'Scheduler' -DefaultValue @
 $tickSeconds = [int](Get-ConfigValue -Map $schedulerConfig -Key 'TickSeconds' -DefaultValue 5)
 $powerShellExecutable = [string](Get-ConfigValue -Map $schedulerConfig -Key 'PowerShellExecutable' -DefaultValue 'pwsh')
 $logDirectory = Resolve-SchedulerPath -Path ([string](Get-ConfigValue -Map $schedulerConfig -Key 'LogDirectory' -DefaultValue 'coworker\tasks\300logs\scheduler')) -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
-$statusFile = Resolve-SchedulerPath -Path ([string](Get-ConfigValue -Map $schedulerConfig -Key 'StatusFile' -DefaultValue 'coworker\tasks\300logs\scheduler\scheduled-tasks.status.json')) -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
+$statusFile = Resolve-SchedulerPath -Path ([string](Get-ConfigValue -Map $schedulerConfig -Key 'StatusFile' -DefaultValue 'logs\scheduled-tasks.status.json')) -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
 
 Ensure-Directory -Path $logDirectory
 Ensure-Directory -Path (Split-Path -Parent $statusFile)

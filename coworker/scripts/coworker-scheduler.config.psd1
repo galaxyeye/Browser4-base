@@ -3,7 +3,7 @@
         TickSeconds          = 5
         PowerShellExecutable = 'pwsh'
         LogDirectory         = 'coworker\tasks\300logs\scheduler'
-        StatusFile           = 'coworker\tasks\300logs\scheduler\scheduled-tasks.status.json'
+        StatusFile           = 'logs\scheduled-tasks.status.json'
     }
 
     Tasks = @(

@@ -3,7 +3,7 @@ package ai.platon.pulsar.agentic.inference.action
 import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.pulsar.agentic.inference.AgentMessageList
-import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_ACTION_GENERATION_PROMPT
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveResultSchema
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentState
@@ -63,12 +63,12 @@ open class TextToAction(
         val agentState = AgentState(1, "", browserUseState = browserUseState)
         val toolCallExpressions = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 
-        val promptTemplate = PromptTemplate(SINGLE_ACTION_GENERATION_PROMPT)
+        val promptTemplate = PromptTemplate(SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT)
         val message = promptTemplate.render(
             mapOf(
                 "ACTION_DESCRIPTIONS" to actionDescriptions,
                 "TOOL_CALL_SPECIFICATION" to toolCallExpressions,
-                "RENDERED_ARIA_SNAPSHOT" to domState.ariaSnapshot,
+                "ARIA_ACCESSIBILITY_TREE" to domState.ariaSnapshot,
                 "OUTPUT_SCHEMA_ACT" to buildObserveResultSchema(true),
             )
         )

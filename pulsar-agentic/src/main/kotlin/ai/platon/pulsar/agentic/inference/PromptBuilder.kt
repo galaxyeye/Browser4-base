@@ -151,6 +151,9 @@ Example:
 
 """
 
+        /**
+         * TODO: no need to list interactive elements in the prompt if the accessibility tree already contains interactivity information. Consider merging them into a unified format.
+         * */
         val INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT = """
 (Interactive Elements)
 
@@ -179,7 +182,7 @@ The accessibility tree summarizes key DOM nodes, including text content, visibil
 
         """.trimIndent()
 
-        const val SINGLE_ACTION_GENERATION_PROMPT = """
+        const val SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT = """
 Choose the single best tool call for the requested browser action.
 
 ## Action Description
@@ -198,7 +201,7 @@ Choose the single best tool call for the requested browser action.
 
 ## Aria Accessibility Tree
 
-{{RENDERED_ARIA_SNAPSHOT}}
+{{ARIA_ACCESSIBILITY_TREE}}
 
 ---
 
@@ -272,12 +275,6 @@ Return an array of matching elements, or an empty array when no suitable match e
 Browser state includes:
 - the current URL
 - all open tabs with their IDs
-
----
-
-## Visual Evidence
-
-- If visual information is present, treat it as ground truth.
 
 ---
 

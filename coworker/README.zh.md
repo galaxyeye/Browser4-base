@@ -80,7 +80,7 @@
 
 ## 统一调度器（PowerShell）
 
-如果你希望只配置一个 Windows Task Scheduler 触发器，请使用统一调度器。它会按配置分别启动各个 PowerShell 子进程，保存 stdout/stderr 日志，并持续把任务状态写入 `coworker/tasks/300logs/scheduler/scheduled-tasks.status.json`。
+如果你希望只配置一个 Windows Task Scheduler 触发器，请使用统一调度器。它会按配置分别启动各个 PowerShell 子进程，保存 stdout/stderr 日志，并持续把任务状态写入 `logs/scheduled-tasks.status.json`。
 
 任务定义位于 `coworker/scripts/coworker-scheduler.config.psd1`。每个任务都可以独立启用或禁用，并单独设置 `IntervalSeconds`、脚本路径、参数、可选的 `DependsOn` 依赖顺序，以及可选的 `PendingPaths` 输入队列。配置 `PendingPaths` 后，调度器会先检查这些文件/目录中是否真的有待处理内容，只有存在工作项时才会启动新的 PowerShell 子进程。
 
