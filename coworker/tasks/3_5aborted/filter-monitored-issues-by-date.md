@@ -1,4 +1,4 @@
-# Improve monitor-task-source
+# Improve process-task-source
 
 ## GitHub Issues Monitoring
 
@@ -8,5 +8,5 @@ Monitor only the issues that created after 2026-02-28, and ignore the issues cre
 
 ## References
 
-[monitor-task-source.ps1](../../scripts/monitor-task-source.ps1)
-[monitor-task-source.sh](../../scripts/monitor-task-source.sh)
+[process-task-source.ps1](../../scripts/process-task-source.ps1)
+[process-task-source.sh](../../scripts/process-task-source.sh)

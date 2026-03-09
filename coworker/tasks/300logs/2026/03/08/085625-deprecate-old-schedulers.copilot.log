@@ -25,14 +25,14 @@
 ● Read coworker\scripts\run_draft_refinement_periodically.sh
   └ 99 lines read
 
-● Read coworker\scripts\monitor-task-source.sh
+● Read coworker\scripts\process-task-source.sh
   └ 162 lines read
 
-● Read coworker\scripts\monitor-task-source.ps1
+● Read coworker\scripts\process-task-source.ps1
   └ 163 lines read
 
 ● Grep
-"run_coworker_periodically|run_draft_refinement_periodically|monitor-task-source|coworker-scheduler"
+"run_coworker_periodically|run_draft_refinement_periodically|process-task-source|coworker-scheduler"
  in *.{md,ps1,sh,psd1} (D:\workspace\Browser4\Browser4-4.6\coworker)
   └ 80 lines found
 
@@ -107,10 +107,10 @@
 ● Read coworker\scripts\run_draft_refinement_periodically.ps1 lines 1-25
   └ 25 lines read
 
-● Read coworker\deprecated\monitor-task-source.ps1 lines 1-20
+● Read coworker\deprecated\process-task-source.ps1 lines 1-20
   └ 20 lines read
 
-● Read coworker\scripts\monitor-task-source.ps1 lines 1-20
+● Read coworker\scripts\process-task-source.ps1 lines 1-20
   └ 20 lines read
 
 ● Read coworker\deprecated\run_draft_refinement_periodically.ps1 lines 1-25
@@ -128,10 +128,10 @@
 ● Read coworker\deprecated\run_coworker_periodically.sh lines 1-25
   └ 25 lines read
 
-● Read coworker\scripts\monitor-task-source.sh lines 1-25
+● Read coworker\scripts\process-task-source.sh lines 1-25
   └ 25 lines read
 
-● Read coworker\deprecated\monitor-task-source.sh lines 1-25
+● Read coworker\deprecated\process-task-source.sh lines 1-25
   └ 25 lines read
 
 ● Grep "Write-Warning|WARNING: .*deprecated" in *.{ps1,sh}
@@ -148,7 +148,7 @@
 
 ● Todo started: validate-scheduler-deprecation
 
-● Grep "run_coworker_periodically|run_draft_refinement_periodically|monitor-task-source" in
+● Grep "run_coworker_periodically|run_draft_refinement_periodically|process-task-source" in
 README*.md (D:\workspace\Browser4\Browser4-4.6\coworker)
   └ 24 lines found
 
@@ -255,13 +255,13 @@ scheduler|旧版草稿润色定时入口" in README*.md (D:\workspace\Browser4\B
   coworker\scripts\coworker-scheduler.config.psd1 coworker\scripts\run_coworker_periodically.ps1
    coworker\scripts\run_coworker_periodically.sh
   coworker\scripts\run_draft_refinement_periodically.ps1
-  coworker\scripts\run_draft_refinement_periodically.sh coworker\scripts\monitor-task-source.ps1...
+  coworker\scripts\run_draft_refinement_periodically.sh coworker\scripts\process-task-source.ps1...
   └ 26 lines...
 
 ● Check diff after line ending normalization
   $ git --no-pager diff --stat -- coworker\README.md coworker\README.zh.md
   coworker\scripts\coworker-scheduler.config.psd1 coworker\scripts\run_coworker_periodically.ps1
-  coworker\scripts\run_draft_refinement_periodically.ps1 coworker\scripts\monitor-task-source.ps1
+  coworker\scripts\run_draft_refinement_periodically.ps1 coworker\scripts\process-task-source.ps1
   coworker\tasks\0draft\README.md coworker\tasks\0draft\README.zh.md
   coworker\tasks\300logs\2026\03\08\MEMORY.20260308.md
   └ 16 lines...
