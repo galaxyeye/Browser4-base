@@ -3,6 +3,7 @@ package ai.platon.browser4.driver.chrome.impl
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.getTracerOrNull
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.stringify
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonProcessingException
@@ -188,6 +189,10 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
     override fun accept(message: String) {
         tracer?.trace("◀ Accept {}", StringUtils.abbreviateMiddle(message, "...", 20000))
 
+        // TODO: add event handler before parsing, so that we can handle events even if the message is not fully compliant with the protocol, e.g., some fields are added/removed/renamed across Chrome versions. This is especially important for events, as they are not correlated by id and can be easily missed if the parsing fails.
+
+        val message = patchMessageForProtocolChange(message)
+
         ChromeDevToolsImpl.numAccepts.inc()
         try {
             val jsonNode = OBJECT_MAPPER.readTree(message)
@@ -234,6 +239,37 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
             removeAllListeners()
             eventDispatcherScope.cancel()
         }
+    }
+
+    private fun patchMessageForProtocolChange(message: String): String {
+        // Patch protocol changes if needed, e.g., some events might change their params structure across Chrome versions
+
+        var patched = message
+        if (patched.contains("initiatorIPAddressSpace")) {
+            // {"requestId":"E0AFE9D2F80AEFDD9FC970FB33C9F88E","blockedCookies":[],"headers":{"Accept-Ranges":"bytes","Connection":"keep-alive","Content-Length":"9629","Content-Type":"text/html","Date":"Mon, 09 Mar 2026 07:33:09 GMT","Keep-Alive":"timeout=60","Last-Modified":"Wed, 11 Feb 2026 05:51:38 GMT"},"resourceIPAddressSpace":"Loopback","statusCode":200,"headersText":"HTTP/1.1 200\r\nLast-Modified: Wed, 11 Feb 2026 05:51:38 GMT\r\nAccept-Ranges: bytes\r\nContent-Type: text/html\r\nContent-Length: 9629\r\nDate: Mon, 09 Mar 2026 07:33:09 GMT\r\nKeep-Alive: timeout=60\r\nConnection: keep-alive\r\n\r\n","cookiePartitionKey":{"topLevelSite":"http://127.0.0.1","hasCrossSiteAncestor":false},"cookiePartitionKeyOpaque":false,"exemptedCookies":[]}
+            // {"method":"Network.requestWillBeSentExtraInfo","params":{"requestId":"15224.2","associatedCookies":[],"connectTiming":{"requestTime":6489.538341},"clientSecurityState":{"initiatorIsSecureContext":true,"initiatorIPAddressSpace":"Loopback","privateNetworkRequestPolicy":"PermissionBlock"},"siteHasCookieInOtherPartition":false}}
+            // InvalidFormatException: Cannot deserialize value of type `ai.platon.cdt.kt.protocol.types.network.IPAddressSpace` from String "Loopback": not one of the values accepted for Enum class: [Public, Unknown, Local, Private]
+            patched = patched.replace("\"initiatorIPAddressSpace\":\"Loopback\"", "\"initiatorIPAddressSpace\":\"Local\"")
+        }
+
+        // "resourceIPAddressSpace":"Loopback"
+        if (patched.contains("resourceIPAddressSpace")) {
+            patched = patched.replace("\"resourceIPAddressSpace\":\"Loopback\"", "\"resourceIPAddressSpace\":\"Local\"")
+        }
+
+        if (patched.contains("privateNetworkRequestPolicy")) {
+            // {"requestId":"31040.2","associatedCookies":[],"connectTiming":{"requestTime":5541.737004},"clientSecurityState":{"initiatorIsSecureContext":true,"initiatorIPAddressSpace":"Local","privateNetworkRequestPolicy":"PermissionBlock"},"siteHasCookieInOtherPartition":false}
+            // InvalidFormatException: Cannot deserialize value of type `ai.platon.cdt.kt.protocol.types.network.PrivateNetworkRequestPolicy` from String "PermissionBlock": not one of the values accepted for Enum class: [BlockFromInsecureToMorePrivate, Allow, WarnFromInsecureToMorePrivate]
+            patched = patched.replace("\"privateNetworkRequestPolicy\":\"PermissionBlock\"", "\"privateNetworkRequestPolicy\":\"Allow\"")
+        }
+
+        // TODO: configurable patching rules, e.g., via regex or some mapping, to handle protocol changes in a more systematic way. The current approach is ad-hoc and only handles specific known changes.
+
+        if (patched.contains("clientSecurityState")) {
+            // printlnPro(patched)
+        }
+
+        return patched
     }
 
     private fun handleEventAsync(name: String, params: JsonNode) {
