@@ -1,6 +1,6 @@
 package ai.platon.pulsar
 
-import ai.platon.browser4.driver.chrome.dom.ChromeCdpSnapshotService
+import ai.platon.browser4.driver.chrome.dom.CDPSnapshotService
 import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
@@ -110,7 +110,7 @@ open class WebDriverTestBase : TestWebSiteAccess() {
         return null
     }
 
-    protected suspend fun collectEnhancedRoot(service: ChromeCdpSnapshotService, options: SnapshotOptions): DOMTreeNodeEx {
+    protected suspend fun collectEnhancedRoot(service: CDPSnapshotService, options: SnapshotOptions): DOMTreeNodeEx {
         repeat(3) { attempt ->
             val t = service.buildTargetTrees(target = PageTarget(), options = options)
             // Best-effort summary for diagnostics

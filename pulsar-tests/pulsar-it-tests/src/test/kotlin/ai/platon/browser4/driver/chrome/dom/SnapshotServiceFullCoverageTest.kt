@@ -20,7 +20,7 @@ import kotlin.io.path.createDirectories
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
+class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
     private val testURL = interactiveDynamicURL
 
     @Test
@@ -28,7 +28,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
     fun getTreesBuildAndSerializeEndToEndWithAssertions() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         val options = SnapshotOptions(
             maxDepth = 100,
@@ -78,7 +78,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
         runEnhancedWebDriverTest(testURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpSnapshotService(devTools)
+            val service = CDPSnapshotService(devTools)
 
             val options = SnapshotOptions(
                 maxDepth = 100,
@@ -161,7 +161,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpSnapshotService(devTools)
+            val service = CDPSnapshotService(devTools)
 
             val options = SnapshotOptions(
                 maxDepth = 100,
@@ -199,7 +199,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
     fun scrollabilityAndInteractivityAnalysisOnDynamicContent() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = driver.snapshotService as ChromeCdpSnapshotService
+        val service = driver.snapshotService as CDPSnapshotService
 
         // Create a clearly scrollable container and interactive buttons
         runCatching { devTools.runtime.evaluate("generateLargeList(1000)") }
@@ -301,7 +301,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
     fun dynamicContentLoadIsReflectedInEnhancedDomTree() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         // Trigger async load of users (2s delay per page script)
         runCatching { devTools.runtime.evaluate("loadContent('users')") }
@@ -352,7 +352,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
     fun snapshotnodeexBoundsAndRectsArePopulatedCorrectly() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         val options = SnapshotOptions(
             maxDepth = 100,
@@ -415,7 +415,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
     fun snapshotNodeExBoundsOnInteractiveElements() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         // Generate dynamic content with buttons
         runCatching { devTools.runtime.evaluate("generateLargeList(100)") }
@@ -579,7 +579,7 @@ class ChromeSnapshotServiceFullCoverageTest : WebDriverTestBase() {
         // Generate a large scrollable list
         runCatching { devTools.runtime.evaluate("generateLargeList(1000)") }
 
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
         service.getBrowserUseState()
 
         // Wait for container to be present

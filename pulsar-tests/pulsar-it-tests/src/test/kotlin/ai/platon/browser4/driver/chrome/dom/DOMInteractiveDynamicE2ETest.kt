@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 
 @Tag("Slow")
 @Tag("E2ETest")
-class ChromeDomInteractiveDynamicE2ETest : WebDriverTestBase() {
+class DOMInteractiveDynamicE2ETest : WebDriverTestBase() {
     private val testURL get() = "$generatedAssetsBaseURL/interactive-dynamic.html"
 
     @Test

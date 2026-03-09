@@ -12,7 +12,7 @@ import kotlin.test.Ignore
 import kotlin.test.assertIs
 import kotlin.test.fail
 
-class ChromeSnapshotServiceIsScrollableTest : WebDriverTestBase() {
+class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
     private val testURL get() = "$generatedAssetsBaseURL/interactive-dynamic.html"
 
     @Test
@@ -21,7 +21,7 @@ class ChromeSnapshotServiceIsScrollableTest : WebDriverTestBase() {
     fun isscrollableBasicsRegularElementsAndOverflowHidden() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         // Create a basic scrollable DIV and a non-scrollable (overflow hidden) DIV
         runCatching {
@@ -105,7 +105,7 @@ class ChromeSnapshotServiceIsScrollableTest : WebDriverTestBase() {
     fun isScrollableSpecialBodyHtmlAndToggleOverflow() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         // Ensure the page has large content and explicitly set overflow on body/html
         runCatching {
@@ -178,7 +178,7 @@ class ChromeSnapshotServiceIsScrollableTest : WebDriverTestBase() {
     fun isScrollableDedupNestedContainersSimilarVsDistinctAreas() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         // Build nested scroll containers
         runCatching {
@@ -302,7 +302,7 @@ class ChromeSnapshotServiceIsScrollableTest : WebDriverTestBase() {
     fun isScrollableNullWhenScrollAnalysisDisabled() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         // Create a basic scrollable DIV
         runCatching {

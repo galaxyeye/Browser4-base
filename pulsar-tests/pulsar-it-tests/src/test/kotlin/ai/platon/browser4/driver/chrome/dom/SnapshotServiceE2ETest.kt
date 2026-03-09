@@ -17,7 +17,7 @@ import kotlin.io.path.createDirectories
 import kotlin.test.assertIs
 
 @Tag("E2ETest")
-class ChromeSnapshotServiceE2ETest : WebDriverTestBase() {
+class SnapshotServiceE2ETest : WebDriverTestBase() {
     private val testURL get() = "$generatedAssetsBaseURL/interactive-dynamic.html"
     private val startTime = Instant.now()
     private val ident = AppPaths.md5Hex(testURL)
@@ -42,7 +42,7 @@ class ChromeSnapshotServiceE2ETest : WebDriverTestBase() {
     fun testGetDomAxAndSnapshot() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         val options = SnapshotOptions(
             maxDepth = 1000,

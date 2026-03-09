@@ -32,7 +32,7 @@ class TinyTreeTest : WebDriverTestBase() {
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpSnapshotService(devTools)
+            val service = CDPSnapshotService(devTools)
 
             val options = SnapshotOptions(
                 maxDepth = 100,
@@ -119,7 +119,7 @@ class TinyTreeTest : WebDriverTestBase() {
     fun isNewFlagRespectsPreviousBackendNodeIds() = runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
-        val service = ChromeCdpSnapshotService(devTools)
+        val service = CDPSnapshotService(devTools)
 
         val options = SnapshotOptions(
             maxDepth = 100,
@@ -169,7 +169,7 @@ class TinyTreeTest : WebDriverTestBase() {
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
-            val service = ChromeCdpSnapshotService(devTools)
+            val service = CDPSnapshotService(devTools)
 
             // Inject an invisible wrapper with trivial content; children will be pruned first, then wrapper by optimizeTree
             runCatching {

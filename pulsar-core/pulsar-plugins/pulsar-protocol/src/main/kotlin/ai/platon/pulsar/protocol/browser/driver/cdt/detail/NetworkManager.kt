@@ -140,9 +140,9 @@ internal class NetworkManager(
             return
         }
 
-        val requestWillBeSentEvent = computeRequestWillBeSentEvent(networkRequestId, event)
+        var requestWillBeSentEvent = computeRequestWillBeSentEvent(networkRequestId, event)
         if (requestWillBeSentEvent != null) {
-            patchRequestEventHeaders(requestWillBeSentEvent, event)
+            requestWillBeSentEvent = patchRequestEventHeaders(requestWillBeSentEvent, event)
             onRequest(requestWillBeSentEvent, fetchRequestId)
         } else {
             networkEventManager.addRequestPausedEvent(networkRequestId, event)
@@ -288,9 +288,11 @@ internal class NetworkManager(
         networkEventManager.addResponseExtraInfoEvent(requestId, event)
     }
 
-    private fun patchRequestEventHeaders(requestWillBeSent: RequestWillBeSent, requestPaused: RequestPaused) {
+    private fun patchRequestEventHeaders(requestWillBeSent: RequestWillBeSent, requestPaused: RequestPaused): RequestWillBeSent {
         // includes extra headers, like: Accept, Origin
-        requestWillBeSent.request.headers.putAll(requestPaused.request.headers)
+        val patchedHeaders = requestWillBeSent.request.headers + requestPaused.request.headers
+        val patchedRequest = requestWillBeSent.request.copy(headers = patchedHeaders)
+        return requestWillBeSent.copy(request = patchedRequest)
     }
 
     private fun onRequestWithoutNetworkInstrumentation(event: RequestPaused) {
@@ -427,7 +429,7 @@ internal class NetworkManager(
         forgetRequest(request, true)
         emit(NetworkEvents.RequestFailed, request)
     }
-    
+
     /**
      * Get the RequestWillBeSentExtraInfo event for a given request ID.
      * This allows access to additional request information including cookies.

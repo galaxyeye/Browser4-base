@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.dom.ChromeCdpSnapshotService
+import ai.platon.browser4.driver.chrome.dom.CDPSnapshotService
 import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
@@ -40,7 +40,7 @@ class PageHandler(
     private var lastBrowserUseState: BrowserUseState? = null
     private var lastAriaSnapshot: String? = null
 
-    val snapshotService: SnapshotService by lazy { ChromeCdpSnapshotService(devTools) }
+    val snapshotService: SnapshotService by lazy { CDPSnapshotService(devTools) }
 
     val jsHandler: JsHandler = JsHandler(devTools, this, isolatedWorldManager)
 
