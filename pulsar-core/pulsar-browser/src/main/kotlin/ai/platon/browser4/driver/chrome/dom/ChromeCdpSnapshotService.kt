@@ -24,6 +24,7 @@ class ChromeCdpSnapshotService(
     private val accessibility = AccessibilityHandler(devTools)
     private val domTree = DomTreeHandler(devTools)
     private val snapshot = DomSnapshotHandler(devTools)
+    private val highlightManager = HighlightManager(devTools)
 
     @Volatile
     private var lastEnhancedRoot: DOMTreeNodeEx? = null
@@ -849,15 +850,11 @@ class ChromeCdpSnapshotService(
     /**
      * Calculate interactivity with paint order consideration.
      */
-    private fun calculateInteractivity(
-        node: DOMTreeNodeEx,
-        snap: SnapshotNodeEx?,
-        paintOrder: Int?
-    ): Boolean? {
-        if (snap == null) return null
+    private fun calculateInteractivity(node: DOMTreeNodeEx, snapshot: SnapshotNodeEx?, paintOrder: Int?): Boolean? {
+        if (snapshot == null) return null
 
         // Check if node is clickable based on cursor style
-        if (snap.isClickable == true) return true
+        if (snapshot.isClickable == true) return true
 
         // Check interactivity based on node type and attributes
         val tag = node.nodeName.uppercase()
@@ -872,7 +869,7 @@ class ChromeCdpSnapshotService(
         }
 
         // Check cursor style
-        if (snap.cursorStyle?.equals("pointer", ignoreCase = true) == true) return true
+        if (snapshot.cursorStyle?.equals("pointer", ignoreCase = true) == true) return true
 
         return ClickableElementDetector().isInteractive(node)
     }
@@ -880,12 +877,10 @@ class ChromeCdpSnapshotService(
     /**
      * Calculate interactive index based on paint order and stacking context.
      */
-    private fun calculateInteractiveIndex(
-        snap: SnapshotNodeEx,
-        stackingContext: Int?,
-        paintOrder: Int?
-    ): Int? {
-        if (paintOrder == null) return null
+    private fun calculateInteractiveIndex(snap: SnapshotNodeEx, stackingContext: Int?, paintOrder: Int?): Int? {
+        if (paintOrder == null) {
+            return null
+        }
 
         // Higher paint order means element is painted later (on top)
         // Lower stacking context values mean higher z-index
@@ -896,51 +891,73 @@ class ChromeCdpSnapshotService(
     private suspend fun getAccessibilityTree(target: PageTarget, options: SnapshotOptions): AccessibilityTreeResult {
         // Fetch AX tree (resilient)
         val axResult: AccessibilityTreeResult = if (options.includeAX) {
-            val result = runCatching {
-                accessibility.getFullAXTree(target.frameId, depth = null)
-            }.onFailure { e ->
-                logger.warn("AX tree collection failed | frameId={} | err={}", target.frameId, e.toString())
-                tracer?.trace("AX tree exception", e)
-            }.getOrDefault(AccessibilityTreeResult.EMPTY)
-            result
+            runCatching { accessibility.getFullAXTree(target.frameId, depth = null) }
+                .onFailure { e ->
+                    logger.warn("AX tree collection failed | frameId={} | err={}", target.frameId, e.toString())
+                    tracer?.trace("AX tree exception", e) }
+                .getOrDefault(AccessibilityTreeResult.EMPTY)
         } else AccessibilityTreeResult.EMPTY
 
         return axResult
     }
 
     override suspend fun addHighlights(elements: InteractiveDOMTreeNodeList) {
-        val highlightManager = HighlightManager(devTools)
         highlightManager.addHighlights(elements)
     }
 
     override suspend fun removeHighlights(force: Boolean) {
-        val highlightManager = HighlightManager(devTools)
         highlightManager.removeHighlights(force)
     }
 
     override suspend fun removeHighlights(elements: InteractiveDOMTreeNodeList) {
-        val highlightManager = HighlightManager(devTools)
         highlightManager.removeHighlights(elements)
     }
 }
 
 /**
- * Convert CDP AXNode to EnhancedAXNode.
+ * Convert CDP AXNode to AXNodeEx.
+ *
+ * In the context of the Chrome DevTools Protocol (CDP), AXNode is a data structure that represents a single node within
+ * the Accessibility Tree. It is used to programmatically inspect how a web page is exposed to assistive technologies
+ * like screen readers.
+ *
+ * ## Accessibility.AXPropertyName
+ *
+ * **Values of AXProperty name:**
+ *
+ * - from 'busy' to 'roledescription': states which apply to every AX node
+ * - from 'live' to 'root': attributes which apply to nodes in live regions
+ * - from 'autocomplete' to 'valuetext': attributes which apply to widgets
+ * - from 'checked' to 'selected': states which apply to widgets
+ * - from 'activedescendant' to 'owns': relationships between elements other than parent/child/sibling
+ * - from 'activeFullscreenElement' to 'uninteresting': reasons why this noode is hidden
+ *
+ * **Allowed Values:**
+ *
+ * - actions,
+ * - busy, disabled, editable, focusable, focused, hidden, hiddenRoot, invalid, keyshortcuts, settable, roledescription,
+ * - live, atomic, relevant, root,
+ * - autocomplete, hasPopup, level, multiselectable, orientation, multiline, readonly, required, valuemin, valuemax, valuetext,
+ * - checked, expanded, modal, pressed, selected,
+ * - activedescendant, controls, describedby, details, errormessage, flowto, labelledby, owns,
+ * - url,
+ * - activeFullscreenElement, activeModalDialog, activeAriaModalDialog, ariaHiddenElement, ariaHiddenSubtree, emptyAlt, emptyText, inertElement,
+ * inertSubtree, labelContainer, labelFor, notRendered, notVisible, presentationalRole, probablyPresentational,
+ * inactiveCarouselTabContent, uninteresting
+ *
+ * **Type**: string
+ *
+ * @see [AXNode](https://chromedevtools.github.io/devtools-protocol/tot/Accessibility/#type-AXNode)
  */
 private fun AXNode.toEnhanced(): AXNodeEx {
     val props = properties?.mapNotNull { prop ->
         try {
-            AXPropertyEx(
-                name = prop.name.toString(),
-                value = prop.value.value
-            )
+            AXPropertyEx(name = prop.name.toString(), value = prop.value.value)
         } catch (e: Exception) {
             null
         }
     }
 
-    // TODO: what about the `value` field?
-    //  val `value`: AXValue? = null
     return AXNodeEx(
         axNodeId = nodeId,
         ignored = ignored,
