@@ -11,14 +11,33 @@ $ErrorActionPreference = 'Stop'
 $configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
 . $configScriptPath
 
+function Get-RepoRoot {
+    $currentDirectory = $PSScriptRoot
+    while ($currentDirectory) {
+        if ((Test-Path (Join-Path $currentDirectory 'ROOT.md')) -or (Test-Path (Join-Path $currentDirectory '.git'))) {
+            return (Resolve-Path $currentDirectory).Path
+        }
+
+        $parentDirectory = Split-Path -Parent $currentDirectory
+        if ($parentDirectory -eq $currentDirectory) {
+            break
+        }
+        $currentDirectory = $parentDirectory
+    }
+
+    throw 'Repo root not found.'
+}
+
 function Test-HasPendingCoworkerTasks {
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot
     )
 
-    $createdTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\1created') -File -ErrorAction SilentlyContinue
-    $approvedTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\5approved') -File -Recurse -ErrorAction SilentlyContinue
+    $createdTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\1created') -File -ErrorAction SilentlyContinue |
+        Where-Object { Test-CoworkerPendingFile -Item $_ }
+    $approvedTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\5approved') -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { Test-CoworkerPendingFile -Item $_ }
     return [bool]($createdTasks -or $approvedTasks)
 }
 
@@ -32,9 +51,9 @@ function Get-RunningCoworkerProcesses {
 
     return @(Get-CimInstance Win32_Process | Where-Object {
         $_.Name -match 'pwsh|powershell' -and
-        $_.CommandLine -match [regex]::Escape($ScriptName) -and
-        $_.CommandLine -notmatch [regex]::Escape($WrapperName) -and
-        $_.ProcessId -ne $PID
+                $_.CommandLine -match [regex]::Escape($ScriptName) -and
+                $_.CommandLine -notmatch [regex]::Escape($WrapperName) -and
+                $_.ProcessId -ne $PID
     })
 }
 
@@ -79,8 +98,8 @@ function Monitor-CoworkerProcess {
         }
 
         $latestLog = Get-ChildItem -Path $logsSubDir -Filter '*.copilot.log.stdout' |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
+                Sort-Object LastWriteTime -Descending |
+                Select-Object -First 1
         if (-not $latestLog) {
             continue
         }
@@ -193,7 +212,7 @@ function Invoke-CoworkerPeriodicCheck {
 
     Write-Host "$timestamp - $ScriptName is NOT running. Starting it..."
     try {
-        $process = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath) -WorkingDirectory $script:workingDirectory -PassThru
+        $process = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath) -WorkingDirectory $RepoRoot -PassThru
         Write-Host "Started $ScriptName with PID: $($process.Id)"
         $exitCode = Monitor-CoworkerProcess -Process $process -RepoRoot $RepoRoot
         Write-Host "Finished $ScriptName."
@@ -205,13 +224,13 @@ function Invoke-CoworkerPeriodicCheck {
     }
 }
 
-$repoRoot = Get-WorkspaceRoot
-$script:workingDirectory = Get-SchedulerWorkingDirectory
+$repoRoot = Get-RepoRoot
+Set-Location $repoRoot
 
-$scriptPath = Join-Path $PSScriptRoot 'coworker.ps1'
+$scriptPath = Join-Path $repoRoot 'coworker\scripts\coworker.ps1'
 $scriptName = 'coworker.ps1'
 $wrapperName = 'process-coworker-queue.ps1'
-$monitorScriptPath = Join-Path $PSScriptRoot 'process-task-source.ps1'
+$monitorScriptPath = Join-Path $repoRoot 'coworker\scripts\process-task-source.ps1'
 
 Write-Host "Monitoring $scriptName..."
 Write-Host "Script path: $scriptPath"
@@ -234,4 +253,3 @@ while ($true) {
 
     Start-Sleep -Seconds $IntervalSeconds
 }
-

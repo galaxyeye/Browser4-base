@@ -63,7 +63,11 @@ function Get-RefineTargets {
 
     $item = Get-Item $InputPath
     if ($item.PSIsContainer) {
-        return @(Get-ChildItem -Path $item.FullName -File | Sort-Object Name)
+        return @(Get-ChildItem -Path $item.FullName -File | Where-Object { Test-CoworkerPendingFile -Item $_ } | Sort-Object Name)
+    }
+
+    if (-not (Test-CoworkerPendingFile -Item $item)) {
+        return @()
     }
 
     return @($item)
