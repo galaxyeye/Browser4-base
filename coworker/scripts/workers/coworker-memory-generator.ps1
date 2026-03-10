@@ -23,37 +23,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 🔍 Find repo root
-$repoRoot = git rev-parse --show-toplevel 2>$null
-if (-not $repoRoot) {
-    $repoRoot = Get-Location
-}
-# Ensure absolute path
-$repoRoot = (Resolve-Path $repoRoot).Path
-Set-Location $repoRoot
-
-$configPath = Join-Path $repoRoot "coworker\scripts\config.ps1"
-if (Test-Path $configPath) {
-    . $configPath
-}
-if (-not $COPILOT) {
-    $COPILOT = @('gh', 'copilot')
-}
-if ($COPILOT -is [string]) {
-    throw "COPILOT must be defined as a PowerShell array in $configPath"
-}
-if ($COPILOT.Count -lt 2) {
-    throw "COPILOT must include an executable and at least one argument"
-}
-$copilotExecutable = $COPILOT[0]
-$copilotBaseArgs = @($COPILOT | Select-Object -Skip 1)
+$configPath = Join-Path (Split-Path -Parent $PSScriptRoot) "config.ps1"
+. $configPath
+$repoRoot = Get-WorkspaceRoot
+$ghCopilotHelper = Join-Path $PSScriptRoot 'gh-copilot.ps1'
+. $ghCopilotHelper
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
+$copilotExecutable = $copilotCommand.Executable
+$copilotBaseArgs = $copilotCommand.BaseArgs
 
 $parsedDate = Get-Date $Date
 $year = $parsedDate.ToString("yyyy")
 $month = $parsedDate.ToString("MM")
 $day = $parsedDate.ToString("dd")
 
-$logsBaseDir = Join-Path $repoRoot "coworker\tasks\300logs"
+$logsBaseDir = Resolve-TasksPath '300logs'
 
 # Function to run gh copilot
 function Invoke-GhCopilot {
@@ -69,20 +53,7 @@ function Invoke-GhCopilot {
     }
 
     if ($CaptureOutput) {
-        # Arguments for direct invocation (no extra quotes needed for array elements)
-        $directArgs = @($copilotBaseArgs + @(
-            '--',
-            '-p',
-            $Prompt,
-            '--allow-all-tools'
-        ))
-
-        # Executing directly to capture output
-        # Note: gh copilot output might include ANSI codes, we might need to strip them?
-        # Typically gh copilot outputs markdown.
-
-        $output = & $copilotExecutable @directArgs 2>&1 | Out-String
-        return $output
+        return Invoke-GHCopilot -Prompt $Prompt -AdditionalArguments @('--allow-all-tools') -RepoRoot $repoRoot -WorkingDirectory $repoRoot -CaptureOutput
     } else {
         # Arguments for Start-Process (might need quotes for complex strings depending on PS version/OS)
         # But generally, Start-Process ArgumentList array is safe.
@@ -96,7 +67,7 @@ function Invoke-GhCopilot {
         ))
 
         # Use Start-Process to handle arguments safely and stream to console
-        Start-Process -FilePath $copilotExecutable -ArgumentList $processArgs -NoNewWindow -Wait
+        Start-Process -FilePath $copilotExecutable -ArgumentList $processArgs -WorkingDirectory $repoRoot -NoNewWindow -Wait
     }
 }
 

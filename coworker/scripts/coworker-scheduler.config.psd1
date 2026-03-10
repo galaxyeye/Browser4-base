@@ -2,6 +2,7 @@
     Scheduler = @{
         TickSeconds          = 5
         PowerShellExecutable = 'pwsh'
+        WorkingDirectory     = 'D:\workspace\Browser4\Browser4-4.6'
         LogDirectory         = 'coworker\tasks\300logs\scheduler'
         StatusFile           = 'logs\scheduled-tasks.status.json'
     }

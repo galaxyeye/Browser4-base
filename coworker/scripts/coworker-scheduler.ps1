@@ -8,29 +8,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Get-RepoRoot {
-    $currentDirectory = $PSScriptRoot
-    while ($currentDirectory) {
-        if ((Test-Path (Join-Path $currentDirectory 'ROOT.md')) -or (Test-Path (Join-Path $currentDirectory '.git'))) {
-            return (Resolve-Path $currentDirectory).Path
-        }
-
-        $parentDirectory = Split-Path -Parent $currentDirectory
-        if ($parentDirectory -eq $currentDirectory) {
-            break
-        }
-        $currentDirectory = $parentDirectory
-    }
-
-    throw 'Repo root not found.'
-}
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
 
 function Resolve-SchedulerPath {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
         [Parameter(Mandatory = $true)]
-        [string]$RepoRoot,
+        [string]$WorkspaceRoot,
         [Parameter(Mandatory = $true)]
         [string]$ConfigDirectory
     )
@@ -44,23 +30,7 @@ function Resolve-SchedulerPath {
         return (Resolve-Path $configRelativePath).Path
     }
 
-    return [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $Path))
-}
-
-function Get-ConfigValue {
-    param(
-        [Parameter(Mandatory = $true)]
-        [object]$Map,
-        [Parameter(Mandatory = $true)]
-        [string]$Key,
-        $DefaultValue = $null
-    )
-
-    if ($Map -is [System.Collections.IDictionary] -and $Map.Contains($Key)) {
-        return $Map[$Key]
-    }
-
-    return $DefaultValue
+    return [System.IO.Path]::GetFullPath((Join-Path $WorkspaceRoot $Path))
 }
 
 function Ensure-Directory {
@@ -155,7 +125,7 @@ function Start-ScheduledTaskRun {
         [Parameter(Mandatory = $true)]
         [string]$PowerShellExecutable,
         [Parameter(Mandatory = $true)]
-        [string]$RepoRoot,
+        [string]$WorkingDirectory,
         [Parameter(Mandatory = $true)]
         [string]$LogDirectory
     )
@@ -171,7 +141,7 @@ function Start-ScheduledTaskRun {
 
     $process = Start-Process -FilePath $PowerShellExecutable `
         -ArgumentList $argumentList `
-        -WorkingDirectory $RepoRoot `
+        -WorkingDirectory $WorkingDirectory `
         -RedirectStandardOutput $stdOutPath `
         -RedirectStandardError $stdErrPath `
         -PassThru
@@ -300,12 +270,12 @@ function Test-ScheduledTaskCanStart {
     return $true
 }
 
-$repoRoot = Get-RepoRoot
+$workspaceRoot = Get-WorkspaceRoot
 if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
     $ConfigPath = Join-Path $PSScriptRoot 'coworker-scheduler.config.psd1'
 }
 
-$resolvedConfigPath = Resolve-SchedulerPath -Path $ConfigPath -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
+$resolvedConfigPath = Resolve-SchedulerPath -Path $ConfigPath -WorkspaceRoot $workspaceRoot -ConfigDirectory $PSScriptRoot
 if (-not (Test-Path $resolvedConfigPath)) {
     throw "Scheduler config not found: $resolvedConfigPath"
 }
@@ -315,62 +285,63 @@ if (-not $config.Tasks) {
     throw "Scheduler config must define a Tasks array: $resolvedConfigPath"
 }
 
-$schedulerConfig = Get-ConfigValue -Map $config -Key 'Scheduler' -DefaultValue @{}
-$tickSeconds = [int](Get-ConfigValue -Map $schedulerConfig -Key 'TickSeconds' -DefaultValue 5)
-$powerShellExecutable = [string](Get-ConfigValue -Map $schedulerConfig -Key 'PowerShellExecutable' -DefaultValue 'pwsh')
-$logDirectory = Resolve-SchedulerPath -Path ([string](Get-ConfigValue -Map $schedulerConfig -Key 'LogDirectory' -DefaultValue 'coworker\tasks\300logs\scheduler')) -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
-$statusFile = Resolve-SchedulerPath -Path ([string](Get-ConfigValue -Map $schedulerConfig -Key 'StatusFile' -DefaultValue 'logs\scheduled-tasks.status.json')) -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
+$schedulerConfig = Get-CoworkerConfigValue -Map $config -Key 'Scheduler' -DefaultValue @{}
+$tickSeconds = [int](Get-CoworkerConfigValue -Map $schedulerConfig -Key 'TickSeconds' -DefaultValue 5)
+$powerShellExecutable = [string](Get-CoworkerConfigValue -Map $schedulerConfig -Key 'PowerShellExecutable' -DefaultValue 'pwsh')
+$workingDirectory = Resolve-SchedulerPath -Path ([string](Get-CoworkerConfigValue -Map $schedulerConfig -Key 'WorkingDirectory' -DefaultValue (Get-SchedulerWorkingDirectory))) -WorkspaceRoot $workspaceRoot -ConfigDirectory (Split-Path -Parent $resolvedConfigPath)
+$logDirectory = Resolve-SchedulerPath -Path ([string](Get-CoworkerConfigValue -Map $schedulerConfig -Key 'LogDirectory' -DefaultValue 'coworker\tasks\300logs\scheduler')) -WorkspaceRoot $workspaceRoot -ConfigDirectory (Split-Path -Parent $resolvedConfigPath)
+$statusFile = Resolve-SchedulerPath -Path ([string](Get-CoworkerConfigValue -Map $schedulerConfig -Key 'StatusFile' -DefaultValue 'logs\scheduled-tasks.status.json')) -WorkspaceRoot $workspaceRoot -ConfigDirectory (Split-Path -Parent $resolvedConfigPath)
 
 Ensure-Directory -Path $logDirectory
 Ensure-Directory -Path (Split-Path -Parent $statusFile)
 
 $taskStates = @{}
 foreach ($task in $config.Tasks) {
-    $taskName = [string](Get-ConfigValue -Map $task -Key 'Name' -DefaultValue '')
+    $taskName = [string](Get-CoworkerConfigValue -Map $task -Key 'Name' -DefaultValue '')
     if ([string]::IsNullOrWhiteSpace($taskName)) {
         throw 'Each scheduled task must define Name.'
     }
-    $intervalSeconds = [int](Get-ConfigValue -Map $task -Key 'IntervalSeconds' -DefaultValue 0)
+    $intervalSeconds = [int](Get-CoworkerConfigValue -Map $task -Key 'IntervalSeconds' -DefaultValue 0)
     if ($intervalSeconds -le 0) {
         throw "Scheduled task '$taskName' must define IntervalSeconds."
     }
-    $scriptPath = [string](Get-ConfigValue -Map $task -Key 'ScriptPath' -DefaultValue '')
+    $scriptPath = [string](Get-CoworkerConfigValue -Map $task -Key 'ScriptPath' -DefaultValue '')
     if ([string]::IsNullOrWhiteSpace($scriptPath)) {
         throw "Scheduled task '$taskName' must define ScriptPath."
     }
 
-    $resolvedScriptPath = Resolve-SchedulerPath -Path $scriptPath -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot
+    $resolvedScriptPath = Resolve-SchedulerPath -Path $scriptPath -WorkspaceRoot $workspaceRoot -ConfigDirectory (Split-Path -Parent $resolvedConfigPath)
     if (-not (Test-Path $resolvedScriptPath)) {
         throw "Scheduled task '$taskName' script not found: $resolvedScriptPath"
     }
 
-    $enabled = [bool](Get-ConfigValue -Map $task -Key 'Enabled' -DefaultValue $true)
+    $enabled = [bool](Get-CoworkerConfigValue -Map $task -Key 'Enabled' -DefaultValue $true)
     $dependsOn = @()
-    $rawDependsOn = Get-ConfigValue -Map $task -Key 'DependsOn' -DefaultValue @()
+    $rawDependsOn = Get-CoworkerConfigValue -Map $task -Key 'DependsOn' -DefaultValue @()
     if ($null -ne $rawDependsOn) {
         $dependsOn = @($rawDependsOn | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     }
 
     $pendingPaths = @()
-    $rawPendingPaths = Get-ConfigValue -Map $task -Key 'PendingPaths' -DefaultValue @()
+    $rawPendingPaths = Get-CoworkerConfigValue -Map $task -Key 'PendingPaths' -DefaultValue @()
     if ($null -ne $rawPendingPaths) {
         $pendingPaths = @(
             $rawPendingPaths |
                 ForEach-Object { [string]$_ } |
                 Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-                ForEach-Object { Resolve-SchedulerPath -Path $_ -RepoRoot $repoRoot -ConfigDirectory $PSScriptRoot }
+                ForEach-Object { Resolve-SchedulerPath -Path $_ -WorkspaceRoot $workspaceRoot -ConfigDirectory (Split-Path -Parent $resolvedConfigPath) }
         )
     }
 
     $taskStates[$taskName] = @{
         Name                = $taskName
-        Description         = [string](Get-ConfigValue -Map $task -Key 'Description' -DefaultValue '')
+        Description         = [string](Get-CoworkerConfigValue -Map $task -Key 'Description' -DefaultValue '')
         Enabled             = $enabled
         IntervalSeconds     = $intervalSeconds
         DependsOn           = $dependsOn
         PendingPaths        = $pendingPaths
         ScriptPath          = $resolvedScriptPath
-        Arguments           = @((Get-ConfigValue -Map $task -Key 'Arguments' -DefaultValue @()))
+        Arguments           = @((Get-CoworkerConfigValue -Map $task -Key 'Arguments' -DefaultValue @()))
         Status              = if ($enabled) { 'Idle' } else { 'Disabled' }
         LastStartedUtc      = $null
         LastFinishedUtc     = $null
@@ -402,7 +373,7 @@ if ($Once) {
         foreach ($taskState in $taskStates.Values | Sort-Object Name) {
             if (Test-ScheduledTaskCanStart -TaskState $taskState -TaskStates $taskStates -Now $now -OnceMode) {
                 if (Test-ScheduledTaskHasPendingInputs -TaskState $taskState) {
-                    Start-ScheduledTaskRun -TaskState $taskState -PowerShellExecutable $powerShellExecutable -RepoRoot $repoRoot -LogDirectory $logDirectory
+                    Start-ScheduledTaskRun -TaskState $taskState -PowerShellExecutable $powerShellExecutable -WorkingDirectory $workingDirectory -LogDirectory $logDirectory
                     $runningCount++
                 }
                 else {
@@ -438,7 +409,7 @@ while ($true) {
 
         if (Test-ScheduledTaskCanStart -TaskState $taskState -TaskStates $taskStates -Now $now) {
             if (Test-ScheduledTaskHasPendingInputs -TaskState $taskState) {
-                Start-ScheduledTaskRun -TaskState $taskState -PowerShellExecutable $powerShellExecutable -RepoRoot $repoRoot -LogDirectory $logDirectory
+                Start-ScheduledTaskRun -TaskState $taskState -PowerShellExecutable $powerShellExecutable -WorkingDirectory $workingDirectory -LogDirectory $logDirectory
             }
             else {
                 Set-ScheduledTaskWaitingForWork -TaskState $taskState -Now $now

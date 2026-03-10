@@ -1,4 +1,14 @@
 @{
+    Paths = @{
+        WorkspaceRoot = '..\..'
+        CoworkerRoot  = '..'
+        TasksRoot     = '..\tasks'
+    }
+
+    Scheduler = @{
+        WorkingDirectory = '..\..'
+    }
+
     COPILOT = @(
         'gh'
         'copilot'

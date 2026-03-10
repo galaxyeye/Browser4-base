@@ -6,29 +6,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Get-RepoRoot {
-    $currentDirectory = $PSScriptRoot
-    while ($currentDirectory) {
-        if ((Test-Path (Join-Path $currentDirectory 'ROOT.md')) -or (Test-Path (Join-Path $currentDirectory '.git'))) {
-            return (Resolve-Path $currentDirectory).Path
-        }
-
-        $parentDirectory = Split-Path -Parent $currentDirectory
-        if ($parentDirectory -eq $currentDirectory) {
-            break
-        }
-        $currentDirectory = $parentDirectory
-    }
-
-    throw 'Repo root not found.'
-}
-
 . (Join-Path $PSScriptRoot 'gh-copilot.ps1')
 
-$repoRoot = Get-RepoRoot
+$repoRoot = Get-WorkspaceRoot
 $copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
 
-$refineRoot = Join-Path $repoRoot 'coworker\tasks\0draft\refine'
+$refineRoot = Resolve-TasksPath '0draft\refine'
 $readyDir = Join-Path $refineRoot '1ready'
 $workingDir = Join-Path $refineRoot '2working'
 $doneDir = Join-Path $refineRoot '3done'
@@ -105,7 +88,7 @@ $draftContent
 --- END DRAFT ---
 "@
 
-    $refinedContent = Invoke-GHCopilot -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths') -RepoRoot $repoRoot | Out-String
+    $refinedContent = Invoke-GHCopilot -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths') -RepoRoot $repoRoot -WorkingDirectory $repoRoot -CaptureOutput
     if ($LASTEXITCODE -ne 0) {
         throw "GitHub Copilot exited with code $LASTEXITCODE while refining $($WorkingFile.Name)"
     }

@@ -1,3 +1,22 @@
+Task: write-coworker-skill-doc
+Description: Task from write-coworker-skill-doc.md
+Original File: write-coworker-skill-doc.md
+Started: 2026-03-09 17:54:07
+Prompt:
+Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\write-coworker-skill-doc.md.
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
+
+After completing the task, you MUST update your daily memory file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\09\MEMORY.20260309.md
+1. Append a summary of this task, its outcome, and any lessons learned to D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\09\MEMORY.20260309.md.
+2. Check if the Monthly Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\MEMORY.202603.md) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Ensure you do not overwrite existing content, always append.
+
+
+[Monthly Memory (2026-03)]:
 # MEMORY.202603.md
 ## Monthly Memory - 2026-03
 
@@ -56,8 +75,36 @@
 - Tightened contract fidelity across MCP/tool specs and CLI/backend naming so exposed capabilities track annotated APIs and real controller payloads.
 - Reinforced recurring execution hygiene: verify generated test pages before editing selectors, centralize shell invocation logic, prefer repo-root absolute paths, and enable `-DrunE2ETests=true` when validating legacy `E2ETest` suites.
 
-### Daily Rollup Update (2026-03-01 to 2026-03-09)
-- Restored and expanded Browser4 coverage across browser behavior and DOM accessibility work, including revived click E2E tests against active generated pages and Playwright-style ARIA snapshot rendering with richer DOM-state attributes.
-- Continued maturing coworker automation by renaming periodic queue processors, keeping compatibility shims for legacy scheduler entrypoints, skipping empty scheduler launches via `PendingPaths`, relocating runtime status artifacts, and documenting the live queue-based workflow in `SKILL.md`.
-- Tightened prompt and review quality across agentic surfaces by normalizing prompt language/rules to concise English and surfacing correctness risks in DOM tree helper traversal/text-association logic.
-- Reinforced execution hygiene: prefer active/generated fixtures over stale ones, keep scheduler/runtime artifacts in ignored operational locations, and place queue-awareness/path resolution in shared orchestration layers instead of duplicated worker logic.
+
+[Daily Memory (2026-03-09)]:
+## Daily Memory - 2026-03-09
+
+- **PulsarWebDriver click tests revived:** Replaced obsolete `PulsarWebDriverClickTests` that depended on a dead dynamic page with active E2E coverage against `generated/interactive-screens.html`, updating selectors to current IDs such as `#addButton` and `#toggleMessageButton`. Coverage now includes counter clicks, modifier clicks, missing-element no-ops, disabled-button behavior, navigation, and sequential interactions. **Learning:** When generated mock pages drift, refresh tests against current HTML instead of preserving dead selectors. **Validation:** `.\mvnw.cmd -f pulsar-tests\pom.xml -pl pulsar-it-tests -am -DrunE2ETests=true -Dtest=PulsarWebDriverClickTests -D"surefire.failIfNoSpecifiedTests=false" test` → 13 passed.
+
+- **Coworker periodic scripts restructured:** Renamed periodic entrypoints to queue-oriented names (`process-coworker-queue.ps1`, `process-draft-refinement-queue.ps1`), moved scheduler-backed implementations into `coworker/scripts/deprecated/`, kept old `run_*_periodically.ps1` files as compatibility shims, and updated scheduler/docs. **Learning:** Once `coworker-scheduler.ps1` owns recurrence, helper names should describe queue processing while shims preserve automation compatibility. **Validation:** AST parsing plus `coworker-scheduler.config.psd1` path checks confirmed clean resolution.
+
+- **ARIA snapshot rendering aligned with Playwright:** Added Playwright-style rendering via `DOMState.render()` and `PageHandler.ariaSnapshot()`. Renderer now emits roles, names, state attrs, refs, pointer hints, inline text, and `/url`; `href` was added to default included attributes so link URLs survive DOM-state construction. **Learning:** Playwright-compatible accessibility YAML must be rendered from the richer micro/unfiltered tree, not generic object YAML, so refs, pointer hints, and semantics are reconstructed deterministically. **Validation:** `.\mvnw.cmd -pl pulsar-core\pulsar-browser -am -Dtest=DOMStateBuilderTest -D"surefire.failIfNoSpecifiedTests=false" test` → 11 passed, 1 skipped.
+
+- **Scheduler empty-queue skip:** Updated `coworker/scripts/coworker-scheduler.ps1` to support `PendingPaths`, allowing the scheduler to inspect queues before spawning child PowerShell processes. Default `coworker` and `draft-refinement` tasks now use queue paths, eliminating empty runs and extra popups. **Learning:** Queue-awareness belongs in the unified scheduler because suppressing child launch is what removes empty-run UX noise. **Validation:** Temporary `-Once` config showed empty queues return `WaitingForWork` with `RunCount=0`, while non-empty queues still launch workers.
+
+- **MicroToNanoTreeHelper review findings:** Found two correctness issues in `MicroDOMTreeNodeHelper.kt`: `toNanoTreeInRangeRecursive()` may prune visible leaf nodes or in-range descendants too early, and `toInteractiveDOMTreeNodeList()` mixes ordering keys (`nodeId` vs `paintOrder/backendNodeId`) when computing `textBefore`, which can attach text to the wrong interactive node. **Learning:** In DOM summarizers, recurse before pruning generated subtrees, and use one monotonic traversal order for “text between nodes” logic.
+
+- **Prompt cleanup and prompt-source normalization:** Translated remaining Chinese prompt text in `PromptBuilder.kt` and `MainSystemPrompt.kt` to concise English, aliased duplicate EN rules to canonical sets, normalized `language` output to `Chinese`/`English`, and tightened wording across system instructions, tool usage, completion criteria, reasoning steps, and skill metadata. **Learning:** Keeping shared prompts in one concise English source reduces bilingual drift and makes prompt maintenance safer. **Validation:** Non-ASCII scans found no remaining prompt text; `.\mvnw.cmd -pl pulsar-agentic -am -DskipTests compile` succeeded.
+
+- **Scheduled-task status file relocated:** Moved default scheduler status output from `coworker\tasks\300logs\scheduler\scheduled-tasks.status.json` to ignored repo-root `logs\scheduled-tasks.status.json`, updated defaults/config/docs, and removed the tracked artifact. **Learning:** Runtime status artifacts belong in ignored operational log locations, not versioned task-history trees. **Validation:** Running `./coworker/scripts/coworker-scheduler.ps1 -ConfigPath <temp-config> -Once` created `logs\scheduled-tasks.status.json` before cleanup.
+
+
+Total usage est:        1 Premium request
+API time spent:         17s
+Total session time:     28s
+Total code changes:     +0 -0
+Breakdown by AI model:
+ gpt-5.4                 21.5k in, 1.0k out, 1.5k cached (Est. 1 Premium request)
+
+
+
+---
+Copilot Execution Output:
+
+Copilot Exit Code: 0
+Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\09\175306-write-coworker-skill-doc.copilot.log

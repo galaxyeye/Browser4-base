@@ -8,26 +8,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Get-RepoRoot {
-    $currentDirectory = $PSScriptRoot
-    while ($currentDirectory) {
-        if ((Test-Path (Join-Path $currentDirectory 'ROOT.md')) -or (Test-Path (Join-Path $currentDirectory '.git'))) {
-            return (Resolve-Path $currentDirectory).Path
-        }
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
 
-        $parentDirectory = Split-Path -Parent $currentDirectory
-        if ($parentDirectory -eq $currentDirectory) {
-            break
-        }
-        $currentDirectory = $parentDirectory
-    }
-
-    throw 'Repo root not found.'
-}
-
-$repoRoot = Get-RepoRoot
-$refineScript = Join-Path $repoRoot 'coworker\scripts\workers\refine-drafts.ps1'
-$defaultReadyDir = Join-Path $repoRoot 'coworker\tasks\0draft\refine\1ready'
+$repoRoot = Get-WorkspaceRoot
+$refineScript = Join-Path $PSScriptRoot 'workers\refine-drafts.ps1'
+$defaultReadyDir = Resolve-TasksPath '0draft\refine\1ready'
 $scanPath = if ([string]::IsNullOrWhiteSpace($Path)) { $defaultReadyDir } else { $Path }
 
 Write-Host "Monitoring draft refinement path: $scanPath"

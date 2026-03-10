@@ -27,6 +27,9 @@ param(
 # $env:GH_DEBUG = 'api'      # 打印 API 请求
 # $env:GH_DEBUG = '1'        # 打印调试信息
 
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
+
 # Handle specified TaskFile
 if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
     # Resolve full path before changing location
@@ -35,12 +38,7 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
     }
 }
 
-$repoRoot = (git rev-parse --show-toplevel 2>$null)
-if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
-}
-Set-Location $repoRoot
+$repoRoot = Get-WorkspaceRoot
 
 # Import common utility script
 . $repoRoot\bin\common\Util.ps1
@@ -48,7 +46,7 @@ Set-Location $repoRoot
 Fix-Encoding-UTF8
 
 $tasksRoot = Join-Path $repoRoot "coworker\tasks"
-$scriptsDir = Join-Path $repoRoot "coworker\scripts"
+$scriptsDir = $PSScriptRoot
 $ghCopilotHelper = Join-Path $scriptsDir "workers\gh-copilot.ps1"
 . $ghCopilotHelper
 $copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
@@ -215,7 +213,7 @@ Prompt: $promptSample
 
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
-        $nameProcess = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $namingPrompt -StdOutPath $nameStdOut -StdErrPath $nameStdErr -NoNewWindow
+        $nameProcess = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $namingPrompt -WorkingDirectory $repoRoot -StdOutPath $nameStdOut -StdErrPath $nameStdErr -NoNewWindow
 
         $waited = $false
         try {
@@ -553,9 +551,6 @@ Do not move **this** task file, just execute the task based on its content, the 
 
         Write-LogVerbose "Task log will be written to: $taskLogPath"
 
-        # Change working directory to repository root
-        Push-Location $repoRoot
-
         Write-LogMessage "Executing Copilot for task: $workingBaseName" INFO
         Write-LogVerbose "Prompt length: $($prompt.Length) characters"
 
@@ -582,7 +577,7 @@ Copilot Execution Output:
 
             # Execute Copilot tool with the task prompt
             # Capture both standard output and error output to separate files
-            $process = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths') -StdOutPath $stdOutLog -StdErrPath $stdErrLog -NoNewWindow
+            $process = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths') -WorkingDirectory $repoRoot -StdOutPath $stdOutLog -StdErrPath $stdErrLog -NoNewWindow
 
             $lastOutputLineCount = 0
 
@@ -684,10 +679,6 @@ Copilot Log: $copilotLogPath
             # Handle any errors that occur during Copilot execution
             Write-LogMessage "Failed to execute copilot: $_" ERROR
             "Error executing copilot: $_" | Out-File -FilePath $taskLogPath -Append -Encoding UTF8
-        }
-        finally {
-            # Always return to the original directory after execution
-            Pop-Location
         }
 
         # Move completed task from working directory to finished or approved directory

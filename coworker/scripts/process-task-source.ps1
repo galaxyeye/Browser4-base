@@ -27,17 +27,12 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ── resolve repo root ──────────────────────────────────────────────────────────
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$RepoRoot  = $ScriptDir
-while (-not (Test-Path (Join-Path $RepoRoot "VERSION")) -and $RepoRoot -ne [System.IO.Path]::GetPathRoot($RepoRoot)) {
-    $RepoRoot = Split-Path -Parent $RepoRoot
-}
-if (-not (Test-Path (Join-Path $RepoRoot "VERSION"))) {
-    Write-Error "ERROR: cannot find repo root"; exit 1
-}
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
 
-$TasksDir = Join-Path $RepoRoot "coworker\tasks\1created"
+$RepoRoot = Get-WorkspaceRoot
+
+$TasksDir = Resolve-TasksPath '1created'
 New-Item -ItemType Directory -Force -Path $TasksDir | Out-Null
 
 # ── helpers ────────────────────────────────────────────────────────────────────

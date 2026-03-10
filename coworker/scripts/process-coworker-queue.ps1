@@ -8,22 +8,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Get-RepoRoot {
-    $currentDirectory = $PSScriptRoot
-    while ($currentDirectory) {
-        if ((Test-Path (Join-Path $currentDirectory 'ROOT.md')) -or (Test-Path (Join-Path $currentDirectory '.git'))) {
-            return (Resolve-Path $currentDirectory).Path
-        }
-
-        $parentDirectory = Split-Path -Parent $currentDirectory
-        if ($parentDirectory -eq $currentDirectory) {
-            break
-        }
-        $currentDirectory = $parentDirectory
-    }
-
-    throw 'Repo root not found.'
-}
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
 
 function Test-HasPendingCoworkerTasks {
     param(
@@ -207,7 +193,7 @@ function Invoke-CoworkerPeriodicCheck {
 
     Write-Host "$timestamp - $ScriptName is NOT running. Starting it..."
     try {
-        $process = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath) -WorkingDirectory $RepoRoot -PassThru
+        $process = Start-Process -FilePath 'pwsh' -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath) -WorkingDirectory $script:workingDirectory -PassThru
         Write-Host "Started $ScriptName with PID: $($process.Id)"
         $exitCode = Monitor-CoworkerProcess -Process $process -RepoRoot $RepoRoot
         Write-Host "Finished $ScriptName."
@@ -219,13 +205,13 @@ function Invoke-CoworkerPeriodicCheck {
     }
 }
 
-$repoRoot = Get-RepoRoot
-Set-Location $repoRoot
+$repoRoot = Get-WorkspaceRoot
+$script:workingDirectory = Get-SchedulerWorkingDirectory
 
-$scriptPath = Join-Path $repoRoot 'coworker\scripts\coworker.ps1'
+$scriptPath = Join-Path $PSScriptRoot 'coworker.ps1'
 $scriptName = 'coworker.ps1'
 $wrapperName = 'process-coworker-queue.ps1'
-$monitorScriptPath = Join-Path $repoRoot 'coworker\scripts\process-task-source.ps1'
+$monitorScriptPath = Join-Path $PSScriptRoot 'process-task-source.ps1'
 
 Write-Host "Monitoring $scriptName..."
 Write-Host "Script path: $scriptPath"

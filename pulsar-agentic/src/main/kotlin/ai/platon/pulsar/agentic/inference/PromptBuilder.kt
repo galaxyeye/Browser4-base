@@ -2,8 +2,8 @@ package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
-import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_COMPLETE_SCHEMA
+import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.agentic.model.ExecutionContext
@@ -14,7 +14,6 @@ import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.serialize.json.Pson
-import java.util.*
 
 /**
  * Description:
@@ -28,13 +27,10 @@ import java.util.*
 class PromptBuilder() {
 
     companion object {
-        var locale: Locale = Locale.CHINESE
-
-        val isZH = locale in listOf(Locale.CHINESE, Locale.SIMPLIFIED_CHINESE, Locale.TRADITIONAL_CHINESE)
-
-        val language = if (isZH) "Chinese" else "English"
-
-        const val MAX_ACTIONS = 1
+        /**
+         * The working language for the prompt. English is generally better for LLM understanding.
+         * */
+        const val workingLanguage = "EN"
 
         fun buildResponseSchema(): String {
             return buildObserveResultSchema(returnAction = true)
@@ -63,7 +59,7 @@ class PromptBuilder() {
             return if (returnAction) schema1 else schema2
         }
 
-        val TOOL_CALL_RULE_CONTENT = """
+        val TOOL_CALL_RULE_CONTENT_V1 = """
 Browser tool rules:
 
 - `domain`: tool domain such as `driver`, `browser`, or `skill.debug.scraping`; subdomains use dots.
@@ -87,7 +83,22 @@ Browser tool rules:
   2. **Open-ended task**: plan autonomously, and if blocked by login or CAPTCHA, try alternative ways to complete the goal.
 """.trimIndent()
 
-        val TOOL_CALL_RULE_CONTENT_EN = TOOL_CALL_RULE_CONTENT
+        val TOOL_CALL_RULE_CONTENT_V2 = """
+Browser tool rules:
+
+- `domain`: tool domain such as `driver`, `browser`, or `skill.debug.scraping`; subdomains use dots.
+- When selecting a node, always set `selector` to the same value as `locator`.
+- Output JSON only. Do not add any explanatory text.
+- When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
+- If typing changes the page, decide whether new elements now require interaction.
+- Keep the final objective in `<user_request>` as the top priority. Explicit user steps override your own plan.
+- Avoid login unless it is necessary, and never attempt login without credentials.
+- Classify the task first:
+  1. **Specific step-by-step instructions**: follow them exactly and do not skip steps.
+  2. **Open-ended task**: plan autonomously, and if blocked by login or CAPTCHA, try alternative ways to complete the goal.
+""".trimIndent()
+
+        val TOOL_CALL_RULE_CONTENT = TOOL_CALL_RULE_CONTENT_V2
 
         /**
          * TODO: move to skill
@@ -170,7 +181,7 @@ Format:
 
         """.trimIndent()
 
-        val A11Y_TREE_NOTE_CONTENT = """
+        val A11Y_TREE_NOTE_CONTENT_V1 = """
 (Accessibility Tree)
 
 The accessibility tree summarizes key DOM nodes, including text content, visibility, interactivity, coordinates, and size.
@@ -281,12 +292,6 @@ Browser state includes:
 ## Interactive Elements
 
 $INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT
-
----
-
-## Accessibility Tree
-
-$A11Y_TREE_NOTE_CONTENT
 
 ---
 
@@ -504,7 +509,7 @@ $lastModelError
         return """
 ## Previous Step Result
 
-Previous action: ${agentState.prevState?.method}
+Previous action: ${agentState.prevState?.toolCallResult?.actionDescription?.pseudoExpression}
 Expected result: ${agentState.prevState?.nextGoal}
 
 Execution result:
@@ -706,10 +711,6 @@ $extractedJson
     ): AgentMessageList {
         val instruction2 = when {
             !instruction.isNullOrBlank() -> instruction
-            isZH -> """
-Based on the context and current progress, select the most appropriate tool to advance the task toward user completion.
-                """.trimIndent()
-
             else -> """
 Based on the context and current progress, select the most appropriate tool to advance the task toward user completion.
                 """.trimIndent()
@@ -762,7 +763,7 @@ $newTabsJson
         val endY = (scrollState.y + viewportHeight + delta).coerceAtLeast(0.0)
         val nanoTree = domState.microTree.toNanoTreeInRange(startY, endY)
 
-        fun contentCN() = """
+        fun contentEN() = """
 ## Browser State
 
 <browser_state>
@@ -800,12 +801,7 @@ ${nanoTree.ariaSnapshot}
 
 """
 
-        fun contentEN() = contentCN()
-
-        val content = when {
-            isZH -> contentCN()
-            else -> contentEN()
-        }
+        val content = contentEN()
 
         messages.addLast("user", content)
     }

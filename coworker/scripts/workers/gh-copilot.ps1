@@ -8,41 +8,17 @@ param(
     [switch]$CaptureOutput
 )
 
+$configPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config.ps1'
+. $configPath
+
 function Get-GHCopilotRepoRoot {
-    param(
-        [string]$StartDirectory = $PSScriptRoot
-    )
-
-    $repoRoot = git rev-parse --show-toplevel 2>$null
-    if ($repoRoot) {
-        return (Resolve-Path $repoRoot).Path
-    }
-
-    $currentDirectory = $StartDirectory
-    while ($currentDirectory) {
-        if (Test-Path (Join-Path $currentDirectory 'ROOT.md')) {
-            return (Resolve-Path $currentDirectory).Path
-        }
-
-        $parentDirectory = Split-Path -Parent $currentDirectory
-        if ($parentDirectory -eq $currentDirectory) {
-            break
-        }
-        $currentDirectory = $parentDirectory
-    }
-
-    throw 'Repo root not found.'
+    return Get-WorkspaceRoot
 }
 
 function Get-GHCopilotCommand {
     param(
         [string]$RepoRoot = (Get-GHCopilotRepoRoot)
     )
-
-    $configPath = Join-Path $RepoRoot 'coworker\scripts\config.ps1'
-    if (Test-Path $configPath) {
-        . $configPath
-    }
 
     if (-not $COPILOT) {
         $COPILOT = @('gh', 'copilot')
@@ -57,10 +33,11 @@ function Get-GHCopilotCommand {
     }
 
     return [pscustomobject]@{
-        RepoRoot   = $RepoRoot
-        ConfigPath = $configPath
-        Executable = $COPILOT[0]
-        BaseArgs   = @($COPILOT | Select-Object -Skip 1)
+        RepoRoot         = $RepoRoot
+        WorkingDirectory = $RepoRoot
+        ConfigPath       = $configPath
+        Executable       = $COPILOT[0]
+        BaseArgs         = @($COPILOT | Select-Object -Skip 1)
     }
 }
 
@@ -166,6 +143,7 @@ function Start-GHCopilotProcess {
         [string[]]$BaseArgs,
         [string]$Prompt,
         [string[]]$AdditionalArguments = @(),
+        [string]$WorkingDirectory,
         [string]$StdOutPath,
         [string]$StdErrPath,
         [switch]$NoNewWindow
@@ -196,6 +174,9 @@ function Start-GHCopilotProcess {
         $startProcessArgs.ArgumentList = $arguments
     }
 
+    if ($PSBoundParameters.ContainsKey('WorkingDirectory') -and -not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
+        $startProcessArgs.WorkingDirectory = $WorkingDirectory
+    }
     if ($NoNewWindow) {
         $startProcessArgs.NoNewWindow = $true
     }
@@ -214,12 +195,44 @@ function Invoke-GHCopilot {
         [Parameter(Mandatory = $true)]
         [string]$Prompt,
         [string[]]$AdditionalArguments = @(),
-        [string]$RepoRoot = (Get-GHCopilotRepoRoot)
+        [string]$RepoRoot = (Get-GHCopilotRepoRoot),
+        [string]$WorkingDirectory = $RepoRoot,
+        [switch]$CaptureOutput
     )
 
     $command = Get-GHCopilotCommand -RepoRoot $RepoRoot
-    $arguments = New-GHCopilotArguments -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments
-    & $command.Executable @arguments
+    if ($CaptureOutput) {
+        $stdOutPath = [System.IO.Path]::GetTempFileName()
+        $stdErrPath = [System.IO.Path]::GetTempFileName()
+
+        try {
+            $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments -WorkingDirectory $WorkingDirectory -StdOutPath $stdOutPath -StdErrPath $stdErrPath -NoNewWindow
+            $process.WaitForExit()
+            $global:LASTEXITCODE = $process.ExitCode
+
+            if (Test-Path $stdErrPath) {
+                $errorOutput = Get-Content -Path $stdErrPath -Raw -Encoding UTF8
+                if (-not [string]::IsNullOrWhiteSpace($errorOutput)) {
+                    [Console]::Error.Write($errorOutput)
+                }
+            }
+
+            if (Test-Path $stdOutPath) {
+                return Get-Content -Path $stdOutPath -Raw -Encoding UTF8
+            }
+
+            return ''
+        }
+        finally {
+            Remove-Item $stdOutPath -ErrorAction SilentlyContinue
+            Remove-Item $stdErrPath -ErrorAction SilentlyContinue
+        }
+    }
+
+    $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments -WorkingDirectory $WorkingDirectory -NoNewWindow
+    $process.WaitForExit()
+    $global:LASTEXITCODE = $process.ExitCode
+    return $null
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
@@ -236,12 +249,15 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 
     if ($CaptureOutput) {
-        Invoke-GHCopilot -Prompt $Prompt -AdditionalArguments $directArguments
+        $output = Invoke-GHCopilot -Prompt $Prompt -AdditionalArguments $directArguments -CaptureOutput
+        if (-not [string]::IsNullOrEmpty($output)) {
+            Write-Output $output
+        }
         exit $LASTEXITCODE
     }
 
     $command = Get-GHCopilotCommand
-    $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $directArguments -NoNewWindow
+    $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $directArguments -WorkingDirectory $command.WorkingDirectory -NoNewWindow
     $process.WaitForExit()
     exit $process.ExitCode
 }

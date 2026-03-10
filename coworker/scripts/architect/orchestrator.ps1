@@ -7,20 +7,17 @@ param(
     [switch]$Loop
 )
 
-$repoRoot = (git rev-parse --show-toplevel 2>$null)
-if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
-}
-Set-Location $repoRoot
+$configPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config.ps1'
+. $configPath
+$repoRoot = Get-WorkspaceRoot
 
 # Configuration
-$templatesDir = Join-Path $repoRoot "coworker\tasks\100templates"
-$logsBaseDir = Join-Path $repoRoot "coworker\tasks\300logs"
-$createdDir = Join-Path $repoRoot "coworker\tasks\1created"
-$workingDir = Join-Path $repoRoot "coworker\tasks\2working"
-$finishedDir = Join-Path $repoRoot "coworker\tasks\3_1complete"
-$abortedDir = Join-Path $repoRoot "coworker\tasks\3_5aborted"
+$templatesDir = Resolve-TasksPath '100templates'
+$logsBaseDir = Resolve-TasksPath '300logs'
+$createdDir = Resolve-TasksPath '1created'
+$workingDir = Resolve-TasksPath '2working'
+$finishedDir = Resolve-TasksPath '3_1complete'
+$abortedDir = Resolve-TasksPath '3_5aborted'
 
 # Ensure directories exist
 foreach ($dir in @($templatesDir, $logsBaseDir, $createdDir, $workingDir, $finishedDir, $abortedDir)) {
@@ -67,7 +64,7 @@ function Invoke-Copilot {
 
     try {
         Write-Host "Invoking GitHub Copilot..."
-        $process = Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+        $process = Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -WorkingDirectory $repoRoot -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
         
         # Wait loop with timeout
         $startTime = Get-Date
