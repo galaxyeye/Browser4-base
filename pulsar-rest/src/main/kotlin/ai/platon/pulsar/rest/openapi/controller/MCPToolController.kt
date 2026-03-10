@@ -6,6 +6,8 @@ import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -31,6 +33,7 @@ data class MCPToolCallRequest(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class MCPToolCallResponse(
     @param:JsonProperty("content") val content: List<MCPContent>,
+    @param:JsonSetter(nulls = Nulls.SKIP)
     @param:JsonProperty("isError") val isError: Boolean = false
 )
 

@@ -9,6 +9,7 @@ import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.rest.openapi.service.SessionManager.ManagedSession
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -26,6 +27,7 @@ import jakarta.servlet.http.HttpServletResponse
 import java.util.UUID
 
 class MCPToolControllerTest {
+    private val objectMapper = jacksonObjectMapper()
 
     @Mock
     private lateinit var sessionManager: SessionManager
@@ -94,6 +96,16 @@ class MCPToolControllerTest {
         assertTrue(result.body!!.content[0].text.contains(newSessionId))
         Mockito.verify(sessionManager).createSession(null)
         Unit
+    }
+
+    @Test
+    fun `test response deserializes null isError as false`() {
+        val json = """{"content":[{"type":"text","text":"ok"}],"isError":null}"""
+
+        val result = objectMapper.readValue(json, MCPToolCallResponse::class.java)
+
+        assertEquals(false, result.isError)
+        assertEquals("ok", result.content.single().text)
     }
 
     @Test

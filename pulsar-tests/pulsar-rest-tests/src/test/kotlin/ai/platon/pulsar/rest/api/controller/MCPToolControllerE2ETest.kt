@@ -5,13 +5,16 @@ import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_LIST_URL
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
 import ai.platon.pulsar.rest.openapi.controller.MCPToolCallResponse
 import ai.platon.pulsar.rest.openapi.controller.MCPToolController
+import ai.platon.pulsar.rest.openapi.service.SessionManager
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertFalse
@@ -43,6 +46,10 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     private val logger = LoggerFactory.getLogger(MCPToolControllerE2ETest::class.java)
     private val objectMapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+
+    @Autowired
+    lateinit var sessionManager: SessionManager
 
     /**
      * Complete mapping from browser4-cli commands to MCP tool names.
@@ -102,6 +109,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     fun cleanUpSessions() {
         // Best-effort cleanup of any sessions left open by the test
         try {
+            // sessionManager.deleteAllSessions()
             callTool("kill_all_sessions")
         } catch (e: Exception) {
             logger.debug("Cleanup kill_all_sessions failed (may be expected): {}", e.message)
@@ -115,14 +123,20 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
 
     private fun callTool(tool: String, arguments: Map<String, Any?> = emptyMap()): MCPToolCallResponse {
         val request = mapOf("tool" to tool, "arguments" to arguments)
-        return client.post().uri("/mcp/call-tool")
+        val body = client.post().uri("/mcp/call-tool")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
             .expectStatus().is2xxSuccessful
-            .expectBody<MCPToolCallResponse>()
+            .expectBody<String>()
             .returnResult()
             .responseBody!!
+
+        val tree = objectMapper.readTree(body)
+        if (tree is ObjectNode && (tree.get("isError") == null || tree.get("isError").isNull)) {
+            tree.put("isError", false)
+        }
+        return objectMapper.treeToValue(tree, MCPToolCallResponse::class.java)
     }
 
     private fun textContent(response: MCPToolCallResponse): String {
