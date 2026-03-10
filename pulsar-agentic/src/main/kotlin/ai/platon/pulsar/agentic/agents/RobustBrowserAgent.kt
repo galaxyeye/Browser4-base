@@ -353,35 +353,6 @@ open class RobustBrowserAgent(
         }
     }
 
-    protected suspend fun generateActions(context: ExecutionContext): ActionDescription {
-        context.screenshotB64 = if (context.step % config.screenshotEveryNSteps == 0) {
-            captureScreenshotWithRetry(context)
-        } else null
-
-        // Prepare messages for model
-        val messages = promptBuilder.buildMultistepAgentMessageListAll(context)
-
-        return try {
-            val actionDescription = cta.generate(messages, context)
-            requireNotNull(context.agentState.actionDescription) {
-                "Field should be set: context.agentState.actionDescription. " + "Step: ${context.step}, Instruction: ${
-                    context.instruction.take(
-                        50
-                    )
-                }. " + "This usually indicates a failure in the LLM response parsing."
-            }
-            circuitBreaker.recordSuccess(CircuitBreaker.FailureType.LLM_FAILURE)
-
-            actionDescription
-        } catch (e: Exception) {
-            handleObserveException(e, context)
-
-            ActionDescription(
-                context.instruction, context = context, exception = e, modelResponse = ModelResponse.INTERNAL_ERROR
-            )
-        }
-    }
-
     private fun handleObserveException(e: Exception, context: ExecutionContext) {
         val failures = try {
             circuitBreaker.recordFailure(CircuitBreaker.FailureType.LLM_FAILURE)

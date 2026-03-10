@@ -45,9 +45,9 @@ object InferencePromptBuilder {
         val messages = AgentMessageList()
 
         if (instruction.isNullOrBlank()) {
-            messages.addUser("对下述文本给出一个总结。")
+            messages.addUser("Provide a summary for the following text.")
         } else {
-            messages.addUser("根据用户指令，对下述文本给出一个总结。")
+            messages.addUser("Generate a summary of the following text based on the user's instructions.")
             messages.addUser("""<user_request>$instruction</user_request>""")
         }
         messages.addUser("\n\n$textContent\n\n".trimIndent())

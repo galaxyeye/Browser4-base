@@ -3,7 +3,7 @@ package ai.platon.pulsar.agentic.prompts
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.EXTRACTION_TOOL_NOTE_CONTENT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.TOOL_CALL_RULE_CONTENT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildResponseSchema
-import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.language
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.workingLanguage
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_COMPLETE_SCHEMA
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
@@ -140,7 +140,7 @@ fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
 
 ## Language
 
-- Default output language: **$language**
+- Default working language: **$workingLanguage**
 - Always reply in the same language as the user request.
 
 ---
