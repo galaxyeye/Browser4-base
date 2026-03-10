@@ -27,12 +27,17 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
-. $configScriptPath
+# ── resolve repo root ──────────────────────────────────────────────────────────
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot  = $ScriptDir
+while (-not (Test-Path (Join-Path $RepoRoot "VERSION")) -and $RepoRoot -ne [System.IO.Path]::GetPathRoot($RepoRoot)) {
+    $RepoRoot = Split-Path -Parent $RepoRoot
+}
+if (-not (Test-Path (Join-Path $RepoRoot "VERSION"))) {
+    Write-Error "ERROR: cannot find repo root"; exit 1
+}
 
-$RepoRoot = Get-WorkspaceRoot
-
-$TasksDir = Resolve-TasksPath '1created'
+$TasksDir = Join-Path $RepoRoot "coworker\tasks\1created"
 New-Item -ItemType Directory -Force -Path $TasksDir | Out-Null
 
 # ── helpers ────────────────────────────────────────────────────────────────────
@@ -121,16 +126,16 @@ function Fetch-Url {
         # Check if any existing task file contains this hash
         $existing = $false
         if (Test-Path $TasksDir) {
-             # Use efficient grep-like search
-             $files = Get-ChildItem -Path $TasksDir -Recurse -File
-             if ($files) {
-                 foreach ($file in $files) {
-                     if (Select-String -Path $file.FullName -Pattern $md5 -SimpleMatch -Quiet) {
-                         $existing = $true
-                         break
-                     }
-                 }
-             }
+            # Use efficient grep-like search
+            $files = Get-ChildItem -Path $TasksDir -Recurse -File
+            if ($files) {
+                foreach ($file in $files) {
+                    if (Select-String -Path $file.FullName -Pattern $md5 -SimpleMatch -Quiet) {
+                        $existing = $true
+                        break
+                    }
+                }
+            }
         }
 
         if ($existing) {
