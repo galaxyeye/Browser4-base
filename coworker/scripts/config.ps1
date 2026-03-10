@@ -97,4 +97,22 @@ function Resolve-TasksPath {
     return Resolve-CoworkerConfiguredPath -Path $RelativePath -BaseDirectory (Get-TasksRoot)
 }
 
+function Test-CoworkerPlaceholderFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$Item
+    )
+
+    return $Item.Name -eq '.gitkeep'
+}
+
+function Test-CoworkerPendingFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$Item
+    )
+
+    return -not $Item.PSIsContainer -and -not (Test-CoworkerPlaceholderFile -Item $Item)
+}
+
 $COPILOT = @($script:configData['COPILOT'])

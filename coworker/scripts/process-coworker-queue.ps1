@@ -8,6 +8,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
+
 function Get-RepoRoot {
     $currentDirectory = $PSScriptRoot
     while ($currentDirectory) {
@@ -31,8 +34,10 @@ function Test-HasPendingCoworkerTasks {
         [string]$RepoRoot
     )
 
-    $createdTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\1created') -File -ErrorAction SilentlyContinue
-    $approvedTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\5approved') -File -Recurse -ErrorAction SilentlyContinue
+    $createdTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\1created') -File -ErrorAction SilentlyContinue |
+        Where-Object { Test-CoworkerPendingFile -Item $_ }
+    $approvedTasks = Get-ChildItem -Path (Join-Path $RepoRoot 'coworker\tasks\5approved') -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { Test-CoworkerPendingFile -Item $_ }
     return [bool]($createdTasks -or $approvedTasks)
 }
 
@@ -248,4 +253,3 @@ while ($true) {
 
     Start-Sleep -Seconds $IntervalSeconds
 }
-

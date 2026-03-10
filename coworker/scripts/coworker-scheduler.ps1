@@ -60,10 +60,11 @@ function Test-PathHasPendingFiles {
     }
 
     if (-not $item.PSIsContainer) {
-        return $true
+        return Test-CoworkerPendingFile -Item $item
     }
 
     $pendingFile = Get-ChildItem -LiteralPath $item.FullName -File -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { Test-CoworkerPendingFile -Item $_ } |
         Select-Object -First 1
     return $null -ne $pendingFile
 }
@@ -388,7 +389,7 @@ if ($Once) {
         }
     } while ($runningCount -gt 0)
 
-    $failed = $taskStates.Values | Where-Object { $_.Enabled -and $_.LastExitCode -ne 0 }
+    $failed = $taskStates.Values | Where-Object { $_.Enabled -and $null -ne $_.LastExitCode -and $_.LastExitCode -ne 0 }
     exit $(if ($failed) { 1 } else { 0 })
 }
 

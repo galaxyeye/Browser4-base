@@ -24,9 +24,9 @@ while ($true) {
     if (Test-Path $scanPath) {
         $scanItem = Get-Item $scanPath
         if ($scanItem.PSIsContainer) {
-            $pendingFiles = @(Get-ChildItem -Path $scanItem.FullName -File)
+            $pendingFiles = @(Get-ChildItem -Path $scanItem.FullName -File | Where-Object { Test-CoworkerPendingFile -Item $_ })
         }
-        else {
+        elseif (Test-CoworkerPendingFile -Item $scanItem) {
             $pendingFiles = @($scanItem)
         }
     }
