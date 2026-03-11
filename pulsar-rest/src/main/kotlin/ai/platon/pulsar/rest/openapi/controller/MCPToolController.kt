@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -88,7 +89,7 @@ class MCPToolController(
         @RequestBody request: MCPToolCallRequest,
         response: HttpServletResponse
     ): ResponseEntity<MCPToolCallResponse> {
-        ControllerUtils.addRequestId(response)
+        addRequestId(response)
 
         return try {
             when (request.tool) {
@@ -115,7 +116,7 @@ class MCPToolController(
     fun listTools(
         response: HttpServletResponse
     ): ResponseEntity<Any> {
-        ControllerUtils.addRequestId(response)
+        addRequestId(response)
 
         val tools = listOf(
             // Session management
@@ -336,4 +337,8 @@ class MCPToolController(
 
     private fun errorResponse(message: String): MCPToolCallResponse =
         MCPToolCallResponse(content = listOf(MCPContent(text = "ERROR: $message")), isError = true)
+
+    private fun addRequestId(response: HttpServletResponse) {
+        response.addHeader("X-Request-Id", UUID.randomUUID().toString())
+    }
 }

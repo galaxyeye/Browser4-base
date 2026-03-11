@@ -19,17 +19,17 @@
  */
 package ai.platon.browser4.driver.chrome.impl
 
-import ai.platon.browser4.driver.chrome.impl.EventDispatcher
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.pulsar.common.ResourceLoader
+import ai.platon.pulsar.common.printlnPro
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 
-class ProtocolTest {
+class ProtocolAXTreeTest {
 
     @Test
-        @DisplayName("Given AXTree json then deserialize correctly by OBJECT_MAPPER")
+    @DisplayName("Given AXTree json then deserialize correctly by OBJECT_MAPPER")
     fun givenAxtreeJsonThenDeserializeCorrectlyByObjectMapper() {
         val mapper = EventDispatcher.OBJECT_MAPPER
         val json = ResourceLoader.readString("dom/AXTree.json")
@@ -41,13 +41,16 @@ class ProtocolTest {
     }
 
     @Test
-        @DisplayName("Given AXTree json then deserialize correctly by EventDispatcher")
-    fun givenAxtreeJsonThenDeserializeCorrectlyByEventdispatcher() {
+    @DisplayName("Given AXTree json then deserialize correctly by EventDispatcher")
+    fun givenAxtreeJsonThenDeserializeCorrectlyByEventDispatcher() {
         val mapper = EventDispatcher.OBJECT_MAPPER
-        val json = ResourceLoader.readString("dom/AXTree.json")
+        val dispatcher = EventDispatcher()
+        val str = ResourceLoader.readString("dom/AXTree.json")
+        val json = dispatcher.patchMessageForProtocolChange(str)
+        // printlnPro(this, json)
+
         val jsonNode = mapper.readTree(json)
         val jsonNodes = jsonNode.get("result").get("nodes")
-        val dispatcher = EventDispatcher()
         // Deserialize a List<AXNode> using the generic-aware overload
         @Suppress("UNCHECKED_CAST")
         val nodes = dispatcher.deserialize(arrayOf(AXNode::class.java), List::class.java, jsonNodes) as List<AXNode>
@@ -56,8 +59,8 @@ class ProtocolTest {
     }
 
     @Test
-        @DisplayName("Given AXTree json WITH BAD FIELDS then deserialize correctly by EventDispatcher")
-    fun givenAxtreeJsonWithBadFieldsThenDeserializeCorrectlyByEventdispatcher() {
+    @DisplayName("Given AXTree json WITH BAD FIELDS then deserialize correctly by EventDispatcher")
+    fun givenAxtreeJsonWithBadFieldsThenDeserializeCorrectlyByEventDispatcher() {
         val mapper = EventDispatcher.OBJECT_MAPPER
         val json = ResourceLoader.readString("dom/AXTree.json")
             .replace("uninteresting", "UNINTERESTINGREPLACEDFORTEST")

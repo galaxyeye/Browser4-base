@@ -40,11 +40,6 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
 
 $repoRoot = Get-WorkspaceRoot
 
-# Import common utility script
-. $repoRoot\bin\common\Util.ps1
-
-Fix-Encoding-UTF8
-
 $tasksRoot = Join-Path $repoRoot "coworker\tasks"
 $scriptsDir = $PSScriptRoot
 $ghCopilotHelper = Join-Path $scriptsDir "workers\gh-copilot.ps1"

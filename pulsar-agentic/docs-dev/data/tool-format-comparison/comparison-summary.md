@@ -13,8 +13,8 @@ This document compares two formats for describing Agent Tools in the system prom
 ## Full System Prompt Size
 | Format | Lines | Characters |
 |--------|-------|------------|
-| Kotlin | 280 | 8144 |
-| JSON | 569 | 13688 |
+| Kotlin | 256 | 8628 |
+| JSON | 545 | 14172 |
 
 ## Key Differences
 
@@ -55,7 +55,7 @@ Example:
 ## Recommendation
 
 For token-efficient LLM interactions, the **Kotlin format** is preferred as it uses
-41% fewer characters in the system prompt.
+40% fewer characters in the system prompt.
 
 For tool/function calling APIs that require JSON schemas, the **JSON format**
 provides better compatibility with OpenAI, Anthropic, and other providers' APIs.

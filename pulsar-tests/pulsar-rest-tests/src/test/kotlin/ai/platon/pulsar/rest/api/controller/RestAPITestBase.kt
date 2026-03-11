@@ -54,7 +54,7 @@ open class RestAPITestBase : IntegrationTestBase() {
     @BeforeEach
     fun setUp() {
         // wait for the mock EC server to be ready before running tests
-        assertThat(getJson("/health").body).contains("healthy")
+        assertThat(getJson("/actuator/health").body).contains("UP")
     }
 
     @Test
