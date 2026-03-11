@@ -2,6 +2,8 @@ package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
+import ai.platon.pulsar.agentic.inference.history.DefaultHistoryRenderStrategy
+import ai.platon.pulsar.agentic.inference.history.HistoryRenderStrategy
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_COMPLETE_SCHEMA
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA
 import ai.platon.pulsar.agentic.model.AgentHistory
@@ -24,7 +26,9 @@ import ai.platon.pulsar.common.serialize.json.Pson
  * - Produces structured fragments for system/user roles
  * - Minimizes extra text to steer LLM behavior
  */
-class PromptBuilder() {
+class PromptBuilder(
+    private val historyRenderStrategy: HistoryRenderStrategy = DefaultHistoryRenderStrategy()
+) {
 
     companion object {
         /**
@@ -427,47 +431,7 @@ $userInstructions
     }
 
     fun buildAgentStateHistoryMessage(agentHistory: AgentHistory): String {
-        val history = agentHistory.states
-        if (history.isEmpty()) {
-            return ""
-        }
-
-        val headingSize = 2
-        val tailingSize = 8
-        val totalSize = headingSize + tailingSize
-        val stateHistory = when {
-            history.size <= totalSize -> history
-            else -> history.take(headingSize) + history.takeLast(tailingSize)
-        }
-
-        val historyJsonl = stateHistory.joinToString("\n") {
-            Pson.toJson(
-                mapOf(
-                    "step" to it.step,
-                    "toolCall" to it.actionDescription?.pseudoExpression,
-                    "nextGoal" to it.nextGoal,
-                    "thinking" to it.thinking,
-                    "exception" to it.exception?.message,
-                    "summary" to it.summary,
-                    "keyFindings" to it.keyFindings
-                )
-            )
-        }
-
-        val msg = """
-## Execution History
-
-(showing up to $totalSize steps)
-
-<agent_history>
-$historyJsonl
-</agent_history>
-
----
-
-		""".trimIndent()
-
-        return msg
+        return historyRenderStrategy.render(agentHistory)
     }
 
     fun buildBrowserVisionInfo(): String {

@@ -145,6 +145,18 @@ class AgentToolExecutor constructor(
         return concreteExecutors.find { it.domain == domain }?.getToolSpecs()?.get(method)
     }
 
+    fun normalizeToolCall(tc: ToolCall): ToolCall {
+        val normalizedDomain = normalizeDomain(tc.domain)
+        val spec = getToolSpec(normalizedDomain, tc.method) ?: getToolSpec(tc.domain, tc.method)
+        val normalizedArguments = normalizeArguments(tc.arguments, spec)
+
+        if (normalizedDomain == tc.domain && normalizedArguments == tc.arguments) {
+            return tc
+        }
+
+        return tc.copy(domain = normalizedDomain, arguments = normalizedArguments)
+    }
+
     /**
      * Execute a tool call directly, bypassing the full [ActionDescription] lifecycle.
      *
@@ -157,26 +169,27 @@ class AgentToolExecutor constructor(
      */
     @Throws(UnsupportedOperationException::class)
     suspend fun executeToolCall(tc: ToolCall): TcEvaluate {
-        var topDomain = tc.domain.split(".").first()
+        val normalized = normalizeToolCall(tc)
+        var topDomain = normalized.domain.split(".").first()
         topDomain = domainAlias.getOrDefault(topDomain, topDomain)
         return when (topDomain) {
-            "driver" -> executor.callFunctionOn(tc, driver)
-            "browser" -> executor.callFunctionOn(tc, driver.browser)
-            "fs" -> executor.callFunctionOn(tc, fs)
-            "shell" -> executor.callFunctionOn(tc, shell)
-            "agent" -> executor.callFunctionOn(tc, agent)
-            "system" -> executor.callFunctionOn(tc, system)
-            "skill" -> executor.callFunctionOn(tc, skillTarget)
-            "mcp" -> executor.callFunctionOn(tc, Any())
+            "driver" -> executor.callFunctionOn(normalized, driver)
+            "browser" -> executor.callFunctionOn(normalized, driver.browser)
+            "fs" -> executor.callFunctionOn(normalized, fs)
+            "shell" -> executor.callFunctionOn(normalized, shell)
+            "agent" -> executor.callFunctionOn(normalized, agent)
+            "system" -> executor.callFunctionOn(normalized, system)
+            "skill" -> executor.callFunctionOn(normalized, skillTarget)
+            "mcp" -> executor.callFunctionOn(normalized, Any())
             else -> {
-                val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                val customExecutor = CustomToolRegistry.instance.get(normalized.domain)
                 if (customExecutor != null) {
-                    val target = _customTargets[tc.domain]
+                    val target = _customTargets[normalized.domain]
                         ?: throw UnsupportedOperationException(
-                            "Custom domain '${tc.domain}' is registered but no target object is available.")
-                    customExecutor.callFunctionOn(tc, target)
+                            "Custom domain '${normalized.domain}' is registered but no target object is available.")
+                    customExecutor.callFunctionOn(normalized, target)
                 } else {
-                    throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
+                    throw UnsupportedOperationException("Unsupported domain: ${normalized.domain}")
                 }
             }
         }
@@ -196,7 +209,7 @@ class AgentToolExecutor constructor(
         }
 
         try {
-            val tc = requireNotNull(actionDescription.toolCall) { "Tool call is required" }
+            val tc = normalizeToolCall(requireNotNull(actionDescription.toolCall) { "Tool call is required" })
 
             val topDomain = tc.domain.split(".").first()
             // First try built-in tool domains
@@ -307,5 +320,37 @@ class AgentToolExecutor constructor(
 """
 
         driver.waitUntil(5_000) { (driver.evaluateValue(expression) as? Boolean) == true }
+    }
+
+    private fun normalizeDomain(domain: String): String {
+        val parts = domain.split(".")
+        if (parts.isEmpty()) {
+            return domain
+        }
+
+        val topDomain = domainAlias.getOrDefault(parts.first(), parts.first())
+        return if (parts.size == 1) topDomain else listOf(topDomain).plus(parts.drop(1)).joinToString(".")
+    }
+
+    private fun normalizeArguments(arguments: Map<String, Any?>, spec: ToolSpec?): MutableMap<String, Any?> {
+        if (arguments.isEmpty() || spec == null) {
+            return arguments.toMutableMap()
+        }
+
+        val normalized = linkedMapOf<String, Any?>()
+
+        arguments.entries
+            .filter { it.key.toIntOrNull() == null }
+            .forEach { (key, value) -> normalized[key] = value }
+
+        arguments.entries
+            .mapNotNull { entry -> entry.key.toIntOrNull()?.let { it to entry.value } }
+            .sortedBy { it.first }
+            .forEach { (index, value) ->
+                val targetName = spec.arguments.getOrNull(index)?.name ?: index.toString()
+                normalized.putIfAbsent(targetName, value)
+            }
+
+        return normalized.toMutableMap()
     }
 }

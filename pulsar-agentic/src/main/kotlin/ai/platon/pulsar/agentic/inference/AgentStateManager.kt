@@ -60,7 +60,7 @@ class AgentStateManager(
     private val logger = getLogger(this)
 
     // for non-logback logs
-    private val auxRunLogDir: Path by lazy { getRunLogDir0() }
+    private val agentLogRootDir: Path by lazy { getRunLogDir0() }
 
     private val config get() = agent.config
     private val driver get() = agent.activeDriver as PulsarWebDriver
@@ -301,10 +301,12 @@ class AgentStateManager(
         // additional message appended to description
         val description = detailedActResult.description
 
+        context.agentState.actionDescription = detailedActResult.actionDescription
+        context.agentState.toolCallResult = toolCallResult
+
         updateAgentState(context, observeElement, toolCall, toolCallResult, description)
 
         writeActionResult(context, detailedActResult)
-        writeAgentState(context.agentState, context.sessionId)
     }
 
     fun updateAgentState(
@@ -320,6 +322,7 @@ class AgentStateManager(
 
         agentState.apply {
             step = computedStep
+            event = context.event
             domain = toolCall.domain
             method = toolCall.method
             this.description = description
@@ -333,6 +336,8 @@ class AgentStateManager(
 
             this.toolCallResult = toolCallResult
         }
+
+        writeAgentState(agentState, context.sessionId)
     }
 
     /**
@@ -341,6 +346,10 @@ class AgentStateManager(
     fun addToHistory(state: AgentState) {
         val history = _stateHistory.states
         synchronized(this) {
+            if (history.lastOrNull() === state) {
+                return
+            }
+
             history.add(state)
             if (history.size > config.maxHistorySize * 2) {
                 // Keep the latest maxHistorySize entries
@@ -348,6 +357,8 @@ class AgentStateManager(
                 history.clear()
                 history.addAll(remaining)
             }
+
+            writeHistory(state)
         }
     }
 
@@ -389,23 +400,26 @@ class AgentStateManager(
     fun writeExecutionContext(context: ExecutionContext) {
         val fileName = "context.log"
         val jsonFileName = "context.jsonl"
-        MessageWriter.writeOnce(auxRunLogDir.resolve(fileName), context.toString())
-        MessageWriter.writeOnce(auxRunLogDir.resolve(jsonFileName), context.toJson())
+        val runLogDir = resolveRunLogDir(context.sessionId)
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), context.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), context.toJson())
     }
 
     fun writeAgentState(state: AgentState, sessionId: String) {
         val fileName = "state.log"
         val jsonFileName = "state.jsonl"
-        MessageWriter.writeOnce(auxRunLogDir.resolve(fileName), state.toString())
-        MessageWriter.writeOnce(auxRunLogDir.resolve(jsonFileName), state.toJson())
+        val runLogDir = resolveRunLogDir(sessionId)
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), state.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), state.toJson())
     }
 
     fun writeActionResult(context: ExecutionContext, result: DetailedActResult) {
         val fileName = "result.log"
         val jsonFileName = "result.jsonl"
+        val runLogDir = resolveRunLogDir(context.sessionId)
 
-        MessageWriter.writeOnce(auxRunLogDir.resolve(fileName), result.toString())
-        MessageWriter.writeOnce(auxRunLogDir.resolve(jsonFileName), result.toJson())
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), result.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), result.toJson())
     }
 
     fun writeChatLog(step: Int, actionType: String, messageType: String, content: String, timestamp: Instant = Instant.now()) {
@@ -414,19 +428,29 @@ class AgentStateManager(
         val ts = formatter.format(timestamp)
 
         val fileName = "chat.$ts.$actionType.$messageType.log"
-        MessageWriter.writeOnce(auxRunLogDir.resolve(fileName), content)
+        val sessionId = _activeContext?.sessionId ?: "standalone"
+        MessageWriter.writeOnce(resolveRunLogDir(sessionId).resolve(fileName), content)
     }
 
     fun writeProcessTrace(trace: ProcessTrace) {
         val fileName = "agent-trace.log"
         val jsonFileName = "agent-trace.jsonl"
-        MessageWriter.writeOnce(auxRunLogDir.resolve(fileName), trace.toString())
-        MessageWriter.writeOnce(auxRunLogDir.resolve(jsonFileName), trace.toJson())
+        val sessionId = _activeContext?.sessionId ?: "standalone"
+        val runLogDir = resolveRunLogDir(sessionId)
+        MessageWriter.writeOnce(runLogDir.resolve(fileName), trace.toString())
+        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), trace.toJson())
     }
 
     fun writeAllProcessTrace() {
-        val path = auxRunLogDir.resolve("process_trace.log")
+        val sessionId = _activeContext?.sessionId ?: "standalone"
+        val path = resolveRunLogDir(sessionId).resolve("process_trace.log")
         MessageWriter.writeOnce(path, processTrace.joinToString("\n") { """🚩$it""" })
+    }
+
+    fun resolveRunLogDir(sessionId: String): Path {
+        val runLogDir = agentLogRootDir.resolve("task-$sessionId")
+        java.nio.file.Files.createDirectories(runLogDir)
+        return runLogDir
     }
 
     fun clearUpHistory(toRemove: Int) {
@@ -548,5 +572,12 @@ class AgentStateManager(
         val agentId = agent.uuid.toString()
         val auxLogDir = AppPaths.detectAuxiliaryLogDir().resolve("agent")
         return auxLogDir.resolve(AppPaths.fromTime(agent.startTime)).resolve(agentId)
+    }
+
+    private fun writeHistory(state: AgentState) {
+        val sessionId = _activeContext?.sessionId ?: return
+        val runLogDir = resolveRunLogDir(sessionId)
+        MessageWriter.writeOnce(runLogDir.resolve("history.log"), state.toString())
+        MessageWriter.writeOnce(runLogDir.resolve("history.jsonl"), state.toJson())
     }
 }

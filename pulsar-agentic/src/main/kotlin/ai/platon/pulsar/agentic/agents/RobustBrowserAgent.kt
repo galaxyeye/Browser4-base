@@ -7,7 +7,6 @@ import ai.platon.pulsar.agentic.inference.detail.*
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.DetailedActResult
-import ai.platon.pulsar.agentic.tools.util.ActionValidator
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.config.AppConstants
@@ -96,8 +95,6 @@ open class RobustBrowserAgent(
     // A dedicated scope for all agent work so close() can cancel promptly
     protected val agentJob = SupervisorJob()
     protected val agentScope = CoroutineScope(Dispatchers.Default + agentJob)
-
-    protected val actionValidator = ActionValidator()
 
     protected val stepExecutionTimes = ConcurrentHashMap<Int, Long>()
 
@@ -594,10 +591,11 @@ open class RobustBrowserAgent(
     protected fun persistTranscript(instruction: String, finalResp: ModelResponse, context: ExecutionContext) {
         runCatching {
             val ts = Instant.now().toEpochMilli()
-            val path = baseDir.resolve("session-${ts}.log")
+            val path = stateManager.resolveRunLogDir(context.sessionId).resolve("session-${ts}.log")
             slogger.info("🧾💾 Persisting execution transcript", context)
             val sb = StringBuilder()
             sb.appendLine("SESSION_ID: $uuid")
+            sb.appendLine("TASK_ID: ${context.sessionId}")
             sb.appendLine("TIMESTAMP: ${Instant.now()}")
             sb.appendLine("INSTRUCTION: $instruction")
             sb.appendLine("RESPONSE_STATE: ${finalResp.state}")
