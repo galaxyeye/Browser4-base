@@ -15,7 +15,7 @@ This module provides the Browser4 Agents application, which can be packaged as a
 mvnw clean package -DskipTests
 ```
 
-This creates `target/Browser4.jar` (~314MB), a fully executable Spring Boot application.
+This creates `target/Browser4.jar` (~314MB), a unified executable launcher.
 
 ### 2. Create Windows Application Image (Portable)
 
@@ -113,6 +113,8 @@ target/
 ### From JAR
 ```shell
 java -jar target/Browser4.jar
+java -jar target/Browser4.jar --app=agents --server.port=9090
+java -jar target/Browser4.jar --app=mcp
 ```
 
 ### From App-Image
@@ -128,7 +130,7 @@ Use the Start Menu shortcut or run from installation directory.
 The application runs on port 8182 by default. Configuration can be customized via:
 
 1. `application.properties` in the working directory
-2. Command line arguments: `Browser4.exe --server.port=9090`
+2. Command line arguments: `Browser4.exe --app=agents --server.port=9090` or `Browser4.exe --app=mcp`
 3. Environment variables
 
 See the main project README for detailed configuration options.

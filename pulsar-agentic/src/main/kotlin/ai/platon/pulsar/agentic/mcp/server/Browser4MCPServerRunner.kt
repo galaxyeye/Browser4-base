@@ -20,7 +20,7 @@ import kotlinx.io.buffered
  *
  * ### Direct invocation
  * ```bash
- * java -cp browser4-all.jar ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt
+ * java -jar Browser4.jar --app=mcp
  * ```
  *
  * ### Claude Desktop configuration (`claude_desktop_config.json`)
@@ -45,7 +45,11 @@ import kotlinx.io.buffered
  * 4. Blocks until the MCP client closes the connection (i.e. EOF on stdin).
  * 5. Shuts down the Pulsar context and closes the browser.
  */
-fun main() {
+fun runBrowser4MCPServer(args: Array<String> = emptyArray()) {
+    require(args.isEmpty()) {
+        "MCP mode does not accept application arguments: ${args.joinToString(" ")}"
+    }
+
     val logger = getLogger("Browser4MCPServerRunner")
     logger.info("Starting Browser4 MCP Server (STDIO transport)")
 
@@ -70,3 +74,5 @@ fun main() {
         AgenticContexts.shutdown()
     }
 }
+
+fun main(args: Array<String>) = runBrowser4MCPServer(args)

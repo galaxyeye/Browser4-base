@@ -26,4 +26,4 @@ function Fix-Encoding-UTF8 {
 
 Fix-Encoding-UTF8
 
-./Browser4.exe
+& (Join-Path $PSScriptRoot "Browser4.exe") @args

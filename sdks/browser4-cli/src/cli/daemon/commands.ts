@@ -75,7 +75,7 @@ const goto = declareCommand({
   args: z.object({
     url: z.string().describe('The URL to navigate to'),
   }),
-  toolName: 'browser_navigate',
+  toolName: 'navigate',
   toolParams: ({ url }) => ({ url }),
 });
 
@@ -84,7 +84,7 @@ const goBack = declareCommand({
   description: 'Go back to the previous page',
   category: 'navigation',
   args: z.object({}),
-  toolName: 'browser_navigate_back',
+  toolName: 'go_back',
   toolParams: () => ({}),
 });
 
@@ -93,7 +93,7 @@ const goForward = declareCommand({
   description: 'Go forward to the next page',
   category: 'navigation',
   args: z.object({}),
-  toolName: 'browser_navigate_forward',
+  toolName: 'go_forward',
   toolParams: () => ({}),
 });
 
@@ -102,7 +102,7 @@ const reload = declareCommand({
   description: 'Reload the current page',
   category: 'navigation',
   args: z.object({}),
-  toolName: 'browser_reload',
+  toolName: 'reload',
   toolParams: () => ({}),
 });
 
@@ -115,7 +115,7 @@ const pressKey = declareCommand({
   args: z.object({
     key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
   }),
-  toolName: 'browser_press_key',
+  toolName: 'press',
   toolParams: ({ key }) => ({ key }),
 });
 
@@ -129,7 +129,7 @@ const type = declareCommand({
   options: z.object({
     submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
   }),
-  toolName: 'browser_press_sequentially',
+  toolName: 'type',
   toolParams: ({ text, submit }) => ({ text, submit }),
 });
 
@@ -196,11 +196,11 @@ const mouseWheel = declareCommand({
   description: 'Scroll mouse wheel',
   category: 'mouse',
   args: z.object({
-    dx: numberArg.describe('Y delta'),
-    dy: numberArg.describe('X delta'),
+    dx: numberArg.describe('X delta'),
+    dy: numberArg.describe('Y delta'),
   }),
   toolName: 'browser_mouse_wheel',
-  toolParams: ({ dx: deltaY, dy: deltaX }) => ({ deltaY, deltaX }),
+  toolParams: ({ dx: deltaX, dy: deltaY }) => ({ deltaX, deltaY }),
 });
 
 // Core
@@ -216,8 +216,8 @@ const click = declareCommand({
   options: z.object({
     modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
   }),
-  toolName: 'browser_click',
-  toolParams: ({ ref, button, modifiers }) => ({ ref, button, modifiers }),
+  toolName: 'click',
+  toolParams: ({ ref: selector, button, modifiers }) => ({ selector, button, modifiers }),
 });
 
 const doubleClick = declareCommand({
@@ -231,8 +231,8 @@ const doubleClick = declareCommand({
   options: z.object({
     modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
   }),
-  toolName: 'browser_click',
-  toolParams: ({ ref, button, modifiers }) => ({ ref, button, modifiers, doubleClick: true }),
+  toolName: 'dblclick',
+  toolParams: ({ ref: selector, button, modifiers }) => ({ selector, button, modifiers }),
 });
 
 const drag = declareCommand({
@@ -243,8 +243,8 @@ const drag = declareCommand({
     startRef: z.string().describe('Exact source element reference from the page snapshot'),
     endRef: z.string().describe('Exact target element reference from the page snapshot'),
   }),
-  toolName: 'browser_drag',
-  toolParams: ({ startRef, endRef }) => ({ startRef, endRef }),
+  toolName: 'drag',
+  toolParams: ({ startRef: sourceSelector, endRef: targetSelector }) => ({ sourceSelector, targetSelector }),
 });
 
 const fill = declareCommand({
@@ -258,8 +258,8 @@ const fill = declareCommand({
   options: z.object({
     submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
   }),
-  toolName: 'browser_type',
-  toolParams: ({ ref, text, submit }) => ({ ref, text, submit }),
+  toolName: 'fill',
+  toolParams: ({ ref: selector, text, submit }) => ({ selector, text, submit }),
 });
 
 const hover = declareCommand({
@@ -269,8 +269,8 @@ const hover = declareCommand({
   args: z.object({
     ref: z.string().describe('Exact target element reference from the page snapshot'),
   }),
-  toolName: 'browser_hover',
-  toolParams: ({ ref }) => ({ ref }),
+  toolName: 'hover',
+  toolParams: ({ ref: selector }) => ({ selector }),
 });
 
 const select = declareCommand({
@@ -281,8 +281,8 @@ const select = declareCommand({
     ref: z.string().describe('Exact target element reference from the page snapshot'),
     val: z.string().describe('Value to select in the dropdown'),
   }),
-  toolName: 'browser_select_option',
-  toolParams: ({ ref, val: value }) => ({ ref, values: [value] }),
+  toolName: 'select_option',
+  toolParams: ({ ref: selector, val: value }) => ({ selector, values: [value] }),
 });
 
 const fileUpload = declareCommand({
@@ -292,7 +292,7 @@ const fileUpload = declareCommand({
   args: z.object({
     file: z.string().describe('The absolute paths to the files to upload'),
   }),
-  toolName: 'browser_file_upload',
+  toolName: 'upload',
   toolParams: ({ file }) => ({ paths: [file] }),
 });
 
@@ -303,8 +303,8 @@ const check = declareCommand({
   args: z.object({
     ref: z.string().describe('Exact target element reference from the page snapshot'),
   }),
-  toolName: 'browser_check',
-  toolParams: ({ ref }) => ({ ref }),
+  toolName: 'check',
+  toolParams: ({ ref: selector }) => ({ selector }),
 });
 
 const uncheck = declareCommand({
@@ -314,8 +314,8 @@ const uncheck = declareCommand({
   args: z.object({
     ref: z.string().describe('Exact target element reference from the page snapshot'),
   }),
-  toolName: 'browser_uncheck',
-  toolParams: ({ ref }) => ({ ref }),
+  toolName: 'uncheck',
+  toolParams: ({ ref: selector }) => ({ selector }),
 });
 
 const snapshot = declareCommand({
@@ -338,8 +338,10 @@ const evaluate = declareCommand({
     func: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
     ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
   }),
-  toolName: 'browser_evaluate',
-  toolParams: ({ func, ref }) => ({ function: func, ref }),
+  toolName: ({ ref }) => ref ? 'evaluate_value' : 'evaluate',
+  toolParams: ({ func, ref }) => ref
+    ? ({ selector: ref, functionDeclaration: func })
+    : ({ expression: func }),
 });
 
 const dialogAccept = declareCommand({
@@ -349,7 +351,7 @@ const dialogAccept = declareCommand({
   args: z.object({
     prompt: z.string().optional().describe('The text of the prompt in case of a prompt dialog.'),
   }),
-  toolName: 'browser_handle_dialog',
+  toolName: 'dialog_accept',
   toolParams: ({ prompt: promptText }) => ({ accept: true, promptText }),
 });
 
@@ -358,7 +360,7 @@ const dialogDismiss = declareCommand({
   description: 'Dismiss a dialog',
   category: 'core',
   args: z.object({}),
-  toolName: 'browser_handle_dialog',
+  toolName: 'dialog_dismiss',
   toolParams: () => ({ accept: false }),
 });
 
@@ -370,7 +372,7 @@ const resize = declareCommand({
     w: numberArg.describe('Width of the browser window'),
     h: numberArg.describe('Height of the browser window'),
   }),
-  toolName: 'browser_resize',
+  toolName: 'resize',
   toolParams: ({ w: width, h: height }) => ({ width, height }),
 });
 
@@ -392,8 +394,8 @@ const tabList = declareCommand({
   description: 'List all tabs',
   category: 'tabs',
   args: z.object({}),
-  toolName: 'browser_tabs',
-  toolParams: () => ({ action: 'list' }),
+  toolName: 'tab_list',
+  toolParams: () => ({}),
 });
 
 const tabNew = declareCommand({
@@ -403,8 +405,8 @@ const tabNew = declareCommand({
   args: z.object({
     url: z.string().optional().describe('The URL to navigate to in the new tab. If omitted, the new tab will be blank.'),
   }),
-  toolName: 'browser_tabs',
-  toolParams: ({ url }) => ({ action: 'new', url }),
+  toolName: 'tab_new',
+  toolParams: ({ url }) => ({ url }),
 });
 
 const tabClose = declareCommand({
@@ -414,8 +416,8 @@ const tabClose = declareCommand({
   args: z.object({
     index: numberArg.optional().describe('Tab index. If omitted, current tab is closed.'),
   }),
-  toolName: 'browser_tabs',
-  toolParams: ({ index }) => ({ action: 'close', index }),
+  toolName: 'tab_close',
+  toolParams: ({ index }) => ({ index }),
 });
 
 const tabSelect = declareCommand({
@@ -425,8 +427,8 @@ const tabSelect = declareCommand({
   args: z.object({
     index: numberArg.describe('Tab index'),
   }),
-  toolName: 'browser_tabs',
-  toolParams: ({ index }) => ({ action: 'select', index }),
+  toolName: 'tab_select',
+  toolParams: ({ index }) => ({ index }),
 });
 
 // Storage
@@ -687,8 +689,8 @@ const screenshot = declareCommand({
     filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
     ['full-page']: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport.'),
   }),
-  toolName: 'browser_take_screenshot',
-  toolParams: ({ ref, filename, ['full-page']: fullPage }) => ({ filename, ref, fullPage }),
+  toolName: 'screenshot',
+  toolParams: ({ ref, filename, ['full-page']: fullPage }) => ({ filename, selector: ref, fullPage }),
 });
 
 const pdfSave = declareCommand({
@@ -1031,7 +1033,12 @@ const supportedCommandsArray: AnyCommandSchema[] = [
     tabList,
     tabNew,
     tabClose,
-    tabSelect
+    tabSelect,
+
+    // session category
+    sessionList,
+    sessionCloseAll,
+    killAll,
 ]
 
 export const commands = Object.fromEntries(supportedCommandsArray.map(cmd => [cmd.name, cmd]));

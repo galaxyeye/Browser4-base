@@ -131,7 +131,7 @@ class MCPToolController(
             "text_content", "get_text", "delay",
             "aria_snapshot", "page_url", "page_title",
             "screenshot", "dblclick", "drag", "select_option",
-            "evaluate", "dialog_accept", "dialog_dismiss", "resize",
+            "evaluate", "evaluate_value", "dialog_accept", "dialog_dismiss", "resize",
             "keydown", "keyup",
             "mousemove", "mousedown", "mouseup", "mousewheel",
             // Browser tools

@@ -311,6 +311,7 @@ class MCPToolControllerTest {
             Triple("uncheck", "driver", "uncheck"),
             Triple("type", "driver", "type"),
             Triple("evaluate", "driver", "evaluate"),
+            Triple("evaluate_value", "driver", "evaluateValue"),
             Triple("dialog_accept", "driver", "dialog_accept"),
             Triple("dialog_dismiss", "driver", "dialog_dismiss"),
             Triple("resize", "driver", "resize"),

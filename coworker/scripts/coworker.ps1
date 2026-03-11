@@ -186,6 +186,72 @@ function Write-LogVerbose {
     $logEntry | Out-File -FilePath $scriptLogPath -Append -Encoding UTF8
 }
 
+function Read-TaskFileContent {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (!(Test-Path -Path $Path -PathType Leaf)) {
+        throw "Task file not found: $Path"
+    }
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -eq 0) {
+        return ""
+    }
+
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+        return [System.Text.Encoding]::UTF8.GetString($bytes, 3, $bytes.Length - 3)
+    }
+
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+        return [System.Text.Encoding]::Unicode.GetString($bytes, 2, $bytes.Length - 2)
+    }
+
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) {
+        return [System.Text.Encoding]::BigEndianUnicode.GetString($bytes, 2, $bytes.Length - 2)
+    }
+
+    $strictUtf8 = [System.Text.UTF8Encoding]::new($false, $true)
+    try {
+        return $strictUtf8.GetString($bytes)
+    } catch {
+        [System.Text.Encoding]::RegisterProvider([System.Text.CodePagesEncodingProvider]::Instance)
+
+        $candidateCodePages = @(
+            [System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ANSICodePage,
+            [Console]::InputEncoding.CodePage,
+            [Console]::OutputEncoding.CodePage
+        ) | Where-Object { $_ -gt 0 } | Select-Object -Unique
+
+        foreach ($codePage in $candidateCodePages) {
+            if ($codePage -eq 65001) {
+                continue
+            }
+
+            try {
+                return ([System.Text.Encoding]::GetEncoding($codePage)).GetString($bytes)
+            } catch {
+                Write-LogVerbose "Failed decoding $Path with code page ${codePage}: $_"
+            }
+        }
+
+        return [System.Text.Encoding]::UTF8.GetString($bytes)
+    }
+}
+
+function Convert-TaskFileToUtf8 {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [string]$Content
+    )
+
+    [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false))
+}
+
 function Ensure-DraftPlaceholders {
     param(
         [Parameter(Mandatory=$true)]
@@ -436,7 +502,8 @@ foreach ($taskRoot in $taskRoots) {
         $descriptiveName = ""
 
         # Read content for fallback title
-        $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+        $content = Read-TaskFileContent -Path $file.FullName
+        Convert-TaskFileToUtf8 -Path $file.FullName -Content $content
         $safeTitle = $file.BaseName -replace '[\\/*?:"<>|]', '_'
         if ([string]::IsNullOrWhiteSpace($safeTitle)) { $safeTitle = "task" }
 
