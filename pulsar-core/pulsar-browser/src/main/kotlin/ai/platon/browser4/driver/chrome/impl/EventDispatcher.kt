@@ -1,8 +1,6 @@
 package ai.platon.browser4.driver.chrome.impl
 
-import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException
-import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.getTracerOrNull
 import ai.platon.pulsar.common.printlnPro
@@ -15,8 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import kotlinx.coroutines.*
 import org.apache.commons.lang3.StringUtils
 import java.io.IOException
@@ -56,15 +52,6 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
         const val METHOD_PROPERTY = "method"
         const val PARAMS_PROPERTY = "params"
 
-        private val AX_PROPERTY_NAMES = setOf(
-            "valuemin", "readonly", "activedescendant", "level", "roledescription", "multiselectable",
-            "orientation", "valuemax", "selected", "relevant", "valuetext", "required", "root",
-            "editable", "checked", "autocomplete", "flowto", "hidden", "atomic", "settable", "owns",
-            "labelledby", "focusable", "controls", "focused", "expanded", "disabled", "errormessage",
-            "details", "describedby", "pressed", "live", "keyshortcuts", "haspopup", "invalid",
-            "busy", "modal", "hiddenroot", "multiline"
-        )
-
         val OBJECT_MAPPER = ObjectMapper()
             .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -80,7 +67,8 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
     private val eventListeners: ConcurrentHashMap<String, ConcurrentSkipListSet<DevToolsEventListener>> =
         ConcurrentHashMap()
 
-    private val eventDispatcherScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("EventDispatcher"))
+    private val eventDispatcherScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("EventDispatcher"))
 
     val isActive get() = !closed.get()
 
@@ -96,7 +84,8 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
             // {"requestId":"E0AFE9D2F80AEFDD9FC970FB33C9F88E","blockedCookies":[],"headers":{"Accept-Ranges":"bytes","Connection":"keep-alive","Content-Length":"9629","Content-Type":"text/html","Date":"Mon, 09 Mar 2026 07:33:09 GMT","Keep-Alive":"timeout=60","Last-Modified":"Wed, 11 Feb 2026 05:51:38 GMT"},"resourceIPAddressSpace":"Loopback","statusCode":200,"headersText":"HTTP/1.1 200\r\nLast-Modified: Wed, 11 Feb 2026 05:51:38 GMT\r\nAccept-Ranges: bytes\r\nContent-Type: text/html\r\nContent-Length: 9629\r\nDate: Mon, 09 Mar 2026 07:33:09 GMT\r\nKeep-Alive: timeout=60\r\nConnection: keep-alive\r\n\r\n","cookiePartitionKey":{"topLevelSite":"http://127.0.0.1","hasCrossSiteAncestor":false},"cookiePartitionKeyOpaque":false,"exemptedCookies":[]}
             // {"method":"Network.requestWillBeSentExtraInfo","params":{"requestId":"15224.2","associatedCookies":[],"connectTiming":{"requestTime":6489.538341},"clientSecurityState":{"initiatorIsSecureContext":true,"initiatorIPAddressSpace":"Loopback","privateNetworkRequestPolicy":"PermissionBlock"},"siteHasCookieInOtherPartition":false}}
             // InvalidFormatException: Cannot deserialize value of type `ai.platon.cdt.kt.protocol.types.network.IPAddressSpace` from String "Loopback": not one of the values accepted for Enum class: [Public, Unknown, Local, Private]
-            patched = patched.replace("\"initiatorIPAddressSpace\":\"Loopback\"", "\"initiatorIPAddressSpace\":\"Local\"")
+            patched =
+                patched.replace("\"initiatorIPAddressSpace\":\"Loopback\"", "\"initiatorIPAddressSpace\":\"Local\"")
         }
 
         // "resourceIPAddressSpace":"Loopback"
@@ -107,7 +96,10 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
         if (force || patched.contains("privateNetworkRequestPolicy")) {
             // {"requestId":"31040.2","associatedCookies":[],"connectTiming":{"requestTime":5541.737004},"clientSecurityState":{"initiatorIsSecureContext":true,"initiatorIPAddressSpace":"Local","privateNetworkRequestPolicy":"PermissionBlock"},"siteHasCookieInOtherPartition":false}
             // InvalidFormatException: Cannot deserialize value of type `ai.platon.cdt.kt.protocol.types.network.PrivateNetworkRequestPolicy` from String "PermissionBlock": not one of the values accepted for Enum class: [BlockFromInsecureToMorePrivate, Allow, WarnFromInsecureToMorePrivate]
-            patched = patched.replace("\"privateNetworkRequestPolicy\":\"PermissionBlock\"", "\"privateNetworkRequestPolicy\":\"Allow\"")
+            patched = patched.replace(
+                "\"privateNetworkRequestPolicy\":\"PermissionBlock\"",
+                "\"privateNetworkRequestPolicy\":\"Allow\""
+            )
         }
 
         if (force || patched.contains("AXPropertyName", ignoreCase = true)) {
@@ -130,12 +122,14 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
 
     @Throws(JsonProcessingException::class)
     fun serialize(id: Long, method: String, params: Map<String, Any>?, sessionId: String?): String {
-        return OBJECT_MAPPER.writeValueAsString(mapOf(
-            ID_PROPERTY to id,
-            METHOD_PROPERTY to method,
-            PARAMS_PROPERTY to params,
-            "sessionId" to sessionId
-        ))
+        return OBJECT_MAPPER.writeValueAsString(
+            mapOf(
+                ID_PROPERTY to id,
+                METHOD_PROPERTY to method,
+                PARAMS_PROPERTY to params,
+                "sessionId" to sessionId
+            )
+        )
     }
 
     @Throws(IOException::class)
@@ -357,7 +351,10 @@ class EventDispatcher : Consumer<String>, AutoCloseable {
             try {
                 listener.handler.onEvent(event)
             } catch (e: Exception) {
-                logger.warn("Failed to handle event, rethrow ChromeRPCException. Enable debug logging to see the stack trace | {}", e.message)
+                logger.warn(
+                    "Failed to handle event, rethrow ChromeRPCException. Enable debug logging to see the stack trace | {}",
+                    e.message
+                )
                 logger.debug("Failed to handle event", e)
                 // Let the exception throw again, they might be caught by RobustRPC, or somewhere else
                 throw ChromeRPCException("Failed to handle event | ${listener.key}, ${listener.paramType}", e)

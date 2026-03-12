@@ -96,10 +96,21 @@ data class ToolCall constructor(
             .joinToString { (k, v) -> "$k=" + Strings.doubleQuote(Strings.compactInline(v?.toString(), 20)) }
 
     @get:JsonIgnore
-    val weakTypeExpression: String get() = "$domain.${method}($weakTypeNamedArguments)"
+    val cliOptions
+        get() = arguments.entries
+            .joinToString { (k, v) -> "--$k=" + Strings.doubleQuote(Strings.compactInline(v?.toString(), 20)) }
 
     @get:JsonIgnore
+    val weakTypeExpression: String get() = "$domain.${method}($weakTypeNamedArguments)"
+
+    /**
+     * The pseudo expression, which is used for messages
+     * */
+    @get:JsonIgnore
     val pseudoExpression: String get() = "$domain.${method}($pseudoNamedArguments)"
+
+    @get:JsonIgnore
+    val cli: String get() = "$domain $method $cliOptions"
 
     override fun toString() = pseudoExpression
 }

@@ -36,52 +36,11 @@ import kotlin.reflect.full.isSuperclassOf
 open class BasicToolCallExecutor(
     val toolExecutors: List<ToolExecutor> = listOf(WebDriverToolExecutor(), BrowserToolExecutor())
 ) {
-    private val logger = getLogger(this)
-    private val engine = ScriptEngineManager().getEngineByExtension("kts")
-
-    /**
-     * Evaluate [expression].
-     *
-     * Slower and unsafe.
-     *
-     * ```kotlin
-     * eval("""driver.click("#submit")""", driver)
-     * ```
-     * */
-    fun eval(expression: String, driver: WebDriver): TcEvaluate {
-        return eval(expression, mapOf("driver" to driver))
-    }
-
-    fun eval(expression: String, browser: Browser): TcEvaluate {
-        return eval(expression, mapOf("browser" to browser))
-    }
-
-    fun eval(expression: String, agent: PerceptiveAgent): TcEvaluate {
-        return eval(expression, mapOf("agent" to agent))
-    }
-
-    fun eval(expression: String, variables: Map<String, Any>): TcEvaluate {
-        return try {
-            variables.forEach { (key, value) -> engine.put(key, value) }
-            val any = engine.eval(expression)
-            TcEvaluate(value = any, expression = expression)
-        } catch (e: Exception) {
-            logger.warn("Error eval expression: {} - {}", expression, e.stackTraceToString())
-            TcEvaluate(expression, e, EVAL_HELP)
-        }
-    }
-
     @Throws(UnsupportedOperationException::class)
     suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
         return toolExecutors
             .firstOrNull { it.targetClass.isSuperclassOf(target::class) }
             ?.callFunctionOn(tc, target)
             ?: throw UnsupportedOperationException("❓ Unsupported target ${target::class}")
-    }
-
-    companion object {
-        val EVAL_HELP = """
-Evaluate an Kotlin expression using ScriptEngineManager.
-        """.trimIndent()
     }
 }
