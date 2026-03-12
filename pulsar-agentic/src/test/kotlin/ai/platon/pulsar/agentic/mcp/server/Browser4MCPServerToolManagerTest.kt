@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic.mcp.server
 
 import ai.platon.pulsar.agentic.model.TcEvaluate
+import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
@@ -156,7 +157,7 @@ class Browser4MCPServerToolManagerTest {
     @Test
     @DisplayName("navigate tool handler routes call through AgentToolManager.executeToolCall")
     fun navigateToolRoutesCallThroughManager() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = null)
+        coEvery { toolManager.executeToolCall(any()) } returns toolCallResult(value = null)
 
         val tool = mcpServer.server.tools["navigate"]!!
         val request = buildRequest("navigate", mapOf("url" to "https://example.com"))
@@ -174,7 +175,7 @@ class Browser4MCPServerToolManagerTest {
     @Test
     @DisplayName("fs_write_string tool handler routes call through AgentToolManager.executeToolCall")
     fun fsWriteStringToolRoutesCallThroughManager() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "OK")
+        coEvery { toolManager.executeToolCall(any()) } returns toolCallResult(value = "OK")
 
         val tool = mcpServer.server.tools["fs_write_string"]!!
         val request = buildRequest("fs_write_string", mapOf("filename" to "out.txt", "content" to "hello"))
@@ -192,7 +193,7 @@ class Browser4MCPServerToolManagerTest {
     @Test
     @DisplayName("tool handler returns the result value from AgentToolManager")
     fun toolHandlerReturnsResultFromManager() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "navigated")
+        coEvery { toolManager.executeToolCall(any()) } returns toolCallResult(value = "navigated")
 
         val tool = mcpServer.server.tools["navigate"]!!
         val result = tool.handler(buildRequest("navigate", mapOf("url" to "https://example.com")))
@@ -222,7 +223,7 @@ class Browser4MCPServerToolManagerTest {
             expression = "driver.navigate(url=\"bad\")",
             cause = RuntimeException("navigation failed"),
         )
-        coEvery { toolManager.executeToolCall(any()) } returns evaluate
+        coEvery { toolManager.executeToolCall(any()) } returns toolCallResult(evaluate = evaluate)
 
         val tool = mcpServer.server.tools["navigate"]!!
         val result = tool.handler(buildRequest("navigate", mapOf("url" to "https://bad.url")))
@@ -273,4 +274,15 @@ class Browser4MCPServerToolManagerTest {
             )
         )
     }
+
+
+    private fun toolCallResult(value: Any? = null, evaluate: TcEvaluate? = null): ToolCallResult {
+        val resolvedEvaluate = evaluate ?: TcEvaluate(value = value)
+        return ToolCallResult(
+            success = resolvedEvaluate.exception == null,
+            evaluate = resolvedEvaluate,
+            message = resolvedEvaluate.exception?.message,
+        )
+    }
+
 }

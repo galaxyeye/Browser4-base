@@ -123,12 +123,13 @@ class Browser4MCPServer(
                     )
                     runCatching { toolManager.executeToolCall(tc) }
                         .fold(
-                            onSuccess = { evaluate ->
-                                val exc = evaluate.exception
+                            onSuccess = { result ->
+                                val evaluate = result.evaluate
+                                val exc = evaluate?.exception
                                 if (exc != null) {
                                     errorResult("$mcpName failed: ${exc.cause?.message ?: exc.expression}")
                                 } else {
-                                    textResult(evaluate.value?.toString() ?: "")
+                                    textResult(evaluate?.value?.toString() ?: "")
                                 }
                             },
                             onFailure = { errorResult("$mcpName failed: ${it.message}") }

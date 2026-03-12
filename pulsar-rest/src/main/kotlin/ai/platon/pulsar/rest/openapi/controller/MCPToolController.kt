@@ -223,11 +223,12 @@ class MCPToolController(
 
         return try {
             val result = agent.toolExtractor.executeToolCall(toolCall)
-            val exception = result.exception
+            val evaluate = result.evaluate
+            val exception = evaluate?.exception
             if (exception != null) {
                 ResponseEntity.ok(errorResponse("$toolName failed: ${exception.cause?.message} help: ${exception.help}"))
             } else {
-                ResponseEntity.ok(textResponse(result.toString()))
+                ResponseEntity.ok(textResponse(evaluate?.value?.toString() ?: ""))
             }
         } catch (e: Exception) {
             logger.error("MCP tool execution failed | tool={} | {}", toolName, e.message, e)

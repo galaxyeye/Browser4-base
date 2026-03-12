@@ -49,18 +49,6 @@ object AgenticEvents {
     }
 
     /**
-     * AgentEventBus event type constants for MCP (Model Context Protocol) events.
-     * Used with AgentEventBus.emitMCPEvent().
-     */
-    object MCPEventTypes {
-        const val ON_WILL_CALL_MCP = "mcp.onWillCallMCP"
-        const val ON_DID_CALL_MCP = "mcp.onDidCallMCP"
-        const val ON_MCP_CONNECTED = "mcp.onMCPConnected"
-        const val ON_MCP_DISCONNECTED = "mcp.onMCPDisconnected"
-        const val ON_MCP_ERROR = "mcp.onMCPError"
-    }
-
-    /**
      * AgentEventBus event type constants for skill execution events.
      * Used with AgentEventBus.emitSkillEvent().
      */

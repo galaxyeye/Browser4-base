@@ -4,8 +4,6 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import ai.platon.pulsar.agentic.common.AgentShell
-import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
-import ai.platon.pulsar.agentic.mcp.MCPToolExecutor
 import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.agentic.skills.SkillContext
 import ai.platon.pulsar.agentic.skills.SkillRegistry
@@ -51,13 +49,6 @@ class AgentToolExecutor constructor(
     val skillTarget: SkillToolTarget by lazy { SkillToolTarget(skillContext, SkillRegistry.instance) }
     val skills: SkillToolExecutor = SkillToolExecutor()
 
-    val mcpExecutors: List<MCPToolExecutor> by lazy {
-        val registry = MCPPluginRegistry.instance
-        registry.getRegisteredServers().mapNotNull { serverName ->
-            registry.getClientManager(serverName)?.let { MCPToolExecutor(it) }
-        }
-    }
-
     val domainAlias = mapOf(
         "driver" to "driver",
         "WebDriver" to "driver",
@@ -79,7 +70,7 @@ class AgentToolExecutor constructor(
             AgentToolExecutor(),
             system,
             skills
-        ) + mcpExecutors
+        )
     }
 
     val executor by lazy { BasicToolCallExecutor(concreteExecutors) }
@@ -180,7 +171,6 @@ class AgentToolExecutor constructor(
             "agent" -> executor.callFunctionOn(normalized, agent)
             "system" -> executor.callFunctionOn(normalized, system)
             "skill" -> executor.callFunctionOn(normalized, skillTarget)
-            "mcp" -> executor.callFunctionOn(normalized, Any())
             else -> {
                 val customExecutor = CustomToolRegistry.instance.get(normalized.domain)
                 if (customExecutor != null) {

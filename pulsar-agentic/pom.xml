@@ -39,15 +39,10 @@
             <artifactId>pulsar-protocol</artifactId>
         </dependency>
 
-        <!-- MCP SDK for plugin support -->
+        <!-- MCP SDK for Browser4 MCP server support -->
         <dependency>
             <groupId>io.modelcontextprotocol</groupId>
             <artifactId>kotlin-sdk-core-jvm</artifactId>
-            <version>0.8.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.modelcontextprotocol</groupId>
-            <artifactId>kotlin-sdk-client-jvm</artifactId>
             <version>0.8.1</version>
         </dependency>
         <dependency>
@@ -56,14 +51,11 @@
             <version>0.8.1</version>
         </dependency>
         <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-client-cio</artifactId>
+            <groupId>io.modelcontextprotocol</groupId>
+            <artifactId>kotlin-sdk-client-jvm</artifactId>
+            <version>0.8.1</version>
+            <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-serialization-kotlinx-json-jvm</artifactId>
-        </dependency>
-
         <!-- Observability: OpenTelemetry for distributed tracing -->
         <dependency>
             <groupId>io.opentelemetry</groupId>

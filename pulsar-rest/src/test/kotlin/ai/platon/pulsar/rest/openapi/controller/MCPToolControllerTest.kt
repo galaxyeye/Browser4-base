@@ -5,6 +5,7 @@ import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.model.TcEvaluate
+import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.rest.openapi.service.SessionManager
 import ai.platon.pulsar.rest.openapi.service.SessionManager.ManagedSession
@@ -236,7 +237,7 @@ class MCPToolControllerTest {
         )
         
         // Mock executeToolCall to return a value
-        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(TcEvaluate("My Page Title", null))
+        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("My Page Title"))
 
         val result = controller.callTool(request, response)
 
@@ -259,7 +260,7 @@ class MCPToolControllerTest {
             arguments = mapOf("sessionId" to sessionId, "index" to 1)
         )
         
-        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(TcEvaluate("ok", null))
+        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("ok"))
 
         val result = controller.callTool(request, response)
         assertEquals(HttpStatus.OK, result.statusCode)
@@ -391,7 +392,7 @@ class MCPToolControllerTest {
             arguments = mapOf("sessionId" to sessionId, "url" to "about:blank")
         )
         
-        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(TcEvaluate("ok", null))
+        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("ok"))
 
         val result = controller.callTool(request, response)
         assertEquals(HttpStatus.OK, result.statusCode)
@@ -412,7 +413,7 @@ class MCPToolControllerTest {
             arguments = mapOf("sessionId" to sessionId)
         )
         
-        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(TcEvaluate("[]", null))
+        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("[]"))
 
         val result = controller.callTool(request, response)
         assertEquals(HttpStatus.OK, result.statusCode)
@@ -433,7 +434,7 @@ class MCPToolControllerTest {
             arguments = mapOf("sessionId" to sessionId)
         )
         
-        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(TcEvaluate("ok", null))
+        `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("ok"))
 
         val result = controller.callTool(request, response)
         assertEquals(HttpStatus.OK, result.statusCode)
@@ -497,7 +498,16 @@ class MCPToolControllerTest {
         
         // Ensure executeToolCall returns success
         runBlocking {
-            `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(TcEvaluate("ok", null))
+            `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("ok"))
         }
+    }
+
+    private fun toolCallResult(value: Any? = null, evaluate: TcEvaluate? = null): ToolCallResult {
+        val resolvedEvaluate = evaluate ?: TcEvaluate(value = value)
+        return ToolCallResult(
+            success = resolvedEvaluate.exception == null,
+            evaluate = resolvedEvaluate,
+            message = resolvedEvaluate.exception?.message,
+        )
     }
 }
