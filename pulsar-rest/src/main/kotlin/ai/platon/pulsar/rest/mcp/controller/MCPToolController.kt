@@ -101,7 +101,7 @@ class MCPToolController(
                 "kill_all_sessions" -> handleKillAllSessions()
                 "delete_session_data" -> handleDeleteSessionData(request)
                 // All other tools are dispatched to the session's MCP Server
-                else -> dispatchToToolExtractor(request)
+                else -> dispatchToAgent(request)
             }
         } catch (e: Exception) {
             logger.error("MCP tool call failed | tool={} | {}", request.tool, e.message, e)
@@ -137,6 +137,7 @@ class MCPToolController(
             // Browser tools
             "switch_tab", "close_tab", "tab_list", "tab_new", "tab_close", "tab_select"
         )
+
         return ResponseEntity.ok(mapOf("tools" to tools))
     }
 
@@ -206,7 +207,7 @@ class MCPToolController(
      * This replaces the manual tool implementation by delegating to the central
      * tool registry in [AgentToolExecutor].
      */
-    private suspend fun dispatchToToolExtractor(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
+    private suspend fun dispatchToAgent(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
         val sessionId = requireSessionId(request)
         val managed = sessionManager.getSession(sessionId)
             ?: return ResponseEntity.ok(errorResponse("Session not found: $sessionId"))
