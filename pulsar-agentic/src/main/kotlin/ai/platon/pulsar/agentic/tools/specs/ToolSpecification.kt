@@ -6,7 +6,7 @@ object ToolSpecification {
      * The `TOOL_CALL_LIST` is written using kotlin syntax to express the tool's `domain`, `method`, `arguments`.
      * */
     const val TOOL_CALL_SPECIFICATION = """
-// domain: driver
+// domain: driver (WebDriver)
 driver.navigate(url: String)
 driver.reload()
 driver.goBack()

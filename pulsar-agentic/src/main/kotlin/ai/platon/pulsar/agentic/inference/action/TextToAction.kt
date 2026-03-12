@@ -201,6 +201,10 @@ open class TextToAction(
         val domain = toolCall.domain
         val method = toolCall.method
 
+//        if (domain != "driver" && domain != "WebDriver") {
+//            return observeElement
+//        }
+
         val locator = observeElement.locator
         val arguments = toolCall.arguments
 

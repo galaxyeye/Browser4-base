@@ -666,7 +666,6 @@ open class RobustBrowserAgent(
         val sid = context.sessionId
 
         require(action.isComplete) { "Required action.isComplete" }
-        // require(context.agentState.isComplete) { "Required context.agentState.isComplete" }
         context.agentState.also {
             it.isComplete = true
             it.summary = action.summary

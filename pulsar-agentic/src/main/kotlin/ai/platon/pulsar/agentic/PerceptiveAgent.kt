@@ -169,7 +169,7 @@ data class ObserveResult constructor(
     // internal
     val actionDescription: ActionDescription? = null,
 
-    // internal
+    // internal, always update before/after an action
     val agentState: AgentState
 )
 

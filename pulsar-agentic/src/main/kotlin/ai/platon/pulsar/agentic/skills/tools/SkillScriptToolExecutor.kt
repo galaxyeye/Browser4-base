@@ -1,4 +1,5 @@
 package ai.platon.pulsar.agentic.skills.tools
+
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.skills.DefinitionBackedSkill
 import ai.platon.pulsar.agentic.skills.SkillRegistry
@@ -8,6 +9,7 @@ import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationProvider
 import ai.platon.pulsar.common.getLogger
 import java.nio.file.Files
 import kotlin.reflect.KClass
+
 class SkillScriptToolExecutor(
     private val registry: SkillRegistry = SkillRegistry.instance,
 ) : AbstractToolExecutor(), ToolCallSpecificationProvider {

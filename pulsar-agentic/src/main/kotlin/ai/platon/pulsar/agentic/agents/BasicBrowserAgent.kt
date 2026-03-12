@@ -407,7 +407,11 @@ open class BasicBrowserAgent(
             return detail.toActResult()
         }
 
+        //////////////////////////////////////////////////////////
+        // EXECUTE THE TOOL CALL
+
         val result = toolExtractor.execute(toolCall)
+
         val exception = result.evaluate.exception?.cause
         val description = if (result.success) {
             "✅ direct command executed | ${enrichedToolCall.pseudoExpression}"
