@@ -238,7 +238,6 @@ open class BasicBrowserAgent(
             )
 
             val failedResult = ToolCallResult(
-                success = false,
                 evaluate = TcEvaluate(actionDescription.pseudoExpression ?: toolCall.pseudoExpression, e),
                 message = e.message,
                 actionDescription = actionDescription
@@ -386,7 +385,6 @@ open class BasicBrowserAgent(
         if (config.enablePreActionValidation && !actionValidator.validateToolCall(enrichedToolCall)) {
             val exception = IllegalArgumentException("Direct command validation failed: ${enrichedToolCall.pseudoExpression}")
             val result = ToolCallResult(
-                success = false,
                 evaluate = TcEvaluate(enrichedToolCall.pseudoExpression, exception),
                 message = exception.message,
                 actionDescription = actionDescription
