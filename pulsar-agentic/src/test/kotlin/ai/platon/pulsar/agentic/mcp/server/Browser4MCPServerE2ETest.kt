@@ -48,7 +48,7 @@ import java.io.PipedOutputStream
  * 3. `tools/call` request → response (success and error cases)
  *
  * The [AgentToolExecutor] is mocked: executor specs drive tool registration, and
- * [AgentToolExecutor.executeToolCall] is mocked to simulate tool execution results.
+ * [AgentToolExecutor.execute] is mocked to simulate tool execution results.
  *
  * ## Transport
  * Two `PipedInputStream`/`PipedOutputStream` pairs create a bidirectional channel:
@@ -259,7 +259,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("AgentToolManager exception propagates as isError=true over MCP")
     fun managerExceptionPropagatesAsErrorViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } throws RuntimeException("CDP disconnected")
+        coEvery { toolManager.execute(any()) } throws RuntimeException("CDP disconnected")
 
         val result = client.callTool("navigate", mapOf("url" to "https://example.com"))
         assertTrue(result.isError == true,
@@ -318,7 +318,7 @@ class Browser4MCPServerE2ETest {
         client.callTool("fill", mapOf("selector" to "input", "text" to "hello"))
 
         // Verify all calls went through executeToolCall
-        io.mockk.coVerify(exactly = 2) { toolManager.executeToolCall(any()) }
+        io.mockk.coVerify(exactly = 2) { toolManager.execute(any()) }
     }
 
 

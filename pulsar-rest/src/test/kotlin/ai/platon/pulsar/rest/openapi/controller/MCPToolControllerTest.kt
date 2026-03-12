@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
@@ -85,7 +84,7 @@ class MCPToolControllerTest {
             tool = "open_session",
             arguments = mapOf("url" to "https://example.com")
         )
-        
+
         val newSessionId = "new-session-id"
         val newManagedSession = Mockito.mock(ManagedSession::class.java)
         `when`(newManagedSession.sessionId).thenReturn(newSessionId)
@@ -165,7 +164,7 @@ class MCPToolControllerTest {
     @Test
     fun `test goto command maps to navigate`() = runBlocking {
         mockTool("driver", "navigate")
-        
+
         val request = MCPToolCallRequest(
             tool = "navigate",
             arguments = mapOf("sessionId" to sessionId, "url" to "https://example.com")
@@ -174,11 +173,11 @@ class MCPToolControllerTest {
         val result = controller.callTool(request, response)
 
         assertEquals(HttpStatus.OK, result.statusCode)
-        
+
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
-        
+
         assertEquals("driver", toolCall.domain)
         assertEquals("navigate", toolCall.method)
         assertEquals("https://example.com", toolCall.arguments["url"])
@@ -187,7 +186,7 @@ class MCPToolControllerTest {
     @Test
     fun `test click command`() = runBlocking {
         mockTool("driver", "click")
-        
+
         val request = MCPToolCallRequest(
             tool = "click",
             arguments = mapOf("sessionId" to sessionId, "selector" to "#btn")
@@ -196,9 +195,9 @@ class MCPToolControllerTest {
         val result = controller.callTool(request, response)
 
         assertEquals(HttpStatus.OK, result.statusCode)
-        
+
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("driver", toolCall.domain)
@@ -209,7 +208,7 @@ class MCPToolControllerTest {
     @Test
     fun `test fill command`() = runBlocking {
         mockTool("driver", "fill")
-        
+
         val request = MCPToolCallRequest(
             tool = "fill",
             arguments = mapOf("sessionId" to sessionId, "selector" to "#input", "text" to "text")
@@ -218,9 +217,9 @@ class MCPToolControllerTest {
         val result = controller.callTool(request, response)
 
         assertEquals(HttpStatus.OK, result.statusCode)
-        
+
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("driver", toolCall.domain)
@@ -235,7 +234,7 @@ class MCPToolControllerTest {
             tool = "page_title",
             arguments = mapOf("sessionId" to sessionId)
         )
-        
+
         // Mock executeToolCall to return a value
         `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("My Page Title"))
 
@@ -243,9 +242,9 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals("My Page Title", result.body!!.content[0].text)
-        
+
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("driver", toolCall.domain)
@@ -266,7 +265,7 @@ class MCPToolControllerTest {
         assertEquals(HttpStatus.OK, result.statusCode)
 
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("browser", toolCall.domain)
@@ -287,7 +286,7 @@ class MCPToolControllerTest {
         assertEquals(HttpStatus.OK, result.statusCode)
 
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("driver", toolCall.domain)
@@ -295,7 +294,7 @@ class MCPToolControllerTest {
         assertEquals("#a", toolCall.arguments["sourceSelector"])
         assertEquals("#b", toolCall.arguments["targetSelector"])
     }
-    
+
     @Test
     fun `test generic commands`() = runBlocking {
         val commands = listOf(
@@ -326,7 +325,7 @@ class MCPToolControllerTest {
 
         for ((tool, domain, method) in commands) {
             mockTool(domain, method)
-            
+
             val request = MCPToolCallRequest(
                 tool = tool,
                 arguments = mapOf("sessionId" to sessionId, "arg" to "val")
@@ -335,13 +334,13 @@ class MCPToolControllerTest {
             // Reset mocks for each iteration to avoid interference or strict stubbing issues
             Mockito.reset(agentToolExecutor)
             mockTool(domain, method) // Re-apply stubbing
-            
+
             val result = controller.callTool(request, response)
 
             assertEquals(HttpStatus.OK, result.statusCode, "Failed for tool: $tool")
-            
+
             val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-            Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+            Mockito.verify(agentToolExecutor).execute(capture(captor))
             val toolCall = captor.value
 
             assertEquals(domain, toolCall.domain)
@@ -376,7 +375,7 @@ class MCPToolControllerTest {
             assertEquals(HttpStatus.OK, result.statusCode, "Failed for tool: $tool")
 
             val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-            Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+            Mockito.verify(agentToolExecutor).execute(capture(captor))
             val toolCall = captor.value
 
             assertEquals("driver", toolCall.domain)
@@ -398,7 +397,7 @@ class MCPToolControllerTest {
         assertEquals(HttpStatus.OK, result.statusCode)
 
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("browser", toolCall.domain)
@@ -419,7 +418,7 @@ class MCPToolControllerTest {
         assertEquals(HttpStatus.OK, result.statusCode)
 
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("browser", toolCall.domain)
@@ -440,7 +439,7 @@ class MCPToolControllerTest {
         assertEquals(HttpStatus.OK, result.statusCode)
 
         val captor = ArgumentCaptor.forClass(ToolCall::class.java)
-        Mockito.verify(agentToolExecutor).executeToolCall(capture(captor))
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
         val toolCall = captor.value
 
         assertEquals("browser", toolCall.domain)
@@ -453,38 +452,38 @@ class MCPToolControllerTest {
             tool = "delete_session_data",
             arguments = mapOf("sessionId" to sessionId)
         )
-        
+
         val mockMutex = Mockito.mock(Mutex::class.java)
         `when`(managedSession.mutex).thenReturn(mockMutex)
-        
+
         // Mock lock/unlock
         `when`(mockMutex.lock(any())).thenReturn(Unit)
-        
+
         val mockDriver = Mockito.mock(WebDriver::class.java)
         `when`(managedSession.driver).thenReturn(mockDriver)
 
         val result = controller.callTool(request, response)
-        
+
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals("User data deleted for session", result.body!!.content[0].text)
-        
+
         Mockito.verify(mockDriver).clearBrowserCookies()
         Mockito.verify(mockDriver).evaluate("localStorage.clear(); sessionStorage.clear()")
         Unit
     }
-    
+
     @Test
     fun `test unknown tool returns error`() = runBlocking {
         val request = MCPToolCallRequest(
             tool = "unknown_tool",
             arguments = mapOf("sessionId" to sessionId)
         )
-        
+
         // Return empty specs so it's not found
         `when`(agentToolExecutor.getAllToolSpecs()).thenReturn(emptyMap())
 
         val result = controller.callTool(request, response)
-        
+
         assertEquals(HttpStatus.OK, result.statusCode)
         assertTrue(result.body!!.isError)
         assertTrue(result.body!!.content[0].text.contains("Unknown tool: unknown_tool"))
@@ -495,7 +494,7 @@ class MCPToolControllerTest {
             domain to mapOf(method to ToolSpec(domain = domain, method = method, description = "desc"))
         )
         `when`(agentToolExecutor.getAllToolSpecs()).thenReturn(toolSpecs)
-        
+
         // Ensure executeToolCall returns success
         runBlocking {
             `when`(agentToolExecutor.executeToolCall(anyToolCall())).thenReturn(toolCallResult("ok"))

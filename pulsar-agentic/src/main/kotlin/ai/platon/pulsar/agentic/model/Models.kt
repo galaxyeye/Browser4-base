@@ -162,14 +162,20 @@ data class TcEvaluate constructor(
 }
 
 data class ToolCallResult constructor(
-    val success: Boolean = false,
-    val evaluate: TcEvaluate? = null,
+    val evaluate: TcEvaluate,
     val message: String? = null,
     @JsonIgnore
     val actionDescription: ActionDescription? = null
 ) {
+    val success: Boolean get() = evaluate.exception != null
     val expression: String get() = actionDescription?.expression ?: ""
     val modelResponse: String? get() = actionDescription?.modelResponse?.content
+
+    companion object {
+        val NO_OP = ToolCallResult(
+            evaluate = TcEvaluate(description = "No operation performed")
+        )
+    }
 }
 
 data class ObserveElement constructor(

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
  *
  * These tests verify that:
  * - All expected MCP tools are registered based on executor tool specs from [AgentToolExecutor].
- * - Each tool handler routes its call through [AgentToolExecutor.executeToolCall].
+ * - Each tool handler routes its call through [AgentToolExecutor.execute].
  * - Each tool returns a non-error result when the manager succeeds.
  * - Each tool returns an error result (isError = true) when the manager throws or returns an exception.
  */
@@ -164,7 +164,7 @@ class Browser4MCPServerTest {
 
         assertFalse(result.isError == true, "Expected success result")
         coVerify(exactly = 1) {
-            toolManager.executeToolCall(match { tc ->
+            toolManager.execute(match { tc ->
                 tc.domain == "driver" && tc.method == "navigate" &&
                         tc.arguments["url"] == "https://example.com"
             })
@@ -182,7 +182,7 @@ class Browser4MCPServerTest {
 
         assertFalse(result.isError == true)
         coVerify(exactly = 1) {
-            toolManager.executeToolCall(match { tc ->
+            toolManager.execute(match { tc ->
                 tc.domain == "fs" && tc.method == "writeString" &&
                         tc.arguments["filename"] == "out.txt" && tc.arguments["content"] == "hello"
             })
@@ -209,7 +209,7 @@ class Browser4MCPServerTest {
     @Test
     @DisplayName("tool handler returns error when AgentToolManager throws")
     fun toolHandlerReturnsErrorOnManagerException() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } throws RuntimeException("driver crashed")
+        coEvery { toolManager.execute(any()) } throws RuntimeException("driver crashed")
 
         val tool = mcpServer.server.tools["navigate"]!!
         val result = tool.handler(buildRequest("navigate", mapOf("url" to "https://example.com")))

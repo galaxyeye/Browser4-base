@@ -28,7 +28,7 @@ internal class SessionActExecutor(
     private val toolCallExecutor = BasicToolCallExecutor(executors)
 
     suspend fun performAct(action: ActionDescription): ToolCallResult {
-        val toolCall = action.toolCall ?: return ToolCallResult(success = false, message = "no tool call")
+        val toolCall = action.toolCall ?: return ToolCallResult.NO_OP
 
         val evaluate = when (toolCall.domain) {
             "driver" -> toolCallExecutor.callFunctionOn(toolCall, driver)
@@ -37,7 +37,6 @@ internal class SessionActExecutor(
         }
 
         return ToolCallResult(
-            success = true,
             evaluate = evaluate,
             message = "performAct",
             actionDescription = action,
