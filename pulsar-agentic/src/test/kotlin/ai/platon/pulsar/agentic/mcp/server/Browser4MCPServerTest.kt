@@ -258,7 +258,6 @@ class Browser4MCPServerTest {
     private fun toolCallResult(value: Any? = null, evaluate: TcEvaluate? = null): ToolCallResult {
         val resolvedEvaluate = evaluate ?: TcEvaluate(value = value)
         return ToolCallResult(
-            success = resolvedEvaluate.exception == null,
             evaluate = resolvedEvaluate,
             message = resolvedEvaluate.exception?.message,
         )
