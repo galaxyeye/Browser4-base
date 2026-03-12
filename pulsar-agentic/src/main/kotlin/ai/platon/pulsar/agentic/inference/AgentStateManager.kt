@@ -238,8 +238,6 @@ class AgentStateManager(
         event: String,
         baseContext: ExecutionContext? = null
     ): ExecutionContext {
-        // val step = (baseContext?.step ?: -1) + 1
-
         val sessionId = baseContext?.sessionId ?: UUID.randomUUID().toString()
         val prevAgentState = baseContext?.agentState
         val currentAgentState = getAgentState(instruction, step, prevAgentState)
@@ -258,6 +256,7 @@ class AgentStateManager(
                 config = baseContext.config,
                 stateHistory = _stateHistory
             )
+
             writeExecutionContext(context)
             writeAgentState(currentAgentState, context.sessionId)
             return context

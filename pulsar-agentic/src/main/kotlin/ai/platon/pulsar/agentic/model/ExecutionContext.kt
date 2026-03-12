@@ -32,39 +32,6 @@ data class ExecutionContext constructor(
 
     val prevAgentState: AgentState? get() = agentState.prevState
 
-    fun createObserveParams(
-        options: ObserveOptions,
-        fromAct: Boolean,
-        resolve: Boolean
-    ): ObserveParams {
-        return ObserveParams(
-            context = this,
-            returnAction = options.returnAction ?: false,
-            logInferenceToFile = config.logInferenceToFile,
-            fromAct = fromAct,
-            multistep = resolve
-        )
-    }
-
-    fun createObserveActParams(resolve: Boolean): ObserveParams {
-        return ObserveParams(
-            context = this,
-            fromAct = true,
-            returnAction = true,
-            multistep = resolve,
-            logInferenceToFile = config.logInferenceToFile,
-        )
-    }
-
-    fun createExtractParams(schema: ExtractionSchema): ExtractParams {
-        return ExtractParams(
-            instruction = instruction,
-            agentState = agentState,
-            schema = schema,
-            requestId = uuid,
-        )
-    }
-
     fun toJson(): String {
         return Pson.toJson(this)
     }
@@ -72,4 +39,37 @@ data class ExecutionContext constructor(
     override fun toString(): String {
         return "step: $step, event: $event, targetUrl: $targetUrl, sessionId: $sessionId, instruction: $instruction"
     }
+}
+
+fun ExecutionContext.createObserveParams(
+    options: ObserveOptions,
+    fromAct: Boolean,
+    resolve: Boolean
+): ObserveParams {
+    return ObserveParams(
+        context = this,
+        returnAction = options.returnAction ?: false,
+        logInferenceToFile = config.logInferenceToFile,
+        fromAct = fromAct,
+        multistep = resolve
+    )
+}
+
+fun ExecutionContext.createObserveActParams(resolve: Boolean): ObserveParams {
+    return ObserveParams(
+        context = this,
+        fromAct = true,
+        returnAction = true,
+        multistep = resolve,
+        logInferenceToFile = config.logInferenceToFile,
+    )
+}
+
+fun ExecutionContext.createExtractParams(schema: ExtractionSchema): ExtractParams {
+    return ExtractParams(
+        instruction = instruction,
+        agentState = agentState,
+        schema = schema,
+        requestId = uuid,
+    )
 }
