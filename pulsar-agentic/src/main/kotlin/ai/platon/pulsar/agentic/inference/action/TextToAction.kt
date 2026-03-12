@@ -36,12 +36,12 @@ open class TextToAction(
     /**
      * Generate EXACT ONE WebDriver action with interactive elements.
      *
-     * @param actionDescriptions The action descriptions
+     * @param action The action descriptions
      * @param driver The driver to use to collect the context, such as interactive elements
      * @return The action description
      * */
     open suspend fun generateActions(
-        actionDescriptions: String, driver: WebDriver, screenshotB64: String? = null
+        action: String, driver: WebDriver, screenshotB64: String? = null
     ): List<ActionDescription> {
         require(driver is AbstractWebDriver)
         val snapshotService = requireNotNull(driver.snapshotService)
@@ -66,7 +66,7 @@ open class TextToAction(
         val promptTemplate = PromptTemplate(SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT)
         val message = promptTemplate.render(
             mapOf(
-                "ACTION_DESCRIPTIONS" to actionDescriptions,
+                "ACTION_DESCRIPTIONS" to action,
                 "TOOL_CALL_SPECIFICATION" to toolCallExpressions,
                 "ARIA_ACCESSIBILITY_TREE" to domState.ariaSnapshot,
                 "OUTPUT_SCHEMA_ACT" to buildObserveResultSchema(true),
@@ -88,7 +88,7 @@ open class TextToAction(
         val content = response.content
         val elements: ModelObserveResponseElements = mapper.readValue(content)
 
-        return toActionDescription(actionDescriptions, elements, agentState, response).toActionDescriptions()
+        return toActionDescription(action, elements, agentState, response).toActionDescriptions()
     }
 
     fun modelResponseToActionDescription(
