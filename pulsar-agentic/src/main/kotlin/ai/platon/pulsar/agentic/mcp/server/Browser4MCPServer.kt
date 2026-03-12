@@ -22,9 +22,7 @@ import kotlinx.serialization.json.JsonPrimitive
  *
  * Tools are discovered dynamically from the [AgentToolExecutor]'s registered executors and their
  * [ai.platon.pulsar.agentic.model.ToolSpec] metadata, keeping registration in sync with the
- * internal agent tool-call infrastructure
- * ([ai.platon.pulsar.agentic.agents.RobustBrowserAgent.executeToolCall] →
- * [AgentToolExecutor.execute]).
+ * internal agent tool-call infrastructure.
  *
  * @param toolManager The [AgentToolExecutor] to use for tool discovery and execution.
  * @param serverInfo MCP server identification (name and version).
@@ -102,7 +100,7 @@ class Browser4MCPServer(
     /**
      * Register all MCP tools by discovering executors and their [ToolSpec] metadata
      * from [toolManager]. Every tool handler routes its call through
-     * [AgentToolExecutor.executeToolCall], matching the internal agent execution path.
+     * [AgentToolExecutor.execute], matching the internal agent execution path.
      */
     private fun Server.registerToolsFromManager(toolManager: AgentToolExecutor) {
         for (executor in toolManager.concreteExecutors) {
@@ -121,9 +119,10 @@ class Browser4MCPServer(
                         method = method,
                         arguments = args.toMutableMap(),
                     )
-                    runCatching { toolManager.executeToolCall(tc) }
+                    runCatching { toolManager.execute(tc) }
                         .fold(
-                            onSuccess = { evaluate ->
+                            onSuccess = { result ->
+                                val evaluate = result.evaluate
                                 val exc = evaluate.exception
                                 if (exc != null) {
                                     errorResult("$mcpName failed: ${exc.cause?.message ?: exc.expression}")

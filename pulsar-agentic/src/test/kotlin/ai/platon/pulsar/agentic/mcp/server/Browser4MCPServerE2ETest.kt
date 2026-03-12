@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic.mcp.server
 
 import ai.platon.pulsar.agentic.model.TcEvaluate
+import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
@@ -47,7 +48,7 @@ import java.io.PipedOutputStream
  * 3. `tools/call` request → response (success and error cases)
  *
  * The [AgentToolExecutor] is mocked: executor specs drive tool registration, and
- * [AgentToolExecutor.executeToolCall] is mocked to simulate tool execution results.
+ * [AgentToolExecutor.execute] is mocked to simulate tool execution results.
  *
  * ## Transport
  * Two `PipedInputStream`/`PipedOutputStream` pairs create a bidirectional channel:
@@ -189,7 +190,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("navigate succeeds and returns result over full MCP protocol")
     fun navigateSucceedsViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "Navigated to https://example.com")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "Navigated to https://example.com"))
 
         val result = client.callTool("navigate", mapOf("url" to "https://example.com"))
         assertFalse(result.isError == true)
@@ -201,7 +202,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("current_url returns the URL result from AgentToolManager over MCP")
     fun currentUrlReturnsDriverUrlViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "https://example.com/page")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "https://example.com/page"))
 
         val result = client.callTool("current_url", emptyMap())
         assertFalse(result.isError == true)
@@ -212,7 +213,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("click succeeds and returns result over MCP")
     fun clickSucceedsViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "Clicked #submit-btn")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "Clicked #submit-btn"))
 
         val result = client.callTool("click", mapOf("selector" to "#submit-btn"))
         assertFalse(result.isError == true)
@@ -223,7 +224,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("get_text returns element text over MCP")
     fun getTextReturnsElementTextViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "Welcome")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "Welcome"))
 
         val result = client.callTool("get_text", mapOf("selector" to "h1"))
         assertFalse(result.isError == true)
@@ -234,7 +235,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("evaluate returns JavaScript result over MCP")
     fun evaluateReturnsJsResultViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "My Page Title")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "My Page Title"))
 
         val result = client.callTool("evaluate", mapOf("expression" to "document.title"))
         assertFalse(result.isError == true)
@@ -245,7 +246,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("reload succeeds over MCP")
     fun reloadSucceedsViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "Page reloaded")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "Page reloaded"))
 
         val result = client.callTool("reload", emptyMap())
         assertFalse(result.isError == true)
@@ -258,7 +259,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("AgentToolManager exception propagates as isError=true over MCP")
     fun managerExceptionPropagatesAsErrorViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } throws RuntimeException("CDP disconnected")
+        coEvery { toolManager.execute(any()) } throws RuntimeException("CDP disconnected")
 
         val result = client.callTool("navigate", mapOf("url" to "https://example.com"))
         assertTrue(result.isError == true,
@@ -272,7 +273,7 @@ class Browser4MCPServerE2ETest {
     @DisplayName("TcEvaluate with exception propagates as isError=true over MCP")
     fun evaluateExceptionPropagatesAsErrorViaMCP() = runBlocking {
         val evaluate = TcEvaluate(expression = "evaluate(expression=\"bad\")", cause = RuntimeException("SyntaxError"))
-        coEvery { toolManager.executeToolCall(any()) } returns evaluate
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(evaluate)
 
         val result = client.callTool("evaluate", mapOf("expression" to "{{bad"))
         assertTrue(result.isError == true)
@@ -285,9 +286,9 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("multiple sequential tool calls succeed over a single MCP connection")
     fun multipleSequentialCallsSucceedViaMCP() = runBlocking {
-        coEvery { toolManager.executeToolCall(match { it.method == "navigate" }) } returns TcEvaluate(value = "navigated")
-        coEvery { toolManager.executeToolCall(match { it.method == "getText" }) } returns TcEvaluate(value = "headline")
-        coEvery { toolManager.executeToolCall(match { it.method == "evaluate" }) } returns TcEvaluate(value = "42")
+        coEvery { toolManager.execute(match { it.method == "navigate" }) } returns ToolCallResult(TcEvaluate(value = "navigated"))
+        coEvery { toolManager.execute(match { it.method == "getText" }) } returns ToolCallResult(TcEvaluate(value = "headline"))
+        coEvery { toolManager.execute(match { it.method == "evaluate" }) } returns ToolCallResult(TcEvaluate(value = "42"))
 
         val nav = client.callTool("navigate", mapOf("url" to "https://example.com"))
         assertFalse(nav.isError == true, "navigate failed")
@@ -308,7 +309,7 @@ class Browser4MCPServerE2ETest {
     @Test
     @DisplayName("all tool calls route through AgentToolManager.executeToolCall with correct domain and method")
     fun allToolCallsRouteThroughManager() = runBlocking {
-        coEvery { toolManager.executeToolCall(any()) } returns TcEvaluate(value = "ok")
+        coEvery { toolManager.execute(any()) } returns ToolCallResult(TcEvaluate(value = "ok"))
 
         // Call navigate - should route to domain=driver, method=navigate
         client.callTool("navigate", mapOf("url" to "https://example.com"))
@@ -317,6 +318,6 @@ class Browser4MCPServerE2ETest {
         client.callTool("fill", mapOf("selector" to "input", "text" to "hello"))
 
         // Verify all calls went through executeToolCall
-        io.mockk.coVerify(exactly = 2) { toolManager.executeToolCall(any()) }
+        io.mockk.coVerify(exactly = 2) { toolManager.execute(any()) }
     }
 }

@@ -15,9 +15,7 @@ import ai.platon.pulsar.agentic.tools.builtin.*
 import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import java.nio.file.Path
 
 class AgentToolExecutor constructor(
@@ -168,7 +166,7 @@ class AgentToolExecutor constructor(
      * @return A [TcEvaluate] with the execution result or exception.
      */
     @Throws(UnsupportedOperationException::class)
-    suspend fun executeToolCall(tc: ToolCall): ToolCallResult {
+    suspend fun execute(tc: ToolCall): ToolCallResult {
         val normalized = normalizeToolCall(tc)
         var topDomain = normalized.domain.split(".").first()
         topDomain = domainAlias.getOrDefault(topDomain, topDomain)
@@ -197,42 +195,10 @@ class AgentToolExecutor constructor(
         return onDidToolCall(tc, evaluate)
     }
 
-    @Throws(UnsupportedOperationException::class)
-    suspend fun execute(actionDescription: ActionDescription, message: String? = null): ToolCallResult {
-        // Fast path: respect user interruption immediately
-        val cancelled = runCatching { !currentCoroutineContext().isActive }.getOrDefault(false)
-        if (cancelled) {
-            return ToolCallResult(
-                success = false,
-                evaluate = null,
-                message = "USER interrupted",
-                actionDescription = actionDescription,
-            )
-        }
-
-        try {
-            val tc = normalizeToolCall(requireNotNull(actionDescription.toolCall) { "Tool call is required" })
-
-            return executeToolCall(tc)
-        } catch (e: Exception) {
-            logger.warn("Failed to execute tool call | $actionDescription", e)
-
-            val ad = actionDescription
-            val expression = ad.pseudoExpression ?: ad.cssFriendlyExpression ?: ad.expression ?: ""
-            return ToolCallResult(
-                success = false,
-                evaluate = TcEvaluate(expression, e),
-                message = e.message,
-                actionDescription = actionDescription,
-            )
-        }
-    }
-
     private suspend fun onDidToolCall(
         tc: ToolCall, evaluate: TcEvaluate, actionDescription: ActionDescription? = null, message: String? = null
     ): ToolCallResult {
         val tcResult = ToolCallResult(
-            success = true,
             evaluate = evaluate,
             message = message,
             actionDescription = actionDescription,

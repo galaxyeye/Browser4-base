@@ -197,13 +197,14 @@ open class BasicBrowserAgent(
         val actionDescription =
             observe.actionDescription ?: return ActResultHelper.failed("No action description to act", instruction)
         val step = context.step
-        val toolCall = element.toolCall ?: return ActResultHelper.failed("No tool call to act", instruction)
+        val originalToolCall = element.toolCall ?: return ActResultHelper.failed("No tool call to act", instruction)
+        val toolCall = toolExtractor.normalizeToolCall(originalToolCall)
         val method = toolCall.method
 
         logger.info("🛠️ tool.exec sid={} step={} tool={}", context.sid, context.step, toolCall.pseudoExpression)
 
         return try {
-            val result = toolExtractor.execute(actionDescription, "resolve, #$step")
+            val result = toolExtractor.execute(toolCall)
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 
@@ -408,7 +409,7 @@ open class BasicBrowserAgent(
             return detail.toActResult()
         }
 
-        val result = toolExtractor.execute(actionDescription, "direct command")
+        val result = toolExtractor.execute(toolCall)
         val exception = result.evaluate?.exception?.cause
         val description = if (result.success) {
             "✅ direct command executed | ${enrichedToolCall.pseudoExpression}"

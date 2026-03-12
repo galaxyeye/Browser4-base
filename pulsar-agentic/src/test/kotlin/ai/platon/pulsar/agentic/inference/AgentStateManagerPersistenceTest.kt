@@ -4,21 +4,14 @@ import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
 import ai.platon.pulsar.agentic.agents.AgentConfig
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.inference.detail.PageStateTracker
-import ai.platon.pulsar.agentic.model.ActionDescription
-import ai.platon.pulsar.agentic.model.AgentHistory
-import ai.platon.pulsar.agentic.model.AgentState
-import ai.platon.pulsar.agentic.model.DetailedActResult
-import ai.platon.pulsar.agentic.model.ExecutionContext
-import ai.platon.pulsar.agentic.model.ObserveElement
-import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.model.ToolCallResult
+import ai.platon.pulsar.agentic.model.*
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 import kotlin.io.path.readText
 
 class AgentStateManagerPersistenceTest {
@@ -61,7 +54,7 @@ class AgentStateManagerPersistenceTest {
         )
         val detail = DetailedActResult(
             actionDescription = actionDescription,
-            toolCallResult = ToolCallResult(success = true, actionDescription = actionDescription),
+            toolCallResult = ToolCallResult.NO_OP,
             success = true,
             description = "Direct command persisted"
         )
