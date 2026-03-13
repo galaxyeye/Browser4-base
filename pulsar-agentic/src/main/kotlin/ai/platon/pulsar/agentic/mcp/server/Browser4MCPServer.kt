@@ -123,11 +123,11 @@ class Browser4MCPServer(
                         .fold(
                             onSuccess = { result ->
                                 val evaluate = result.evaluate
-                                val exc = evaluate?.exception
+                                val exc = evaluate.exception
                                 if (exc != null) {
                                     errorResult("$mcpName failed: ${exc.cause?.message ?: exc.expression}")
                                 } else {
-                                    textResult(evaluate?.value?.toString() ?: "")
+                                    textResult(evaluate.value?.toString() ?: "")
                                 }
                             },
                             onFailure = { errorResult("$mcpName failed: ${it.message}") }
@@ -142,11 +142,11 @@ class Browser4MCPServer(
     /**
      * Convert a domain + camelCase method name to a snake_case MCP tool name.
      *
-     * Driver and system domains use just the snake_case method name (no prefix).
+     * Tab and system domains use just the snake_case method name (no prefix).
      * All other domains prepend `{domain}_` to disambiguate.
      *
      * Examples:
-     * - driver.goBack     -> go_back
+     * - tab.goBack     -> go_back
      * - browser.switchTab -> browser_switch_tab
      * - fs.writeString    -> fs_write_string
      * - agent.extract     -> agent_extract
