@@ -27,6 +27,7 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
     @DisplayName("Get trees, build and serialize end-to-end with assertions")
     fun getTreesBuildAndSerializeEndToEndWithAssertions() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
+        driver.waitForSelector("h1")
         val devTools = driver.implementation as RemoteDevTools
         val service = CDPSnapshotService(devTools)
 
@@ -56,7 +57,12 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
         assertTrue(tinyTree.children.isNotEmpty())
 
         val domState = service.buildDOMState(tinyTree)
-        assertTrue(domState.ariaSnapshot.length > 100)
+        assertTrue(domState.ariaSnapshot.isNotBlank(), "Serialized aria snapshot should not be blank")
+        assertTrue(
+            domState.ariaSnapshot.contains("RootWebArea") &&
+                    domState.ariaSnapshot.contains("Dynamic Content Test"),
+            "Serialized aria snapshot should contain stable page content, actual:\n${domState.ariaSnapshot}"
+        )
         assertTrue(domState.selectorMap.isNotEmpty())
 
         val nanoTree = domState.microTree.toNanoTree()

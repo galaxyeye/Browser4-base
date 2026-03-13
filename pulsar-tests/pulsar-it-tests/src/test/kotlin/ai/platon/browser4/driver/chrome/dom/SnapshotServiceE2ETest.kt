@@ -41,6 +41,8 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
     @DisplayName("Given interactive page When collecting all trees Then get DOM AX and Snapshot with timings")
     fun testGetDomAxAndSnapshot() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
+        driver.waitForSelector("h1")
+        driver.bringToFront()
         val devTools = driver.implementation as RemoteDevTools
         val service = CDPSnapshotService(devTools)
 
@@ -56,18 +58,40 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
             includeInteractivity = true
         )
 
+        runCatching { devTools.runtime.evaluate("generateLargeList(100)") }
+        var hasVirtualItems = false
+        for (attempt in 0 until 30) {
+            hasVirtualItems = runCatching {
+                devTools.runtime.evaluate(
+                    "document.querySelectorAll('#virtualScrollContent [data-testid^=\"tta-virtual-\"]').length >= 3"
+                )
+            }.getOrNull()?.result?.value?.toString()?.equals("true", ignoreCase = true) == true
+            if (hasVirtualItems) {
+                break
+            }
+            if (attempt < 29) {
+                Thread.sleep(100)
+            }
+        }
+        assertTrue(hasVirtualItems, "Expected virtual list content to be rendered before snapshot collection")
+
         val trees = service.buildTargetTrees(target = PageTarget(), options = options)
         assertTrue(trees.devicePixelRatio > 0.1, "devicePixelRatio should be positive")
         assertTrue(trees.cdpTiming.isNotEmpty(), "cdpTiming should record phases")
 
-        val enhancedRoot = service.buildEnhancedDomTree(trees)
+        val enhancedRoot = collectEnhancedRoot(service, options)
         val simplified = service.buildTinyTree(enhancedRoot)
         val domState = service.buildDOMState(simplified)
 
         assertTrue { enhancedRoot.children.isNotEmpty() }
         kotlin.test.assertTrue { simplified.children.isNotEmpty() }
 
-        assertTrue(domState.ariaSnapshot.length > 50, "Serialized Aria Snapshot should not be trivial")
+        assertTrue(domState.ariaSnapshot.isNotBlank(), "Serialized Aria Snapshot should not be blank")
+        assertTrue(
+            domState.ariaSnapshot.contains("RootWebArea") &&
+                    domState.ariaSnapshot.contains("Dynamic Content Test"),
+            "Serialized Aria Snapshot should contain stable page content, actual:\n${domState.ariaSnapshot}"
+        )
         assertTrue(domState.selectorMap.isNotEmpty(), "Selector map should contain entries")
 
         // Probe a stable element
