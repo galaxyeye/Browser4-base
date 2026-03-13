@@ -1,7 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom.model
 
-import java.util.LinkedHashMap
-import java.util.Locale
+import java.util.*
 
 object AriaSnapshotRenderer {
     private val yamlKeywords = setOf("null", "true", "false", "~")
@@ -9,7 +8,10 @@ object AriaSnapshotRenderer {
 
     fun render(root: NanoDOMTreeNode): String {
         val lines = mutableListOf<String>()
-        toRenderNode(root)?.let { visitNode(it, "", lines) }
+        val renderNode = toRenderNode(root)
+        if (renderNode != null) {
+            visitNode(renderNode, "", lines)
+        }
         return lines.joinToString("\n")
     }
 

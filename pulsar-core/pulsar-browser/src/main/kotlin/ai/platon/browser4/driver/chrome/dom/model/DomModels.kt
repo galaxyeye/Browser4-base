@@ -3,10 +3,10 @@ package ai.platon.browser4.driver.chrome.dom.model
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.FBNLocator
 import ai.platon.browser4.driver.chrome.dom.LocatorMap
-import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper.Companion.estimatedSize
 import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import ai.platon.browser4.driver.chrome.dom.util.DOMUtils
 import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper
+import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper.Companion.estimatedSize
 import ai.platon.browser4.driver.chrome.dom.util.MicroToNanoTreeHelper
 import ai.platon.browser4.driver.common.BrowserSettings.Companion.VIEWPORT
 import ai.platon.pulsar.common.math.roundTo
@@ -70,7 +70,7 @@ object DefaultIncludeAttributes {
     val ATTRIBUTES = listOf(
         "title", "type", "checked", "id", "name", "role", "value",
         "placeholder", "data-date-format", "alt", "aria-label",
-        "href",
+        "href", "src", "action", "target", "rel", "download",
         "aria-expanded", "data-state", "aria-checked", "aria-valuemin",
         "aria-valuemax", "aria-valuenow", "aria-placeholder", "pattern",
         "min", "max", "minlength", "maxlength", "step", "pseudo",
@@ -555,50 +555,13 @@ data class NanoDOMTreeNode(
     val microTreeNode: MicroDOMTree? = null,
 ) {
     @get:JsonIgnore
-    val ariaSnapshot: String by lazy { AriaSnapshotRenderer.render(this) }
+    val ariaSnapshot: String get() = AriaSnapshotRenderer.render(this)
 
     @get:JsonIgnore
     val ref: Int get() = FBNLocator.parseRelaxed(locator)?.backendNodeId ?: 0
-
-    fun toPicoDOMTreeNode(): PicoDOMTreeNode {
-        return PicoDOMTreeNode(
-            ref = ref,
-            nodeName = nodeName,
-            nodeValue = nodeValue,
-            attributes = attributes,
-            children = children?.map { it.toPicoDOMTreeNode() }
-        )
-    }
 }
 
 typealias NanoDOMTree = NanoDOMTreeNode
-
-/**
- * Serializable DOMTreeNode structure.
- * Enhanced with compound component marking and paint order information.
- *
- * Naming conversion to compress the tree for LLM input:
- * mini -> tiny -> micro -> nano -> pico -> femto -> atto -> zepto -> yocto
- * */
-data class PicoDOMTreeNode(
-    val ref: Int,
-    val nodeName: String? = null,
-    val nodeValue: String? = null,
-    val attributes: Map<String, Any>? = null,
-    val children: List<PicoDOMTreeNode>? = null,
-) {
-    @get:JsonIgnore
-    val lazyJson: String by lazy { Pson.toJson(this) }
-
-    @get:JsonIgnore
-    val lazyYaml: String by lazy { Pson.toYaml(this) }
-
-    fun toJson() = lazyJson
-
-    fun toYaml() = lazyYaml
-}
-
-typealias PicoDOMTree = PicoDOMTreeNode
 
 data class DOMState constructor(
     val microTree: MicroDOMTree,
@@ -608,7 +571,7 @@ data class DOMState constructor(
     val locatorMap: LocatorMap = LocatorMap()
 ) {
     @get:JsonIgnore
-    val ariaSnapshot: String by lazy { microTree.toNanoTreeUnfiltered().ariaSnapshot }
+    val ariaSnapshot: String get() = microTree.toNanoTreeUnfiltered().ariaSnapshot
 
     fun getAbsoluteFBNLocator(locator: String?): FBNLocator? {
         if (locator == null) {

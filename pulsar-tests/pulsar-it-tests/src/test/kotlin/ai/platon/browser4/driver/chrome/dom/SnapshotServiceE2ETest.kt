@@ -115,7 +115,7 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         )
 
         writeMetrics(metrics)
-        writeSnapshot(enhancedRoot)
+        writeDOMTreeNodeEx(enhancedRoot)
         writeDOMState(domState)
     }
 
@@ -127,24 +127,27 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         logger.info("Metrics written | {}", path.toUri())
     }
 
-    private fun writeSnapshot(snapshot: DOMTreeNodeEx) {
-        val path = reportDir.resolve("snapshot-$ident.yaml")
+    private fun writeDOMTreeNodeEx(domTreeNode: DOMTreeNodeEx) {
+        val path = reportDir.resolve("snapshot-$ident.yml")
         path.parent.createDirectories()
-        Files.writeString(path, snapshot.toYaml())
+        Files.writeString(path, domTreeNode.toYaml())
 
-        logger.info("Snapshot written | {}", path.toUri())
+        logger.info("Dom tree node written | {}", path.toUri())
     }
 
     private fun writeDOMState(domState: DOMState) {
-        var path = reportDir.resolve("dom-state-micro-$ident.yaml")
+        var path = reportDir.resolve("dom-state-micro-$ident.yml")
         path.parent.createDirectories()
         Files.writeString(path, domState.microTree.toYaml())
         logger.info("Micro tree written | {}", path.toUri())
 
-        path = reportDir.resolve("dom-state-nano-$ident.yaml")
-        path.parent.createDirectories()
+        path = reportDir.resolve("dom-state-aria-snapshot-$ident.yml")
         Files.writeString(path, domState.ariaSnapshot)
-        logger.info("Nano tree written | {}", path.toUri())
+        logger.info("Aria snapshot written | {}", path.toUri())
+
+        path = reportDir.resolve("dom-state-nano-aria-snapshot-$ident.yml")
+        Files.writeString(path, domState.microTree.toNanoTree().ariaSnapshot)
+        logger.info("Aria snapshot written (nano) | {}", path.toUri())
     }
 
     private fun countDomNodes(root: DOMTreeNodeEx?): Int {

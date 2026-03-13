@@ -3,15 +3,14 @@ package ai.platon.browser4.driver.chrome.dom
 import ai.platon.browser4.driver.chrome.dom.model.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 
 class DOMStateBuilderTest {
     private val mapper = jacksonObjectMapper()
 
     @Test
-        @DisplayName("serialize filters attributes and populates selector map")
+    @DisplayName("serialize filters attributes and populates selector map")
     fun serializeFiltersAttributesAndPopulatesSelectorMap() {
         val childOriginal = DOMTreeNodeEx(
             nodeId = 2,
@@ -49,7 +48,7 @@ class DOMStateBuilderTest {
     }
 
     @Test
-        @DisplayName("serialize propagates scroll info only when helper allows it")
+    @DisplayName("serialize propagates scroll info only when helper allows it")
     fun serializePropagatesScrollInfoOnlyWhenHelperAllowsIt() {
         val scrollableNode = DOMTreeNodeEx(
             nodeId = 3,
@@ -84,7 +83,7 @@ class DOMStateBuilderTest {
     }
 
     @Test
-        @DisplayName("serialize with paint order pruning removes high paint order elements")
+    @DisplayName("serialize with paint order pruning removes high paint order elements")
     fun serializeWithPaintOrderPruningRemovesHighPaintOrderElements() {
         val highPaintOrderNode = DOMTreeNodeEx(
             nodeId = 4,
@@ -131,13 +130,16 @@ class DOMStateBuilderTest {
         // REVIEW CHANGE: shouldDisplay is null for pruned nodes (which means false), so it's omitted from JSON
         // Test that the field is either null or false to confirm pruned status
         val shouldDisplay = highPaintChild.get("shouldDisplay")
-        assertTrue(shouldDisplay == null || shouldDisplay.asBoolean() == false, "High paint order node should not be displayed")
+        assertTrue(
+            shouldDisplay == null || shouldDisplay.asBoolean() == false,
+            "High paint order node should not be displayed"
+        )
         // Note: paintOrder field is temporarily ignored due to serialization issues
         // assertEquals(true, highPaintChild.get("ignoredByPaintOrder").asBoolean(), "High paint order node should be marked as ignored")
     }
 
     @Test
-        @DisplayName("serialize detects compound components correctly")
+    @DisplayName("serialize detects compound components correctly")
     fun serializeDetectsCompoundComponentsCorrectly() {
         val listItem = DOMTreeNodeEx(
             nodeId = 6,
@@ -174,11 +176,15 @@ class DOMStateBuilderTest {
         val tree = mapper.readTree(json)
 
         val ulNode = tree.get("children").first()
-        assertEquals(true, ulNode.get("isCompoundComponent").asBoolean(), "UL with multiple children should be detected as compound component")
+        assertEquals(
+            true,
+            ulNode.get("isCompoundComponent").asBoolean(),
+            "UL with multiple children should be detected as compound component"
+        )
     }
 
     @Test
-        @DisplayName("serialize aligns attribute casing correctly")
+    @DisplayName("serialize aligns attribute casing correctly")
     fun serializeAlignsAttributeCasingCorrectly() {
         val node = DOMTreeNodeEx(
             nodeId = 7,
@@ -210,7 +216,7 @@ class DOMStateBuilderTest {
     }
 
     @Test
-        @DisplayName("serialize builds enhanced selector map with multiple keys")
+    @DisplayName("serialize builds enhanced selector map with multiple keys")
     fun serializeBuildsEnhancedSelectorMapWithMultipleKeys() {
         val node = DOMTreeNodeEx(
             nodeId = 8,
@@ -239,7 +245,7 @@ class DOMStateBuilderTest {
     }
 
     @Test
-        @DisplayName("serialize preserves original casing when configured")
+    @DisplayName("serialize preserves original casing when configured")
     fun serializePreservesOriginalCasingWhenConfigured() {
         val node = DOMTreeNodeEx(
             nodeId = 9,
@@ -256,12 +262,14 @@ class DOMStateBuilderTest {
         val json = DOMSerializer.toJson(result.microTree)
         val tree = mapper.readTree(json)
 
-        assertEquals("CustomElement", tree.get("originalNode").get("nodeName").asText(),
-            "Original casing should be preserved when configured")
+        assertEquals(
+            "CustomElement", tree.get("originalNode").get("nodeName").asText(),
+            "Original casing should be preserved when configured"
+        )
     }
 
     @Test
-        @DisplayName("serialize handles deep tree end-to-end")
+    @DisplayName("serialize handles deep tree end-to-end")
     fun serializeHandlesDeepTreeEndToEnd() {
         val levels = 30
 
@@ -304,7 +312,10 @@ class DOMStateBuilderTest {
 
         // Ensure selector map contains all element hash keys
         for (i in 1..levels) {
-            assertTrue(result.selectorMap.containsKey("hash:node-$i"), "selectorMap should contain element hash for node-$i")
+            assertTrue(
+                result.selectorMap.containsKey("hash:node-$i"),
+                "selectorMap should contain element hash for node-$i"
+            )
         }
     }
 
@@ -439,9 +450,8 @@ class DOMStateBuilderTest {
         assertTrue(ariaSnapshot.contains("- /url: https://example.com"))
     }
 
-    @Disabled("Feature disabled temporarily")
     @Test
-        @DisplayName("test href and navigation attributes are preserved in NanoDOMTree")
+    @DisplayName("test href and navigation attributes are preserved in NanoDOMTree")
     fun testHrefAndNavigationAttributesArePreservedInNanoDOMTree() {
         // Create an anchor node with href attribute
         val anchorNode = DOMTreeNodeEx(
