@@ -6,7 +6,7 @@ import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.tools.BasicToolCallExecutor
 import ai.platon.pulsar.agentic.tools.builtin.BrowserToolExecutor
-import ai.platon.pulsar.agentic.tools.builtin.WebDriverToolExecutor
+import ai.platon.pulsar.agentic.tools.builtin.BrowserTabToolExecutor
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 
@@ -22,7 +22,7 @@ internal class SessionActExecutor(
     )
 
     private val executors = listOf(
-        WebDriverToolExecutor(),
+        BrowserTabToolExecutor(),
         BrowserToolExecutor()
     )
     private val toolCallExecutor = BasicToolCallExecutor(executors)

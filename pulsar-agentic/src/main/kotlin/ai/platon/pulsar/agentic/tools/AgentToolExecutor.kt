@@ -62,7 +62,7 @@ class AgentToolExecutor constructor(
 
     val concreteExecutors: List<ToolExecutor> by lazy {
         listOf(
-            WebDriverToolExecutor(),
+            BrowserTabToolExecutor(),
             BrowserToolExecutor(),
             FileSystemToolExecutor(),
             ShellToolExecutor(),

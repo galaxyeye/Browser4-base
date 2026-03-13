@@ -4,7 +4,7 @@ import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.builtin.BrowserToolExecutor
 import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
-import ai.platon.pulsar.agentic.tools.builtin.WebDriverToolExecutor
+import ai.platon.pulsar.agentic.tools.builtin.BrowserTabToolExecutor
 import kotlin.reflect.full.isSuperclassOf
 
 /**
@@ -29,7 +29,7 @@ import kotlin.reflect.full.isSuperclassOf
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
  */
 open class BasicToolCallExecutor(
-    val toolExecutors: List<ToolExecutor> = listOf(WebDriverToolExecutor(), BrowserToolExecutor())
+    val toolExecutors: List<ToolExecutor> = listOf(BrowserTabToolExecutor(), BrowserToolExecutor())
 ) {
     @Throws(UnsupportedOperationException::class)
     suspend fun callFunctionOn(tc: ToolCall, receiver: Any): TcEvaluate {
