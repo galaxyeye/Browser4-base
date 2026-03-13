@@ -7,7 +7,7 @@ import java.time.Duration
 import kotlin.reflect.KClass
 
 class BrowserTabToolExecutor: AbstractToolExecutor() {
-    override val domain = "driver"
+    override val domain = "tab"
 
     override val receiverClass: KClass<*> = WebDriver::class
 
