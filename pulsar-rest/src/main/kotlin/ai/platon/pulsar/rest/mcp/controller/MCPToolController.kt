@@ -55,8 +55,7 @@ data class MCPContent(
  * through a simple REST endpoint instead of STDIO.
  *
  * Session management tools (open_session, close_session, list_sessions, etc.)
- * are handled directly by this controller.  All other tools are dispatched to
- * a per-session [Browser4MCPServer] instance that wraps the session's WebDriver.
+ * are handled directly by this controller.
  */
 @RestController
 @CrossOrigin
