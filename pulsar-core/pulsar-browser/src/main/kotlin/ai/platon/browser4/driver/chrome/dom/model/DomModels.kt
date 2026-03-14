@@ -308,11 +308,11 @@ data class MergedDOMTreeNode constructor(
 typealias MergedDOMTree = MergedDOMTreeNode
 
 /**
- * Enhanced and simplified node for LLM serialization.
+ * An optimized DOM tree.
  */
-data class EnhancedDOMTreeNode(
+data class OptimizedDOMTreeNode(
     val originalNode: MergedDOMTreeNode,
-    val children: List<EnhancedDOMTreeNode> = emptyList(),
+    val children: List<OptimizedDOMTreeNode> = emptyList(),
     val shouldDisplay: Boolean = true,
     val interactiveIndex: Int? = null,
     val isNew: Boolean = false,
@@ -322,7 +322,7 @@ data class EnhancedDOMTreeNode(
     val isCompoundComponent: Boolean = false
 )
 
-typealias EnhancedDOMTree = EnhancedDOMTreeNode
+typealias OptimizedDOMTree = OptimizedDOMTreeNode
 
 /**
  * DOM interacted element for agent interaction.
@@ -565,7 +565,7 @@ data class DOMState constructor(
     val selectorMap: Map<String, MergedDOMTreeNode> = mapOf(),
     val locatorMap: LocatorMap = LocatorMap(),
     @get:JsonIgnore
-    val enhancedTree: EnhancedDOMTree? = null
+    val enhancedTree: OptimizedDOMTree? = null
 ) {
     @get:JsonIgnore
     val ariaSnapshot: String get() = enhancedTree?.let(AriaSnapshotRenderer::render)

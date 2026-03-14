@@ -3,11 +3,11 @@ package ai.platon.browser4.driver.chrome.dom.model
 import java.util.Locale
 
 object AriaSnapshotRenderer {
-    fun render(root: EnhancedDOMTreeNode): String {
+    fun render(root: OptimizedDOMTreeNode): String {
         return AriaSnapshotFormatting.render(toRenderChildren(root))
     }
 
-    private fun toRenderChildren(node: EnhancedDOMTreeNode): List<AriaSnapshotFormatting.RenderChild> {
+    private fun toRenderChildren(node: OptimizedDOMTreeNode): List<AriaSnapshotFormatting.RenderChild> {
         val original = node.originalNode
         if (isTextNode(original)) {
             return AriaSnapshotFormatting.normalizeText(original.nodeValue)
@@ -49,7 +49,7 @@ object AriaSnapshotRenderer {
     }
 
     private fun renderProps(
-        node: EnhancedDOMTreeNode,
+        node: OptimizedDOMTreeNode,
         role: String,
         accessibleName: String?
     ): LinkedHashMap<String, String> {
@@ -86,7 +86,7 @@ object AriaSnapshotRenderer {
         return props
     }
 
-    private fun accessibleName(node: EnhancedDOMTreeNode): String? {
+    private fun accessibleName(node: OptimizedDOMTreeNode): String? {
         val original = node.originalNode
         val role = role(node)
         return AriaSnapshotFormatting.normalizeText(
@@ -97,11 +97,11 @@ object AriaSnapshotRenderer {
         )
     }
 
-    private fun level(node: EnhancedDOMTreeNode): String? {
+    private fun level(node: OptimizedDOMTreeNode): String? {
         return rawState(node, "level", "aria-level")?.trim()?.takeIf { it.isNotEmpty() }
     }
 
-    private fun role(node: EnhancedDOMTreeNode): String? {
+    private fun role(node: OptimizedDOMTreeNode): String? {
         val role = node.originalNode.axNode?.role?.trim()
             ?: node.originalNode.attributes["role"]?.trim()
         return when {
@@ -111,12 +111,12 @@ object AriaSnapshotRenderer {
         }
     }
 
-    private fun rawState(node: EnhancedDOMTreeNode, propertyName: String, attributeName: String): String? {
+    private fun rawState(node: OptimizedDOMTreeNode, propertyName: String, attributeName: String): String? {
         val attributes = node.originalNode.attributes
         return axProperties(node)[propertyName] ?: attributes[propertyName] ?: attributes[attributeName]
     }
 
-    private fun axProperties(node: EnhancedDOMTreeNode): LinkedHashMap<String, String> {
+    private fun axProperties(node: OptimizedDOMTreeNode): LinkedHashMap<String, String> {
         val properties = linkedMapOf<String, String>()
         node.originalNode.axNode?.properties.orEmpty().forEach { property ->
             val name = property.name.trim().lowercase(Locale.ROOT)

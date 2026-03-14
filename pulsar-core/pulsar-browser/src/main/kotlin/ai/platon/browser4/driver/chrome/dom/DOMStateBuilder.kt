@@ -41,7 +41,7 @@ object DOMStateBuilder {
      * @return The compact DOM state containing the serialized micro tree plus lookup metadata
      */
     fun build(
-        root: EnhancedDOMTreeNode,
+        root: OptimizedDOMTreeNode,
         includeAttributes: List<String> = emptyList(),
         options: CompactOptions = CompactOptions()
     ): DOMState {
@@ -89,7 +89,7 @@ object DOMStateBuilder {
         }
     }
 
-    private fun collectFrameIds(root: EnhancedDOMTreeNode, frameIds: MutableSet<String>) {
+    private fun collectFrameIds(root: OptimizedDOMTreeNode, frameIds: MutableSet<String>) {
         root.originalNode.frameId?.let { frameIds.add(it) }
         root.children.forEach {
             collectFrameIds(it, frameIds)
@@ -97,9 +97,9 @@ object DOMStateBuilder {
     }
 
     // Find the top-level HTML node's client height to use as viewport height
-    private fun findTopLevelViewportHeight(root: EnhancedDOMTreeNode): Double? {
+    private fun findTopLevelViewportHeight(root: OptimizedDOMTreeNode): Double? {
         var height: Double? = null
-        fun dfs(n: EnhancedDOMTreeNode) {
+        fun dfs(n: OptimizedDOMTreeNode) {
             if (height != null) return
             val o = n.originalNode
             if (o.nodeName.equals("HTML", ignoreCase = true)) {
@@ -136,7 +136,7 @@ object DOMStateBuilder {
      * agent-facing representation.
      */
     private fun buildMicroDOMTree(
-        node: EnhancedDOMTreeNode,
+        node: OptimizedDOMTreeNode,
         includeAttributes: Set<String>,
         ancestors: List<MergedDOMTreeNode>,
         locatorMap: LocatorMap,
@@ -209,7 +209,7 @@ object DOMStateBuilder {
     /**
      * Determine if a node should be pruned based on paint order.
      */
-    private fun shouldPruneByPaintOrder(node: EnhancedDOMTreeNode, options: CompactOptions): Boolean {
+    private fun shouldPruneByPaintOrder(node: OptimizedDOMTreeNode, options: CompactOptions): Boolean {
         val paintOrder = node.originalNode.snapshotNode?.paintOrder ?: return false
         return paintOrder > options.maxPaintOrderThreshold
     }
@@ -217,7 +217,7 @@ object DOMStateBuilder {
     /**
      * Detect if a node represents a compound component.
      */
-    private fun detectCompoundComponent(node: EnhancedDOMTreeNode, options: CompactOptions): Boolean {
+    private fun detectCompoundComponent(node: OptimizedDOMTreeNode, options: CompactOptions): Boolean {
         val originalNode = node.originalNode
         val tag = originalNode.nodeName.lowercase()
 
@@ -270,7 +270,7 @@ object DOMStateBuilder {
      * Create a pruned node with minimal information for high paint-order elements.
      */
     private fun createPrunedNode(
-        node: EnhancedDOMTreeNode,
+        node: OptimizedDOMTreeNode,
         ancestors: List<MergedDOMTreeNode>,
         locatorMap: LocatorMap,
         frameIds: List<String>,

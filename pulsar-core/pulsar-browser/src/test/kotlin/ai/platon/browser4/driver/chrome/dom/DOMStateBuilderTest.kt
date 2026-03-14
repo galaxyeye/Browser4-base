@@ -25,9 +25,9 @@ class DOMStateBuilderTest {
             elementHash = "root-hash"
         )
 
-        val root = EnhancedDOMTreeNode(
+        val root = OptimizedDOMTreeNode(
             originalNode = rootOriginal,
-            children = listOf(EnhancedDOMTreeNode(originalNode = childOriginal))
+            children = listOf(OptimizedDOMTreeNode(originalNode = childOriginal))
         )
 
         val result = DOMStateBuilder.build(root, listOf("data-id", "aria-label"))
@@ -68,9 +68,9 @@ class DOMStateBuilderTest {
             elementHash = "body-hash"
         )
 
-        val simplified = EnhancedDOMTreeNode(
+        val simplified = OptimizedDOMTreeNode(
             originalNode = rootOriginal,
-            children = listOf(EnhancedDOMTreeNode(originalNode = scrollableNode))
+            children = listOf(OptimizedDOMTreeNode(originalNode = scrollableNode))
         )
 
         val result = DOMStateBuilder.build(simplified)
@@ -107,11 +107,11 @@ class DOMStateBuilderTest {
             elementHash = "body-hash"
         )
 
-        val simplified = EnhancedDOMTreeNode(
+        val simplified = OptimizedDOMTreeNode(
             originalNode = rootOriginal,
             children = listOf(
-                EnhancedDOMTreeNode(originalNode = highPaintOrderNode),
-                EnhancedDOMTreeNode(originalNode = normalNode)
+                OptimizedDOMTreeNode(originalNode = highPaintOrderNode),
+                OptimizedDOMTreeNode(originalNode = normalNode)
             )
         )
 
@@ -157,12 +157,12 @@ class DOMStateBuilderTest {
             elementHash = "body-hash"
         )
 
-        val simplified = EnhancedDOMTreeNode(
+        val simplified = OptimizedDOMTreeNode(
             originalNode = rootOriginal,
             children = listOf(
-                EnhancedDOMTreeNode(
+                OptimizedDOMTreeNode(
                     originalNode = listNode,
-                    children = List(5) { EnhancedDOMTreeNode(originalNode = listItem) } // 5 children to meet threshold
+                    children = List(5) { OptimizedDOMTreeNode(originalNode = listItem) } // 5 children to meet threshold
                 )
             )
         )
@@ -198,7 +198,7 @@ class DOMStateBuilderTest {
             )
         )
 
-        val simplified = EnhancedDOMTreeNode(originalNode = node)
+        val simplified = OptimizedDOMTreeNode(originalNode = node)
 
         val options = DOMStateBuilder.CompactOptions(
             enableAttributeCasingAlignment = true,
@@ -226,7 +226,7 @@ class DOMStateBuilderTest {
             backendNodeId = 12345
         )
 
-        val simplified = EnhancedDOMTreeNode(originalNode = node)
+        val simplified = OptimizedDOMTreeNode(originalNode = node)
 
         val result = DOMStateBuilder.build(simplified)
 
@@ -253,7 +253,7 @@ class DOMStateBuilderTest {
             elementHash = "custom-hash"
         )
 
-        val simplified = EnhancedDOMTreeNode(originalNode = node)
+        val simplified = OptimizedDOMTreeNode(originalNode = node)
 
         val options = DOMStateBuilder.CompactOptions(
             preserveOriginalCasing = true
@@ -274,7 +274,7 @@ class DOMStateBuilderTest {
         val levels = 30
 
         // Build a deep chain of SlimNodes: node-1 -> node-2 -> ... -> node-29 -> node-30(leaf)
-        var leaf: EnhancedDOMTreeNode = EnhancedDOMTreeNode(
+        var leaf: OptimizedDOMTreeNode = OptimizedDOMTreeNode(
             originalNode = MergedDOMTreeNode(
                 nodeId = levels,
                 nodeName = "SPAN",
@@ -287,7 +287,7 @@ class DOMStateBuilderTest {
                 nodeName = "DIV",
                 elementHash = "node-$i"
             )
-            leaf = EnhancedDOMTreeNode(
+            leaf = OptimizedDOMTreeNode(
                 originalNode = parentOriginal,
                 children = listOf(leaf)
             )
@@ -439,9 +439,9 @@ class DOMStateBuilderTest {
             children = listOf(anchorNode),
             isVisible = true
         )
-        val root = EnhancedDOMTreeNode(
+        val root = OptimizedDOMTreeNode(
             originalNode = rootOriginal,
-            children = listOf(EnhancedDOMTreeNode(originalNode = anchorNode, interactiveIndex = 1))
+            children = listOf(OptimizedDOMTreeNode(originalNode = anchorNode, interactiveIndex = 1))
         )
 
         val ariaSnapshot = DOMStateBuilder.build(root).ariaSnapshot
@@ -477,7 +477,7 @@ class DOMStateBuilderTest {
             isVisible = true,
             isInteractable = true
         )
-        val root = EnhancedDOMTreeNode(
+        val root = OptimizedDOMTreeNode(
             originalNode = MergedDOMTreeNode(
                 nodeId = 0,
                 backendNodeId = 100,
@@ -485,7 +485,7 @@ class DOMStateBuilderTest {
                 children = listOf(searchNode),
                 isVisible = true
             ),
-            children = listOf(EnhancedDOMTreeNode(originalNode = searchNode, interactiveIndex = 1))
+            children = listOf(OptimizedDOMTreeNode(originalNode = searchNode, interactiveIndex = 1))
         )
 
         val domState = DOMStateBuilder.build(root)
@@ -619,12 +619,12 @@ class DOMStateBuilderTest {
             children = listOf(anchorNode, imgNode, formNode)
         )
 
-        val root = EnhancedDOMTreeNode(
+        val root = OptimizedDOMTreeNode(
             originalNode = rootOriginal,
             children = listOf(
-                EnhancedDOMTreeNode(originalNode = anchorNode),
-                EnhancedDOMTreeNode(originalNode = imgNode),
-                EnhancedDOMTreeNode(originalNode = formNode)
+                OptimizedDOMTreeNode(originalNode = anchorNode),
+                OptimizedDOMTreeNode(originalNode = imgNode),
+                OptimizedDOMTreeNode(originalNode = formNode)
             )
         )
 

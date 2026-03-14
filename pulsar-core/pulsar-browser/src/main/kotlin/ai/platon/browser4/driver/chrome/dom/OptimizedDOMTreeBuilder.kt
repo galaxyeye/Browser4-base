@@ -3,12 +3,12 @@ package ai.platon.browser4.driver.chrome.dom
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
-import ai.platon.browser4.driver.chrome.dom.model.EnhancedDOMTreeNode
+import ai.platon.browser4.driver.chrome.dom.model.OptimizedDOMTreeNode
 import kotlin.math.max
 import kotlin.math.min
 
 /**
- * Build a SlimNode tree:
+ * Build an optimized DOM tree:
  * - Create simplified tree (skip disabled tags, include iframe content, preserve shadow DOM)
  * - Optimize tree (remove non-meaningful parents)
  * - Apply bounding box filtering with propagating bounds (mark excluded_by_parent)
@@ -50,26 +50,26 @@ class OptimizedDOMTreeBuilder(
 
     private var interactiveCounter = 1
 
-    fun build(): EnhancedDOMTreeNode? {
-        val tinyTree = createEnhancedDOMTree(root) ?: return null
+    fun build(): OptimizedDOMTreeNode? {
+        val tinyTree = optimizeDOMTree(root) ?: return null
         val optimized = optimizeTree(tinyTree)
         val filtered = if (enableBBoxFiltering) applyBoundingBoxFiltering(optimized) else optimized
         return assignInteractiveIndices(filtered)
     }
 
     /** Create enhanced tree with key decisions: skip disabled tags, include iframe/frame content, shadow DOM. */
-    private fun createEnhancedDOMTree(node: MergedDOMTreeNode, depth: Int = 0): EnhancedDOMTreeNode? {
+    private fun optimizeDOMTree(node: MergedDOMTreeNode, depth: Int = 0): OptimizedDOMTreeNode? {
         return when (node.nodeType) {
             NodeType.DOCUMENT_NODE -> {
                 // Return first non-null tiny tree child among all children and shadow roots
-                node.children.firstNotNullOfOrNull { createEnhancedDOMTree(it, depth + 1) }
-                    ?: node.shadowRoots.firstNotNullOfOrNull { createEnhancedDOMTree(it, depth + 1) }
+                node.children.firstNotNullOfOrNull { optimizeDOMTree(it, depth + 1) }
+                    ?: node.shadowRoots.firstNotNullOfOrNull { optimizeDOMTree(it, depth + 1) }
             }
 
             NodeType.DOCUMENT_FRAGMENT_NODE -> {
                 // Shadow DOM fragment - always include to preserve shadow content
-                val children = (node.children + node.shadowRoots).mapNotNull { createEnhancedDOMTree(it, depth + 1) }
-                EnhancedDOMTreeNode(
+                val children = (node.children + node.shadowRoots).mapNotNull { optimizeDOMTree(it, depth + 1) }
+                OptimizedDOMTreeNode(
                     originalNode = node,
                     children = children,
                     shouldDisplay = true,
@@ -86,8 +86,8 @@ class OptimizedDOMTreeBuilder(
                 // iframe/frame: include content document children
                 if (node.nodeName.equals("IFRAME", true) || node.nodeName.equals("FRAME", true)) {
                     val doc = node.contentDocument
-                    val children = doc?.children?.mapNotNull { createEnhancedDOMTree(it, depth + 1) } ?: emptyList()
-                    return EnhancedDOMTreeNode(
+                    val children = doc?.children?.mapNotNull { optimizeDOMTree(it, depth + 1) } ?: emptyList()
+                    return OptimizedDOMTreeNode(
                         originalNode = node,
                         children = children,
                         shouldDisplay = true,
@@ -110,8 +110,8 @@ class OptimizedDOMTreeBuilder(
 
                 // Include if meaningful
                 if (alwaysKeep || isVisible || isScrollable || node.children.isNotEmpty() || hasShadowContent) {
-                    val children = (node.children + node.shadowRoots).mapNotNull { createEnhancedDOMTree(it, depth + 1) }
-                    return EnhancedDOMTreeNode(
+                    val children = (node.children + node.shadowRoots).mapNotNull { optimizeDOMTree(it, depth + 1) }
+                    return OptimizedDOMTreeNode(
                         originalNode = node,
                         children = children,
                         shouldDisplay = true,
@@ -126,7 +126,7 @@ class OptimizedDOMTreeBuilder(
                 val visible = node.snapshotNode != null && node.isVisible == true
                 val text = node.nodeValue.trim()
                 if (visible && text.length > 1) {
-                    EnhancedDOMTreeNode(
+                    OptimizedDOMTreeNode(
                         originalNode = node,
                         children = emptyList(),
                         shouldDisplay = true,
@@ -140,7 +140,7 @@ class OptimizedDOMTreeBuilder(
     }
 
     /** Remove non-meaningful parents: keep if visible or scrollable or is text or has children */
-    private fun optimizeTree(node: EnhancedDOMTreeNode?): EnhancedDOMTreeNode? {
+    private fun optimizeTree(node: OptimizedDOMTreeNode?): OptimizedDOMTreeNode? {
         node ?: return null
         val optimizedChildren = node.children.mapNotNull { optimizeTree(it) }
         val newNode = node.copy(children = optimizedChildren)
@@ -156,12 +156,12 @@ class OptimizedDOMTreeBuilder(
     }
 
     /** Apply bounding-box filtering with propagating parents; mark excluded_by_parent on contained children. */
-    private fun applyBoundingBoxFiltering(node: EnhancedDOMTreeNode?): EnhancedDOMTreeNode? {
+    private fun applyBoundingBoxFiltering(node: OptimizedDOMTreeNode?): OptimizedDOMTreeNode? {
         node ?: return null
         return filterRecursive(node, activeBounds = null, depth = 0)
     }
 
-    private fun filterRecursive(node: EnhancedDOMTreeNode, activeBounds: PropagatingBounds?, depth: Int): EnhancedDOMTreeNode {
+    private fun filterRecursive(node: OptimizedDOMTreeNode, activeBounds: PropagatingBounds?, depth: Int): OptimizedDOMTreeNode {
         var excluded = false
         // Exclude if sufficiently contained in active bounds
         if (activeBounds != null && shouldExcludeChild(node, activeBounds)) {
@@ -180,7 +180,7 @@ class OptimizedDOMTreeBuilder(
         return node.copy(children = newChildren, excludedByParent = excluded)
     }
 
-    private fun shouldExcludeChild(node: EnhancedDOMTreeNode, activeBounds: PropagatingBounds): Boolean {
+    private fun shouldExcludeChild(node: OptimizedDOMTreeNode, activeBounds: PropagatingBounds): Boolean {
         val original = node.originalNode
         if (original.nodeType == NodeType.TEXT_NODE) return false
         if (isAlwaysKeptControl(original)) return false
@@ -239,12 +239,12 @@ class OptimizedDOMTreeBuilder(
     }
 
     /** Assign interactive indices in DFS order to nodes that are visible + interactive and not excluded/ignored. */
-    private fun assignInteractiveIndices(node: EnhancedDOMTreeNode?): EnhancedDOMTreeNode? {
+    private fun assignInteractiveIndices(node: OptimizedDOMTreeNode?): OptimizedDOMTreeNode? {
         node ?: return null
         return assignRecursive(node)
     }
 
-    private fun assignRecursive(node: EnhancedDOMTreeNode): EnhancedDOMTreeNode {
+    private fun assignRecursive(node: OptimizedDOMTreeNode): OptimizedDOMTreeNode {
         // Compute this node's index if qualifies
         val qualifies = !node.excludedByParent && !node.ignoredByPaintOrder &&
                 (node.originalNode.isInteractable == true) && (node.originalNode.isVisible == true)

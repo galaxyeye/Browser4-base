@@ -400,7 +400,7 @@ class CDPSnapshotService(
         return merged
     }
 
-    internal fun buildEnhancedDOMTree(trees: TargetTrees): EnhancedDOMTree {
+    internal fun buildEnhancedDOMTree(trees: TargetTrees): OptimizedDOMTree {
         val enhanced = buildMergedDOMTreeNode(trees)
         val hasElements = enhanced.children.isNotEmpty() ||
                 enhanced.shadowRoots.isNotEmpty() ||
@@ -412,14 +412,14 @@ class CDPSnapshotService(
             // throw IllegalStateException("Empty DOM tree collected (AX=${trees.axTree.size}, SNAP=${trees.snapshotByBackendId.size})")
         }
 
-        return tinyTree ?: EnhancedDOMTree(MergedDOMTreeNode())
+        return tinyTree ?: OptimizedDOMTree(MergedDOMTreeNode())
     }
 
-    fun buildEnhancedDOMTree(root: MergedDOMTreeNode): EnhancedDOMTreeNode {
-        fun simplify(node: MergedDOMTreeNode): EnhancedDOMTreeNode {
+    fun buildEnhancedDOMTree(root: MergedDOMTreeNode): OptimizedDOMTreeNode {
+        fun simplify(node: MergedDOMTreeNode): OptimizedDOMTreeNode {
             val simplifiedChildren = node.children.map { simplify(it) }
 
-            return EnhancedDOMTreeNode(
+            return OptimizedDOMTreeNode(
                 originalNode = node,
                 children = simplifiedChildren,
                 shouldDisplay = node.nodeType == NodeType.ELEMENT_NODE ||
@@ -431,7 +431,7 @@ class CDPSnapshotService(
         return simplify(root)
     }
 
-    fun buildDOMState(root: EnhancedDOMTreeNode, includeAttributes: List<String> = emptyList()): DOMState {
+    fun buildDOMState(root: OptimizedDOMTreeNode, includeAttributes: List<String> = emptyList()): DOMState {
         // Use enhanced serialization with default options
         val options = DOMStateBuilder.CompactOptions(
             enablePaintOrderPruning = true,

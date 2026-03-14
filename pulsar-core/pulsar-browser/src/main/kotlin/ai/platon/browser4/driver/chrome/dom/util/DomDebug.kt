@@ -61,7 +61,7 @@ object DomDebug {
         return "nodeId=${n.nodeId}, name=${n.nodeName}, label=${labelOfNode(n)}, hash=${hashShort}, bounds=${r}"
     }
 
-    private fun briefWithBounds(n: EnhancedDOMTreeNode): String {
+    private fun briefWithBounds(n: OptimizedDOMTreeNode): String {
         val o = n.originalNode
         val r = rectOf(o)
         val hashShort = o.elementHash?.take(12)
@@ -86,9 +86,9 @@ object DomDebug {
         return middleTwo(eligible)
     }
 
-    private fun midTwoWithBounds(root: EnhancedDOMTreeNode): Pair<EnhancedDOMTreeNode?, EnhancedDOMTreeNode?> {
-        val eligible = mutableListOf<EnhancedDOMTreeNode>()
-        fun dfs(n: EnhancedDOMTreeNode) {
+    private fun midTwoWithBounds(root: OptimizedDOMTreeNode): Pair<OptimizedDOMTreeNode?, OptimizedDOMTreeNode?> {
+        val eligible = mutableListOf<OptimizedDOMTreeNode>()
+        fun dfs(n: OptimizedDOMTreeNode) {
             val r = rectOf(n.originalNode)
             if (hasNonZeroXY(r)) eligible += n
             n.children.forEach { dfs(it) }
@@ -128,11 +128,11 @@ object DomDebug {
         return TreeStats(maxDepth, count, leaves)
     }
 
-    fun stats(root: EnhancedDOMTreeNode): TreeStats {
+    fun stats(root: OptimizedDOMTreeNode): TreeStats {
         var maxDepth = 0
         var count = 0
         var leaves = 0
-        fun dfs(n: EnhancedDOMTreeNode, d: Int) {
+        fun dfs(n: OptimizedDOMTreeNode, d: Int) {
             count++
             if (d > maxDepth) maxDepth = d
             if (n.children.isEmpty()) leaves++
@@ -178,11 +178,11 @@ object DomDebug {
         return BoundsStats(zero, positive, missing)
     }
 
-    fun boundsStats(root: EnhancedDOMTreeNode): BoundsStats {
+    fun boundsStats(root: OptimizedDOMTreeNode): BoundsStats {
         var zero = 0
         var positive = 0
         var missing = 0
-        fun dfs(n: EnhancedDOMTreeNode) {
+        fun dfs(n: OptimizedDOMTreeNode) {
             val o = n.originalNode
             val r = rectOf(o)
             if (r == null) missing++
@@ -255,9 +255,9 @@ object DomDebug {
         return list
     }
 
-    private fun collectXY(root: EnhancedDOMTreeNode): List<Pair<Double, Double>> {
+    private fun collectXY(root: OptimizedDOMTreeNode): List<Pair<Double, Double>> {
         val list = mutableListOf<Pair<Double, Double>>()
-        fun dfs(n: EnhancedDOMTreeNode) {
+        fun dfs(n: OptimizedDOMTreeNode) {
             xyOf(rectOf(n.originalNode))?.let { list += it }
             n.children.forEach { dfs(it) }
         }
@@ -295,7 +295,7 @@ object DomDebug {
         "bounds" to (n.snapshotNode?.clientRects ?: n.absolutePosition),
     )
 
-    fun toMidNodeMap(n: EnhancedDOMTreeNode): Map<String, Any?> = toMidNodeMap(n.originalNode)
+    fun toMidNodeMap(n: OptimizedDOMTreeNode): Map<String, Any?> = toMidNodeMap(n.originalNode)
     fun toMidNodeMap(n: NanoDOMTree): Map<String, Any?> = linkedMapOf(
         "locator" to n.locator,
         "label" to labelOfNano(n),
@@ -383,7 +383,7 @@ object DomDebug {
         )
     }
 
-    fun summarize(root: EnhancedDOMTreeNode): Map<String, Any?> {
+    fun summarize(root: OptimizedDOMTreeNode): Map<String, Any?> {
         val s = stats(root)
         val b = boundsStats(root)
         val original = root.originalNode

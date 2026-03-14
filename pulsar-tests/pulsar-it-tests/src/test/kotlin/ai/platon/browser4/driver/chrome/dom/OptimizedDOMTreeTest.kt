@@ -1,24 +1,24 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
+import ai.platon.browser4.driver.chrome.dom.model.OptimizedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
-import ai.platon.browser4.driver.chrome.dom.model.EnhancedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
+import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import kotlin.test.assertIs
-import org.junit.jupiter.api.DisplayName
 
-class TinyTreeTest : WebDriverTestBase() {
+class OptimizedDOMTreeTest : WebDriverTestBase() {
 
-    private fun flattenSlim(root: EnhancedDOMTreeNode): List<EnhancedDOMTreeNode> {
-        val out = ArrayList<EnhancedDOMTreeNode>()
-        fun dfs(n: EnhancedDOMTreeNode) {
+    private fun flattenSlim(root: OptimizedDOMTreeNode): List<OptimizedDOMTreeNode> {
+        val out = ArrayList<OptimizedDOMTreeNode>()
+        fun dfs(n: OptimizedDOMTreeNode) {
             out.add(n)
             n.children.forEach { dfs(it) }
         }
@@ -27,7 +27,7 @@ class TinyTreeTest : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("DOMTinyTreeBuilder invariants on interactive-dynamic page")
+    @DisplayName("DOMTinyTreeBuilder invariants on interactive-dynamic page")
     fun domTinyTreeBuilderInvariantsOnInteractiveDynamicPage() =
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
@@ -115,7 +115,7 @@ class TinyTreeTest : WebDriverTestBase() {
         }
 
     @Test
-        @DisplayName("isNew flag respects previous backend node ids")
+    @DisplayName("isNew flag respects previous backend node ids")
     fun isNewFlagRespectsPreviousBackendNodeIds() = runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
@@ -164,7 +164,7 @@ class TinyTreeTest : WebDriverTestBase() {
     }
 
     @Test
-        @DisplayName("optimizeTree prunes invisible wrapper with pruned children on real page")
+    @DisplayName("optimizeTree prunes invisible wrapper with pruned children on real page")
     fun optimizetreePrunesInvisibleWrapperWithPrunedChildrenOnRealPage() =
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
             assertIs<PulsarWebDriver>(driver)
