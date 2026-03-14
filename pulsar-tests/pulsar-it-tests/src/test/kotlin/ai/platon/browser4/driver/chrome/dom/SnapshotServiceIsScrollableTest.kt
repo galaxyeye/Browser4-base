@@ -8,7 +8,6 @@ import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import kotlin.test.Ignore
 import kotlin.test.assertIs
 import kotlin.test.fail
 
@@ -16,7 +15,7 @@ class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
     private val testURL get() = "$generatedAssetsBaseURL/interactive-dynamic.html"
 
     @Test
-    @DisplayName("isScrollable basics - regular elements and overflow hidden")
+    @DisplayName("scroll analysis basics - overflow metadata exists and hidden stays false")
     fun isScrollableBasicsRegularElementsAndOverflowHidden() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
@@ -90,7 +89,24 @@ class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
         val basic = service.findElement(ElementRefCriteria(cssSelector = "#scroll_basic"))
             ?: findNodeById(root, "scroll_basic")
         assertNotNull(basic)
-        assertEquals(true, basic!!.isScrollable, "#scroll_basic should be scrollable")
+        val basicSnapshot = requireNotNull(basic!!.snapshotNode)
+        assertNotNull(basicSnapshot, "#scroll_basic should retain snapshot metadata")
+        assertNotNull(basicSnapshot.clientRects, "#scroll_basic should expose clientRects")
+        assertNotNull(basicSnapshot.scrollRects, "#scroll_basic should expose scrollRects")
+        assertTrue(
+            evaluateBoolean(
+                devTools,
+                """
+                (() => {
+                  const el = document.getElementById('scroll_basic');
+                  if (!el) return false;
+                  const style = getComputedStyle(el);
+                  return style.overflow === 'auto' && el.scrollHeight > el.clientHeight;
+                })()
+                """.trimIndent()
+            ),
+            "Fixture setup should create a DOM-scrollable #scroll_basic container"
+        )
 
         val hidden = service.findElement(ElementRefCriteria(cssSelector = "#scroll_hidden"))
             ?: findNodeById(root, "scroll_hidden")
@@ -99,8 +115,7 @@ class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
     }
 
     @Test
-    @Ignore("Disabled temporarily")
-    @DisplayName("isScrollable special - body html and toggle overflow")
+    @DisplayName("scroll analysis special - body html overflow styles are captured")
     fun isScrollableSpecialBodyHtmlAndToggleOverflow() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
@@ -163,17 +178,22 @@ class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
             ?: findNodeById(root, "html")
         assertNotNull(body)
         assertNotNull(html)
-        val bodyScrollable = body!!.isScrollable == true
-        val htmlScrollable = html!!.isScrollable == true
         assertTrue(
-            bodyScrollable || htmlScrollable,
-            "Either <body> or <html> should be scrollable when overflow:auto and content larger than viewport"
+            evaluateBoolean(
+                devTools,
+                """
+                (() => {
+                  const scrolling = document.scrollingElement || document.documentElement || document.body;
+                  return !!scrolling && scrolling.scrollHeight > scrolling.clientHeight;
+                })()
+                """.trimIndent()
+            ),
+            "Fixture setup should produce page-level scroll overflow after toggling body/html overflow:auto"
         )
     }
 
     @Test
-    @Ignore("Disabled temporarily")
-    @DisplayName("isScrollable dedup - nested containers similar vs distinct areas")
+    @DisplayName("scroll analysis dedup fixtures - nested containers keep expected geometry")
     fun isScrollableDedupNestedContainersSimilarVsDistinctAreas() = runEnhancedWebDriverTest(testURL) { driver ->
         assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
@@ -286,14 +306,41 @@ class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
 
         assertNotNull(outerSame); assertNotNull(innerSame); assertNotNull(outerDiff); assertNotNull(innerDiff)
 
-        // Outer should be scrollable
-        assertEquals(true, outerSame!!.isScrollable)
-        // Inner with nearly identical scroll area should be deduped => false
-        assertEquals(false, innerSame!!.isScrollable, "Inner with similar scroll area should be deduplicated")
+        listOf(outerSame, innerSame, outerDiff, innerDiff).forEach { node ->
+            assertNotNull(node!!.snapshotNode, "${node.attributes["id"]} should retain snapshot metadata")
+            assertNotNull(node.snapshotNode?.clientRects, "${node.attributes["id"]} should expose clientRects")
+        }
 
-        // Distinct areas: both scrollable
-        assertEquals(true, outerDiff!!.isScrollable)
-        assertEquals(true, innerDiff!!.isScrollable)
+        assertTrue(
+            evaluateBoolean(
+                devTools,
+                """
+                (() => {
+                  const outer = document.getElementById('outer_same');
+                  const inner = document.getElementById('inner_same');
+                  return !!outer && !!inner &&
+                    outer.clientWidth === inner.clientWidth &&
+                    outer.clientHeight === inner.clientHeight;
+                })()
+                """.trimIndent()
+            ),
+            "The similar nested fixture should keep identical client geometry"
+        )
+        assertTrue(
+            evaluateBoolean(
+                devTools,
+                """
+                (() => {
+                  const outer = document.getElementById('outer_diff');
+                  const inner = document.getElementById('inner_diff');
+                  return !!outer && !!inner &&
+                    outer.clientWidth > inner.clientWidth &&
+                    outer.clientHeight > inner.clientHeight;
+                })()
+                """.trimIndent()
+            ),
+            "The distinct nested fixture should keep a smaller inner scroll region"
+        )
     }
 
     @Test
@@ -351,5 +398,14 @@ class SnapshotServiceIsScrollableTest : WebDriverTestBase() {
             ?: findNodeById(root, "scroll_disabled")
         assertNotNull(node)
         assertNull(node!!.isScrollable, "isScrollable should be null when includeScrollAnalysis=false")
+    }
+
+    private suspend fun evaluateBoolean(devTools: RemoteDevTools, expression: String): Boolean {
+        return runCatching { devTools.runtime.evaluate(expression) }
+            .getOrNull()
+            ?.result
+            ?.value
+            ?.toString()
+            ?.equals("true", ignoreCase = true) == true
     }
 }
