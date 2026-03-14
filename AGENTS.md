@@ -77,8 +77,9 @@ mvnw.cmd -q -DskipTests
 | `pulsar-core` | Core engine: sessions, scheduling, DOM, browser control |
 | `pulsar-agentic` | AI agents implementation, MCP, skills registration |
 | `pulsar-rest` | Spring Boot REST layer & command endpoints |
-| `sdks/*` | Client SDKs (Kotlin, Python) |
-| `browser4/*` | Product aggregation (SPA & packaging) |
+| `sdks/*` | Browser4 CLI + skill assets (`sdks/browser4-cli`, `sdks/skill`) |
+| `browser4/*` | Product packaging (`browser4/browser4-agents`) |
+| `examples/*` | Runnable examples (`examples/browser4-examples`) |
 | `pulsar-tests` | E2E & heavy integration & scenario tests |
 | `pulsar-tests-common` | Shared test base classes and utilities |
 | `pulsar-benchmarks` | JMH benchmarks |
@@ -153,7 +154,12 @@ To keep iteration fast, **don’t run full test suites by default**.
 - Upgrade scope when risk increases (cross-module, public API/DTO/serialization, Spring wiring, dependency bumps,
   concurrency/I/O, browser/CDP lifecycle)
 
-See [TESTING.md](TESTING.md) for details and trade-offs.
+See [TESTING.md](docs/TESTING.md) for details and trade-offs.
+
+### Test Commands in This Repository
+- Use `bin/test.ps1` on Windows for scoped runs: `fast`, `it`, `e2e`, `core`, `rest`, `skills`, `mcp`, `nodejs-sdk`, `browser4`
+- `nodejs-sdk` runs tests from `sdks/browser4-cli`; legacy `kotlin-sdk` and `python-sdk` test types are removed
+- Maven profile switches in root `pom.xml` are property-driven: `-DrunITs=true`, `-DrunE2ETests=true`, `-DrunSDKTests=true`, `-DrunCoreTests=true`, `-DrunRestTests=true`
 
 ### Test Location
 - Module unit tests: `src/test/kotlin/...`
@@ -233,6 +239,7 @@ browser.display.mode=GUI  # GUI | HEADLESS | SUPERVISED
 
 - [Configuration Guide](docs/config.md)
 - [Build Guide](docs/build.md)
+- [Testing Taxonomy](docs/TESTING.md)
 - [Advanced Guide](docs/advanced-guides.md)
 - [REST API Examples](docs/rest-api-examples.md)
 - [Concepts](docs/concepts.md)
@@ -420,4 +427,4 @@ Before submitting changes, verify:
 
 ---
 
-*Last updated: 2026-02-08*
+*Last updated: 2026-03-14*
