@@ -4,6 +4,7 @@ import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.dom.model.*
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.AppPaths
+import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -141,7 +142,7 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
     private fun writeDOMState(domState: DOMState) {
         var path = reportDir.resolve("dom-state-micro-$ident.yml")
         path.parent.createDirectories()
-        Files.writeString(path, domState.serializableTree.toYaml())
+        Files.writeString(path, Pson.toYaml(domState.serializableTree))
         logger.info("Serializable tree written | {}", path.toUri())
 
         path = reportDir.resolve("aria-snapshot-$ident.yml")

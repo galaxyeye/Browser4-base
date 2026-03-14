@@ -491,12 +491,6 @@ data class SerializableDOMTreeNode(
 ) {
     private val seenChunks = mutableListOf<Pair<Double, Double>>()
 
-    val links = mutableListOf<String>()
-
-    fun toJson() = Pson.toJson(this)
-
-    fun toYaml() = Pson.toYaml(this)
-
     fun buildInteractiveNodeList(currentViewportIndex: Int, lastViewportIndex: Int): InteractiveDOMTreeNodeList =
         InteractiveNodeListBuilder(this, false, currentViewportIndex, lastViewportIndex)
             .build()
@@ -568,8 +562,7 @@ data class DOMState constructor(
     val optimizedDOMTree: OptimizedDOMTree? = null
 ) {
     @get:JsonIgnore
-    val ariaSnapshot: String get() = optimizedDOMTree?.let(AriaSnapshotRenderer::render)
-        ?: serializableTree.toNanoTreeUnfiltered().ariaSnapshot
+    val ariaSnapshot: String get() = optimizedDOMTree?.let(AriaSnapshotRenderer::render) ?: ""
 
     fun getAbsoluteFBNLocator(locator: String?): FBNLocator? {
         if (locator == null) {

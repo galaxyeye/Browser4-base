@@ -451,6 +451,123 @@ class DOMStateBuilderTest {
     }
 
     @Test
+    @DisplayName("render ignores invalid aria snapshot nodes")
+    fun renderIgnoresInvalidAriaSnapshotNodes() {
+        val root = OptimizedDOMTreeNode(
+            originalNode = MergedDOMTreeNode(
+                nodeId = 100,
+                backendNodeId = 100,
+                nodeName = "DIV",
+                axNode = AXNodeEx(
+                    axNodeId = "ax-root",
+                    role = "region",
+                    name = "Fixture",
+                    backendNodeId = 100
+                )
+            ),
+            children = listOf(
+                OptimizedDOMTreeNode(
+                    originalNode = MergedDOMTreeNode(
+                        nodeId = 101,
+                        backendNodeId = 101,
+                        nodeType = NodeType.TEXT_NODE,
+                        nodeName = "#text",
+                        nodeValue = "   "
+                    )
+                ),
+                OptimizedDOMTreeNode(
+                    originalNode = MergedDOMTreeNode(
+                        nodeId = 102,
+                        backendNodeId = 102,
+                        nodeType = NodeType.COMMENT_NODE,
+                        nodeName = "#comment",
+                        nodeValue = "debug marker"
+                    )
+                ),
+                OptimizedDOMTreeNode(
+                    originalNode = MergedDOMTreeNode(
+                        nodeId = 103,
+                        backendNodeId = 103,
+                        nodeName = "SCRIPT",
+                        children = listOf(
+                            MergedDOMTreeNode(
+                                nodeId = 104,
+                                backendNodeId = 104,
+                                nodeType = NodeType.TEXT_NODE,
+                                nodeName = "#text",
+                                nodeValue = "console.log('ignore me')"
+                            )
+                        )
+                    ),
+                    children = listOf(
+                        OptimizedDOMTreeNode(
+                            originalNode = MergedDOMTreeNode(
+                                nodeId = 104,
+                                backendNodeId = 104,
+                                nodeType = NodeType.TEXT_NODE,
+                                nodeName = "#text",
+                                nodeValue = "console.log('ignore me')"
+                            )
+                        )
+                    )
+                ),
+                OptimizedDOMTreeNode(
+                    originalNode = MergedDOMTreeNode(
+                        nodeId = 105,
+                        backendNodeId = 105,
+                        nodeName = "STYLE",
+                        children = listOf(
+                            MergedDOMTreeNode(
+                                nodeId = 106,
+                                backendNodeId = 106,
+                                nodeType = NodeType.TEXT_NODE,
+                                nodeName = "#text",
+                                nodeValue = ".hidden { display: none; }"
+                            )
+                        )
+                    ),
+                    children = listOf(
+                        OptimizedDOMTreeNode(
+                            originalNode = MergedDOMTreeNode(
+                                nodeId = 106,
+                                backendNodeId = 106,
+                                nodeType = NodeType.TEXT_NODE,
+                                nodeName = "#text",
+                                nodeValue = ".hidden { display: none; }"
+                            )
+                        )
+                    )
+                ),
+                OptimizedDOMTreeNode(
+                    originalNode = MergedDOMTreeNode(
+                        nodeId = 107,
+                        backendNodeId = 107,
+                        nodeName = "BUTTON",
+                        axNode = AXNodeEx(
+                            axNodeId = "ax-button",
+                            role = "button",
+                            name = "Submit",
+                            backendNodeId = 107
+                        ),
+                        isInteractable = true
+                    ),
+                    interactiveIndex = 1
+                )
+            )
+        )
+
+        val ariaSnapshot = DOMStateBuilder.build(root).ariaSnapshot
+
+        assertEquals(
+            """
+            - region "Fixture" [ref=e100]:
+              - button "Submit" [ref=e107] [cursor=pointer]
+            """.trimIndent(),
+            ariaSnapshot
+        )
+    }
+
+    @Test
     @DisplayName("render matches Playwright cursor pointer suppression for nested interactive nodes")
     fun renderMatchesPlaywrightCursorPointerSuppressionForNestedInteractiveNodes() {
         val root = SerializableDOMTreeNode(

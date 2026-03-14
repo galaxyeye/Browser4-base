@@ -9,6 +9,10 @@ object AriaSnapshotRenderer {
 
     private fun toRenderChildren(node: OptimizedDOMTreeNode): List<AriaSnapshotFormatting.RenderChild> {
         val original = node.originalNode
+        if (shouldIgnoreNode(original)) {
+            return emptyList()
+        }
+
         if (isTextNode(original)) {
             return AriaSnapshotFormatting.normalizeText(original.nodeValue)
                 ?.let { listOf(AriaSnapshotFormatting.RenderChild.Text(it)) }
@@ -173,6 +177,15 @@ object AriaSnapshotRenderer {
             "invalid", "multiline", "readonly", "required" -> value.equals("false", ignoreCase = true)
             else -> false
         }
+    }
+
+    private fun shouldIgnoreNode(node: MergedDOMTreeNode): Boolean {
+        val nodeName = node.nodeName.trim().lowercase(Locale.ROOT)
+        return node.nodeType == NodeType.COMMENT_NODE ||
+                nodeName == "#comment" ||
+                nodeName == "comment" ||
+                nodeName == "script" ||
+                nodeName == "style"
     }
 
     private fun isTextNode(node: MergedDOMTreeNode): Boolean {
