@@ -875,17 +875,6 @@ class PlaywrightDriver(
 
     override suspend fun querySelectorAll(selector: String): List<NodeRef> {
         TODO("Not supported by PlaywrightDriver currently")
-//        return try {
-//            rpc.invokeDeferred("querySelectorAll") {
-//                page.querySelectorAll(selector).map { element ->
-//                    val handle = (element as ElementHandle).asElement()
-//                    NodeRef(handle)
-//                }
-//            } ?: listOf()
-//        } catch (e: Exception) {
-//            rpc.handleWebDriverException(e, "querySelectorAll", selector)
-//            listOf()
-//        }
     }
 
     override suspend fun selectFirstTextOrNull(selector: String): String? {
