@@ -33,9 +33,13 @@ data class MCPToolCallRequest(
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class MCPToolCallResponse(
-    @param:JsonProperty("content") val content: List<MCPContent>,
+    @get:JsonProperty("content")
+    @param:JsonProperty("content")
+    val content: List<MCPContent>,
+    @get:JsonProperty("isError")
     @param:JsonSetter(nulls = Nulls.SKIP)
-    @param:JsonProperty("isError") val isError: Boolean = false
+    @param:JsonProperty("isError")
+    val isError: Boolean = false
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -67,6 +71,31 @@ data class MCPContent(
 class MCPToolController(
     private val sessionManager: SessionManager
 ) {
+    companion object {
+        private const val CLEAR_SESSION_STORAGE_SCRIPT = """
+            (() => {
+                const result = {
+                    localStorageCleared: false,
+                    sessionStorageCleared: false,
+                    errors: []
+                };
+                try {
+                    window.localStorage.clear();
+                    result.localStorageCleared = true;
+                } catch (error) {
+                    result.errors.push("localStorage: " + error);
+                }
+                try {
+                    window.sessionStorage.clear();
+                    result.sessionStorageCleared = true;
+                } catch (error) {
+                    result.errors.push("sessionStorage: " + error);
+                }
+                return JSON.stringify(result);
+            })()
+        """
+    }
+
     private val logger = LoggerFactory.getLogger(MCPToolController::class.java)
 
     // =========================================================================
@@ -191,7 +220,14 @@ class MCPToolController(
 
         managed.withLock {
             driver.clearBrowserCookies()
-            driver.evaluate("localStorage.clear(); sessionStorage.clear()")
+            val storageResult = driver.evaluate(CLEAR_SESSION_STORAGE_SCRIPT)?.toString().orEmpty()
+            if (storageResult.isNotBlank() && !storageResult.contains("\"errors\":[]")) {
+                logger.warn(
+                    "delete_session_data completed with partial storage cleanup | sessionId={} | result={}",
+                    sessionId,
+                    storageResult
+                )
+            }
         }
 
         return ResponseEntity.ok(textResponse("User data deleted for session"))
@@ -284,6 +320,7 @@ class MCPToolController(
 
     private fun normalizeToolArguments(toolName: String, args: Map<String, Any?>): Map<String, Any?> {
         val normalized = args.mapKeys { (key, _) -> snakeToCamel(key) }.toMutableMap()
+        normalized.remove("sessionId")
 
         when (toolName) {
             "switch_tab", "tab_select", "close_tab", "tab_close" -> {

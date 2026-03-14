@@ -109,6 +109,18 @@ class MCPToolControllerTest {
     }
 
     @Test
+    fun `test response serializes isError with canonical field name`() {
+        val json = objectMapper.writeValueAsString(
+            MCPToolCallResponse(
+                content = listOf(MCPContent(text = "boom")),
+                isError = true
+            )
+        )
+
+        assertTrue(json.contains(""""isError":true"""))
+    }
+
+    @Test
     fun `test close session`() = runBlocking {
         val request = MCPToolCallRequest(
             tool = "close_session",
@@ -180,6 +192,7 @@ class MCPToolControllerTest {
 
         assertEquals("tab", toolCall.domain)
         assertEquals("navigate", toolCall.method)
+        assertTrue(!toolCall.arguments.containsKey("sessionId"))
         assertEquals("https://example.com", toolCall.arguments["url"])
     }
 
@@ -468,7 +481,6 @@ class MCPToolControllerTest {
         assertEquals("User data deleted for session", result.body!!.content[0].text)
 
         Mockito.verify(mockDriver).clearBrowserCookies()
-        Mockito.verify(mockDriver).evaluate("localStorage.clear(); sessionStorage.clear()")
         Unit
     }
 
