@@ -14,7 +14,7 @@ import kotlin.math.min
  * - Apply bounding box filtering with propagating bounds (mark excluded_by_parent)
  * - Assign interactive indices for visible+interactive elements only
  */
-class DOMTinyTreeBuilder(
+class OptimizedDOMTreeBuilder(
     private val root: MergedDOMTreeNode,
     private val previousBackendNodeIds: Set<Int> = emptySet(),
     private val enableBBoxFiltering: Boolean = true,
@@ -57,7 +57,7 @@ class DOMTinyTreeBuilder(
         return assignInteractiveIndices(filtered)
     }
 
-    /** Create tiny tree with key decisions: skip disabled tags, include iframe/frame content, shadow DOM. */
+    /** Create enhanced tree with key decisions: skip disabled tags, include iframe/frame content, shadow DOM. */
     private fun createEnhancedDOMTree(node: MergedDOMTreeNode, depth: Int = 0): EnhancedDOMTreeNode? {
         return when (node.nodeType) {
             NodeType.DOCUMENT_NODE -> {

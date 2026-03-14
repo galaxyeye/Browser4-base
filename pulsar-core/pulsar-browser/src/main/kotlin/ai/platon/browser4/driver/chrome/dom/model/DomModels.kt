@@ -349,7 +349,7 @@ data class DOMInteractedElement(
 /**
  * Cleaned original node without children_nodes and shadow_roots.
  * Enhanced with additional snapshot information for LLM consumption.
- * This prevents duplication since SimplifiedNode.children already contains them.
+ * This prevents duplication since children nodes already contains them.
  */
 data class CleanedDOMTreeNode constructor(
     /**
@@ -474,10 +474,9 @@ class InteractiveDOMTreeNodeList(
 }
 
 /**
- * Serializable DOMTreeNode structure.
- * Enhanced with compound component marking and paint order information.
+ * Serializable DOM tree node structure. Enhanced with compound component marking and paint order information.
  *
- * Naming conversion: mini -> tiny -> micro -> nano -> pico -> ...
+ * mini -> tiny -> micro -> nano -> pico -> femto -> atto -> zepto -> yocto
  */
 data class MicroDOMTreeNode(
     val shouldDisplay: Boolean? = null,
@@ -521,11 +520,7 @@ data class MicroDOMTreeNode(
 typealias MicroDOMTree = MicroDOMTreeNode
 
 /**
- * Serializable DOMTreeNode structure.
- * Enhanced with compound component marking and paint order information.
- *
- * Naming conversion to compress the tree for LLM input:
- * mini -> tiny -> micro -> nano -> pico -> femto -> atto -> zepto -> yocto
+ * Serializable DOM tree node structure.
  * */
 data class NanoDOMTreeNode(
     /**
@@ -568,10 +563,13 @@ data class DOMState constructor(
     val interactiveNodes: List<MicroDOMTreeNode> = listOf(),
     val frameIds: List<String> = listOf(),
     val selectorMap: Map<String, MergedDOMTreeNode> = mapOf(),
-    val locatorMap: LocatorMap = LocatorMap()
+    val locatorMap: LocatorMap = LocatorMap(),
+    @get:JsonIgnore
+    val enhancedTree: EnhancedDOMTree? = null
 ) {
     @get:JsonIgnore
-    val ariaSnapshot: String get() = microTree.toNanoTreeUnfiltered().ariaSnapshot
+    val ariaSnapshot: String get() = enhancedTree?.let(AriaSnapshotRenderer::render)
+        ?: microTree.toNanoTreeUnfiltered().ariaSnapshot
 
     fun getAbsoluteFBNLocator(locator: String?): FBNLocator? {
         if (locator == null) {

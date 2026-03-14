@@ -451,6 +451,60 @@ class DOMStateBuilderTest {
     }
 
     @Test
+    @DisplayName("render preserves enhanced accessibility metadata without nano conversion loss")
+    fun renderPreservesEnhancedAccessibilityMetadataWithoutNanoConversionLoss() {
+        val searchNode = MergedDOMTreeNode(
+            nodeId = 1,
+            backendNodeId = 101,
+            nodeName = "INPUT",
+            attributes = mapOf(
+                "type" to "text",
+                "placeholder" to "Search docs"
+            ),
+            axNode = AXNodeEx(
+                axNodeId = "ax-1",
+                role = "textbox",
+                name = "Search",
+                description = "Search Browser4 docs",
+                properties = listOf(
+                    AXPropertyEx("autocomplete", "list"),
+                    AXPropertyEx("readonly", true),
+                    AXPropertyEx("required", true),
+                    AXPropertyEx("valuetext", "Current query")
+                ),
+                backendNodeId = 101
+            ),
+            isVisible = true,
+            isInteractable = true
+        )
+        val root = EnhancedDOMTreeNode(
+            originalNode = MergedDOMTreeNode(
+                nodeId = 0,
+                backendNodeId = 100,
+                nodeName = "DIV",
+                children = listOf(searchNode),
+                isVisible = true
+            ),
+            children = listOf(EnhancedDOMTreeNode(originalNode = searchNode, interactiveIndex = 1))
+        )
+
+        val domState = DOMStateBuilder.build(root)
+        val ariaSnapshot = domState.ariaSnapshot
+        val legacySnapshot = domState.microTree.toNanoTreeUnfiltered().ariaSnapshot
+
+        assertTrue(ariaSnapshot.contains("- textbox \"Search\" [ref=e101] [cursor=pointer]:"), ariaSnapshot)
+        assertTrue(ariaSnapshot.contains("- /placeholder: Search docs"), ariaSnapshot)
+        assertTrue(ariaSnapshot.contains("- /description: Search Browser4 docs"), ariaSnapshot)
+        assertTrue(ariaSnapshot.contains("- /autocomplete: list"), ariaSnapshot)
+        assertTrue(ariaSnapshot.contains("- /readonly: \"true\""), ariaSnapshot)
+        assertTrue(ariaSnapshot.contains("- /required: \"true\""), ariaSnapshot)
+        assertTrue(ariaSnapshot.contains("- /valuetext: Current query"), ariaSnapshot)
+
+        assertFalse(legacySnapshot.contains("/description"), legacySnapshot)
+        assertFalse(legacySnapshot.contains("/autocomplete"), legacySnapshot)
+    }
+
+    @Test
     @DisplayName("render preserves descendants under presentational containers")
     fun renderPreservesDescendantsUnderPresentationalContainers() {
         val root = MicroDOMTreeNode(

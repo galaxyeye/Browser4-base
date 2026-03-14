@@ -50,7 +50,7 @@ class TinyTreeTest : WebDriverTestBase() {
             printlnPro(DomDebug.summarize(enhancedRoot))
             assertTrue(enhancedRoot.children.isNotEmpty(), "Enhanced root should have children")
 
-            val tinyTree = DOMTinyTreeBuilder(enhancedRoot).build()
+            val tinyTree = OptimizedDOMTreeBuilder(enhancedRoot).build()
             assertNotNull(tinyTree, "Simplified Tiny DOM should not be null")
             tinyTree!!
             printlnPro(DomDebug.summarize(tinyTree))
@@ -144,7 +144,7 @@ class TinyTreeTest : WebDriverTestBase() {
         collectBackendIds(enhancedRoot)
         assertTrue(allBackendIds.isNotEmpty(), "Expected some backend node IDs in the enhanced DOM")
 
-        val simplifiedInitial = DOMTinyTreeBuilder(enhancedRoot).build()
+        val simplifiedInitial = OptimizedDOMTreeBuilder(enhancedRoot).build()
         assertNotNull(simplifiedInitial)
         val nodesInitial = flattenSlim(simplifiedInitial!!)
         // With empty previous set, nodes that have backend IDs should be considered new (best-effort)
@@ -152,7 +152,7 @@ class TinyTreeTest : WebDriverTestBase() {
         assertTrue(anyNew, "Expected at least one node marked isNew on first build")
 
         // Build again with previous IDs supplied: nodes should now be marked as not new
-        val simplifiedSecond = DOMTinyTreeBuilder(enhancedRoot, previousBackendNodeIds = allBackendIds).build()
+        val simplifiedSecond = OptimizedDOMTreeBuilder(enhancedRoot, previousBackendNodeIds = allBackendIds).build()
         assertNotNull(simplifiedSecond)
         val nodesSecond = flattenSlim(simplifiedSecond!!)
         nodesSecond.forEach { n ->
@@ -203,7 +203,7 @@ class TinyTreeTest : WebDriverTestBase() {
             val enhancedRoot = collectEnhancedRoot(service, options)
             assertTrue(enhancedRoot.children.isNotEmpty())
 
-            val simplified = DOMTinyTreeBuilder(enhancedRoot).build()
+            val simplified = OptimizedDOMTreeBuilder(enhancedRoot).build()
             assertNotNull(simplified)
             val flat = flattenSlim(simplified!!)
 

@@ -208,6 +208,9 @@ class CDPSnapshotService(
         )
     }
 
+    /**
+     * Build a merged DOM tree from all trees (DOM, AX, Snapshot) with enhanced metrics, frame-aware offsets, and robust error handling.
+     * */
     fun buildMergedDOMTreeNode(trees: TargetTrees): MergedDOMTreeNode {
         val options = trees.options
         // Build ancestor map for XPath and hash generation
@@ -402,7 +405,7 @@ class CDPSnapshotService(
         val hasElements = enhanced.children.isNotEmpty() ||
                 enhanced.shadowRoots.isNotEmpty() ||
                 enhanced.contentDocument != null
-        val tinyTree = DOMTinyTreeBuilder(enhanced).build()
+        val tinyTree = OptimizedDOMTreeBuilder(enhanced).build()
 
         if (!hasElements || tinyTree == null) {
             logger.info("Empty DOM tree collected | trees: {}", DomDebug.summarize(trees))

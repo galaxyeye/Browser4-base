@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 
-class DOMTinyTreeBuilderTest {
+class OptimizedDOMTreeBuilderTest {
 
     @Test
         @DisplayName("bbox filtering excludes contained non-exception children")
@@ -27,7 +27,7 @@ class DOMTinyTreeBuilderTest {
         )
         val root = parent.copy(children = listOf(childInside))
 
-        val slim = DOMTinyTreeBuilder(root, enableBBoxFiltering = true).build()
+        val slim = OptimizedDOMTreeBuilder(root, enableBBoxFiltering = true).build()
         assertNotNull(slim)
         val childSlim = slim!!.children.firstOrNull()
         assertNotNull(childSlim)
@@ -59,7 +59,7 @@ class DOMTinyTreeBuilderTest {
             children = listOf(btn1, btn2)
         )
 
-        val tree = DOMTinyTreeBuilder(root, enableBBoxFiltering = false).build()
+        val tree = OptimizedDOMTreeBuilder(root, enableBBoxFiltering = false).build()
         assertNotNull(tree)
 
         // Serialize to build selector map with index:* entries
@@ -97,7 +97,7 @@ class DOMTinyTreeBuilderTest {
         )
         val rootWithChild = root.copy(children = listOf(invisibleParent))
 
-        val tree = DOMTinyTreeBuilder(rootWithChild, enableBBoxFiltering = false).build()
+        val tree = OptimizedDOMTreeBuilder(rootWithChild, enableBBoxFiltering = false).build()
         assertNotNull(tree)
         // After createSimplifiedTree, the text child is pruned; then optimizeTree should drop the invisible parent
         val child = tree!!.children.firstOrNull()

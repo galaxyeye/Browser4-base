@@ -76,7 +76,7 @@ object DOMStateBuilder {
 
         // Export legacy selector map view for backward compatibility and diagnostics/tests
         val legacySelectorMap = locatorMap.toStringMap()
-        return DOMState(microTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap)
+        return DOMState(microTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap, root)
     }
 
     @Deprecated("Use DOMSerializer.toJson(root) instead", ReplaceWith("DOMSerializer.toJson(root)"))
@@ -125,10 +125,10 @@ object DOMStateBuilder {
     )
 
     /**
-     * Recursively converts one `TinyDOMTreeNode` subtree into its `MicroDOMTreeNode` equivalent.
+     * Recursively converts one `EnhancedDOMTreeNode` subtree into its `MicroDOMTreeNode` equivalent.
      *
      * The important distinction is:
-     * - the tiny node still points at the full `DOMTreeNodeEx` via `originalNode`, so this method can inspect
+     * - the enhanced node still points at the full `MergedDOMTreeNode` via `originalNode`, so this method can inspect
      *   geometry, AX role/name data, DOM attributes, and frame metadata while deciding how to serialize.
      * - the returned micro node keeps only compact, prompt-safe fields and a cleaned copy of the original node.
      *

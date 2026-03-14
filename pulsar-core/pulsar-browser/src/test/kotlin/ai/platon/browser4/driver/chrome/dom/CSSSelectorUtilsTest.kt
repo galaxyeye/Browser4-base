@@ -4,13 +4,13 @@ import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 
 class CSSSelectorUtilsTest {
 
     @Test
-        @DisplayName("uses id when valid css identifier")
+    @DisplayName("uses id when valid css identifier")
     fun usesIdWhenValidCssIdentifier() {
         val node = MergedDOMTreeNode(
             nodeName = "DIV",
@@ -21,7 +21,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("uses attribute selector when id is not a valid css identifier and escapes")
+    @DisplayName("uses attribute selector when id is not a valid css identifier and escapes")
     fun usesAttributeSelectorWhenIdIsNotAValidCssIdentifierAndEscapes() {
         val node = MergedDOMTreeNode(
             nodeName = "DIV",
@@ -33,7 +33,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("uses up to three stable classes in order")
+    @DisplayName("uses up to three stable classes in order")
     fun usesUpToThreeStableClassesInOrder() {
         val node = MergedDOMTreeNode(
             nodeName = "div",
@@ -53,7 +53,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("class selector without tag when tag is wildcard")
+    @DisplayName("class selector without tag when tag is wildcard")
     fun classSelectorWithoutTagWhenTagIsWildcard() {
         val node = MergedDOMTreeNode(
             nodeName = "", // will become "*"
@@ -64,7 +64,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("falls back to preferred attributes")
+    @DisplayName("falls back to preferred attributes")
     fun fallsBackToPreferredAttributes() {
         val node = MergedDOMTreeNode(
             nodeName = "SPAN",
@@ -75,7 +75,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("input prefers value attribute")
+    @DisplayName("input prefers value attribute")
     fun inputPrefersValueAttribute() {
         val node = MergedDOMTreeNode(
             nodeName = "INPUT",
@@ -86,7 +86,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("last resort is lowercase tag")
+    @DisplayName("last resort is lowercase tag")
     fun lastResortIsLowercaseTag() {
         val node = MergedDOMTreeNode(
             nodeName = "Section",
@@ -97,7 +97,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("non-element returns name lowercased or star when blank")
+    @DisplayName("non-element returns name lowercased or star when blank")
     fun nonElementReturnsNameLowercasedOrStarWhenBlank() {
         val textWithName = MergedDOMTreeNode(
             nodeType = NodeType.TEXT_NODE,
@@ -117,7 +117,7 @@ class CSSSelectorUtilsTest {
     // New tests for tree scenarios
 
     @Test
-        @DisplayName("selectors in a simple tree")
+    @DisplayName("selectors in a simple tree")
     fun selectorsInASimpleTree() {
         val li1 = MergedDOMTreeNode(
             nodeName = "LI",
@@ -154,7 +154,7 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("deeply nested node selector remains based on itself")
+    @DisplayName("deeply nested node selector remains based on itself")
     fun deeplyNestedNodeSelectorRemainsBasedOnItself() {
         val deepChild = MergedDOMTreeNode(
             nodeName = "SPAN",
@@ -178,11 +178,12 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("shadow root descendants are handled as regular nodes for selector")
+    @DisplayName("shadow root descendants are handled as regular nodes for selector")
     fun shadowRootDescendantsAreHandledAsRegularNodesForSelector() {
         val insideShadow = MergedDOMTreeNode(
             nodeName = "INPUT",
-            attributes = mapOf("id" to "a b", "value" to "Ignored because id present"))
+            attributes = mapOf("id" to "a b", "value" to "Ignored because id present")
+        )
         val host = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("class" to "host"),
@@ -197,11 +198,12 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-        @DisplayName("wildcard tag in tree yields class-only selector")
+    @DisplayName("wildcard tag in tree yields class-only selector")
     fun wildcardTagInTreeYieldsClassOnlySelector() {
         val child = MergedDOMTreeNode(
             nodeName = "",
-            attributes = mapOf("class" to "chip primary"))
+            attributes = mapOf("class" to "chip primary")
+        )
         val parent = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("class" to "container"),
