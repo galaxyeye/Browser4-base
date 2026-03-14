@@ -1,13 +1,14 @@
 package ai.platon.pulsar.skeleton.common.proxy
 
+import ai.platon.pulsar.external.ChatModelException
 import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.skeleton.context.PulsarContexts
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
 @Tag("RequiresServer")
 class UniversalProxyParserTest {
@@ -20,8 +21,8 @@ class UniversalProxyParserTest {
     }
 
     @Test
-        @DisplayName("test parseUniversalProxy")
-    fun testParseuniversalproxy() {
+    @DisplayName("test parseUniversalProxy")
+    fun testParseUniversalProxy() {
         val parser = UniversalProxyParser()
         val proxies = parser.parse(
             """
@@ -56,11 +57,12 @@ proxy89.myvpn.network:443
     }
 
     @Test
-        @DisplayName("test parseUniversalProxy with NON-STANDARD proxy")
-    fun testParseuniversalproxyWithNonStandardProxy() {
+    @DisplayName("test parseUniversalProxy with NON-STANDARD proxy")
+    fun testParseUniversalProxyWithNonStandardProxy() {
         val parser = UniversalProxyParser()
-        val proxies = parser.parse(
-            """
+        val proxies = try {
+            parser.parse(
+                """
         :8080
         192.168.1.1
         proxy-nyc-1.company.net:invalid-port
@@ -83,7 +85,16 @@ proxy89.myvpn.network:443
         proxy89.myvpn.network:443
 
         """
-        )
+            )
+        } catch (e: ChatModelException) {
+            val message = e.message.orEmpty()
+            Assumptions.assumeTrue(
+                !message.contains("request timed out", ignoreCase = true) &&
+                        !message.contains("timeout and cancelled", ignoreCase = true),
+                "Skipping flaky chat-model timeout for non-standard proxy parsing: $message"
+            )
+            throw e
+        }
 
         // assertTrue { proxies.isEmpty() }
         proxies.forEach {
@@ -92,4 +103,3 @@ proxy89.myvpn.network:443
         }
     }
 }
-

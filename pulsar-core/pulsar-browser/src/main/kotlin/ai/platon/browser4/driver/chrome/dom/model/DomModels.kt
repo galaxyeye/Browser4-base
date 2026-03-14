@@ -7,7 +7,7 @@ import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import ai.platon.browser4.driver.chrome.dom.util.DOMUtils
 import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper
 import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper.Companion.estimatedSize
-import ai.platon.browser4.driver.chrome.dom.util.MicroToNanoTreeHelper
+import ai.platon.browser4.driver.chrome.dom.util.NanoDOMTreeBuilder
 import ai.platon.browser4.driver.common.BrowserSettings.Companion.VIEWPORT
 import ai.platon.pulsar.common.math.roundTo
 import ai.platon.pulsar.common.serialize.json.Pson
@@ -507,13 +507,13 @@ data class SerializableDOMTreeNode(
     fun toNanoTree(): NanoDOMTree = toNanoTreeInRange(0.0, 1000000.0)
 
     fun toNanoTreeUnfiltered(): NanoDOMTree {
-        val helper = MicroToNanoTreeHelper(this, seenChunks)
-        return helper.toNanoTreeUnfiltered()
+        val helper = NanoDOMTreeBuilder(this, seenChunks)
+        return helper.buildUnfiltered()
     }
 
     fun toNanoTreeInRange(startY: Double = 0.0, endY: Double = 100000.0): NanoDOMTree {
-        val helper = MicroToNanoTreeHelper(this, seenChunks)
-        return helper.toNanoTreeInRange(startY, endY)
+        val helper = NanoDOMTreeBuilder(this, seenChunks)
+        return helper.build(startY, endY)
     }
 }
 

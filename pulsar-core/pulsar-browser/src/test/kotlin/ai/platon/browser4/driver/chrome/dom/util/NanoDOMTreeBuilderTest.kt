@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-class MicroToNanoTreeHelperTest {
+class NanoDOMTreeBuilderTest {
     @Test
     @DisplayName("toNanoTreeInRange includes overlapping leaf nodes")
-    fun toNanoTreeInRangeIncludesOverlappingLeafNodes() {
+    fun buildIncludesOverlappingLeafNodes() {
         val root = microNode(
             id = 1,
             y = 0.0,
@@ -35,7 +35,7 @@ class MicroToNanoTreeHelperTest {
 
     @Test
     @DisplayName("toNanoTreeInRange uses open-start closed-end semantics for point nodes")
-    fun toNanoTreeInRangeUsesOpenStartClosedEndSemanticsForPointNodes() {
+    fun buildUsesOpenStartClosedEndSemanticsForPointNodes() {
         val root = microNode(
             id = 1,
             y = 0.0,
@@ -55,7 +55,7 @@ class MicroToNanoTreeHelperTest {
 
     @Test
     @DisplayName("toNanoTreeInRange merges nearby chunks and clamps negative starts")
-    fun toNanoTreeInRangeMergesNearbyChunksAndClampsNegativeStarts() {
+    fun buildMergesNearbyChunksAndClampsNegativeStarts() {
         val root = microNode(
             id = 1,
             y = 0.0,
@@ -76,9 +76,9 @@ class MicroToNanoTreeHelperTest {
             )
         )
         val seenChunks = mutableListOf<Pair<Double, Double>>()
-        val helper = MicroToNanoTreeHelper(root, seenChunks)
+        val helper = NanoDOMTreeBuilder(root, seenChunks)
 
-        val nanoTree = helper.toNanoTreeInRange(-20.0, 80.0)
+        val nanoTree = helper.build(-20.0, 80.0)
 
         assertEquals(listOf("0,10", "0,20"), nanoTree.children!!.mapNotNull { it.locator })
         assertEquals(listOf(0.0 to 35.0), seenChunks)
@@ -86,7 +86,7 @@ class MicroToNanoTreeHelperTest {
 
     @Test
     @DisplayName("toNanoTreeInRange filters all descendants for invalid intervals")
-    fun toNanoTreeInRangeFiltersAllDescendantsForInvalidIntervals() {
+    fun buildFiltersAllDescendantsForInvalidIntervals() {
         val root = microNode(
             id = 1,
             y = 0.0,
@@ -102,7 +102,7 @@ class MicroToNanoTreeHelperTest {
 
     @Test
     @DisplayName("toNanoTreeInRange canonical full range matches unfiltered output")
-    fun toNanoTreeInRangeCanonicalFullRangeMatchesUnfilteredOutput() {
+    fun buildMatchesUnfilteredOutput() {
         val root = microNode(
             id = 1,
             y = 0.0,
