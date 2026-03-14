@@ -40,7 +40,7 @@ Run Browser4 examples (`ai.platon.pulsar.examples.agent.Browser4AgentKt`).
 
 ### `test.ps1`, `test.sh`
 
-Comprehensive test runner for the project. Supports various test suites and SDKs.
+Comprehensive test runner for the current Maven reactors plus the Browser4 CLI package.
 
 **Usage:**
 ```bash
@@ -56,17 +56,15 @@ Comprehensive test runner for the project. Supports various test suites and SDKs
 - `skills`: Run skills module tests
 - `mcp`: Run MCP module tests
 - `browser4`: Run all Browser4 main tests (`fast`, `core`, `rest`, `it`, `e2e`)
-- `kotlin-sdk`: Run Kotlin SDK tests
-- `python-sdk`: Run Python SDK tests
-- `nodejs-sdk`: Run NodeJS SDK tests
+- `nodejs-sdk`: Run Browser4 CLI tests from `sdks/browser4-cli`
 
 **Examples:**
 ```bash
 ./bin/test.sh fast                       # Run unit tests
 ./bin/test.sh it                         # Run integration tests
 ./bin/test.sh browser4                   # Run all main tests
-./bin/test.sh python-sdk                 # Run Python SDK tests
-./bin/test.sh nodejs-sdk --coverage      # Run NodeJS SDK tests with coverage
+./bin/test.sh nodejs-sdk                 # Run Browser4 CLI tests
+./bin/test.sh nodejs-sdk -- --coverage   # Run Browser4 CLI tests with coverage
 ```
 
 ### `version.ps1`, `version.sh`

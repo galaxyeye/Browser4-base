@@ -79,9 +79,6 @@ object DOMStateBuilder {
         return DOMState(serializableDOMTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap, root)
     }
 
-    @Deprecated("Use DOMSerializer.toJson(root) instead", ReplaceWith("DOMSerializer.toJson(root)"))
-    fun toJson(root: SerializableDOMTree) = DOMSerializer.toJson(root)
-
     private fun collectInteractiveNodes(root: SerializableDOMTree, interactiveNodes: MutableList<SerializableDOMTreeNode>) {
         root.takeIf { it.interactiveIndex != null }?.let { interactiveNodes.add(it) }
         root.children?.forEach {

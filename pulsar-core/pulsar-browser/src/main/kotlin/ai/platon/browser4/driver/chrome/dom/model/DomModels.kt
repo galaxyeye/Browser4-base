@@ -507,13 +507,13 @@ data class SerializableDOMTreeNode(
     fun toNanoTree(): NanoDOMTree = toNanoTreeInRange(0.0, 1000000.0)
 
     fun toNanoTreeUnfiltered(): NanoDOMTree {
-        val helper = NanoDOMTreeBuilder(this, seenChunks)
-        return helper.buildUnfiltered()
+        val builder = NanoDOMTreeBuilder(this, seenChunks)
+        return builder.buildUnfiltered()
     }
 
     fun toNanoTreeInRange(startY: Double = 0.0, endY: Double = 100000.0): NanoDOMTree {
-        val helper = NanoDOMTreeBuilder(this, seenChunks)
-        return helper.build(startY, endY)
+        val builder = NanoDOMTreeBuilder(this, seenChunks)
+        return builder.build(startY, endY)
     }
 }
 
