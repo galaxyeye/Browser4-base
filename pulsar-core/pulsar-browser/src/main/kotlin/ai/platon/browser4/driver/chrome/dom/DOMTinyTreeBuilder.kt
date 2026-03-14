@@ -1,9 +1,9 @@
 package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
-import ai.platon.browser4.driver.chrome.dom.model.TinyDOMTreeNode
+import ai.platon.browser4.driver.chrome.dom.model.EnhancedDOMTreeNode
 import kotlin.math.max
 import kotlin.math.min
 
@@ -15,7 +15,7 @@ import kotlin.math.min
  * - Assign interactive indices for visible+interactive elements only
  */
 class DOMTinyTreeBuilder(
-    private val root: DOMTreeNodeEx,
+    private val root: MergedDOMTreeNode,
     private val previousBackendNodeIds: Set<Int> = emptySet(),
     private val enableBBoxFiltering: Boolean = true,
     private val containmentThreshold: Double = DEFAULT_CONTAINMENT_THRESHOLD,
@@ -50,26 +50,26 @@ class DOMTinyTreeBuilder(
 
     private var interactiveCounter = 1
 
-    fun build(): TinyDOMTreeNode? {
-        val tinyTree = createTinyTree(root) ?: return null
+    fun build(): EnhancedDOMTreeNode? {
+        val tinyTree = createEnhancedDOMTree(root) ?: return null
         val optimized = optimizeTree(tinyTree)
         val filtered = if (enableBBoxFiltering) applyBoundingBoxFiltering(optimized) else optimized
         return assignInteractiveIndices(filtered)
     }
 
     /** Create tiny tree with key decisions: skip disabled tags, include iframe/frame content, shadow DOM. */
-    private fun createTinyTree(node: DOMTreeNodeEx, depth: Int = 0): TinyDOMTreeNode? {
+    private fun createEnhancedDOMTree(node: MergedDOMTreeNode, depth: Int = 0): EnhancedDOMTreeNode? {
         return when (node.nodeType) {
             NodeType.DOCUMENT_NODE -> {
                 // Return first non-null tiny tree child among all children and shadow roots
-                node.children.asSequence().mapNotNull { createTinyTree(it, depth + 1) }.firstOrNull()
-                    ?: node.shadowRoots.asSequence().mapNotNull { createTinyTree(it, depth + 1) }.firstOrNull()
+                node.children.firstNotNullOfOrNull { createEnhancedDOMTree(it, depth + 1) }
+                    ?: node.shadowRoots.firstNotNullOfOrNull { createEnhancedDOMTree(it, depth + 1) }
             }
 
             NodeType.DOCUMENT_FRAGMENT_NODE -> {
                 // Shadow DOM fragment - always include to preserve shadow content
-                val children = (node.children + node.shadowRoots).mapNotNull { createTinyTree(it, depth + 1) }
-                TinyDOMTreeNode(
+                val children = (node.children + node.shadowRoots).mapNotNull { createEnhancedDOMTree(it, depth + 1) }
+                EnhancedDOMTreeNode(
                     originalNode = node,
                     children = children,
                     shouldDisplay = true,
@@ -86,8 +86,8 @@ class DOMTinyTreeBuilder(
                 // iframe/frame: include content document children
                 if (node.nodeName.equals("IFRAME", true) || node.nodeName.equals("FRAME", true)) {
                     val doc = node.contentDocument
-                    val children = doc?.children?.mapNotNull { createTinyTree(it, depth + 1) } ?: emptyList()
-                    return TinyDOMTreeNode(
+                    val children = doc?.children?.mapNotNull { createEnhancedDOMTree(it, depth + 1) } ?: emptyList()
+                    return EnhancedDOMTreeNode(
                         originalNode = node,
                         children = children,
                         shouldDisplay = true,
@@ -110,8 +110,8 @@ class DOMTinyTreeBuilder(
 
                 // Include if meaningful
                 if (alwaysKeep || isVisible || isScrollable || node.children.isNotEmpty() || hasShadowContent) {
-                    val children = (node.children + node.shadowRoots).mapNotNull { createTinyTree(it, depth + 1) }
-                    return TinyDOMTreeNode(
+                    val children = (node.children + node.shadowRoots).mapNotNull { createEnhancedDOMTree(it, depth + 1) }
+                    return EnhancedDOMTreeNode(
                         originalNode = node,
                         children = children,
                         shouldDisplay = true,
@@ -126,7 +126,7 @@ class DOMTinyTreeBuilder(
                 val visible = node.snapshotNode != null && node.isVisible == true
                 val text = node.nodeValue.trim()
                 if (visible && text.length > 1) {
-                    TinyDOMTreeNode(
+                    EnhancedDOMTreeNode(
                         originalNode = node,
                         children = emptyList(),
                         shouldDisplay = true,
@@ -140,7 +140,7 @@ class DOMTinyTreeBuilder(
     }
 
     /** Remove non-meaningful parents: keep if visible or scrollable or is text or has children */
-    private fun optimizeTree(node: TinyDOMTreeNode?): TinyDOMTreeNode? {
+    private fun optimizeTree(node: EnhancedDOMTreeNode?): EnhancedDOMTreeNode? {
         node ?: return null
         val optimizedChildren = node.children.mapNotNull { optimizeTree(it) }
         val newNode = node.copy(children = optimizedChildren)
@@ -156,12 +156,12 @@ class DOMTinyTreeBuilder(
     }
 
     /** Apply bounding-box filtering with propagating parents; mark excluded_by_parent on contained children. */
-    private fun applyBoundingBoxFiltering(node: TinyDOMTreeNode?): TinyDOMTreeNode? {
+    private fun applyBoundingBoxFiltering(node: EnhancedDOMTreeNode?): EnhancedDOMTreeNode? {
         node ?: return null
         return filterRecursive(node, activeBounds = null, depth = 0)
     }
 
-    private fun filterRecursive(node: TinyDOMTreeNode, activeBounds: PropagatingBounds?, depth: Int): TinyDOMTreeNode {
+    private fun filterRecursive(node: EnhancedDOMTreeNode, activeBounds: PropagatingBounds?, depth: Int): EnhancedDOMTreeNode {
         var excluded = false
         // Exclude if sufficiently contained in active bounds
         if (activeBounds != null && shouldExcludeChild(node, activeBounds)) {
@@ -180,7 +180,7 @@ class DOMTinyTreeBuilder(
         return node.copy(children = newChildren, excludedByParent = excluded)
     }
 
-    private fun shouldExcludeChild(node: TinyDOMTreeNode, activeBounds: PropagatingBounds): Boolean {
+    private fun shouldExcludeChild(node: EnhancedDOMTreeNode, activeBounds: PropagatingBounds): Boolean {
         val original = node.originalNode
         if (original.nodeType == NodeType.TEXT_NODE) return false
         if (isAlwaysKeptControl(original)) return false
@@ -215,13 +215,13 @@ class DOMTinyTreeBuilder(
         return ratio >= threshold
     }
 
-    private fun isPropagatingElement(node: DOMTreeNodeEx): Boolean {
+    private fun isPropagatingElement(node: MergedDOMTreeNode): Boolean {
         val tag = node.nodeName.lowercase()
         val role = node.attributes["role"]
         return PROPAGATING_ELEMENTS.any { (t, r) -> (t == tag) && (r == null || r == role) }
     }
 
-    private fun isAlwaysKeptControl(node: DOMTreeNodeEx): Boolean {
+    private fun isAlwaysKeptControl(node: MergedDOMTreeNode): Boolean {
         val tag = node.nodeName.lowercase()
         if (tag == "a") return false
         if (tag == "button" || tag == "select" || tag == "textarea") return true
@@ -239,12 +239,12 @@ class DOMTinyTreeBuilder(
     }
 
     /** Assign interactive indices in DFS order to nodes that are visible + interactive and not excluded/ignored. */
-    private fun assignInteractiveIndices(node: TinyDOMTreeNode?): TinyDOMTreeNode? {
+    private fun assignInteractiveIndices(node: EnhancedDOMTreeNode?): EnhancedDOMTreeNode? {
         node ?: return null
         return assignRecursive(node)
     }
 
-    private fun assignRecursive(node: TinyDOMTreeNode): TinyDOMTreeNode {
+    private fun assignRecursive(node: EnhancedDOMTreeNode): EnhancedDOMTreeNode {
         // Compute this node's index if qualifies
         val qualifies = !node.excludedByParent && !node.ignoredByPaintOrder &&
                 (node.originalNode.isInteractable == true) && (node.originalNode.isVisible == true)

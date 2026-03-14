@@ -41,7 +41,7 @@ object DOMStateBuilder {
      * @return The compact DOM state containing the serialized micro tree plus lookup metadata
      */
     fun build(
-        root: TinyDOMTreeNode,
+        root: EnhancedDOMTreeNode,
         includeAttributes: List<String> = emptyList(),
         options: CompactOptions = CompactOptions()
     ): DOMState {
@@ -89,7 +89,7 @@ object DOMStateBuilder {
         }
     }
 
-    private fun collectFrameIds(root: TinyDOMTreeNode, frameIds: MutableSet<String>) {
+    private fun collectFrameIds(root: EnhancedDOMTreeNode, frameIds: MutableSet<String>) {
         root.originalNode.frameId?.let { frameIds.add(it) }
         root.children.forEach {
             collectFrameIds(it, frameIds)
@@ -97,9 +97,9 @@ object DOMStateBuilder {
     }
 
     // Find the top-level HTML node's client height to use as viewport height
-    private fun findTopLevelViewportHeight(root: TinyDOMTreeNode): Double? {
+    private fun findTopLevelViewportHeight(root: EnhancedDOMTreeNode): Double? {
         var height: Double? = null
-        fun dfs(n: TinyDOMTreeNode) {
+        fun dfs(n: EnhancedDOMTreeNode) {
             if (height != null) return
             val o = n.originalNode
             if (o.nodeName.equals("HTML", ignoreCase = true)) {
@@ -136,9 +136,9 @@ object DOMStateBuilder {
      * agent-facing representation.
      */
     private fun buildMicroDOMTree(
-        node: TinyDOMTreeNode,
+        node: EnhancedDOMTreeNode,
         includeAttributes: Set<String>,
-        ancestors: List<DOMTreeNodeEx>,
+        ancestors: List<MergedDOMTreeNode>,
         locatorMap: LocatorMap,
         frameIds: List<String>,
         options: CompactOptions,
@@ -209,7 +209,7 @@ object DOMStateBuilder {
     /**
      * Determine if a node should be pruned based on paint order.
      */
-    private fun shouldPruneByPaintOrder(node: TinyDOMTreeNode, options: CompactOptions): Boolean {
+    private fun shouldPruneByPaintOrder(node: EnhancedDOMTreeNode, options: CompactOptions): Boolean {
         val paintOrder = node.originalNode.snapshotNode?.paintOrder ?: return false
         return paintOrder > options.maxPaintOrderThreshold
     }
@@ -217,7 +217,7 @@ object DOMStateBuilder {
     /**
      * Detect if a node represents a compound component.
      */
-    private fun detectCompoundComponent(node: TinyDOMTreeNode, options: CompactOptions): Boolean {
+    private fun detectCompoundComponent(node: EnhancedDOMTreeNode, options: CompactOptions): Boolean {
         val originalNode = node.originalNode
         val tag = originalNode.nodeName.lowercase()
 
@@ -270,8 +270,8 @@ object DOMStateBuilder {
      * Create a pruned node with minimal information for high paint-order elements.
      */
     private fun createPrunedNode(
-        node: TinyDOMTreeNode,
-        ancestors: List<DOMTreeNodeEx>,
+        node: EnhancedDOMTreeNode,
+        ancestors: List<MergedDOMTreeNode>,
         locatorMap: LocatorMap,
         frameIds: List<String>,
         topViewportHeight: Double?
@@ -322,7 +322,7 @@ object DOMStateBuilder {
     }
 
     // Compute viewport index (1-based) using absolute Y and top-level viewport height
-    fun computeViewportIndex(node: DOMTreeNodeEx, topViewportHeight: Double?): Int? {
+    fun computeViewportIndex(node: MergedDOMTreeNode, topViewportHeight: Double?): Int? {
         val vh = topViewportHeight ?: return null
         if (!vh.isFinite() || vh <= 0.0) return null
         // Prefer absolute bounds from snapshot; fallback to absolutePosition or bounds
@@ -340,7 +340,7 @@ object DOMStateBuilder {
      * Enhanced cleanOriginalNode with attribute casing alignment and improved filtering.
      */
     private fun cleanOriginalNodeEnhanced(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         includeAttributes: Set<String>,
         options: CompactOptions,
         includeOrder: List<String>,
@@ -510,7 +510,7 @@ object DOMStateBuilder {
     }
 
     private fun cleanOriginalNode(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         includeAttributes: Set<String>,
         frameIds: List<String>,
     ): CleanedDOMTreeNode {
@@ -572,7 +572,7 @@ object DOMStateBuilder {
      * Supports element hash, XPath, backend node ID, frame/backend combo and node ID for comprehensive element lookup.
      */
     private fun addToLocatorMap(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         frameIds: List<String>,
         locatorMap: LocatorMap
     ) {
@@ -605,7 +605,7 @@ object DOMStateBuilder {
         locatorMap.put(Locator.Type.NODE_ID, node.nodeId.toString(), node)
     }
 
-    private fun createNodeLocator(node: DOMTreeNodeEx, frameIds: List<String>): FBNLocator {
+    private fun createNodeLocator(node: MergedDOMTreeNode, frameIds: List<String>): FBNLocator {
         // Returns -1 if the list does not contain element
         val frameIndex = frameIds.indexOf(node.frameId).takeIf { it > 0 } ?: 0
         val backendNodeId = node.backendNodeId ?: 0

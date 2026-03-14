@@ -1,6 +1,6 @@
 package ai.platon.pulsar
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.browser4.driver.common.SimpleScriptConfuser
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
@@ -66,7 +66,7 @@ open class WebDriverTestBase : MockSiteAccess() {
         webDriverService.openEnhanced(url, driver, scrollCount)
 
     // Helper to DFS find the first node by id in the enhanced tree
-    protected fun findNodeById(root: DOMTreeNodeEx?, id: String): DOMTreeNodeEx? {
+    protected fun findNodeById(root: MergedDOMTreeNode?, id: String): MergedDOMTreeNode? {
         root ?: return null
         if (root.attributes["id"] == id) return root
         root.children.forEach { findNodeById(it, id)?.let { return it } }

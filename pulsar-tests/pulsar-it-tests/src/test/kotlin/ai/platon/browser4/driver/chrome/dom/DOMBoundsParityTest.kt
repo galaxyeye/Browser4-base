@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.pulsar.WebDriverTestBase
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,13 +21,13 @@ class DOMBoundsParityTest : WebDriverTestBase() {
         assertTrue(abs(a - expected) <= delta, message ?: "Expected ~$expected ±$delta, got $a")
     }
 
-    private fun findIframeHtmlNode(root: DOMTreeNodeEx, iframeId: String): DOMTreeNodeEx {
+    private fun findIframeHtmlNode(root: MergedDOMTreeNode, iframeId: String): MergedDOMTreeNode {
         val iframe = findNodeById(root, iframeId)
         assertNotNull(iframe, "iframe#$iframeId should exist")
         val doc = iframe.contentDocument
         assertNotNull(doc, "iframe#$iframeId should have a contentDocument")
         // Depth-first find the HTML element under this content document
-        fun dfs(n: DOMTreeNodeEx?): DOMTreeNodeEx? {
+        fun dfs(n: MergedDOMTreeNode?): MergedDOMTreeNode? {
             n ?: return null
             if (n.nodeName.equals("HTML", true)) return n
             n.children.forEach { dfs(it)?.let { return it } }

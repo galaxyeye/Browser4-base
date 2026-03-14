@@ -2,7 +2,19 @@ package ai.platon.browser4.driver.chrome.dom.model
 
 import java.util.*
 
+
 object AriaSnapshotRenderer {
+    private val yamlKeywords = setOf("null", "true", "false", "~")
+    private val whitespaceRegex = Regex("\\s+")
+
+    fun render(root: NanoDOMTreeNode): String {
+        val lines = mutableListOf<String>()
+        toRenderChildren(root).forEach { child -> visitChild(child, "", lines) }
+        return lines.joinToString("\n")
+    }
+}
+
+object AriaSnapshotForNanoDOMTreeRenderer {
     private val yamlKeywords = setOf("null", "true", "false", "~")
     private val whitespaceRegex = Regex("\\s+")
 

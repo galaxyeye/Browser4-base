@@ -12,22 +12,22 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize filters attributes and populates selector map")
     fun serializeFiltersAttributesAndPopulatesSelectorMap() {
-        val childOriginal = DOMTreeNodeEx(
+        val childOriginal = MergedDOMTreeNode(
             nodeId = 2,
             nodeName = "SPAN",
             attributes = mapOf("data-test" to "value", "aria-label" to "ok"),
             elementHash = "child-hash"
         )
-        val rootOriginal = DOMTreeNodeEx(
+        val rootOriginal = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "DIV",
             attributes = mapOf("id" to "card", "data-id" to "123"),
             elementHash = "root-hash"
         )
 
-        val root = TinyDOMTreeNode(
+        val root = EnhancedDOMTreeNode(
             originalNode = rootOriginal,
-            children = listOf(TinyDOMTreeNode(originalNode = childOriginal))
+            children = listOf(EnhancedDOMTreeNode(originalNode = childOriginal))
         )
 
         val result = DOMStateBuilder.build(root, listOf("data-id", "aria-label"))
@@ -50,7 +50,7 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize propagates scroll info only when helper allows it")
     fun serializePropagatesScrollInfoOnlyWhenHelperAllowsIt() {
-        val scrollableNode = DOMTreeNodeEx(
+        val scrollableNode = MergedDOMTreeNode(
             nodeId = 3,
             nodeName = "div",
             attributes = emptyMap(),
@@ -61,16 +61,16 @@ class DOMStateBuilderTest {
                 scrollRects = DOMRect(0.0, 0.0, 400.0, 400.0)
             )
         )
-        val rootOriginal = DOMTreeNodeEx(
+        val rootOriginal = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BODY",
             nodeType = NodeType.ELEMENT_NODE,
             elementHash = "body-hash"
         )
 
-        val simplified = TinyDOMTreeNode(
+        val simplified = EnhancedDOMTreeNode(
             originalNode = rootOriginal,
-            children = listOf(TinyDOMTreeNode(originalNode = scrollableNode))
+            children = listOf(EnhancedDOMTreeNode(originalNode = scrollableNode))
         )
 
         val result = DOMStateBuilder.build(simplified)
@@ -85,7 +85,7 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize with paint order pruning removes high paint order elements")
     fun serializeWithPaintOrderPruningRemovesHighPaintOrderElements() {
-        val highPaintOrderNode = DOMTreeNodeEx(
+        val highPaintOrderNode = MergedDOMTreeNode(
             nodeId = 4,
             nodeName = "DIV",
             elementHash = "high-paint-hash",
@@ -93,7 +93,7 @@ class DOMStateBuilderTest {
                 paintOrder = 1500 // Above default threshold of 1000
             )
         )
-        val normalNode = DOMTreeNodeEx(
+        val normalNode = MergedDOMTreeNode(
             nodeId = 5,
             nodeName = "SPAN",
             elementHash = "normal-hash",
@@ -101,17 +101,17 @@ class DOMStateBuilderTest {
                 paintOrder = 500 // Below threshold
             )
         )
-        val rootOriginal = DOMTreeNodeEx(
+        val rootOriginal = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BODY",
             elementHash = "body-hash"
         )
 
-        val simplified = TinyDOMTreeNode(
+        val simplified = EnhancedDOMTreeNode(
             originalNode = rootOriginal,
             children = listOf(
-                TinyDOMTreeNode(originalNode = highPaintOrderNode),
-                TinyDOMTreeNode(originalNode = normalNode)
+                EnhancedDOMTreeNode(originalNode = highPaintOrderNode),
+                EnhancedDOMTreeNode(originalNode = normalNode)
             )
         )
 
@@ -141,28 +141,28 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize detects compound components correctly")
     fun serializeDetectsCompoundComponentsCorrectly() {
-        val listItem = DOMTreeNodeEx(
+        val listItem = MergedDOMTreeNode(
             nodeId = 6,
             nodeName = "LI",
             elementHash = "li-hash"
         )
-        val listNode = DOMTreeNodeEx(
+        val listNode = MergedDOMTreeNode(
             nodeId = 5,
             nodeName = "UL",
             elementHash = "ul-hash"
         )
-        val rootOriginal = DOMTreeNodeEx(
+        val rootOriginal = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BODY",
             elementHash = "body-hash"
         )
 
-        val simplified = TinyDOMTreeNode(
+        val simplified = EnhancedDOMTreeNode(
             originalNode = rootOriginal,
             children = listOf(
-                TinyDOMTreeNode(
+                EnhancedDOMTreeNode(
                     originalNode = listNode,
-                    children = List(5) { TinyDOMTreeNode(originalNode = listItem) } // 5 children to meet threshold
+                    children = List(5) { EnhancedDOMTreeNode(originalNode = listItem) } // 5 children to meet threshold
                 )
             )
         )
@@ -186,7 +186,7 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize aligns attribute casing correctly")
     fun serializeAlignsAttributeCasingCorrectly() {
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 7,
             nodeName = "INPUT",
             elementHash = "input-hash",
@@ -198,7 +198,7 @@ class DOMStateBuilderTest {
             )
         )
 
-        val simplified = TinyDOMTreeNode(originalNode = node)
+        val simplified = EnhancedDOMTreeNode(originalNode = node)
 
         val options = DOMStateBuilder.CompactOptions(
             enableAttributeCasingAlignment = true,
@@ -218,7 +218,7 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize builds enhanced selector map with multiple keys")
     fun serializeBuildsEnhancedSelectorMapWithMultipleKeys() {
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 8,
             nodeName = "BUTTON",
             elementHash = "button-hash",
@@ -226,7 +226,7 @@ class DOMStateBuilderTest {
             backendNodeId = 12345
         )
 
-        val simplified = TinyDOMTreeNode(originalNode = node)
+        val simplified = EnhancedDOMTreeNode(originalNode = node)
 
         val result = DOMStateBuilder.build(simplified)
 
@@ -247,13 +247,13 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("serialize preserves original casing when configured")
     fun serializePreservesOriginalCasingWhenConfigured() {
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 9,
             nodeName = "CustomElement",
             elementHash = "custom-hash"
         )
 
-        val simplified = TinyDOMTreeNode(originalNode = node)
+        val simplified = EnhancedDOMTreeNode(originalNode = node)
 
         val options = DOMStateBuilder.CompactOptions(
             preserveOriginalCasing = true
@@ -274,20 +274,20 @@ class DOMStateBuilderTest {
         val levels = 30
 
         // Build a deep chain of SlimNodes: node-1 -> node-2 -> ... -> node-29 -> node-30(leaf)
-        var leaf: TinyDOMTreeNode = TinyDOMTreeNode(
-            originalNode = DOMTreeNodeEx(
+        var leaf: EnhancedDOMTreeNode = EnhancedDOMTreeNode(
+            originalNode = MergedDOMTreeNode(
                 nodeId = levels,
                 nodeName = "SPAN",
                 elementHash = "node-$levels"
             )
         )
         for (i in levels - 1 downTo 1) {
-            val parentOriginal = DOMTreeNodeEx(
+            val parentOriginal = MergedDOMTreeNode(
                 nodeId = i,
                 nodeName = "DIV",
                 elementHash = "node-$i"
             )
-            leaf = TinyDOMTreeNode(
+            leaf = EnhancedDOMTreeNode(
                 originalNode = parentOriginal,
                 children = listOf(leaf)
             )
@@ -415,7 +415,7 @@ class DOMStateBuilderTest {
     @Test
     @DisplayName("render includes link urls from default DOM state build")
     fun renderIncludesLinkUrlsFromDefaultDomStateBuild() {
-        val anchorNode = DOMTreeNodeEx(
+        val anchorNode = MergedDOMTreeNode(
             nodeId = 1,
             backendNodeId = 101,
             nodeName = "A",
@@ -432,16 +432,16 @@ class DOMStateBuilderTest {
             isVisible = true,
             isInteractable = true
         )
-        val rootOriginal = DOMTreeNodeEx(
+        val rootOriginal = MergedDOMTreeNode(
             nodeId = 0,
             backendNodeId = 100,
             nodeName = "DIV",
             children = listOf(anchorNode),
             isVisible = true
         )
-        val root = TinyDOMTreeNode(
+        val root = EnhancedDOMTreeNode(
             originalNode = rootOriginal,
-            children = listOf(TinyDOMTreeNode(originalNode = anchorNode, interactiveIndex = 1))
+            children = listOf(EnhancedDOMTreeNode(originalNode = anchorNode, interactiveIndex = 1))
         )
 
         val ariaSnapshot = DOMStateBuilder.build(root).ariaSnapshot
@@ -516,7 +516,7 @@ class DOMStateBuilderTest {
     @DisplayName("test href and navigation attributes are preserved in NanoDOMTree")
     fun testHrefAndNavigationAttributesArePreservedInNanoDOMTree() {
         // Create an anchor node with href attribute
-        val anchorNode = DOMTreeNodeEx(
+        val anchorNode = MergedDOMTreeNode(
             nodeId = 1,
             backendNodeId = 101,
             nodeName = "A",
@@ -532,7 +532,7 @@ class DOMStateBuilderTest {
         )
 
         // Create an img node with src attribute
-        val imgNode = DOMTreeNodeEx(
+        val imgNode = MergedDOMTreeNode(
             nodeId = 2,
             backendNodeId = 102,
             nodeName = "IMG",
@@ -546,7 +546,7 @@ class DOMStateBuilderTest {
         )
 
         // Create a form node with action attribute
-        val formNode = DOMTreeNodeEx(
+        val formNode = MergedDOMTreeNode(
             nodeId = 3,
             backendNodeId = 103,
             nodeName = "FORM",
@@ -559,18 +559,18 @@ class DOMStateBuilderTest {
             )
         )
 
-        val rootOriginal = DOMTreeNodeEx(
+        val rootOriginal = MergedDOMTreeNode(
             nodeId = 0,
             nodeName = "DIV",
             children = listOf(anchorNode, imgNode, formNode)
         )
 
-        val root = TinyDOMTreeNode(
+        val root = EnhancedDOMTreeNode(
             originalNode = rootOriginal,
             children = listOf(
-                TinyDOMTreeNode(originalNode = anchorNode),
-                TinyDOMTreeNode(originalNode = imgNode),
-                TinyDOMTreeNode(originalNode = formNode)
+                EnhancedDOMTreeNode(originalNode = anchorNode),
+                EnhancedDOMTreeNode(originalNode = imgNode),
+                EnhancedDOMTreeNode(originalNode = formNode)
             )
         )
 

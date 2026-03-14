@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.model
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.pulsar.agentic.ActResult
 import ai.platon.pulsar.agentic.ObserveResult
 import ai.platon.pulsar.common.Strings
@@ -206,7 +206,7 @@ data class ObserveElement constructor(
     // Revised fields
     val toolCall: ToolCall? = null,
     @JsonIgnore
-    val node: DOMTreeNodeEx? = null,
+    val node: MergedDOMTreeNode? = null,
     val backendNodeId: Int? = null,
     val xpath: String? = null,
     val cssSelector: String? = null,

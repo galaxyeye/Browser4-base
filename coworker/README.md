@@ -4,6 +4,8 @@ The Builtin AI Coworker is an agent that assists you with various tasks in your 
 
 ## How to Use
 
+Start Assistant → Batch Draft Tasks → Copy to Execution Directory → Assistant Executes Tasks [→ View Results → Review] → Move to Approval Directory → Auto-Submit and Push
+
 1. run `coworker-scheduler.ps1` to start recurring automation
 2. draft tasks in `0draft` (or anywhere)
 3. copy ready tasks to `1created` for execution

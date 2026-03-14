@@ -80,7 +80,7 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         assertTrue(trees.cdpTiming.isNotEmpty(), "cdpTiming should record phases")
 
         val enhancedRoot = collectEnhancedRoot(service, options)
-        val simplified = service.buildTinyTree(enhancedRoot)
+        val simplified = service.buildEnhancedDOMTree(enhancedRoot)
         val domState = service.buildDOMState(simplified)
 
         assertTrue { enhancedRoot.children.isNotEmpty() }
@@ -130,7 +130,7 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         logger.info("Metrics written | {}", path.toUri())
     }
 
-    private fun writeDOMTreeNodeEx(domTreeNode: DOMTreeNodeEx) {
+    private fun writeDOMTreeNodeEx(domTreeNode: MergedDOMTreeNode) {
         val path = reportDir.resolve("snapshot-$ident.yml")
         path.parent.createDirectories()
         Files.writeString(path, domTreeNode.toYaml())
@@ -153,7 +153,7 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         logger.info("Aria snapshot written (nano) | {}", path.toUri())
     }
 
-    private fun countDomNodes(root: DOMTreeNodeEx?): Int {
+    private fun countDomNodes(root: MergedDOMTreeNode?): Int {
         if (root == null) return 0
         var n = 1
         root.children.forEach { n += countDomNodes(it) }

@@ -2,10 +2,10 @@ package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
-import ai.platon.browser4.driver.chrome.dom.model.TinyDOMTreeNode
+import ai.platon.browser4.driver.chrome.dom.model.EnhancedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
@@ -16,9 +16,9 @@ import org.junit.jupiter.api.DisplayName
 
 class TinyTreeTest : WebDriverTestBase() {
 
-    private fun flattenSlim(root: TinyDOMTreeNode): List<TinyDOMTreeNode> {
-        val out = ArrayList<TinyDOMTreeNode>()
-        fun dfs(n: TinyDOMTreeNode) {
+    private fun flattenSlim(root: EnhancedDOMTreeNode): List<EnhancedDOMTreeNode> {
+        val out = ArrayList<EnhancedDOMTreeNode>()
+        fun dfs(n: EnhancedDOMTreeNode) {
             out.add(n)
             n.children.forEach { dfs(it) }
         }
@@ -135,7 +135,7 @@ class TinyTreeTest : WebDriverTestBase() {
 
         val enhancedRoot = collectEnhancedRoot(service, options)
         val allBackendIds = mutableSetOf<Int>()
-        fun collectBackendIds(n: DOMTreeNodeEx) {
+        fun collectBackendIds(n: MergedDOMTreeNode) {
             n.backendNodeId?.let { allBackendIds.add(it) }
             n.children.forEach { collectBackendIds(it) }
             n.shadowRoots.forEach { collectBackendIds(it) }

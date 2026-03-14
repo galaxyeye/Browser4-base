@@ -249,7 +249,7 @@ data class SnapshotNodeEx constructor(
 /**
  * Enhanced DOM tree node containing merged information from DOM, AX, and Snapshot trees.
  */
-data class DOMTreeNodeEx constructor(
+data class MergedDOMTreeNode constructor(
     // DOM Node data
     val nodeId: Int = 0,
     val backendNodeId: Int? = null,
@@ -267,9 +267,9 @@ data class DOMTreeNodeEx constructor(
     val sessionId: String? = null,
 
     // Tree structure
-    val children: List<DOMTreeNodeEx> = emptyList(),
-    val shadowRoots: List<DOMTreeNodeEx> = emptyList(),
-    val contentDocument: DOMTreeNodeEx? = null,
+    val children: List<MergedDOMTreeNode> = emptyList(),
+    val shadowRoots: List<MergedDOMTreeNode> = emptyList(),
+    val contentDocument: MergedDOMTreeNode? = null,
 
     // Snapshot data
     val snapshotNode: SnapshotNodeEx? = null,
@@ -305,14 +305,14 @@ data class DOMTreeNodeEx constructor(
     fun toYaml() = Pson.toYaml(this)
 }
 
-typealias DOMTreeEx = DOMTreeNodeEx
+typealias MergedDOMTree = MergedDOMTreeNode
 
 /**
- * Simplified node for LLM serialization.
+ * Enhanced and simplified node for LLM serialization.
  */
-data class TinyDOMTreeNode(
-    val originalNode: DOMTreeNodeEx,
-    val children: List<TinyDOMTreeNode> = emptyList(),
+data class EnhancedDOMTreeNode(
+    val originalNode: MergedDOMTreeNode,
+    val children: List<EnhancedDOMTreeNode> = emptyList(),
     val shouldDisplay: Boolean = true,
     val interactiveIndex: Int? = null,
     val isNew: Boolean = false,
@@ -322,7 +322,7 @@ data class TinyDOMTreeNode(
     val isCompoundComponent: Boolean = false
 )
 
-typealias TinyDOMTreeTree = TinyDOMTreeNode
+typealias EnhancedDOMTree = EnhancedDOMTreeNode
 
 /**
  * DOM interacted element for agent interaction.
@@ -555,7 +555,7 @@ data class NanoDOMTreeNode(
     val microTreeNode: MicroDOMTree? = null,
 ) {
     @get:JsonIgnore
-    val ariaSnapshot: String by lazy { AriaSnapshotRenderer.render(this) }
+    val ariaSnapshot: String by lazy { AriaSnapshotForNanoDOMTreeRenderer.render(this) }
 
     @get:JsonIgnore
     val ref: Int get() = FBNLocator.parseRelaxed(locator)?.backendNodeId ?: 0
@@ -567,7 +567,7 @@ data class DOMState constructor(
     val microTree: MicroDOMTree,
     val interactiveNodes: List<MicroDOMTreeNode> = listOf(),
     val frameIds: List<String> = listOf(),
-    val selectorMap: Map<String, DOMTreeNodeEx> = mapOf(),
+    val selectorMap: Map<String, MergedDOMTreeNode> = mapOf(),
     val locatorMap: LocatorMap = LocatorMap()
 ) {
     @get:JsonIgnore

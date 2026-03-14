@@ -1,7 +1,7 @@
 package ai.platon.pulsar
 
 import ai.platon.browser4.driver.chrome.dom.CDPSnapshotService
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
@@ -101,7 +101,7 @@ open class WebDriverTestBase : TestWebSiteAccess() {
         webDriverService.open(url, driver, scrollCount)
 
     // Helper to DFS find the first node by id in the enhanced tree
-    protected fun findNodeById(root: DOMTreeNodeEx?, id: String): DOMTreeNodeEx? {
+    protected fun findNodeById(root: MergedDOMTreeNode?, id: String): MergedDOMTreeNode? {
         root ?: return null
         if (root.attributes["id"] == id) return root
         root.children.forEach { findNodeById(it, id)?.let { return it } }
@@ -110,15 +110,15 @@ open class WebDriverTestBase : TestWebSiteAccess() {
         return null
     }
 
-    protected suspend fun collectEnhancedRoot(service: CDPSnapshotService, options: SnapshotOptions): DOMTreeNodeEx {
+    protected suspend fun collectEnhancedRoot(service: CDPSnapshotService, options: SnapshotOptions): MergedDOMTreeNode {
         repeat(3) { attempt ->
             val t = service.buildTargetTrees(target = PageTarget(), options = options)
             // Best-effort summary for diagnostics
             printlnPro(DomDebug.summarize(t))
-            val r = service.buildEnhancedDomTree(t)
+            val r = service.buildMergedDOMTreeNode(t)
             if (r.children.isNotEmpty() || attempt == 2) return r
             Thread.sleep(300)
         }
-        return service.buildEnhancedDomTree(service.buildTargetTrees(PageTarget(), options))
+        return service.buildMergedDOMTreeNode(service.buildTargetTrees(PageTarget(), options))
     }
 }

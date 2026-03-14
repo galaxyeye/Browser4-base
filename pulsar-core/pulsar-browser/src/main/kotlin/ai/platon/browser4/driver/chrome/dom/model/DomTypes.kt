@@ -29,7 +29,7 @@ data class SnapshotOptions(
  */
 data class TargetTrees(
     val snapshot: Map<String, Any>? = null,
-    val domTree: DOMTreeEx = DOMTreeEx(),
+    val domTree: MergedDOMTree = MergedDOMTree(),
     val axTree: List<AXNodeEx> = emptyList(),
     val devicePixelRatio: Double = 1.0,
     val cdpTiming: Map<String, Long> = emptyMap(),
@@ -39,7 +39,7 @@ data class TargetTrees(
     val snapshotByBackendId: Map<Int, SnapshotNodeEx> = emptyMap(),
     val axByBackendId: Map<Int, AXNodeEx> = emptyMap(),
     val axTreeByFrameId: Map<String, List<AXNodeEx>> = emptyMap(),
-    val domByBackendId: Map<Int, DOMTreeNodeEx> = emptyMap()
+    val domByBackendId: Map<Int, MergedDOMTreeNode> = emptyMap()
 )
 
 /**

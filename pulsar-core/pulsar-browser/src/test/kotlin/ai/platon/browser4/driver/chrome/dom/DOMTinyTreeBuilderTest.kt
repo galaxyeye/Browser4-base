@@ -11,7 +11,7 @@ class DOMTinyTreeBuilderTest {
         @DisplayName("bbox filtering excludes contained non-exception children")
     fun bboxFilteringExcludesContainedNonExceptionChildren() {
         // Parent propagating element: <div role="button"> with bounds 0,0,100x40
-        val parent = DOMTreeNodeEx(
+        val parent = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "DIV",
             attributes = mapOf("role" to "button"),
@@ -19,7 +19,7 @@ class DOMTinyTreeBuilderTest {
             isVisible = true
         )
         // Child element fully inside: <span>
-        val childInside = DOMTreeNodeEx(
+        val childInside = MergedDOMTreeNode(
             nodeId = 2,
             nodeName = "SPAN",
             snapshotNode = SnapshotNodeEx(bounds = DOMRect(5.0, 5.0, 20.0, 10.0)),
@@ -38,21 +38,21 @@ class DOMTinyTreeBuilderTest {
         @DisplayName("interactive indices assigned only to visible and interactive nodes and appear in selector map")
     fun interactiveIndicesAssignedOnlyToVisibleAndInteractiveNodesAndAppearInSelectorMap() {
         // Two interactive visible buttons
-        val btn1 = DOMTreeNodeEx(
+        val btn1 = MergedDOMTreeNode(
             nodeId = 10,
             nodeName = "BUTTON",
             isVisible = true,
             isInteractable = true,
             elementHash = "btn1"
         )
-        val btn2 = DOMTreeNodeEx(
+        val btn2 = MergedDOMTreeNode(
             nodeId = 11,
             nodeName = "A",
             isVisible = true,
             isInteractable = true,
             elementHash = "btn2"
         )
-        val root = DOMTreeNodeEx(
+        val root = MergedDOMTreeNode(
             nodeId = 9,
             nodeName = "DIV",
             isVisible = true,
@@ -73,19 +73,19 @@ class DOMTinyTreeBuilderTest {
         @DisplayName("optimizeTree prunes invisible non-scrollable parent with all children pruned")
     fun optimizetreePrunesInvisibleNonScrollableParentWithAllChildrenPruned() {
         // Root visible container
-        val root = DOMTreeNodeEx(
+        val root = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "DIV",
             isVisible = true
         )
         // Invisible, non-scrollable parent with one child text that will be pruned (no snapshot, not visible)
-        val invisibleParent = DOMTreeNodeEx(
+        val invisibleParent = MergedDOMTreeNode(
             nodeId = 2,
             nodeName = "DIV",
             isVisible = false,
             isScrollable = false,
             children = listOf(
-                DOMTreeNodeEx(
+                MergedDOMTreeNode(
                     nodeId = 3,
                     nodeType = NodeType.TEXT_NODE,
                     nodeName = "#text",

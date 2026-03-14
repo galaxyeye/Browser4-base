@@ -88,13 +88,13 @@ class CDPSnapshotService(
     private val clickableDetector = ClickableElementDetector()
 
     @Volatile
-    private var lastEnhancedRoot: DOMTreeNodeEx? = null
+    private var lastEnhancedRoot: MergedDOMTreeNode? = null
 
     @Volatile
-    private var lastAncestorMap: Map<Int, List<DOMTreeNodeEx>> = emptyMap()
+    private var lastAncestorMap: Map<Int, List<MergedDOMTreeNode>> = emptyMap()
 
     @Volatile
-    private var lastDomByBackend: Map<Int, DOMTreeNodeEx> = emptyMap()
+    private var lastDomByBackend: Map<Int, MergedDOMTreeNode> = emptyMap()
 
     override suspend fun getBrowserUseState(
         target: PageTarget,
@@ -113,7 +113,7 @@ class CDPSnapshotService(
             logger.debug("allTrees summary: \n{}", DomDebug.summarize(allTrees))
         }
 
-        val tinyTree = buildTinyTree(allTrees)
+        val tinyTree = buildEnhancedDOMTree(allTrees)
         if (logger.isDebugEnabled) {
             logger.debug("tinyTree summary: \n{}", DomDebug.summarize(tinyTree))
         }
@@ -146,7 +146,7 @@ class CDPSnapshotService(
             .onFailure { e ->
                 logger.warn("DOM tree collection failed | frameId={} | err={}", target.frameId, e.toString())
                 tracer?.trace("DOM tree exception", e)
-            }.getOrElse { DOMTreeNodeEx() }
+            }.getOrElse { MergedDOMTreeNode() }
         val domByBackendId = runCatching { this.domTree.lastBackendNodeLookup() }.getOrDefault(emptyMap())
         cdpTiming["dom_tree"] = System.currentTimeMillis() - domStart
 
@@ -208,7 +208,7 @@ class CDPSnapshotService(
         )
     }
 
-    fun buildEnhancedDomTree(trees: TargetTrees): DOMTreeNodeEx {
+    fun buildMergedDOMTreeNode(trees: TargetTrees): MergedDOMTreeNode {
         val options = trees.options
         // Build ancestor map for XPath and hash generation
         val ancestorMap = buildAncestorMap(trees.domTree)
@@ -238,7 +238,7 @@ class CDPSnapshotService(
             return true
         }
 
-        fun isElementVisibleAccordingToAllParents(node: DOMTreeNodeEx, htmlFrames: List<DOMTreeNodeEx>): Boolean {
+        fun isElementVisibleAccordingToAllParents(node: MergedDOMTreeNode, htmlFrames: List<MergedDOMTreeNode>): Boolean {
             val snap = node.snapshotNode ?: return false
             var current = snap.bounds?.roundTo(1)
                 ?.let { DOMRect(it.x, it.y, it.width, it.height) } ?: return false
@@ -277,13 +277,13 @@ class CDPSnapshotService(
 
         // Merge trees recursively with enhanced metrics and frame-aware offsets
         fun merge(
-            node: DOMTreeNodeEx,
-            ancestors: List<DOMTreeNodeEx>,
-            htmlFrames: List<DOMTreeNodeEx>,
+            node: MergedDOMTreeNode,
+            ancestors: List<MergedDOMTreeNode>,
+            htmlFrames: List<MergedDOMTreeNode>,
             offsetX: Double,
             offsetY: Double,
             depth: Int = 0
-        ): DOMTreeNodeEx {
+        ): MergedDOMTreeNode {
             val backendNodeId = node.backendNodeId
 
             // Get snapshot and AX
@@ -367,7 +367,7 @@ class CDPSnapshotService(
                 merge(shadow, newAncestors, nextHtmlFrames, nextOffsetX, nextOffsetY, depth + 1)
             }
 
-            var mergedContentDocument: DOMTreeNodeEx? = null
+            var mergedContentDocument: MergedDOMTreeNode? = null
             if (node.contentDocument != null) {
                 // If current node is an IFRAME/FRAME, push frame and add its bounds to offset for content doc
                 var cFrames = nextHtmlFrames
@@ -397,8 +397,8 @@ class CDPSnapshotService(
         return merged
     }
 
-    internal fun buildTinyTree(trees: TargetTrees): TinyDOMTreeTree {
-        val enhanced = buildEnhancedDomTree(trees)
+    internal fun buildEnhancedDOMTree(trees: TargetTrees): EnhancedDOMTree {
+        val enhanced = buildMergedDOMTreeNode(trees)
         val hasElements = enhanced.children.isNotEmpty() ||
                 enhanced.shadowRoots.isNotEmpty() ||
                 enhanced.contentDocument != null
@@ -409,14 +409,14 @@ class CDPSnapshotService(
             // throw IllegalStateException("Empty DOM tree collected (AX=${trees.axTree.size}, SNAP=${trees.snapshotByBackendId.size})")
         }
 
-        return tinyTree ?: TinyDOMTreeTree(DOMTreeNodeEx())
+        return tinyTree ?: EnhancedDOMTree(MergedDOMTreeNode())
     }
 
-    fun buildTinyTree(root: DOMTreeNodeEx): TinyDOMTreeNode {
-        fun simplify(node: DOMTreeNodeEx): TinyDOMTreeNode {
+    fun buildEnhancedDOMTree(root: MergedDOMTreeNode): EnhancedDOMTreeNode {
+        fun simplify(node: MergedDOMTreeNode): EnhancedDOMTreeNode {
             val simplifiedChildren = node.children.map { simplify(it) }
 
-            return TinyDOMTreeNode(
+            return EnhancedDOMTreeNode(
                 originalNode = node,
                 children = simplifiedChildren,
                 shouldDisplay = node.nodeType == NodeType.ELEMENT_NODE ||
@@ -428,7 +428,7 @@ class CDPSnapshotService(
         return simplify(root)
     }
 
-    fun buildDOMState(root: TinyDOMTreeNode, includeAttributes: List<String> = emptyList()): DOMState {
+    fun buildDOMState(root: EnhancedDOMTreeNode, includeAttributes: List<String> = emptyList()): DOMState {
         // Use enhanced serialization with default options
         val options = DOMStateBuilder.CompactOptions(
             enablePaintOrderPruning = true,
@@ -627,7 +627,7 @@ class CDPSnapshotService(
         )
     }
 
-    override fun findElement(ref: ElementRefCriteria): DOMTreeNodeEx? {
+    override fun findElement(ref: ElementRefCriteria): MergedDOMTreeNode? {
         val root = requireNotNull(lastEnhancedRoot) { "Enhanced DOM tree not built yet" }
 
         // Try element hash first (fastest)
@@ -658,7 +658,7 @@ class CDPSnapshotService(
     /**
      * Depth-first search for the first node matching the predicate.
      */
-    private fun findByDfs(root: DOMTreeNodeEx, predicate: (DOMTreeNodeEx) -> Boolean): DOMTreeNodeEx? {
+    private fun findByDfs(root: MergedDOMTreeNode, predicate: (MergedDOMTreeNode) -> Boolean): MergedDOMTreeNode? {
         if (predicate(root)) return root
         root.children.forEach { child -> findByDfs(child, predicate)?.let { return it } }
         root.shadowRoots.forEach { shadow -> findByDfs(shadow, predicate)?.let { return it } }
@@ -669,7 +669,7 @@ class CDPSnapshotService(
     /**
      * Build a CSS selector matcher for simple selectors (tag, #id, .class).
      */
-    private fun buildCssMatcher(selector: String): (DOMTreeNodeEx) -> Boolean {
+    private fun buildCssMatcher(selector: String): (MergedDOMTreeNode) -> Boolean {
         val tagRegex = Regex("^[a-zA-Z0-9]+")
         val idRegex = Regex("#([a-zA-Z0-9_-]+)")
         val classRegex = Regex("\\.([a-zA-Z0-9_-]+)")
@@ -678,14 +678,14 @@ class CDPSnapshotService(
         val id = idRegex.find(selector)?.groupValues?.getOrNull(1)
         val classes = classRegex.findAll(selector).map { it.groupValues[1] }.toSet()
 
-        return { n: DOMTreeNodeEx ->
+        return { n: MergedDOMTreeNode ->
             (tag == null || n.nodeName.equals(tag, ignoreCase = true)) &&
                     (id == null || n.attributes["id"] == id) &&
                     (classes.isEmpty() || classes.all { it in (n.attributes["class"]?.split(Regex("\\s+"))?.toSet() ?: emptySet()) })
         }
     }
 
-    fun toInteractedElement(node: DOMTreeNodeEx): DOMInteractedElement {
+    fun toInteractedElement(node: MergedDOMTreeNode): DOMInteractedElement {
         return DOMInteractedElement(
             elementHash = node.elementHash ?: HashUtils.simpleElementHash(node),
             xpath = node.xpath,
@@ -710,10 +710,10 @@ class CDPSnapshotService(
     /**
      * Build a map of node ID to ancestors for efficient path calculation.
      */
-    private fun buildAncestorMap(root: DOMTreeNodeEx): Map<Int, List<DOMTreeNodeEx>> {
-        val map = mutableMapOf<Int, List<DOMTreeNodeEx>>()
+    private fun buildAncestorMap(root: MergedDOMTreeNode): Map<Int, List<MergedDOMTreeNode>> {
+        val map = mutableMapOf<Int, List<MergedDOMTreeNode>>()
 
-        fun traverse(node: DOMTreeNodeEx, ancestors: List<DOMTreeNodeEx>) {
+        fun traverse(node: MergedDOMTreeNode, ancestors: List<MergedDOMTreeNode>) {
             map[node.nodeId] = ancestors
             val newAncestors = ancestors + node
             node.children.forEach { traverse(it, newAncestors) }
@@ -728,10 +728,10 @@ class CDPSnapshotService(
     /**
      * Build a map of parent node ID to children for index calculation.
      */
-    private fun buildSiblingMap(root: DOMTreeNodeEx): Map<Int, List<DOMTreeNodeEx>> {
-        val map = mutableMapOf<Int, List<DOMTreeNodeEx>>()
+    private fun buildSiblingMap(root: MergedDOMTreeNode): Map<Int, List<MergedDOMTreeNode>> {
+        val map = mutableMapOf<Int, List<MergedDOMTreeNode>>()
 
-        fun traverse(node: DOMTreeNodeEx) {
+        fun traverse(node: MergedDOMTreeNode) {
             if (node.children.isNotEmpty()) {
                 map[node.nodeId] = node.children
             }
@@ -748,9 +748,9 @@ class CDPSnapshotService(
      * Calculate scrollability with enhanced logic covering iframe/body/html and nested containers.
      */
     private fun calculateScrollability(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         snap: SnapshotNodeEx?,
-        ancestors: List<DOMTreeNodeEx>
+        ancestors: List<MergedDOMTreeNode>
     ): Boolean? {
         if (snap == null) return null
 
@@ -800,7 +800,7 @@ class CDPSnapshotService(
      * Calculate interactivity with paint order consideration.
      */
     private fun calculateInteractivity(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         snap: SnapshotNodeEx?,
         paintOrder: Int?
     ): Boolean? {

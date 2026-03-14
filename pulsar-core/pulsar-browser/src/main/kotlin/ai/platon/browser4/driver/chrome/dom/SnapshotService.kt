@@ -14,7 +14,7 @@ interface SnapshotService {
     /**
      * Find an element by various criteria (CSS selector, XPath, element hash).
      */
-    fun findElement(ref: ElementRefCriteria): DOMTreeNodeEx?
+    fun findElement(ref: ElementRefCriteria): MergedDOMTreeNode?
 
     suspend fun addHighlights(elements: InteractiveDOMTreeNodeList)
 

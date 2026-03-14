@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
@@ -51,7 +51,7 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
         printlnPro(DomDebug.summarize(enhancedRoot))
         assertTrue(enhancedRoot.children.isNotEmpty())
 
-        val tinyTree = service.buildTinyTree(enhancedRoot)
+        val tinyTree = service.buildEnhancedDOMTree(enhancedRoot)
         // Print tinyTree summary and basic tree stats
         printlnPro(DomDebug.summarize(tinyTree))
         assertTrue(tinyTree.children.isNotEmpty())
@@ -101,15 +101,15 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
                 includeInteractivity = true
             )
 
-            suspend fun collectRoot(): DOMTreeNodeEx {
+            suspend fun collectRoot(): MergedDOMTreeNode {
                 repeat(3) { attempt ->
                     val t = service.buildTargetTrees(target = PageTarget(), options = options)
                     printlnPro(DomDebug.summarize(t))
-                    val r = service.buildEnhancedDomTree(t)
+                    val r = service.buildMergedDOMTreeNode(t)
                     if (r.children.isNotEmpty() || attempt == 2) return r
                     Thread.sleep(300)
                 }
-                return service.buildEnhancedDomTree(service.buildTargetTrees(PageTarget(), options))
+                return service.buildMergedDOMTreeNode(service.buildTargetTrees(PageTarget(), options))
             }
 
             val root = collectRoot()
@@ -189,7 +189,7 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
             assertTrue(trees.snapshotByBackendId.isEmpty())
             assertTrue(trees.axTree.isEmpty())
 
-            val root = service.buildEnhancedDomTree(trees)
+            val root = service.buildMergedDOMTreeNode(trees)
             printlnPro(DomDebug.summarize(root))
             assertTrue(root.children.isNotEmpty())
 

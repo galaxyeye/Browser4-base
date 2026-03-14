@@ -1,6 +1,6 @@
 package ai.platon.pulsar.agentic.inference.action
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.pulsar.agentic.inference.AgentMessageList
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT
@@ -208,7 +208,7 @@ open class TextToAction(
         val locator = observeElement.locator
         val arguments = toolCall.arguments
 
-        var node: DOMTreeNodeEx? = null
+        var node: MergedDOMTreeNode? = null
         if (!locator.isNullOrBlank()) {
             val fbnLocator = agentState.browserUseState.domState.getAbsoluteFBNLocator(locator)
             if (fbnLocator != null) {
