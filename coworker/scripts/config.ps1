@@ -106,13 +106,64 @@ function Test-CoworkerPlaceholderFile {
     return $Item.Name -eq '.gitkeep'
 }
 
+function Test-CoworkerDotPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$Item
+    )
+
+    $currentItem = $Item
+    while ($null -ne $currentItem) {
+        if ($currentItem.Name.StartsWith('.')) {
+            return $true
+        }
+
+        $currentItem = $currentItem.Directory
+    }
+
+    return $false
+}
+
+function Test-CoworkerIgnoredFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.IO.FileSystemInfo]$Item
+    )
+
+    return (Test-CoworkerDotPath -Item $Item) -or (Test-CoworkerPlaceholderFile -Item $Item)
+}
+
 function Test-CoworkerPendingFile {
     param(
         [Parameter(Mandatory = $true)]
         [System.IO.FileSystemInfo]$Item
     )
 
-    return -not $Item.PSIsContainer -and -not (Test-CoworkerPlaceholderFile -Item $Item)
+    return -not $Item.PSIsContainer -and -not (Test-CoworkerIgnoredFile -Item $Item)
+}
+
+function Get-CoworkerQueueFiles {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [switch]$Recurse
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return @()
+    }
+
+    $getChildItemParameters = @{
+        LiteralPath  = $Path
+        File         = $true
+        ErrorAction  = 'SilentlyContinue'
+    }
+
+    if ($Recurse) {
+        $getChildItemParameters.Recurse = $true
+    }
+
+    return @(Get-ChildItem @getChildItemParameters | Where-Object { -not (Test-CoworkerIgnoredFile -Item $_) })
 }
 
 $COPILOT = @($script:configData['COPILOT'])

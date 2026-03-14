@@ -423,14 +423,14 @@ foreach ($taskRoot in $taskRoots) {
     Ensure-DraftPlaceholders -DraftDirectory $draftDir
 
     # 1. Process 0draft
-    $prepareFiles = Get-ChildItem -Path $draftDir -File
+    $prepareFiles = Get-CoworkerQueueFiles -Path $draftDir
     foreach ($file in $prepareFiles) {
         Write-LogMessage "[PREPARE] Task: $($file.Name)" INFO
     }
 
     # 2. Process 3_1complete (newly added to show pending reviews)
     if (Test-Path $finishedDir) {
-        $finishedFiles = Get-ChildItem -Path $finishedDir -Recurse -File
+        $finishedFiles = Get-CoworkerQueueFiles -Path $finishedDir -Recurse
         foreach ($file in $finishedFiles) {
             # Only show files from the last 24 hours to avoid noise
             if ($file.LastWriteTimeUtc -ge (Get-Date).ToUniversalTime().AddDays(-1)) {
@@ -440,7 +440,7 @@ foreach ($taskRoot in $taskRoots) {
     }
 
     # 3. Process 4review
-    $reviewFiles = Get-ChildItem -Path $reviewDir -File
+    $reviewFiles = Get-CoworkerQueueFiles -Path $reviewDir
     foreach ($file in $reviewFiles) {
         Write-LogMessage "[REVIEW] Task: $($file.Name)" INFO
     }
@@ -448,7 +448,7 @@ foreach ($taskRoot in $taskRoots) {
     # 4. Process 5approved
     # If there are any files in 5approved or its subdirectories, move them to 6git-pushed with date-based organization, and then call the commit script
     if (Test-Path $approvedDir) {
-        $approvedFiles = Get-ChildItem -Path $approvedDir -Recurse -File
+        $approvedFiles = Get-CoworkerQueueFiles -Path $approvedDir -Recurse
         if ($approvedFiles.Count -gt 0) {
             # Move files to pushed directory
             foreach ($file in $approvedFiles) {
@@ -484,7 +484,7 @@ foreach ($taskRoot in $taskRoots) {
     # 4. Process 6git-pushed (last 2 days)
     # Recursively find files in 6git-pushed
     if (Test-Path $pushedDir) {
-        $pushedFiles = Get-ChildItem -Path $pushedDir -Recurse -File
+        $pushedFiles = Get-CoworkerQueueFiles -Path $pushedDir -Recurse
         $twoDaysAgo = (Get-Date).ToUniversalTime().AddDays(-2)
         foreach ($file in $pushedFiles) {
             if ($file.LastWriteTimeUtc -ge $twoDaysAgo) {
@@ -493,7 +493,7 @@ foreach ($taskRoot in $taskRoots) {
         }
     }
 
-    $files = Get-ChildItem -Path $createdDir -File
+    $files = Get-CoworkerQueueFiles -Path $createdDir
 
     # Process each task file found in the created directory
     foreach ($file in $files) {

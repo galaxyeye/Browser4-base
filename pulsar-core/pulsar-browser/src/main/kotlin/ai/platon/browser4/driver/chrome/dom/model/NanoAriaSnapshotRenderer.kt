@@ -94,11 +94,51 @@ object NanoAriaSnapshotRenderer {
     }
 
     private fun role(node: NanoDOMTreeNode): String? {
-        val role = stringAttributes(node)["role"]?.trim()
+        val attributes = stringAttributes(node)
+        val explicitRole = attributes["role"]?.trim()
+        if (!explicitRole.isNullOrEmpty()) {
+            return when {
+                explicitRole.equals("none", ignoreCase = true) ||
+                        explicitRole.equals("presentation", ignoreCase = true) -> null
+                else -> explicitRole
+            }
+        }
+
+        val role = implicitRole(node, attributes)
         return when {
             role.isNullOrEmpty() -> if (isTextNode(node)) null else "generic"
-            role.equals("none", ignoreCase = true) || role.equals("presentation", ignoreCase = true) -> null
             else -> role
+        }
+    }
+
+    private fun implicitRole(node: NanoDOMTreeNode, attributes: Map<String, String>): String? {
+        val nodeName = node.nodeName?.trim()?.lowercase(Locale.ROOT) ?: return null
+        return when (nodeName) {
+            "a" -> attributes["href"]?.takeIf { it.isNotBlank() }?.let { "link" }
+            "button" -> "button"
+            "img" -> "img"
+            "option" -> "option"
+            "select" -> if (
+                attributes["multiple"]?.equals("true", ignoreCase = true) == true ||
+                attributes["size"]?.toIntOrNull()?.let { it > 1 } == true
+            ) {
+                "listbox"
+            } else {
+                "combobox"
+            }
+            "summary" -> "button"
+            "textarea" -> "textbox"
+            "input" -> when (attributes["type"]?.trim()?.lowercase(Locale.ROOT)) {
+                null, "", "email", "password", "tel", "text", "url" -> "textbox"
+                "button", "image", "reset", "submit" -> "button"
+                "checkbox" -> "checkbox"
+                "number" -> "spinbutton"
+                "radio" -> "radio"
+                "range" -> "slider"
+                "search" -> "searchbox"
+                else -> null
+            }
+            else -> null
         }
     }
 

@@ -24,10 +24,9 @@ tab.press(selector: String, key: String)
 tab.check(selector: String)
 tab.uncheck(selector: String)
 tab.scrollTo(selector: String)
-tab.scrollToTop()
-tab.scrollToBottom()
 tab.scrollToMiddle(ratio: Double = 0.5)
 tab.scrollBy(pixels: Double = 200.0): Double
+tab.ariaSnapshot()
 tab.textContent(): String?                            // Returns the document's text content.
 tab.selectFirstTextOrNull(selector: String): String?  // Returns the first node's text content (descendants included). Returns null if no node.
 tab.delay(millis: Long)

@@ -671,6 +671,47 @@ class DOMStateBuilderTest {
     }
 
     @Test
+    @DisplayName("nano aria snapshot preserves implicit semantic roles after compaction removes duplicate role attrs")
+    fun nanoAriaSnapshotPreservesImplicitSemanticRolesAfterCompaction() {
+        val actionNode = MergedDOMTreeNode(
+            nodeId = 1,
+            backendNodeId = 101,
+            nodeName = "BUTTON",
+            attributes = emptyMap(),
+            axNode = AXNodeEx(
+                axNodeId = "ax-101",
+                role = "button",
+                name = "Load Users (2s delay)",
+                backendNodeId = 101
+            ),
+            isVisible = true,
+            isInteractable = true
+        )
+        val root = OptimizedDOMTreeNode(
+            originalNode = MergedDOMTreeNode(
+                nodeId = 0,
+                backendNodeId = 100,
+                nodeName = "DIV",
+                children = listOf(actionNode),
+                isVisible = true
+            ),
+            children = listOf(OptimizedDOMTreeNode(originalNode = actionNode, interactiveIndex = 1))
+        )
+
+        val domState = DOMStateBuilder.build(root)
+        val nanoSnapshot = domState.serializableTree.toNanoTreeUnfiltered().ariaSnapshot
+
+        assertTrue(
+            nanoSnapshot.contains("- button \"Load Users (2s delay)\" [ref=e101] [cursor=pointer]"),
+            nanoSnapshot
+        )
+        assertFalse(
+            nanoSnapshot.contains("- generic \"Load Users (2s delay)\" [ref=e101] [cursor=pointer]"),
+            nanoSnapshot
+        )
+    }
+
+    @Test
     @DisplayName("render preserves descendants under presentational containers")
     fun renderPreservesDescendantsUnderPresentationalContainers() {
         val root = SerializableDOMTreeNode(
