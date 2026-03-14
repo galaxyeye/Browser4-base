@@ -60,8 +60,11 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
         assertTrue(domState.ariaSnapshot.isNotBlank(), "Serialized aria snapshot should not be blank")
         assertTrue(
             domState.ariaSnapshot.contains("RootWebArea") &&
-                    domState.ariaSnapshot.contains("Dynamic Content Test"),
-            "Serialized aria snapshot should contain stable page content, actual:\n${domState.ariaSnapshot}"
+                    domState.ariaSnapshot.contains("Dynamic Content Test") &&
+                    domState.ariaSnapshot.contains("heading \"Dynamic Content Test Page\"") &&
+                    domState.ariaSnapshot.contains("heading \"Asynchronous Content Loading\"") &&
+                    domState.ariaSnapshot.contains("Enter new item..."),
+            "Serialized aria snapshot should preserve accessible descendants, actual:\n${domState.ariaSnapshot}"
         )
         assertTrue(domState.selectorMap.isNotEmpty())
 

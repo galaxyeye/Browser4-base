@@ -451,6 +451,68 @@ class DOMStateBuilderTest {
     }
 
     @Test
+    @DisplayName("render preserves descendants under presentational containers")
+    fun renderPreservesDescendantsUnderPresentationalContainers() {
+        val root = MicroDOMTreeNode(
+            originalNode = cleanedNode(
+                locator = "0,2",
+                backendNodeId = 2,
+                nodeName = "#document",
+                attributes = mapOf("role" to "RootWebArea", "ax_name" to "Dynamic Content Test")
+            ),
+            children = listOf(
+                MicroDOMTreeNode(
+                    originalNode = cleanedNode(
+                        locator = "0,3",
+                        backendNodeId = 3,
+                        nodeName = "html",
+                        attributes = mapOf("role" to "none")
+                    ),
+                    children = listOf(
+                        MicroDOMTreeNode(
+                            originalNode = cleanedNode(
+                                locator = "0,4",
+                                backendNodeId = 4,
+                                nodeName = "body"
+                            ),
+                            children = listOf(
+                                MicroDOMTreeNode(
+                                    originalNode = cleanedNode(
+                                        locator = "0,5",
+                                        backendNodeId = 5,
+                                        nodeName = "h1",
+                                        attributes = mapOf(
+                                            "role" to "heading",
+                                            "ax_name" to "Dynamic Content Test Page",
+                                            "level" to "1"
+                                        )
+                                    )
+                                ),
+                                MicroDOMTreeNode(
+                                    interactiveIndex = 1,
+                                    originalNode = cleanedNode(
+                                        locator = "0,6",
+                                        backendNodeId = 6,
+                                        nodeName = "button",
+                                        attributes = mapOf("role" to "button", "ax_name" to "Load Users (2s delay)"),
+                                        isInteractable = true
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        val ariaSnapshot = DOMState(root).ariaSnapshot
+
+        assertTrue(ariaSnapshot.contains("- RootWebArea \"Dynamic Content Test\" [ref=e2]:"))
+        assertTrue(ariaSnapshot.contains("- heading \"Dynamic Content Test Page\" [level=1] [ref=e5]"))
+        assertTrue(ariaSnapshot.contains("- button \"Load Users (2s delay)\" [ref=e6] [cursor=pointer]"))
+    }
+
+    @Test
     @DisplayName("test href and navigation attributes are preserved in NanoDOMTree")
     fun testHrefAndNavigationAttributesArePreservedInNanoDOMTree() {
         // Create an anchor node with href attribute

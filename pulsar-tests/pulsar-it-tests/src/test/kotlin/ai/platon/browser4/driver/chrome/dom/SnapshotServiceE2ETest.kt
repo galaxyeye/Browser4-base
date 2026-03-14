@@ -89,8 +89,11 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         assertTrue(domState.ariaSnapshot.isNotBlank(), "Serialized Aria Snapshot should not be blank")
         assertTrue(
             domState.ariaSnapshot.contains("RootWebArea") &&
-                    domState.ariaSnapshot.contains("Dynamic Content Test"),
-            "Serialized Aria Snapshot should contain stable page content, actual:\n${domState.ariaSnapshot}"
+                    domState.ariaSnapshot.contains("Dynamic Content Test") &&
+                    domState.ariaSnapshot.contains("heading \"Dynamic Content Test Page\"") &&
+                    domState.ariaSnapshot.contains("heading \"Asynchronous Content Loading\"") &&
+                    domState.ariaSnapshot.contains("Enter new item..."),
+            "Serialized Aria Snapshot should preserve accessible descendants, actual:\n${domState.ariaSnapshot}"
         )
         assertTrue(domState.selectorMap.isNotEmpty(), "Selector map should contain entries")
 

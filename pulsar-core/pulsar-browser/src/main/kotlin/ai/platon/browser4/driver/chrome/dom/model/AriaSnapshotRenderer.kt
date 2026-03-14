@@ -8,11 +8,15 @@ object AriaSnapshotRenderer {
 
     fun render(root: NanoDOMTreeNode): String {
         val lines = mutableListOf<String>()
-        val renderNode = toRenderNode(root)
-        if (renderNode != null) {
-            visitNode(renderNode, "", lines)
-        }
+        toRenderChildren(root).forEach { child -> visitChild(child, "", lines) }
         return lines.joinToString("\n")
+    }
+
+    private fun visitChild(child: RenderChild, indent: String, lines: MutableList<String>) {
+        when (child) {
+            is RenderChild.Text -> lines += "$indent- text: ${yamlEscapeValueIfNeeded(child.value)}"
+            is RenderChild.Node -> visitNode(child.node, indent, lines)
+        }
     }
 
     private fun visitNode(node: RenderNode, indent: String, lines: MutableList<String>) {
@@ -44,46 +48,45 @@ object AriaSnapshotRenderer {
         }
     }
 
-    private fun toRenderNode(node: NanoDOMTreeNode): RenderNode? {
+    private fun toRenderChildren(node: NanoDOMTreeNode): List<RenderChild> {
         if (node.invisible == true) {
-            return null
+            return emptyList()
         }
         if (isTextNode(node)) {
-            return null
+            return normalizeText(node.nodeValue)
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { listOf(RenderChild.Text(it)) }
+                ?: emptyList()
         }
 
         val children = node.children.orEmpty()
-            .mapNotNull { child ->
-                if (isTextNode(child)) {
-                    normalizeText(child.nodeValue)
-                        ?.takeIf { it.isNotEmpty() }
-                        ?.let { RenderChild.Text(it) }
-                } else {
-                    toRenderNode(child)?.let { RenderChild.Node(it) }
-                }
-            }
+            .flatMap { child -> toRenderChildren(child) }
             .let { normalizeChildren(it, accessibleName(node)) }
 
-        val role = role(node) ?: return null
+        val role = role(node) ?: return children
         val props = renderProps(node, role)
 
         if (children.isEmpty() && props.isEmpty() && node.ref <= 0 && accessibleName(node).isNullOrEmpty()) {
-            return null
+            return emptyList()
         }
 
-        return RenderNode(
-            role = role,
-            name = accessibleName(node),
-            checked = triState(stringAttributes(node)["checked"] ?: stringAttributes(node)["aria-checked"]),
-            disabled = booleanAttribute(stringAttributes(node)["disabled"] ?: stringAttributes(node)["aria-disabled"]),
-            expanded = booleanAttribute(stringAttributes(node)["expanded"] ?: stringAttributes(node)["aria-expanded"]),
-            level = level(stringAttributes(node)),
-            pressed = triState(stringAttributes(node)["pressed"] ?: stringAttributes(node)["aria-pressed"]),
-            selected = booleanAttribute(stringAttributes(node)["selected"] ?: stringAttributes(node)["aria-selected"]),
-            ref = node.ref.takeIf { it > 0 }?.let { "e$it" },
-            cursorPointer = node.interactive == true,
-            props = props,
-            children = children
+        return listOf(
+            RenderChild.Node(
+                RenderNode(
+                    role = role,
+                    name = accessibleName(node),
+                    checked = triState(stringAttributes(node)["checked"] ?: stringAttributes(node)["aria-checked"]),
+                    disabled = booleanAttribute(stringAttributes(node)["disabled"] ?: stringAttributes(node)["aria-disabled"]),
+                    expanded = booleanAttribute(stringAttributes(node)["expanded"] ?: stringAttributes(node)["aria-expanded"]),
+                    level = level(stringAttributes(node)),
+                    pressed = triState(stringAttributes(node)["pressed"] ?: stringAttributes(node)["aria-pressed"]),
+                    selected = booleanAttribute(stringAttributes(node)["selected"] ?: stringAttributes(node)["aria-selected"]),
+                    ref = node.ref.takeIf { it > 0 }?.let { "e$it" },
+                    cursorPointer = node.interactive == true,
+                    props = props,
+                    children = children
+                )
+            )
         )
     }
 
