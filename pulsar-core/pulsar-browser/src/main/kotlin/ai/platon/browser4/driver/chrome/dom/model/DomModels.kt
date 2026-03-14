@@ -5,8 +5,8 @@ import ai.platon.browser4.driver.chrome.dom.FBNLocator
 import ai.platon.browser4.driver.chrome.dom.LocatorMap
 import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import ai.platon.browser4.driver.chrome.dom.util.DOMUtils
-import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper
-import ai.platon.browser4.driver.chrome.dom.util.MicroDOMTreeNodeHelper.Companion.estimatedSize
+import ai.platon.browser4.driver.chrome.dom.util.InteractiveNodeListBuilder
+import ai.platon.browser4.driver.chrome.dom.util.InteractiveNodeListBuilder.Companion.estimatedSize
 import ai.platon.browser4.driver.chrome.dom.util.NanoDOMTreeBuilder
 import ai.platon.browser4.driver.common.BrowserSettings.Companion.VIEWPORT
 import ai.platon.pulsar.common.math.roundTo
@@ -498,11 +498,11 @@ data class SerializableDOMTreeNode(
     fun toYaml() = Pson.toYaml(this)
 
     fun toInteractiveDOMTreeNodeList(currentViewportIndex: Int, lastViewportIndex: Int): InteractiveDOMTreeNodeList =
-        MicroDOMTreeNodeHelper(this, false, currentViewportIndex, lastViewportIndex)
-            .toInteractiveDOMTreeNodeList()
+        InteractiveNodeListBuilder(this, false, currentViewportIndex, lastViewportIndex)
+            .build()
 
     fun toInteractiveDOMTreeNodeList(): InteractiveDOMTreeNodeList =
-        MicroDOMTreeNodeHelper(this, true).toInteractiveDOMTreeNodeList()
+        InteractiveNodeListBuilder(this, true).build()
 
     fun toNanoTree(): NanoDOMTree = toNanoTreeInRange(0.0, 1000000.0)
 

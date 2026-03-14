@@ -9,7 +9,7 @@ import ai.platon.pulsar.common.Strings
 import org.apache.commons.lang3.StringUtils
 import kotlin.collections.plusAssign
 
-class MicroDOMTreeNodeHelper(
+class InteractiveNodeListBuilder(
     private val root: SerializableDOMTreeNode,
     private val includeAllViewports: Boolean = false,
     private val currentViewportIndex: Int = 1,
@@ -49,7 +49,7 @@ class MicroDOMTreeNodeHelper(
         }
     }
 
-    fun toInteractiveDOMTreeNodeList(): InteractiveDOMTreeNodeList {
+    fun build(): InteractiveDOMTreeNodeList {
         val collected = mutableListOf<InteractiveDOMTreeNode>()
 
         // Keep mapping from interactive index -> backing DOM node id
