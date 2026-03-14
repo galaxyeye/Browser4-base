@@ -47,7 +47,7 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
         runCatching { devTools.runtime.evaluate("generateLargeList(100)") }
 
         val enhancedRoot = collectEnhancedRoot(service, options)
-        // Print enhanced DOMTreeNodeEx summary and basic tree stats
+        // Print enhanced MergedDOMTree summary and basic tree stats
         printlnPro(DomDebug.summarize(enhancedRoot))
         assertTrue(enhancedRoot.children.isNotEmpty())
 

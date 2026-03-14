@@ -451,6 +451,55 @@ class DOMStateBuilderTest {
     }
 
     @Test
+    @DisplayName("render matches Playwright cursor pointer suppression for nested interactive nodes")
+    fun renderMatchesPlaywrightCursorPointerSuppressionForNestedInteractiveNodes() {
+        val root = SerializableDOMTreeNode(
+            originalNode = cleanedNode(
+                locator = "0,1",
+                backendNodeId = 1,
+                nodeName = "body"
+            ),
+            children = listOf(
+                SerializableDOMTreeNode(
+                    interactiveIndex = 1,
+                    originalNode = cleanedNode(
+                        locator = "0,2",
+                        backendNodeId = 2,
+                        nodeName = "div",
+                        isInteractable = true
+                    ),
+                    children = listOf(
+                        SerializableDOMTreeNode(
+                            interactiveIndex = 2,
+                            originalNode = cleanedNode(
+                                locator = "0,3",
+                                backendNodeId = 3,
+                                nodeName = "button",
+                                isInteractable = true,
+                                attributes = mapOf(
+                                    "role" to "button",
+                                    "ax_name" to "Open"
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        val ariaSnapshot = DOMState(root).ariaSnapshot
+
+        assertEquals(
+            """
+            - generic [ref=e1]:
+              - generic [ref=e2] [cursor=pointer]:
+                - button "Open" [ref=e3]
+            """.trimIndent(),
+            ariaSnapshot
+        )
+    }
+
+    @Test
     @DisplayName("render preserves enhanced accessibility metadata without nano conversion loss")
     fun renderPreservesEnhancedAccessibilityMetadataWithoutNanoConversionLoss() {
         val searchNode = MergedDOMTreeNode(

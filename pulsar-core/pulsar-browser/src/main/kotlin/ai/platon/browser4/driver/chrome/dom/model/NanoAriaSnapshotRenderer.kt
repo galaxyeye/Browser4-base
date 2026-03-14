@@ -5,7 +5,7 @@ import java.util.Locale
 @Deprecated(
     message = "Use AriaSnapshotRenderer.render(EnhancedDOMTreeNode) or DOMState.ariaSnapshot. This nano-tree renderer is kept for backward compatibility and may be removed in a future release."
 )
-object AriaSnapshotForNanoDOMTreeRenderer {
+object NanoAriaSnapshotRenderer {
     fun render(root: NanoDOMTreeNode): String {
         return AriaSnapshotFormatting.render(toRenderChildren(root))
     }

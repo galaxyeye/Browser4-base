@@ -103,7 +103,7 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         val interacted = service.toInteractedElement(bodyNode!!)
         assertTrue(interacted.elementHash.isNotBlank(), "Interacted element hash should be non-empty")
 
-        val domCount = countDomNodes(enhancedRoot)
+        val domCount = countDOMNodes(enhancedRoot)
         val metrics = Metrics(
             url = testURL,
             timestamp = Instant.now().toString(),
@@ -153,12 +153,12 @@ class SnapshotServiceE2ETest : WebDriverTestBase() {
         logger.info("Aria snapshot written (nano) | {}", path.toUri())
     }
 
-    private fun countDomNodes(root: MergedDOMTreeNode?): Int {
+    private fun countDOMNodes(root: MergedDOMTreeNode?): Int {
         if (root == null) return 0
         var n = 1
-        root.children.forEach { n += countDomNodes(it) }
-        root.shadowRoots.forEach { n += countDomNodes(it) }
-        root.contentDocument?.let { n += countDomNodes(it) }
+        root.children.forEach { n += countDOMNodes(it) }
+        root.shadowRoots.forEach { n += countDOMNodes(it) }
+        root.contentDocument?.let { n += countDOMNodes(it) }
         return n
     }
 }

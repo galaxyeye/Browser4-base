@@ -8,7 +8,7 @@ internal object AriaSnapshotFormatting {
 
     fun render(children: List<RenderChild>): String {
         val lines = mutableListOf<String>()
-        children.forEach { child -> visitChild(child, "", lines) }
+        children.forEach { child -> visitChild(child, "", lines, renderCursorPointer = true) }
         return lines.joinToString("\n")
     }
 
@@ -44,15 +44,25 @@ internal object AriaSnapshotFormatting {
         }
     }
 
-    private fun visitChild(child: RenderChild, indent: String, lines: MutableList<String>) {
+    private fun visitChild(
+        child: RenderChild,
+        indent: String,
+        lines: MutableList<String>,
+        renderCursorPointer: Boolean
+    ) {
         when (child) {
             is RenderChild.Text -> lines += "$indent- text: ${yamlEscapeValueIfNeeded(child.value)}"
-            is RenderChild.Node -> visitNode(child.node, indent, lines)
+            is RenderChild.Node -> visitNode(child.node, indent, lines, renderCursorPointer)
         }
     }
 
-    private fun visitNode(node: RenderNode, indent: String, lines: MutableList<String>) {
-        val key = indent + "- " + yamlEscapeKeyIfNeeded(createKey(node))
+    private fun visitNode(
+        node: RenderNode,
+        indent: String,
+        lines: MutableList<String>,
+        renderCursorPointer: Boolean
+    ) {
+        val key = indent + "- " + yamlEscapeKeyIfNeeded(createKey(node, renderCursorPointer))
         val singleInlinedTextChild = node.singleInlinedTextChild()
 
         when {
@@ -70,17 +80,23 @@ internal object AriaSnapshotFormatting {
                     lines += "$indent  - /$name: ${yamlEscapeValueIfNeeded(value)}"
                 }
                 val childIndent = "$indent  "
+                val inCursorPointer = node.ref != null && renderCursorPointer && node.cursorPointer
                 node.children.forEach { child ->
                     when (child) {
                         is RenderChild.Text -> lines += "$childIndent- text: ${yamlEscapeValueIfNeeded(child.value)}"
-                        is RenderChild.Node -> visitNode(child.node, childIndent, lines)
+                        is RenderChild.Node -> visitNode(
+                            child.node,
+                            childIndent,
+                            lines,
+                            renderCursorPointer && !inCursorPointer
+                        )
                     }
                 }
             }
         }
     }
 
-    private fun createKey(node: RenderNode): String {
+    private fun createKey(node: RenderNode, renderCursorPointer: Boolean): String {
         var key = node.role
         node.name?.let { name ->
             if (name.length <= 900) {
@@ -109,7 +125,7 @@ internal object AriaSnapshotFormatting {
         }
         node.ref?.let { ref ->
             key += " [ref=$ref]"
-            if (node.cursorPointer) {
+            if (renderCursorPointer && node.cursorPointer) {
                 key += " [cursor=pointer]"
             }
         }

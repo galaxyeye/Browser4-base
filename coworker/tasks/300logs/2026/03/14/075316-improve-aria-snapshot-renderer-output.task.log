@@ -1,9 +1,9 @@
-Task: review-microdom-nanotree-consistency
-Description: Task from review-microdom-nanotree-consistency.md
-Original File: review-microdom-nanotree-consistency.md
-Started: 2026-03-14 05:49:08
+Task: improve-aria-snapshot-renderer-output
+Description: Task from improve-aria-snapshot-renderer-output.md
+Original File: improve-aria-snapshot-renderer-output.md
+Started: 2026-03-14 07:54:45
 Prompt:
-Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\review-microdom-nanotree-consistency.md.
+Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\improve-aria-snapshot-renderer-output.md.
 Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
 
 *** MEMORY UPDATE INSTRUCTIONS ***
@@ -103,17 +103,29 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
 
 
 [Daily Memory (2026-03-14)]:
+Here’s a compressed version under 3000 characters:
+
 ## Daily Memory - 2026-03-14
 
-- **Documented the DOMStateBuilder node-model pipeline:** Added object- and method-level KDoc in `pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt` to clarify the transformation chain: `MergedDOMTree` is the rich merged DOM/AX/snapshot model, `TinyDOMTreeNode` adds builder-stage pruning/display metadata, and `MicroDOMTreeNode` is the compact prompt-facing output sent to agents. **Learning:** The transformation boundary is the best place to explain model differences, because that is where readers must understand why rich internal nodes become compact agent-facing ones.
+- **Clarified DOM node-model pipeline:** Added KDoc in `DOMStateBuilder.kt` documenting the transformation chain: `MergedDOMTree` = rich merged DOM/AX/snapshot model, `TinyDOMTreeNode` = builder-stage pruned/display-aware form, `MicroDOMTreeNode` = compact agent-facing output. **Learning:** The compaction boundary is the right place to explain why rich internal nodes become minimal prompt nodes.
 
-- **Validated documentation changes with the smallest reliable test scope:** Ran `.\mvnw.cmd -f pulsar-core\pulsar-browser\pom.xml -Dtest=DOMStateBuilderTest -D"surefire.failIfNoSpecifiedTests=false" test` before and after the KDoc update; both passed (`12` tests). **Learning:** Even for docs-only work in DOM serialization, `DOMStateBuilderTest` is the right focused validation target, especially when nearby code is already in flux.
+- **Used focused validation for DOM serialization changes:** Re-ran `.\mvnw.cmd -f pulsar-core\pulsar-browser\pom.xml -Dtest=DOMStateBuilderTest -D"surefire.failIfNoSpecifiedTests=false" test` before/after nearby changes; it passed both times. **Learning:** `DOMStateBuilderTest` is the smallest reliable safety check for DOM serialization / aria snapshot work.
 
-- **Maintained coworker memory append-only:** Added today’s daily memory entry. When the monthly rollup was missing the prior day, appended a new cumulative month-to-date rollup instead of editing earlier entries. Later verified the monthly file already contained the `2026-03-13` rollup for a separate task, so only the daily log was extended. **Learning:** Treat monthly-memory sync as an explicit gate every time; if yesterday is missing, append a fresh cumulative update, otherwise leave the monthly file untouched.
+- **Fixed nano-tree range pruning with stronger regression coverage:** Expanded `MicroToNanoTreeHelperTest` for overlapping leaf inclusion, open-start/closed-end semantics, merged seen-chunk behavior, invalid intervals, and full-range consistency. Root cause: `toNanoTreeInRangeRecursive()` filtered leaf children too early and dropped valid prompt-facing nodes. Fix: recurse into in-range children first, then prune only empty placeholder nano nodes. **Learning:** Range tests must include real leaf descendants because pre-recursion filtering can remove exactly the compact nodes the prompt needs.
 
-- **Added focused `toNanoTreeInRange` coverage and fixed dropped leaf nodes:** Completed `review-to-nano-range-tests.md` by adding `MicroToNanoTreeHelperTest` cases for overlapping leaf inclusion, open-start/closed-end point semantics, merged seen-chunk behavior, and invalid intervals. The tests exposed that `MicroToNanoTreeHelper.toNanoTreeInRangeRecursive()` filtered leaf children too early, dropping valid prompt-facing nodes. The fix now recurses into in-range children first and removes only empty placeholder nano nodes afterward. **Learning:** Range-filter tests for tree compaction must include real leaf descendants, because pre-recursion filtering can erase exactly the nodes the compact output needs.
+- **Aligned full-range and unfiltered traversal:** Reviewed `MicroDOMTreeNode.toNanoTree()`, `toNanoTreeInRange()`, and `toNanoTreeUnfiltered()`, then changed `MicroToNanoTreeHelper.toNanoTreeInRange()` so canonical full range (`0.0..1_000_000.0`) delegates to the unfiltered path. This removed drift where range traversal dropped geometry-less nodes, zero-height nodes at `y == 0`, or nodes beyond the sentinel cutoff. **Learning:** If “full range” should equal unfiltered behavior, both should share the same code path.
 
-- **Validated the nano-range fix with focused browser-module tests:** Used `DOMStateBuilderTest` as the baseline, then ran `.\mvnw.cmd -f pulsar-core\pulsar-browser\pom.xml "-Dtest=MicroToNanoTreeHelperTest,DOMStateBuilderTest" -D"surefire.failIfNoSpecifiedTests=false" test`; final validation passed `16` tests. **Learning:** In Windows PowerShell, comma-separated Surefire test lists must be quoted as one `-Dtest=...` value or PowerShell splits them before Maven receives the intended class list.
+- **Validated serializer fixes with the right focused pair:** Ran `.\mvnw.cmd -f pulsar-core\pulsar-browser\pom.xml "-Dtest=MicroToNanoTreeHelperTest,DOMStateBuilderTest" -D"surefire.failIfNoSpecifiedTests=false" test`; focused passes increased as expected. **Learning:** `MicroToNanoTreeHelperTest` + `DOMStateBuilderTest` is an efficient validation pair for DOM serialization work. In PowerShell, quote comma-separated Surefire class lists as one `-Dtest=...` value.
+
+- **Implemented direct aria snapshot rendering from the enhanced tree:** Added `AriaSnapshotRenderer`, routed `DOMState.ariaSnapshot` to prefer `EnhancedDOMTreeNode`, extracted shared YAML formatting helpers, and deprecated `AriaSnapshotForNanoDOMTreeRenderer` for compatibility. This preserved AX metadata like description and autocomplete-style/non-default properties that were lost during enhanced -> micro -> nano compaction. **Learning:** Fidelity-sensitive rendering should happen before a lossy compaction boundary, or retain a direct reference to the richer tree.
+
+- **Fixed memory-note formatting guidance:** Confirmed validation preserved description/autocomplete-style AX metadata. **Learning:** When appending Markdown via PowerShell here-strings, avoid unescaped backticks or use escape-aware construction.
+
+- **Made flaky LLM-backed proxy test timeout-skippable:** Updated `UniversalProxyParserTest.kt` so `testParseuniversalproxyWithNonStandardProxy()` catches `ChatModelException` and converts known timeout messages into a JUnit assumption skip, while rethrowing non-timeout failures. **Learning:** Guard only the known remote-timeout path instead of weakening the whole test.
+
+- **Validated with correct Surefire profile awareness:** A focused run of `UniversalProxyParserTest` executed 0 tests until rerun with `-DrunE2ETests=true`, after which the class ran and skipped locally because no LLM was configured. **Learning:** In this repo, `@Tag("RequiresServer")` tests need `-DrunE2ETests=true` for focused Surefire runs to be meaningful.
+
+- **Kept coworker memory append-only:** Daily memory was appended without retro-editing monthly history. Verified `coworker\tasks\300logs\2026\03\MEMORY.202603.md` already contained the `2026-03-13` rollup, so no backfill was needed. **Learning:** Verify first, then append; never rewrite prior month entries.
 
 
 
@@ -122,4 +134,4 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
 Copilot Execution Output:
 
 Copilot Exit Code: 0
-Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\14\054711-review-microdom-nanotree-consistency.copilot.log
+Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\14\075316-improve-aria-snapshot-renderer-output.copilot.log

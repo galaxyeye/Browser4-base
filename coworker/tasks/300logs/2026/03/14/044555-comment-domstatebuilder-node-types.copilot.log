@@ -47,7 +47,7 @@ I found the task: it’s a documentation/commenting change in `DOMStateBuilder`,
   lines 420-620
   └ 201 lines read
 
-● Grep "data class (TinyDOMTreeNode|MicroDOMTreeNode|DOMTreeNodeEx)|typealias MicroDOMTree"
+● Grep "data class (TinyDOMTreeNode|MicroDOMTreeNode|MergedDOMTree)|typealias MicroDOMTree"
 (D:\workspace\Browser4\Browser4-4.6\pulsar-core\pulsar-browser\src\main\kotlin)
   └ 4 lines found
 
@@ -61,7 +61,7 @@ I’ve confirmed the relevant model types. Next I’m making a comments-only cha
   pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt
   └ 71 lines...
 
-Baseline `DOMStateBuilderTest` is green, so I’m now landing a comments-only patch that clarifies the `DOMTreeNodeEx` → `TinyDOMTreeNode` → `MicroDOMTreeNode` pipeline.
+Baseline `DOMStateBuilderTest` is green, so I’m now landing a comments-only patch that clarifies the `MergedDOMTree` → `TinyDOMTreeNode` → `MicroDOMTreeNode` pipeline.
 
 ● Edit
   pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt
@@ -138,7 +138,7 @@ I’ve written the memory entries. I’m doing one last verification pass on the
 
 Done.
 
-I added KDoc in `pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt` that clearly explains the `DOMTreeNodeEx` → `TinyDOMTreeNode` → `MicroDOMTreeNode` pipeline and the differences between those node types at the exact transformation boundary.
+I added KDoc in `pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt` that clearly explains the `MergedDOMTree` → `TinyDOMTreeNode` → `MicroDOMTreeNode` pipeline and the differences between those node types at the exact transformation boundary.
 
 Validation passed before and after the comments change with:
 

@@ -78,6 +78,6 @@
 
 ### Daily Rollup Update (2026-03-01 to 2026-03-13)
 - Continued stabilizing Browser4 MCP, launch, and DOM snapshot behavior across the month, including packaged-jar MCP startup guidance, snapshot/ARIA assertion refinements, restored navigation attributes in DOM serialization, and presentational-container fixes that preserve accessible descendants.
-- Added clearer guidance and validation around DOM serialization internals, including documenting the `DOMTreeNodeEx` -> `TinyDOMTreeNode` -> `MicroDOMTreeNode` pipeline directly in `DOMStateBuilder` while keeping focused module-local validation on `DOMStateBuilderTest`.
+- Added clearer guidance and validation around DOM serialization internals, including documenting the `MergedDOMTree` -> `TinyDOMTreeNode` -> `MicroDOMTreeNode` pipeline directly in `DOMStateBuilder` while keeping focused module-local validation on `DOMStateBuilderTest`.
 - Kept coworker execution hygiene tight: empty task files were treated as no-ops, daily memory was updated append-only, and monthly memory synchronization was explicitly checked against the latest available pre-today daily summary.
 - Reinforced recurring execution hygiene: prefer module-local Maven `-f` validation when the root reactor is incomplete, validate prompt/DOM output semantically instead of via brittle size checks, and document transformation-stage model boundaries where future maintainers will read them.

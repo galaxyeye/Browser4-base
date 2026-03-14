@@ -497,11 +497,11 @@ data class SerializableDOMTreeNode(
 
     fun toYaml() = Pson.toYaml(this)
 
-    fun toInteractiveDOMTreeNodeList(currentViewportIndex: Int, lastViewportIndex: Int): InteractiveDOMTreeNodeList =
+    fun buildInteractiveNodeList(currentViewportIndex: Int, lastViewportIndex: Int): InteractiveDOMTreeNodeList =
         InteractiveNodeListBuilder(this, false, currentViewportIndex, lastViewportIndex)
             .build()
 
-    fun toInteractiveDOMTreeNodeList(): InteractiveDOMTreeNodeList =
+    fun buildInteractiveNodeList(): InteractiveDOMTreeNodeList =
         InteractiveNodeListBuilder(this, true).build()
 
     fun toNanoTree(): NanoDOMTree = toNanoTreeInRange(0.0, 1000000.0)
@@ -550,7 +550,7 @@ data class NanoDOMTreeNode(
     val serializableTreeNode: SerializableDOMTree? = null,
 ) {
     @get:JsonIgnore
-    val ariaSnapshot: String by lazy { AriaSnapshotForNanoDOMTreeRenderer.render(this) }
+    val ariaSnapshot: String by lazy { NanoAriaSnapshotRenderer.render(this) }
 
     @get:JsonIgnore
     val ref: Int get() = FBNLocator.parseRelaxed(locator)?.backendNodeId ?: 0
@@ -677,7 +677,7 @@ data class BrowserUseState(
     val domState: DOMState
 ) {
     fun getAllInteractiveElements(): InteractiveDOMTreeNodeList {
-        return domState.serializableTree.toInteractiveDOMTreeNodeList()
+        return domState.serializableTree.buildInteractiveNodeList()
     }
 
     fun getInteractiveElements(): InteractiveDOMTreeNodeList {
@@ -688,7 +688,7 @@ data class BrowserUseState(
         val processingViewport = scrollState.processingViewport
         val viewportsTotal = scrollState.viewportsTotal
 
-        return domState.serializableTree.toInteractiveDOMTreeNodeList(
+        return domState.serializableTree.buildInteractiveNodeList(
             currentViewportIndex = processingViewport, lastViewportIndex = viewportsTotal
         )
     }

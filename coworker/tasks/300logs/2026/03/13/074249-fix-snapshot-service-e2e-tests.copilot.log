@@ -248,7 +248,7 @@ The rerun still failed, but now it’s down to whatever remains in the Maven tai
 ● Read ~\AppData\Local\Temp\copilot-tool-output-1773388266983-qz9c5a.txt lines 90-150
   └ 61 lines read
 
-● Grep "TargetTrees|TinyNode|DOMTreeNodeEx|ariaSnapshot|selectorMap"
+● Grep "TargetTrees|TinyNode|MergedDOMTree|ariaSnapshot|selectorMap"
 (C:\Users\pereg\AppData\Local\Temp\copilot-tool-output-1773388266983-qz9c5a.txt)
   └ 4 lines found
 

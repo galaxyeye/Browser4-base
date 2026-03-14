@@ -8,21 +8,21 @@ import ai.platon.browser4.driver.chrome.dom.util.ScrollUtils
  *
  * The builder sits between three related node models:
  *
- * - `DOMTreeNodeEx` is the richest form. It is the merged DOM/AX/snapshot node produced by snapshot capture and
+ * - `MergedDOMTree` is the richest form. It is the merged DOM/AX/snapshot node produced by snapshot capture and
  *   still contains full tree structure, geometry, accessibility metadata, and browser-facing identifiers.
- * - `TinyDOMTreeNode` is an intermediate builder tree. Each tiny node wraps a `DOMTreeNodeEx` in `originalNode`
+ * - `TinyDOMTreeNode` is an intermediate builder tree. Each tiny node wraps a `MergedDOMTree` in `originalNode`
  *   and adds traversal decisions made upstream, such as `shouldDisplay`, `interactiveIndex`, paint-order flags,
  *   and other pruning hints. In other words, tiny nodes keep the original rich payload but annotate it with
  *   "how should the builder treat this node?" metadata.
- * - `MicroDOMTreeNode` is the final compact output. It replaces the rich `DOMTreeNodeEx` payload with a
+ * - `MicroDOMTreeNode` is the final compact output. It replaces the rich `MergedDOMTree` payload with a
  *   `CleanedDOMTreeNode`, keeps only the fields that matter to downstream prompting/interaction, and recursively
  *   serializes children into a smaller LLM-facing tree.
  *
  * So the pipeline is intentionally:
  *
- * `DOMTreeNodeEx` (raw merged browser model)
- * -> `TinyDOMTreeNode` (builder-oriented wrapper with pruning/display decisions)
- * -> `MicroDOMTreeNode` (compact serialized agent model)
+ * `MergedDOMTree` (raw merged browser model)
+ * -> `OptimizedDOMTreeNode` (builder-oriented wrapper with pruning/display decisions)
+ * -> `SerializableDOMTreeNode` (compact serialized agent model)
  */
 object DOMStateBuilder {
     /**
@@ -30,9 +30,9 @@ object DOMStateBuilder {
      *
      * `DOMTinyTreeBuilder` does the expensive structural filtering first and hands this builder a
      * `TinyDOMTreeNode` tree. We then preserve those filtering decisions while compacting each node's
-     * embedded `DOMTreeNodeEx` into `CleanedDOMTreeNode` entries inside the final `MicroDOMTreeNode` tree.
+     * embedded `MergedDOMTree` into `CleanedDOMTreeNode` entries inside the final `MicroDOMTreeNode` tree.
      *
-     * This split keeps Browser4's internal browser model (`DOMTreeNodeEx`) available during transformation,
+     * This split keeps Browser4's internal browser model (`MergedDOMTree`) available during transformation,
      * but prevents the final payload from carrying the full DOM/AX/snapshot graph into prompts.
      *
      * @param root The intermediate tiny tree root that still references the original rich browser nodes
@@ -59,7 +59,7 @@ object DOMStateBuilder {
         // Detect top-level viewport height from the first HTML node's client rects
         val topViewportHeight: Double? = findTopLevelViewportHeight(root)
 
-        val microTree = buildMicroDOMTree(
+        val serializableDOMTree = buildSerializableDOMTreeNode(
             root,
             includeAttributes,
             emptyList(),
@@ -72,11 +72,11 @@ object DOMStateBuilder {
         )
 
         val interactiveNodes = mutableListOf<SerializableDOMTreeNode>()
-        collectInteractiveNodes(microTree, interactiveNodes)
+        collectInteractiveNodes(serializableDOMTree, interactiveNodes)
 
         // Export legacy selector map view for backward compatibility and diagnostics/tests
         val legacySelectorMap = locatorMap.toStringMap()
-        return DOMState(microTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap, root)
+        return DOMState(serializableDOMTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap, root)
     }
 
     @Deprecated("Use DOMSerializer.toJson(root) instead", ReplaceWith("DOMSerializer.toJson(root)"))
@@ -125,17 +125,17 @@ object DOMStateBuilder {
     )
 
     /**
-     * Recursively converts one `EnhancedDOMTreeNode` subtree into its `MicroDOMTreeNode` equivalent.
+     * Recursively converts one `OptimizedDOMTreeNode` subtree into its `SerializableDOMTreeNode` equivalent.
      *
      * The important distinction is:
-     * - the enhanced node still points at the full `MergedDOMTreeNode` via `originalNode`, so this method can inspect
+     * - the optimized node still points at the full `MergedDOMTreeNode` via `originalNode`, so this method can inspect
      *   geometry, AX role/name data, DOM attributes, and frame metadata while deciding how to serialize.
-     * - the returned micro node keeps only compact, prompt-safe fields and a cleaned copy of the original node.
+     * - the returned serializable node keeps only compact, prompt-safe fields and a cleaned copy of the original node.
      *
      * This is where the builder crosses the boundary from an internal transformation tree to the final
      * agent-facing representation.
      */
-    private fun buildMicroDOMTree(
+    private fun buildSerializableDOMTreeNode(
         node: OptimizedDOMTreeNode,
         includeAttributes: Set<String>,
         ancestors: List<MergedDOMTreeNode>,
@@ -180,7 +180,7 @@ object DOMStateBuilder {
         // Recursively serialize children with enhanced logic (do not filter; prune per-node)
         val childAncestors = ancestors + node.originalNode
         val serializedChildren = node.children.map {
-            buildMicroDOMTree(
+            buildSerializableDOMTreeNode(
                 it,
                 includeAttributes,
                 childAncestors,

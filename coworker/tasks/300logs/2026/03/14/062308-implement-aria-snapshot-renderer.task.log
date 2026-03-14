@@ -97,7 +97,7 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
 
 ### Daily Rollup Update (2026-03-01 to 2026-03-13)
 - Continued stabilizing Browser4 MCP, launch, and DOM snapshot behavior across the month, including packaged-jar MCP startup guidance, snapshot/ARIA assertion refinements, restored navigation attributes in DOM serialization, and presentational-container fixes that preserve accessible descendants.
-- Added clearer guidance and validation around DOM serialization internals, including documenting the `DOMTreeNodeEx` -> `TinyDOMTreeNode` -> `MicroDOMTreeNode` pipeline directly in `DOMStateBuilder` while keeping focused module-local validation on `DOMStateBuilderTest`.
+- Added clearer guidance and validation around DOM serialization internals, including documenting the `MergedDOMTree` -> `TinyDOMTreeNode` -> `MicroDOMTreeNode` pipeline directly in `DOMStateBuilder` while keeping focused module-local validation on `DOMStateBuilderTest`.
 - Kept coworker execution hygiene tight: empty task files were treated as no-ops, daily memory was updated append-only, and monthly memory synchronization was explicitly checked against the latest available pre-today daily summary.
 - Reinforced recurring execution hygiene: prefer module-local Maven `-f` validation when the root reactor is incomplete, validate prompt/DOM output semantically instead of via brittle size checks, and document transformation-stage model boundaries where future maintainers will read them.
 
@@ -105,7 +105,7 @@ After completing the task, you MUST update your daily memory file: D:\workspace\
 [Daily Memory (2026-03-14)]:
 ## Daily Memory - 2026-03-14
 
-- **Clarified the DOMStateBuilder node-model pipeline:** Added KDoc in `pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt` documenting the transformation chain: `DOMTreeNodeEx` as the rich merged DOM/AX/snapshot model, `TinyDOMTreeNode` as the builder-stage pruned/display-aware form, and `MicroDOMTreeNode` as the compact agent-facing output. **Learning:** The transformation boundary is the clearest place to explain why rich internal nodes become compact prompt-facing ones.
+- **Clarified the DOMStateBuilder node-model pipeline:** Added KDoc in `pulsar-core\pulsar-browser\src\main\kotlin\ai\platon\browser4\driver\chrome\dom\DOMStateBuilder.kt` documenting the transformation chain: `MergedDOMTree` as the rich merged DOM/AX/snapshot model, `TinyDOMTreeNode` as the builder-stage pruned/display-aware form, and `MicroDOMTreeNode` as the compact agent-facing output. **Learning:** The transformation boundary is the clearest place to explain why rich internal nodes become compact prompt-facing ones.
 
 - **Used the smallest reliable validation scope for DOM serialization docs:** Ran `.\mvnw.cmd -f pulsar-core\pulsar-browser\pom.xml -Dtest=DOMStateBuilderTest -D"surefire.failIfNoSpecifiedTests=false" test` before and after the KDoc change; both passed (`12` tests). **Learning:** Even for docs-only changes near DOM serialization, `DOMStateBuilderTest` is the right focused safety check.
 

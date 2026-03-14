@@ -342,7 +342,7 @@ object DomDebug {
         val gt50Sorted = sortedGt50(xyAll)
         val (mid1, mid2) = midPair ?: Pair(null, null)
         return linkedMapOf(
-            "type" to "DOMTreeNodeEx",
+            "type" to "MergedDOMTree",
             "nodeId" to node.nodeId,
             "backendNodeId" to node.backendNodeId,
             "nodeType" to node.nodeType,
