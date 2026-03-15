@@ -44,6 +44,8 @@ function makeAxios(baseUrl: string): AxiosInstance {
 }
 
 export async function ensureServerRunning(args: string[]): Promise<void> {
+    console.log("ensuring server...");
+
     const state = readState();
     let baseUrl = state.baseUrl || 'http://localhost:8182';
 
@@ -70,6 +72,9 @@ export async function ensureServerRunning(args: string[]): Promise<void> {
     console.log('Browser4 server not running. Starting...');
 
     const jarPath = await findOrDownloadJar();
+
+    console.log("Jar path: ", jarPath);
+
     const port = parseInt(new URL(baseUrl).port) || 8182;
 
     await startServer(jarPath, baseUrl, port);
@@ -83,12 +88,12 @@ async function findOrDownloadJar(): Promise<string> {
 
     // Check common locations
     const candidates = [
-        path.join(os.homedir(), '.browser4', 'Browser4.jar'),
-        path.join(os.homedir(), '.browser4', 'lib', 'Browser4.jar'),
         path.resolve('Browser4.jar'),
         path.resolve('target', 'Browser4.jar'),
         path.resolve(__dirname, '..', '..', 'target', 'Browser4.jar'),
-        path.resolve(__dirname, '..', '..', '..', 'browser4', 'browser4-agents', 'target', 'Browser4.jar'), // Monorepo location
+        path.resolve(__dirname, '..', '..', '..', '..', '..', 'browser4', 'browser4-agents', 'target', 'Browser4.jar'), // Monorepo location
+        path.join(os.homedir(), '.browser4', 'Browser4.jar'),
+        path.join(os.homedir(), '.browser4', 'lib', 'Browser4.jar'),
     ];
 
     for (const candidate of candidates) {
@@ -98,7 +103,7 @@ async function findOrDownloadJar(): Promise<string> {
     }
 
     // Download if not found
-    const downloadPath = path.join(os.homedir(), '.browser4', 'Browser4.jar');
+    const downloadPath = path.join(os.homedir(), '.browser4', "lib", 'Browser4.jar');
     await downloadJar(downloadPath);
     return downloadPath;
 }

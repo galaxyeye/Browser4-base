@@ -23,6 +23,15 @@ npm run build
 npm link        # makes browser4-cli available globally
 ```
 
+For automatic recompilation while editing locally:
+
+```bash
+npm run build:watch
+```
+
+If you want the globally linked `browser4-cli` command to pick up changes as you save,
+run `npm link` once and keep the watch build running in a separate terminal.
+
 ## Usage
 
 ```

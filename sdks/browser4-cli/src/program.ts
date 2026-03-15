@@ -40,6 +40,66 @@ function makeAxios(baseUrl: string): AxiosInstance {
     });
 }
 
+const LEGACY_TOOL_NAME_ALIASES: Readonly<Record<string, string>> = {
+    browser_navigate: 'navigate',
+    browser_snapshot: 'aria_snapshot',
+    browser_navigate_back: 'go_back',
+    browser_navigate_forward: 'go_forward',
+    browser_reload: 'reload',
+    browser_press_key: 'press',
+    browser_press_sequentially: 'type',
+    browser_drag: 'drag',
+    browser_type: 'fill',
+    browser_hover: 'hover',
+    browser_select_option: 'select_option',
+    browser_file_upload: 'upload',
+    browser_check: 'check',
+    browser_uncheck: 'uncheck',
+    browser_evaluate: 'evaluate',
+    browser_resize: 'resize',
+    browser_take_screenshot: 'screenshot',
+    browser_keydown: 'keydown',
+    browser_keyup: 'keyup',
+    browser_mouse_move_xy: 'mousemove',
+    browser_mouse_down: 'mousedown',
+    browser_mouse_up: 'mouseup',
+    browser_mouse_wheel: 'mousewheel',
+};
+
+function normalizeToolCall(
+    tool: string,
+    args: Record<string, unknown> = {},
+): { tool: string; args: Record<string, unknown> } {
+    if (tool === 'browser_click') {
+        const {doubleClick, ...rest} = args;
+        return {
+            tool: doubleClick ? 'dblclick' : 'click',
+            args: rest,
+        };
+    }
+
+    if (tool === 'browser_handle_dialog') {
+        const {accept, ...rest} = args;
+        return {
+            tool: accept === false ? 'dialog_dismiss' : 'dialog_accept',
+            args: rest,
+        };
+    }
+
+    if (tool === 'browser_tabs') {
+        const {action, ...rest} = args;
+        if (action === 'list') return {tool: 'tab_list', args: rest};
+        if (action === 'new') return {tool: 'tab_new', args: rest};
+        if (action === 'close') return {tool: 'tab_close', args: rest};
+        if (action === 'select') return {tool: 'tab_select', args: rest};
+    }
+
+    return {
+        tool: LEGACY_TOOL_NAME_ALIASES[tool] ?? tool,
+        args,
+    };
+}
+
 /**
  * Call an MCP tool on the server.
  *
@@ -53,7 +113,8 @@ async function callTool(
     tool: string,
     args: Record<string, unknown> = {},
 ): Promise<string> {
-    const res = await ax.post('/mcp/call-tool', {tool, arguments: args});
+    const normalized = normalizeToolCall(tool, args);
+    const res = await ax.post('/mcp/call-tool', {tool: normalized.tool, arguments: normalized.args});
     const data = res.data as { content?: Array<{ text?: string }>; isError?: boolean };
 
     if (data.isError) {
@@ -392,7 +453,7 @@ async function handleScreenshot(
 ): Promise<void> {
     const state = requireSession();
     const sid = state.sessionId;
-    const { filename, ...captureArgs } = toolParams;
+    const {filename, ...captureArgs} = toolParams;
     const base64 = await callTool(ax, 'screenshot', {
         ...captureArgs,
         sessionId: sid,
@@ -438,6 +499,8 @@ async function main(): Promise<void> {
             printHelp(remaining[1]);
             return;
         }
+
+        console.log("Starting command...");
 
         // Resolve base URL: --server flag > persisted state > default
         const currentState = readState();
@@ -512,6 +575,8 @@ async function main(): Promise<void> {
             }
         }
     } catch (err) {
+        console.error(".................");
+
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`Error: ${msg}`);
         process.exit(1);
@@ -526,4 +591,4 @@ if (require.main === module) {
     });
 }
 
-export {parseRawArgs, parseGlobalFlags, shouldEnsureServerRunning};
+export {parseRawArgs, parseGlobalFlags, shouldEnsureServerRunning, normalizeToolCall};

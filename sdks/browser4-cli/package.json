@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "Browser4 CLI — control a Browser4 server from the command line",
   "bin": {
-    "browser4-cli": "dist/cli.js"
+    "browser4-cli": "dist/program.js"
   },
-  "main": "dist/cli.js",
+  "main": "dist/program.js",
   "scripts": {
     "build": "tsc",
+    "build:watch": "tsc --watch",
     "clean": "tsc --build --clean",
     "rebuild": "npm run clean && npm run build",
     "test": "jest",

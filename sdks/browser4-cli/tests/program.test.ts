@@ -23,7 +23,7 @@ jest.mock('../src/cli/daemon/daemon', () => ({
     ensureServerRunning: jest.fn(),
 }));
 
-import {parseRawArgs, parseGlobalFlags} from '../src/program';
+import {normalizeToolCall, parseRawArgs, parseGlobalFlags} from '../src/program';
 import {shouldEnsureServerRunning} from '../src/program';
 
 describe('parseRawArgs', () => {
@@ -138,5 +138,43 @@ describe('shouldEnsureServerRunning', () => {
 
     it('keeps auto-start for normal commands', () => {
         expect(shouldEnsureServerRunning('open')).toBe(true);
+    });
+});
+
+describe('normalizeToolCall', () => {
+    it('maps legacy navigate tool names to backend MCP names', () => {
+        expect(normalizeToolCall('browser_navigate', {url: 'https://example.com'})).toEqual({
+            tool: 'navigate',
+            args: {url: 'https://example.com'},
+        });
+    });
+
+    it('maps legacy click variants to click and dblclick', () => {
+        expect(normalizeToolCall('browser_click', {ref: 'e1'})).toEqual({
+            tool: 'click',
+            args: {ref: 'e1'},
+        });
+        expect(normalizeToolCall('browser_click', {ref: 'e1', doubleClick: true})).toEqual({
+            tool: 'dblclick',
+            args: {ref: 'e1'},
+        });
+    });
+
+    it('maps legacy tab action tool names to tab MCP names', () => {
+        expect(normalizeToolCall('browser_tabs', {action: 'select', index: 2})).toEqual({
+            tool: 'tab_select',
+            args: {index: 2},
+        });
+    });
+
+    it('maps legacy dialog tool names to dialog MCP names', () => {
+        expect(normalizeToolCall('browser_handle_dialog', {accept: true, promptText: 'ok'})).toEqual({
+            tool: 'dialog_accept',
+            args: {promptText: 'ok'},
+        });
+        expect(normalizeToolCall('browser_handle_dialog', {accept: false})).toEqual({
+            tool: 'dialog_dismiss',
+            args: {},
+        });
     });
 });
