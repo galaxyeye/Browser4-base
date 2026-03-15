@@ -31,6 +31,7 @@ import {commands} from './commands';
 import {parseCommand} from './command';
 import axios, {AxiosInstance} from "axios";
 import {readState} from "../../state";
+import {registerManagedServerProcess, removeManagedServerProcess} from './managedProcesses';
 
 import type * as mcp from './../../mcp/exports';
 
@@ -71,7 +72,7 @@ export async function ensureServerRunning(args: string[]): Promise<void> {
     const jarPath = await findOrDownloadJar();
     const port = parseInt(new URL(baseUrl).port) || 8182;
 
-    await startServer(jarPath, port);
+    await startServer(jarPath, baseUrl, port);
 }
 
 async function findOrDownloadJar(): Promise<string> {
@@ -83,6 +84,7 @@ async function findOrDownloadJar(): Promise<string> {
     // Check common locations
     const candidates = [
         path.join(os.homedir(), '.browser4', 'Browser4.jar'),
+        path.join(os.homedir(), '.browser4', 'lib', 'Browser4.jar'),
         path.resolve('Browser4.jar'),
         path.resolve('target', 'Browser4.jar'),
         path.resolve(__dirname, '..', '..', 'target', 'Browser4.jar'),
@@ -144,12 +146,24 @@ async function downloadJar(targetPath: string): Promise<void> {
     });
 }
 
-async function startServer(jarPath: string, port: number): Promise<void> {
+async function startServer(jarPath: string, baseUrl: string, port: number): Promise<void> {
     console.log(`Starting server from ${jarPath} on port ${port}...`);
 
     const child = spawn('java', ['-jar', jarPath, `--server.port=${port}`], {
         detached: true,
         stdio: 'ignore' // or 'inherit' for debugging, but 'ignore' keeps it clean
+    });
+
+    if (!child.pid) {
+        throw new Error('Browser4 server started without a PID.');
+    }
+
+    registerManagedServerProcess({
+        pid: child.pid,
+        baseUrl,
+        port,
+        jarPath,
+        startedAt: new Date().toISOString(),
     });
 
     child.unref(); // Allow the parent process to exit independently
@@ -168,6 +182,7 @@ async function startServer(jarPath: string, port: number): Promise<void> {
         }
     }
 
+    removeManagedServerProcess(child.pid);
     throw new Error(`Server failed to start within ${timeout}ms`);
 }
 

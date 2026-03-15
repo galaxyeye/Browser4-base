@@ -24,6 +24,7 @@ jest.mock('../src/cli/daemon/daemon', () => ({
 }));
 
 import {parseRawArgs, parseGlobalFlags} from '../src/program';
+import {shouldEnsureServerRunning} from '../src/program';
 
 describe('parseRawArgs', () => {
     it('should parse positional arguments', () => {
@@ -123,5 +124,19 @@ describe('parseGlobalFlags', () => {
         expect(result.sessionName).toBeUndefined();
         expect(result.serverUrl).toBeUndefined();
         expect(result.args).toEqual([]);
+    });
+});
+
+describe('shouldEnsureServerRunning', () => {
+    it('skips auto-start for close-all', () => {
+        expect(shouldEnsureServerRunning('close-all')).toBe(false);
+    });
+
+    it('skips auto-start for kill-all', () => {
+        expect(shouldEnsureServerRunning('kill-all')).toBe(false);
+    });
+
+    it('keeps auto-start for normal commands', () => {
+        expect(shouldEnsureServerRunning('open')).toBe(true);
     });
 });

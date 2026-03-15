@@ -26,6 +26,7 @@ import {ensureServerRunning} from './cli/daemon/daemon';
 import {commands} from './cli/daemon/commands';
 import {parseCommand} from './cli/daemon/command';
 import {generateHelp, generateHelpJSON} from './cli/daemon/helpGenerator';
+import {readManagedServerProcesses, shutdownManagedServerProcesses} from './cli/daemon/managedProcesses';
 
 // ---------------------------------------------------------------------------
 // MCP tool call helpers
@@ -272,16 +273,76 @@ async function handleClose(ax: AxiosInstance): Promise<void> {
 
 /** Handle the `close-all` command: close all sessions. */
 async function handleCloseAll(ax: AxiosInstance): Promise<void> {
-    const result = await callTool(ax, 'close_all_sessions', {});
+    const baseUrls = new Set([
+        ax.defaults.baseURL?.replace(/\/$/, '') ?? '',
+        ...readManagedServerProcesses().map(processInfo => processInfo.baseUrl.replace(/\/$/, '')),
+    ]);
+    const closeResults: string[] = [];
+    const closeErrors: string[] = [];
+
+    for (const baseUrl of baseUrls) {
+        if (!baseUrl) {
+            continue;
+        }
+
+        try {
+            const result = await callTool(makeAxios(baseUrl), 'close_all_sessions', {});
+            closeResults.push(baseUrl === ax.defaults.baseURL?.replace(/\/$/, '')
+                ? result
+                : `${baseUrl}: ${result}`);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            closeErrors.push(`${baseUrl}: ${message}`);
+        }
+    }
+
+    const shutdownResult = await shutdownManagedServerProcesses({force: false});
     clearState();
-    console.log(result || 'All sessions closed.');
+    if (closeResults.length > 0) {
+        for (const result of closeResults) {
+            console.log(result);
+        }
+    } else {
+        console.log('No reachable Browser4 servers responded to close-all.');
+    }
+    logShutdownResult('Stopped', shutdownResult);
+    if (closeErrors.length > 0) {
+        console.error(`close-all warnings: ${closeErrors.join(' | ')}`);
+    }
 }
 
 /** Handle the `kill-all` command: forcefully kill all sessions. */
 async function handleKillAll(ax: AxiosInstance): Promise<void> {
-    const result = await callTool(ax, 'kill_all_sessions', {});
+    const shutdownResult = await shutdownManagedServerProcesses({force: true});
     clearState();
-    console.log(result || 'All sessions killed.');
+    logShutdownResult('Killed', shutdownResult);
+}
+
+function logShutdownResult(
+    action: 'Stopped' | 'Killed',
+    shutdownResult: Awaited<ReturnType<typeof shutdownManagedServerProcesses>>,
+): void {
+    if (shutdownResult.stoppedPids.length > 0) {
+        console.log(`${action} Browser4 process(es): ${shutdownResult.stoppedPids.join(', ')}`);
+    } else if (shutdownResult.missingPids.length === 0) {
+        console.log('No tracked Browser4 processes found.');
+    }
+
+    if (shutdownResult.missingPids.length > 0) {
+        console.log(`Already stopped Browser4 process(es): ${shutdownResult.missingPids.join(', ')}`);
+    }
+
+    if (shutdownResult.forcedPids.length > 0 && action === 'Stopped') {
+        console.log(`Forced Browser4 process(es) after graceful timeout: ${shutdownResult.forcedPids.join(', ')}`);
+    }
+
+    if (shutdownResult.remainingPids.length > 0) {
+        console.error(`Browser4 process(es) still running after ${action.toLowerCase()}: ${shutdownResult.remainingPids.join(', ')}`);
+    }
+}
+
+function shouldEnsureServerRunning(command?: string): boolean {
+    return command !== 'close-all' && command !== 'kill-all';
 }
 
 /** Handle the `list` command: list all active sessions. */
@@ -386,7 +447,9 @@ async function main(): Promise<void> {
         }
 
         // Ensure the Browser4 server is running
-        await ensureServerRunning(remaining.slice(1));
+        if (shouldEnsureServerRunning(command)) {
+            await ensureServerRunning(remaining.slice(1));
+        }
 
         const ax = makeAxios(baseUrl);
 
@@ -463,4 +526,4 @@ if (require.main === module) {
     });
 }
 
-export {parseRawArgs, parseGlobalFlags};
+export {parseRawArgs, parseGlobalFlags, shouldEnsureServerRunning};

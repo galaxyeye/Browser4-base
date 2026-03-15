@@ -1,3 +1,22 @@
+Task: browser-cli-process-shutdown
+Description: Task from browser-cli-process-shutdown.md
+Original File: browser-cli-process-shutdown.md
+Started: 2026-03-15 05:08:25
+Prompt:
+Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\browser-cli-process-shutdown.md.
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
+
+After completing the task, you MUST update your daily memory file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\15\MEMORY.20260315.md
+1. Append a summary of this task, its outcome, and any lessons learned to D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\15\MEMORY.20260315.md.
+2. Check if the Monthly Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\MEMORY.202603.md) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Ensure you do not overwrite existing content, always append.
+
+
+[Monthly Memory (2026-03)]:
 # MEMORY.202603.md
 ## Monthly Memory - 2026-03
 
@@ -82,8 +101,9 @@
 - Kept coworker execution hygiene tight: empty task files were treated as no-ops, daily memory was updated append-only, and monthly memory synchronization was explicitly checked against the latest available pre-today daily summary.
 - Reinforced recurring execution hygiene: prefer module-local Maven `-f` validation when the root reactor is incomplete, validate prompt/DOM output semantically instead of via brittle size checks, and document transformation-stage model boundaries where future maintainers will read them.
 
-### Daily Rollup Update (2026-03-01 to 2026-03-14)
-- Continued stabilizing Browser4 MCP, launch, DOM snapshot, and renderer fidelity across the month, including packaged-jar MCP startup guidance, DOM/ARIA serialization fixes, richer aria rendering from earlier tree stages, and nano-tree semantic-role recovery for compacted snapshots.
-- Strengthened focused validation practice by favoring small reliable checks (`DOMStateBuilderTest`, focused E2E classes, targeted browser4-cli Jest suites), documenting when tags like `RequiresServer` need `-DrunE2ETests=true`, and noting pre-existing suite failures separately from task-specific verification.
-- Improved coworker/tooling hygiene with append-only memory updates, hidden-file queue filtering, wrapper/test script cleanup, and explicit monthly-memory synchronization checks so daily learnings continue to roll up cleanly.
-- Reinforced recurring execution hygiene: prefer tracked identifiers over brittle scans for process/session cleanup, avoid auto-start behavior in shutdown paths, keep generated/spec artifacts aligned with code, and use focused module-local builds/tests when the broader workspace has unrelated breakage.
+
+---
+Copilot Execution Output:
+
+Copilot Exit Code: 0
+Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\15\050726-browser-cli-process-shutdown.copilot.log
