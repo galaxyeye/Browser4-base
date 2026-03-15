@@ -1031,7 +1031,12 @@ const supportedCommandsArray: AnyCommandSchema[] = [
     tabList,
     tabNew,
     tabClose,
-    tabSelect
-]
+    tabSelect,
+
+    // session category
+    sessionList,
+    sessionCloseAll,
+    killAll,
+];
 
 export const commands = Object.fromEntries(supportedCommandsArray.map(cmd => [cmd.name, cmd]));
