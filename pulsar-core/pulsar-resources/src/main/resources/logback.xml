@@ -37,6 +37,7 @@
         <File>${logging.dir}/${logging.file}</File>
         <encoder>
             <pattern>${DRFA_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logging.dir}/${logging.file}.%d{.yyyy-MM-dd}</fileNamePattern>
@@ -47,6 +48,7 @@
         <File>${logging.dir}/${logging.s.file}</File>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%.10thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logging.dir}/${logging.s.file}.%d{.yyyy-MM-dd}</fileNamePattern>
@@ -57,6 +59,7 @@
         <File>${logging.dir}/${logging.hv.file}</File>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%.10thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logging.dir}/${logging.hv.file}.%d{.yyyy-MM-dd}</fileNamePattern>
@@ -67,6 +70,7 @@
         <File>${logging.dir}/${logging.pg.file}</File>
         <encoder>
             <pattern>${DRFA_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logging.dir}/${logging.pg.file}.%d{.yyyy-MM-dd}</fileNamePattern>
@@ -77,6 +81,7 @@
         <File>${logging.dir}/${logging.api.file}</File>
         <encoder>
             <pattern>${DRFA_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logging.dir}/${logging.api.file}.%d{.yyyy-MM-dd}</fileNamePattern>
@@ -88,6 +93,7 @@
         <append>true</append>
         <encoder>
             <pattern>%d{ISO8601} --- %m%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
@@ -96,6 +102,7 @@
         <append>true</append>
         <encoder>
             <pattern>%d{ISO8601} --- %m%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
@@ -104,6 +111,7 @@
         <append>true</append>
         <encoder>
             <pattern>%d{ISO8601} --- %m%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
@@ -111,6 +119,7 @@
         <File>${logging.dir}/${logging.sql.file}</File>
         <encoder>
             <pattern>%d{ISO8601} --- %m%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
@@ -118,6 +127,7 @@
         <File>${logging.dir}/${logging.dc.file}</File>
         <encoder>
             <pattern>%d{ISO8601} --- %m%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 

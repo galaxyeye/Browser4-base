@@ -13,7 +13,7 @@
         'gh'
         'copilot'
         '--model'
-        'gpt-5.4'
+        'GPT-5.3-Codex'
         '--no-ask-user'
         '--log-level'
         'info'
