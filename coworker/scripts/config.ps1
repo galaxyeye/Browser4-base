@@ -118,7 +118,18 @@ function Test-CoworkerDotPath {
             return $true
         }
 
-        $currentItem = $currentItem.Directory
+        # FileInfo exposes Directory; DirectoryInfo exposes Parent.
+        if ($currentItem.PSObject.Properties.Match('Directory').Count -gt 0) {
+            $currentItem = $currentItem.Directory
+            continue
+        }
+
+        if ($currentItem.PSObject.Properties.Match('Parent').Count -gt 0) {
+            $currentItem = $currentItem.Parent
+            continue
+        }
+
+        $currentItem = $null
     }
 
     return $false
