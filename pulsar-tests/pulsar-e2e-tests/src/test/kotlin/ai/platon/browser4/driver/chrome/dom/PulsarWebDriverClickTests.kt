@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
+import ai.platon.pulsar.FastWebDriverService
 import ai.platon.pulsar.WebDriverTestBase
-import ai.platon.pulsar.browser.FastWebDriverService
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
@@ -73,41 +73,43 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
 
     @Test
     @DisplayName("click sequential different elements on current screen")
-    fun testClickSequentialDifferentElements() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        driver.waitForSelector("#calculatorSection")
+    fun testClickSequentialDifferentElements() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            driver.waitForSelector("#calculatorSection")
 
-        driver.scrollTo("#calculatorSection")
-        driver.bringToFront()
-        driver.click("#addButton", 1)
-        driver.waitUntil(MEDIUM_TIMEOUT) {
-            driver.selectFirstTextOrNull("#sumResult") == "Result: Please enter valid numbers"
+            driver.scrollTo("#calculatorSection")
+            driver.bringToFront()
+            driver.click("#addButton", 1)
+            driver.waitUntil(MEDIUM_TIMEOUT) {
+                driver.selectFirstTextOrNull("#sumResult") == "Result: Please enter valid numbers"
+            }
+            assertTrue(
+                driver.selectFirstTextOrNull("#sumResult") == "Result: Please enter valid numbers",
+                "Calculator button should update the current page state before the next click"
+            )
+
+            driver.scrollTo("#toggleSection")
+            assertMessageHidden(driver)
+            driver.bringToFront()
+            driver.click("#toggleMessageButton", 1)
+            assertMessageVisible(driver)
         }
-        assertTrue(
-            driver.selectFirstTextOrNull("#sumResult") == "Result: Please enter valid numbers",
-            "Calculator button should update the current page state before the next click"
-        )
-
-        driver.scrollTo("#toggleSection")
-        assertMessageHidden(driver)
-        driver.bringToFront()
-        driver.click("#toggleMessageButton", 1)
-        assertMessageVisible(driver)
-    }
 
     @Test
     @DisplayName("click repeated on same element keeps calculator result stable")
-    fun testClickRapidSequentialSameElement() = runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
-        driver.waitForSelector("#calculatorSection")
+    fun testClickRapidSequentialSameElement() =
+        runEnhancedWebDriverTest(multiScreensInteractiveUrl, browser) { driver ->
+            driver.waitForSelector("#calculatorSection")
 
-        prepareCalculator(driver, "1.5", "2.5")
+            prepareCalculator(driver, "1.5", "2.5")
 
-        repeat(3) {
-            driver.bringToFront()
-            driver.click("#addButton", 1)
+            repeat(3) {
+                driver.bringToFront()
+                driver.click("#addButton", 1)
+            }
+
+            assertCalculatorResult(driver, "Result: 4")
         }
-
-        assertCalculatorResult(driver, "Result: 4")
-    }
 
     @Test
     @DisplayName("click can target out of view element by auto-scrolling")
@@ -208,7 +210,10 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
         driver.waitUntil(SHORT_TIMEOUT) {
             driver.selectFirstTextOrNull("#sumResult").isNullOrBlank()
         }
-        assertTrue(driver.selectFirstTextOrNull("#sumResult").isNullOrBlank(), "Disabled button should not update result")
+        assertTrue(
+            driver.selectFirstTextOrNull("#sumResult").isNullOrBlank(),
+            "Disabled button should not update result"
+        )
     }
 
     private suspend fun prepareCalculator(driver: WebDriver, first: String, second: String) {
@@ -226,8 +231,8 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
     private suspend fun assertMessageVisible(driver: WebDriver) {
         driver.waitUntil(MEDIUM_TIMEOUT) {
             !driver.exists("#hiddenMessage.hidden") &&
-                driver.selectFirstAttributeOrNull("#toggleMessageButton", "aria-expanded") == "true" &&
-                driver.selectFirstAttributeOrNull("#hiddenMessage", "aria-hidden") == "false"
+                    driver.selectFirstAttributeOrNull("#toggleMessageButton", "aria-expanded") == "true" &&
+                    driver.selectFirstAttributeOrNull("#hiddenMessage", "aria-hidden") == "false"
         }
 
         assertFalse(driver.exists("#hiddenMessage.hidden"), "Hidden message should be visible")
@@ -240,8 +245,8 @@ class PulsarWebDriverClickTests : WebDriverTestBase() {
     private suspend fun assertMessageHidden(driver: WebDriver) {
         driver.waitUntil(MEDIUM_TIMEOUT) {
             driver.exists("#hiddenMessage.hidden") &&
-                driver.selectFirstAttributeOrNull("#toggleMessageButton", "aria-expanded") == "false" &&
-                driver.selectFirstAttributeOrNull("#hiddenMessage", "aria-hidden") == "true"
+                    driver.selectFirstAttributeOrNull("#toggleMessageButton", "aria-expanded") == "false" &&
+                    driver.selectFirstAttributeOrNull("#hiddenMessage", "aria-hidden") == "true"
         }
 
         assertTrue(driver.exists("#hiddenMessage.hidden"), "Hidden message should not be visible")

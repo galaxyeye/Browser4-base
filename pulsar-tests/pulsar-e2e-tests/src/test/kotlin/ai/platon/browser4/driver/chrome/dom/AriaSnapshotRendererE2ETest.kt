@@ -30,31 +30,35 @@ class AriaSnapshotRendererE2ETest : WebDriverTestBase() {
 
     @Test
     @DisplayName("Render Playwright-style aria snapshot output on a real server-hosted page")
-    fun renderPlaywrightStyleAriaSnapshotOutputOnRealFixturePage() = runEnhancedWebDriverTest(rendererFixtureURL) { driver ->
-        assertIs<PulsarWebDriver>(driver)
-        driver.waitForSelector("h1")
-        driver.bringToFront()
+    fun renderPlaywrightStyleAriaSnapshotOutputOnRealFixturePage() =
+        runEnhancedWebDriverTest(rendererFixtureURL) { driver ->
+            assertIs<PulsarWebDriver>(driver)
+            driver.waitForSelector("h1")
+            driver.bringToFront()
 
-        val devTools = driver.implementation as RemoteDevTools
-        installRendererFixture(devTools)
-        driver.waitForSelector("h1")
+            val devTools = driver.implementation as RemoteDevTools
+            installRendererFixture(devTools)
+            driver.waitForSelector("h1")
 
-        val service = CDPSnapshotService(devTools)
-        val normalized = normalizeRefs(collectAriaSnapshot(service)).lowercase()
+            val service = CDPSnapshotService(devTools)
+            val normalized = normalizeRefs(collectAriaSnapshot(service)).lowercase()
 
-        assertTrue(normalized.contains("- region \"collapsed generic\" [ref=#]:"), normalized)
-        assertTrue(normalized.contains("- button \"collapsed button\" [ref=#] [cursor=pointer]"), normalized)
-        assertTrue(normalized.contains("- region \"nested cursor pointer\" [ref=#]:"), normalized)
-        assertTrue(normalized.contains("- link \"link with a button button\" [ref=#] [cursor=pointer]:"), normalized)
-        assertTrue(normalized.contains("- /url: about:blank"), normalized)
-        assertTrue(normalized.contains("- text: link with a button"), normalized)
-        assertTrue(normalized.contains("- button \"button\" [ref=#]"), normalized)
-        assertTrue(normalized.contains("- region \"presentational wrapper\" [ref=#]:"), normalized)
-        assertTrue(normalized.contains("- heading \"presentational heading\" [level=2] [ref=#]"), normalized)
-        assertTrue(normalized.contains("- textbox \"search\" [ref=#]"), normalized)
-        assertTrue(normalized.contains("- /placeholder: search docs"), normalized)
-        assertTrue(normalized.contains("- generic \"element title\" [ref=#]"), normalized)
-    }
+            assertTrue(normalized.contains("- region \"collapsed generic\" [ref=#]:"), normalized)
+            assertTrue(normalized.contains("- button \"collapsed button\" [ref=#] [cursor=pointer]"), normalized)
+            assertTrue(normalized.contains("- region \"nested cursor pointer\" [ref=#]:"), normalized)
+            assertTrue(
+                normalized.contains("- link \"link with a button button\" [ref=#] [cursor=pointer]:"),
+                normalized
+            )
+            assertTrue(normalized.contains("- /url: about:blank"), normalized)
+            assertTrue(normalized.contains("- text: link with a button"), normalized)
+            assertTrue(normalized.contains("- button \"button\" [ref=#]"), normalized)
+            assertTrue(normalized.contains("- region \"presentational wrapper\" [ref=#]:"), normalized)
+            assertTrue(normalized.contains("- heading \"presentational heading\" [level=2] [ref=#]"), normalized)
+            assertTrue(normalized.contains("- textbox \"search\" [ref=#]"), normalized)
+            assertTrue(normalized.contains("- /placeholder: search docs"), normalized)
+            assertTrue(normalized.contains("- generic \"element title\" [ref=#]"), normalized)
+        }
 
     @Test
     @DisplayName("Render iframe nodes and nested frame content on a real frames page")

@@ -4,6 +4,7 @@ import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.pulsar.WebDriverTestBase
+import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
@@ -45,7 +46,7 @@ class DOMBoundsParityTest : WebDriverTestBase() {
     @DisplayName("bounds are in CSS pixels independent of DPR (scaling applied)")
     fun boundsAreInCssPixelsIndependentOfDprScalingApplied() =
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
-            assertIs<ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver>(driver)
+            assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
             val service = CDPSnapshotService(devTools)
 
@@ -91,7 +92,7 @@ class DOMBoundsParityTest : WebDriverTestBase() {
     @DisplayName("iframe offsets and scroll are reflected in absolutePosition and visibility true when within viewport")
     fun iframeOffsetsAndScrollAreReflectedInAbsolutePositionAndVisibilityTrueWhenWithinViewport() =
         runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
-            assertIs<ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver>(driver)
+            assertIs<PulsarWebDriver>(driver)
             val devTools = driver.implementation as RemoteDevTools
             val service = driver.snapshotService as CDPSnapshotService
 
@@ -173,7 +174,7 @@ class DOMBoundsParityTest : WebDriverTestBase() {
     @Ignore("inner iframe features are postponed")
     @DisplayName("iframe content outside viewport is not visible")
     fun iframeContentOutsideViewportIsNotVisible() = runEnhancedWebDriverTest(interactiveDynamicURL) { driver ->
-        assertIs<ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver>(driver)
+        assertIs<PulsarWebDriver>(driver)
         val devTools = driver.implementation as RemoteDevTools
         val service = CDPSnapshotService(devTools)
 

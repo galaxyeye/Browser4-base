@@ -17,6 +17,7 @@ import org.junit.jupiter.api.assertNotNull
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.createDirectories
+import kotlin.math.abs
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -505,7 +506,7 @@ class SnapshotServiceFullCoverageTest : WebDriverTestBase() {
         val expectedW = bcr["width"]!!
         val expectedH = bcr["height"]!!
 
-        fun close(a: Double?, b: Double?, eps: Double = 2.0) = a != null && b != null && kotlin.math.abs(a - b) <= eps
+        fun close(a: Double?, b: Double?, eps: Double = 2.0) = a != null && b != null && abs(a - b) <= eps
 
         val b = buttonSnapshot.bounds
         val ab = buttonSnapshot.absoluteBounds
