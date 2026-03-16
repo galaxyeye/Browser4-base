@@ -1297,6 +1297,10 @@ interface WebDriver : Closeable {
     @MCP
     suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
 
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseDown(x: Double, y: Double, button: String = "left", modifier: String? = null)
+
     /**
      * Releases a mouse button at the current mouse position. @mcp
      *
@@ -1311,6 +1315,10 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     @MCP
     suspend fun mouseUp(button: String = "left", clickCount: Int = 1)
+
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseUp(x: Double, y: Double, button: String = "left", modifier: String? = null)
 
     /**
      * The mouse moves to the element with [selector]. @mcp
