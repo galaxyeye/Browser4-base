@@ -20,8 +20,16 @@ export interface CliState {
   sessionName?: string;
 }
 
+function resolveDefaultStateDir(): string {
+  const override = process.env.BROWSER4_CLI_STATE_DIR?.trim();
+  if (override) {
+    return path.resolve(override);
+  }
+  return path.join(os.homedir(), '.browser4');
+}
+
 /** Default directory for persisted state. Can be overridden for testing. */
-export const DEFAULT_STATE_DIR = path.join(os.homedir(), '.browser4');
+export const DEFAULT_STATE_DIR = resolveDefaultStateDir();
 
 const DEFAULT_STATE: CliState = {
   baseUrl: 'http://localhost:8182',

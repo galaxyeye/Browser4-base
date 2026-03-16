@@ -12,6 +12,7 @@
     "clean": "tsc --build --clean",
     "rebuild": "npm run clean && npm run build",
     "test": "jest",
+    "test:e2e": "npm run build && node ./scripts/run-e2e.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src tests --ext .ts",

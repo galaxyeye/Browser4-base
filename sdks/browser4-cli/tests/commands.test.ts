@@ -105,15 +105,17 @@ describe('parseCommand', () => {
 
     it('should parse type command', () => {
         const cmd = commands['type'];
-        const {toolName, toolParams} = parseCommand(cmd, args(['type', 'hello world']));
+        const {toolName, toolParams} = parseCommand(cmd, args(['type', '#message', 'hello world']));
         expect(toolName).toBe('browser_press_sequentially');
+        expect(toolParams.ref).toBe('#message');
         expect(toolParams.text).toBe('hello world');
     });
 
     it('should parse press command', () => {
         const cmd = commands['press'];
-        const {toolName, toolParams} = parseCommand(cmd, args(['press', 'Enter']));
+        const {toolName, toolParams} = parseCommand(cmd, args(['press', '#message', 'Enter']));
         expect(toolName).toBe('browser_press_key');
+        expect(toolParams.ref).toBe('#message');
         expect(toolParams.key).toBe('Enter');
     });
 
@@ -203,14 +205,14 @@ describe('parseCommand', () => {
         const cmd = commands['eval'];
         const {toolName, toolParams} = parseCommand(cmd, args(['eval', 'document.title']));
         expect(toolName).toBe('browser_evaluate');
-        expect(toolParams.function).toBe('document.title');
+        expect(toolParams.expression).toBe('document.title');
     });
 
     it('should parse eval command with element ref', () => {
         const cmd = commands['eval'];
         const {toolName, toolParams} = parseCommand(cmd, args(['eval', 'el => el.textContent', 'e5']));
         expect(toolName).toBe('browser_evaluate');
-        expect(toolParams.function).toBe('el => el.textContent');
+        expect(toolParams.expression).toBe('el => el.textContent');
         expect(toolParams.ref).toBe('e5');
     });
 
@@ -279,8 +281,9 @@ describe('parseCommand', () => {
 
     it('should parse upload command', () => {
         const cmd = commands['upload'];
-        const {toolName, toolParams} = parseCommand(cmd, args(['upload', './document.pdf']));
+        const {toolName, toolParams} = parseCommand(cmd, args(['upload', '#file-input', './document.pdf']));
         expect(toolName).toBe('browser_file_upload');
+        expect(toolParams.ref).toBe('#file-input');
         expect(toolParams.paths).toEqual(['./document.pdf']);
     });
 

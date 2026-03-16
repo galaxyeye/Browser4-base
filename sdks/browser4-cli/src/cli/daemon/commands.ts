@@ -113,10 +113,11 @@ const pressKey = declareCommand({
     description: 'Press a key on the keyboard, `a`, `ArrowLeft`',
     category: 'keyboard',
     args: z.object({
+        ref: z.string().describe('CSS selector or element reference to receive the key press'),
         key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
     }),
     toolName: 'browser_press_key',
-    toolParams: ({ key }) => ({ key }),
+    toolParams: ({ ref, key }) => ({ ref, key }),
 });
 
 const type = declareCommand({
@@ -124,13 +125,14 @@ const type = declareCommand({
     description: 'Type text into editable element',
     category: 'core',
     args: z.object({
+        ref: z.string().describe('CSS selector or element reference to type into'),
         text: z.string().describe('Text to type into the element'),
     }),
     options: z.object({
         submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
     }),
     toolName: 'browser_press_sequentially',
-    toolParams: ({ text, submit }) => ({ text, submit }),
+    toolParams: ({ ref, text, submit }) => ({ ref, text, submit }),
 });
 
 const keydown = declareCommand({
@@ -290,10 +292,11 @@ const fileUpload = declareCommand({
     description: 'Upload one or multiple files',
     category: 'core',
     args: z.object({
+        ref: z.string().describe('CSS selector or element reference for the file input'),
         file: z.string().describe('The absolute paths to the files to upload'),
     }),
     toolName: 'browser_file_upload',
-    toolParams: ({ file }) => ({ paths: [file] }),
+    toolParams: ({ ref, file }) => ({ ref, paths: [file] }),
 });
 
 const check = declareCommand({
@@ -335,11 +338,11 @@ const evaluate = declareCommand({
     description: 'Evaluate JavaScript expression on page or element',
     category: 'core',
     args: z.object({
-        func: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
+        func: z.string().describe('JavaScript expression to evaluate on the page'),
         ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
     }),
     toolName: 'browser_evaluate',
-    toolParams: ({ func, ref }) => ({ function: func, ref }),
+    toolParams: ({ func, ref }) => ({ expression: func, ref }),
 });
 
 const dialogAccept = declareCommand({
