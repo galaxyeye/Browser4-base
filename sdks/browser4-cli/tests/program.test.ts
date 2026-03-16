@@ -143,54 +143,54 @@ describe('shouldEnsureServerRunning', () => {
 });
 
 describe('normalizeToolCall', () => {
-    it('maps legacy navigate tool names to backend MCP names', () => {
+    it('keeps frontend navigate tool names unchanged', () => {
         expect(normalizeToolCall('browser_navigate', {url: 'https://example.com'})).toEqual({
-            tool: 'navigate',
+            tool: 'browser_navigate',
             args: {url: 'https://example.com'},
         });
     });
 
-    it('maps legacy click variants to click and dblclick', () => {
+    it('keeps frontend click variants and resolves element refs', () => {
         expect(normalizeToolCall('browser_click', {ref: 'e1'})).toEqual({
-            tool: 'click',
-            args: {selector: 'backend:1'},
+            tool: 'browser_click',
+            args: {ref: 'backend:1'},
         });
         expect(normalizeToolCall('browser_click', {ref: 'e1', doubleClick: true})).toEqual({
-            tool: 'dblclick',
-            args: {selector: 'backend:1'},
+            tool: 'browser_click',
+            args: {ref: 'backend:1', doubleClick: true},
         });
     });
 
-    it('maps legacy tab action tool names to tab MCP names', () => {
+    it('keeps frontend tab action tool names unchanged', () => {
         expect(normalizeToolCall('browser_tabs', {action: 'select', index: 2})).toEqual({
-            tool: 'tab_select',
-            args: {index: 2},
+            tool: 'browser_tabs',
+            args: {action: 'select', index: 2},
         });
     });
 
-    it('maps legacy dialog tool names to dialog MCP names', () => {
+    it('keeps frontend dialog tool names unchanged', () => {
         expect(normalizeToolCall('browser_handle_dialog', {accept: true, promptText: 'ok'})).toEqual({
-            tool: 'dialog_accept',
-            args: {promptText: 'ok'},
+            tool: 'browser_handle_dialog',
+            args: {accept: true, promptText: 'ok'},
         });
         expect(normalizeToolCall('browser_handle_dialog', {accept: false})).toEqual({
-            tool: 'dialog_dismiss',
-            args: {},
+            tool: 'browser_handle_dialog',
+            args: {accept: false},
         });
     });
 
-    it('maps legacy selector-style command args to selector fields', () => {
+    it('resolves selector-style frontend ref fields without renaming them', () => {
         expect(normalizeToolCall('browser_type', {ref: 'e2271', text: 'hello'})).toEqual({
-            tool: 'fill',
-            args: {selector: 'backend:2271', text: 'hello'},
+            tool: 'browser_type',
+            args: {ref: 'backend:2271', text: 'hello'},
         });
         expect(normalizeToolCall('browser_hover', {ref: '.cta'})).toEqual({
-            tool: 'hover',
-            args: {selector: '.cta'},
+            tool: 'browser_hover',
+            args: {ref: '.cta'},
         });
         expect(normalizeToolCall('browser_drag', {startRef: 'e1', endRef: 'e2'})).toEqual({
-            tool: 'drag',
-            args: {sourceSelector: 'backend:1', targetSelector: 'backend:2'},
+            tool: 'browser_drag',
+            args: {startRef: 'backend:1', endRef: 'backend:2'},
         });
     });
 });

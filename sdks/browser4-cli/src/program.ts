@@ -40,37 +40,11 @@ function makeAxios(baseUrl: string): AxiosInstance {
     });
 }
 
-const LEGACY_TOOL_NAME_ALIASES: Readonly<Record<string, string>> = {
-    browser_navigate: 'navigate',
-    browser_snapshot: 'aria_snapshot',
-    browser_navigate_back: 'go_back',
-    browser_navigate_forward: 'go_forward',
-    browser_reload: 'reload',
-    browser_press_key: 'press',
-    browser_press_sequentially: 'type',
-    browser_drag: 'drag',
-    browser_type: 'fill',
-    browser_hover: 'hover',
-    browser_select_option: 'select_option',
-    browser_file_upload: 'upload',
-    browser_check: 'check',
-    browser_uncheck: 'uncheck',
-    browser_evaluate: 'evaluate',
-    browser_resize: 'resize',
-    browser_take_screenshot: 'screenshot',
-    browser_keydown: 'keydown',
-    browser_keyup: 'keyup',
-    browser_mouse_move_xy: 'mousemove',
-    browser_mouse_down: 'mousedown',
-    browser_mouse_up: 'mouseup',
-    browser_mouse_wheel: 'mousewheel',
-};
-
 function normalizeToolCall(
     tool: string,
     args: Record<string, unknown> = {},
 ): { tool: string; args: Record<string, unknown> } {
-    const withSelector = (rawArgs: Record<string, unknown>, keys: string[]): Record<string, unknown> => {
+    const normalizeRefs = (rawArgs: Record<string, unknown>, keys: string[]): Record<string, unknown> => {
         const normalizedArgs = {...rawArgs};
         for (const key of keys) {
             const value = normalizedArgs[key];
@@ -81,91 +55,9 @@ function normalizeToolCall(
         return normalizedArgs;
     };
 
-    if (tool === 'browser_click') {
-        const {doubleClick, ref, modifiers, ...rest} = args;
-        const selectorArgs: Record<string, unknown> = {
-            ...rest,
-            ...(typeof ref === 'string' ? {selector: resolveRef(ref)} : {}),
-            ...(Array.isArray(modifiers) && modifiers.length > 0 ? {modifier: modifiers[0]} : {}),
-        };
-        return {
-            tool: doubleClick ? 'dblclick' : 'click',
-            args: selectorArgs,
-        };
-    }
-
-    if (tool === 'browser_handle_dialog') {
-        const {accept, ...rest} = args;
-        return {
-            tool: accept === false ? 'dialog_dismiss' : 'dialog_accept',
-            args: rest,
-        };
-    }
-
-    if (tool === 'browser_tabs') {
-        const {action, ...rest} = args;
-        if (action === 'list') return {tool: 'tab_list', args: rest};
-        if (action === 'new') return {tool: 'tab_new', args: rest};
-        if (action === 'close') return {tool: 'tab_close', args: rest};
-        if (action === 'select') return {tool: 'tab_select', args: rest};
-    }
-
-    if (tool === 'browser_type') {
-        const {ref, ...rest} = args;
-        return {
-            tool: 'fill',
-            args: {
-                ...rest,
-                ...(typeof ref === 'string' ? {selector: resolveRef(ref)} : {}),
-            },
-        };
-    }
-
-    if (tool === 'browser_hover' || tool === 'browser_select_option' || tool === 'browser_check' || tool === 'browser_uncheck') {
-        const {ref, ...rest} = args;
-        return {
-            tool: LEGACY_TOOL_NAME_ALIASES[tool] ?? tool,
-            args: {
-                ...rest,
-                ...(typeof ref === 'string' ? {selector: resolveRef(ref)} : {}),
-            },
-        };
-    }
-
-    if (tool === 'browser_drag') {
-        const {startRef, endRef, ...rest} = args;
-        return {
-            tool: 'drag',
-            args: {
-                ...rest,
-                ...(typeof startRef === 'string' ? {sourceSelector: resolveRef(startRef)} : {}),
-                ...(typeof endRef === 'string' ? {targetSelector: resolveRef(endRef)} : {}),
-            },
-        };
-    }
-
-    if (tool === 'browser_take_screenshot') {
-        const {ref, ...rest} = args;
-        return {
-            tool: 'screenshot',
-            args: {
-                ...rest,
-                ...(typeof ref === 'string' ? {selector: resolveRef(ref)} : {}),
-            },
-        };
-    }
-
-    if (tool === 'browser_file_upload') {
-        const rawArgs = withSelector(args, ['selector']);
-        return {
-            tool: 'upload',
-            args: rawArgs,
-        };
-    }
-
     return {
-        tool: LEGACY_TOOL_NAME_ALIASES[tool] ?? tool,
-        args: withSelector(args, ['selector']),
+        tool,
+        args: normalizeRefs(args, ['selector', 'ref', 'startRef', 'endRef']),
     };
 }
 
@@ -173,7 +65,7 @@ function normalizeToolCall(
  * Call an MCP tool on the server.
  *
  * @param ax       Axios instance
- * @param tool     MCP tool name (e.g. "navigate", "click", "aria_snapshot")
+ * @param tool     MCP tool name (e.g. "browser_navigate", "browser_click")
  * @param args     Tool arguments
  * @returns The text content from the first content block, or the full response.
  */
@@ -237,7 +129,7 @@ async function postCommandSnapshot(ax: AxiosInstance, sessionId: string): Promis
         const [pageUrl, pageTitle, snapshotContent] = await Promise.all([
             callTool(ax, 'page_url', {sessionId}),
             callTool(ax, 'page_title', {sessionId}),
-            callTool(ax, 'aria_snapshot', {sessionId}),
+            callTool(ax, 'browser_snapshot', {sessionId}),
         ]);
 
         const outName = timestampedFilename('page', 'yml');
@@ -364,6 +256,7 @@ function printHelp(commandName?: string): void {
 async function handleOpen(
     ax: AxiosInstance,
     baseUrl: string,
+    toolName: string,
     toolParams: Record<string, unknown>,
     sessionName?: string,
 ): Promise<void> {
@@ -379,7 +272,7 @@ async function handleOpen(
     writeState({sessionId, baseUrl, sessionName});
 
     if (toolParams.url && toolParams.url !== 'about:blank') {
-        const result = await callTool(ax, 'open', {
+        const result = await callTool(ax, toolName, {
             ...toolParams,
             sessionId,
         });
@@ -494,17 +387,19 @@ async function handleDeleteData(ax: AxiosInstance): Promise<void> {
  */
 async function handleSnapshot(
     ax: AxiosInstance,
+    toolName: string,
     toolParams: Record<string, unknown>,
 ): Promise<void> {
     const state = requireSession();
     const sid = state.sessionId;
+    const {filename, ...snapshotArgs} = toolParams;
     const [pageUrl, pageTitle, snapshotContent] = await Promise.all([
         callTool(ax, 'page_url', {sessionId: sid}),
         callTool(ax, 'page_title', {sessionId: sid}),
-        callTool(ax, 'aria_snapshot', {sessionId: sid}),
+        callTool(ax, toolName, {sessionId: sid, ...snapshotArgs}),
     ]);
 
-    const outName = (toolParams.filename as string) || timestampedFilename('snapshot', 'yml');
+    const outName = (filename as string) || timestampedFilename('snapshot', 'yml');
     const outPath = path.resolve(SNAPSHOT_DIR, outName);
     ensureDir(path.dirname(outPath));
     fs.writeFileSync(outPath, snapshotContent, 'utf-8');
@@ -518,12 +413,13 @@ async function handleSnapshot(
 
 async function handleScreenshot(
     ax: AxiosInstance,
+    toolName: string,
     toolParams: Record<string, unknown>,
 ): Promise<void> {
     const state = requireSession();
     const sid = state.sessionId;
     const {filename, ...captureArgs} = toolParams;
-    const base64 = await callTool(ax, 'screenshot', {
+    const base64 = await callTool(ax, toolName, {
         ...captureArgs,
         sessionId: sid,
     });
@@ -604,7 +500,7 @@ async function main(): Promise<void> {
         // Dispatch the command
         switch (command) {
             case 'open':
-                await handleOpen(ax, baseUrl, toolParams, sessionName);
+                await handleOpen(ax, baseUrl, toolName, toolParams, sessionName);
                 break;
             case 'close':
                 await handleClose(ax);
@@ -622,10 +518,10 @@ async function main(): Promise<void> {
                 await handleDeleteData(ax);
                 break;
             case 'snapshot':
-                await handleSnapshot(ax, toolParams);
+                await handleSnapshot(ax, toolName, toolParams);
                 break;
             case 'screenshot':
-                await handleScreenshot(ax, toolParams);
+                await handleScreenshot(ax, toolName, toolParams);
                 break;
             default:
                 if (!toolName) {

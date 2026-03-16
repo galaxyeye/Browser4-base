@@ -174,11 +174,11 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test goto command maps to navigate`() = runBlocking {
+    fun `test frontend navigate tool maps to navigate`() = runBlocking {
         mockTool("tab", "navigate")
 
         val request = MCPToolCallRequest(
-            tool = "navigate",
+            tool = "browser_navigate",
             arguments = mapOf("sessionId" to sessionId, "url" to "https://example.com")
         )
 
@@ -197,12 +197,12 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test click command`() = runBlocking {
+    fun `test frontend click command`() = runBlocking {
         mockTool("tab", "click")
 
         val request = MCPToolCallRequest(
-            tool = "click",
-            arguments = mapOf("sessionId" to sessionId, "selector" to "#btn")
+            tool = "browser_click",
+            arguments = mapOf("sessionId" to sessionId, "ref" to "#btn")
         )
 
         val result = controller.callTool(request, response)
@@ -219,12 +219,12 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test fill command`() = runBlocking {
+    fun `test frontend fill command`() = runBlocking {
         mockTool("tab", "fill")
 
         val request = MCPToolCallRequest(
-            tool = "fill",
-            arguments = mapOf("sessionId" to sessionId, "selector" to "#input", "text" to "text")
+            tool = "browser_type",
+            arguments = mapOf("sessionId" to sessionId, "ref" to "#input", "text" to "text")
         )
 
         val result = controller.callTool(request, response)
@@ -237,6 +237,7 @@ class MCPToolControllerTest {
 
         assertEquals("tab", toolCall.domain)
         assertEquals("fill", toolCall.method)
+        assertEquals("#input", toolCall.arguments["selector"])
         assertEquals("text", toolCall.arguments["text"])
     }
 
@@ -265,11 +266,10 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test explicit mapping switch_tab`() = runBlocking {
-        // switch_tab maps to browser.switchTab explicitly
+    fun `test frontend tab select maps to browser switchTab`() = runBlocking {
         val request = MCPToolCallRequest(
-            tool = "switch_tab",
-            arguments = mapOf("sessionId" to sessionId, "index" to 1)
+            tool = "browser_tabs",
+            arguments = mapOf("sessionId" to sessionId, "action" to "select", "index" to 1)
         )
 
         `when`(agentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult("ok"))
@@ -309,7 +309,7 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test generic commands`() = runBlocking {
+    fun `test generic canonical commands`() = runBlocking {
         val commands = listOf(
             Triple("go_back", "tab", "go_back"),
             Triple("reload", "tab", "reload"),
@@ -362,7 +362,7 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test browser4 cli input aliases`() = runBlocking {
+    fun `test frontend mouse and keyboard tool names`() = runBlocking {
         val commands = listOf(
             "browser_keydown" to "keyDown",
             "browser_keyup" to "keyUp",
@@ -397,11 +397,10 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test explicit mapping tab_new`() = runBlocking {
-        // tab_new maps to browser.newTab
+    fun `test frontend tab new maps to browser newTab`() = runBlocking {
         val request = MCPToolCallRequest(
-            tool = "tab_new",
-            arguments = mapOf("sessionId" to sessionId, "url" to "about:blank")
+            tool = "browser_tabs",
+            arguments = mapOf("sessionId" to sessionId, "action" to "new", "url" to "about:blank")
         )
 
         `when`(agentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult("ok"))
@@ -418,11 +417,10 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test explicit mapping tab_list`() = runBlocking {
-        // tab_list maps to browser.listTabs
+    fun `test frontend tab list maps to browser listTabs`() = runBlocking {
         val request = MCPToolCallRequest(
-            tool = "tab_list",
-            arguments = mapOf("sessionId" to sessionId)
+            tool = "browser_tabs",
+            arguments = mapOf("sessionId" to sessionId, "action" to "list")
         )
 
         `when`(agentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult("[]"))
@@ -439,11 +437,10 @@ class MCPToolControllerTest {
     }
 
     @Test
-    fun `test explicit mapping tab_close`() = runBlocking {
-        // tab_close maps to browser.closeTab
+    fun `test frontend tab close maps to browser closeTab`() = runBlocking {
         val request = MCPToolCallRequest(
-            tool = "tab_close",
-            arguments = mapOf("sessionId" to sessionId)
+            tool = "browser_tabs",
+            arguments = mapOf("sessionId" to sessionId, "action" to "close")
         )
 
         `when`(agentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult("ok"))
@@ -457,6 +454,47 @@ class MCPToolControllerTest {
 
         assertEquals("browser", toolCall.domain)
         assertEquals("closeTab", toolCall.method)
+    }
+
+    @Test
+    fun `test frontend dialog tool maps to dismiss variant`() = runBlocking {
+        mockTool("tab", "dialogDismiss")
+
+        val request = MCPToolCallRequest(
+            tool = "browser_handle_dialog",
+            arguments = mapOf("sessionId" to sessionId, "accept" to false)
+        )
+
+        val result = controller.callTool(request, response)
+        assertEquals(HttpStatus.OK, result.statusCode)
+
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
+        val toolCall = captor.value
+
+        assertEquals("tab", toolCall.domain)
+        assertEquals("dialogDismiss", toolCall.method)
+    }
+
+    @Test
+    fun `test frontend double click maps to dblclick`() = runBlocking {
+        mockTool("tab", "dblclick")
+
+        val request = MCPToolCallRequest(
+            tool = "browser_click",
+            arguments = mapOf("sessionId" to sessionId, "ref" to "#btn", "doubleClick" to true)
+        )
+
+        val result = controller.callTool(request, response)
+        assertEquals(HttpStatus.OK, result.statusCode)
+
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(agentToolExecutor).execute(capture(captor))
+        val toolCall = captor.value
+
+        assertEquals("tab", toolCall.domain)
+        assertEquals("dblclick", toolCall.method)
+        assertEquals("#btn", toolCall.arguments["selector"])
     }
 
     @Test

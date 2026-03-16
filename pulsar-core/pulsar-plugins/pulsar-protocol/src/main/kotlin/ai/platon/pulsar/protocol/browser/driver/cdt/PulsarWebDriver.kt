@@ -90,8 +90,6 @@ class PulsarWebDriver(
 
     val isNetworkIdle get() = networkManager.isIdle
 
-    var injectedScriptIdentifier: String? = null
-
     var fingerprintApplier: ((WebDriver) -> Unit)? = null
 
     /**

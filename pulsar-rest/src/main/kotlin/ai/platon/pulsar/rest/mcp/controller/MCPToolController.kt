@@ -72,6 +72,32 @@ class MCPToolController(
     private val sessionManager: SessionManager
 ) {
     companion object {
+        private val FRONTEND_TOOL_NAME_ALIASES: Map<String, String> = mapOf(
+            "browser_navigate" to "navigate",
+            "browser_snapshot" to "aria_snapshot",
+            "browser_navigate_back" to "go_back",
+            "browser_navigate_forward" to "go_forward",
+            "browser_reload" to "reload",
+            "browser_press_key" to "press",
+            "browser_press_sequentially" to "type",
+            "browser_keydown" to "keydown",
+            "browser_keyup" to "keyup",
+            "browser_mouse_move_xy" to "mousemove",
+            "browser_mouse_down" to "mousedown",
+            "browser_mouse_up" to "mouseup",
+            "browser_mouse_wheel" to "mousewheel",
+            "browser_drag" to "drag",
+            "browser_type" to "fill",
+            "browser_hover" to "hover",
+            "browser_select_option" to "select_option",
+            "browser_file_upload" to "upload",
+            "browser_check" to "check",
+            "browser_uncheck" to "uncheck",
+            "browser_evaluate" to "evaluate",
+            "browser_resize" to "resize",
+            "browser_take_screenshot" to "screenshot",
+        )
+
         private const val CLEAR_SESSION_STORAGE_SCRIPT = """
             (() => {
                 const result = {
@@ -97,6 +123,11 @@ class MCPToolController(
     }
 
     private val logger = LoggerFactory.getLogger(MCPToolController::class.java)
+
+    private data class NormalizedToolCall(
+        val tool: String,
+        val arguments: Map<String, Any?>
+    )
 
     // =========================================================================
     // Tool call endpoint
@@ -150,20 +181,18 @@ class MCPToolController(
             // Session management
             "open_session", "close_session", "list_sessions",
             "close_all_sessions", "kill_all_sessions", "delete_session_data",
-            // Driver tools
-            "navigate", "reload", "go_back", "go_forward",
-            "wait_for_selector", "exists", "is_visible", "focus",
-            "hover", "click", "fill", "type", "upload", "press",
-            "check", "uncheck",
-            "scroll_to", "scroll_to_top", "scroll_to_bottom", "scroll_to_middle", "scroll_by",
-            "text_content", "get_text", "delay",
-            "aria_snapshot", "page_url", "page_title",
-            "screenshot", "dblclick", "drag", "select_option",
-            "evaluate", "evaluate_value", "dialog_accept", "dialog_dismiss", "resize",
-            "keydown", "keyup",
-            "mousemove", "mousedown", "mouseup", "mousewheel",
-            // Browser tools
-            "switch_tab", "close_tab", "tab_list", "tab_new", "tab_close", "tab_select"
+            // Frontend-declared Browser4 CLI tools
+            "browser_navigate", "browser_snapshot",
+            "browser_navigate_back", "browser_navigate_forward", "browser_reload",
+            "browser_press_key", "browser_press_sequentially",
+            "browser_keydown", "browser_keyup",
+            "browser_mouse_move_xy", "browser_mouse_down", "browser_mouse_up", "browser_mouse_wheel",
+            "browser_click", "browser_drag", "browser_type", "browser_hover", "browser_select_option",
+            "browser_file_upload", "browser_check", "browser_uncheck",
+            "browser_evaluate", "browser_handle_dialog", "browser_resize",
+            "browser_take_screenshot", "browser_tabs",
+            // Internal helper tools still used by browser4-cli
+            "page_url", "page_title"
         )
 
         return ResponseEntity.ok(mapOf("tools" to tools))
@@ -244,33 +273,72 @@ class MCPToolController(
      * tool registry in [AgentToolExecutor].
      */
     private suspend fun dispatchToAgent(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
-        val sessionId = requireSessionId(request)
+        val normalizedRequest = normalizeFrontendToolCall(request.tool, request.arguments ?: emptyMap())
+        val sessionId = requireSessionId(normalizedRequest.arguments)
         val managed = sessionManager.getSession(sessionId)
             ?: return ResponseEntity.ok(errorResponse("Session not found: $sessionId"))
 
         val agent = managed.agenticSession.companionAgent as? BasicBrowserAgent
             ?: return ResponseEntity.ok(errorResponse("Session agent does not support tools"))
 
-        val toolName = request.tool
-        val args = normalizeToolArguments(toolName, request.arguments ?: emptyMap())
+        val toolName = normalizedRequest.tool
+        val args = normalizeToolArguments(toolName, normalizedRequest.arguments)
 
         // Find the matching tool in AgentToolManager
         val toolCall = resolveToolCall(toolName, args, agent)
-            ?: return ResponseEntity.ok(errorResponse("Unknown tool: $toolName"))
+            ?: return ResponseEntity.ok(errorResponse("Unknown tool: ${request.tool}"))
 
         return try {
             val result = agent.toolExtractor.execute(toolCall)
             val evaluate = result.evaluate
             val exception = evaluate.exception
             if (exception != null) {
-                ResponseEntity.ok(errorResponse("$toolName failed: ${exception.cause?.message} help: ${exception.help}"))
+                ResponseEntity.ok(errorResponse("${request.tool} failed: ${exception.cause?.message} help: ${exception.help}"))
             } else {
                 ResponseEntity.ok(textResponse(evaluate.value?.toString() ?: ""))
             }
         } catch (e: Exception) {
-            logger.error("MCP tool execution failed | tool={} | {}", toolName, e.message, e)
-            ResponseEntity.ok(errorResponse("$toolName failed: ${e.message}"))
+            logger.error("MCP tool execution failed | tool={} | normalizedTool={} | {}", request.tool, toolName, e.message, e)
+            ResponseEntity.ok(errorResponse("${request.tool} failed: ${e.message}"))
         }
+    }
+
+    private fun normalizeFrontendToolCall(toolName: String, args: Map<String, Any?>): NormalizedToolCall {
+        if (toolName == "browser_tabs") {
+            val action = args["action"]?.toString()
+            val resolvedTool = when (action) {
+                "list" -> "tab_list"
+                "new" -> "tab_new"
+                "close" -> "tab_close"
+                "select" -> "tab_select"
+                else -> toolName
+            }
+            return NormalizedToolCall(
+                tool = resolvedTool,
+                arguments = args.toMutableMap().apply { remove("action") }
+            )
+        }
+
+        if (toolName == "browser_handle_dialog") {
+            val accept = args["accept"].toBooleanValue()
+            return NormalizedToolCall(
+                tool = if (accept == false) "dialog_dismiss" else "dialog_accept",
+                arguments = args.toMutableMap().apply { remove("accept") }
+            )
+        }
+
+        if (toolName == "browser_click") {
+            val doubleClick = args["doubleClick"].toBooleanValue()
+            return NormalizedToolCall(
+                tool = if (doubleClick == true) "dblclick" else "click",
+                arguments = args.toMutableMap().apply { remove("doubleClick") }
+            )
+        }
+
+        return NormalizedToolCall(
+            tool = FRONTEND_TOOL_NAME_ALIASES[toolName] ?: toolName,
+            arguments = args
+        )
     }
 
     private fun resolveToolCall(toolName: String, args: Map<String, Any?>, agent: BasicBrowserAgent): ToolCall? {
@@ -284,12 +352,12 @@ class MCPToolController(
             "tab_new" -> return ToolCall("browser", "newTab", args1)
             "tab_list" -> return ToolCall("browser", "listTabs", args1)
             "tab_close", "close_tab" -> return ToolCall("browser", "closeTab", args1)
-            "keydown", "browser_keydown" -> return ToolCall("tab", "keyDown", args1)
-            "keyup", "browser_keyup" -> return ToolCall("tab", "keyUp", args1)
-            "mousemove", "browser_mouse_move_xy" -> return ToolCall("tab", "mouseMove", args1)
-            "mousedown", "browser_mouse_down" -> return ToolCall("tab", "mouseDown", args1)
-            "mouseup", "browser_mouse_up" -> return ToolCall("tab", "mouseUp", args1)
-            "mousewheel", "browser_mouse_wheel" -> return ToolCall("tab", "mouseWheel", args1)
+            "keydown" -> return ToolCall("tab", "keyDown", args1)
+            "keyup" -> return ToolCall("tab", "keyUp", args1)
+            "mousemove" -> return ToolCall("tab", "mouseMove", args1)
+            "mousedown" -> return ToolCall("tab", "mouseDown", args1)
+            "mouseup" -> return ToolCall("tab", "mouseUp", args1)
+            "mousewheel" -> return ToolCall("tab", "mouseWheel", args1)
         }
 
         // 2. Generic mapping
@@ -322,6 +390,26 @@ class MCPToolController(
         val normalized = args.mapKeys { (key, _) -> snakeToCamel(key) }.toMutableMap()
         normalized.remove("sessionId")
 
+        val ref = normalized.remove("ref")
+        if (!normalized.containsKey("selector") && ref != null) {
+            normalized["selector"] = ref
+        }
+
+        val startRef = normalized.remove("startRef")
+        if (!normalized.containsKey("sourceSelector") && startRef != null) {
+            normalized["sourceSelector"] = startRef
+        }
+
+        val endRef = normalized.remove("endRef")
+        if (!normalized.containsKey("targetSelector") && endRef != null) {
+            normalized["targetSelector"] = endRef
+        }
+
+        val modifiers = normalized.remove("modifiers")
+        if (!normalized.containsKey("modifier") && modifiers is List<*> && modifiers.isNotEmpty()) {
+            normalized["modifier"] = modifiers.first()?.toString()
+        }
+
         when (toolName) {
             "switch_tab", "tab_select", "close_tab", "tab_close" -> {
                 val legacyTabId = normalized.remove("index") ?: normalized.remove("id")
@@ -339,6 +427,12 @@ class MCPToolController(
         }
 
         return normalized
+    }
+
+    private fun Any?.toBooleanValue(): Boolean? = when (this) {
+        is Boolean -> this
+        is String -> this.toBooleanStrictOrNull()
+        else -> null
     }
 
     private fun snakeToCamel(key: String): String {
@@ -363,6 +457,11 @@ class MCPToolController(
 
     private fun requireSessionId(request: MCPToolCallRequest): String {
         return request.arguments?.get("sessionId")?.toString()
+            ?: throw IllegalArgumentException("Missing required parameter: sessionId")
+    }
+
+    private fun requireSessionId(arguments: Map<String, Any?>): String {
+        return arguments["sessionId"]?.toString()
             ?: throw IllegalArgumentException("Missing required parameter: sessionId")
     }
 

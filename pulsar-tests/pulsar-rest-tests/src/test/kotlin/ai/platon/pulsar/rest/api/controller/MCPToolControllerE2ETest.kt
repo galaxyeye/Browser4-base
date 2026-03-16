@@ -29,15 +29,19 @@ import kotlin.test.assertTrue
  * `sdks/browser4-cli/src/cli.ts`.
  *
  * CLI command → MCP tool mapping:
- * - Core: open→open_session, goto→navigate, click, dblclick, fill, drag, hover,
- *         select→select_option, upload, check, uncheck, type, snapshot→aria_snapshot,
- *         eval→evaluate, dialog-accept→dialog_accept, dialog-dismiss→dialog_dismiss,
- *         resize, close→close_session
- * - Navigation: go-back→go_back, go-forward→go_forward, reload
- * - Keyboard: press, keydown, keyup
- * - Mouse: mousemove, mousedown, mouseup, mousewheel
- * - Save as: screenshot
- * - Tabs: tab-list→tab_list, tab-new→tab_new, tab-close→tab_close, tab-select→tab_select
+ * - Core: open→open_session, goto→browser_navigate, click/dblclick→browser_click,
+ *         fill→browser_type, drag→browser_drag, hover→browser_hover,
+ *         select→browser_select_option, upload→browser_file_upload,
+ *         check→browser_check, uncheck→browser_uncheck, type→browser_press_sequentially,
+ *         snapshot→browser_snapshot, eval→browser_evaluate,
+ *         dialog-accept/dialog-dismiss→browser_handle_dialog, resize→browser_resize,
+ *         close→close_session
+ * - Navigation: go-back→browser_navigate_back, go-forward→browser_navigate_forward, reload→browser_reload
+ * - Keyboard: press→browser_press_key, keydown→browser_keydown, keyup→browser_keyup
+ * - Mouse: mousemove→browser_mouse_move_xy, mousedown→browser_mouse_down,
+ *         mouseup→browser_mouse_up, mousewheel→browser_mouse_wheel
+ * - Save as: screenshot→browser_take_screenshot
+ * - Tabs: tab-list/tab-new/tab-close/tab-select→browser_tabs
  * - Session management: list→list_sessions, close-all→close_all_sessions,
  *                       kill-all→kill_all_sessions, delete-data→delete_session_data
  */
@@ -58,43 +62,43 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     private val cliCommandToMcpTool = mapOf(
         // Core
         "open" to "open_session",
-        "goto" to "navigate",
-        "click" to "click",
-        "dblclick" to "dblclick",
-        "fill" to "fill",
-        "drag" to "drag",
-        "hover" to "hover",
-        "select" to "select_option",
-        "upload" to "upload",
-        "check" to "check",
-        "uncheck" to "uncheck",
-        "type" to "type",
-        "snapshot" to "aria_snapshot",
-        "eval" to "evaluate",
-        "dialog-accept" to "dialog_accept",
-        "dialog-dismiss" to "dialog_dismiss",
-        "resize" to "resize",
+        "goto" to "browser_navigate",
+        "click" to "browser_click",
+        "dblclick" to "browser_click",
+        "fill" to "browser_type",
+        "drag" to "browser_drag",
+        "hover" to "browser_hover",
+        "select" to "browser_select_option",
+        "upload" to "browser_file_upload",
+        "check" to "browser_check",
+        "uncheck" to "browser_uncheck",
+        "type" to "browser_press_sequentially",
+        "snapshot" to "browser_snapshot",
+        "eval" to "browser_evaluate",
+        "dialog-accept" to "browser_handle_dialog",
+        "dialog-dismiss" to "browser_handle_dialog",
+        "resize" to "browser_resize",
         "close" to "close_session",
         // Navigation
-        "go-back" to "go_back",
-        "go-forward" to "go_forward",
-        "reload" to "reload",
+        "go-back" to "browser_navigate_back",
+        "go-forward" to "browser_navigate_forward",
+        "reload" to "browser_reload",
         // Keyboard
-        "press" to "press",
-        "keydown" to "keydown",
-        "keyup" to "keyup",
+        "press" to "browser_press_key",
+        "keydown" to "browser_keydown",
+        "keyup" to "browser_keyup",
         // Mouse
-        "mousemove" to "mousemove",
-        "mousedown" to "mousedown",
-        "mouseup" to "mouseup",
-        "mousewheel" to "mousewheel",
+        "mousemove" to "browser_mouse_move_xy",
+        "mousedown" to "browser_mouse_down",
+        "mouseup" to "browser_mouse_up",
+        "mousewheel" to "browser_mouse_wheel",
         // Save as
-        "screenshot" to "screenshot",
+        "screenshot" to "browser_take_screenshot",
         // Tabs
-        "tab-list" to "tab_list",
-        "tab-new" to "tab_new",
-        "tab-close" to "tab_close",
-        "tab-select" to "tab_select",
+        "tab-list" to "browser_tabs",
+        "tab-new" to "browser_tabs",
+        "tab-close" to "browser_tabs",
+        "tab-select" to "browser_tabs",
         // Session management
         "list" to "list_sessions",
         "close-all" to "close_all_sessions",
@@ -179,7 +183,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     /** Shorthand: open a session, navigate to the given URL, and return the sessionId. */
     private fun openAndNavigate(url: String = MOCK_PRODUCT_DETAIL_URL): String {
         val sid = openSession()
-        val navResponse = callTool("navigate", mapOf("sessionId" to sid, "url" to url))
+        val navResponse = callTool("browser_navigate", mapOf("sessionId" to sid, "url" to url))
         assertNotError(navResponse)
         return sid
     }
@@ -204,6 +208,16 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
         printlnPro(this, tools)
         val missingTools = cliCommandToMcpTool.values.filter { it !in tools }
         assertTrue(missingTools.isEmpty(), "Missing MCP tools for cli commands: $missingTools")
+    }
+
+    @Test
+    @DisplayName("POST /mcp/call-tool accepts frontend-declared Browser4 CLI tool names")
+    fun testFrontendToolNamesAreRecognized() {
+        val sid = openSession()
+
+        assertToolRecognized("browser_navigate", mapOf("sessionId" to sid, "url" to MOCK_PRODUCT_DETAIL_URL))
+        assertToolRecognized("browser_snapshot", mapOf("sessionId" to sid))
+        assertToolRecognized("browser_tabs", mapOf("sessionId" to sid, "action" to "list"))
     }
 
     // =========================================================================

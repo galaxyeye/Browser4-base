@@ -1,3 +1,22 @@
+Task: unify-frontend-backend-tool-names
+Description: Task from unify-frontend-backend-tool-names.md
+Original File: unify-frontend-backend-tool-names.md
+Started: 2026-03-16 03:48:02
+Prompt:
+Finish the task described in file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\2working\unify-frontend-backend-tool-names.md.
+Do not move **this** task file, just execute the task based on its content, the system will move it after you finished the task.
+
+*** MEMORY UPDATE INSTRUCTIONS ***
+You have a memory system to help you learn and improve.
+Your memory files are located in: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs
+
+After completing the task, you MUST update your daily memory file: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\16\MEMORY.20260316.md
+1. Append a summary of this task, its outcome, and any lessons learned to D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\16\MEMORY.20260316.md.
+2. Check if the Monthly Memory file (D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\MEMORY.202603.md) has been updated with the previous day's summary. If not, summarize all daily memories from this month (excluding today) into the Monthly Memory.
+3. Ensure you do not overwrite existing content, always append.
+
+
+[Monthly Memory (2026-03)]:
 # MEMORY.202603.md
 ## Monthly Memory - 2026-03
 
@@ -88,10 +107,9 @@
 - Improved coworker/tooling hygiene with append-only memory updates, hidden-file queue filtering, wrapper/test script cleanup, and explicit monthly-memory synchronization checks so daily learnings continue to roll up cleanly.
 - Reinforced recurring execution hygiene: prefer tracked identifiers over brittle scans for process/session cleanup, avoid auto-start behavior in shutdown paths, keep generated/spec artifacts aligned with code, and use focused module-local builds/tests when the broader workspace has unrelated breakage.
 
-### Daily Rollup Update (2026-03-01 to 2026-03-15)
-- Aligned Browser4 CLI and REST MCP naming by making /mcp/call-tool accept the frontend-declared rowser_* tool names directly, moving click/dialog/tab dispatch normalization into MCPToolController, and updating /mcp/tools plus focused controller/E2E coverage to reflect the frontend contract.
-- Continued improving Browser4 CLI/REST execution hygiene by keeping the CLI focused on value-level ref normalization while the backend owns contract compatibility, and by validating the change with both targeted Jest coverage and focused REST controller/E2E Maven runs.
-- Reinforced recurring execution hygiene: when pulsar-tests E2Es depend on updated local module artifacts, install the changed module first; keep monthly memory rollups explicitly synchronized with the latest available pre-today daily memory.
 
-### Daily Rollup Correction (2026-03-15)
-- Correction to the previous appended line: the aligned frontend contract uses the browser_* tool-name family (for example: browser_navigate, browser_tabs, browser_handle_dialog, browser_click); the earlier malformed text was a PowerShell formatting artifact.
+---
+Copilot Execution Output:
+
+Copilot Exit Code: 0
+Copilot Log: D:\workspace\Browser4\Browser4-4.6\coworker\tasks\300logs\2026\03\16\034737-unify-frontend-backend-tool-names.copilot.log
