@@ -211,16 +211,6 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun testClickNthAnchor() = runEnhancedWebDriverTest(mockAmazonProductUrl, browser) { driver ->
-        driver.clickNthAnchor(100, "body")
-//        logPrintln(href)
-
-        driver.waitForNavigation()
-        driver.waitForSelector("body")
-        driver.scrollDown(5)
-    }
-
-    @Test
     fun testMouseMove() = runEnhancedWebDriverTest(mockAmazonProductUrl, browser) { driver ->
         repeat(10) { i ->
             val x = 100.0 + 2 * i

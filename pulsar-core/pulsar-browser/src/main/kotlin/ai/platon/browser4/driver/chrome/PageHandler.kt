@@ -4,6 +4,7 @@ import ai.platon.browser4.driver.chrome.dom.CDPSnapshotService
 import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
+import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.util.CDPReturnError
@@ -402,7 +403,7 @@ class PageHandler(
 
   return null;
 })('%s')
-            """.trimIndent(), Strings.escapeJsString(selector)
+            """.trimIndent(), normalizeCSSSelector(selector)
         )
 
         val result = jsHandler.evaluateValue(expression)
@@ -460,7 +461,7 @@ class PageHandler(
                 node, e.message, selector
             )
             // Fallback to legacy helper (CSS-only); safe stringify to avoid quoting issues
-            val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
+            val safeSelector = normalizeCSSSelector(selector)
             jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             node
         } catch (e: Exception) {
@@ -501,11 +502,26 @@ class PageHandler(
         } catch (e: ChromeRPCException) {
             // As a last resort, attempt legacy JS utility when a CSS selector is available
             if (!selector.isNullOrBlank()) {
-                val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
+                val safeSelector = normalizeCSSSelector(selector)
                 jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             }
             nodeRef
         }
+    }
+
+    fun convertSelectorIfNecessary(selector: String): String {
+        val nodeId = if (selector.startsWith("e")) selector.substring(1).toIntOrNull() else null
+        if (nodeId != null) {
+            val ref = ElementRefCriteria(backendNodeId = nodeId)
+            return snapshotService.findElement(ref)?.cssSelector() ?: selector
+        }
+        return selector
+    }
+
+    fun normalizeCSSSelector(selector: String): String {
+        val cssSelector = convertSelectorIfNecessary(selector)
+        val safeSelector = Strings.escapeJsString(cssSelector)
+        return safeSelector
     }
 
     /**

@@ -478,13 +478,6 @@ abstract class AbstractWebDriver(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun clickNthAnchor(n: Int, rootSelector: String): String? {
-        val safeRootSelector = Strings.escapeJsString(rootSelector)
-        val result = evaluate("__pulsar_utils__.clickNthAnchor($n, '$safeRootSelector')")
-        return result?.toString()
-    }
-
-    @Throws(WebDriverException::class)
     override suspend fun outerHTML() = outerHTML(":root")
 
     @Throws(WebDriverException::class)

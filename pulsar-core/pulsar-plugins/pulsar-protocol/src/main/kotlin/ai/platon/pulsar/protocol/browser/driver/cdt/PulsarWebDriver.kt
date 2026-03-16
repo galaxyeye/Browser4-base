@@ -1299,16 +1299,20 @@ function() {
 
     private suspend fun waitForScrollSettled(selector: String, timeout: Duration = Duration.ofMillis(5_000)) {
         val safeSelector = normalizeCSSSelector(selector)
+        val stateKey = "__ps_scroll_${Random.nextLong(Long.MAX_VALUE).toString(16)}"
         val expression = """
 (() => {
   const sel = "$safeSelector";
+  const key = "$stateKey";
   const el = document.querySelector(sel);
   if (!el) return true;
   const r = el.getBoundingClientRect();
   const s = document.scrollingElement || document.documentElement;
-  const isFirst = (typeof el.__pulsar_scroll_prev === 'undefined');
-  const prev = el.__pulsar_scroll_prev || {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
-  el.__pulsar_scroll_prev = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  const map = window[key] || (window[key] = new WeakMap());
+  const curr = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  const isFirst = !map.has(el);
+  const prev = map.get(el) || curr;
+  map.set(el, curr);
   return !isFirst &&
          Math.abs(prev.t - r.top) < 1 &&
          Math.abs(prev.l - r.left) < 1 &&
@@ -1317,20 +1321,28 @@ function() {
 })()
 """
 
-        waitUntil(200, timeout) {
-            val settled = evaluateDetail(expression)
-            settled?.value as? Boolean ?: false
-        }
-
-        evaluateDetail(
-            """
+        try {
+            waitUntil(200, timeout) {
+                val settled = evaluateDetail(expression)
+                settled?.value as? Boolean ?: false
+            }
+        } finally {
+            runCatching {
+                evaluateDetail(
+                    """
 (() => {
   const sel = "$safeSelector";
+  const key = "$stateKey";
   const el = document.querySelector(sel);
-  if (!el) return true;
-  delete el.__pulsar_scroll_prev;
+  if (el && window[key]) {
+    window[key].delete(el);
+  }
+  delete window[key];
+  return true;
 })()
                     """
-        )
+                )
+            }
+        }
     }
 }

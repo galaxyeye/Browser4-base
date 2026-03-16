@@ -222,19 +222,6 @@ class BrowserTabToolExecutor: AbstractToolExecutor() {
                     else -> throw IllegalArgumentException("clickMatches requires 'selector','attrName','pattern' (optional 'count')")
                 }
             }
-            "clickNthAnchor" -> {
-                when {
-                    args.containsKey("n") && args.containsKey("rootSelector") -> {
-                        validateArgs(args, allowed("n", "rootSelector"), setOf("n", "rootSelector"), functionName)
-                        driver.clickNthAnchor(n = paramInt(args, "n", functionName)!!, rootSelector = paramString(args, "rootSelector", functionName)!!)
-                    }
-                    args.containsKey("n") -> {
-                        validateArgs(args, allowed("n"), setOf("n"), functionName)
-                        driver.clickNthAnchor(n = paramInt(args, "n", functionName)!!)
-                    }
-                    else -> throw IllegalArgumentException("clickNthAnchor requires 'n' (optional 'rootSelector')")
-                }
-            }
             "check" -> { validateArgs(args, allowed("selector"), setOf("selector"), functionName); driver.check(paramString(args, "selector", functionName)!!) }
             "uncheck" -> { validateArgs(args, allowed("selector"), setOf("selector"), functionName); driver.uncheck(paramString(args, "selector", functionName)!!) }
             "scrollTo" -> { validateArgs(args, allowed("selector"), setOf("selector"), functionName); driver.scrollTo(paramString(args, "selector", functionName)!!) }
