@@ -160,7 +160,7 @@ class MCPToolController(
                 "kill_all_sessions" -> handleKillAllSessions()
                 "delete_session_data" -> handleDeleteSessionData(request)
                 // All other tools are dispatched to the session's agent
-                else -> dispatchToAgent(request)
+                else -> dispatchToAgentToolExecutor(request)
             }
         } catch (e: Exception) {
             logger.error("MCP tool call failed | tool={} | {}", request.tool, e.message, e)
@@ -272,7 +272,7 @@ class MCPToolController(
      * This replaces the manual tool implementation by delegating to the central
      * tool registry in [AgentToolExecutor].
      */
-    private suspend fun dispatchToAgent(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
+    private suspend fun dispatchToAgentToolExecutor(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
         val normalizedRequest = normalizeFrontendToolCall(request.tool, request.arguments ?: emptyMap())
         val sessionId = requireSessionId(normalizedRequest.arguments)
         val managed = sessionManager.getSession(sessionId)

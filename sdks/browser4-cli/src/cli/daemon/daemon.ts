@@ -26,14 +26,9 @@ import path from 'path';
 import * as os from 'os';
 import {spawn} from 'child_process';
 import * as https from 'https';
-
-import {commands} from './commands';
-import {parseCommand} from './command';
 import axios, {AxiosInstance} from "axios";
 import {readState} from "../../state";
 import {registerManagedServerProcess, removeManagedServerProcess} from './managedProcesses';
-
-import type * as mcp from './../../mcp/exports';
 
 function makeAxios(baseUrl: string): AxiosInstance {
     return axios.create({
@@ -189,22 +184,4 @@ async function startServer(jarPath: string, baseUrl: string, port: number): Prom
 
     removeManagedServerProcess(child.pid);
     throw new Error(`Server failed to start within ${timeout}ms`);
-}
-
-function formatResult(result: mcp.CallToolResult) {
-    // Formats the MCP tool execution result for the client response.
-    const isError = result.isError;
-    const text = result.content[0].type === 'text' ? result.content[0].text : undefined;
-    return {isError, text};
-}
-
-function parseCliCommand(args: Record<string, string> & { _: string[] }): {
-    toolName: string,
-    toolParams: NonNullable<mcp.CallToolRequest['params']['arguments']>
-} {
-    // Parses CLI arguments to identify the command and its parameters.
-    const command = commands[args._[0]];
-    if (!command)
-        throw new Error('Command is required');
-    return parseCommand(command, args);
 }
