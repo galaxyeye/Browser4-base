@@ -678,6 +678,15 @@ interface WebDriver : Closeable {
     suspend fun waitForPage(url: String, timeout: Duration): WebDriver?
 
     /**
+     * Returns when the pageFunction returns a truthy value. @mcp
+     *
+     * @param pageFunction A JavaScript function to be evaluated in the page context.
+     * */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver?
+
+    /**
      * Wait until the predicate returns true. @mcp
      *
      * ```kotlin
@@ -914,7 +923,7 @@ interface WebDriver : Closeable {
     suspend fun keyUp(key: String)
 
     /**
-     * This method focuses an element with [selector] and clicks it. @mcp
+     * Focus on an element with [selector] and click it. @mcp
      *
      * If there's no element matching `selector`, nothing to do.
      *

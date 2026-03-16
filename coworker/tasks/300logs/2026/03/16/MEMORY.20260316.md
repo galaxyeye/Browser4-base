@@ -1,39 +1,66 @@
+● Memory stored: driver implementation
+  └ When updating WebDriver interface, update both PulsarWebDriver (CDP) and Playwri…
+
+● Memory stored: selector conversion
+  └ Methods injecting raw JS (like waitForScrollSettled) must manually convert custo…
+
+● Memory stored: cli testing
+  └ Use `npm run test:e2e` in sdks/browser4-cli to run live E2E tests against the re…
+
+● Memory stored: logging
+  └ Always explicitly set <charset>UTF-8</charset> in Logback file appenders to avoi…
+
 # Daily Memory - 2026-03-16
 
 ## 1. Unified Tool Naming (Frontend/Backend)
-**Context:** The CLI wrapper previously aliased tool names.
-**Change:** Removed aliasing from `sdks/browser4-cli`. Updated `pulsar-rest` `MCPToolController` to directly accept frontend-declared `browser_*` names (e.g., `browser_navigate`, `browser_click`).
-**Validation:**
-- CLI: `npm test` (program/commands) passed.
-- Backend: `MCPToolControllerTest` passed.
-- E2E: Focused `pulsar-rest-tests` passed after installing the modified `pulsar-rest` module locally.
-**Key Insight:** API compatibility layers belong at the backend boundary, not in CLI wrappers.
-**Testing Strategy:** For cross-module E2E, `mvn install` the changed module locally before running `pulsar-tests` with `-DrunE2ETests=true`.
+**Context:** CLI wrapper previously aliased tool names.
+**Change:** Removed aliasing from `sdks/browser4-cli`. Updated `pulsar-rest` `MCPToolController` to accept `browser_*` names directly.
+**Validation:** CLI `npm test`, Backend `MCPToolControllerTest`, and `pulsar-rest-tests` passed.
+**Key Insight:** API compatibility layers belong at the backend boundary.
+**Testing Strategy:** `mvn install` changed modules locally before running `pulsar-tests` with `-DrunE2ETests=true`.
 
 ## 2. Log Encoding Fix
-**Context:** Windows default charset caused garbled localized logs (e.g., "使用 Web UI").
-**Change:** Explicitly added `<charset>UTF-8</charset>` to all file appenders in `pulsar-core` logback configurations (`logback.xml`, `dev`, `prod`).
-**Validation:** Verified `pulsar.log` output correctly encodes UTF-8 even when JVM runs with `-Dfile.encoding=GBK`.
-**Key Insight:** Never rely on JVM default charset for file logging; explicit configuration is required for robust localization.
+**Context:** Windows default charset caused garbled localized logs.
+**Change:** Added `<charset>UTF-8</charset>` to all file appenders in `pulsar-core` logback configs.
+**Validation:** Verified `pulsar.log` encodes UTF-8 correctly despite JVM defaults.
+**Key Insight:** Explicit charset configuration is required for robust localization; never rely on JVM defaults.
 
 ## 3. Real CLI E2E Coverage
-**Context:** Unit tests missed contract mismatches between CLI and Backend.
-**Change:** Added `npm run test:e2e` in `sdks/browser4-cli`. This runs a live `Browser4.jar`, isolates state via `BROWSER4_CLI_STATE_DIR`, and verifies all supported commands. Fixed `eval`, `upload`, `type`, and `press` contracts.
-**Validation:** `npm run test:e2e` passed. Guard ensures tests stay aligned with `supportedCommandsArray`.
-**Key Insight:**
-- Live E2E tests are essential for detecting argument shape and identifier mismatches.
-- Explicitly cover known backend gaps (e.g., aliases like `console`/`pdf`) to maintain visibility on feature parity.
-
-
+**Context:** Unit tests missed CLI/Backend contract mismatches.
+**Change:** Added `npm run test:e2e` in `sdks/browser4-cli` running live `Browser4.jar`. Fixed `eval`, `upload`, `type`, `press` contracts.
+**Validation:** `npm run test:e2e` passed; guard ensures alignment with `supportedCommandsArray`.
+**Key Insight:** Live E2E tests are essential for detecting argument shape/identifier mismatches and covering known gaps (e.g., aliases).
 
 ## 4. DOMState Aria Snapshot Fallback
-**Context:** `DOMStateBuilderTest` failures because `DOMState.ariaSnapshot` returned an empty string when `optimizedDOMTree` was null (default constructor behavior used in tests).
-**Change:** Updated `DOMState.ariaSnapshot` in `DomModels.kt` to fallback to `serializableTree.toNanoTreeUnfiltered().ariaSnapshot` when `optimizedDOMTree` is null.
+**Context:** `DOMStateBuilderTest` failed; `ariaSnapshot` was empty when `optimizedDOMTree` was null.
+**Change:** Updated `DOMState.ariaSnapshot` in `DomModels.kt` to fallback to `serializableTree.toNanoTreeUnfiltered().ariaSnapshot` if needed.
 **Validation:** `DOMStateBuilderTest` passed (16 tests).
-**Key Insight:** `DOMState` is sometimes constructed directly from `SerializableDOMTreeNode` in tests (and potentially elsewhere) where `OptimizedDOMTree` is not available. The fallback ensures `ariaSnapshot` still works via nano-tree conversion.
+**Key Insight:** `DOMState` requires fallback logic for scenarios (like tests) where `OptimizedDOMTree` is unavailable.
 
 ## 5. PulsarWebDriver Selector Conversion
-**Context:** `PulsarWebDriver.waitForScrollSettled` failed with `e123` format selectors because `document.querySelector` doesn't support them.
-**Change:** Implemented `convertSelectorIfNecessary` in `PulsarWebDriver.kt` to convert `e123` format to CSS selector using `SnapshotService`. Applied it in `waitForScrollSettled`.
+**Context:** `waitForScrollSettled` failed with `e123` selectors as `document.querySelector` rejects them.
+**Change:** Implemented `convertSelectorIfNecessary` in `PulsarWebDriver.kt` to resolve `e123` to CSS via `SnapshotService`.
 **Validation:** Compiled `pulsar-protocol`.
-**Key Insight:** Methods injecting raw JS with selectors must handle `e123` -> CSS conversion manually, as they bypass `PageHandler`'s resolution logic.
+**Key Insight:** Methods injecting raw JS must manually handle `e123` -> CSS conversion, bypassing `PageHandler` logic.
+
+## 6. WebDriver waitForFunction Implementation
+**Context:** `WebDriver.waitForFunction` was defined in the interface but missing in `PulsarWebDriver` and `PlaywrightDriver`.
+**Change:**
+- Implemented `waitForFunction` in `PulsarWebDriver.kt` using `evaluate` to check for truthy values.
+- Implemented `waitForFunction` in `PlaywrightDriver.kt` using `page.waitForFunction`.
+- Removed `override` from `clickNthAnchor` in `PlaywrightDriver.kt` as it's no longer in the interface.
+- Replaced unresolved `normalizeCSSSelector` with `page.convertSelectorIfNecessary` in `PulsarWebDriver.waitForScrollSettled`.
+**Validation:** Compiled `pulsar-protocol` and `pulsar-protocol-playwright` successfully.
+**Key Insight:** When modifying `WebDriver` interface or implementations, ensure both `PulsarWebDriver` (Chrome CDP) and `PlaywrightDriver` are updated to maintain build integrity, even if Playwright is test-only.
+
+## 7. WebDriver mouseDown/mouseUp Support
+**Context:** User requested `mouseDown` and `mouseUp` support in `WebDriver` interface and implementations.
+**Change:**
+- Added `mouseDown` and `mouseUp` to `WebDriver` interface.
+- Implemented `mouseDown` and `mouseUp` in `PulsarWebDriver` using `EmulationHandler`.
+- Added `down` and `up` methods to `EmulationHandler` class, utilizing `Mouse.down` and `Mouse.up` with CDP modifiers support.
+- Implemented `mouseDown` and `mouseUp` in `PlaywrightDriver` using `page.mouse().down/up`.
+**Validation:** Compiled `pulsar-core`, `pulsar-protocol`, and `pulsar-protocol-playwright` successfully.
+**Key Insight:** Drag-and-drop operations require explicit `mouseDown`/`mouseUp` control. Implementing these in `EmulationHandler` allows reuse of existing CDP mouse handling logic.
+
+

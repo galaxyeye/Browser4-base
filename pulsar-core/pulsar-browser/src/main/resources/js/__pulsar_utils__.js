@@ -1570,7 +1570,7 @@ __pulsar_utils__.getFullPageMetrics = function() {
 };
 
 /**
- * Create an info box in pure javascript to show information for the element with the selector.
+ * Create an info box in pure JavaScript to show information for the element with the selector.
  * The info box appears in the top right corner of the element.
  * The information includes the tag name, id, class, and the text content.
  *

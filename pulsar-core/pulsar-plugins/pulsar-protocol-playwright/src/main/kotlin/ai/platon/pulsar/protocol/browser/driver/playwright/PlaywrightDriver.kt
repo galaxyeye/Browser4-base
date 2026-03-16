@@ -335,6 +335,18 @@ class PlaywrightDriver(
         return this
     }
 
+    override suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver? {
+        try {
+            rpc.invokeDeferred("waitForFunction") {
+                page.waitForFunction(pageFunction, null, Page.WaitForFunctionOptions().setTimeout(timeout.toMillis().toDouble()))
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "waitForFunction", "pageFunction: $pageFunction, timeout: $timeout")
+            return null
+        }
+        return this
+    }
+
     /**
      * Checks if an element exists in the DOM.
      * @param selector The CSS selector to check
@@ -565,23 +577,6 @@ class PlaywrightDriver(
                 "clickMatches",
                 "selector: $selector, attrName: $attrName, pattern: $pattern, count: $count"
             )
-        }
-    }
-
-    override suspend fun clickNthAnchor(n: Int, rootSelector: String): String? {
-        return try {
-            rpc.invokeDeferred("clickNthAnchor") {
-                val anchors = page.querySelectorAll("$rootSelector a")
-                if (n < anchors.size) {
-                    anchors[n].click()
-                    anchors[n].getAttribute("href")
-                } else {
-                    null
-                }
-            }
-        } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "clickNthAnchor", "n: $n, rootSelector: $rootSelector")
-            null
         }
     }
 

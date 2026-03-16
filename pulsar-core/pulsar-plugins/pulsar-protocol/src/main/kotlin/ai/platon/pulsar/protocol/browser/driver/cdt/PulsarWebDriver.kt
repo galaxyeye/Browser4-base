@@ -1,9 +1,8 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
-import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
@@ -179,12 +178,6 @@ class PulsarWebDriver(
         }
     }
 
-    // Unittest failed
-//    override suspend fun selectAttributeAll(selector: String, attrName: String, start: Int, limit: Int): List<String> {
-//        val name = "selectAttributeAll"
-//        return driverHelper.invokeOnPage(name) { page.getAttributeAll(selector, attrName, start, limit) } ?: listOf()
-//    }
-
     @Throws(WebDriverException::class)
     override suspend fun evaluate(expression: String): Any? {
         return driverHelper.invokeOnPage("evaluate") { jsHandler.evaluate(expression) }
@@ -228,10 +221,6 @@ class PulsarWebDriver(
     }
 
     override suspend fun currentUrl(): String {
-        // TODO: find out why mainFrameAPI?.url fails because of timing issue when run agent.observe() via SDK, a possible reason is about multithreading problem
-//        val mainFrameUrl = runCatching { driverHelper.invokeOnPage("currentUrl") { mainFrameAPI?.url } }
-//            .onFailure { logger.warn("Failed to retrieve the mainFrameUrl", it) }
-//            .getOrNull()
         val mainFrameUrl = evaluate("document.URL", navigateUrl)
         navigateUrl = mainFrameUrl ?: navigateUrl
         return navigateUrl ?: userTypedUrl ?: ""
@@ -280,6 +269,15 @@ class PulsarWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun waitForPage(url: String, timeout: Duration): WebDriver? {
         return waitFor("waitForPage", timeout) { browser.findDriver(url) }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver? {
+        return waitFor("waitForFunction", timeout) {
+            val res = evaluate(pageFunction)
+            val isTruthy = res != null && res != false && res != "" && res != 0 && res != 0.0
+            if (isTruthy) this else null
+        }
     }
 
     @Throws(WebDriverException::class)
@@ -340,6 +338,9 @@ class PulsarWebDriver(
         driverHelper.invokeOnPage("mouseMove") { mouse?.moveTo(x, y) }
     }
 
+    /**
+     * TODO: use CDP to implement mouseDown: CDP → Browser Input System → Hit Testing → DOM → JS Event
+     * */
     @Throws(WebDriverException::class)
     override suspend fun mouseDown(button: String, clickCount: Int) {
         if (button == "left") {
@@ -366,6 +367,9 @@ class PulsarWebDriver(
         driverHelper.invokeOnPage("mouseDown") { evaluate(script) }
     }
 
+    /**
+     * TODO: use CDP to implement mouseUp: CDP → Browser Input System → Hit Testing → DOM → JS Event
+     * */
     @Throws(WebDriverException::class)
     override suspend fun mouseUp(button: String, clickCount: Int) {
         if (button == "left") {
@@ -1298,7 +1302,7 @@ function() {
     }
 
     private suspend fun waitForScrollSettled(selector: String, timeout: Duration = Duration.ofMillis(5_000)) {
-        val safeSelector = normalizeCSSSelector(selector)
+        val safeSelector = page.convertSelectorIfNecessary(selector)
         val stateKey = "__ps_scroll_${Random.nextLong(Long.MAX_VALUE).toString(16)}"
         val expression = """
 (() => {
