@@ -1,6 +1,7 @@
 package ai.platon.pulsar.rest.mcp.controller
 
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
+import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.rest.mcp.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -14,6 +15,9 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
 
 // ---------------------------------------------------------------------------
 // DTOs
@@ -284,7 +288,7 @@ class MCPToolController(
         val args = normalizeToolArguments(toolName, normalizedRequest.arguments)
 
         // Find the matching tool in AgentToolManager
-        val toolCall = agent.toolExtractor.resolveToolCall(toolName, args)
+        val toolCall = resolveMcpToolCall(toolName, args, agent)
             ?: return ResponseEntity.ok(errorResponse("Unknown tool: ${request.tool}"))
 
         return try {
@@ -299,6 +303,54 @@ class MCPToolController(
         } catch (e: Exception) {
             logger.error("MCP tool execution failed | tool={} | normalizedTool={} | {}", request.tool, toolName, e.message, e)
             ResponseEntity.ok(errorResponse("${request.tool} failed: ${e.message}"))
+        }
+    }
+
+    /**
+     * Resolve a tool call from a tool name and arguments, using explicit mappings for legacy/special names
+     * */
+    fun resolveMcpToolCall(toolName: String, args: Map<String, Any?>, agent: BasicBrowserAgent): ToolCall? {
+        val args1 = args.toMutableMap()
+
+        // 1. Explicit mapping for legacy/special names
+        when (toolName) {
+            "page_title" -> return ToolCall("tab", "title", args1)
+            "page_url" -> return ToolCall("tab", "currentUrl", args1) // or just rely on pageUrl if it exists
+            "switch_tab", "tab_select" -> return ToolCall("browser", "switchTab", args1)
+            "tab_new" -> return ToolCall("browser", "newTab", args1)
+            "tab_list" -> return ToolCall("browser", "listTabs", args1)
+            "tab_close", "close_tab" -> return ToolCall("browser", "closeTab", args1)
+            "keydown" -> return ToolCall("tab", "keyDown", args1)
+            "keyup" -> return ToolCall("tab", "keyUp", args1)
+            "mousemove" -> return ToolCall("tab", "mouseMove", args1)
+            "mousedown" -> return ToolCall("tab", "mouseDown", args1)
+            "mouseup" -> return ToolCall("tab", "mouseUp", args1)
+            "mousewheel" -> return ToolCall("tab", "mouseWheel", args1)
+        }
+
+        // 2. Generic mapping
+        val specs = agent.toolExtractor.getAllToolSpecs()
+        for ((domain, methods) in specs) {
+            for ((method, _) in methods) {
+                val mcpName = toMcpToolName(domain, method)
+                if (mcpName == toolName) {
+                    return ToolCall(domain, method, args1)
+                }
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * Convert domain+method to snake_case MCP tool name.
+     * Must match logic in Browser4MCPServer.
+     */
+    private fun toMcpToolName(domain: String, method: String): String {
+        val snake = method.replace(Regex("([A-Z])")) { "_${it.groupValues[1].lowercase()}" }
+        return when (domain) {
+            "tab", "system" -> snake
+            else -> "${domain}_$snake"
         }
     }
 

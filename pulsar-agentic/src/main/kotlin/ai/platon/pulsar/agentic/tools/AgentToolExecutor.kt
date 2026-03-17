@@ -115,42 +115,6 @@ class AgentToolExecutor constructor(
         return customExecutor?.help(method) ?: ""
     }
 
-    /**
-     * Resolve a tool call from a tool name and arguments, using explicit mappings for legacy/special names
-     * */
-    fun resolveToolCall(toolName: String, args: Map<String, Any?>): ToolCall? {
-        val args1 = args.toMutableMap()
-
-        // 1. Explicit mapping for legacy/special names
-        when (toolName) {
-            "page_title" -> return ToolCall("tab", "title", args1)
-            "page_url" -> return ToolCall("tab", "currentUrl", args1) // or just rely on pageUrl if it exists
-            "switch_tab", "tab_select" -> return ToolCall("browser", "switchTab", args1)
-            "tab_new" -> return ToolCall("browser", "newTab", args1)
-            "tab_list" -> return ToolCall("browser", "listTabs", args1)
-            "tab_close", "close_tab" -> return ToolCall("browser", "closeTab", args1)
-            "keydown" -> return ToolCall("tab", "keyDown", args1)
-            "keyup" -> return ToolCall("tab", "keyUp", args1)
-            "mousemove" -> return ToolCall("tab", "mouseMove", args1)
-            "mousedown" -> return ToolCall("tab", "mouseDown", args1)
-            "mouseup" -> return ToolCall("tab", "mouseUp", args1)
-            "mousewheel" -> return ToolCall("tab", "mouseWheel", args1)
-        }
-
-        // 2. Generic mapping
-        val specs = getAllToolSpecs()
-        for ((domain, methods) in specs) {
-            for ((method, _) in methods) {
-                val mcpName = toMcpToolName(domain, method)
-                if (mcpName == toolName) {
-                    return ToolCall(domain, method, args1)
-                }
-            }
-        }
-
-        return null
-    }
-
     fun normalizeToolCall(tc: ToolCall): ToolCall {
         val normalizedDomain = normalizeDomain(tc.domain)
         val spec = getToolSpec(normalizedDomain, tc.method) ?: getToolSpec(tc.domain, tc.method)
@@ -220,18 +184,6 @@ class AgentToolExecutor constructor(
         }
 
         return onDidToolCall(tc, evaluate)
-    }
-
-    /**
-     * Convert domain+method to snake_case MCP tool name.
-     * Must match logic in Browser4MCPServer.
-     */
-    private fun toMcpToolName(domain: String, method: String): String {
-        val snake = method.replace(Regex("([A-Z])")) { "_${it.groupValues[1].lowercase()}" }
-        return when (domain) {
-            "tab", "system" -> snake
-            else -> "${domain}_$snake"
-        }
     }
 
     private suspend fun onDidToolCall(
@@ -307,6 +259,7 @@ class AgentToolExecutor constructor(
         }
 
         val topDomain = domainAlias.getOrDefault(parts.first(), parts.first())
+
         return if (parts.size == 1) topDomain else listOf(topDomain).plus(parts.drop(1)).joinToString(".")
     }
 
