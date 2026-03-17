@@ -61,9 +61,9 @@ async fn find_or_download_jar() -> Result<PathBuf, String> {
     // Common candidate locations
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     let candidates = vec![
-        PathBuf::from("Browser4.jar"),
+        PathBuf::from("../../browser4/browser4-agents/target/Browser4.jar"),
+        PathBuf::from("browser4/browser4-agents/target/Browser4.jar"),
         PathBuf::from("target/Browser4.jar"),
-        home.join(".browser4").join("Browser4.jar"),
         home.join(".browser4").join("lib").join("Browser4.jar"),
     ];
 

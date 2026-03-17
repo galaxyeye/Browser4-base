@@ -779,6 +779,6 @@ describeE2E('browser4-cli real backend e2e', () => {
     });
 
     it('keeps the e2e matrix aligned with every supported command', () => {
-        expect([...coveredCommands].sort()).toEqual(Object.keys(commands).sort());
+        expect(Array.from(coveredCommands).sort()).toEqual(Object.keys(commands).sort());
     });
 });
