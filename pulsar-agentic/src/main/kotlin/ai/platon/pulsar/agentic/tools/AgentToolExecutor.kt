@@ -151,16 +151,16 @@ class AgentToolExecutor constructor(
         return null
     }
 
-    /**
-     * Convert domain+method to snake_case MCP tool name.
-     * Must match logic in Browser4MCPServer.
-     */
-    private fun toMcpToolName(domain: String, method: String): String {
-        val snake = method.replace(Regex("([A-Z])")) { "_${it.groupValues[1].lowercase()}" }
-        return when (domain) {
-            "tab", "system" -> snake
-            else -> "${domain}_$snake"
+    fun normalizeToolCall(tc: ToolCall): ToolCall {
+        val normalizedDomain = normalizeDomain(tc.domain)
+        val spec = getToolSpec(normalizedDomain, tc.method) ?: getToolSpec(tc.domain, tc.method)
+        val normalizedArguments = normalizeArguments(tc.arguments, spec)
+
+        if (normalizedDomain == tc.domain && normalizedArguments == tc.arguments) {
+            return tc
         }
+
+        return tc.copy(domain = normalizedDomain, arguments = normalizedArguments)
     }
 
     /**
@@ -181,18 +181,6 @@ class AgentToolExecutor constructor(
      */
     fun getToolSpec(domain: String, method: String): ToolSpec? {
         return concreteExecutors.find { it.domain == domain }?.getToolSpecs()?.get(method)
-    }
-
-    fun normalizeToolCall(tc: ToolCall): ToolCall {
-        val normalizedDomain = normalizeDomain(tc.domain)
-        val spec = getToolSpec(normalizedDomain, tc.method) ?: getToolSpec(tc.domain, tc.method)
-        val normalizedArguments = normalizeArguments(tc.arguments, spec)
-
-        if (normalizedDomain == tc.domain && normalizedArguments == tc.arguments) {
-            return tc
-        }
-
-        return tc.copy(domain = normalizedDomain, arguments = normalizedArguments)
     }
 
     /**
@@ -232,6 +220,18 @@ class AgentToolExecutor constructor(
         }
 
         return onDidToolCall(tc, evaluate)
+    }
+
+    /**
+     * Convert domain+method to snake_case MCP tool name.
+     * Must match logic in Browser4MCPServer.
+     */
+    private fun toMcpToolName(domain: String, method: String): String {
+        val snake = method.replace(Regex("([A-Z])")) { "_${it.groupValues[1].lowercase()}" }
+        return when (domain) {
+            "tab", "system" -> snake
+            else -> "${domain}_$snake"
+        }
     }
 
     private suspend fun onDidToolCall(
@@ -297,6 +297,9 @@ class AgentToolExecutor constructor(
         delay(3000)
     }
 
+    /**
+     *
+     * */
     private fun normalizeDomain(domain: String): String {
         val parts = domain.split(".")
         if (parts.isEmpty()) {

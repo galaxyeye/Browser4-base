@@ -678,6 +678,15 @@ interface WebDriver : Closeable {
     suspend fun waitForPage(url: String, timeout: Duration): WebDriver?
 
     /**
+     * Returns when the pageFunction returns a truthy value. @mcp
+     *
+     * @param pageFunction A JavaScript function to be evaluated in the page context.
+     * */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver?
+
+    /**
      * Wait until the predicate returns true. @mcp
      *
      * ```kotlin
@@ -914,7 +923,7 @@ interface WebDriver : Closeable {
     suspend fun keyUp(key: String)
 
     /**
-     * This method focuses an element with [selector] and clicks it. @mcp
+     * Focus on an element with [selector] and click it. @mcp
      *
      * If there's no element matching `selector`, nothing to do.
      *
@@ -1040,26 +1049,6 @@ interface WebDriver : Closeable {
         val selected = selectOption(selector, listOf(value))
         return selected.firstOrNull()
     }
-
-    /**
-     * Clicks the nth anchor element in the DOM. @mcp
-     *
-     * This function searches for all anchor (`<a>`) elements within the specified root element,
-     * and clicks the nth anchor element (0-based index). If the anchor element exists, it returns
-     * the `href` attribute of the clicked anchor element. If the element does not exist, it returns null.
-     *
-     * ```kotlin
-     * driver.clickNthAnchor(100, "body")
-     * ```
-     *
-     * @param n The index of the anchor element to click (0-based).
-     * @param rootSelector The CSS selector of the root element to search within (default is "body").
-     * @return The href attribute of the clicked anchor element, or null if the element does not exist.
-     * @throws WebDriverException If an error occurs while interacting with the WebDriver.
-     */
-    @Throws(WebDriverException::class)
-    @MCP
-    suspend fun clickNthAnchor(n: Int, rootSelector: String = "body"): String?
 
     /**
      * This method check an element with [selector]. If there's no element matching [selector], nothing to do. @mcp
@@ -1308,6 +1297,10 @@ interface WebDriver : Closeable {
     @MCP
     suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
 
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseDown(x: Double, y: Double, button: String = "left", modifier: String? = null)
+
     /**
      * Releases a mouse button at the current mouse position. @mcp
      *
@@ -1322,6 +1315,10 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     @MCP
     suspend fun mouseUp(button: String = "left", clickCount: Int = 1)
+
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseUp(x: Double, y: Double, button: String = "left", modifier: String? = null)
 
     /**
      * The mouse moves to the element with [selector]. @mcp

@@ -165,7 +165,7 @@ open class BasicBrowserAgent(
 
         val result = try {
             withTimeout(config.actTimeoutMs) {
-                tryExecuteDirectCommand(action, context) ?: doObserveAct(action)
+                doObserveAct(action)
             }
         } catch (_: TimeoutCancellationException) {
             val msg = "⏳ Action timed out after ${config.actTimeoutMs}ms: ${action.action}"
@@ -196,7 +196,6 @@ open class BasicBrowserAgent(
             ?: return ActResultHelper.failed("No observation to act", instruction)
         val actionDescription =
             observe.actionDescription ?: return ActResultHelper.failed("No action description to act", instruction)
-        val step = context.step
         val originalToolCall = element.toolCall ?: return ActResultHelper.failed("No tool call to act", instruction)
         val toolCall = toolExtractor.normalizeToolCall(originalToolCall)
         val method = toolCall.method
@@ -345,101 +344,6 @@ open class BasicBrowserAgent(
                 "uuid" to uuid
             )
         )
-    }
-
-    protected open suspend fun tryExecuteDirectCommand(
-        action: ActionOptions,
-        context: ExecutionContext
-    ): ActResult? {
-        val parsedToolCall = commandParser.parseFunctionExpression(action.action) ?: return null
-        val toolCall = toolExtractor.normalizeToolCall(parsedToolCall)
-        val selector = toolCall.arguments["selector"]?.toString()
-        val enrichedToolCall = toolCall.copy(description = "Direct command fast path")
-        val observeElement = ObserveElement(
-            locator = selector,
-            toolCall = enrichedToolCall,
-            cssSelector = selector,
-            cssFriendlyExpression = enrichedToolCall.weakTypeExpression,
-            currentPageContentSummary = "Direct command execution",
-            nextGoal = "Execute ${enrichedToolCall.domain}.${enrichedToolCall.method}"
-        )
-        val actionDescription = ActionDescription(
-            instruction = action.action,
-            observeElements = listOf(observeElement),
-            context = context,
-            agentState = context.agentState
-        )
-        context.agentState.actionDescription = actionDescription
-
-        stateManager.addTrace(
-            context.agentState,
-            event = "directCommandDetected",
-            items = mapOf(
-                "domain" to enrichedToolCall.domain,
-                "method" to enrichedToolCall.method,
-                "expression" to enrichedToolCall.pseudoExpression
-            ),
-            message = "⚡ direct command"
-        )
-
-        if (config.enablePreActionValidation && !actionValidator.validateToolCall(enrichedToolCall)) {
-            val exception = IllegalArgumentException("Direct command validation failed: ${enrichedToolCall.pseudoExpression}")
-            val result = ToolCallResult(
-                evaluate = TcEvaluate(enrichedToolCall.pseudoExpression, exception),
-                message = exception.message,
-                actionDescription = actionDescription
-            )
-            val detail = DetailedActResult(
-                actionDescription = actionDescription,
-                toolCallResult = result,
-                success = false,
-                description = exception.message,
-                exception = exception
-            )
-            stateManager.updateAgentState(context, detail)
-            stateManager.addTrace(
-                context.agentState,
-                event = "directCommandRejected",
-                items = mapOf("expression" to enrichedToolCall.pseudoExpression),
-                message = exception.message
-            )
-            stateManager.addToHistory(context.agentState)
-            return detail.toActResult()
-        }
-
-        //////////////////////////////////////////////////////////
-        // EXECUTE THE TOOL CALL
-
-        val result = toolExtractor.execute(toolCall)
-
-        val exception = result.evaluate.exception?.cause
-        val description = if (result.success) {
-            "✅ direct command executed | ${enrichedToolCall.pseudoExpression}"
-        } else {
-            "❌ direct command failed | ${enrichedToolCall.pseudoExpression}"
-        }
-        val detail = DetailedActResult(
-            actionDescription = actionDescription,
-            toolCallResult = result,
-            success = result.success,
-            description = description,
-            exception = exception
-        )
-
-        stateManager.updateAgentState(context, detail)
-        stateManager.addTrace(
-            context.agentState,
-            event = if (result.success) "directCommandExecOk" else "directCommandExecFailed",
-            items = mapOf(
-                "domain" to enrichedToolCall.domain,
-                "method" to enrichedToolCall.method,
-                "expression" to enrichedToolCall.pseudoExpression
-            ),
-            message = description
-        )
-        stateManager.addToHistory(context.agentState)
-
-        return detail.toActResult()
     }
 
     protected fun onDidObserve(options: ObserveOptions, result: ObserveActResult) {
