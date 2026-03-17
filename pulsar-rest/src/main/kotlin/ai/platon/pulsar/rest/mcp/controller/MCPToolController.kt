@@ -309,7 +309,7 @@ class MCPToolController(
     /**
      * Resolve a tool call from a tool name and arguments, using explicit mappings for legacy/special names
      * */
-    fun resolveMcpToolCall(toolName: String, args: Map<String, Any?>, agent: BasicBrowserAgent): ToolCall? {
+    private fun resolveMcpToolCall(toolName: String, args: Map<String, Any?>, agent: BasicBrowserAgent): ToolCall? {
         val args1 = args.toMutableMap()
 
         // 1. Explicit mapping for legacy/special names
