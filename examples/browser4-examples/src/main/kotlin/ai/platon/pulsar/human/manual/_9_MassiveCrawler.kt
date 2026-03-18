@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.common.LinkExtractors
 import ai.platon.pulsar.common.Priority13
@@ -69,7 +69,7 @@ fun main() {
 
     // Create session to access URL pool
     val session = PulsarContexts.createSession()
-    
+
     // Get the global URL pool for direct queue manipulation
     // AI Note: urlPool is the central hub for all URL scheduling
     val urlPool = session.context.globalCache.urlPool
@@ -85,7 +85,7 @@ fun main() {
         // AI Note: In production, store to database, extract data, analyze content
         println(document.title + "\t|\t" + document.baseURI)
     }
-    
+
     // Load URLs from resource file with parse handler
     val urls = LinkExtractors.fromResource("seeds100.txt").map { ParsableHyperlink(it, parseHandler) }
 
@@ -98,13 +98,13 @@ fun main() {
     // =====================================================================
     //
     // Different ways to submit URLs to the crawl queue:
-    
+
     // Submit single URL with default options
     session.submit(url1)
-    
+
     // Submit with "-refresh" to force re-fetch ignoring cache
     session.submit(url2, "-refresh")
-    
+
     // Submit with expiration: re-fetch if cached version is older than 30 seconds
     session.submit(url3, "-i 30s")
 
@@ -113,10 +113,10 @@ fun main() {
     // =====================================================================
     //
     // Submit many URLs at once - efficient for large crawls.
-    
+
     // Submit all URLs with default options
     session.submitAll(urls)
-    
+
     // feel free to submit millions of urls here
     // AI Note: Browser4 can handle millions of URLs in the queue
     // They're processed based on priority and available resources
@@ -127,10 +127,10 @@ fun main() {
     // =====================================================================
     //
     // For fine-grained control, add URLs directly to specific queues.
-    
+
     // Add to default pool (normal priority)
     urlPool.add(url4)
-    
+
     // Add with custom priority (HIGHER4 = 4th highest priority)
     // AI Note: Priority13 has 13 levels from HIGHEST to LOWEST
     urlPool.add(url5.apply { priority = Priority13.HIGHER4.value })
@@ -140,27 +140,27 @@ fun main() {
     // =====================================================================
     //
     // Add URLs directly to specific priority queues for precise control.
-    
+
     // High priority, allow re-submission (reentrant)
     // AI Note: reentrantQueue allows the same URL to be added multiple times
     urlPool.highestCache.reentrantQueue.add(url1)
-    
+
     // Higher priority, process only once (non-reentrant)
     // AI Note: nonReentrantQueue ignores duplicate URLs
     urlPool.higher2Cache.nonReentrantQueue.add(url2)
-    
+
     // Lower priority, limited re-entry
     // AI Note: nReentrantQueue allows N re-entries (configurable)
     urlPool.lower2Cache.nReentrantQueue.add(url3)
-    
+
     // =====================================================================
     // STEP 7: Real-Time and Delayed Processing
     // =====================================================================
-    
+
     // Highest priority - immediate processing
     // AI Note: Use for time-sensitive URLs that need immediate attention
     urlPool.realTimeCache.reentrantQueue.add(url4)
-    
+
     // Delayed processing - will start 2 hours later
     // AI Note: Useful for:
     // - Rate limiting compliance
@@ -171,7 +171,7 @@ fun main() {
     // =====================================================================
     // STEP 8: Wait for Completion
     // =====================================================================
-    
+
     // wait for all tasks to be finished.
     // AI Note: Blocks until all queues are empty and all pages processed
     PulsarContexts.await()

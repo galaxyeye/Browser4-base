@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.common.urls.UrlAware
 import ai.platon.pulsar.dom.FeaturedDocument
@@ -24,13 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger
  * ## Event Flow (in order of execution):
  * ```
  * LOAD PHASE:
- * onNormalize → onWillLoad → onWillFetch → onFetched → 
+ * onNormalize → onWillLoad → onWillFetch → onFetched →
  * onWillParse → onWillParseHTMLDocument → onHTMLDocumentParsed → onParsed → onLoaded
  *
  * BROWSE PHASE (during fetch):
  * onWillLaunchBrowser → onBrowserLaunched → onWillNavigate → onNavigated →
  * onWillInteract → onWillCheckDocumentState → onDocumentFullyLoaded →
- * onWillScroll → onDidScroll → onDocumentSteady → 
+ * onWillScroll → onDidScroll → onDocumentSteady →
  * onWillComputeFeature → onFeatureComputed → onDidInteract →
  * onWillStopTab → onTabStopped
  *
@@ -71,45 +71,45 @@ class PrintFlowEventHandlers: DefaultPageEventHandlers() {
                 println("$seq. load - onNormalize")
                 url
             }
-            
+
             // Called before attempting to load
             // AI Note: Return a WebPage to skip loading, or null to proceed
             onWillLoad.addLast { url ->
                 println("$seq. load - onWillLoad")
                 null
             }
-            
+
             // Called before fetching from network
             onWillFetch.addLast { page ->
                 println("$seq. load - onWillFetch")
             }
-            
+
             // Called after fetching completes
             onFetched.addLast { page ->
                 println("$seq. load - onFetched")
             }
-            
+
             // Called before parsing begins
             onWillParse.addLast { page ->
                 println("$seq. load - onWillParse")
             }
-            
+
             // Called before HTML document parsing
             onWillParseHTMLDocument.addLast { page ->
                 println("$seq. load - onWillParseHTMLDocument")
             }
-            
+
             // Called after HTML document is parsed
             // AI Note: Ideal for AI content analysis - you have both page and document
             onHTMLDocumentParsed.addLast { page: WebPage, document: FeaturedDocument ->
                 println("$seq. load - onHTMLDocumentParsed")
             }
-            
+
             // Called after all parsing completes
             onParsed.addLast { page ->
                 println("$seq. load - onParsed")
             }
-            
+
             // Called when load operation completes
             onLoaded.addLast { page ->
                 println("$seq. load - onLoaded")
@@ -125,77 +125,77 @@ class PrintFlowEventHandlers: DefaultPageEventHandlers() {
             onWillLaunchBrowser.addLast { page ->
                 println("$seq. browse - onWillLaunchBrowser")
             }
-            
+
             // Called after browser is launched
             // AI Note: Good place for browser configuration
             onBrowserLaunched.addLast { page, driver ->
                 println("$seq. browse - onBrowserLaunched")
             }
-            
+
             // Called before navigating to URL
             // AI Note: Can modify navigation behavior, add headers, etc.
             onWillNavigate.addLast { page, driver ->
                 println("$seq. browse - onWillNavigate")
             }
-            
+
             // Called after navigation completes
             onNavigated.addLast { page, driver ->
                 println("$seq. browse - onNavigated")
             }
-            
+
             // Called before interaction phase begins
             onWillInteract.addLast { page, driver ->
                 println("$seq. browse - onWillInteract")
             }
-            
+
             // Called when checking if document is ready
             onWillCheckDocumentState.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onWillCheckDocumentState")
             }
-            
+
             // Called when document is fully loaded (DOMContentLoaded + load)
             // AI Note: Ideal for custom JavaScript execution or element waiting
             onDocumentFullyLoaded.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onDocumentFullyLoaded")
             }
-            
+
             // Called before scrolling begins
             onWillScroll.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onWillScroll")
             }
-            
+
             // Called after scrolling completes
             onDidScroll.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onDidScroll")
             }
-            
+
             // Called when document reaches steady state (no more network activity)
             // AI Note: Good for pages with lazy loading
             onDocumentSteady.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onDocumentSteady")
             }
-            
+
             // Called before computing page features
             onWillComputeFeature.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onWillComputeFeature")
             }
-            
+
             // Called after features are computed
             // AI Note: Good for final JavaScript evaluation or screenshot capture
             onFeatureComputed.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onFeatureComputed")
             }
-            
+
             // Called after all interactions complete
             onDidInteract.addLast { page, driver ->
                 println("$seq. browse - onDidInteract")
             }
-            
+
             // Called before stopping the browser tab
             onWillStopTab.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onWillStopTab")
             }
-            
+
             // Called after tab is stopped
             onTabStopped.addLast { page: WebPage, driver: WebDriver ->
                 println("$seq. browse - onTabStopped")
@@ -213,7 +213,7 @@ class PrintFlowEventHandlers: DefaultPageEventHandlers() {
                 println("$seq. crawl - onWillLoad")
                 url
             }
-            
+
             // Called after loading in crawl loop
             onLoaded.addLast { url, page ->
                 println("$seq. crawl - onLoaded")
@@ -239,7 +239,7 @@ fun main() {
 
     val url = PRODUCT_DETAIL_URL
     val session = PulsarContexts.createSession()
-    
+
     // =====================================================================
     // Create ListenableHyperlink with Custom Event Handlers
     // =====================================================================

@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.common.LinkExtractors
 import ai.platon.pulsar.dom.FeaturedDocument
@@ -47,7 +47,7 @@ fun main() {
     // STEP 1: Browser Configuration for Continuous Crawling
     // =====================================================================
     // For continuous crawls, you'd better use sequential browsers or temporary browsers
-    // 
+    //
     // AI Note: Sequential browsers create fresh browser contexts, preventing:
     // - Cookie accumulation that might trigger anti-bot measures
     // - Memory leaks from long-running browser sessions
@@ -63,7 +63,7 @@ fun main() {
     // =====================================================================
     // STEP 2: Define the Parse Handler (Core Crawl Logic)
     // =====================================================================
-    // 
+    //
     // This handler is called for every page after it's loaded and parsed.
     // It's the heart of the continuous crawler where you:
     // - Extract data from the current page
@@ -87,22 +87,22 @@ fun main() {
     // =====================================================================
     // STEP 3: Create Seed URLs with Parse Handlers
     // =====================================================================
-    // 
+    //
     // Load seed URLs from a resource file and wrap them with ParsableHyperlink
-    // 
+    //
     // AI Note: Each URL gets the same parseHandler, but you could customize
     // handlers based on URL patterns for different page types
     //
     // change to seeds100.txt to crawl more
     val urls = LinkExtractors.fromResource("seeds100.txt")
         .map { ParsableHyperlink("$it -refresh", parseHandler) }
-    
+
     // =====================================================================
     // STEP 4: Submit and Wait
     // =====================================================================
-    // 
+    //
     // Submit all seed URLs and wait for the crawl to complete
-    // 
+    //
     // AI Note: The crawler will:
     // 1. Process seed URLs
     // 2. Call parseHandler for each page

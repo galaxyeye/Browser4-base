@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.skeleton.PulsarSettings
 import ai.platon.pulsar.skeleton.context.PulsarContexts
@@ -44,7 +44,7 @@ fun main() {
     // =====================================================================
     // CATEGORY 1: Expiration Control Options
     // =====================================================================
-    
+
     // Load a page, or fetch it if the expiry time exceeds.
     //
     // Option `-expires` specifies the expiry time and has a short form `-i`.
@@ -61,7 +61,7 @@ fun main() {
     // =====================================================================
     // CATEGORY 2: Failure Handling Options
     // =====================================================================
-    
+
     // Add option `-ignoreFailure` to force re-fetch ignoring all failures even if `fetchRetries` exceeds the maximal.
     // AI Note: Use this when you want to retry a URL that previously failed permanently.
     page = session.load(url, "-ignoreFailure -expires 0s")
@@ -74,7 +74,7 @@ fun main() {
     // =====================================================================
     // CATEGORY 3: Quality Gate Options
     // =====================================================================
-    
+
     // Option `-requireSize` to specifies the minimal page size, the page should be re-fetch if the
     // last page size is smaller than that.
     // AI Note: Useful for detecting blocked/captcha pages that return small responses.
@@ -94,7 +94,7 @@ fun main() {
     // =====================================================================
     // CATEGORY 4: Deadline and Parsing Options
     // =====================================================================
-    
+
     // If the deadline is exceeded, the task should be abandoned as soon as possible.
     // AI Note: Use for time-sensitive crawling jobs where stale data is useless.
     page = session.load(url, "-deadline 2022-04-15T18:36:54.941Z")
@@ -110,7 +110,7 @@ fun main() {
     // =====================================================================
     // CATEGORY 5: Retry Control Options
     // =====================================================================
-    
+
     // Option `-nMaxRetry` specifies the maximal number of retries in the crawl loop, and if it's still failed
     // after this number, the page will be marked as `Gone`. A retry will be triggered when a RETRY(1601) status code
     // is returned.
@@ -125,7 +125,7 @@ fun main() {
     // =====================================================================
     // CATEGORY 6: Portal Page Options (Multi-Page Crawling)
     // =====================================================================
-    
+
     // Load or fetch the portal page, and then load or fetch the out links selected by `-outLink`.
     //
     // Portal Page Options:
@@ -156,7 +156,7 @@ fun main() {
     // =====================================================================
     // CLEANUP: Wait for Background Tasks
     // =====================================================================
-    
+
     // Wait until all tasks are done.
     // AI Note: Important when using submit() or async operations to ensure clean shutdown.
     session.context.await()

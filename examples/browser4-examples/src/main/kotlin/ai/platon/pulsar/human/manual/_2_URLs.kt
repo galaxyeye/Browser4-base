@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.common.urls.PlainUrl
@@ -169,7 +169,7 @@ fun main() {
     // =====================================================================
     // CLEANUP: Wait for Background Tasks
     // =====================================================================
-    
+
     // Wait until all tasks are done.
     PulsarContexts.await()
 }

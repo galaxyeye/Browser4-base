@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.skeleton.PulsarSettings
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
@@ -46,11 +46,11 @@ internal class RPACrawler(private val session: PulsarSession = createSession()) 
     // =====================================================================
     // Selector Definitions
     // =====================================================================
-    // 
+    //
     // CSS selectors for target elements on the page.
     // AI Note: These selectors are specific to Amazon product pages.
     // For other sites, you'll need to inspect the HTML and adjust selectors.
-    
+
     // Search form selectors (for demonstration of typing)
     private val searchBoxSelector = ".form input[type=text]"
     private val searchBoxSubmit = ".form input[type=submit]"
@@ -126,14 +126,14 @@ internal class RPACrawler(private val session: PulsarSession = createSession()) 
         if (driver.exists(selector)) {
             // Step 1: Click the element
             driver.click(selector)
-            
+
             // Step 2: Extract text from the element
             val text = driver.selectFirstTextOrNull(selector) ?: "no-text"
-            
+
             // Step 3: Use extracted text in search box (first 3 chars)
             // AI Note: substring(1, 4) takes chars at index 1, 2, 3
             driver.type(searchBoxSelector, text.substring(1, 4))
-            
+
             // Log the interaction
             logger.info("{} clicked", selector)
         }
@@ -155,18 +155,18 @@ fun main() {
     val url = PRODUCT_DETAIL_URL
     // "-refresh -parse" forces fresh page load and enables parsing
     val args = "-refresh -parse"
-    
+
     // Create session and RPA crawler
     val session = createSession()
     val crawler = RPACrawler(session)
-    
+
     // Load page with RPA interactions, then scrape fields
     // AI Note: scrape() combines:
     // 1. load() - with event handlers executing RPA logic
     // 2. parse() - converting to document
     // 3. extract() - getting text from selectors
     val fields = session.scrape(url, crawler.options(args), crawler.fieldSelectors)
-    
+
     // Print extracted data
     println(fields)
 }

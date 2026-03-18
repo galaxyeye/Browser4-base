@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.common.LinkExtractors
 import ai.platon.pulsar.persist.WebPage
@@ -43,7 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue
 internal object CrawlCoroutines {
     // Create a session at object initialization
     private val session = PulsarContexts.createSession()
-    
+
     // Create a coroutine scope with a descriptive name
     // AI Note: CoroutineName helps with debugging and logging
     private val scope = CoroutineScope(Dispatchers.Default) + CoroutineName("demo")
@@ -60,10 +60,10 @@ internal object CrawlCoroutines {
     suspend fun loadAllInCoroutines() {
         // Create a job for each URL
         val jobs = LinkExtractors.fromResource("seeds10.txt")
-            .map { scope.launch { 
+            .map { scope.launch {
                 // loadDeferred is a suspend function that loads the page
                 // AI Note: .also {} allows us to perform side effects (printing) on the result
-                session.loadDeferred("$it -expires 1s").also { println(it.url) } 
+                session.loadDeferred("$it -expires 1s").also { println(it.url) }
             } }
         // Wait for all jobs to complete
         // AI Note: joinAll() suspends until all jobs finish (success or failure)
@@ -82,19 +82,19 @@ internal object CrawlCoroutines {
     suspend fun loadAllInCoroutines2() {
         // Thread-safe queue to collect deferred results
         val deferredPages = LinkedBlockingQueue<Deferred<WebPage>>()
-        
+
         // Launch coroutines that create async operations
         val jobs = LinkExtractors.fromResource("seeds10.txt")
             .map { "$it -expires 1s -ignoreFailure" }
-            .map { scope.launch { 
+            .map { scope.launch {
                 // async() returns a Deferred that we can await later
                 // AI Note: We store the Deferred, not the result, allowing parallel execution
-                async { session.loadDeferred(it) }.also(deferredPages::add) 
+                async { session.loadDeferred(it) }.also(deferredPages::add)
             } }
 
         // suspends current coroutine until all given jobs are complete.
         jobs.joinAll()
-        
+
         // Now await all deferred results and process them
         // AI Note: awaitAll() collects results from all Deferred operations
         deferredPages.awaitAll().forEach { println(it.url) }

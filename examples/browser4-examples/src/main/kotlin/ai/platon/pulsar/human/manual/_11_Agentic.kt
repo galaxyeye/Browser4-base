@@ -1,4 +1,4 @@
-package ai.platon.pulsar.manual
+package ai.platon.pulsar.human.manual
 
 import ai.platon.pulsar.agentic.context.AgenticContexts
 
@@ -34,7 +34,7 @@ import ai.platon.pulsar.agentic.context.AgenticContexts
  * llm.apiKey=sk-xxx
  *
  * # Or Volcengine
- * llm.provider=volcengine  
+ * llm.provider=volcengine
  * llm.apiKey=xxx
  * ```
  *
@@ -56,7 +56,7 @@ class AgentRunner {
     // =====================================================================
     // Agent Initialization
     // =====================================================================
-    // 
+    //
     // Get or create a BrowserAgent instance.
     // AI Note: The agent connects to the configured LLM provider and
     // manages browser instances for task execution.
@@ -86,7 +86,7 @@ go to amazon.com and search for pens to draw on whiteboards
 go to https://news.ycombinator.com/news , open the 4-th articles in new tab
 go to https://news.ycombinator.com/news , read top 3 articles and give me a summary
         """.lines().filter { it.isNotBlank() }
-        
+
         // =====================================================================
         // Task Breakdown (AI Analysis)
         // =====================================================================
@@ -125,7 +125,7 @@ go to https://news.ycombinator.com/news , read top 3 articles and give me a summ
         // Select the first task for execution.
         // AI Note: Change index to run different tasks, or loop through all.
         val task = tasks[0]
-        
+
         // Run the task - this is an async operation
         // AI Note: agent.run() is a suspend function that:
         // 1. Sends task to LLM for planning
@@ -133,7 +133,7 @@ go to https://news.ycombinator.com/news , read top 3 articles and give me a summ
         // 3. Handles errors and retries
         // 4. Returns natural language result
         agent.run(task)
-        
+
         // =====================================================================
         // Advanced Usage Examples (Reference)
         // =====================================================================
