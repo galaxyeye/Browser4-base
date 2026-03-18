@@ -332,7 +332,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_OBSERVE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE,
             agentId = agentId,
             message = "Starting observation",
             metadata = mapOf("instruction" to options.instruction?.take(100))
@@ -351,7 +351,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_OBSERVE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE,
             agentId = agentId,
             message = "Observation completed",
             metadata = mapOf(
@@ -375,7 +375,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_RUN,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_RUN,
             agentId = agentId,
             message = "Starting run with action: ${action.action.take(100)}",
             metadata = mapOf("action" to action.action)
@@ -395,7 +395,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_RUN,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_RUN,
             agentId = agentId,
             message = "Run completed",
             metadata = mapOf(
@@ -418,7 +418,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_ACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_ACT,
             agentId = agentId,
             message = "Starting action: ${action.action.take(100)}",
             metadata = mapOf("action" to action.action)
@@ -437,7 +437,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_ACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_ACT,
             agentId = agentId,
             message = if (result.success) "Action completed successfully" else "Action failed: ${result.message.take(100)}",
             metadata = mapOf(
@@ -460,7 +460,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_EXTRACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT,
             agentId = agentId,
             message = "Starting extraction: ${options.instruction.take(100)}",
             metadata = mapOf("instruction" to options.instruction)
@@ -479,7 +479,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_EXTRACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT,
             agentId = agentId,
             message = if (result.success) "Extraction completed successfully" else "Extraction failed: ${
                 result.message.take(
@@ -505,7 +505,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_SUMMARIZE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE,
             agentId = agentId,
             message = "Starting summarization",
             metadata = mapOf(
@@ -528,7 +528,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_SUMMARIZE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE,
             agentId = agentId,
             message = "Summarization completed",
             metadata = mapOf(
