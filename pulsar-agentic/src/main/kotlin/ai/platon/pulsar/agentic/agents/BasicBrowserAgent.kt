@@ -2,7 +2,6 @@ package ai.platon.pulsar.agentic.agents
 
 import ai.platon.pulsar.agentic.*
 import ai.platon.pulsar.agentic.common.AgentPaths
-import ai.platon.pulsar.agentic.common.SimpleKotlinParser
 import ai.platon.pulsar.agentic.event.AgentEventBus
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.inference.AgentMessageList
@@ -23,7 +22,6 @@ import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.serialize.json.Pson
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,14 +37,15 @@ open class BasicBrowserAgent(
     private val _startTime: Instant = Instant.now()
     private val _uuid: UUID = UUID.randomUUID()
     private val _baseDir: Path = AgentPaths.AGENT_BASE_DIR
-        .resolve(DateTimes.PATH_SAFE_FORMATTER_1.format(_startTime))
+        .resolve(DateTimes.PATH_SAFE_YEAR.format(_startTime))
+        .resolve(DateTimes.PATH_SAFE_MONTH.format(_startTime))
+        .resolve(DateTimes.PATH_SAFE_DAY.format(_startTime))
         .resolve(_uuid.toString())
 
     protected val cta by lazy { ContextToAction(session.sessionConfig) }
     protected val inference by lazy { InferenceEngine(this) }
     protected val snapshotService get() = inference.snapshotService
     protected val promptBuilder = PromptBuilder()
-    protected val commandParser = SimpleKotlinParser()
     protected val actionValidator by lazy {
         ActionValidator(
             maxSelectorLength = config.maxSelectorLength,
@@ -56,12 +55,12 @@ open class BasicBrowserAgent(
         )
     }
 
-    private val lazyToolManager by lazy {
+    private val lazyToolExecutor by lazy {
         AgentToolExecutor(_baseDir, this)
     }
 
     /** The [AgentToolExecutor] used by this agent for tool discovery and execution. */
-    val toolExtractor: AgentToolExecutor get() = lazyToolManager
+    val toolExtractor: AgentToolExecutor get() = lazyToolExecutor
     protected val fs get() = toolExtractor.fs
 
     protected val pageStateTracker = PageStateTracker(session, config)

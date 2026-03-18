@@ -273,6 +273,19 @@
   "help" : "Await navigation to the specified URL page or timeout if necessary.\n\n```kotlin val newDriver = driver.waitForPage(\"https://www.example.com\", Duration.ofSeconds(30)) ```"
 }, {
   "domain" : "tab",
+  "method" : "waitForFunction",
+  "arguments" : [ {
+    "name" : "pageFunction",
+    "type" : "String"
+  }, {
+    "name" : "timeout",
+    "type" : "Duration"
+  } ],
+  "returnType" : "WebDriver?",
+  "description" : "Returns when the pageFunction returns a truthy value.",
+  "help" : "Returns when the pageFunction returns a truthy value."
+}, {
+  "domain" : "tab",
   "method" : "exists",
   "arguments" : [ {
     "name" : "selector",
@@ -408,8 +421,8 @@
     "defaultValue" : "1"
   } ],
   "returnType" : "Unit",
-  "description" : "This method focuses an element with [selector] and clicks it.",
-  "help" : "This method focuses an element with [selector] and clicks it.\n\nIf there's no element matching `selector`, nothing to do.\n\n```kotlin driver.click(\"button[type='submit']\") ```\n\nof an element to focus. If there are multiple elements satisfying the selector, the first will be focused."
+  "description" : "Focus on an element with [selector] and click it.",
+  "help" : "Focus on an element with [selector] and click it.\n\nIf there's no element matching `selector`, nothing to do.\n\n```kotlin driver.click(\"button[type='submit']\") ```\n\nof an element to focus. If there are multiple elements satisfying the selector, the first will be focused."
 }, {
   "domain" : "tab",
   "method" : "click",
@@ -539,20 +552,6 @@
   "returnType" : "String?",
   "description" : "Selects an option in a <select> element.",
   "help" : "Selects an option in a <select> element."
-}, {
-  "domain" : "tab",
-  "method" : "clickNthAnchor",
-  "arguments" : [ {
-    "name" : "n",
-    "type" : "Int"
-  }, {
-    "name" : "rootSelector",
-    "type" : "String",
-    "defaultValue" : "body"
-  } ],
-  "returnType" : "String?",
-  "description" : "Clicks the nth anchor element in the DOM.",
-  "help" : "Clicks the nth anchor element in the DOM.\n\nThis function searches for all anchor (`<a>`) elements within the specified root element, and clicks the nth anchor element (0-based index). If the anchor element exists, it returns the `href` attribute of the clicked anchor element. If the element does not exist, it returns null.\n\n```kotlin driver.clickNthAnchor(100, \"body\") ```"
 }, {
   "domain" : "tab",
   "method" : "check",

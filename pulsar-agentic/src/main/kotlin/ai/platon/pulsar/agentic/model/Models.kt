@@ -9,6 +9,7 @@ import ai.platon.pulsar.common.llmFriendlyBrief
 import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.external.ModelResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIncludeProperties
 import org.apache.commons.lang3.StringUtils
 import java.time.Instant
 
@@ -236,6 +237,7 @@ data class ObserveElement constructor(
     val pseudoExpression get() = toolCall?.pseudoExpression
 }
 
+@JsonIncludeProperties("states")
 data class AgentHistory(
     val states: MutableList<AgentState> = mutableListOf(),
 ) {
@@ -246,6 +248,7 @@ data class AgentHistory(
     val isSuccess get() = finalResult?.isSuccess == true
     val totalSteps get() = states.size
     val hasErrors get() = states.any { it.hasErrors }
+
     val actionHistory get() = states.map { it.actionDescription }
     val actionResults get() = states.map { it.toolCallResult }
 
@@ -259,21 +262,6 @@ data class AgentHistory(
     fun last() = states.last()
     fun firstOrNull() = states.firstOrNull()
     fun lastOrNull() = states.lastOrNull()
-
-    fun toJson(): String {
-        return Pson.toJson(
-            mapOf(
-                "size" to size,
-                "isDone" to isDone,
-                "isSuccess" to isSuccess,
-                "totalSteps" to totalSteps,
-                "hasErrors" to hasErrors,
-                "urls" to urls,
-                "modelOutputs" to modelOutputs,
-                "modelThoughts" to modelThoughts,
-            )
-        )
-    }
 
     override fun toString(): String {
         return states.joinToString("\n") { it.toString() }
