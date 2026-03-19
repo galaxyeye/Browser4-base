@@ -200,7 +200,7 @@ open class BasicBrowserAgent(
             val state = if (result.success) "✅ success" else """☑️ executed"""
             val description = MessageFormat.format(
                 "✅ tool.done | {0} {1} | {4} | {2}/{3}",
-                method, state, element.ref, element.cssSelector, element.pseudoExpression
+                method, state, element.backendNodeId, element.cssSelector, element.pseudoExpression
             )
             logger.info(description)
 
@@ -223,7 +223,7 @@ open class BasicBrowserAgent(
 
             val description = MessageFormat.format(
                 "❌ observe.act execution failed | {0} | {1}/{2}",
-                method, observe.locator, element.cssSelector
+                method, observe.backendNodeId, element.cssSelector
             )
 
             val failedResult = ToolCallResult(

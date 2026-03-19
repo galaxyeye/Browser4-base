@@ -351,7 +351,6 @@ data class ActionDescription constructor(
     fun toObserveResults(agentState: AgentState): List<ObserveResult> {
         val results = observeElements?.map { ele ->
             ObserveResult(
-                locator = ele.ref,
                 domain = ele.domain?.ifBlank { null },
                 method = ele.method?.ifBlank { null },
                 arguments = ele.arguments?.takeIf { it.isNotEmpty() },

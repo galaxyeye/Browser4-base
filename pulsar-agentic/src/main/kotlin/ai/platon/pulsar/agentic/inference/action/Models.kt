@@ -99,7 +99,7 @@ data class ModelObserveResponseElement(
     val description: String? = null,
 
     /**
-     * Web page node locator for DOM manipulation.
+     * Web page node reference for DOM manipulation.
      * Specified explicitly for easy access and parsing, even if it's also present in [arguments].
      */
     val ref: String? = null,

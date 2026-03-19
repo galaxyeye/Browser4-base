@@ -215,8 +215,7 @@ open class TextToAction(
 
         var node: MergedDOMTreeNode? = null
         if (!ref.isNullOrBlank()) {
-            var locator: Locator? = null
-            locator = if (ref.startsWith("e")) {
+            val locator = if (ref.startsWith("e")) {
                 // playwright compatible format: `e123`, where 123 is the backend node id
                 Locator(Locator.Type.BACKEND_NODE_ID, ref.substring(1).trim())
             } else {
@@ -230,10 +229,8 @@ open class TextToAction(
                     // revise selector
                     arguments["selector"] = locator.absoluteSelector
                 }
-            }
-
-            if (locator == null) {
-                logger.warn("FBN locator not found. method={}, locator={}", method, ref)
+            } else {
+                logger.warn("Locator not found. method={}, locator={}", method, locator)
             }
         }
 

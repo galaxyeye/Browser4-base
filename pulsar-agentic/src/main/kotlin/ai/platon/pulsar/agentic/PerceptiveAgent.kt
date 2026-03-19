@@ -137,7 +137,7 @@ data class ObserveOptions(
 )
 
 data class ObserveResult constructor(
-    // the domain of the tool call, `tab`, `browser`, `fs`, `agent`, etc
+    // the domain of the tool call, `browser`, `tab`, `fs`, `agent`, etc
     val domain: String? = null,
     // the tool call method, `click`, `type`, `scrollBy`, etc
     val method: String? = null,
@@ -147,9 +147,6 @@ data class ObserveResult constructor(
     val description: String? = null,
 
     val backendNodeId: Int? = null,
-    // the DOM node locator, format is `frameIndex,backendNodeId`
-    @Deprecated("Locator is deprecated and will be removed in future versions. Use backendNodeId directly for element identification.")
-    val locator: String? = null,
 
     val screenshotContentSummary: String? = null,
     val currentPageContentSummary: String? = null,
