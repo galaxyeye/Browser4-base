@@ -291,12 +291,6 @@ Browser state includes:
 
 ---
 
-## Interactive Elements
-
-$INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT
-
----
-
 ## Output Requirements
 
 - Use the JSON format below exactly and output JSON only.
@@ -315,9 +309,6 @@ ${buildToolUseSections()}
             val boundaries = """
 Identify the page elements that best match the observation request
 Return an array of matching elements
-
-## Interactive Elements
----
 
 ## Accessibility Tree
 ---
@@ -744,12 +735,6 @@ $viewPortJson
 - Viewport position and numbering may change whenever the page content changes.
 - The provided accessibility tree focuses on viewport `i` and includes a small amount of nearby off-screen context.
 - To inspect the next viewport, call `scrollBy(viewportHeight)`.
-
-## Interactive Elements
-
-Focused on interactive elements in viewport ${processingViewport}.
-
-${interactiveElements.lazyString}
 
 ## Accessibility Tree
 
