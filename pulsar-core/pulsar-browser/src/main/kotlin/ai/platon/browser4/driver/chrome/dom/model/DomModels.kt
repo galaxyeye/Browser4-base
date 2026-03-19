@@ -405,7 +405,7 @@ data class InteractiveDOMTreeNode(
     /**
      * Locator format: `frameIndex,backendNodeId`
      * */
-    val locator: String? = null,
+    val backendNodeId: String? = null,
     val slimHTML: String? = null,
     val textBefore: String? = null,
     val scrollable: Boolean? = null,   // null means false
@@ -443,7 +443,7 @@ data class InteractiveDOMTreeNode(
 
         return buildString {
             append("[")
-            append(locator)
+            append(backendNodeId)
             append("]")
             append("{")
             append(viewportIndex ?: 1)

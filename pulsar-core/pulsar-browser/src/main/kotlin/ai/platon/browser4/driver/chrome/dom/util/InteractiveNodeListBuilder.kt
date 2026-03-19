@@ -86,7 +86,7 @@ class InteractiveNodeListBuilder(
                 collected += InteractiveDOMTreeNode(
                     interactiveIndex = idx,
                     // remove prefix to reduce serialized size, align with Nano tree
-                    locator = o.locator.substringAfterLast(":"),
+                    backendNodeId = o.locator.substringAfterLast(":").substringAfterLast(","),
                     slimHTML = slimHTML(n),
                     textBefore = null,
                     viewportIndex = o.viewportIndex,
@@ -140,7 +140,7 @@ class InteractiveNodeListBuilder(
         }
 
         // Sort by interactive index, then by locator for stability and fill prev/next/textUntilNextNode
-        val sorted = collected.sortedWith(compareBy({ it.interactiveIndex }, { it.locator ?: "" }))
+        val sorted = collected.sortedWith(compareBy({ it.interactiveIndex }, { it.backendNodeId ?: "" }))
         val nodes = sorted.mapIndexed { i, it ->
             val prev = if (i > 0) sorted[i - 1].interactiveIndex else null
             val next = if (i < sorted.lastIndex) sorted[i + 1].interactiveIndex else null
