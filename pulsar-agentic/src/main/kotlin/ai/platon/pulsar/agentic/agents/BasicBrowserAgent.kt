@@ -612,7 +612,7 @@ open class BasicBrowserAgent(
     }
 
     private suspend fun doObserveActObserve(
-        options: Any, context: ExecutionContext, resolve: Boolean
+        options: Any, context: ExecutionContext, multistep: Boolean
     ): ObserveActResult {
         val observeOptions = options as? ObserveOptions
         val drawOverlay = alwaysTrue() || (observeOptions?.drawOverlay ?: false)
@@ -621,10 +621,10 @@ open class BasicBrowserAgent(
             is ObserveOptions -> context.createObserveParams(
                 options,
                 fromAct = false,
-                resolve = resolve
+                multistep = multistep
             )
 
-            is ActionOptions -> context.createObserveActParams(resolve)
+            is ActionOptions -> context.createObserveActParams(multistep)
             else -> throw IllegalArgumentException("Not supported options | $options")
         }
 

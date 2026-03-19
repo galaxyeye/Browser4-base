@@ -89,14 +89,14 @@ data class ExecutionContext constructor(
 fun ExecutionContext.createObserveParams(
     options: ObserveOptions,
     fromAct: Boolean,
-    resolve: Boolean
+    multistep: Boolean
 ): ObserveParams {
     return ObserveParams(
         context = this,
         returnAction = options.returnAction ?: false,
         logInferenceToFile = config.logInferenceToFile,
         fromAct = fromAct,
-        multistep = resolve
+        multistep = multistep
     )
 }
 
@@ -104,12 +104,12 @@ fun ExecutionContext.createObserveParams(
  * Convenience factory for the common "observe in order to act" flow, where the model is expected to return an
  * actionable result and logging should honor the current agent configuration.
  */
-fun ExecutionContext.createObserveActParams(resolve: Boolean): ObserveParams {
+fun ExecutionContext.createObserveActParams(multistep: Boolean): ObserveParams {
     return ObserveParams(
         context = this,
         fromAct = true,
         returnAction = true,
-        multistep = resolve,
+        multistep = multistep,
         logInferenceToFile = config.logInferenceToFile,
     )
 }

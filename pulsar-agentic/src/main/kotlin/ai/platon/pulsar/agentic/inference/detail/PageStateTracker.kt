@@ -6,6 +6,7 @@ import ai.platon.pulsar.agentic.agents.AgentConfig
 import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -32,6 +33,7 @@ class PageStateTracker(
     private val recentHashes: ArrayDeque<Int> = ArrayDeque()
     private val maxRecentHashes = 10
 
+    private val domStateHandle = "_ds_" + UUID.randomUUID().toString().filter { it.isLetterOrDigit() }.take(8)
     private val domSettleJsLoaded = AtomicBoolean(false)
     private var domSettleJs: String? = null
 
@@ -43,14 +45,14 @@ class PageStateTracker(
      * @return Hash code representing the page state
      */
     suspend fun calculatePageStateHash(browserUseState: BrowserUseState): Int {
-        val driver = requireNotNull(activeDriver)
+        val driver = activeDriver
 
         // Combine URL, DOM structure, and interactive elements for fingerprint
         val urlHash = driver.currentUrl().hashCode()
         // Prefer cached microTree JSON from DOMState to avoid repeated serialization cost
 //        val domJson = browserUseState.domState.microTree.toNanoTreeInRange().lazyJson
 //        val domHash = domJson.hashCode()
-        val domHash = browserUseState.domState.serializableTree.hashCode()
+        val domHash = browserUseState.domState.ariaSnapshot.hashCode()
         // Quantize scroll ratio to reduce noise from tiny jitters (bucket to percentage 0..100)
         val scrollBucket = (browserUseState.browserState.scrollState.scrollYRatio * 100).toInt()
         val scrollHash = scrollBucket
@@ -131,7 +133,8 @@ class PageStateTracker(
         val driver = activeDriver
 
         if (domSettleJsLoaded.compareAndSet(false, true)) {
-            domSettleJs = ResourceLoader.readString("js/dom_settle.js")
+            val rawJs = ResourceLoader.readString("js/dom_settle.js")
+            domSettleJs = rawJs.replace("__DOM_STATE_VAR__", domStateHandle)
         }
 
         val js = requireNotNull(domSettleJs) { "dom_settle Js is null" }
@@ -167,7 +170,7 @@ class PageStateTracker(
                 // Call the cached function with minimal JS to reduce parser/bridge overhead
                 val signatureNum = (driver.evaluateValue(
                     """
-                    (() => { try { const f = window.__pulsar_GetDomSignature; return typeof f === 'function' ? f() : -1; } catch(e) { return -1; } })()
+                    (() => { try { const s = window['$domStateHandle']; return s && typeof s.getSignature === 'function' ? s.getSignature() : -1; } catch(e) { return -1; } })()
                     """.trimIndent()
                 ) as? Number)?.toLong()
 

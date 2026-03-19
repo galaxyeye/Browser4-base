@@ -127,7 +127,7 @@ open class RobustBrowserAgent(
      *
      * @param action The action options containing the user's goal and configuration
      * @return Agent history with executed actions
-     * @throws CancellationException if the agent is closed or the operation is cancelled
+     * @throws CancellationException if the agent is closed or the operation is canceled
      */
     override suspend fun run(action: ActionOptions): AgentHistory {
         onWillRun(action)
