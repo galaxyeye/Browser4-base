@@ -1,5 +1,6 @@
 package ai.platon.pulsar.agentic.prompts
 
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.EXTRACTION_TOOL_NOTE_CONTENT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.TOOL_CALL_RULE_CONTENT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildResponseSchema
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.workingLanguage
@@ -107,6 +108,10 @@ $TOOL_CALL_RULE_CONTENT
 ### Skill Tool Types
 
 $SKILL_TOOL_TYPE_DEFINITIONS
+
+### `agent.extract` Data Types
+
+$EXTRACTION_TOOL_NOTE_CONTENT
 
 ### Tool List
 
