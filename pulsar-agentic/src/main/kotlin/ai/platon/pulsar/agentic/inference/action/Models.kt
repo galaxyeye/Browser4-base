@@ -144,11 +144,10 @@ const val OBSERVE_RESPONSE_ELEMENT_SCHEMA = """
       "arguments": [
         {
           "name": "Parameter name, such as `selector`",
-          "value": "Parameter value, such as `0,4`"
+          "value": "Parameter value, such as `ref123`"
         }
       ],
-      "locator": "Web page node locator for DOM manipulation",
-      "description": "Description of the current locator and tool selection",
+      "description": "Description of the current tool selection",
       "screenshotContentSummary": "Summary of the current screenshot content",
       "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
       "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",

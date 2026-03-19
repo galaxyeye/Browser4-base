@@ -475,8 +475,6 @@ class InteractiveDOMTreeNodeList(
 
 /**
  * Serializable DOM tree node structure. Enhanced with compound component marking and paint order information.
- *
- * mini -> tiny -> micro -> nano -> pico -> femto -> atto -> zepto -> yocto
  */
 data class SerializableDOMTreeNode(
     val shouldDisplay: Boolean? = null,
