@@ -1,7 +1,8 @@
 package ai.platon.pulsar.agentic.inference.detail
 
 import ai.platon.pulsar.agentic.ActResult
-import ai.platon.pulsar.agentic.model.*
+import ai.platon.pulsar.agentic.model.ActionDescription
+import ai.platon.pulsar.agentic.model.DetailedActResult
 import ai.platon.pulsar.common.Strings
 
 /**
@@ -14,23 +15,15 @@ object ActResultHelper {
         return "[${actResult.action}] expr: ${actResult.expression} eval: $eval message: ${actResult.message}"
     }
 
-    fun failed(message: String, action: String? = null) = ActResult(false, message, action)
-
-    fun failed(message: String, detail: DetailedActResult) = ActResult(
-        false,
-        message,
-        detail = detail,
-    )
+    fun failed(exception: Exception, action: String) = ActResult(action = action, exception = exception)
 
     fun complete(actionDescription: ActionDescription): ActResult {
         val detailedActResult = DetailedActResult(actionDescription, null, actionDescription.summary)
         // val toolCall = ToolCall("agent", "done")
         return ActResult(
-            true,
             "completed",
             actionDescription.instruction,
-            null,
-            detailedActResult
+            detail = detailedActResult
         )
     }
 }

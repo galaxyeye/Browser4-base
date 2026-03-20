@@ -14,7 +14,6 @@ import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.external.ResponseState
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
 import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
@@ -167,7 +166,7 @@ open class RobustBrowserAgent(
             }
         } catch (e: CancellationException) {
             logger.info("🛑 act.cancelled action={}", action.action.take(50))
-            ActResult(false, "USER interrupted: ${e.message}", action = action.action)
+            ActResultHelper.failed(e, action.action)
         }
     }
 
@@ -186,7 +185,7 @@ open class RobustBrowserAgent(
             }
         } catch (e: CancellationException) {
             logger.info("🛑 act.cancelled instruction={}", observe.agentState.instruction.take(50))
-            ActResult(false, "USER interrupted: ${e.message}", action = observe.agentState.instruction)
+            ActResultHelper.failed(e, action = observe.actionDescription?.instruction ?: "")
         }
     }
 
@@ -320,16 +319,14 @@ open class RobustBrowserAgent(
             )
 
             result
-        } catch (_: TimeoutCancellationException) {
-            val msg =
-                "⏳ Resolve timed out after ${effectiveTimeout}ms (base: ${config.resolveTimeoutMs}ms + " + "retries: ${maxPossibleDelays}ms): $instruction"
+        } catch (e: TimeoutCancellationException) {
             stateManager.addTrace(
                 baseContext.agentState, event = "resolveTimeout", items = mapOf(
                     "timeoutMs" to effectiveTimeout,
                     "instruction" to Strings.compactInline(instruction, COMPACT_INLINE_SESSION_LENGTH)
                 ), message = "⏳ resolve TIMEOUT"
             )
-            val actResult = ActResult(success = false, message = msg, action = instruction)
+            val actResult = ActResultHelper.failed(e, action = instruction)
             ResolveResult(baseContext, actResult)
         } finally {
             // clear history so the next task will have a clean operation trace for summary.
@@ -437,9 +434,8 @@ open class RobustBrowserAgent(
                 context.step,
                 e.message ?: "user interruption"
             )
-            val result = ActResult(
-                success = false, message = "USER interrupted: ${e.message}", action = initContext.instruction
-            )
+
+            val result = ActResultHelper.failed(e, initContext.instruction)
             return ResolveResult(context, result)
         } catch (e: Exception) {
             throw handleResolutionFailure(e, context, startTime)
@@ -472,11 +468,7 @@ open class RobustBrowserAgent(
             }
         }
 
-        val actResult = ActResult(
-            success = false,
-            message = "Failed after ${config.maxRetries + 1} attempts. Last error: ${lastError?.message}",
-            action = action.action
-        )
+        val actResult = ActResultHelper.failed(lastError ?: Exception("Unknown error"), action.action)
 
         return ResolveResult(activeContext, actResult)
     }
@@ -612,7 +604,11 @@ open class RobustBrowserAgent(
         }.onFailure { e -> slogger.logError("🧾❌ Failed to persist transcript", e, context.sessionId) }
     }
 
-    protected suspend fun handleConsecutiveNoOps(consecutiveNoOps: Int, result: ActResult, context: ExecutionContext): Boolean {
+    protected suspend fun handleConsecutiveNoOps(
+        consecutiveNoOps: Int,
+        result: ActResult,
+        context: ExecutionContext
+    ): Boolean {
         val step = context.step
         stateManager.addTrace(
             context.agentState,
@@ -695,12 +691,13 @@ open class RobustBrowserAgent(
         val summary = result.modelResponse
         val context = result.context
         val ok = summary.state != ResponseState.OTHER
+        val exception = if (ok) null else IllegalStateException("ResponseState: OTHER")
 
         return ActResult(
-            success = ok,
             message = summary.content,
             action = context.instruction,
-            result = context.agentState.toolCallResult
+            result = context.agentState.toolCallResult,
+            exception = exception
         )
     }
 
@@ -712,13 +709,13 @@ open class RobustBrowserAgent(
             "💥 agent.fail sid={} steps={} dur={} err={}", context.sid, context.step, executionTime, e.message, e
         )
         runCatching { stateManager.removeLastIfStep(context.step) }.onFailure {
-                logger.warn(
-                    "⚠️ rollback failed sid={} step={} msg={}",
-                    context.sid,
-                    context.step,
-                    e.message
-                )
-            }
+            logger.warn(
+                "⚠️ rollback failed sid={} step={} msg={}",
+                context.sid,
+                context.step,
+                e.message
+            )
+        }
         return classifyError(e, context.step)
     }
 }

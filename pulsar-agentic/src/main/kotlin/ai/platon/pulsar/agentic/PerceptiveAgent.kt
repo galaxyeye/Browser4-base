@@ -59,22 +59,23 @@ data class ActionOptions(
  *
  * The `toString()` provides a compact, log-friendly summary.
  *
- * @property success Whether the action/tool execution succeeded. 是否成功。
  * @property message Additional status or error message. 状态/错误信息。
  * @property action The user action command that produced this result. 触发该结果的用户动作。
  * @property result The structured tool-call result payload. 工具调用结果。
  * @property detail Internal diagnostics detail; not serialized. 内部诊断信息（不序列化）。
  */
 data class ActResult constructor(
-    val success: Boolean = false,
     val message: String = "",
     val action: String? = null,
     val result: ToolCallResult? = null,
+    val exception: Exception? = null,
     @get:JsonIgnore
     val detail: DetailedActResult? = null
 ) {
     /** Check if the overall task is complete according to the agent. */
     val isComplete: Boolean get() = detail?.actionDescription?.isReallyComplete == true
+
+    val success: Boolean get() = exception == null && detail?.exception != null && result?.success == true
 
     /** Expression with weak parameter types (if provided by the model/tool). */
     @get:JsonIgnore

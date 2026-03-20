@@ -157,7 +157,7 @@ open class BasicBrowserAgent(
             withTimeout(config.actTimeoutMs) {
                 doObserveAct(action)
             }
-        } catch (_: TimeoutCancellationException) {
+        } catch (e: TimeoutCancellationException) {
             val msg = "⏳ Action timed out after ${config.actTimeoutMs}ms: ${action.action}"
             stateManager.addTrace(
                 context.agentState,
@@ -165,7 +165,7 @@ open class BasicBrowserAgent(
                 event = "actTimeout",
                 message = "⏳ act TIMEOUT"
             )
-            ActResultHelper.failed(msg, action.action)
+            ActResultHelper.failed(IllegalStateException(msg, e), action.action)
         }
 
         if (result.detail != null) {
@@ -183,10 +183,10 @@ open class BasicBrowserAgent(
         require(observe.agentState == context.agentState) { "Required: observe.agentState == context?.agentState" }
 
         val element = observe.observeElement
-            ?: return ActResultHelper.failed("No observation to act", instruction)
+            ?: return ActResultHelper.failed(IllegalStateException("No observation to act"), instruction)
         val actionDescription =
-            observe.actionDescription ?: return ActResultHelper.failed("No action description to act", instruction)
-        val originalToolCall = element.toolCall ?: return ActResultHelper.failed("No tool call to act", instruction)
+            observe.actionDescription ?: return ActResultHelper.failed(IllegalStateException("No action description to act"), instruction)
+        val originalToolCall = element.toolCall ?: return ActResultHelper.failed(IllegalStateException("No tool call to act"), instruction)
         val toolCall = toolExtractor.normalizeToolCall(originalToolCall)
         val method = toolCall.method
 
@@ -552,7 +552,7 @@ open class BasicBrowserAgent(
         if (observeResults.isEmpty()) {
             val msg = "⚠️ doObserveAct: No observe result"
             stateManager.addTrace(context.agentState, event = "observeActNoAction", message = msg)
-            return ActResultHelper.failed(msg, action = options.action)
+            return ActResultHelper.failed(IllegalStateException(msg), action = options.action)
         }
 
         val resultsToTry = observeResults.take(config.maxResultsToTry)
@@ -605,7 +605,7 @@ open class BasicBrowserAgent(
             message = msg
         )
 
-        return ActResultHelper.failed(msg, options.action)
+        return ActResultHelper.failed(IllegalStateException(msg), options.action)
     }
 
     private suspend fun doObserveActObserve(

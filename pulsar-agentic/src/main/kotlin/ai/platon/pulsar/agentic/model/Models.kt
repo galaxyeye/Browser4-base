@@ -31,7 +31,6 @@ data class DetailedActResult constructor(
     fun toActResult(): ActResult {
         return ActResult(
             action = actionDescription.instruction,
-            success = success,
             message = description ?: "",
             result = toolCallResult,
             detail = this
@@ -162,6 +161,7 @@ data class TcEvaluate constructor(
         return when (value) {
             is Number,
             is Boolean -> "$value"
+
             is String -> Strings.compactInline(value, 50)
             else -> mapOf(
                 "description" to description, "expression" to expression,
