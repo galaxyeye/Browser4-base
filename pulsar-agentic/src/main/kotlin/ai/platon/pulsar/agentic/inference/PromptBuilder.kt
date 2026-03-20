@@ -91,7 +91,8 @@ Browser tool rules:
 Browser tool rules:
 
 - `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
-- When selecting a node, always set `selector` to the same value as the `ref` attribute in aria snapshot, e.g., click(selector='e123').
+- Always set `selector` as the value of the `ref` attribute in aria snapshot, e.g., click(selector='e123').
+- Always set `selector` as the value of the `ref` attribute in aria snapshot, e.g., click(selector='e123').
 - Output JSON only. Do not add any explanatory text.
 - When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
 - If typing changes the page, decide whether new elements now require interaction.

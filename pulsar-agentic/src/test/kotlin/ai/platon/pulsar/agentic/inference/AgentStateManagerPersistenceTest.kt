@@ -55,7 +55,6 @@ class AgentStateManagerPersistenceTest {
         val detail = DetailedActResult(
             actionDescription = actionDescription,
             toolCallResult = ToolCallResult.NO_OP,
-            success = true,
             description = "Direct command persisted"
         )
 

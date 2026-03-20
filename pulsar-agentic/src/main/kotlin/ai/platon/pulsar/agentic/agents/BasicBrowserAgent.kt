@@ -207,7 +207,6 @@ open class BasicBrowserAgent(
             val detailedResult = DetailedActResult(
                 actionDescription = actionDescription,
                 toolCallResult = result,
-                success = result.success,
                 description = description
             )
             stateManager.updateAgentState(context, detailedResult)
@@ -234,7 +233,6 @@ open class BasicBrowserAgent(
             val detailedResult = DetailedActResult(
                 actionDescription = actionDescription,
                 toolCallResult = failedResult,
-                success = false,
                 description = description,
                 exception = e
             )

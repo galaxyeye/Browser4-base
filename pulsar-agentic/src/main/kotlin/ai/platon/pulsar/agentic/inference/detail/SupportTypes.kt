@@ -23,7 +23,7 @@ object ActResultHelper {
     )
 
     fun complete(actionDescription: ActionDescription): ActResult {
-        val detailedActResult = DetailedActResult(actionDescription, null, true, actionDescription.summary)
+        val detailedActResult = DetailedActResult(actionDescription, null, actionDescription.summary)
         // val toolCall = ToolCall("agent", "done")
         return ActResult(
             true,

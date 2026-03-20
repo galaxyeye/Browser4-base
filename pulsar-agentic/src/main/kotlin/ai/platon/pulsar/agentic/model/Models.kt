@@ -4,6 +4,7 @@ import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.pulsar.agentic.ActResult
 import ai.platon.pulsar.agentic.ObserveResult
 import ai.platon.pulsar.common.Strings
+import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.compactedBrief
 import ai.platon.pulsar.common.llmFriendlyBrief
 import ai.platon.pulsar.common.serialize.json.Pson
@@ -13,19 +14,20 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties
 import org.apache.commons.lang3.StringUtils
 import java.time.Instant
 
-data class DetailedActResult(
+data class DetailedActResult constructor(
     val actionDescription: ActionDescription,
     val toolCallResult: ToolCallResult? = null,
-    val success: Boolean = false,
     /**
      * A short description about the current state
      * */
     val description: String? = null,
     /**
-     * The exception that not from tool call execution which is already in ToolCallResult
+     * Additional exception, which is not a ToolCall exception
      * */
     val exception: Exception? = null,
 ) {
+    val success: Boolean get() = toolCallResult?.success == true
+
     fun toActResult(): ActResult {
         return ActResult(
             action = actionDescription.instruction,
@@ -41,12 +43,12 @@ data class DetailedActResult(
     }
 
     override fun toString(): String {
-        return "DetailedActResult(success=$success, description=$description, exception=${exception?.compactedBrief()}, actionDescription=${actionDescription}, toolCallResult=${toolCallResult})"
+        return "DetailedActResult(success=$success, description=$description, toolCallResult=${toolCallResult}, exception=${exception?.brief()})"
     }
 
     companion object {
-        fun failed(actionDescription: ActionDescription, exception: Exception? = null): DetailedActResult {
-            return DetailedActResult(actionDescription, exception = exception)
+        fun failed(actionDescription: ActionDescription): DetailedActResult {
+            return DetailedActResult(actionDescription)
         }
     }
 }

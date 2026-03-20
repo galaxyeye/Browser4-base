@@ -696,16 +696,6 @@ open class RobustBrowserAgent(
         val context = result.context
         val ok = summary.state != ResponseState.OTHER
 
-        val agentState = result.context.agentState.also {
-            it.instruction = instruction
-            it.isComplete = true
-            it.domain = "summary"
-            it.event = "summary"
-            it.method = "summary"
-            it.step = context.step
-        }
-//        stateManager.addToHistory(agentState)
-
         return ActResult(
             success = ok,
             message = summary.content,
