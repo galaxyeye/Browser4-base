@@ -360,18 +360,23 @@ open class RobustBrowserAgent(
         val browserUseState = agentState.browserUseState
         val step = context.step
         val sid = context.sid
-
-        var consecutiveNoOps = noOpsIn
-        val unchangedCount = pageStateTracker.checkStateChange(browserUseState)
-        if (unchangedCount >= 3) {
-            logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={}", sid, step, unchangedCount)
-            consecutiveNoOps++
+        val lastToolCall = agentState.actionDescription?.toolCall
+        val lastDomain = lastToolCall?.domain ?: ""
+        if (lastDomain.equals("tab", ignoreCase = true)) {
+            // Only tab operations can change the WebPage state
+            var consecutiveNoOps = noOpsIn
+            val unchangedCount = pageStateTracker.checkStateChange(browserUseState)
+            if (unchangedCount >= 3) {
+                logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={}", sid, step, unchangedCount)
+                consecutiveNoOps++
+            }
+            logger.info("▶️ step.exec sid={} step={}/{} noOps={}", sid, step, config.maxSteps, consecutiveNoOps)
         }
 
-        logger.info("▶️ step.exec sid={} step={}/{} noOps={}", sid, step, config.maxSteps, consecutiveNoOps)
         if (logger.isDebugEnabled) {
             logger.debug("🧩 dom={}", DomDebug.summarizeStr(browserUseState.domState, 5))
         }
+
         return context
     }
 
@@ -507,7 +512,7 @@ open class RobustBrowserAgent(
 
         if (!actResult.success) {
             consecutiveNoOps++
-            val stop = handleConsecutiveNoOps(consecutiveNoOps, context)
+            val stop = handleConsecutiveNoOps(consecutiveNoOps, actResult, context)
             if (stop) {
                 return StepProcessingResult(context, consecutiveNoOps, true)
             }
@@ -607,7 +612,7 @@ open class RobustBrowserAgent(
         }.onFailure { e -> slogger.logError("🧾❌ Failed to persist transcript", e, context.sessionId) }
     }
 
-    protected suspend fun handleConsecutiveNoOps(consecutiveNoOps: Int, context: ExecutionContext): Boolean {
+    protected suspend fun handleConsecutiveNoOps(consecutiveNoOps: Int, result: ActResult, context: ExecutionContext): Boolean {
         val step = context.step
         stateManager.addTrace(
             context.agentState,
@@ -615,7 +620,7 @@ open class RobustBrowserAgent(
             items = mapOf("step" to step, "consecutive" to consecutiveNoOps),
             message = "🕒 no-op"
         )
-        logger.info("🕒 noop sid={} step={} consecutive={}", context.sid, step, consecutiveNoOps)
+        logger.info("🕒 noop sid={} step={} consecutive={} | {}", context.sid, step, consecutiveNoOps, result)
         if (consecutiveNoOps >= config.consecutiveNoOpLimit) {
             logger.info("⛔ noop.stop sid={} step={} limit={}", context.sid, step, config.consecutiveNoOpLimit)
             return true
