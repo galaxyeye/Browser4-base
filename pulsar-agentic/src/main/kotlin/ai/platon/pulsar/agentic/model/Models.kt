@@ -26,7 +26,7 @@ data class DetailedActResult constructor(
      * */
     val exception: Exception? = null,
 ) {
-    val success: Boolean get() = toolCallResult?.success == true
+    val success: Boolean get() = exception == null && toolCallResult?.evaluate?.exception == null
 
     fun toActResult(): ActResult {
         return ActResult(
@@ -152,6 +152,8 @@ data class TcEvaluate constructor(
 ) {
     constructor(expression: String, cause: Exception, help: String? = null) :
             this(expression = expression, exception = TcException(expression, cause, help))
+
+    val success: Boolean get() = exception == null
 
     override fun toString(): String {
         return doGetPreview()

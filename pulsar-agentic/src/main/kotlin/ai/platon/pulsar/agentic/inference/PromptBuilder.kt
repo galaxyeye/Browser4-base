@@ -91,8 +91,10 @@ Browser tool rules:
 Browser tool rules:
 
 - `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
-- Always set `selector` as the value of the `ref` attribute in aria snapshot, e.g., click(selector='e123').
-- Always set `selector` as the value of the `ref` attribute in aria snapshot, e.g., click(selector='e123').
+- `ref` attribute in aria snapshot is a unique node reference, format: [ref=e123], prefer `ref` to locate DOM nodes when possible.
+- Always set `selector` as the value of the `ref` attribute in aria snapshot to locate DOM node
+    - click a node with [ref=e123] -> tab.click('e123')
+    - fill a node with [ref=e123] -> tab.fill('e123', 'hello')
 - Output JSON only. Do not add any explanatory text.
 - When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
 - If typing changes the page, decide whether new elements now require interaction.
@@ -549,7 +551,10 @@ $viewPortJson
 ---
 
 ## Accessibility Tree
-(current viewport range only)
+
+- Current viewport range only
+- `ref` is a unique node reference that can be used for tab tools to locate the node, e.g., click node with [ref=e123] -> tab.click('e123')
+
 ```yaml
 ${nanoTree.ariaSnapshot}
 ```

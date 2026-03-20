@@ -75,7 +75,7 @@ data class ActResult constructor(
     /** Check if the overall task is complete according to the agent. */
     val isComplete: Boolean get() = detail?.actionDescription?.isReallyComplete == true
 
-    val isSuccess: Boolean get() = exception == null && detail?.exception == null && result?.success == true
+    val isSuccess: Boolean get() = exception == null && detail?.exception == null && result?.evaluate?.exception == null
 
     /** Expression with weak parameter types (if provided by the model/tool). */
     @get:JsonIgnore

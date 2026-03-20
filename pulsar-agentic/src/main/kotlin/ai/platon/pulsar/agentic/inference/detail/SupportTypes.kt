@@ -18,7 +18,7 @@ object ActResultHelper {
     fun failed(exception: Exception, action: String) = ActResult(action = action, exception = exception)
 
     fun complete(actionDescription: ActionDescription): ActResult {
-        val detailedActResult = DetailedActResult(actionDescription, null, actionDescription.summary)
+        val detailedActResult = DetailedActResult(actionDescription, description =  actionDescription.summary)
         // val toolCall = ToolCall("agent", "done")
         return ActResult(
             "completed",

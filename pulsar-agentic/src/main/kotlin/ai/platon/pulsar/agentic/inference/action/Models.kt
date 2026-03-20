@@ -144,7 +144,7 @@ const val OBSERVE_RESPONSE_ELEMENT_SCHEMA = """
       "arguments": [
         {
           "name": "Parameter name, such as `selector`",
-          "value": "Parameter value, such as `ref123`"
+          "value": "Parameter value, such as `e123`"
         }
       ],
       "description": "Description of the current tool selection",
