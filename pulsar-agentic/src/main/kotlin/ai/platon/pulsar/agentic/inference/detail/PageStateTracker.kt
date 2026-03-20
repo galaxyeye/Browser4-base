@@ -161,7 +161,7 @@ class PageStateTracker(
      * @param checkIntervalMs Interval between stability checks
      */
     suspend fun waitForDOMSettle(timeoutMs: Long, checkIntervalMs: Long) {
-        val driver = requireNotNull(activeDriver)
+        val driver = activeDriver
 
         driver.waitForSelector("body", timeoutMs)
         // Install once to avoid re-parsing the script below on each poll
