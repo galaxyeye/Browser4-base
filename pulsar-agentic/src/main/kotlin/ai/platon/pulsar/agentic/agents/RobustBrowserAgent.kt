@@ -314,7 +314,7 @@ open class RobustBrowserAgent(
             // Not a single-step action, keep it out of AgentState history
             stateManager.addTrace(
                 result.context.agentState, event = "resolveDone", items = mapOf(
-                    "session" to baseContext.sid, "success" to result.result.success, "durationMs" to dur
+                    "session" to baseContext.sid, "success" to result.result.isSuccess, "durationMs" to dur
                 ), message = "✅ resolve DONE"
             )
 
@@ -502,7 +502,7 @@ open class RobustBrowserAgent(
             return StepProcessingResult(context, consecutiveNoOps, true)
         }
 
-        if (!actResult.success) {
+        if (!actResult.isSuccess) {
             consecutiveNoOps++
             val stop = handleConsecutiveNoOps(consecutiveNoOps, actResult, context)
             if (stop) {

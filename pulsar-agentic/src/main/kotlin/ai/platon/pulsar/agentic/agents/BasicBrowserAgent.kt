@@ -427,10 +427,10 @@ open class BasicBrowserAgent(
         AgentEventBus.emitAgentEvent(
             eventType = AgenticEvents.PerceptiveAgent.ON_DID_ACT,
             agentId = agentId,
-            message = if (result.success) "Action completed successfully" else "Action failed: ${result.message.take(100)}",
+            message = if (result.isSuccess) "Action completed successfully" else "Action failed: ${result.message.take(100)}",
             metadata = mapOf(
                 "action" to action.action,
-                "success" to result.success,
+                "success" to result.isSuccess,
                 "isComplete" to result.isComplete
             )
         )
@@ -582,7 +582,7 @@ open class BasicBrowserAgent(
 
             }
 
-            if (!actResult.success) {
+            if (!actResult.isSuccess) {
                 lastError = "Candidate ${index + 1} failed: ${actResult.message}"
                 continue
             }
