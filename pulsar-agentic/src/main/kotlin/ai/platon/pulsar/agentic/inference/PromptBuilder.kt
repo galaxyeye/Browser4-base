@@ -68,7 +68,7 @@ Browser tool rules:
 
 - `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
 - `method`: tool method such as `click`, `fill`, or `extract`.
-- When selecting a node, always set `selector` to the same value as `ref`.
+- When selecting a node, always set `selector` to the same value as `ref` in aria snapshot, e.g., `e123`.
 - `ref` must exactly match either the interactive element list or the relevant accessibility-tree node attributes.
 - Output JSON only. Do not add any explanatory text.
 - Read all open-tab information from `## Browser State`.
@@ -91,7 +91,7 @@ Browser tool rules:
 Browser tool rules:
 
 - `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
-- When selecting a node, always set `selector` to the same value as `ref`.
+- When selecting a node, always set `selector` to the same value as `ref` in aria snapshot, e.g., `e123`.
 - Output JSON only. Do not add any explanatory text.
 - When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
 - If typing changes the page, decide whether new elements now require interaction.
@@ -235,8 +235,8 @@ Output format:
 {
   "elements": [
     {
-      "ref": "Web page node reference",
-      "description": "Description of the current reference and tool selection",
+      "ref": "Web page node reference, e.g., `e123`",
+      "description": "Description of the current node selected and tool selection",
       "screenshotContentSummary": "Summary of the current screenshot content",
       "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
       "memory": "1-3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
@@ -257,7 +257,7 @@ Output format:
       "arguments": [
         {
           "name": "Parameter name, such as `selector`",
-          "value": "Parameter value, such as `0,4`"
+          "value": "Parameter value, such as `ref123`"
         }
       ],
       "screenshotContentSummary": "Summary of the current screenshot content",
