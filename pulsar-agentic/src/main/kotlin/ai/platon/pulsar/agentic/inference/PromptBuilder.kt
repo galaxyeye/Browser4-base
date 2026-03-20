@@ -68,7 +68,7 @@ Browser tool rules:
 
 - `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
 - `method`: tool method such as `click`, `fill`, or `extract`.
-- When selecting a node, always set `selector` to the same value as `ref` in aria snapshot, e.g., `e123`.
+- When selecting a node, always set `selector` to the same value as `ref` in aria snapshot, e.g., click(selector=`e123`).
 - `ref` must exactly match either the interactive element list or the relevant accessibility-tree node attributes.
 - Output JSON only. Do not add any explanatory text.
 - Read all open-tab information from `## Browser State`.
@@ -91,7 +91,7 @@ Browser tool rules:
 Browser tool rules:
 
 - `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
-- When selecting a node, always set `selector` to the same value as `ref` in aria snapshot, e.g., `e123`.
+- When selecting a node, always set `selector` to the same value as the `ref` attribute in aria snapshot, e.g., click(selector='e123').
 - Output JSON only. Do not add any explanatory text.
 - When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
 - If typing changes the page, decide whether new elements now require interaction.

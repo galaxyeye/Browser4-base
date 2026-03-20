@@ -26,6 +26,7 @@ class PageStateTracker(
     private val logger = getLogger(this)
 
     private val activeDriver get() = session.getOrCreateBoundDriver()
+    private var lastURL: String? = null
     private var lastPageStateHash: Int? = null
     private var sameStateCount = 0
 
@@ -44,14 +45,9 @@ class PageStateTracker(
      * @param browserUseState The current browser state
      * @return Hash code representing the page state
      */
-    suspend fun calculatePageStateHash(browserUseState: BrowserUseState): Int {
-        val driver = activeDriver
-
-        // Combine URL, DOM structure, and interactive elements for fingerprint
-        val urlHash = driver.currentUrl().hashCode()
-        // Prefer cached microTree JSON from DOMState to avoid repeated serialization cost
-//        val domJson = browserUseState.domState.microTree.toNanoTreeInRange().lazyJson
-//        val domHash = domJson.hashCode()
+    fun calculatePageStateHash(browserUseState: BrowserUseState): Int {
+        // Combine URL, scroll state, DOM structure for fingerprint
+        val urlHash = browserUseState.browserState.url.hashCode()
         val domHash = browserUseState.domState.ariaSnapshot.hashCode()
         // Quantize scroll ratio to reduce noise from tiny jitters (bucket to percentage 0..100)
         val scrollBucket = (browserUseState.browserState.scrollState.scrollYRatio * 100).toInt()
@@ -67,7 +63,16 @@ class PageStateTracker(
      * @param browserUseState The current browser state
      * @return Number of consecutive times the same state has been observed
      */
-    suspend fun checkStateChange(browserUseState: BrowserUseState): Int {
+    fun checkStateChange(browserUseState: BrowserUseState): Int {
+        val currentURL = browserUseState.browserState.url
+        // Navigated to a new page
+        if (currentURL != lastURL) {
+            sameStateCount = 0
+            lastPageStateHash = 0
+            lastURL = currentURL
+            return 0
+        }
+
         val currentStateHash = calculatePageStateHash(browserUseState)
 
         if (currentStateHash == lastPageStateHash) {
@@ -79,7 +84,9 @@ class PageStateTracker(
         lastPageStateHash = currentStateHash
         // Maintain a ring buffer of recent hashes for loop detection
         recentHashes.addLast(currentStateHash)
-        if (recentHashes.size > maxRecentHashes) recentHashes.removeFirst()
+        if (recentHashes.size > maxRecentHashes) {
+            recentHashes.removeFirst()
+        }
         return sameStateCount
     }
 
