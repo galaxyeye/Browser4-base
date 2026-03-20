@@ -204,9 +204,7 @@ open class TextToAction(
 
         // The `driver`, `WebDriver` domains are deprecated and replaced by `tab`
         // Only when the `tab` domain requires a locator for tool calls
-        if (!domain.equals("tab", true)
-            && !domain.equals("driver", true)
-            && !domain.equals("WebDriver", true)) {
+        if (!domain.equals("tab", true)) {
             return observeElement
         }
 
@@ -251,28 +249,6 @@ open class TextToAction(
         )
 
         return revisedObserveElement
-    }
-
-    private fun jsonElementToKotlin(e: JsonElement): Any? = when {
-        e.isJsonNull -> null
-        e.isJsonPrimitive -> {
-            val p = e.asJsonPrimitive
-            when {
-                p.isBoolean -> p.asBoolean
-                p.isNumber -> {
-                    val num = p.asNumber
-                    val d = num.toDouble()
-                    val i = num.toInt()
-                    if (d == i.toDouble()) i else d
-                }
-
-                else -> p.asString
-            }
-        }
-
-        e.isJsonArray -> e.asJsonArray.map { jsonElementToKotlin(it) }
-        e.isJsonObject -> e.asJsonObject.entrySet().associate { it.key to jsonElementToKotlin(it.value) }
-        else -> null
     }
 
     companion object {
