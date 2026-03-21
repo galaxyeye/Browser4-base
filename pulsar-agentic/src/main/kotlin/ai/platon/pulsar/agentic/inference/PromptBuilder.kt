@@ -169,35 +169,6 @@ Example:
 
 """
 
-        /**
-         * TODO: no need to list interactive elements in the prompt since the accessibility tree already contains interactivity information. Consider merging them into a unified format.
-         * */
-        val INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT = """
-(Interactive Elements)
-
-The interactive element list summarizes page DOM elements that can be acted on, including slim HTML, text content, surrounding text, viewport index, coordinates, and size.
-
-Format:
-[ref]{viewport}(x,y,width,height)<slimNode>textContent</slimNode>Text-Before-This-Interactive-Element-And-After-Previous-Interactive-Element
-
-- By default, it lists the focused viewport, viewports 1 and 2, and the final viewport.
-- `viewport` is a 1-based viewport index without brackets.
-- Viewport positions may change whenever page content changes.
-- `x,y,width,height` describe the node coordinates and size.
-
-        """.trimIndent()
-
-        val A11Y_TREE_NOTE_CONTENT_V1 = """
-(Accessibility Tree)
-
-The accessibility tree summarizes key DOM nodes, including text content, visibility, interactivity, coordinates, and size.
-
-- Unless explicitly stated otherwise, it contains nodes from the current viewport plus a small amount of nearby context outside the viewport.
-- For all nodes, `invisible`, `scrollable`, and `interactive` default to `false`.
-- Coordinates and sizes default to `0` when not explicitly present. Relevant properties include `clientRects`, `scrollRects`, and `bounds`.
-
-        """.trimIndent()
-
         const val SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT = """
 Choose the single best tool call for the requested browser action.
 
