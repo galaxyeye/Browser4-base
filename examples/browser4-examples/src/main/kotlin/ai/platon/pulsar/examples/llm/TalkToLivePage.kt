@@ -32,7 +32,7 @@ get the text of the element with id 'productTitle'
                 println(">>> $action")
                 session.bindDriver(driver)
                 val results = session.act(action)
-                println(results.joinToString { it.modelResponse ?: "" })
+                println(results.joinToString { it.modelResponse?.toString() ?: "" })
 
                 results.forEach { result ->
                     val expression = result.expression

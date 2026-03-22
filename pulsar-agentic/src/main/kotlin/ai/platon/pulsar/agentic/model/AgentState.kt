@@ -8,16 +8,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.time.Instant
 
 data class AgentState constructor(
+    // The current step in the loop
     var step: Int,
     // The user instruction
     var instruction: String,
     // The current browser use state
     @JsonIgnore
     var browserUseState: BrowserUseState,
-    // A simple and descriptive description
+    // A simple description
     var description: String? = null,
-    // The last event
+    // The last event, for identify purpose only
     var event: String? = null,
+
     // AI:
     var domain: String? = null,
     // AI:
@@ -36,7 +38,7 @@ data class AgentState constructor(
     var isComplete: Boolean? = null,
     // timestamp
     var timestamp: Instant = Instant.now(),
-    // The last exception
+    // The last exception if any
     var exception: Exception? = null,
 
     // AI: completion summary
@@ -46,6 +48,7 @@ data class AgentState constructor(
     // AI: completion next suggestions
     var nextSuggestions: List<String>? = null,
 
+    // low level action description which is originally constructed from AI's response
     @JsonIgnore
     var actionDescription: ActionDescription? = null,
     @JsonIgnore

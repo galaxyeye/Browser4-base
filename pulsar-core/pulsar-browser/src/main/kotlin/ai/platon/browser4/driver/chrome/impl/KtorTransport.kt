@@ -158,7 +158,9 @@ class KtorTransport : Transport {
     }
 
     /**
-     * On Windows, “localhost” often resolves to IPv6 ::1 first. If Chrome is listening only on IPv4 127.0.0.1 for the DevTools WebSocket, the handshake can silently stall in the socket layer, and Ktor’s webSocketSession may not return quickly without an explicit timeout.
+     * On Windows, “localhost” often resolves to IPv6 ::1 first. If Chrome is listening only on IPv4 127.0.0.1 for the
+     * DevTools WebSocket, the handshake can silently stall in the socket layer, and Ktor’s webSocketSession may not
+     * return quickly without an explicit timeout.
      * */
     private fun normalizeUri(uri: URI): URI {
         // Prefer IPv4 loopback for localhost to avoid potential IPv6-only bind issues on Windows

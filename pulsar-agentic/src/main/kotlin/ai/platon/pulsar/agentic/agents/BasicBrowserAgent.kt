@@ -197,7 +197,7 @@ open class BasicBrowserAgent(
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 
-            val state = if (result.success) "✅ success" else """☑️ executed"""
+            val state = if (result.isSuccess) "✅ success" else """☑️ executed"""
             val description = MessageFormat.format(
                 "✅ tool.done | {0} {1} | {4} | {2}/{3}",
                 method, state, element.backendNodeId, element.cssSelector, element.pseudoExpression
