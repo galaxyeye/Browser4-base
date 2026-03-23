@@ -13,7 +13,7 @@ self-contained native binary is preferred over a Node.js dependency.
 ## Build
 
 ```bash
-cd sdks/browser4-cli-rust
+cd sdks/browser4-cli
 cargo build --release
 # Binary is at target/release/browser4-cli
 ```
