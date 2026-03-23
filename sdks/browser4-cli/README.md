@@ -157,7 +157,6 @@ browser4-cli goto https://playwright.dev
 browser4-cli snapshot
 
 # Interact using refs from the snapshot
-# e15 → backend:15 is handled automatically
 browser4-cli click e15
 browser4-cli type e15 "Hello World"
 browser4-cli press e15 Enter
