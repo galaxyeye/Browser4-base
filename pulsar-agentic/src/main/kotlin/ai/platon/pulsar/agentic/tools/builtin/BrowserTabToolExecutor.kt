@@ -6,6 +6,7 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import java.time.Duration
 import kotlin.reflect.KClass
 
+
 class BrowserTabToolExecutor: AbstractToolExecutor() {
     override val domain = "tab"
 
@@ -18,114 +19,13 @@ class BrowserTabToolExecutor: AbstractToolExecutor() {
         }
     }
 
-    override fun help(): String {
-        return buildString {
-            appendLine("USAGE")
-            appendLine("    browser4-cli tab <command> [options]")
-            appendLine()
-            appendLine("DESCRIPTION")
-            appendLine("    Browser tab tools for page navigation, element interaction, content extraction,")
-            appendLine("    screenshots, scrolling, keyboard and mouse control, and more.")
-            appendLine()
-            appendLine("COMMANDS")
-
-            val categories = linkedMapOf(
-                "Navigation" to listOf("open", "navigate", "reload", "goBack", "goForward"),
-                "Wait" to listOf("waitForSelector", "waitForNavigation", "waitForPage"),
-                "Status" to listOf("exists", "isVisible", "isHidden", "isChecked"),
-                "Interaction" to listOf(
-                    "click", "dblclick", "fill", "type", "press", "hover", "focus",
-                    "check", "uncheck", "selectOption", "upload", "drag", "dragAndDrop", "chat"
-                ),
-                "Keyboard" to listOf("keyDown", "keyUp"),
-                "Mouse" to listOf("mouseDown", "mouseUp", "mouseWheel", "mouseWheelDown", "mouseWheelUp", "moveMouseTo"),
-                "Scrolling" to listOf(
-                    "scrollDown", "scrollUp", "scrollBy", "scrollToTop", "scrollToBottom",
-                    "scrollToMiddle", "scrollToViewport"
-                ),
-                "Dialog" to listOf("dialogAccept", "dialogDismiss"),
-                "Content" to listOf(
-                    "ariaSnapshot", "title", "textContent", "outerHTML", "nanoDOMTree",
-                    "screenshot", "pageSource"
-                ),
-                "Selection" to listOf(
-                    "selectFirstTextOrNull", "selectTextAll", "selectFirstAttributeOrNull",
-                    "selectAttributes", "selectAttributeAll", "selectHyperlinks", "selectAnchors", "selectImages"
-                ),
-                "JavaScript" to listOf("evaluate", "evaluateValue"),
-                "Cookies" to listOf("getCookies", "deleteCookies", "clearBrowserCookies"),
-                "Utility" to listOf("currentUrl", "url", "delay", "pause", "stop", "resize", "bringToFront"),
-                "Help" to listOf("help")
-            )
-
-            for ((category, methods) in categories) {
-                val available = methods.filter { toolSpec.containsKey(it) }
-                if (available.isEmpty()) continue
-                appendLine("  $category")
-                for (m in available) {
-                    val spec = toolSpec[m] ?: continue
-                    val desc = spec.description ?: ""
-                    appendLine("    %-28s %s".format(m, desc))
-                }
-                appendLine()
-            }
-
-            appendLine("EXAMPLES")
-            appendLine("    # Navigate and interact with a page")
-            appendLine("    browser4-cli open https://example.com")
-            appendLine("    browser4-cli ariaSnapshot")
-            appendLine("    browser4-cli click e3")
-            appendLine("    browser4-cli fill e5 \"user@example.com\"")
-            appendLine("    browser4-cli press e6 Enter")
-            appendLine("    browser4-cli screenshot")
-            appendLine()
-            appendLine("    # Navigation")
-            appendLine("    browser4-cli goBack")
-            appendLine("    browser4-cli reload")
-            appendLine()
-            appendLine("    # Keyboard and mouse")
-            appendLine("    browser4-cli keyDown Shift")
-            appendLine("    browser4-cli keyUp Shift")
-            appendLine("    browser4-cli mouseWheel --deltaX=0 --deltaY=100")
-            appendLine()
-            appendLine("    # Scrolling")
-            appendLine("    browser4-cli scrollDown")
-            appendLine("    browser4-cli scrollToTop")
-            appendLine()
-            append("""Run browser4-cli help <command>) for more information on a specific command.""")
-        }
-    }
-
     override fun help(method: String): String {
         val spec = toolSpec[method] ?: return "No help available for unknown method: $method"
 
-        return buildString {
-            appendLine("USAGE")
-            val required = spec.arguments.filter { it.defaultValue.isNullOrEmpty() }
-            val optional = spec.arguments.filter { !it.defaultValue.isNullOrEmpty() }
-            val usageArgs = buildString {
-                required.forEach { append(" <${it.name}>") }
-                optional.forEach { append(" [<${it.name}>]") }
-            }
-            appendLine("    browser4-cli $method$usageArgs")
-            appendLine()
-
-            val desc = spec.description
-            if (!desc.isNullOrBlank()) {
-                appendLine("DESCRIPTION")
-                appendLine("    $desc")
-                appendLine()
-            }
-
-            if (spec.arguments.isNotEmpty()) {
-                appendLine("OPTIONS")
-                for (arg in spec.arguments) {
-                    val opt = "--${arg.name}=<${arg.type}>"
-                    val suffix = if (arg.defaultValue.isNullOrEmpty()) "(required)" else "(optional, default: ${arg.defaultValue})"
-                    appendLine("    %-36s %s".format(opt, suffix))
-                }
-            }
-        }.trimEnd()
+        return spec.help ?: """
+            ${spec.expression}
+            ${spec.description}
+        """.trimIndent()
     }
 
     /**
@@ -445,9 +345,10 @@ class BrowserTabToolExecutor: AbstractToolExecutor() {
             "baseURI" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.baseURI() }
             "referrer" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.referrer() }
             "pageSource" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.pageSource() }
-            "help" -> { args.values.firstOrNull()?.toString()?.let { this.help(it) } ?: this.help() }
 
-            else -> help()
+            "help" -> help()
+
+            else -> throw IllegalArgumentException("Unsupported WebDriver tool function: $functionName, call $domain.help() for more details")
         }
     }
 }

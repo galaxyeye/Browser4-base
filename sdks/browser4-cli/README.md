@@ -151,7 +151,7 @@ After each command that modifies browser state, the CLI automatically:
 browser4-cli open
 
 # Navigate to a page
-browser4-cli goto https://browser4.io
+browser4-cli goto https://playwright.dev
 
 # Inspect the page — note the eN labels on interactive nodes
 browser4-cli snapshot
