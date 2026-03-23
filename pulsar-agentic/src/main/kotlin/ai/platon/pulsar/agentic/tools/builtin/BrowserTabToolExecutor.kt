@@ -6,7 +6,6 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import java.time.Duration
 import kotlin.reflect.KClass
 
-
 class BrowserTabToolExecutor: AbstractToolExecutor() {
     override val domain = "tab"
 
