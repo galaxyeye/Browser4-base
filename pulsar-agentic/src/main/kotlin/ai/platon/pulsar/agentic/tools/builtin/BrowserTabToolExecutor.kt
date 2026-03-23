@@ -72,27 +72,27 @@ class BrowserTabToolExecutor: AbstractToolExecutor() {
 
             appendLine("EXAMPLES")
             appendLine("    # Navigate and interact with a page")
-            appendLine("    browser4-cli tab open https://example.com")
-            appendLine("    browser4-cli tab ariaSnapshot")
-            appendLine("    browser4-cli tab click e3")
-            appendLine("    browser4-cli tab fill e5 \"user@example.com\"")
-            appendLine("    browser4-cli tab press e6 Enter")
-            appendLine("    browser4-cli tab screenshot")
+            appendLine("    browser4-cli open https://example.com")
+            appendLine("    browser4-cli ariaSnapshot")
+            appendLine("    browser4-cli click e3")
+            appendLine("    browser4-cli fill e5 \"user@example.com\"")
+            appendLine("    browser4-cli press e6 Enter")
+            appendLine("    browser4-cli screenshot")
             appendLine()
             appendLine("    # Navigation")
-            appendLine("    browser4-cli tab goBack")
-            appendLine("    browser4-cli tab reload")
+            appendLine("    browser4-cli goBack")
+            appendLine("    browser4-cli reload")
             appendLine()
             appendLine("    # Keyboard and mouse")
-            appendLine("    browser4-cli tab keyDown Shift")
-            appendLine("    browser4-cli tab keyUp Shift")
-            appendLine("    browser4-cli tab mouseWheel --deltaX=0 --deltaY=100")
+            appendLine("    browser4-cli keyDown Shift")
+            appendLine("    browser4-cli keyUp Shift")
+            appendLine("    browser4-cli mouseWheel --deltaX=0 --deltaY=100")
             appendLine()
             appendLine("    # Scrolling")
-            appendLine("    browser4-cli tab scrollDown")
-            appendLine("    browser4-cli tab scrollToTop")
+            appendLine("    browser4-cli scrollDown")
+            appendLine("    browser4-cli scrollToTop")
             appendLine()
-            append("""Run browser4-cli tab help <command>) for more information on a specific command.""")
+            append("""Run browser4-cli help <command>) for more information on a specific command.""")
         }
     }
 
@@ -104,10 +104,10 @@ class BrowserTabToolExecutor: AbstractToolExecutor() {
             val required = spec.arguments.filter { it.defaultValue.isNullOrEmpty() }
             val optional = spec.arguments.filter { !it.defaultValue.isNullOrEmpty() }
             val usageArgs = buildString {
-                required.forEach { append(" --${it.name}=<${it.type}>") }
-                optional.forEach { append(" [--${it.name}=<${it.type}>]") }
+                required.forEach { append(" <${it.name}>") }
+                optional.forEach { append(" [<${it.name}>]") }
             }
-            appendLine("    browser4-cli tab $method$usageArgs")
+            appendLine("    browser4-cli $method$usageArgs")
             appendLine()
 
             val desc = spec.description

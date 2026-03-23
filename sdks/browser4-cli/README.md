@@ -1,9 +1,7 @@
-# Browser4 CLI (Rust)
+# Browser4 CLI
 
 A Rust implementation of the Browser4 CLI — drive a [Browser4](https://github.com/platonai/Browser4)
-server from the command line. This is a feature-equivalent port of the TypeScript
-[`browser4-cli`](../browser4-cli) package, designed for environments where a
-self-contained native binary is preferred over a Node.js dependency.
+server from the command line.
 
 ## Prerequisites
 
