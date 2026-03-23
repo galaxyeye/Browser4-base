@@ -44,7 +44,7 @@ fn no_snapshot_commands() -> HashSet<&'static str> {
     [
         "open", "close", "close-all", "kill-all", "list", "help", "snapshot", "screenshot", "pdf",
         "agent-run", "agent-status", "agent-result",
-        "collective-run", "collective-status", "collective-result", "collective-list",
+        "co-create", "co-submit", "co-scrape", "co-status", "co-result",
     ]
     .into()
 }
@@ -489,32 +489,174 @@ async fn handle_agent_result(
 }
 
 // ---------------------------------------------------------------------------
-// Collective command handlers
+// Collective (co) command handlers
 // ---------------------------------------------------------------------------
 
-async fn handle_collective_run(
+async fn handle_co_create(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+    session_name: Option<&str>,
+) -> Result<(), String> {
+    // Build capabilities map from CLI options
+    let mut capabilities = serde_json::Map::new();
+    if let Some(v) = tool_params.get("profileMode").and_then(|v| v.as_str()) {
+        capabilities.insert("profileMode".to_string(), json!(v));
+    }
+    if let Some(v) = tool_params.get("maxOpenTabs").and_then(|v| v.as_str()) {
+        capabilities.insert("maxOpenTabs".to_string(), json!(v));
+    }
+    if let Some(v) = tool_params.get("maxBrowserContexts").and_then(|v| v.as_str()) {
+        capabilities.insert("maxBrowserContexts".to_string(), json!(v));
+    }
+    if let Some(v) = tool_params.get("displayMode").and_then(|v| v.as_str()) {
+        capabilities.insert("displayMode".to_string(), json!(v));
+    }
+
+    let open_args = if capabilities.is_empty() {
+        json!({})
+    } else {
+        json!({ "capabilities": Value::Object(capabilities) })
+    };
+
+    let result = call_tool(client, base_url, "open_session", open_args).await?;
+
+    // Parse session ID from response
+    let session_id = if let Ok(parsed) = serde_json::from_str::<Value>(&result) {
+        parsed
+            .get("sessionId")
+            .and_then(|v| v.as_str())
+            .unwrap_or(&result)
+            .to_string()
+    } else {
+        result.clone()
+    };
+
+    let mut state = read_state(None);
+    state.session_name = session_name.map(|s| s.to_string());
+    state.session_id = Some(session_id.clone());
+    state.base_url = base_url.to_string();
+    write_state(&state, None).map_err(|e| e.to_string())?;
+
+    println!("Collective session created: {}", session_id);
+    Ok(())
+}
+
+async fn handle_co_submit(
     client: &Client,
     base_url: &str,
     tool_params: &Value,
 ) -> Result<(), String> {
-    let task = tool_params
-        .get("task")
-        .and_then(|v| v.as_str())
-        .unwrap_or_default();
+    let url = tool_params.get("url").and_then(|v| v.as_str()).unwrap_or("");
+    let seed_file = tool_params.get("seedFile").and_then(|v| v.as_str());
 
-    if task.is_empty() {
-        return Err("Task description is required.".to_string());
+    if url.is_empty() && seed_file.is_none() {
+        return Err("Either a URL or --seed-file is required.".to_string());
     }
 
-    // Collective tasks also use the plain command API with async mode
-    let result = submit_plain_command(client, base_url, task, true).await?;
-    let task_id = result.trim().trim_matches('"').to_string();
-    println!("Collective task submitted: {}", task_id);
-    println!("Use 'browser4-cli collective-status {}' to check progress.", task_id);
+    // Collect URLs to submit
+    let mut urls: Vec<String> = Vec::new();
+    if !url.is_empty() {
+        urls.push(url.to_string());
+    }
+    if let Some(file_path) = seed_file {
+        let content = std::fs::read_to_string(file_path)
+            .map_err(|e| format!("Failed to read seed file '{}': {}", file_path, e))?;
+        for line in content.lines() {
+            let line = line.trim();
+            if !line.is_empty() && !line.starts_with('#') {
+                urls.push(line.to_string());
+            }
+        }
+    }
+
+    if urls.is_empty() {
+        return Err("No URLs to submit.".to_string());
+    }
+
+    // Build load options string from flags
+    let mut load_opts = Vec::new();
+    if let Some(v) = tool_params.get("deadline").and_then(|v| v.as_str()) {
+        load_opts.push(format!("-deadline {}", v));
+    }
+    if let Some(v) = tool_params.get("expires").and_then(|v| v.as_str()) {
+        load_opts.push(format!("-expires {}", v));
+    }
+    if tool_params.get("refresh").and_then(|v| v.as_bool()).unwrap_or(false) {
+        load_opts.push("-refresh".to_string());
+    }
+    if tool_params.get("parse").and_then(|v| v.as_bool()).unwrap_or(false) {
+        load_opts.push("-parse".to_string());
+    }
+    if tool_params.get("storeContent").and_then(|v| v.as_bool()).unwrap_or(false) {
+        load_opts.push("-storeContent".to_string());
+    }
+    let opts_str = load_opts.join(" ");
+
+    // Submit each URL as a plain command (async)
+    for u in &urls {
+        let command = if opts_str.is_empty() {
+            u.clone()
+        } else {
+            format!("{} {}", u, opts_str)
+        };
+
+        let result = submit_plain_command(client, base_url, &command, true).await?;
+        let task_id = result.trim().trim_matches('"').to_string();
+        println!("Submitted: {} → task {}", u, task_id);
+    }
+
+    if urls.len() > 1 {
+        println!("{} URL(s) submitted.", urls.len());
+    }
     Ok(())
 }
 
-async fn handle_collective_status(
+async fn handle_co_scrape(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let url = tool_params.get("url").and_then(|v| v.as_str()).unwrap_or_default();
+    if url.is_empty() {
+        return Err("URL is required.".to_string());
+    }
+
+    let selector = tool_params.get("selector").and_then(|v| v.as_str());
+    let attribute = tool_params.get("attribute").and_then(|v| v.as_str());
+    let output = tool_params.get("output").and_then(|v| v.as_str());
+
+    // Build a scrape command string with load options
+    let mut parts = vec![url.to_string()];
+    if let Some(v) = tool_params.get("deadline").and_then(|v| v.as_str()) {
+        parts.push(format!("-deadline {}", v));
+    }
+    if let Some(v) = tool_params.get("expires").and_then(|v| v.as_str()) {
+        parts.push(format!("-expires {}", v));
+    }
+    if tool_params.get("refresh").and_then(|v| v.as_bool()).unwrap_or(false) {
+        parts.push("-refresh".to_string());
+    }
+    let command = parts.join(" ");
+
+    let result = submit_plain_command(client, base_url, &command, true).await?;
+    let task_id = result.trim().trim_matches('"').to_string();
+
+    println!("Scrape submitted: {} → task {}", url, task_id);
+    if let Some(sel) = selector {
+        println!("  selector: {}", sel);
+    }
+    if let Some(attr) = attribute {
+        println!("  attribute: {}", attr);
+    }
+    if let Some(out) = output {
+        println!("  output: {}", out);
+    }
+    println!("Use 'browser4-cli co status {}' to check progress.", task_id);
+    Ok(())
+}
+
+async fn handle_co_status(
     client: &Client,
     base_url: &str,
     tool_params: &Value,
@@ -533,7 +675,7 @@ async fn handle_collective_status(
     Ok(())
 }
 
-async fn handle_collective_result(
+async fn handle_co_result(
     client: &Client,
     base_url: &str,
     tool_params: &Value,
@@ -552,17 +694,6 @@ async fn handle_collective_result(
     Ok(())
 }
 
-async fn handle_collective_list(
-    _client: &Client,
-    _base_url: &str,
-) -> Result<(), String> {
-    // List running tasks by querying the commands endpoint
-    // For now, inform the user this is not yet fully supported
-    println!("Listing collective tasks is not yet supported by the server.");
-    println!("Use 'browser4-cli agent-status <id>' to check individual task status.");
-    Ok(())
-}
-
 fn should_ensure_server_running(command: &str) -> bool {
     command != "close-all" && command != "kill-all"
 }
@@ -575,9 +706,30 @@ fn should_ensure_server_running(command: &str) -> bool {
 async fn main() {
     let raw_args: Vec<String> = std::env::args().skip(1).collect();
     let global = parse_global_flags(&raw_args);
-    let command = global.args.first().map(|s| s.as_str()).unwrap_or("");
 
-    if let Err(e) = run(command, &global).await {
+    // Handle "co <subcommand>" → "co-<subcommand>" prefix rewriting.
+    // When the user types `browser4-cli co create ...`, global.args is ["co", "create", ...].
+    // We rewrite to ["co-create", ...] so the command lookup works.
+    let (command, effective_global) = if global.args.first().map(|s| s.as_str()) == Some("co") {
+        if let Some(sub) = global.args.get(1) {
+            let combined = format!("co-{}", sub);
+            let mut new_args = vec![combined.clone()];
+            new_args.extend(global.args[2..].iter().cloned());
+            let new_global = args::GlobalFlags {
+                session_name: global.session_name.clone(),
+                server_url: global.server_url.clone(),
+                args: new_args,
+            };
+            (combined, new_global)
+        } else {
+            ("co".to_string(), global)
+        }
+    } else {
+        let cmd = global.args.first().map(|s| s.to_string()).unwrap_or_default();
+        (cmd, global)
+    };
+
+    if let Err(e) = run(&command, &effective_global).await {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
@@ -586,8 +738,13 @@ async fn main() {
 async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
     // Handle help or no command
     if command.is_empty() || command == "help" || command == "--help" || command == "-h" {
-        let sub = global.args.get(1).map(|s| s.as_str());
-        print_help(sub);
+        // Handle "help co <subcommand>" by joining "co" + subcommand
+        let sub = match (global.args.get(1).map(|s| s.as_str()), global.args.get(2).map(|s| s.as_str())) {
+            (Some("co"), Some(subcmd)) => Some(format!("co-{}", subcmd)),
+            (Some(name), _) => Some(name.to_string()),
+            _ => None,
+        };
+        print_help(sub.as_deref());
         return Ok(());
     }
 
@@ -676,17 +833,20 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
             handle_agent_result(&client, &base_url, &tool_params).await?;
         }
         // Collective commands
-        "collective-run" => {
-            handle_collective_run(&client, &base_url, &tool_params).await?;
+        "co-create" => {
+            handle_co_create(&client, &base_url, &tool_params, global.session_name.as_deref()).await?;
         }
-        "collective-status" => {
-            handle_collective_status(&client, &base_url, &tool_params).await?;
+        "co-submit" => {
+            handle_co_submit(&client, &base_url, &tool_params).await?;
         }
-        "collective-result" => {
-            handle_collective_result(&client, &base_url, &tool_params).await?;
+        "co-scrape" => {
+            handle_co_scrape(&client, &base_url, &tool_params).await?;
         }
-        "collective-list" => {
-            handle_collective_list(&client, &base_url).await?;
+        "co-status" => {
+            handle_co_status(&client, &base_url, &tool_params).await?;
+        }
+        "co-result" => {
+            handle_co_result(&client, &base_url, &tool_params).await?;
         }
         _ => {
             if tool_name.is_empty() {

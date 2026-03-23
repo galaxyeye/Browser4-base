@@ -142,7 +142,9 @@ mod tests {
         assert!(help.contains("extract"));
         assert!(help.contains("summarize"));
         assert!(help.contains("agent-run"));
-        assert!(help.contains("collective-run"));
+        assert!(help.contains("co-create"));
+        assert!(help.contains("co-submit"));
+        assert!(help.contains("co-scrape"));
     }
 
     #[test]
@@ -184,12 +186,37 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_command_help_collective_run() {
+    fn test_generate_command_help_co_create() {
         let cmds = all_commands();
-        let cmd = cmds.iter().find(|c| c.name == "collective-run").unwrap();
+        let cmd = cmds.iter().find(|c| c.name == "co-create").unwrap();
         let help = generate_command_help(cmd);
-        assert!(help.contains("browser4-cli collective-run <task>"));
-        assert!(help.contains("multi-agent collective"));
-        assert!(help.contains("--agents"));
+        assert!(help.contains("browser4-cli co-create"));
+        assert!(help.contains("collective session"));
+        assert!(help.contains("--profile-mode"));
+        assert!(help.contains("--max-open-tabs"));
+        assert!(help.contains("--max-browser-contexts"));
+        assert!(help.contains("--display-mode"));
+    }
+
+    #[test]
+    fn test_generate_command_help_co_submit() {
+        let cmds = all_commands();
+        let cmd = cmds.iter().find(|c| c.name == "co-submit").unwrap();
+        let help = generate_command_help(cmd);
+        assert!(help.contains("browser4-cli co-submit"));
+        assert!(help.contains("--seed-file"));
+        assert!(help.contains("--deadline"));
+        assert!(help.contains("--expires"));
+    }
+
+    #[test]
+    fn test_generate_command_help_co_scrape() {
+        let cmds = all_commands();
+        let cmd = cmds.iter().find(|c| c.name == "co-scrape").unwrap();
+        let help = generate_command_help(cmd);
+        assert!(help.contains("browser4-cli co-scrape <url>"));
+        assert!(help.contains("--selector"));
+        assert!(help.contains("--attribute"));
+        assert!(help.contains("--output"));
     }
 }

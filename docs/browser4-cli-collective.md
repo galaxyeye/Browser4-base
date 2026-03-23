@@ -2,232 +2,315 @@
 
 ## Overview
 
-The **Collective** commands in `browser4-cli` enable multi-agent coordination for
-complex tasks that benefit from parallel execution across multiple browser
-sessions. A collective distributes work across multiple `BasicBrowserAgent`
-instances, each operating in its own browser session.
+The **Collective** commands (`co`) in `browser4-cli` enable multi-browser
+parallel execution for faster and more efficient task handling. A collective
+session creates multiple browser contexts and tabs to handle URL submission,
+data scraping, and task execution in parallel.
 
-> **Note:** Collective commands are currently in preview. The server-side
-> implementation is evolving and some features may have limited functionality.
+---
+
+## Quick Start
+
+```bash
+# 1. Create a collective session with 8 tabs and 2 contexts in GUI mode
+browser4-cli co create --profile-mode=temporary --max-open-tabs=8 --max-browser-contexts=2 --display-mode=GUI
+
+# 2. Submit a URL with a deadline
+browser4-cli co submit https://www.amazon.com/dp/B08PP5MSVB -deadline 2026-02-24T23:59:59Z
+
+# 3. Scrape data from a page
+browser4-cli co scrape https://www.amazon.com/dp/B08PP5MSVB --selector=".product-title" --attribute="textContent" --output=title.txt
+
+# 4. Close the session
+browser4-cli close
+```
 
 ---
 
 ## Commands
 
-### `collective-run` — Run a multi-agent task
+### `co create` — Create a Collective Session
 
-Submit a task that will be distributed across multiple agents for parallel
-execution. This is a long-running operation that returns immediately with a task
-ID.
+Initialize a session with multiple browser contexts and tabs to handle parallel
+tasks.
 
 ```
-browser4-cli collective-run <task> [--agents=<n>]
+browser4-cli co create [options]
 ```
-
-**Arguments:**
-
-| Argument | Required | Description                                              |
-|----------|----------|----------------------------------------------------------|
-| `task`   | Yes      | Natural language task for the collective to execute      |
 
 **Options:**
 
-| Option     | Description                                              |
-|------------|----------------------------------------------------------|
-| `--agents` | Number of agents to use (default: auto — server decides) |
+| Option                     | Description                                                          |
+|----------------------------|----------------------------------------------------------------------|
+| `--profile-mode`           | Browser profile mode: `temporary`, `default`, `system_default`, `prototype` |
+| `--max-open-tabs`          | Maximum open tabs per browser context (default: 8)                   |
+| `--max-browser-contexts`   | Number of isolated browser environments (default: 2)                 |
+| `--display-mode`           | Display mode: `GUI`, `HEADLESS`, `SUPERVISED`                        |
 
 **Examples:**
 
 ```bash
-# Run a collective task with auto agent count
-browser4-cli collective-run "scrape the top 10 products from amazon.com/bestsellers and extract name, price, rating for each"
+# Create a session with default settings
+browser4-cli co create
 
-# Specify the number of agents
-browser4-cli collective-run "visit these 5 news sites and summarize the top story from each" --agents=5
+# Create a headless session with 16 tabs across 4 contexts
+browser4-cli co create --profile-mode=temporary --max-open-tabs=16 --max-browser-contexts=4 --display-mode=HEADLESS
+
+# Create a GUI session for debugging
+browser4-cli co create --display-mode=GUI
 ```
 
 **How it works:**
 
-The `collective-run` command submits the task to the Browser4 server via
-`POST /api/commands/plain?async=true`. The server can distribute the work across
-multiple agent instances, each with its own browser session. Results are
-aggregated upon completion.
+The `co create` command calls the `open_session` MCP tool with a `capabilities`
+map built from the CLI options. The capabilities map to:
+
+- `profileMode` → `BrowserProfileMode` (e.g., `temporary`, `default`)
+- `maxOpenTabs` → Controls concurrency per browser context
+- `maxBrowserContexts` → Controls the number of isolated browser environments
+- `displayMode` → `DisplayMode` (e.g., `GUI`, `HEADLESS`)
 
 ---
 
-### `collective-status` — Check collective task status
+### `co submit` — Submit Tasks
+
+Submit one or more URLs or tasks to the active collective session for async
+processing.
+
+```
+browser4-cli co submit [url] [options]
+```
+
+**Arguments:**
+
+| Argument | Required | Description                        |
+|----------|----------|------------------------------------|
+| `url`    | No*      | URL or task to submit              |
+
+*Either `url` or `--seed-file` is required.
+
+**Options:**
+
+| Option            | Description                                                    |
+|-------------------|----------------------------------------------------------------|
+| `--seed-file`     | File containing URLs to submit, one per line                   |
+| `--deadline`      | Deadline for task completion (ISO 8601, e.g. `2026-02-24T23:59:59Z`) |
+| `--expires`       | Cache expiration duration (e.g. `1d`, `1h`)                    |
+| `--refresh`       | Force a fresh fetch, ignoring cache                            |
+| `--parse`         | Parse page immediately after fetching                          |
+| `--store-content` | Persist page content to storage                                |
+
+**Examples:**
+
+```bash
+# Submit a single URL with a deadline
+browser4-cli co submit https://www.amazon.com/dp/B08PP5MSVB --deadline=2026-02-24T23:59:59Z
+
+# Submit with cache control
+browser4-cli co submit https://www.amazon.com/dp/B08PP5MSVB --expires=1d --refresh --parse
+
+# Submit multiple URLs from a seed file
+browser4-cli co submit --seed-file=seeds.txt
+
+# Submit with content persistence
+browser4-cli co submit https://example.com --store-content --parse
+```
+
+**Seed file format:**
+
+```text
+# Lines starting with # are comments
+https://www.amazon.com/dp/B08PP5MSVB
+https://www.amazon.com/dp/B09V3KXJPB
+https://www.amazon.com/dp/B0BSHF7WHW
+```
+
+**How it works:**
+
+Each URL is submitted asynchronously via `POST /api/commands/plain?async=true`.
+The command returns immediately with a task ID for each URL. Load options
+(`-deadline`, `-expires`, `-refresh`, `-parse`, `-storeContent`) are appended to
+each URL command string and map directly to `LoadOptions` on the server.
+
+---
+
+### `co scrape` — Scrape Data
+
+Extract specific data from pages using CSS selectors.
+
+```
+browser4-cli co scrape <url> [options]
+```
+
+**Arguments:**
+
+| Argument | Required | Description          |
+|----------|----------|----------------------|
+| `url`    | Yes      | URL to scrape        |
+
+**Options:**
+
+| Option        | Description                                                    |
+|---------------|----------------------------------------------------------------|
+| `--selector`  | CSS selector to extract elements                               |
+| `--attribute` | Element attribute to extract (e.g. `textContent`, `href`)      |
+| `--output`    | Output file path for scraped data                              |
+| `--deadline`  | Deadline for task completion (ISO 8601)                         |
+| `--expires`   | Cache expiration duration (e.g. `1d`, `1h`)                    |
+| `--refresh`   | Force a fresh fetch, ignoring cache                            |
+
+**Examples:**
+
+```bash
+# Scrape product titles
+browser4-cli co scrape https://www.amazon.com/dp/B08PP5MSVB --selector=".product-title" --attribute="textContent" --output=title.txt
+
+# Scrape links from a page
+browser4-cli co scrape https://example.com --selector="a" --attribute="href"
+
+# Scrape with a fresh fetch
+browser4-cli co scrape https://example.com --selector=".price" --refresh
+```
+
+---
+
+### `co status` — Check Task Status
 
 Check the status of a running collective task.
 
 ```
-browser4-cli collective-status <id>
+browser4-cli co status <id>
 ```
 
 **Arguments:**
 
-| Argument | Required | Description                                 |
-|----------|----------|---------------------------------------------|
-| `id`     | Yes      | Task ID returned by `collective-run`        |
+| Argument | Required | Description                             |
+|----------|----------|-----------------------------------------|
+| `id`     | Yes      | Task ID returned by `co submit` or `co scrape` |
 
 **Examples:**
 
 ```bash
-browser4-cli collective-status abc-123-def
-```
-
-**Response:**
-
-Returns a JSON object with the current status:
-
-```json
-{
-  "id": "abc-123-def",
-  "status": "running",
-  "agents": 5,
-  "completed": 3,
-  "progress": "3/5 agents completed"
-}
+browser4-cli co status abc-123-def
 ```
 
 ---
 
-### `collective-result` — Get collective task result
+### `co result` — Get Task Result
 
-Get the aggregated result of a completed collective task.
+Get the result of a completed collective task.
 
 ```
-browser4-cli collective-result <id>
+browser4-cli co result <id>
 ```
 
 **Arguments:**
 
-| Argument | Required | Description                              |
-|----------|----------|------------------------------------------|
-| `id`     | Yes      | Task ID returned by `collective-run`     |
+| Argument | Required | Description                             |
+|----------|----------|-----------------------------------------|
+| `id`     | Yes      | Task ID returned by `co submit` or `co scrape` |
 
 **Examples:**
 
 ```bash
-browser4-cli collective-result abc-123-def
+browser4-cli co result abc-123-def
 ```
 
 ---
 
-### `collective-list` — List running collective tasks
+## Workflow Examples
 
-List all currently running collective tasks.
-
-```
-browser4-cli collective-list
-```
-
-**Examples:**
+### Batch Product Scraping
 
 ```bash
-browser4-cli collective-list
+# 1. Create a high-concurrency session
+browser4-cli co create --max-open-tabs=16 --max-browser-contexts=4 --display-mode=HEADLESS
+
+# 2. Submit product URLs from a seed file
+browser4-cli co submit --seed-file=product-urls.txt --parse --store-content
+
+# 3. Check status of individual tasks
+browser4-cli co status <task-id>
+
+# 4. Get results
+browser4-cli co result <task-id>
+
+# 5. Close the session
+browser4-cli close
 ```
 
-> **Note:** This command has limited server-side support in the current release.
-
----
-
-## Workflow Example
-
-A typical collective workflow for data gathering:
+### Single-Page Data Extraction
 
 ```bash
-# 1. Submit a multi-site data gathering task
-browser4-cli collective-run "visit these product pages and extract price, title, and availability: \
-  https://amazon.com/dp/B08PP5MSVB \
-  https://amazon.com/dp/B09V3KXJPB \
-  https://amazon.com/dp/B0BSHF7WHW" --agents=3
+# 1. Create a session
+browser4-cli co create --profile-mode=temporary --display-mode=GUI
 
-# Output: Collective task submitted: abc-123-def
-# Output: Use 'browser4-cli collective-status abc-123-def' to check progress.
+# 2. Scrape data from a page
+browser4-cli co scrape https://www.amazon.com/dp/B08PP5MSVB \
+  --selector=".product-title" \
+  --attribute="textContent" \
+  --output=title.txt
 
-# 2. Monitor progress
-browser4-cli collective-status abc-123-def
-
-# 3. Retrieve aggregated results
-browser4-cli collective-result abc-123-def
-```
-
----
-
-## Use Cases
-
-### Parallel Data Extraction
-
-Collect product data from multiple pages simultaneously:
-
-```bash
-browser4-cli collective-run "extract product specs from these URLs and return as JSON: \
-  page1_url, page2_url, page3_url" --agents=3
-```
-
-### Multi-Site Monitoring
-
-Monitor prices or content across multiple sites:
-
-```bash
-browser4-cli collective-run "check the current price of 'MacBook Pro 16' on: \
-  amazon.com, bestbuy.com, newegg.com" --agents=3
-```
-
-### Content Aggregation
-
-Aggregate news or content from multiple sources:
-
-```bash
-browser4-cli collective-run "get the top headline from: \
-  news.ycombinator.com, reddit.com/r/technology, techcrunch.com" --agents=3
+# 3. Close the session
+browser4-cli close
 ```
 
 ---
 
-## Configuration
+## Technical Notes
 
-Collective commands share the same LLM configuration as agent commands. Ensure
-the Browser4 server has an LLM provider configured:
+### Parameter Mapping
 
-```properties
-# Example: OpenRouter provider
-openrouter.api.key=sk-your-api-key-here
-openrouter.model.name=bytedance-seed/seed-1.6
+CLI parameters map directly to the underlying Agentic and Skeleton APIs.
 
-# Example: OpenAI-compatible provider
-# openai.api.key=sk-your-api-key-here
-# openai.model.name=gpt-4o
-# openai.base.url=https://api.openai.com/v1
-```
+**`co create`** parameters map to `AgenticContexts.createSession(...)`:
+
+| CLI Option                 | API Property         | Type                 |
+|----------------------------|----------------------|----------------------|
+| `--profile-mode`           | `BrowserProfileMode` | `temporary`, `default`, etc. |
+| `--max-open-tabs`          | `maxOpenTabs`        | Integer              |
+| `--max-browser-contexts`   | `maxBrowserContexts` | Integer              |
+| `--display-mode`           | `DisplayMode`        | `GUI`, `HEADLESS`, `SUPERVISED` |
+
+**`co submit`** and **`co scrape`** options map to `LoadOptions`:
+
+| CLI Option       | LoadOptions Property | Description                    |
+|------------------|----------------------|--------------------------------|
+| `--deadline`     | `deadline`           | Absolute time limit (ISO 8601) |
+| `--expires`      | `expires`            | Cache expiration duration      |
+| `--refresh`      | `refresh`            | Force fresh fetch              |
+| `--parse`        | `parse`              | Parse after fetching           |
+| `--store-content`| `storeContent`       | Persist content to storage     |
 
 ---
 
 ## REST API Mapping
 
-| CLI Command          | REST Endpoint                          | Method |
-|----------------------|----------------------------------------|--------|
-| `collective-run`     | `/api/commands/plain?async=true`       | POST   |
-| `collective-status`  | `/api/commands/{id}/status`            | GET    |
-| `collective-result`  | `/api/commands/{id}/result`            | GET    |
-| `collective-list`    | *(not yet supported)*                  | —      |
+| CLI Command      | REST Endpoint                                         | Method |
+|------------------|-------------------------------------------------------|--------|
+| `co create`      | `/mcp/call-tool` (tool: `open_session`)               | POST   |
+| `co submit`      | `/api/commands/plain?async=true`                      | POST   |
+| `co scrape`      | `/api/commands/plain?async=true`                      | POST   |
+| `co status`      | `/api/commands/{id}/status`                           | GET    |
+| `co result`      | `/api/commands/{id}/result`                           | GET    |
 
 ---
 
 ## Comparison: Agent vs Collective
 
-| Feature              | Agent (`agent-run`)         | Collective (`collective-run`)    |
-|----------------------|-----------------------------|---------------------------------|
-| Browser sessions     | Single session              | Multiple parallel sessions      |
-| Task complexity      | Single-flow tasks           | Distributable multi-target tasks|
-| Execution model      | Sequential observe→act      | Parallel across agents          |
-| Best for             | Complex single-page tasks   | Multi-page data gathering       |
-| Resource usage       | Low (1 browser)             | Higher (N browsers)             |
+| Feature              | Agent (`agent-run`)            | Collective (`co`)                  |
+|----------------------|--------------------------------|------------------------------------|
+| Session setup        | Implicit (auto-created)        | Explicit (`co create` with options)|
+| Browser contexts     | Single context                 | Multiple parallel contexts         |
+| Execution model      | Sequential observe→act cycles  | Parallel URL processing            |
+| Best for             | Complex single-page AI tasks   | High-volume page scraping          |
+| Resource usage       | Low (1 browser)                | Configurable (N contexts × M tabs) |
 
 ---
 
 ## See Also
 
-- [browser4-cli-agent.md](browser4-cli-agent.md) — Single-agent commands
+- [browser4-cli-agent.md](browser4-cli-agent.md) — Single-agent AI commands
 - [rest-api-examples.md](rest-api-examples.md) — REST API usage examples
-- [BasicBrowserAgent.kt](../pulsar-agentic/src/main/kotlin/ai/platon/pulsar/agentic/agents/BasicBrowserAgent.kt) — Agent implementation
+- [LoadOptions.kt](../pulsar-core/pulsar-skeleton/src/main/kotlin/ai/platon/pulsar/skeleton/common/options/LoadOptions.kt) — Load options reference
+- [AgenticContexts.kt](../pulsar-agentic/src/main/kotlin/ai/platon/pulsar/agentic/AgenticContexts.kt) — Session creation API

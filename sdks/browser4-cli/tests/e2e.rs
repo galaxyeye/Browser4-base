@@ -1036,10 +1036,11 @@ fn assert_all_commands_covered(ctx: &E2ECtx) {
         "agent-run",
         "agent-status",
         "agent-result",
-        "collective-run",
-        "collective-status",
-        "collective-result",
-        "collective-list",
+        "co-create",
+        "co-submit",
+        "co-scrape",
+        "co-status",
+        "co-result",
     ]
     .into();
 
