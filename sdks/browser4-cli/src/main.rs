@@ -553,14 +553,13 @@ async fn handle_collective_result(
 }
 
 async fn handle_collective_list(
-    client: &Client,
-    base_url: &str,
+    _client: &Client,
+    _base_url: &str,
 ) -> Result<(), String> {
     // List running tasks by querying the commands endpoint
     // For now, inform the user this is not yet fully supported
     println!("Listing collective tasks is not yet supported by the server.");
     println!("Use 'browser4-cli agent-status <id>' to check individual task status.");
-    let _ = (client, base_url);
     Ok(())
 }
 

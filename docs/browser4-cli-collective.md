@@ -191,9 +191,14 @@ Collective commands share the same LLM configuration as agent commands. Ensure
 the Browser4 server has an LLM provider configured:
 
 ```properties
-# LLM provider configuration
-llm.provider=openai
-llm.apiKey=your-api-key-here
+# Example: OpenRouter provider
+openrouter.api.key=sk-your-api-key-here
+openrouter.model.name=bytedance-seed/seed-1.6
+
+# Example: OpenAI-compatible provider
+# openai.api.key=sk-your-api-key-here
+# openai.model.name=gpt-4o
+# openai.base.url=https://api.openai.com/v1
 ```
 
 ---

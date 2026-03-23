@@ -223,13 +223,17 @@ Agent commands require the Browser4 server to have an LLM provider configured.
 Set the following in your `application.properties` or `application-private.properties`:
 
 ```properties
-# LLM provider configuration
-llm.provider=openai
-llm.apiKey=your-api-key-here
+# Example: OpenRouter provider
+openrouter.api.key=sk-your-api-key-here
+openrouter.model.name=bytedance-seed/seed-1.6
 
-# Or use environment variables
-# LLM_PROVIDER=openai
-# LLM_API_KEY=your-api-key-here
+# Example: OpenAI-compatible provider
+# openai.api.key=sk-your-api-key-here
+# openai.model.name=gpt-4o
+# openai.base.url=https://api.openai.com/v1
+
+# Example: DeepSeek provider
+# deepseek.api.key=sk-your-api-key-here
 ```
 
 ---

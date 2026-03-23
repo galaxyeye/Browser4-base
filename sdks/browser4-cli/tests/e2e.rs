@@ -1030,7 +1030,7 @@ fn assert_all_commands_covered(ctx: &E2ECtx) {
     .into();
 
     // Commands that require LLM/agent backend and are not tested in e2e
-    let _agent_commands: HashSet<&str> = [
+    let _excluded_agent_commands: HashSet<&str> = [
         "extract",
         "summarize",
         "agent-run",
