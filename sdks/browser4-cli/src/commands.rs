@@ -19,6 +19,8 @@ pub enum Category {
     Browsers,
     Config,
     Install,
+    Agent,
+    Collective,
 }
 
 impl Category {
@@ -36,6 +38,8 @@ impl Category {
             Category::Browsers => "browsers",
             Category::Config => "config",
             Category::Install => "install",
+            Category::Agent => "agent",
+            Category::Collective => "collective",
         }
     }
 }
@@ -692,6 +696,176 @@ pub fn all_commands() -> Vec<CommandDef> {
             tool_name_fn: |_| String::new(),
             tool_params_fn: |_| json!({}),
         },
+        // ---- Agent ----
+        CommandDef {
+            name: "extract",
+            description: "Extract structured data from the current page",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "instruction", description: "What data to extract, e.g. 'product name, price, ratings'", optional: false }],
+            options: &[
+                OptionDef { name: "schema", description: "JSON schema to constrain the extracted data structure", is_bool: false },
+            ],
+            tool_name_fn: |_| "agent_extract".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({ "instruction": get_str(args, "instruction").unwrap_or_default() });
+                if let Some(s) = get_opt_str(args, "schema") { p["schema"] = json!(s); }
+                p
+            },
+        },
+        CommandDef {
+            name: "summarize",
+            description: "Summarize page content using AI",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "instruction", description: "Summarization instruction, e.g. 'summarize the product reviews'", optional: true }],
+            options: &[
+                OptionDef { name: "selector", description: "CSS selector to limit the scope of summarization", is_bool: false },
+            ],
+            tool_name_fn: |_| "agent_summarize".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({});
+                if let Some(i) = get_opt_str(args, "instruction") { p["instruction"] = json!(i); }
+                if let Some(s) = get_opt_str(args, "selector") { p["selector"] = json!(s); }
+                p
+            },
+        },
+        CommandDef {
+            name: "agent-run",
+            description: "Run an autonomous agent task (async, returns task ID)",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "task", description: "Natural language task for the agent to execute", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__agent_run__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "task": get_str(args, "task").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "agent-status",
+            description: "Check the status of a running agent task",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by agent-run", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__agent_status__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "agent-result",
+            description: "Get the result of a completed agent task",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by agent-run", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__agent_result__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        // ---- Collective (co) ----
+        CommandDef {
+            name: "co-create",
+            description: "Create a collective session with parallel browser contexts",
+            category: Category::Collective,
+            hidden: false,
+            args: &[],
+            options: &[
+                OptionDef { name: "profile-mode", description: "Browser profile mode (temporary, default, system_default, prototype)", is_bool: false },
+                OptionDef { name: "max-open-tabs", description: "Maximum open tabs per browser context (default: 8)", is_bool: false },
+                OptionDef { name: "max-browser-contexts", description: "Number of isolated browser environments (default: 2)", is_bool: false },
+                OptionDef { name: "display-mode", description: "Display mode: GUI, HEADLESS, SUPERVISED", is_bool: false },
+            ],
+            tool_name_fn: |_| "__co_create__".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({});
+                if let Some(v) = get_opt_str(args, "profile-mode") { p["profileMode"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "max-open-tabs") { p["maxOpenTabs"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "max-browser-contexts") { p["maxBrowserContexts"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "display-mode") { p["displayMode"] = json!(v); }
+                p
+            },
+        },
+        CommandDef {
+            name: "co-submit",
+            description: "Submit URL(s) or tasks to the active collective session",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "url", description: "URL or task to submit", optional: true }],
+            options: &[
+                OptionDef { name: "seed-file", description: "File containing URLs to submit, one per line", is_bool: false },
+                OptionDef { name: "deadline", description: "Deadline for task completion (ISO 8601, e.g. 2026-02-24T23:59:59Z)", is_bool: false },
+                OptionDef { name: "expires", description: "Cache expiration duration (e.g. 1d, 1h)", is_bool: false },
+                OptionDef { name: "refresh", description: "Force a fresh fetch, ignoring cache", is_bool: true },
+                OptionDef { name: "parse", description: "Parse page immediately after fetching", is_bool: true },
+                OptionDef { name: "store-content", description: "Persist page content to storage", is_bool: true },
+            ],
+            tool_name_fn: |_| "__co_submit__".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({});
+                if let Some(v) = get_opt_str(args, "url") { p["url"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "seed-file") { p["seedFile"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "deadline") { p["deadline"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "expires") { p["expires"] = json!(v); }
+                if let Some(b) = get_bool(args, "refresh") { p["refresh"] = json!(b); }
+                if let Some(b) = get_bool(args, "parse") { p["parse"] = json!(b); }
+                if let Some(b) = get_bool(args, "store-content") { p["storeContent"] = json!(b); }
+                p
+            },
+        },
+        CommandDef {
+            name: "co-scrape",
+            description: "Scrape data from a URL using CSS selectors",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "url", description: "URL to scrape", optional: false }],
+            options: &[
+                OptionDef { name: "selector", description: "CSS selector to extract elements", is_bool: false },
+                OptionDef { name: "attribute", description: "Element attribute to extract (e.g. textContent, href)", is_bool: false },
+                OptionDef { name: "output", description: "Output file path for scraped data", is_bool: false },
+                OptionDef { name: "deadline", description: "Deadline for task completion (ISO 8601)", is_bool: false },
+                OptionDef { name: "expires", description: "Cache expiration duration (e.g. 1d, 1h)", is_bool: false },
+                OptionDef { name: "refresh", description: "Force a fresh fetch, ignoring cache", is_bool: true },
+            ],
+            tool_name_fn: |_| "__co_scrape__".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({ "url": get_str(args, "url").unwrap_or_default() });
+                if let Some(v) = get_opt_str(args, "selector") { p["selector"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "attribute") { p["attribute"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "output") { p["output"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "deadline") { p["deadline"] = json!(v); }
+                if let Some(v) = get_opt_str(args, "expires") { p["expires"] = json!(v); }
+                if let Some(b) = get_bool(args, "refresh") { p["refresh"] = json!(b); }
+                p
+            },
+        },
+        CommandDef {
+            name: "co-status",
+            description: "Check the status of a collective task",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by co submit or co scrape", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__co_status__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "co-result",
+            description: "Get the result of a completed collective task",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by co submit or co scrape", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__co_result__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
     ]
 }
 
@@ -719,7 +893,11 @@ mod tests {
     #[test]
     fn test_commands_map_contains_expected() {
         let map = commands_map();
-        for expected in &["open", "close", "goto", "click", "type", "fill", "snapshot", "screenshot"] {
+        for expected in &[
+            "open", "close", "goto", "click", "type", "fill", "snapshot", "screenshot",
+            "extract", "summarize", "agent-run", "agent-status", "agent-result",
+            "co-create", "co-submit", "co-scrape", "co-status", "co-result",
+        ] {
             assert!(map.contains_key(*expected), "Missing command: {}", expected);
         }
     }
@@ -739,5 +917,196 @@ mod tests {
         let cmd = map.get("open").unwrap();
         let args = HashMap::new();
         assert_eq!((cmd.tool_name_fn)(&args), "browser_snapshot");
+    }
+
+    #[test]
+    fn test_extract_tool_name_and_params() {
+        let map = commands_map();
+        let cmd = map.get("extract").unwrap();
+        let mut args = HashMap::new();
+        args.insert("instruction".to_string(), json!("product name, price"));
+        assert_eq!((cmd.tool_name_fn)(&args), "agent_extract");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["instruction"], "product name, price");
+    }
+
+    #[test]
+    fn test_extract_with_schema() {
+        let map = commands_map();
+        let cmd = map.get("extract").unwrap();
+        let mut args = HashMap::new();
+        args.insert("instruction".to_string(), json!("product info"));
+        args.insert("schema".to_string(), json!(r#"{"fields":[]}"#));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["instruction"], "product info");
+        assert_eq!(params["schema"], r#"{"fields":[]}"#);
+    }
+
+    #[test]
+    fn test_summarize_tool_name_and_params() {
+        let map = commands_map();
+        let cmd = map.get("summarize").unwrap();
+        let mut args = HashMap::new();
+        args.insert("instruction".to_string(), json!("summarize the reviews"));
+        assert_eq!((cmd.tool_name_fn)(&args), "agent_summarize");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["instruction"], "summarize the reviews");
+    }
+
+    #[test]
+    fn test_summarize_with_selector() {
+        let map = commands_map();
+        let cmd = map.get("summarize").unwrap();
+        let mut args = HashMap::new();
+        args.insert("selector".to_string(), json!("#content"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["selector"], "#content");
+        assert!(params.get("instruction").is_none());
+    }
+
+    #[test]
+    fn test_agent_run_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("agent-run").unwrap();
+        let mut args = HashMap::new();
+        args.insert("task".to_string(), json!("go to amazon.com"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__agent_run__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["task"], "go to amazon.com");
+    }
+
+    #[test]
+    fn test_agent_status_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("agent-status").unwrap();
+        let mut args = HashMap::new();
+        args.insert("id".to_string(), json!("abc-123"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__agent_status__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["id"], "abc-123");
+    }
+
+    #[test]
+    fn test_agent_result_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("agent-result").unwrap();
+        let mut args = HashMap::new();
+        args.insert("id".to_string(), json!("abc-123"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__agent_result__");
+    }
+
+    #[test]
+    fn test_co_create_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("co-create").unwrap();
+        let args = HashMap::new();
+        assert_eq!((cmd.tool_name_fn)(&args), "__co_create__");
+    }
+
+    #[test]
+    fn test_co_create_params_with_options() {
+        let map = commands_map();
+        let cmd = map.get("co-create").unwrap();
+        let mut args = HashMap::new();
+        args.insert("profile-mode".to_string(), json!("temporary"));
+        args.insert("max-open-tabs".to_string(), json!("8"));
+        args.insert("max-browser-contexts".to_string(), json!("2"));
+        args.insert("display-mode".to_string(), json!("GUI"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["profileMode"], "temporary");
+        assert_eq!(params["maxOpenTabs"], "8");
+        assert_eq!(params["maxBrowserContexts"], "2");
+        assert_eq!(params["displayMode"], "GUI");
+    }
+
+    #[test]
+    fn test_co_submit_tool_name_and_params() {
+        let map = commands_map();
+        let cmd = map.get("co-submit").unwrap();
+        let mut args = HashMap::new();
+        args.insert("url".to_string(), json!("https://www.amazon.com/dp/B08PP5MSVB"));
+        args.insert("deadline".to_string(), json!("2026-02-24T23:59:59Z"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__co_submit__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["url"], "https://www.amazon.com/dp/B08PP5MSVB");
+        assert_eq!(params["deadline"], "2026-02-24T23:59:59Z");
+    }
+
+    #[test]
+    fn test_co_submit_with_seed_file() {
+        let map = commands_map();
+        let cmd = map.get("co-submit").unwrap();
+        let mut args = HashMap::new();
+        args.insert("seed-file".to_string(), json!("seeds.txt"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["seedFile"], "seeds.txt");
+    }
+
+    #[test]
+    fn test_co_submit_with_load_options() {
+        let map = commands_map();
+        let cmd = map.get("co-submit").unwrap();
+        let mut args = HashMap::new();
+        args.insert("url".to_string(), json!("https://example.com"));
+        args.insert("refresh".to_string(), json!(true));
+        args.insert("parse".to_string(), json!(true));
+        args.insert("store-content".to_string(), json!(true));
+        args.insert("expires".to_string(), json!("1d"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["refresh"], true);
+        assert_eq!(params["parse"], true);
+        assert_eq!(params["storeContent"], true);
+        assert_eq!(params["expires"], "1d");
+    }
+
+    #[test]
+    fn test_co_scrape_tool_name_and_params() {
+        let map = commands_map();
+        let cmd = map.get("co-scrape").unwrap();
+        let mut args = HashMap::new();
+        args.insert("url".to_string(), json!("https://www.amazon.com/dp/B08PP5MSVB"));
+        args.insert("selector".to_string(), json!(".product-title"));
+        args.insert("attribute".to_string(), json!("textContent"));
+        args.insert("output".to_string(), json!("title.txt"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__co_scrape__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["url"], "https://www.amazon.com/dp/B08PP5MSVB");
+        assert_eq!(params["selector"], ".product-title");
+        assert_eq!(params["attribute"], "textContent");
+        assert_eq!(params["output"], "title.txt");
+    }
+
+    #[test]
+    fn test_co_status_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("co-status").unwrap();
+        let mut args = HashMap::new();
+        args.insert("id".to_string(), json!("abc-123"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__co_status__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["id"], "abc-123");
+    }
+
+    #[test]
+    fn test_co_result_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("co-result").unwrap();
+        let mut args = HashMap::new();
+        args.insert("id".to_string(), json!("abc-123"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__co_result__");
+    }
+
+    #[test]
+    fn test_collective_commands_in_collective_category() {
+        let cmds = all_commands();
+        let collective_cmds: Vec<&str> = cmds.iter()
+            .filter(|c| c.category == Category::Collective)
+            .map(|c| c.name)
+            .collect();
+        assert!(collective_cmds.contains(&"co-create"));
+        assert!(collective_cmds.contains(&"co-submit"));
+        assert!(collective_cmds.contains(&"co-scrape"));
+        assert!(collective_cmds.contains(&"co-status"));
+        assert!(collective_cmds.contains(&"co-result"));
     }
 }

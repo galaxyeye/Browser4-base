@@ -985,6 +985,7 @@ fn test_tab_commands_plus_close_all_and_kill_all(ctx: &mut E2ECtx) {
 /// Verify that every command defined in the CLI was exercised by the e2e tests.
 fn assert_all_commands_covered(ctx: &E2ECtx) {
     // Canonical list of all CLI commands (must stay in sync with commands.rs).
+    // Agent and collective commands are excluded because they require an LLM backend.
     let all_commands: HashSet<&str> = [
         "open",
         "close",
@@ -1025,6 +1026,23 @@ fn assert_all_commands_covered(ctx: &E2ECtx) {
         "list",
         "close-all",
         "kill-all",
+    ]
+    .into();
+
+    // Commands that require LLM/agent backend or multi-browser contexts
+    // and are not tested in e2e. Listed here to document exclusions.
+    #[allow(unused_variables)]
+    let excluded_commands: HashSet<&str> = [
+        "extract",
+        "summarize",
+        "agent-run",
+        "agent-status",
+        "agent-result",
+        "co-create",
+        "co-submit",
+        "co-scrape",
+        "co-status",
+        "co-result",
     ]
     .into();
 
