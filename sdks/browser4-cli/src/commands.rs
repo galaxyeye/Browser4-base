@@ -19,6 +19,8 @@ pub enum Category {
     Browsers,
     Config,
     Install,
+    Agent,
+    Collective,
 }
 
 impl Category {
@@ -36,6 +38,8 @@ impl Category {
             Category::Browsers => "browsers",
             Category::Config => "config",
             Category::Install => "install",
+            Category::Agent => "agent",
+            Category::Collective => "collective",
         }
     }
 }
@@ -692,6 +696,127 @@ pub fn all_commands() -> Vec<CommandDef> {
             tool_name_fn: |_| String::new(),
             tool_params_fn: |_| json!({}),
         },
+        // ---- Agent ----
+        CommandDef {
+            name: "extract",
+            description: "Extract structured data from the current page",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "instruction", description: "What data to extract, e.g. 'product name, price, ratings'", optional: false }],
+            options: &[
+                OptionDef { name: "schema", description: "JSON schema to constrain the extracted data structure", is_bool: false },
+            ],
+            tool_name_fn: |_| "agent_extract".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({ "instruction": get_str(args, "instruction").unwrap_or_default() });
+                if let Some(s) = get_opt_str(args, "schema") { p["schema"] = json!(s); }
+                p
+            },
+        },
+        CommandDef {
+            name: "summarize",
+            description: "Summarize page content using AI",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "instruction", description: "Summarization instruction, e.g. 'summarize the product reviews'", optional: true }],
+            options: &[
+                OptionDef { name: "selector", description: "CSS selector to limit the scope of summarization", is_bool: false },
+            ],
+            tool_name_fn: |_| "agent_summarize".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({});
+                if let Some(i) = get_opt_str(args, "instruction") { p["instruction"] = json!(i); }
+                if let Some(s) = get_opt_str(args, "selector") { p["selector"] = json!(s); }
+                p
+            },
+        },
+        CommandDef {
+            name: "agent-run",
+            description: "Run an autonomous agent task (async, returns task ID)",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "task", description: "Natural language task for the agent to execute", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__agent_run__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "task": get_str(args, "task").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "agent-status",
+            description: "Check the status of a running agent task",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by agent-run", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__agent_status__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "agent-result",
+            description: "Get the result of a completed agent task",
+            category: Category::Agent,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by agent-run", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__agent_result__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        // ---- Collective ----
+        CommandDef {
+            name: "collective-run",
+            description: "Run a multi-agent collective task (async, returns task ID)",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "task", description: "Natural language task for the collective to execute", optional: false }],
+            options: &[
+                OptionDef { name: "agents", description: "Number of agents to use (default: auto)", is_bool: false },
+            ],
+            tool_name_fn: |_| "__collective_run__".to_string(),
+            tool_params_fn: |args| {
+                let mut p = json!({ "task": get_str(args, "task").unwrap_or_default() });
+                if let Some(n) = get_opt_str(args, "agents") { p["agents"] = json!(n); }
+                p
+            },
+        },
+        CommandDef {
+            name: "collective-status",
+            description: "Check the status of a running collective task",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by collective-run", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__collective_status__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "collective-result",
+            description: "Get the result of a completed collective task",
+            category: Category::Collective,
+            hidden: false,
+            args: &[ArgDef { name: "id", description: "Task ID returned by collective-run", optional: false }],
+            options: &[],
+            tool_name_fn: |_| "__collective_result__".to_string(),
+            tool_params_fn: |args| {
+                json!({ "id": get_str(args, "id").unwrap_or_default() })
+            },
+        },
+        CommandDef {
+            name: "collective-list",
+            description: "List running collective tasks",
+            category: Category::Collective,
+            hidden: false,
+            args: &[],
+            options: &[],
+            tool_name_fn: |_| "__collective_list__".to_string(),
+            tool_params_fn: |_| json!({}),
+        },
     ]
 }
 
@@ -719,7 +844,11 @@ mod tests {
     #[test]
     fn test_commands_map_contains_expected() {
         let map = commands_map();
-        for expected in &["open", "close", "goto", "click", "type", "fill", "snapshot", "screenshot"] {
+        for expected in &[
+            "open", "close", "goto", "click", "type", "fill", "snapshot", "screenshot",
+            "extract", "summarize", "agent-run", "agent-status", "agent-result",
+            "collective-run", "collective-status", "collective-result", "collective-list",
+        ] {
             assert!(map.contains_key(*expected), "Missing command: {}", expected);
         }
     }
@@ -739,5 +868,130 @@ mod tests {
         let cmd = map.get("open").unwrap();
         let args = HashMap::new();
         assert_eq!((cmd.tool_name_fn)(&args), "browser_snapshot");
+    }
+
+    #[test]
+    fn test_extract_tool_name_and_params() {
+        let map = commands_map();
+        let cmd = map.get("extract").unwrap();
+        let mut args = HashMap::new();
+        args.insert("instruction".to_string(), json!("product name, price"));
+        assert_eq!((cmd.tool_name_fn)(&args), "agent_extract");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["instruction"], "product name, price");
+    }
+
+    #[test]
+    fn test_extract_with_schema() {
+        let map = commands_map();
+        let cmd = map.get("extract").unwrap();
+        let mut args = HashMap::new();
+        args.insert("instruction".to_string(), json!("product info"));
+        args.insert("schema".to_string(), json!(r#"{"fields":[]}"#));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["instruction"], "product info");
+        assert_eq!(params["schema"], r#"{"fields":[]}"#);
+    }
+
+    #[test]
+    fn test_summarize_tool_name_and_params() {
+        let map = commands_map();
+        let cmd = map.get("summarize").unwrap();
+        let mut args = HashMap::new();
+        args.insert("instruction".to_string(), json!("summarize the reviews"));
+        assert_eq!((cmd.tool_name_fn)(&args), "agent_summarize");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["instruction"], "summarize the reviews");
+    }
+
+    #[test]
+    fn test_summarize_with_selector() {
+        let map = commands_map();
+        let cmd = map.get("summarize").unwrap();
+        let mut args = HashMap::new();
+        args.insert("selector".to_string(), json!("#content"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["selector"], "#content");
+        assert!(params.get("instruction").is_none());
+    }
+
+    #[test]
+    fn test_agent_run_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("agent-run").unwrap();
+        let mut args = HashMap::new();
+        args.insert("task".to_string(), json!("go to amazon.com"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__agent_run__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["task"], "go to amazon.com");
+    }
+
+    #[test]
+    fn test_agent_status_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("agent-status").unwrap();
+        let mut args = HashMap::new();
+        args.insert("id".to_string(), json!("abc-123"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__agent_status__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["id"], "abc-123");
+    }
+
+    #[test]
+    fn test_agent_result_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("agent-result").unwrap();
+        let mut args = HashMap::new();
+        args.insert("id".to_string(), json!("abc-123"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__agent_result__");
+    }
+
+    #[test]
+    fn test_collective_run_tool_name() {
+        let map = commands_map();
+        let cmd = map.get("collective-run").unwrap();
+        let mut args = HashMap::new();
+        args.insert("task".to_string(), json!("scrape 10 pages"));
+        assert_eq!((cmd.tool_name_fn)(&args), "__collective_run__");
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["task"], "scrape 10 pages");
+    }
+
+    #[test]
+    fn test_collective_run_with_agents_option() {
+        let map = commands_map();
+        let cmd = map.get("collective-run").unwrap();
+        let mut args = HashMap::new();
+        args.insert("task".to_string(), json!("scrape pages"));
+        args.insert("agents".to_string(), json!("5"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["agents"], "5");
+    }
+
+    #[test]
+    fn test_agent_commands_in_agent_category() {
+        let cmds = all_commands();
+        let agent_cmds: Vec<&str> = cmds.iter()
+            .filter(|c| c.category == Category::Agent)
+            .map(|c| c.name)
+            .collect();
+        assert!(agent_cmds.contains(&"extract"));
+        assert!(agent_cmds.contains(&"summarize"));
+        assert!(agent_cmds.contains(&"agent-run"));
+        assert!(agent_cmds.contains(&"agent-status"));
+        assert!(agent_cmds.contains(&"agent-result"));
+    }
+
+    #[test]
+    fn test_collective_commands_in_collective_category() {
+        let cmds = all_commands();
+        let collective_cmds: Vec<&str> = cmds.iter()
+            .filter(|c| c.category == Category::Collective)
+            .map(|c| c.name)
+            .collect();
+        assert!(collective_cmds.contains(&"collective-run"));
+        assert!(collective_cmds.contains(&"collective-status"));
+        assert!(collective_cmds.contains(&"collective-result"));
+        assert!(collective_cmds.contains(&"collective-list"));
     }
 }

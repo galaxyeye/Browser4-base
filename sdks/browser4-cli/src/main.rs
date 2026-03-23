@@ -30,7 +30,7 @@ use args::{build_command_args, parse_global_flags, parse_raw_args};
 use commands::commands_map;
 use daemon::{ensure_server_running, resolve_base_url};
 use help::{generate_command_help, generate_help};
-use http::{call_tool, is_stale_session_error, make_client};
+use http::{call_tool, is_stale_session_error, make_client, submit_plain_command, get_command_status, get_command_result};
 use managed_processes::{
     read_managed_server_processes, shutdown_managed_server_processes, ShutdownResult,
 };
@@ -43,6 +43,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn no_snapshot_commands() -> HashSet<&'static str> {
     [
         "open", "close", "close-all", "kill-all", "list", "help", "snapshot", "screenshot", "pdf",
+        "agent-run", "agent-status", "agent-result",
+        "collective-run", "collective-status", "collective-result", "collective-list",
     ]
     .into()
 }
@@ -421,6 +423,147 @@ async fn handle_tool_command(
     Ok(())
 }
 
+// ---------------------------------------------------------------------------
+// Agent command handlers
+// ---------------------------------------------------------------------------
+
+async fn handle_agent_run(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let task = tool_params
+        .get("task")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+
+    if task.is_empty() {
+        return Err("Task description is required.".to_string());
+    }
+
+    let result = submit_plain_command(client, base_url, task, true).await?;
+
+    // The async response is a task ID (possibly JSON-quoted)
+    let task_id = result.trim().trim_matches('"').to_string();
+    println!("Task submitted: {}", task_id);
+    println!("Use 'browser4-cli agent-status {}' to check progress.", task_id);
+    Ok(())
+}
+
+async fn handle_agent_status(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let id = tool_params
+        .get("id")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+
+    if id.is_empty() {
+        return Err("Task ID is required.".to_string());
+    }
+
+    let result = get_command_status(client, base_url, id).await?;
+    println!("{}", result);
+    Ok(())
+}
+
+async fn handle_agent_result(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let id = tool_params
+        .get("id")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+
+    if id.is_empty() {
+        return Err("Task ID is required.".to_string());
+    }
+
+    let result = get_command_result(client, base_url, id).await?;
+    println!("{}", result);
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Collective command handlers
+// ---------------------------------------------------------------------------
+
+async fn handle_collective_run(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let task = tool_params
+        .get("task")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+
+    if task.is_empty() {
+        return Err("Task description is required.".to_string());
+    }
+
+    // Collective tasks also use the plain command API with async mode
+    let result = submit_plain_command(client, base_url, task, true).await?;
+    let task_id = result.trim().trim_matches('"').to_string();
+    println!("Collective task submitted: {}", task_id);
+    println!("Use 'browser4-cli collective-status {}' to check progress.", task_id);
+    Ok(())
+}
+
+async fn handle_collective_status(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let id = tool_params
+        .get("id")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+
+    if id.is_empty() {
+        return Err("Task ID is required.".to_string());
+    }
+
+    let result = get_command_status(client, base_url, id).await?;
+    println!("{}", result);
+    Ok(())
+}
+
+async fn handle_collective_result(
+    client: &Client,
+    base_url: &str,
+    tool_params: &Value,
+) -> Result<(), String> {
+    let id = tool_params
+        .get("id")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+
+    if id.is_empty() {
+        return Err("Task ID is required.".to_string());
+    }
+
+    let result = get_command_result(client, base_url, id).await?;
+    println!("{}", result);
+    Ok(())
+}
+
+async fn handle_collective_list(
+    client: &Client,
+    base_url: &str,
+) -> Result<(), String> {
+    // List running tasks by querying the commands endpoint
+    // For now, inform the user this is not yet fully supported
+    println!("Listing collective tasks is not yet supported by the server.");
+    println!("Use 'browser4-cli agent-status <id>' to check individual task status.");
+    let _ = (client, base_url);
+    Ok(())
+}
+
 fn should_ensure_server_running(command: &str) -> bool {
     command != "close-all" && command != "kill-all"
 }
@@ -522,6 +665,29 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
         }
         "screenshot" => {
             handle_screenshot(&client, &base_url, &tool_name, &tool_params).await?;
+        }
+        // Agent commands
+        "agent-run" => {
+            handle_agent_run(&client, &base_url, &tool_params).await?;
+        }
+        "agent-status" => {
+            handle_agent_status(&client, &base_url, &tool_params).await?;
+        }
+        "agent-result" => {
+            handle_agent_result(&client, &base_url, &tool_params).await?;
+        }
+        // Collective commands
+        "collective-run" => {
+            handle_collective_run(&client, &base_url, &tool_params).await?;
+        }
+        "collective-status" => {
+            handle_collective_status(&client, &base_url, &tool_params).await?;
+        }
+        "collective-result" => {
+            handle_collective_result(&client, &base_url, &tool_params).await?;
+        }
+        "collective-list" => {
+            handle_collective_list(&client, &base_url).await?;
         }
         _ => {
             if tool_name.is_empty() {

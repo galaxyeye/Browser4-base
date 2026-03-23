@@ -13,6 +13,8 @@ const CATEGORIES: &[(&str, &str)] = &[
     ("storage", "Storage"),
     ("network", "Network"),
     ("devtools", "DevTools"),
+    ("agent", "Agent"),
+    ("collective", "Collective"),
     ("install", "Install"),
     ("config", "Configuration"),
     ("browsers", "Browser sessions"),
@@ -135,6 +137,12 @@ mod tests {
         assert!(help.contains("click"));
         assert!(help.contains("snapshot"));
         assert!(help.contains("Core:"));
+        assert!(help.contains("Agent:"));
+        assert!(help.contains("Collective:"));
+        assert!(help.contains("extract"));
+        assert!(help.contains("summarize"));
+        assert!(help.contains("agent-run"));
+        assert!(help.contains("collective-run"));
     }
 
     #[test]
@@ -144,5 +152,44 @@ mod tests {
         let help = generate_command_help(goto);
         assert!(help.contains("browser4-cli goto <url>"));
         assert!(help.contains("Navigate to a URL"));
+    }
+
+    #[test]
+    fn test_generate_command_help_extract() {
+        let cmds = all_commands();
+        let cmd = cmds.iter().find(|c| c.name == "extract").unwrap();
+        let help = generate_command_help(cmd);
+        assert!(help.contains("browser4-cli extract <instruction>"));
+        assert!(help.contains("Extract structured data"));
+        assert!(help.contains("--schema"));
+    }
+
+    #[test]
+    fn test_generate_command_help_summarize() {
+        let cmds = all_commands();
+        let cmd = cmds.iter().find(|c| c.name == "summarize").unwrap();
+        let help = generate_command_help(cmd);
+        assert!(help.contains("browser4-cli summarize"));
+        assert!(help.contains("Summarize page content"));
+        assert!(help.contains("--selector"));
+    }
+
+    #[test]
+    fn test_generate_command_help_agent_run() {
+        let cmds = all_commands();
+        let cmd = cmds.iter().find(|c| c.name == "agent-run").unwrap();
+        let help = generate_command_help(cmd);
+        assert!(help.contains("browser4-cli agent-run <task>"));
+        assert!(help.contains("autonomous agent task"));
+    }
+
+    #[test]
+    fn test_generate_command_help_collective_run() {
+        let cmds = all_commands();
+        let cmd = cmds.iter().find(|c| c.name == "collective-run").unwrap();
+        let help = generate_command_help(cmd);
+        assert!(help.contains("browser4-cli collective-run <task>"));
+        assert!(help.contains("multi-agent collective"));
+        assert!(help.contains("--agents"));
     }
 }
