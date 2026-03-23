@@ -119,6 +119,8 @@ application-private.properties
 /test-results/
 /release_notes.md
 /node_modules/
+/**/node_modules/**
 */**/py/dom/
 */**/human-private/
 */**/.browser4-cli/
+/**/dist/**

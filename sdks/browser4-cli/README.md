@@ -1,7 +1,7 @@
 # Browser4 CLI
 
-A Rust implementation of the Browser4 CLI — drive a [Browser4](https://github.com/platonai/Browser4)
-server from the command line.
+A command-line interface for controlling a [Browser4](https://github.com/platonai/Browser4)
+server. Designed for use by AI agents through SKILLS + CLI.
 
 ## Prerequisites
 
