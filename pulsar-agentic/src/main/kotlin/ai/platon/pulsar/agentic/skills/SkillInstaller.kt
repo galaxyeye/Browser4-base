@@ -99,16 +99,11 @@ class SkillInstaller(
             val definitions = definitionLoader.loadFromDirectory(sourceDir.parent)
             definition = definitions.find {
                 it.skillId == sourceDir.fileName.toString()
-            } ?: run {
-                // If directory-based loading didn't match, try single-directory loading
-                val singleDefs = definitionLoader.loadFromDirectory(sourceDir.parent)
-                singleDefs.firstOrNull { it.skillId == sourceDir.fileName.toString() }
-                    ?: return InstallResult(
-                        success = false,
-                        skillId = sourceDir.fileName.toString(),
-                        message = "Failed to parse SKILL.md in: $sourceDir"
-                    )
-            }
+            } ?: return InstallResult(
+                success = false,
+                skillId = sourceDir.fileName.toString(),
+                message = "Failed to parse SKILL.md in: $sourceDir"
+            )
         } catch (e: Exception) {
             return InstallResult(
                 success = false,
@@ -276,7 +271,8 @@ class SkillInstaller(
     fun readDocumentation(skillId: String): String? {
         val activation = try {
             registry.activateSkill(skillId)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.debug("Failed to read documentation for skill '{}': {}", skillId, e.message)
             return null
         }
         return activation.skillMd.takeIf { it.isNotBlank() }

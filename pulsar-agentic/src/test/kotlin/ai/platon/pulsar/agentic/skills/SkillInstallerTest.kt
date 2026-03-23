@@ -4,7 +4,11 @@ import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
 import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -49,7 +53,7 @@ class SkillInstallerTest {
         assertTrue(result.success, "Installation should succeed: ${result.message}")
         assertEquals("test-install-skill", result.skillId)
         assertTrue(registry.contains("test-install-skill"), "Skill should be registered")
-        Assertions.assertNotNull(result.deployedPath, "Deployed path should be set")
+        assertNotNull(result.deployedPath, "Deployed path should be set")
     }
 
     @Test
@@ -218,7 +222,7 @@ class SkillInstallerTest {
 
         val doc = installer.readDocumentation("web-scraping")
 
-        Assertions.assertNotNull(doc)
+        assertNotNull(doc)
         assertTrue(doc!!.contains("Web Scraping"))
     }
 
@@ -226,7 +230,7 @@ class SkillInstallerTest {
     @DisplayName("test readDocumentation returns null for unknown skill")
     fun testReadDocumentationReturnsNullForUnknown() = runBlocking {
         val doc = installer.readDocumentation("nonexistent-skill")
-        Assertions.assertNull(doc)
+        assertNull(doc)
     }
 
     @Test
@@ -314,7 +318,7 @@ class SkillInstallerTest {
         val definitions = loader.loadFromDirectory(tempDir)
 
         val def = definitions.find { it.skillId == "test-loader-skill" }
-        Assertions.assertNotNull(def, "Definition should be loaded")
+        assertNotNull(def, "Definition should be loaded")
         assertEquals(3, def!!.installSteps.size)
         assertEquals("Download the binary", def.installSteps[0])
         assertEquals("Add to PATH", def.installSteps[1])
