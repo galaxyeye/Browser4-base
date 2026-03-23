@@ -88,6 +88,90 @@ pub fn is_stale_session_error(message: &str) -> bool {
         || lower.contains("session does not exist")
 }
 
+/// Submit a plain-text command to the Browser4 server.
+///
+/// When `async_mode` is true, the server returns a task ID immediately.
+/// When false, the server blocks until execution completes.
+pub async fn submit_plain_command(
+    client: &Client,
+    base_url: &str,
+    command: &str,
+    async_mode: bool,
+) -> Result<String, String> {
+    let url = format!(
+        "{}/api/commands/plain?async={}",
+        base_url.trim_end_matches('/'),
+        async_mode
+    );
+
+    let response = client
+        .post(&url)
+        .header("Content-Type", "text/plain")
+        .body(command.to_string())
+        .send()
+        .await
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    let text = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read response: {e}"))?;
+
+    Ok(text)
+}
+
+/// Get the status of a command by its task ID.
+pub async fn get_command_status(
+    client: &Client,
+    base_url: &str,
+    task_id: &str,
+) -> Result<String, String> {
+    let url = format!(
+        "{}/api/commands/{}/status",
+        base_url.trim_end_matches('/'),
+        task_id
+    );
+
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    let text = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read response: {e}"))?;
+
+    Ok(text)
+}
+
+/// Get the result of a completed command by its task ID.
+pub async fn get_command_result(
+    client: &Client,
+    base_url: &str,
+    task_id: &str,
+) -> Result<String, String> {
+    let url = format!(
+        "{}/api/commands/{}/result",
+        base_url.trim_end_matches('/'),
+        task_id
+    );
+
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    let text = response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read response: {e}"))?;
+
+    Ok(text)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
