@@ -445,7 +445,7 @@ class BrowserTabToolExecutor: AbstractToolExecutor() {
             "baseURI" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.baseURI() }
             "referrer" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.referrer() }
             "pageSource" -> { validateArgs(args, emptySet(), emptySet(), functionName); driver.pageSource() }
-            "help" -> { args["method"]?.toString()?.let { this.help(it) } ?: this.help() }
+            "help" -> { args.values.firstOrNull()?.toString()?.let { this.help(it) } ?: this.help() }
 
             else -> help()
         }
