@@ -774,7 +774,7 @@ pub fn all_commands() -> Vec<CommandDef> {
             hidden: false,
             args: &[],
             options: &[
-                OptionDef { name: "profile-mode", description: "Browser profile mode: temporary, default, system_default, prototype", is_bool: false },
+                OptionDef { name: "profile-mode", description: "Browser profile mode (temporary, default, system_default, prototype)", is_bool: false },
                 OptionDef { name: "max-open-tabs", description: "Maximum open tabs per browser context (default: 8)", is_bool: false },
                 OptionDef { name: "max-browser-contexts", description: "Number of isolated browser environments (default: 2)", is_bool: false },
                 OptionDef { name: "display-mode", description: "Display mode: GUI, HEADLESS, SUPERVISED", is_bool: false },

@@ -702,28 +702,35 @@ fn should_ensure_server_running(command: &str) -> bool {
 // Entry point
 // ---------------------------------------------------------------------------
 
+/// Rewrite "co <subcommand>" to "co-<subcommand>".
+///
+/// When the user types `browser4-cli co create ...`, the args are
+/// `["co", "create", ...]`. This function joins them into `["co-create", ...]`.
+/// Returns `None` if the input does not start with `"co"` or has no subcommand.
+fn rewrite_co_prefix(args: &[String]) -> Option<Vec<String>> {
+    if args.first().map(|s| s.as_str()) != Some("co") {
+        return None;
+    }
+    let sub = args.get(1)?;
+    let mut rewritten = vec![format!("co-{}", sub)];
+    rewritten.extend(args[2..].iter().cloned());
+    Some(rewritten)
+}
+
 #[tokio::main]
 async fn main() {
     let raw_args: Vec<String> = std::env::args().skip(1).collect();
     let global = parse_global_flags(&raw_args);
 
     // Handle "co <subcommand>" → "co-<subcommand>" prefix rewriting.
-    // When the user types `browser4-cli co create ...`, global.args is ["co", "create", ...].
-    // We rewrite to ["co-create", ...] so the command lookup works.
-    let (command, effective_global) = if global.args.first().map(|s| s.as_str()) == Some("co") {
-        if let Some(sub) = global.args.get(1) {
-            let combined = format!("co-{}", sub);
-            let mut new_args = vec![combined.clone()];
-            new_args.extend(global.args[2..].iter().cloned());
-            let new_global = args::GlobalFlags {
-                session_name: global.session_name.clone(),
-                server_url: global.server_url.clone(),
-                args: new_args,
-            };
-            (combined, new_global)
-        } else {
-            ("co".to_string(), global)
-        }
+    let (command, effective_global) = if let Some(rewritten) = rewrite_co_prefix(&global.args) {
+        let cmd = rewritten[0].clone();
+        let new_global = args::GlobalFlags {
+            session_name: global.session_name.clone(),
+            server_url: global.server_url.clone(),
+            args: rewritten,
+        };
+        (cmd, new_global)
     } else {
         let cmd = global.args.first().map(|s| s.to_string()).unwrap_or_default();
         (cmd, global)
@@ -738,11 +745,12 @@ async fn main() {
 async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
     // Handle help or no command
     if command.is_empty() || command == "help" || command == "--help" || command == "-h" {
-        // Handle "help co <subcommand>" by joining "co" + subcommand
-        let sub = match (global.args.get(1).map(|s| s.as_str()), global.args.get(2).map(|s| s.as_str())) {
-            (Some("co"), Some(subcmd)) => Some(format!("co-{}", subcmd)),
-            (Some(name), _) => Some(name.to_string()),
-            _ => None,
+        // Resolve "help co <subcommand>" using the shared prefix rewriter
+        let help_args: Vec<String> = global.args.iter().skip(1).cloned().collect();
+        let sub = if let Some(rewritten) = rewrite_co_prefix(&help_args) {
+            Some(rewritten[0].clone())
+        } else {
+            global.args.get(1).cloned()
         };
         print_help(sub.as_deref());
         return Ok(());
