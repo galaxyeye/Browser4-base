@@ -52,7 +52,7 @@ pub fn resolve_default_state_dir() -> PathBuf {
 
 fn state_file(state_dir: &Path, session_name: Option<&str>) -> PathBuf {
     match session_name {
-        Some(name) => state_dir.join(format!("cli-state-{}.json", name)),
+        Some(name) => state_dir.join("sessions").join(format!("{}.json", name)),
         None => state_dir.join("cli-state.json"),
     }
 }
@@ -78,9 +78,14 @@ pub fn write_state(
     let dir = state_dir
         .map(|p| p.to_path_buf())
         .unwrap_or_else(resolve_default_state_dir);
-    fs::create_dir_all(&dir)?;
+    
+    let path = state_file(&dir, session_name);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    
     let json = serde_json::to_string_pretty(state).expect("state serialization should not fail");
-    fs::write(state_file(&dir, session_name), json)
+    fs::write(path, json)
 }
 
 /// Clear all persisted CLI state (called on `close`).

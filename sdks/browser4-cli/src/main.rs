@@ -35,7 +35,7 @@ use managed_processes::{
     read_managed_server_processes, shutdown_managed_server_processes, ShutdownResult,
 };
 use snapshot::{resolve_output_path, save_binary, save_snapshot};
-use state::{clear_state, read_state, write_state, CliState};
+use state::{clear_state, read_state, write_state, CliState, resolve_default_state_dir};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -70,8 +70,15 @@ fn get_session_id(state: &CliState) -> Result<&str, String> {
         .ok_or_else(|| r#"No active session. Run "browser4-cli open" first."#.to_string())
 }
 
-async fn create_session(client: &Client, base_url: &str, state: &CliState, session_name: Option<&str>) -> Result<String, String> {
-    let result = call_tool(client, base_url, "open_session", json!({})).await?;
+async fn create_session(
+    client: &Client,
+    base_url: &str,
+    state: &CliState,
+    session_name: Option<&str>,
+    capabilities: Option<Value>,
+) -> Result<String, String> {
+    let params = capabilities.unwrap_or(json!({}));
+    let result = call_tool(client, base_url, "open_session", params).await?;
     // The server response may be a JSON object `{"sessionId":"..."}` or a plain
     // string. Try JSON first; fall back to using the raw string as the session ID.
     let session_id = if let Ok(parsed) = serde_json::from_str::<Value>(&result) {
@@ -123,7 +130,7 @@ where
             if !recover_stale {
                 return Err(r#"Saved session expired. Run "browser4-cli open" first."#.to_string());
             }
-            let new_session_id = create_session(client, base_url, &state, session_name).await?;
+            let new_session_id = create_session(client, base_url, &state, session_name, None).await?;
             action(new_session_id).await
         }
     }
@@ -172,7 +179,22 @@ async fn handle_open(
 ) -> Result<(), String> {
     let mut state = read_state(None, session_name);
     state.session_name = session_name.map(|s| s.to_string());
-    let session_id = create_session(client, base_url, &state, session_name).await?;
+
+    let capabilities = {
+        let mut caps = json!({});
+        if let Some(h) = tool_params.get("headed") {
+            caps["headed"] = h.clone();
+        }
+        if let Some(p) = tool_params.get("persistent") {
+            caps["persistent"] = p.clone();
+        }
+        if let Some(pp) = tool_params.get("profilePath") {
+            caps["profilePath"] = pp.clone();
+        }
+        caps
+    };
+
+    let session_id = create_session(client, base_url, &state, session_name, Some(capabilities)).await?;
 
     let url = tool_params.get("url").and_then(|u| u.as_str()).unwrap_or("about:blank");
     if !url.is_empty() && url != "about:blank" {
@@ -232,6 +254,19 @@ async fn handle_close_all(client: &Client, base_url: &str) -> Result<(), String>
         shutdown_managed_server_processes(false, None, 5_000, 250);
     clear_state(None, None);
 
+    // Clear all named session states
+    let state_dir = resolve_default_state_dir().join("sessions");
+    if state_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(state_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map_or(false, |ext| ext == "json") {
+                    let _ = std::fs::remove_file(path);
+                }
+            }
+        }
+    }
+
     if close_results.is_empty() {
         println!("No reachable Browser4 servers responded to close-all.");
     } else {
@@ -287,7 +322,49 @@ fn log_shutdown_result(action: &str, result: &ShutdownResult) {
 
 async fn handle_list(client: &Client, base_url: &str) -> Result<(), String> {
     let result = call_tool(client, base_url, "list_sessions", json!({})).await?;
-    println!("{}", result);
+
+    let active_ids: Vec<String> = serde_json::from_str::<Value>(&result)
+        .ok()
+        .and_then(|v| {
+            v.as_array().map(|arr| {
+                arr.iter()
+                    .filter_map(|x| x.as_str().map(String::from))
+                    .collect()
+            })
+        })
+        .unwrap_or_default();
+
+    println!("{:<20} | {:<40} | {}", "Name", "Session ID", "Status");
+    println!("{:-<20}-+-{:-<40}-+-{:-<10}", "", "", "");
+
+    // List named sessions
+    let state_dir = resolve_default_state_dir().join("sessions");
+    if state_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(state_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().map_or(false, |ext| ext == "json") {
+                    let name = path.file_stem().unwrap().to_string_lossy();
+                    if let Ok(content) = std::fs::read_to_string(&path) {
+                        if let Ok(state) = serde_json::from_str::<CliState>(&content) {
+                            if let Some(sid) = state.session_id {
+                                let status = if active_ids.contains(&sid) { "Active" } else { "Stale" };
+                                println!("{:<20} | {:<40} | {}", name, sid, status);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // List default session
+    let default_state = read_state(None, None);
+    if let Some(sid) = default_state.session_id {
+        let status = if active_ids.contains(&sid) { "Active" } else { "Stale" };
+        println!("{:<20} | {:<40} | {}", "(default)", sid, status);
+    }
+
     Ok(())
 }
 
@@ -305,6 +382,7 @@ async fn handle_delete_data(client: &Client, base_url: &str, session_name: Optio
     } else {
         println!("{}", result);
     }
+    clear_state(None, session_name);
     Ok(())
 }
 

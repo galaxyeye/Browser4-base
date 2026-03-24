@@ -114,6 +114,7 @@ pub fn all_commands() -> Vec<CommandDef> {
             options: &[
                 OptionDef { name: "headed", description: "Run browser in headed mode", is_bool: true },
                 OptionDef { name: "persistent", description: "Use persistent browser profile", is_bool: true },
+                OptionDef { name: "profile", description: "Path to browser profile directory", is_bool: false },
             ],
             tool_name_fn: |args| {
                 if args.get("url").and_then(|v| v.as_str()).map(|u| !u.is_empty()).unwrap_or(false) {
@@ -124,7 +125,17 @@ pub fn all_commands() -> Vec<CommandDef> {
             },
             tool_params_fn: |args| {
                 let url = get_opt_str(args, "url").unwrap_or("about:blank");
-                json!({ "url": url })
+                let mut params = json!({ "url": url });
+                if let Some(h) = get_bool(args, "headed") {
+                    params["headed"] = json!(h);
+                }
+                if let Some(p) = get_bool(args, "persistent") {
+                    params["persistent"] = json!(p);
+                }
+                if let Some(pf) = get_opt_str(args, "profile") {
+                    params["profilePath"] = json!(pf);
+                }
+                params
             },
         },
         CommandDef {
