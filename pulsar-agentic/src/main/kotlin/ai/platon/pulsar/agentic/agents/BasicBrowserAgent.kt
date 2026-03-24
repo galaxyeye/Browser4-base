@@ -36,7 +36,7 @@ open class BasicBrowserAgent(
     private val _startTime: Instant = Instant.now()
     private val _uuid: UUID = UUID.randomUUID()
     private val _baseDir: Path = AgentPaths.resolveTimedDirectory(_startTime).resolve(_uuid.toString())
-    private val _logDir = getLogDir()
+    private val _logDir = getAgentLogDir()
 
     protected val cta by lazy { ContextToAction(session.sessionConfig) }
     protected val inference by lazy { InferenceEngine(this) }
@@ -666,7 +666,7 @@ open class BasicBrowserAgent(
 
     }
 
-    private fun getLogDir(): Path {
+    private fun getAgentLogDir(): Path {
         val agentId = uuid.toString()
         val auxLogDir = AppPaths.detectAuxiliaryLogDir().resolve("agent")
         return auxLogDir.resolve(AppPaths.fromTime(startTime)).resolve(agentId)
