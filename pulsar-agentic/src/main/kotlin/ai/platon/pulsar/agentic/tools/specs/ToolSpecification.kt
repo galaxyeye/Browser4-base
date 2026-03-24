@@ -67,4 +67,23 @@ system.help(domain: String, method: String): String        // get help for a too
     val SUPPORTED_ACTIONS = SUPPORTED_TOOL_CALLS.map { it.substringBefore("(").trim() }
 
     val MAY_NAVIGATE_ACTIONS = setOf("navigate", "click", "reload", "goBack", "goForward")
+
+    /**
+     * Domains whose actions directly interact with the browser page and may change its visual state.
+     * Used to decide whether screenshots and DOM snapshots are necessary, and whether
+     * page-state diff comparisons are meaningful for no-op detection.
+     */
+    val BROWSER_INTERACTION_DOMAINS = setOf("tab", "driver", "browser")
+
+    /**
+     * Returns `true` if the given [domain] represents a browser-interaction action
+     * that may change the visible page state (e.g., clicking, navigating, switching tabs).
+     *
+     * Non-browser-interaction domains (e.g., `fs`, `agent`, `system`) do not alter the
+     * webpage and therefore do not require fresh screenshots or page-state comparisons.
+     */
+    fun isBrowserInteraction(domain: String?): Boolean {
+        if (domain.isNullOrBlank()) return true // default to true for safety (first step, unknown)
+        return BROWSER_INTERACTION_DOMAINS.contains(domain.lowercase())
+    }
 }

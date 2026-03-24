@@ -377,6 +377,10 @@ $userProvidedInstructions
         val visionInfo = """
 ## Visual Evidence
 
+- A screenshot is attached below. It is captured automatically after browser-interaction actions (e.g., click, navigate, scroll, fill, switchTab).
+- Screenshots are omitted after non-browser actions (e.g., file I/O, data extraction, system queries) to save tokens.
+- If you need visual confirmation after a non-browser action, use `tab.ariaSnapshot()` or request a screenshot explicitly.
+
 [Current page screenshot provided as base64 image]
 
 ---
