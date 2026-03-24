@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 const val AGENT_HISTORY_FILE_NAME = "state-history.jsonl"
+const val TOOL_CALL_RESULT_FILE_NAME = "tool-call-result-history.jsonl"
 
 /**
  * Manages agent state, execution contexts, and history tracking.
@@ -402,45 +403,36 @@ class AgentStateManager(
     fun writeExecutionContext(context: ExecutionContext) {
         val fileName = "context.log"
         val jsonFileName = "context.jsonl"
-        val runLogDir = resolveSessionLogDir(context.sessionId)
-        MessageWriter.writeOnce(runLogDir.resolve(fileName), context.toString())
-        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), context.toJson())
+        val sessionLogDir = resolveSessionLogDir(context.sessionId)
+        MessageWriter.writeOnce(sessionLogDir.resolve(fileName), context.toString())
+        MessageWriter.writeOnce(sessionLogDir.resolve(jsonFileName), context.toJson())
     }
 
     fun writeAgentState(state: AgentState, sessionId: String) {
         val fileName = "state-history.log"
         val jsonFileName = AGENT_HISTORY_FILE_NAME
-        val runLogDir = resolveSessionLogDir(sessionId)
-        MessageWriter.writeOnce(runLogDir.resolve(fileName), state.toString())
-        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), state.toJson())
+        val sessionLogDir = resolveSessionLogDir(sessionId)
+
+        MessageWriter.writeOnce(sessionLogDir.resolve(fileName), "" + state.timestamp + " - " + state)
+        MessageWriter.writeOnce(sessionLogDir.resolve(jsonFileName), state.toJson())
     }
 
     fun writeActionResult(context: ExecutionContext, result: DetailedActResult) {
-        val fileName = "result.log"
-        val jsonFileName = "result.jsonl"
-        val runLogDir = resolveSessionLogDir(context.sessionId)
+        val fileName = "tool-call-result.log"
+        val jsonFileName = TOOL_CALL_RESULT_FILE_NAME
+        val sessionLogDir = resolveSessionLogDir(context.sessionId)
 
-        MessageWriter.writeOnce(runLogDir.resolve(fileName), result.toString())
-        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), result.toJson())
-    }
-
-    fun writeChatLog(step: Int, actionType: String, messageType: String, content: String, timestamp: Instant = Instant.now()) {
-        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss")
-            .withZone(ZoneId.systemDefault())
-        val ts = formatter.format(timestamp)
-
-        val fileName = "chat.$ts.$actionType.$messageType.log"
-        val sessionId = _activeContext?.sessionId ?: "standalone"
-        MessageWriter.writeOnce(resolveSessionLogDir(sessionId).resolve(fileName), content)
+        MessageWriter.writeOnce(sessionLogDir.resolve(fileName), result.toString())
+        MessageWriter.writeOnce(sessionLogDir.resolve(jsonFileName), result.toJson())
     }
 
     fun writeProcessTrace(trace: ProcessTrace) {
         val fileName = "agent-trace.log"
         val jsonFileName = "agent-trace.jsonl"
         val sessionId = _activeContext?.sessionId ?: "standalone"
-        val runLogDir = resolveSessionLogDir(sessionId)
-        MessageWriter.writeOnce(runLogDir.resolve(fileName), trace.toString())
-        MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), trace.toJson())
+        val sessionLogDir = resolveSessionLogDir(sessionId)
+        MessageWriter.writeOnce(sessionLogDir.resolve(fileName), trace.toString())
+        MessageWriter.writeOnce(sessionLogDir.resolve(jsonFileName), trace.toJson())
     }
 
     fun writeAllProcessTrace() {
@@ -450,9 +442,9 @@ class AgentStateManager(
     }
 
     fun resolveSessionLogDir(sessionId: String): Path {
-        val runLogDir = logDir.resolve("task-$sessionId")
-        java.nio.file.Files.createDirectories(runLogDir)
-        return runLogDir
+        val sessionLogDir = logDir.resolve("task-$sessionId")
+        java.nio.file.Files.createDirectories(sessionLogDir)
+        return sessionLogDir
     }
 
     fun clearHistory() {
@@ -536,8 +528,8 @@ class AgentStateManager(
 
     private fun writeHistory(state: AgentState) {
         val sessionId = _activeContext?.sessionId ?: return
-        val runLogDir = resolveSessionLogDir(sessionId)
-        MessageWriter.writeOnce(runLogDir.resolve("history.log"), state.toString())
-        MessageWriter.writeOnce(runLogDir.resolve("history.jsonl"), state.toJson())
+        val sessionLogDir = resolveSessionLogDir(sessionId)
+        MessageWriter.writeOnce(sessionLogDir.resolve("history.log"), state.toString())
+        MessageWriter.writeOnce(sessionLogDir.resolve("history.jsonl"), state.toJson())
     }
 }

@@ -25,7 +25,7 @@ interface ToolExecutor {
 
 abstract class AbstractToolExecutor : ToolExecutor {
 
-    private val logger = getLogger(this)
+    private val logger = getLogger(AbstractToolExecutor::class)
 
     protected val toolSpec = mutableMapOf<String, ToolSpec>()
 

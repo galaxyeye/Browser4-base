@@ -148,7 +148,7 @@ class SkillInstallE2ETest {
             EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_ACT) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 val result = map["result"]
-                eventLogger.info("🎬 Act completed - result: {}", result)
+                eventLogger.info("🎬 Act completed - result: {}", Strings.compactInline(result.toString()))
                 capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_DID_ACT) {
                     mutableListOf()
                 }.add(map)

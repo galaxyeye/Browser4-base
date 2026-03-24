@@ -211,8 +211,8 @@ Output format:
     {
       "ref": "Web page node reference, e.g., `e123`",
       "description": "Description of the current node selected and tool selection",
-      "screenshotContentSummary": "Summary of the current screenshot content",
-      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
+      "screenshotContentSummary": "Summary of the current screenshot content if provided",
+      "currentPageContentSummary": "Summary of the current web page text content, based on the aria snapshot or web content extraction results",
       "memory": "1-3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
       "thinking": "A structured <think>-style reasoning block."
     }
@@ -234,8 +234,8 @@ Output format:
           "value": "Parameter value, such as `ref123`"
         }
       ],
-      "screenshotContentSummary": "Summary of the current screenshot content",
-      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
+      "screenshotContentSummary": "Summary of the current screenshot content if provided",
+      "currentPageContentSummary": "Summary of the current web page text content, based on the aria snapshot or web content extraction results",
       "memory": "1-3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
       "thinking": "A structured <think>-style reasoning block."
     }
@@ -655,9 +655,10 @@ Based on the context and current progress, select the most appropriate tool to a
     }
 
     private fun buildBrowserStateMessageForBrowserInteraction(messages: AgentMessageList, context: ExecutionContext) {
+        val step = context.step
         val lastToolCall = context.prevAgentState?.actionDescription?.toolCall
         val lastDomain = lastToolCall?.domain
-        if (ToolSpecification.isBrowserInteraction(lastDomain)) {
+        if (step > 1 && !ToolSpecification.isBrowserInteraction(lastDomain)) {
             return
         }
 

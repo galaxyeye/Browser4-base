@@ -148,7 +148,7 @@ const val OBSERVE_RESPONSE_ELEMENT_SCHEMA = """
         }
       ],
       "description": "Description of the current tool selection",
-      "screenshotContentSummary": "Summary of the current screenshot content",
+      "screenshotContentSummary": "Summary of the current screenshot content if provided",
       "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
       "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
       "thinking": "A structured <think>-style reasoning block.",
