@@ -3,6 +3,7 @@ package ai.platon.pulsar.agentic.inference.history
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.common.Strings
+import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.serialize.json.Pson
 
 class DefaultHistoryRenderStrategy(
@@ -11,7 +12,7 @@ class DefaultHistoryRenderStrategy(
     private val summaryStepLimit: Int = 6,
 ) : HistoryRenderStrategy {
 
-    override fun render(agentHistory: AgentHistory): String {
+    override fun render(agentHistory: AgentHistory, logPath: String?): String {
         val history = agentHistory.states
         if (history.isEmpty()) {
             return ""
@@ -20,9 +21,9 @@ class DefaultHistoryRenderStrategy(
         val recentStates = history.takeLast(recentStepsToKeep)
         val olderStates = history.dropLast(recentStates.size)
         val summarizedOlderStates = summarizeOlderStates(olderStates)
-        val recentJsonl = recentStates.joinToString("\n") { renderDetailedState(it) }
 
         val sections = buildList {
+            add("")
             add("## Execution History")
             add("")
             add(
@@ -34,24 +35,31 @@ class DefaultHistoryRenderStrategy(
             )
             add("")
             if (summarizedOlderStates.isNotEmpty()) {
+                add("")
                 add("### Earlier Steps Summary")
                 add(summarizedOlderStates)
                 add("")
             }
+            add("")
             add("### Recent Steps")
-            add("<agent_history>")
-            add(recentJsonl)
-            add("</agent_history>")
+            renderHistoryWithBudget(recentStates, this, logPath)
             if (olderStates.isNotEmpty()) {
                 add("")
-                add("Older steps remain available in persisted task logs and checkpoints.")
+                if (logPath != null) {
+                    add("Older steps remain available in persisted task logs: $logPath")
+                } else {
+                    add("Older steps remain available in persisted task logs and checkpoints.")
+                }
+            } else if (logPath != null) {
+                add("")
+                add("Full task logs available at: $logPath")
             }
             add("")
             add("---")
         }
 
         val rendered = sections.joinToString("\n")
-        return trimToBudget(rendered, history.size, olderStates.isNotEmpty())
+        return rendered
     }
 
     private fun summarizeOlderStates(states: List<AgentState>): String {
@@ -77,16 +85,52 @@ class DefaultHistoryRenderStrategy(
             }
     }
 
-    private fun renderDetailedState(state: AgentState): String {
+    private fun renderHistoryWithBudget(recentStates: List<AgentState>, output: MutableList<String>, logPath: String? = null) {
+        if (recentStates.isEmpty()) {
+            return
+        }
+
+        var i = 0
+        var renderedLength = 0
+        var averageLength = 0
+        var estimatedTotalLength = 0
+        var hasCompressedHistory = false
+
+        recentStates.forEach {
+            ++i
+
+            val compress = estimatedTotalLength > maxCharacters && i < recentStates.size - 2
+            if (compress) {
+                hasCompressedHistory = true
+            }
+            val rendered = renderDetailedState(it, compress)
+            renderedLength += rendered.length
+            averageLength = renderedLength / i
+            estimatedTotalLength = averageLength * recentStates.size
+
+            output.add(rendered)
+        }
+
+        val suffix = if (hasCompressedHistory) {
+            val details = if (logPath != null) " at $logPath" else ""
+            "\n\n(history budget applied; see persisted task logs$details for full details)"
+        } else {
+            "\n\n(history budget applied over ${recentStates.size} steps)"
+        }
+
+        output.add(suffix)
+    }
+
+    private fun renderDetailedState(state: AgentState, compress: Boolean = false): String {
         return Pson.toJson(
             mapOf(
                 "step" to state.step,
                 "toolCall" to state.actionDescription?.pseudoExpression,
-                "nextGoal" to state.nextGoal,
-                "thinking" to state.thinking,
-                "exception" to state.exception?.message,
+                "exception" to state.exception?.brief(),
                 "summary" to state.summary,
-                "keyFindings" to state.keyFindings
+                "nextGoal" to state.nextGoal.takeIf { !compress },
+                "thinking" to state.thinking.takeIf { !compress },
+                "keyFindings" to state.keyFindings.takeIf { !compress }
             )
         )
     }

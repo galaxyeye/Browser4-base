@@ -338,7 +338,7 @@ ${buildMainSystemPromptV1()}
 
         messages.addSystem(systemMsg)
         messages.addLastIfAbsent("user", buildUserRequestMessage(instruction), name = "user_request")
-        messages.addUser(buildAgentStateHistoryMessage(stateHistory))
+        messages.addUser(buildAgentStateHistoryMessage(stateHistory, context.agentStateHistoryLogPath))
         if (context.screenshotB64 != null) {
             messages.addUser(buildBrowserVisionInfo())
         }
@@ -369,8 +369,8 @@ $userProvidedInstructions
         return SimpleMessage("system", content)
     }
 
-    fun buildAgentStateHistoryMessage(agentHistory: AgentHistory): String {
-        return historyRenderStrategy.render(agentHistory)
+    fun buildAgentStateHistoryMessage(agentHistory: AgentHistory, agentStateHistoryLogPath: String? = null): String {
+        return historyRenderStrategy.render(agentHistory, agentStateHistoryLogPath)
     }
 
     fun buildBrowserVisionInfo(): String {
@@ -416,7 +416,7 @@ $lastModelError
         return """
 ## Previous Step Result
 
-Previous action: ${agentState.prevState?.toolCallResult?.actionDescription?.pseudoExpression}
+Previous action: ${agentState.prevState?.actionDescription?.pseudoExpression}
 Expected result: ${agentState.prevState?.nextGoal}
 
 Execution result:

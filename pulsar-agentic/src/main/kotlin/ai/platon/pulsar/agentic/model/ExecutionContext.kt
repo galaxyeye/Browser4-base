@@ -57,6 +57,7 @@ data class ExecutionContext constructor(
     val config: AgentConfig,
     val sessionId: String,
     val uuid: String = UUID.randomUUID().toString(),
+    val agentStateHistoryLogPath: String? = null,
 ) {
     /**
      * Short session identifier for compact logs and human-readable traces.

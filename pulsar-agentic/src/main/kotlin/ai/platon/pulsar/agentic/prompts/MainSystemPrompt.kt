@@ -148,6 +148,7 @@ fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
 ## File Handling
 
 - Prefer `fs.*` tools for file operations.
+- Use `plan.md` if you have a plan.
 - Use `results.md` to summarize task results.
 
 ---

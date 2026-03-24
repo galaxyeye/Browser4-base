@@ -27,6 +27,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+const val AGENT_HISTORY_FILE_NAME = "state-history.jsonl"
+
 /**
  * Manages agent state, execution contexts, and history tracking.
  *
@@ -254,7 +256,8 @@ class AgentStateManager(
                 stepStartTime = Instant.now(),
                 agentState = currentAgentState,
                 config = baseContext.config,
-                stateHistory = _stateHistory
+                stateHistory = _stateHistory,
+                agentStateHistoryLogPath = resolveRunLogDir(sessionId).resolve(AGENT_HISTORY_FILE_NAME).toAbsolutePath().toString()
             )
 
             writeExecutionContext(context)
@@ -270,6 +273,7 @@ class AgentStateManager(
             agentState = currentAgentState,
             config = config,
             stateHistory = _stateHistory,
+            agentStateHistoryLogPath = resolveRunLogDir(sessionId).resolve(AGENT_HISTORY_FILE_NAME).toAbsolutePath().toString()
         )
         writeExecutionContext(context)
         writeAgentState(currentAgentState, context.sessionId)
@@ -405,8 +409,8 @@ class AgentStateManager(
     }
 
     fun writeAgentState(state: AgentState, sessionId: String) {
-        val fileName = "state.log"
-        val jsonFileName = "state.jsonl"
+        val fileName = "state-history.log"
+        val jsonFileName = AGENT_HISTORY_FILE_NAME
         val runLogDir = resolveRunLogDir(sessionId)
         MessageWriter.writeOnce(runLogDir.resolve(fileName), state.toString())
         MessageWriter.writeOnce(runLogDir.resolve(jsonFileName), state.toJson())
