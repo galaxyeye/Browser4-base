@@ -12,7 +12,7 @@ class DefaultHistoryRenderStrategy(
     private val summaryStepLimit: Int = 6,
 ) : HistoryRenderStrategy {
 
-    override fun render(agentHistory: AgentHistory, logPath: String?): String {
+    override fun render(agentHistory: AgentHistory, stateHistoryPath: String?): String {
         val history = agentHistory.states
         if (history.isEmpty()) {
             return ""
@@ -42,17 +42,17 @@ class DefaultHistoryRenderStrategy(
             }
             add("")
             add("### Recent Steps")
-            renderHistoryWithBudget(recentStates, this, logPath)
+            renderHistoryWithBudget(recentStates, this, stateHistoryPath)
             if (olderStates.isNotEmpty()) {
                 add("")
-                if (logPath != null) {
-                    add("Older steps remain available in persisted task logs: $logPath")
+                if (stateHistoryPath != null) {
+                    add("Older steps remain available in persisted agent state history logs: $stateHistoryPath")
                 } else {
-                    add("Older steps remain available in persisted task logs and checkpoints.")
+                    add("Older steps remain available in persisted agent state history logs and checkpoints.")
                 }
-            } else if (logPath != null) {
+            } else if (stateHistoryPath != null) {
                 add("")
-                add("Full task logs available at: $logPath")
+                add("Full agent state history logs available at: $stateHistoryPath")
             }
             add("")
             add("---")

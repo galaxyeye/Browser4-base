@@ -369,8 +369,8 @@ $userProvidedInstructions
         return SimpleMessage("system", content)
     }
 
-    fun buildAgentStateHistoryMessage(agentHistory: AgentHistory, agentStateHistoryLogPath: String? = null): String {
-        return historyRenderStrategy.render(agentHistory, agentStateHistoryLogPath)
+    fun buildAgentStateHistoryMessage(agentHistory: AgentHistory, stateHistoryPath: String? = null): String {
+        return historyRenderStrategy.render(agentHistory, stateHistoryPath)
     }
 
     fun buildBrowserVisionInfo(): String {
