@@ -16,7 +16,7 @@ object InferencePromptBuilder {
         }
     }
 
-    fun buildExtractPrompt(params: ExtractParams): AgentMessageList {
+    fun buildExtractionPrompt(params: ExtractParams): AgentMessageList {
         val messages = AgentMessageList()
 
         messages.addLast(promptBuilder.buildExtractSystemPrompt(params.userProvidedInstructions))
@@ -26,7 +26,7 @@ object InferencePromptBuilder {
         return messages
     }
 
-    fun buildMetadataPrompt(
+    fun buildExtractionEvaluationPrompt(
         params: ExtractParams,
         extractedNode: ObjectNode,
     ): AgentMessageList {

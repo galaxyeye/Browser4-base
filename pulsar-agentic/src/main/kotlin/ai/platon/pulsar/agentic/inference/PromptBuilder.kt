@@ -2,10 +2,10 @@ package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
-import ai.platon.pulsar.agentic.inference.history.DefaultHistoryRenderStrategy
-import ai.platon.pulsar.agentic.inference.history.HistoryRenderStrategy
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_COMPLETE_SCHEMA
 import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA
+import ai.platon.pulsar.agentic.inference.history.DefaultHistoryRenderStrategy
+import ai.platon.pulsar.agentic.inference.history.HistoryRenderStrategy
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.agentic.model.ExecutionContext
@@ -311,7 +311,7 @@ ${buildMainSystemPromptV1()}
         buildMultistepMessageListStart(context, context.stateHistory, messages)
 
         // browser state, viewport info, interactive elements, DOM
-        buildObserveUserMessageLast(messages, context)
+        buildBrowserStateMessageForBrowserInteraction(messages, context)
 
         return messages
     }
@@ -323,7 +323,7 @@ ${buildMainSystemPromptV1()}
         // observe guide
         buildSingleObserveSystemPrompt(messages, params)
         // browser state, viewport info, interactive elements, DOM
-        buildObserveUserMessageLast(messages, context)
+        buildBrowserStateMessageForBrowserInteraction(messages, context)
 
         return messages
     }
@@ -654,7 +654,13 @@ Based on the context and current progress, select the most appropriate tool to a
         return messages
     }
 
-    private fun buildObserveUserMessageLast(messages: AgentMessageList, context: ExecutionContext) {
+    private fun buildBrowserStateMessageForBrowserInteraction(messages: AgentMessageList, context: ExecutionContext) {
+        val lastToolCall = context.prevAgentState?.actionDescription?.toolCall
+        val lastDomain = lastToolCall?.domain
+        if (ToolSpecification.isBrowserInteraction(lastDomain)) {
+            return
+        }
+
         val prevBrowserState = context.agentState.prevState?.browserUseState?.browserState
         val browserState = context.agentState.browserUseState.browserState
 
@@ -698,22 +704,6 @@ $newTabsJson
         val endY = (scrollState.y + viewportHeight + delta).coerceAtLeast(0.0)
         val nanoTree = domState.serializableTree.toNanoTreeInRange(startY, endY)
 
-        val lastToolCall = context.prevAgentState?.actionDescription?.toolCall
-        val lastDomain = lastToolCall?.domain
-        val ariaSnapshotSection = if (ToolSpecification.isBrowserInteraction(lastDomain)) {
-            """
-## ARIA Snapshot
-
-Focused on nodes in viewport ${processingViewport}.
-
-```yaml
-${nanoTree.ariaSnapshot}
-```
-
----
-"""
-        } else ""
-
         fun contentEN() = """
 ## Browser State
 
@@ -736,7 +726,15 @@ $viewPortInfo
 
 ---
 
-$ariaSnapshotSection
+## ARIA Snapshot
+
+Focused on nodes in viewport ${processingViewport}.
+
+```yaml
+${nanoTree.ariaSnapshot}
+```
+
+---
 """
 
         val content = contentEN()

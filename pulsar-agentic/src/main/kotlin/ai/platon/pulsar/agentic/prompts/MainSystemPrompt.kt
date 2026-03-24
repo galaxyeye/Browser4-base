@@ -147,9 +147,10 @@ fun buildMainSystemPromptV1(toolFormat: ToolSpecFormat): String {
 
 ## File Handling
 
+- Use the file system to save your processing progress and final results.
 - Prefer `fs.*` tools for file operations.
 - Use `plan.md` if you have a plan.
-- Use `results.md` to summarize task results.
+- Use `results.md` to summarize final task results.
 
 ---
 

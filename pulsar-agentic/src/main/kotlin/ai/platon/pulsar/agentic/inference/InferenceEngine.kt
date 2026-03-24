@@ -128,7 +128,7 @@ class InferenceEngine(
     suspend fun extract(params: ExtractParams): ObjectNode {
         onWillExtractInfer(params)
 
-        val messages = InferencePromptBuilder.buildExtractPrompt(params)
+        val messages = InferencePromptBuilder.buildExtractionPrompt(params)
 
         // 1) Extraction call -----------------------------------------------------------------
         val timestamp = AppPaths.fromNow()
@@ -172,7 +172,7 @@ class InferenceEngine(
         )
 
         // 2) Metadata call -------------------------------------------------------------------
-        val metadataMessages = InferencePromptBuilder.buildMetadataPrompt(params, extractedNode)
+        val metadataMessages = InferencePromptBuilder.buildExtractionEvaluationPrompt(params, extractedNode)
 
         val metadataStartTime = Instant.now()
         val metadataResponse = cta.generateResponseRaw(metadataMessages)
