@@ -83,7 +83,9 @@ system.help(domain: String, method: String): String        // get help for a too
      * webpage and therefore do not require fresh screenshots or page-state comparisons.
      */
     fun isBrowserInteraction(domain: String?): Boolean {
-        if (domain.isNullOrBlank()) return true // default to true for safety (first step, unknown)
+        // Default to true for safety: ensures screenshots are captured when the domain is
+        // unknown or on the first step where no previous action exists.
+        if (domain.isNullOrBlank()) return true
         return BROWSER_INTERACTION_DOMAINS.contains(domain.lowercase())
     }
 }
