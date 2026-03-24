@@ -172,6 +172,58 @@ pub fn shutdown_managed_server_processes(
     result
 }
 
+/// Kill all found Browser4 Chrome processes (marked with PULSAR_CHROME).
+pub fn kill_all_browsers() -> Vec<u32> {
+    let pids = find_pulsar_browser_processes();
+    let mut killed = Vec::new();
+    for pid in &pids {
+        force_stop(*pid);
+        killed.push(*pid);
+    }
+    killed
+}
+
+fn find_pulsar_browser_processes() -> Vec<u32> {
+    let mut pids = Vec::new();
+
+    #[cfg(unix)]
+    {
+        use std::process::Command;
+        if let Ok(output) = Command::new("pgrep").args(["-f", "PULSAR_CHROME"]).output() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if let Ok(pid) = line.trim().parse::<u32>() {
+                    pids.push(pid);
+                }
+            }
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        use std::process::Command;
+        let ps_command = r#"
+            Get-Process -Name "chrome" -ErrorAction SilentlyContinue | ForEach-Object {
+                $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $($_.Id)").CommandLine
+                if ($cmdLine -match "PULSAR_CHROME") { $_.Id }
+            }
+        "#;
+        if let Ok(output) = Command::new("powershell")
+            .args(["-NoProfile", "-NonInteractive", "-Command", ps_command])
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if let Ok(pid) = line.trim().parse::<u32>() {
+                    pids.push(pid);
+                }
+            }
+        }
+    }
+
+    pids
+}
+
 // ---------------------------------------------------------------------------
 // Platform-specific process control
 // ---------------------------------------------------------------------------

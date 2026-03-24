@@ -32,7 +32,7 @@ use daemon::{ensure_server_running, resolve_base_url};
 use help::{generate_command_help, generate_help};
 use http::{call_tool, is_stale_session_error, make_client, submit_plain_command, get_command_status, get_command_result};
 use managed_processes::{
-    read_managed_server_processes, shutdown_managed_server_processes, ShutdownResult,
+    read_managed_server_processes, shutdown_managed_server_processes, ShutdownResult, kill_all_browsers,
 };
 use snapshot::{resolve_output_path, save_binary, save_snapshot};
 use state::{clear_state, read_state, write_state, CliState, resolve_default_state_dir};
@@ -286,6 +286,13 @@ async fn handle_kill_all() -> Result<(), String> {
     let result = shutdown_managed_server_processes(true, None, 5_000, 250);
     clear_state(None, None);
     log_shutdown_result("Killed", &result);
+
+    let browser_pids = kill_all_browsers();
+    if !browser_pids.is_empty() {
+        let pids: Vec<String> = browser_pids.iter().map(|p| p.to_string()).collect();
+        println!("Killed found Browser4 Chrome process(es): {}", pids.join(", "));
+    }
+
     Ok(())
 }
 

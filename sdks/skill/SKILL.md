@@ -161,3 +161,7 @@ browser4-cli tab-select 0
 browser4-cli snapshot
 browser4-cli close
 ```
+
+## Specific tasks
+
+* **Browser session management** [references/session-management.md](references/session-management.md)
