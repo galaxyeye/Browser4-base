@@ -5,10 +5,16 @@
 //! # Running
 //!
 //! The tests are **disabled by default** and only run when the environment variable
-//! `BROWSER4_CLI_E2E=true` is set.
+//! `BROWSER4_CLI_E2E` is set to `true`.
+//!
+//! ```powershell
+//! # PowerShell (Windows)
+//! $env:BROWSER4_CLI_E2E = "true"
+//! cargo test --test e2e -- --nocapture
+//! ```
 //!
 //! ```bash
-//! # From the repo root – build the jar first, then run:
+//! # POSIX shells
 //! BROWSER4_CLI_E2E=true cargo test --test e2e -- --nocapture
 //! ```
 //!
@@ -1064,11 +1070,13 @@ fn assert_all_commands_covered(ctx: &E2ECtx) {
 
 /// Full e2e test suite for the browser4-cli Rust binary.
 ///
-/// Disabled unless `BROWSER4_CLI_E2E=true` is set in the environment.
+/// Disabled unless `BROWSER4_CLI_E2E` is `true` in the environment.
 #[test]
 fn test_e2e_full_suite() {
     if !is_e2e_enabled() {
-        eprintln!("Skipping e2e tests (set BROWSER4_CLI_E2E=true to enable)");
+        eprintln!(
+            "Skipping e2e tests (set $env:BROWSER4_CLI_E2E=\"true\" in PowerShell to enable)"
+        );
         return;
     }
 

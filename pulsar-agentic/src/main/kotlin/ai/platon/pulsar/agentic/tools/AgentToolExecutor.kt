@@ -47,6 +47,9 @@ class AgentToolExecutor constructor(
     val skillTarget: SkillToolTarget by lazy { SkillToolTarget(skillContext, SkillRegistry.instance) }
     val skills: SkillToolExecutor = SkillToolExecutor()
 
+    /**
+     * Domain alias are mainly used for backward capability
+     * */
     val domainAlias = mapOf(
         "tab" to "tab",
         "Tab" to "tab",

@@ -389,7 +389,6 @@ async fn handle_delete_data(client: &Client, base_url: &str, session_name: Optio
     } else {
         println!("{}", result);
     }
-    clear_state(None, session_name);
     Ok(())
 }
 
