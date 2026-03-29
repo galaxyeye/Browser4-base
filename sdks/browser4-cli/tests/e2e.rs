@@ -1,18 +1,15 @@
 //! End-to-end tests for the `browser4-cli` Rust binary.
 //!
-//! Mirrors [`sdks/browser4-cli-node/tests/e2e.test.ts`] as closely as possible.
+//! Each test function spins up its own Browser4 backend server and a local HTTP
+//! fixture server, then drives the CLI binary as a subprocess.  Covered commands
+//! are tracked per-test via [`E2ECtx::covered_commands`]; the dedicated
+//! [`test_e2e_command_coverage`] test verifies — at compile time — that the union
+//! of all tested commands plus the explicitly-excluded set equals the full command
+//! list from [`browser4_cli::commands::all_commands`].
 //!
 //! # Running
 //!
-//! The tests run whenever this test target is executed.
-//!
-//! ```powershell
-//! # PowerShell (Windows)
-//! cargo test --test e2e -- --nocapture
-//! ```
-//!
 //! ```bash
-//! # POSIX shells
 //! cargo test --test e2e -- --nocapture
 //! ```
 //!
@@ -30,6 +27,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
+
+use browser4_cli::commands::all_commands;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1023,86 +1022,62 @@ fn test_tab_commands(ctx: &mut E2ECtx) {
     run_command(ctx, &["tab-close", &other_tab_id]);
 }
 
-/// Verify that every command defined in the CLI was exercised by the e2e tests.
-fn assert_all_commands_covered(ctx: &E2ECtx) {
-    // Canonical list of all CLI commands (must stay in sync with commands.rs).
-    // Agent and collective commands are excluded because they require an LLM backend.
-    let all_commands: HashSet<&str> = [
-        "open",
-        "close",
-        "goto",
-        "go-back",
-        "go-forward",
-        "reload",
-        "press",
-        "type",
-        "keydown",
-        "keyup",
-        "mousemove",
-        "mousedown",
-        "mouseup",
-        "mousewheel",
-        "click",
-        "dblclick",
-        "drag",
-        "fill",
-        "hover",
-        "select",
-        "upload",
-        "check",
-        "uncheck",
-        "snapshot",
-        "eval",
-        "console",
-        "dialog-accept",
-        "dialog-dismiss",
-        "resize",
-        "delete-data",
-        "screenshot",
-        "pdf",
-        "tab-list",
-        "tab-new",
-        "tab-close",
-        "tab-select",
-        "list",
-    ]
-        .into();
+// ---------------------------------------------------------------------------
+// Command-coverage helpers
+// ---------------------------------------------------------------------------
 
-    // Commands that require LLM/agent backend, global process cleanup, or
-    // multi-browser contexts and are not tested in the parallel e2e suite.
-    // `close-all` / `kill-all` are intentionally excluded because they are
-    // destructive across concurrent sessions and would make the suite flaky.
-    #[allow(unused_variables)]
-    let excluded_commands: HashSet<&str> = [
+/// Commands that require an LLM/agent backend, destructive global cleanup, or
+/// multi-browser contexts and therefore cannot be exercised in the parallel
+/// e2e suite.  Each entry has a brief justification.
+///
+/// This set is validated by [`test_e2e_command_coverage`]: if a new command is
+/// added to `commands.rs` without appearing here *or* in the tested set, the
+/// build will fail.
+fn excluded_commands() -> HashSet<&'static str> {
+    [
+        // LLM / agent backend required
         "extract",
         "summarize",
-        "close-all",
-        "kill-all",
         "agent-run",
         "agent-status",
         "agent-result",
+        // Destructive across concurrent sessions — would make the suite flaky
+        "close-all",
+        "kill-all",
+        // Collective (co-*) commands require a multi-context backend
         "co-create",
         "co-submit",
         "co-scrape",
         "co-status",
         "co-result",
     ]
-        .into();
+    .into()
+}
 
-    let covered: HashSet<&str> = ctx.covered_commands.iter().map(String::as_str).collect();
-    let uncovered: Vec<&&str> = all_commands
-        .iter()
-        .filter(|cmd| !covered.contains(**cmd))
-        .collect();
-
-    assert!(
-        uncovered.is_empty(),
-        "The following commands were NOT covered by the e2e tests: {uncovered:?}"
-    );
+/// The set of commands that the e2e scenario functions exercise via
+/// [`run_command`] / [`run_command_expecting_failure`].  This must be kept in
+/// sync with what the test functions actually call.
+fn tested_commands() -> HashSet<&'static str> {
+    [
+        // test_session_and_navigation
+        "open", "list", "goto", "go-back", "go-forward", "reload", "delete-data", "close",
+        // test_interaction_console_and_export
+        "resize", "type", "fill", "press", "keydown", "keyup", "click", "dblclick",
+        "hover", "drag", "select", "check", "uncheck", "upload", "console",
+        "snapshot", "screenshot", "pdf",
+        // test_mouse_and_dialog
+        "mousemove", "mousedown", "mouseup", "mousewheel",
+        "dialog-accept", "dialog-dismiss",
+        // test_tab_commands
+        "tab-list", "tab-new", "tab-select", "tab-close",
+        // eval is exercised indirectly by the eval_text helper
+        "eval",
+    ]
+    .into()
 }
 
 // ---------------------------------------------------------------------------
-// Entry point
+// Entry point — individual test functions
 // ---------------------------------------------------------------------------
 
 #[test]
@@ -1129,59 +1104,56 @@ fn test_e2e_tab_commands() {
     test_tab_commands(&mut resources.ctx);
 }
 
+// ---------------------------------------------------------------------------
+// Coverage assertion — runs without a server
+// ---------------------------------------------------------------------------
+
+/// Verify that `tested_commands() ∪ excluded_commands()` equals the full
+/// command list from [`browser4_cli::commands::all_commands`].
+///
+/// This test does **not** require a running server.  It is a compile-time
+/// guard: if a command is added to `commands.rs` without being placed into
+/// either [`tested_commands`] or [`excluded_commands`], this test fails.
 #[test]
 fn test_e2e_command_coverage() {
-    let covered_commands: HashSet<String> = [
-        "open",
-        "close",
-        "goto",
-        "go-back",
-        "go-forward",
-        "reload",
-        "press",
-        "type",
-        "keydown",
-        "keyup",
-        "mousemove",
-        "mousedown",
-        "mouseup",
-        "mousewheel",
-        "click",
-        "dblclick",
-        "drag",
-        "fill",
-        "hover",
-        "select",
-        "upload",
-        "check",
-        "uncheck",
-        "snapshot",
-        "eval",
-        "console",
-        "dialog-accept",
-        "dialog-dismiss",
-        "resize",
-        "delete-data",
-        "screenshot",
-        "pdf",
-        "tab-list",
-        "tab-new",
-        "tab-close",
-        "tab-select",
-        "list",
-    ]
-        .into_iter()
-        .map(str::to_string)
+    let all: HashSet<&str> = all_commands()
+        .iter()
+        .map(|c| c.name)
         .collect();
 
-    let ctx = E2ECtx {
-        fixture_base_url: String::new(),
-        browser4_base_url: String::new(),
-        workspace_dir: PathBuf::new(),
-        state_dir: PathBuf::new(),
-        upload_file_path: PathBuf::new(),
-        covered_commands,
-    };
+    let tested = tested_commands();
+    let excluded = excluded_commands();
 
-    assert_all_commands_covered(&ctx);
+    // 1. No command should appear in both sets.
+    let overlap: Vec<&&str> = tested.intersection(&excluded).collect();
+    assert!(
+        overlap.is_empty(),
+        "Commands appear in BOTH tested and excluded sets: {overlap:?}"
+    );
+
+    // 2. Every command from commands.rs must be in one of the two sets.
+    let accounted: HashSet<&str> = tested.union(&excluded).copied().collect();
+    let mut missing: Vec<&str> = all
+        .iter()
+        .copied()
+        .filter(|cmd| !accounted.contains(cmd))
+        .collect();
+    missing.sort();
+    assert!(
+        missing.is_empty(),
+        "Commands defined in commands.rs are not accounted for in e2e tests \
+         (add them to `tested_commands` or `excluded_commands`): {missing:?}"
+    );
+
+    // 3. No stale entries: every name in the two sets must exist in commands.rs.
+    let mut stale: Vec<&str> = accounted
+        .iter()
+        .copied()
+        .filter(|cmd| !all.contains(cmd))
+        .collect();
+    stale.sort();
+    assert!(
+        stale.is_empty(),
+        "Stale command names in e2e test sets that no longer exist in commands.rs: {stale:?}"
+    );
 }
