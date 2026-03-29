@@ -3,7 +3,7 @@
 //! Each test function spins up its own Browser4 backend server and a local HTTP
 //! fixture server, then drives the CLI binary as a subprocess.  Covered commands
 //! are tracked per-test via [`E2ECtx::covered_commands`]; the dedicated
-//! [`test_e2e_command_coverage`] test verifies — at compile time — that the union
+//! [`test_e2e_command_coverage`] test verifies — at test time — that the union
 //! of all tested commands plus the explicitly-excluded set equals the full command
 //! list from [`browser4_cli::commands::all_commands`].
 //!
@@ -1111,7 +1111,7 @@ fn test_e2e_tab_commands() {
 /// Verify that `tested_commands() ∪ excluded_commands()` equals the full
 /// command list from [`browser4_cli::commands::all_commands`].
 ///
-/// This test does **not** require a running server.  It is a compile-time
+/// This test does **not** require a running server.  It is a test-time
 /// guard: if a command is added to `commands.rs` without being placed into
 /// either [`tested_commands`] or [`excluded_commands`], this test fails.
 #[test]
