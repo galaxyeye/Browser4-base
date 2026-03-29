@@ -15,9 +15,7 @@ pub fn ensure_dir(dir: &Path) -> std::io::Result<()> {
 
 /// Generate a timestamped filename (e.g., `page-2026-01-15T10-30-00.yml`).
 pub fn timestamped_filename(prefix: &str, ext: &str) -> String {
-    let now = Utc::now()
-        .format("%Y-%m-%dT%H-%M-%S")
-        .to_string();
+    let now = Utc::now().format("%Y-%m-%dT%H-%M-%S").to_string();
     format!("{}-{}.{}", prefix, now, ext)
 }
 

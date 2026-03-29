@@ -65,7 +65,9 @@ pub fn generate_command_help(cmd: &CommandDef) -> String {
         .join(" ");
 
     let mut lines: Vec<String> = vec![
-        format!("browser4-cli {} {}", cmd.name, args_text).trim().to_string(),
+        format!("browser4-cli {} {}", cmd.name, args_text)
+            .trim()
+            .to_string(),
         String::new(),
         cmd.description.to_string(),
         String::new(),
@@ -87,11 +89,7 @@ pub fn generate_command_help(cmd: &CommandDef) -> String {
         lines.push("Options:".to_string());
         for opt in cmd.options {
             let label = format!("  --{}", opt.name);
-            lines.push(format_with_gap(
-                &label,
-                &opt.description.to_lowercase(),
-                30,
-            ));
+            lines.push(format_with_gap(&label, &opt.description.to_lowercase(), 30));
         }
     }
 

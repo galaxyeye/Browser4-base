@@ -137,7 +137,11 @@ mod tests {
 
     #[test]
     fn test_parse_global_flags_session_name() {
-        let argv = vec!["-s=mysession".to_string(), "goto".to_string(), "https://example.com".to_string()];
+        let argv = vec![
+            "-s=mysession".to_string(),
+            "goto".to_string(),
+            "https://example.com".to_string(),
+        ];
         let flags = parse_global_flags(&argv);
         assert_eq!(flags.session_name.as_deref(), Some("mysession"));
         assert_eq!(flags.args, vec!["goto", "https://example.com"]);
@@ -145,7 +149,10 @@ mod tests {
 
     #[test]
     fn test_parse_global_flags_server_equals() {
-        let argv = vec!["--server=http://localhost:9090".to_string(), "open".to_string()];
+        let argv = vec![
+            "--server=http://localhost:9090".to_string(),
+            "open".to_string(),
+        ];
         let flags = parse_global_flags(&argv);
         assert_eq!(flags.server_url.as_deref(), Some("http://localhost:9090"));
         assert_eq!(flags.args, vec!["open"]);
@@ -174,7 +181,11 @@ mod tests {
 
     #[test]
     fn test_parse_raw_args_options() {
-        let raw = vec!["click".to_string(), "e15".to_string(), "--submit=true".to_string()];
+        let raw = vec![
+            "click".to_string(),
+            "e15".to_string(),
+            "--submit=true".to_string(),
+        ];
         let map = parse_raw_args(&raw);
         assert_eq!(map.get("submit"), Some(&json!(true)));
     }

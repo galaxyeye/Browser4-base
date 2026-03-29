@@ -56,7 +56,11 @@ pub async fn call_tool(
         .await
         .map_err(|e| format!("Failed to parse response JSON: {e}"))?;
 
-    if data.get("isError").and_then(|v| v.as_bool()).unwrap_or(false) {
+    if data
+        .get("isError")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         let msg = data
             .get("content")
             .and_then(|c| c.as_array())
@@ -194,7 +198,9 @@ mod tests {
 
     #[test]
     fn test_is_stale_session_error() {
-        assert!(is_stale_session_error("Cannot find context with specified id"));
+        assert!(is_stale_session_error(
+            "Cannot find context with specified id"
+        ));
         assert!(is_stale_session_error("Invalid session ID"));
         assert!(is_stale_session_error("Session not found"));
         assert!(!is_stale_session_error("Connection refused"));

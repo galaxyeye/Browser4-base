@@ -343,7 +343,11 @@ fn serve_fixture_request(mut stream: std::net::TcpStream) {
     } else if path == OTHER_PATH {
         ("200 OK", "text/html; charset=utf-8", other_html())
     } else {
-        ("404 Not Found", "text/plain; charset=utf-8", "not found".to_string())
+        (
+            "404 Not Found",
+            "text/plain; charset=utf-8",
+            "not found".to_string(),
+        )
     };
 
     let response = format!(
@@ -461,9 +465,22 @@ impl E2ECtx {
 
 struct E2ETestResources {
     _temp_dir: tempfile::TempDir,
-    _browser4: Browser4Server,
+    browser4: Option<Browser4Server>,
     _fixture: FixtureServer,
+    browser4_jar_path: PathBuf,
     ctx: E2ECtx,
+}
+
+impl E2ETestResources {
+    fn restart_browser4(&mut self) {
+        self.browser4 = None;
+        let browser4_port = find_free_port();
+        self.ctx.browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
+        self.browser4 = Some(Browser4Server::start(
+            &self.ctx.browser4_base_url,
+            &self.browser4_jar_path,
+        ));
+    }
 }
 
 /// Run `browser4-cli --server=<url> <args...>` in the workspace dir with the isolated state dir.
@@ -669,7 +686,6 @@ fn create_e2e_test_resources() -> E2ETestResources {
     let fixture_base_url = fixture.base_url();
     let browser4_port = find_free_port();
     let browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
-    let browser4 = Browser4Server::start(&browser4_base_url, &jar_path);
 
     let temp_dir = tempfile::TempDir::new().expect("tempdir creation failed");
     let workspace_dir = temp_dir.path().join("workspace");
@@ -683,8 +699,9 @@ fn create_e2e_test_resources() -> E2ETestResources {
 
     E2ETestResources {
         _temp_dir: temp_dir,
-        _browser4: browser4,
+        browser4: None,
         _fixture: fixture,
+        browser4_jar_path: jar_path,
         ctx: E2ECtx {
             fixture_base_url,
             browser4_base_url,
@@ -840,11 +857,7 @@ fn test_interaction_console_and_export(ctx: &mut E2ECtx) {
 
     // select
     run_command(ctx, &["select", "#select-target", "green"]);
-    wait_for_state(
-        ctx,
-        |s| s["selectValue"].as_str() == Some("green"),
-        15_000,
-    );
+    wait_for_state(ctx, |s| s["selectValue"].as_str() == Some("green"), 15_000);
 
     // check / uncheck
     run_command(ctx, &["check", "#check-target"]);
@@ -1052,16 +1065,45 @@ fn excluded_commands() -> HashSet<&'static str> {
 fn tested_commands() -> HashSet<&'static str> {
     [
         // test_session_and_navigation
-        "open", "list", "goto", "go-back", "go-forward", "reload", "delete-data", "close",
+        "open",
+        "list",
+        "goto",
+        "go-back",
+        "go-forward",
+        "reload",
+        "delete-data",
+        "close",
         // test_interaction_console_and_export
-        "resize", "type", "fill", "press", "keydown", "keyup", "click", "dblclick",
-        "hover", "drag", "select", "check", "uncheck", "upload", "console",
-        "snapshot", "screenshot", "pdf",
+        "resize",
+        "type",
+        "fill",
+        "press",
+        "keydown",
+        "keyup",
+        "click",
+        "dblclick",
+        "hover",
+        "drag",
+        "select",
+        "check",
+        "uncheck",
+        "upload",
+        "console",
+        "snapshot",
+        "screenshot",
+        "pdf",
         // test_mouse_and_dialog
-        "mousemove", "mousedown", "mouseup", "mousewheel",
-        "dialog-accept", "dialog-dismiss",
+        "mousemove",
+        "mousedown",
+        "mouseup",
+        "mousewheel",
+        "dialog-accept",
+        "dialog-dismiss",
         // test_tab_commands
-        "tab-list", "tab-new", "tab-select", "tab-close",
+        "tab-list",
+        "tab-new",
+        "tab-select",
+        "tab-close",
         // eval is exercised indirectly by the eval_text helper
         "eval",
     ]
@@ -1083,10 +1125,7 @@ fn tested_commands() -> HashSet<&'static str> {
 /// guard: if a command is added to `commands.rs` without being placed into
 /// either [`tested_commands`] or [`excluded_commands`], this test fails.
 fn verify_e2e_command_coverage() {
-    let all: HashSet<&str> = all_commands()
-        .iter()
-        .map(|c| c.name)
-        .collect();
+    let all: HashSet<&str> = all_commands().iter().map(|c| c.name).collect();
 
     let tested = tested_commands();
     let excluded = excluded_commands();
@@ -1132,10 +1171,11 @@ fn run_named_test(name: &str, test_fn: fn()) {
     println!("ok");
 }
 
-fn run_named_scenario(name: &str, ctx: &mut E2ECtx, test_fn: fn(&mut E2ECtx)) {
+fn run_named_scenario(name: &str, resources: &mut E2ETestResources, test_fn: fn(&mut E2ECtx)) {
     print!("test {name} ... ");
     std::io::stdout().flush().expect("stdout flush failed");
-    test_fn(ctx);
+    resources.restart_browser4();
+    test_fn(&mut resources.ctx);
     println!("ok");
 }
 
@@ -1148,20 +1188,20 @@ fn main() {
     let mut resources = create_e2e_test_resources();
     run_named_scenario(
         "test_e2e_session_and_navigation",
-        &mut resources.ctx,
+        &mut resources,
         test_session_and_navigation,
     );
     run_named_scenario(
         "test_e2e_interaction_console_and_export",
-        &mut resources.ctx,
+        &mut resources,
         test_interaction_console_and_export,
     );
     run_named_scenario(
         "test_e2e_mouse_and_dialog",
-        &mut resources.ctx,
+        &mut resources,
         test_mouse_and_dialog,
     );
-    run_named_scenario("test_e2e_tab_commands", &mut resources.ctx, test_tab_commands);
+    run_named_scenario("test_e2e_tab_commands", &mut resources, test_tab_commands);
 
     println!(
         "test result: ok. {} passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",

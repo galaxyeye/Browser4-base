@@ -78,12 +78,12 @@ pub fn write_state(
     let dir = state_dir
         .map(|p| p.to_path_buf())
         .unwrap_or_else(resolve_default_state_dir);
-    
+
     let path = state_file(&dir, session_name);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    
+
     let json = serde_json::to_string_pretty(state).expect("state serialization should not fail");
     fs::write(path, json)
 }

@@ -30,21 +30,39 @@ use args::{build_command_args, parse_global_flags, parse_raw_args};
 use commands::commands_map;
 use daemon::{ensure_server_running, resolve_base_url};
 use help::{generate_command_help, generate_help};
-use http::{call_tool, is_stale_session_error, make_client, submit_plain_command, get_command_status, get_command_result};
+use http::{
+    call_tool, get_command_result, get_command_status, is_stale_session_error, make_client,
+    submit_plain_command,
+};
 use managed_processes::{
-    read_managed_server_processes, shutdown_managed_server_processes, ShutdownResult, kill_all_browsers,
+    kill_all_browsers, read_managed_server_processes, shutdown_managed_server_processes,
+    ShutdownResult,
 };
 use snapshot::{resolve_output_path, save_binary, save_snapshot};
-use state::{clear_state, read_state, write_state, CliState, resolve_default_state_dir};
+use state::{clear_state, read_state, resolve_default_state_dir, write_state, CliState};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Commands that should NOT trigger a post-command snapshot.
 fn no_snapshot_commands() -> HashSet<&'static str> {
     [
-        "open", "close", "close-all", "kill-all", "list", "help", "snapshot", "screenshot", "pdf",
-        "agent-run", "agent-status", "agent-result",
-        "co-create", "co-submit", "co-scrape", "co-status", "co-result",
+        "open",
+        "close",
+        "close-all",
+        "kill-all",
+        "list",
+        "help",
+        "snapshot",
+        "screenshot",
+        "pdf",
+        "agent-run",
+        "agent-status",
+        "agent-result",
+        "co-create",
+        "co-submit",
+        "co-scrape",
+        "co-status",
+        "co-result",
     ]
     .into()
 }
@@ -56,9 +74,7 @@ fn no_snapshot_commands() -> HashSet<&'static str> {
 fn require_session(session_name: Option<&str>) -> Result<CliState, String> {
     let state = read_state(None, session_name);
     if state.session_id.is_none() {
-        return Err(
-            r#"No active session. Run "browser4-cli open" first."#.to_string(),
-        );
+        return Err(r#"No active session. Run "browser4-cli open" first."#.to_string());
     }
     Ok(state)
 }
@@ -130,7 +146,8 @@ where
             if !recover_stale {
                 return Err(r#"Saved session expired. Run "browser4-cli open" first."#.to_string());
             }
-            let new_session_id = create_session(client, base_url, &state, session_name, None).await?;
+            let new_session_id =
+                create_session(client, base_url, &state, session_name, None).await?;
             action(new_session_id).await
         }
     }
@@ -142,16 +159,30 @@ where
 
 async fn post_command_snapshot(client: &Client, base_url: &str, session_id: &str) {
     let (page_url, page_title, snapshot_content) = tokio::join!(
-        call_tool(client, base_url, "page_url", json!({ "sessionId": session_id })),
-        call_tool(client, base_url, "page_title", json!({ "sessionId": session_id })),
-        call_tool(client, base_url, "browser_snapshot", json!({ "sessionId": session_id })),
+        call_tool(
+            client,
+            base_url,
+            "page_url",
+            json!({ "sessionId": session_id })
+        ),
+        call_tool(
+            client,
+            base_url,
+            "page_title",
+            json!({ "sessionId": session_id })
+        ),
+        call_tool(
+            client,
+            base_url,
+            "browser_snapshot",
+            json!({ "sessionId": session_id })
+        ),
     );
 
-    let (url_result, title_result, snap_result) =
-        match (page_url, page_title, snapshot_content) {
-            (Ok(u), Ok(t), Ok(s)) => (u, t, s),
-            _ => return, // silently ignore failures (e.g. session just closed)
-        };
+    let (url_result, title_result, snap_result) = match (page_url, page_title, snapshot_content) {
+        (Ok(u), Ok(t), Ok(s)) => (u, t, s),
+        _ => return, // silently ignore failures (e.g. session just closed)
+    };
 
     let out_path = resolve_output_path(None, "page", "yml");
     if let Err(e) = save_snapshot(&out_path, &snap_result) {
@@ -194,9 +225,13 @@ async fn handle_open(
         caps
     };
 
-    let session_id = create_session(client, base_url, &state, session_name, Some(capabilities)).await?;
+    let session_id =
+        create_session(client, base_url, &state, session_name, Some(capabilities)).await?;
 
-    let url = tool_params.get("url").and_then(|u| u.as_str()).unwrap_or("about:blank");
+    let url = tool_params
+        .get("url")
+        .and_then(|u| u.as_str())
+        .unwrap_or("about:blank");
     if !url.is_empty() && url != "about:blank" {
         let mut params = tool_params.clone();
         params["sessionId"] = json!(session_id);
@@ -210,7 +245,11 @@ async fn handle_open(
     Ok(())
 }
 
-async fn handle_close(client: &Client, base_url: &str, session_name: Option<&str>) -> Result<(), String> {
+async fn handle_close(
+    client: &Client,
+    base_url: &str,
+    session_name: Option<&str>,
+) -> Result<(), String> {
     let state = require_session(session_name)?;
     let session_id = get_session_id(&state)?.to_string();
     // Ignore errors — session might already be closed
@@ -250,8 +289,7 @@ async fn handle_close_all(client: &Client, base_url: &str) -> Result<(), String>
         }
     }
 
-    let shutdown_result =
-        shutdown_managed_server_processes(false, None, 5_000, 250);
+    let shutdown_result = shutdown_managed_server_processes(false, None, 5_000, 250);
     clear_state(None, None);
 
     // Clear all named session states
@@ -290,7 +328,10 @@ async fn handle_kill_all() -> Result<(), String> {
     let browser_pids = kill_all_browsers();
     if !browser_pids.is_empty() {
         let pids: Vec<String> = browser_pids.iter().map(|p| p.to_string()).collect();
-        println!("Killed found Browser4 Chrome process(es): {}", pids.join(", "));
+        println!(
+            "Killed found Browser4 Chrome process(es): {}",
+            pids.join(", ")
+        );
     }
 
     Ok(())
@@ -318,7 +359,11 @@ fn log_shutdown_result(action: &str, result: &ShutdownResult) {
     }
 
     if !result.remaining_pids.is_empty() {
-        let pids: Vec<String> = result.remaining_pids.iter().map(|p| p.to_string()).collect();
+        let pids: Vec<String> = result
+            .remaining_pids
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
         eprintln!(
             "Browser4 process(es) still running after {}: {}",
             action.to_lowercase(),
@@ -355,7 +400,11 @@ async fn handle_list(client: &Client, base_url: &str) -> Result<(), String> {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         if let Ok(state) = serde_json::from_str::<CliState>(&content) {
                             if let Some(sid) = state.session_id {
-                                let status = if active_ids.contains(&sid) { "Active" } else { "Stale" };
+                                let status = if active_ids.contains(&sid) {
+                                    "Active"
+                                } else {
+                                    "Stale"
+                                };
                                 println!("{:<20} | {:<40} | {}", name, sid, status);
                             }
                         }
@@ -368,19 +417,33 @@ async fn handle_list(client: &Client, base_url: &str) -> Result<(), String> {
     // List default session
     let default_state = read_state(None, None);
     if let Some(sid) = default_state.session_id {
-        let status = if active_ids.contains(&sid) { "Active" } else { "Stale" };
+        let status = if active_ids.contains(&sid) {
+            "Active"
+        } else {
+            "Stale"
+        };
         println!("{:<20} | {:<40} | {}", "(default)", sid, status);
     }
 
     Ok(())
 }
 
-async fn handle_delete_data(client: &Client, base_url: &str, session_name: Option<&str>) -> Result<(), String> {
+async fn handle_delete_data(
+    client: &Client,
+    base_url: &str,
+    session_name: Option<&str>,
+) -> Result<(), String> {
     let result = with_session(client, base_url, session_name, false, |session_id| {
         let client = client.clone();
         let base_url = base_url.to_string();
         async move {
-            call_tool(&client, &base_url, "delete_session_data", json!({ "sessionId": session_id })).await
+            call_tool(
+                &client,
+                &base_url,
+                "delete_session_data",
+                json!({ "sessionId": session_id }),
+            )
+            .await
         }
     })
     .await?;
@@ -399,7 +462,10 @@ async fn handle_snapshot(
     tool_params: &Value,
     session_name: Option<&str>,
 ) -> Result<(), String> {
-    let filename = tool_params.get("filename").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let filename = tool_params
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let snapshot_args = {
         let mut a = tool_params.clone();
         if let Value::Object(ref mut m) = a {
@@ -417,8 +483,18 @@ async fn handle_snapshot(
 
         async move {
             let (url_res, title_res, snap_res) = tokio::join!(
-                call_tool(&client, &base_url, "page_url", json!({ "sessionId": session_id })),
-                call_tool(&client, &base_url, "page_title", json!({ "sessionId": session_id })),
+                call_tool(
+                    &client,
+                    &base_url,
+                    "page_url",
+                    json!({ "sessionId": session_id })
+                ),
+                call_tool(
+                    &client,
+                    &base_url,
+                    "page_title",
+                    json!({ "sessionId": session_id })
+                ),
                 call_tool(&client, &base_url, &tool_name, snap_args),
             );
             let url = url_res?;
@@ -454,7 +530,10 @@ async fn handle_screenshot(
     tool_params: &Value,
     session_name: Option<&str>,
 ) -> Result<(), String> {
-    let filename = tool_params.get("filename").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let filename = tool_params
+        .get("filename")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let capture_args = {
         let mut a = tool_params.clone();
         if let Value::Object(ref mut m) = a {
@@ -469,9 +548,7 @@ async fn handle_screenshot(
         let tool_name = tool_name.to_string();
         let mut args = capture_args.clone();
         args["sessionId"] = json!(session_id);
-        async move {
-            call_tool(&client, &base_url, &tool_name, args).await
-        }
+        async move { call_tool(&client, &base_url, &tool_name, args).await }
     })
     .await?;
 
@@ -493,16 +570,20 @@ async fn handle_tool_command(
     recover_stale: bool,
     session_name: Option<&str>,
 ) -> Result<(), String> {
-    let result = with_session(client, base_url, session_name, recover_stale, |session_id| {
-        let client = client.clone();
-        let base_url = base_url.to_string();
-        let tool_name = tool_name.to_string();
-        let mut params = tool_params.clone();
-        params["sessionId"] = json!(session_id);
-        async move {
-            call_tool(&client, &base_url, &tool_name, params).await
-        }
-    })
+    let result = with_session(
+        client,
+        base_url,
+        session_name,
+        recover_stale,
+        |session_id| {
+            let client = client.clone();
+            let base_url = base_url.to_string();
+            let tool_name = tool_name.to_string();
+            let mut params = tool_params.clone();
+            params["sessionId"] = json!(session_id);
+            async move { call_tool(&client, &base_url, &tool_name, params).await }
+        },
+    )
     .await?;
 
     if !result.is_empty() {
@@ -535,7 +616,10 @@ async fn handle_agent_run(
     // The async response is a task ID (possibly JSON-quoted)
     let task_id = result.trim().trim_matches('"').to_string();
     println!("Task submitted: {}", task_id);
-    println!("Use 'browser4-cli agent-status {}' to check progress.", task_id);
+    println!(
+        "Use 'browser4-cli agent-status {}' to check progress.",
+        task_id
+    );
     Ok(())
 }
 
@@ -595,7 +679,10 @@ async fn handle_co_create(
     if let Some(v) = tool_params.get("maxOpenTabs").and_then(|v| v.as_str()) {
         capabilities.insert("maxOpenTabs".to_string(), json!(v));
     }
-    if let Some(v) = tool_params.get("maxBrowserContexts").and_then(|v| v.as_str()) {
+    if let Some(v) = tool_params
+        .get("maxBrowserContexts")
+        .and_then(|v| v.as_str())
+    {
         capabilities.insert("maxBrowserContexts".to_string(), json!(v));
     }
     if let Some(v) = tool_params.get("displayMode").and_then(|v| v.as_str()) {
@@ -636,7 +723,10 @@ async fn handle_co_submit(
     base_url: &str,
     tool_params: &Value,
 ) -> Result<(), String> {
-    let url = tool_params.get("url").and_then(|v| v.as_str()).unwrap_or("");
+    let url = tool_params
+        .get("url")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     let seed_file = tool_params.get("seedFile").and_then(|v| v.as_str());
 
     if url.is_empty() && seed_file.is_none() {
@@ -671,13 +761,25 @@ async fn handle_co_submit(
     if let Some(v) = tool_params.get("expires").and_then(|v| v.as_str()) {
         load_opts.push(format!("-expires {}", v));
     }
-    if tool_params.get("refresh").and_then(|v| v.as_bool()).unwrap_or(false) {
+    if tool_params
+        .get("refresh")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         load_opts.push("-refresh".to_string());
     }
-    if tool_params.get("parse").and_then(|v| v.as_bool()).unwrap_or(false) {
+    if tool_params
+        .get("parse")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         load_opts.push("-parse".to_string());
     }
-    if tool_params.get("storeContent").and_then(|v| v.as_bool()).unwrap_or(false) {
+    if tool_params
+        .get("storeContent")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         load_opts.push("-storeContent".to_string());
     }
     let opts_str = load_opts.join(" ");
@@ -706,7 +808,10 @@ async fn handle_co_scrape(
     base_url: &str,
     tool_params: &Value,
 ) -> Result<(), String> {
-    let url = tool_params.get("url").and_then(|v| v.as_str()).unwrap_or_default();
+    let url = tool_params
+        .get("url")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
     if url.is_empty() {
         return Err("URL is required.".to_string());
     }
@@ -723,7 +828,11 @@ async fn handle_co_scrape(
     if let Some(v) = tool_params.get("expires").and_then(|v| v.as_str()) {
         parts.push(format!("-expires {}", v));
     }
-    if tool_params.get("refresh").and_then(|v| v.as_bool()).unwrap_or(false) {
+    if tool_params
+        .get("refresh")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+    {
         parts.push("-refresh".to_string());
     }
     let command = parts.join(" ");
@@ -741,7 +850,10 @@ async fn handle_co_scrape(
     if let Some(out) = output {
         println!("  output: {}", out);
     }
-    println!("Use 'browser4-cli co status {}' to check progress.", task_id);
+    println!(
+        "Use 'browser4-cli co status {}' to check progress.",
+        task_id
+    );
     Ok(())
 }
 
@@ -821,7 +933,11 @@ async fn main() {
         };
         (cmd, new_global)
     } else {
-        let cmd = global.args.first().map(|s| s.to_string()).unwrap_or_default();
+        let cmd = global
+            .args
+            .first()
+            .map(|s| s.to_string())
+            .unwrap_or_default();
         (cmd, global)
     };
 
@@ -860,7 +976,8 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
         if server_url != &current_state.base_url {
             let mut updated = current_state;
             updated.base_url = server_url.clone();
-            write_state(&updated, None, global.session_name.as_deref()).map_err(|e| e.to_string())?;
+            write_state(&updated, None, global.session_name.as_deref())
+                .map_err(|e| e.to_string())?;
         }
     }
 
@@ -886,8 +1003,7 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
     // Parse positional + named arguments
     let raw_parsed = parse_raw_args(&global.args);
     let arg_names: Vec<&str> = cmd_def.args.iter().map(|a| a.name).collect();
-    let parsed = build_command_args(&raw_parsed, &arg_names)
-        .map_err(|e| e.to_string())?;
+    let parsed = build_command_args(&raw_parsed, &arg_names).map_err(|e| e.to_string())?;
 
     // Resolve tool name and parameters
     let tool_name = (cmd_def.tool_name_fn)(&parsed);
@@ -896,7 +1012,14 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
     // Dispatch the command
     match command {
         "open" => {
-            handle_open(&client, &base_url, &tool_name, &tool_params, global.session_name.as_deref()).await?;
+            handle_open(
+                &client,
+                &base_url,
+                &tool_name,
+                &tool_params,
+                global.session_name.as_deref(),
+            )
+            .await?;
         }
         "close" => {
             handle_close(&client, &base_url, global.session_name.as_deref()).await?;
@@ -914,14 +1037,34 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
             handle_delete_data(&client, &base_url, global.session_name.as_deref()).await?;
         }
         "snapshot" => {
-            handle_snapshot(&client, &base_url, &tool_name, &tool_params, global.session_name.as_deref()).await?;
+            handle_snapshot(
+                &client,
+                &base_url,
+                &tool_name,
+                &tool_params,
+                global.session_name.as_deref(),
+            )
+            .await?;
         }
         "screenshot" => {
-            handle_screenshot(&client, &base_url, &tool_name, &tool_params, global.session_name.as_deref()).await?;
+            handle_screenshot(
+                &client,
+                &base_url,
+                &tool_name,
+                &tool_params,
+                global.session_name.as_deref(),
+            )
+            .await?;
         }
         // Agent commands
         "agent-run" => {
-            handle_agent_run(&client, &base_url, &tool_params, global.session_name.as_deref()).await?;
+            handle_agent_run(
+                &client,
+                &base_url,
+                &tool_params,
+                global.session_name.as_deref(),
+            )
+            .await?;
         }
         "agent-status" => {
             handle_agent_status(&client, &base_url, &tool_params).await?;
@@ -931,7 +1074,13 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
         }
         // Collective commands
         "co-create" => {
-            handle_co_create(&client, &base_url, &tool_params, global.session_name.as_deref()).await?;
+            handle_co_create(
+                &client,
+                &base_url,
+                &tool_params,
+                global.session_name.as_deref(),
+            )
+            .await?;
         }
         "co-submit" => {
             handle_co_submit(&client, &base_url, &tool_params).await?;

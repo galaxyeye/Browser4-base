@@ -897,7 +897,11 @@ mod tests {
         let cmds = all_commands();
         let mut names = std::collections::HashSet::new();
         for cmd in &cmds {
-            assert!(names.insert(cmd.name), "Duplicate command name: {}", cmd.name);
+            assert!(
+                names.insert(cmd.name),
+                "Duplicate command name: {}",
+                cmd.name
+            );
         }
     }
 
@@ -905,9 +909,24 @@ mod tests {
     fn test_commands_map_contains_expected() {
         let map = commands_map();
         for expected in &[
-            "open", "close", "goto", "click", "type", "fill", "snapshot", "screenshot",
-            "extract", "summarize", "agent-run", "agent-status", "agent-result",
-            "co-create", "co-submit", "co-scrape", "co-status", "co-result",
+            "open",
+            "close",
+            "goto",
+            "click",
+            "type",
+            "fill",
+            "snapshot",
+            "screenshot",
+            "extract",
+            "summarize",
+            "agent-run",
+            "agent-status",
+            "agent-result",
+            "co-create",
+            "co-submit",
+            "co-scrape",
+            "co-status",
+            "co-result",
         ] {
             assert!(map.contains_key(*expected), "Missing command: {}", expected);
         }
@@ -1035,7 +1054,10 @@ mod tests {
         let map = commands_map();
         let cmd = map.get("co-submit").unwrap();
         let mut args = HashMap::new();
-        args.insert("url".to_string(), json!("https://www.amazon.com/dp/B08PP5MSVB"));
+        args.insert(
+            "url".to_string(),
+            json!("https://www.amazon.com/dp/B08PP5MSVB"),
+        );
         args.insert("deadline".to_string(), json!("2026-02-24T23:59:59Z"));
         assert_eq!((cmd.tool_name_fn)(&args), "__co_submit__");
         let params = (cmd.tool_params_fn)(&args);
@@ -1075,7 +1097,10 @@ mod tests {
         let map = commands_map();
         let cmd = map.get("co-scrape").unwrap();
         let mut args = HashMap::new();
-        args.insert("url".to_string(), json!("https://www.amazon.com/dp/B08PP5MSVB"));
+        args.insert(
+            "url".to_string(),
+            json!("https://www.amazon.com/dp/B08PP5MSVB"),
+        );
         args.insert("selector".to_string(), json!(".product-title"));
         args.insert("attribute".to_string(), json!("textContent"));
         args.insert("output".to_string(), json!("title.txt"));
@@ -1158,7 +1183,8 @@ mod tests {
     #[test]
     fn test_collective_commands_in_collective_category() {
         let cmds = all_commands();
-        let collective_cmds: Vec<&str> = cmds.iter()
+        let collective_cmds: Vec<&str> = cmds
+            .iter()
             .filter(|c| c.category == Category::Collective)
             .map(|c| c.name)
             .collect();
