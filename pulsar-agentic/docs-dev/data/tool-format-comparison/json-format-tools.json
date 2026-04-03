@@ -37,201 +37,6 @@
       "returns": "Int"
     },
     {
-      "domain": "driver",
-      "method": "check",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "click",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Unit",
-      "description": "focus on an element with [selector] and click it"
-    },
-    {
-      "domain": "driver",
-      "method": "click",
-      "parameters": [
-        {"name": "selector", "type": "String"},
-        {"name": "modifier", "type": "String"}
-      ],
-      "returns": "Unit",
-      "description": "focus on an element with [selector] and click it with modifier pressed"
-    },
-    {
-      "domain": "driver",
-      "method": "delay",
-      "parameters": [
-        {"name": "millis", "type": "Long"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "exists",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Boolean"
-    },
-    {
-      "domain": "driver",
-      "method": "fill",
-      "parameters": [
-        {"name": "selector", "type": "String"},
-        {"name": "text", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "focus",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "goBack",
-      "parameters": [
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "goForward",
-      "parameters": [
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "hover",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "isVisible",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Boolean"
-    },
-    {
-      "domain": "driver",
-      "method": "navigate",
-      "parameters": [
-        {"name": "url", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "press",
-      "parameters": [
-        {"name": "selector", "type": "String"},
-        {"name": "key", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "reload",
-      "parameters": [
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "scrollBy",
-      "parameters": [
-        {"name": "pixels", "type": "Double", "default": "200.0"}
-      ],
-      "returns": "Double"
-    },
-    {
-      "domain": "driver",
-      "method": "scrollTo",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "scrollToBottom",
-      "parameters": [
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "scrollToMiddle",
-      "parameters": [
-        {"name": "ratio", "type": "Double", "default": "0.5"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "scrollToTop",
-      "parameters": [
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "selectFirstTextOrNull",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "String?",
-      "description": "Returns the first node's text content (descendants included). Returns null if no node."
-    },
-    {
-      "domain": "driver",
-      "method": "textContent",
-      "parameters": [
-      ],
-      "returns": "String?",
-      "description": "Returns the document's text content."
-    },
-    {
-      "domain": "driver",
-      "method": "type",
-      "parameters": [
-        {"name": "selector", "type": "String"},
-        {"name": "text", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "uncheck",
-      "parameters": [
-        {"name": "selector", "type": "String"}
-      ],
-      "returns": "Unit"
-    },
-    {
-      "domain": "driver",
-      "method": "waitForSelector",
-      "parameters": [
-        {"name": "selector", "type": "String"},
-        {"name": "timeoutMillis", "type": "Long", "default": "3000"}
-      ],
-      "returns": "Unit"
-    },
-    {
       "domain": "fs",
       "method": "append",
       "parameters": [
@@ -334,6 +139,194 @@
       ],
       "returns": "String",
       "description": "get help for a tool call"
+    },
+    {
+      "domain": "tab",
+      "method": "ariaSnapshot",
+      "parameters": [
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "check",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "click",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Unit",
+      "description": "focus on an element with [selector] and click it"
+    },
+    {
+      "domain": "tab",
+      "method": "click",
+      "parameters": [
+        {"name": "selector", "type": "String"},
+        {"name": "modifier", "type": "String"}
+      ],
+      "returns": "Unit",
+      "description": "focus on an element with [selector] and click it with modifier pressed"
+    },
+    {
+      "domain": "tab",
+      "method": "delay",
+      "parameters": [
+        {"name": "millis", "type": "Long"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "exists",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Boolean"
+    },
+    {
+      "domain": "tab",
+      "method": "fill",
+      "parameters": [
+        {"name": "selector", "type": "String"},
+        {"name": "text", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "focus",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "goBack",
+      "parameters": [
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "goForward",
+      "parameters": [
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "hover",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "isVisible",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Boolean"
+    },
+    {
+      "domain": "tab",
+      "method": "navigate",
+      "parameters": [
+        {"name": "url", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "press",
+      "parameters": [
+        {"name": "selector", "type": "String"},
+        {"name": "key", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "reload",
+      "parameters": [
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "scrollBy",
+      "parameters": [
+        {"name": "pixels", "type": "Double", "default": "200.0"}
+      ],
+      "returns": "Double"
+    },
+    {
+      "domain": "tab",
+      "method": "scrollTo",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "scrollToMiddle",
+      "parameters": [
+        {"name": "ratio", "type": "Double", "default": "0.5"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "selectFirstTextOrNull",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "String?",
+      "description": "Returns the first node's text content (descendants included). Returns null if no node."
+    },
+    {
+      "domain": "tab",
+      "method": "textContent",
+      "parameters": [
+      ],
+      "returns": "String?",
+      "description": "Returns the document's text content."
+    },
+    {
+      "domain": "tab",
+      "method": "type",
+      "parameters": [
+        {"name": "selector", "type": "String"},
+        {"name": "text", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "uncheck",
+      "parameters": [
+        {"name": "selector", "type": "String"}
+      ],
+      "returns": "Unit"
+    },
+    {
+      "domain": "tab",
+      "method": "waitForSelector",
+      "parameters": [
+        {"name": "selector", "type": "String"},
+        {"name": "timeoutMillis", "type": "Long", "default": "3000"}
+      ],
+      "returns": "Unit"
     }
   ]
 }

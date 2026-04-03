@@ -1,70 +1,27 @@
-# Daily Memory - 2026-03-08
+## Daily Memory - 2026-03-08
 
-## Task: coworker-script-config-loading
-**Summary:** Standardized coworker runners and worker scripts to load shared Copilot command config from `coworker/scripts/config.ps1` and `config.sh`, ensuring consistent CLI flags across main, delegated, streamed, and captured runs.
+- **Coworker/Copilot standardization:** Unified all `gh copilot` invocation behind shared native helpers (`coworker/scripts/workers/gh-copilot.ps1` / `.sh`). Entry points now source shared config, validate `COPILOT`, build args with native arrays, avoid quoting bugs, and handle PowerShell `GH_DEBUG` correctly. **Learning:** Centralize Copilot invocation in reusable helpers; on Windows, use LF-normalized temp `.sh` copies plus temp working dirs for reliable Bash validation.
 
-**Changes:**
-- Replaced string-built Copilot commands with native shell command arrays in both config files.
-- Updated `coworker.ps1` and `coworker.sh` to source config, validate the `COPILOT` array, and reuse it for task naming/execution.
-- Applied the same pattern to direct worker entry points: `refine-last-draft`, `coworker-memory-generator`, and `coworker-daily-memory-generator` in both PowerShell and Bash.
-- All direct Copilot calls now flow through the shared executable + argument array.
+- **Draft placeholder hygiene:** PowerShell and Bash runners now keep `coworker/tasks/0draft` populated with `1.md`-`5.md`, repairing placeholders before queue listing and after task completion. **Learning:** Placeholder maintenance belongs in shared runners at both startup and completion so PS/Bash behavior stays aligned.
 
-**Validation:**
-- PowerShell scripts parsed successfully.
-- Verified PowerShell array expands to `gh copilot --model gpt-5.4 --no-ask-user --log-level info --allow-all`.
-- Confirmed worker scripts append prompt/tool flags on top of the shared base command.
-- Validated Bash scripts with `bash -n` on LF-normalized temp copies.
-- Confirmed `config.sh` exports a valid `COPILOT` bash array starting with `gh copilot`.
+- **MCP tool-spec tightening:** Tool-spec generation now exposes only explicitly annotated `@MCP` methods. Added `WebDriver.drag(sourceSelector, targetSelector)`, annotated executor-used `WebDriver` and `PerceptiveAgent` methods, and regenerated code-mirror artifacts. **Learning:** The spec pipeline is source-text driven, so annotations and generated artifacts must stay synchronized; explicit exposure prevents deprecated/helper overload leakage.
 
-**Key Learnings / Structural Insight:**
-- Shared CLI config should use native shell arrays, not strings, when scripts need safe argument appends.
-- Any script invoking Copilot directly must validate and reuse the shared array or delegated flows will drift.
-- On Windows, Bash syntax validation is more reliable on LF-normalized temp copies when repo files use CRLF.
-- Coworker tooling now follows a stronger pattern: shared shell-specific command-array config -> per-entrypoint validation -> reuse across primary and delegated flows.
+- **WebDriver CLI/backend alignment:** `browser4-cli` commands were aligned to real MCP/backend tool names and payloads (`navigate`, `go_back`, `press`, `type`, `select_option`, `tab_*`, etc.); unsupported exports were removed; open/snapshot/screenshot now use `open`, `aria_snapshot`, and `screenshot` with base64 file saving. `MCPToolController.kt` now normalizes snake_case and legacy payloads for compatibility. **Learning:** Match the real MCP contract rather than preserving partial Playwright-style aliases; keep compatibility in the controller with small normalization instead of alias drift.
 
-## Task: create-missing-draft-files
-**Summary:** Added automatic placeholder maintenance so `coworker/tasks/0draft` always contains `1.md` through `5.md` at runner startup and after task completion.
+- **Draft refinement pipeline:** Added dedicated flow `0draft/refine/1ready -> 2working -> 3done` with `refine-drafts.ps1/.sh`. Scripts resolve repo root from their own location, move inputs into working, promote only successful rewrites, and leave failures in working. **Learning:** Standalone helpers should resolve repo root from script location, not caller cwd; an explicit working state preserves failed inputs for inspection.
 
-**Changes:**
-- Added `Ensure-DraftPlaceholders` to `coworker/scripts/coworker.ps1`.
-- Added `ensure_draft_placeholders` to `coworker/scripts/coworker.sh`.
-- Wired both runners to recreate missing numbered draft files before queue listing and after moving a finished task.
-- Restored missing `coworker/tasks/0draft/1.md`.
+- **Python coworker runner:** Added `coworker/scripts/coworker.py` mirroring the existing lifecycle: repo-root discovery, task-folder lifecycle, placeholder maintenance, config-driven Copilot invocation, naming, memory init, logging, approved-task git sync, and completion moves. **Learning:** A Python port can stay aligned by preserving the same folder contract and helper interfaces; temp repos with fake Copilot commands give safe end-to-end coverage.
 
-**Validation:**
-- PowerShell runner parsed successfully.
-- Bash runner passed `bash -n` on an LF-normalized temp copy.
-- Verified `coworker/tasks/0draft` contains `1.md` to `5.md`.
+- **Browser4 MCP startup verification:** Confirmed Browser4 MCP does **not** start from `browser4\browser4-agents\target\Browser4.jar`; it starts from `pulsar-agentic` via Maven exec entry point `Browser4MCPServerRunnerKt`, launches Browser4/Chrome, registers tools, and exits when STDIO closes. **Learning:** Browser4 MCP is a STDIO subprocess, not a long-running HTTP server; docs/tests should clearly distinguish it from the Spring Boot app.
 
-**Key Learnings:**
-- Placeholder maintenance belongs in shared runners so Windows and Bash stay aligned.
-- Checking at startup and after completion preserves repo hygiene and automation consistency.
-- No monthly memory append was needed because the 2026-03-07 rollup already existed.
-
-## Task: webdriver-mcp-toolspec-update
-**Summary:** Aligned MCP tool-spec generation with explicit `@MCP` annotations, added `WebDriver.drag(sourceSelector, targetSelector)`, and refreshed code-mirror tool-spec resources so only annotated WebDriver/agent tools are exposed.
-
-**Changes:**
-- Added `@MCP` coverage across WebDriver methods used by `WebDriverToolExecutor`.
-- Implemented default `WebDriver.drag` using computed source/target offsets and `dragAndDrop`.
-- Updated `ToolSpecGenerator` to emit specs only for `@MCP` methods, prefer `@mcp` KDoc sections (case-insensitive), fall back to full KDoc, and humanize method names if KDoc is absent.
-- Simplified `WebDriverToolExecutor` to reuse interface drag logic/spec, annotated MCP-visible `PerceptiveAgent` entrypoints, added focused tests, and refreshed `code-mirror` JSON/text artifacts.
-
-**Validation:**
-- Scripted coverage check confirmed every `WebDriverToolExecutor.callFunctionOn` WebDriver method maps to an `@MCP`-annotated WebDriver function.
-- Regenerated `code-mirror` WebDriver/PerceptiveAgent text and tool-spec JSON artifacts.
-- Maven validation was attempted but blocked by a pre-existing Kotlin compile-daemon connection failure in unrelated modules before reaching the changed module.
-
-**Key Learnings:**
-- Browser4's tool-spec pipeline is source-text driven, so `@MCP` annotations and code-mirror JSON/text artifacts must stay synchronized.
-- Restricting spec generation to explicit annotations removes deprecated/helper overloads from MCP exposure and makes KDoc tagging rules prompt-visible.
-- When Kotlin daemon failures block module builds, scripted consistency checks still provide useful coverage evidence while the blocker is documented.
+- **Unified scheduling + deprecation cleanup:** Implemented PowerShell-first unified scheduling with `coworker-scheduler.ps1` + config, running coworker, draft refinement, and task-source monitoring as child processes with per-task logs, shared status JSON, config-driven intervals/args, and `DependsOn` ordering; `run_coworker_periodically.ps1` gained `-Once`. Legacy periodic scripts were moved to `coworker/deprecated`, original paths became deprecation-warning shims, and docs/config were retargeted accordingly. **Learning:** A one-shot scheduler still needs dependency awareness so producer work is visible in the same cycle; under `Set-StrictMode`, imported config hashtables should use key checks/default helpers, not direct property access; when deprecating runnable scripts, keep compatibility shims and normalize touched `.sh` files to LF before `bash -n` on Windows.
 
 
 Total usage est:        1 Premium request
-API time spent:         13s
-Total session time:     20s
+API time spent:         24s
+Total session time:     32s
 Total code changes:     +0 -0
 Breakdown by AI model:
- gpt-5.4                 20.6k in, 1.1k out, 17.9k cached (Est. 1 Premium request)
+ gpt-5.4                 21.1k in, 1.4k out, 18.9k cached (Est. 1 Premium request)
 
+- **PSD1-backed PowerShell coworker config:** Moved the PowerShell Copilot command definition out of coworker/scripts/config.ps1 into the new coworker/scripts/config.psd1, with config.ps1 now importing the data file and coworker.py updated to prefer the PSD1 while keeping existing PowerShell/Bash fallbacks. **Outcome:** PowerShell helpers still load the configured command correctly, and the Python coworker runner now resolves the same flags from the PSD1 source of truth. **Learning:** When PowerShell config becomes data-driven, cross-runtime consumers must either parse the PSD1 directly or retain a compatible fallback path rather than scraping the wrapper script.

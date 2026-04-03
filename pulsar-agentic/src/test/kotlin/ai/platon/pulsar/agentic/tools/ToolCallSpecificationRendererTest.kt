@@ -10,9 +10,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import kotlin.reflect.KClass
-import org.junit.jupiter.api.DisplayName
 
 class ToolCallSpecificationRendererTest {
 
@@ -37,8 +37,8 @@ class ToolCallSpecificationRendererTest {
     }
 
     @Test
-        @DisplayName("render should keep ToolSpecification verbatim and append custom tools")
-    fun renderShouldKeepToolspecificationVerbatimAndAppendCustomTools() {
+    @DisplayName("render should keep ToolSpecification verbatim and append custom tools")
+    fun renderShouldKeepToolSpecificationVerbatimAndAppendCustomTools() {
         val executor = DbToolExecutor()
         val specs = listOf(
             ToolSpec(
@@ -55,8 +55,8 @@ class ToolCallSpecificationRendererTest {
         val rendered = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 
         // Built-in specification should be present verbatim
-        assertTrue(rendered.contains("// domain: driver"), rendered)
-        assertTrue(rendered.contains("driver.reload()"), rendered)
+        assertTrue(rendered.contains("// domain: tab"), rendered)
+        assertTrue(rendered.contains("tab.reload()"), rendered)
 
         // Custom section appended
         assertTrue(rendered.contains("// CustomTool"), rendered)
@@ -65,13 +65,12 @@ class ToolCallSpecificationRendererTest {
     }
 
     @Test
-        @DisplayName("render should include MCP service tools when registered")
-    fun renderShouldIncludeMcpServiceToolsWhenRegistered() {
-        // Simulate MCP tool registration
-        val mcpExecutor = MockMCPToolExecutor()
-        val mcpSpecs = listOf(
+    @DisplayName("render should include registered custom service tools")
+    fun renderShouldIncludeRegisteredCustomServiceTools() {
+        val serviceExecutor = MockServiceToolExecutor()
+        val serviceSpecs = listOf(
             ToolSpec(
-                domain = "mcp.test-server",
+                domain = "service.test-server",
                 method = "fetch",
                 arguments = listOf(
                     ToolSpec.Arg("url", "String"),
@@ -81,7 +80,7 @@ class ToolCallSpecificationRendererTest {
                 description = "Fetch content from a URL"
             ),
             ToolSpec(
-                domain = "mcp.test-server",
+                domain = "service.test-server",
                 method = "store",
                 arguments = listOf(
                     ToolSpec.Arg("key", "String"),
@@ -92,23 +91,20 @@ class ToolCallSpecificationRendererTest {
             )
         )
 
-        registry.register(mcpExecutor, mcpSpecs)
+        registry.register(serviceExecutor, serviceSpecs)
 
         val rendered = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 
-        // Built-in tools should be present
-        assertTrue(rendered.contains("// domain: driver"), "Should contain built-in driver domain")
-
-        // MCP custom tools should be present
+        assertTrue(rendered.contains("// domain: tab"), "Should contain built-in tab domain")
         assertTrue(rendered.contains("// CustomTool"), "Should contain CustomTool section")
-        assertTrue(rendered.contains("mcp.test-server.fetch("), "Should contain MCP fetch method")
-        assertTrue(rendered.contains("url: String"), "Should contain MCP fetch url parameter")
-        assertTrue(rendered.contains("mcp.test-server.store("), "Should contain MCP store method")
-        assertTrue(rendered.contains("key: String"), "Should contain MCP store key parameter")
+        assertTrue(rendered.contains("service.test-server.fetch("), "Should contain fetch method")
+        assertTrue(rendered.contains("url: String"), "Should contain fetch url parameter")
+        assertTrue(rendered.contains("service.test-server.store("), "Should contain store method")
+        assertTrue(rendered.contains("key: String"), "Should contain store key parameter")
     }
 
     @Test
-        @DisplayName("render should include SKILL tools when registered")
+    @DisplayName("render should include SKILL tools when registered")
     fun renderShouldIncludeSkillToolsWhenRegistered() = runBlocking {
         // Register a skill with toolSpec
         val skill = TestSkillWithToolSpec()
@@ -121,7 +117,7 @@ class ToolCallSpecificationRendererTest {
         val rendered = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 
         // Built-in tools should be present
-        assertTrue(rendered.contains("// domain: driver"), "Should contain built-in driver domain")
+        assertTrue(rendered.contains("// domain: tab"), "Should contain built-in tab domain")
 
         // Skill tools should be present
         assertTrue(rendered.contains("// CustomTool"), "Should contain CustomTool section")
@@ -134,20 +130,19 @@ class ToolCallSpecificationRendererTest {
     }
 
     @Test
-        @DisplayName("render should include both MCP and SKILL tools when both are registered")
-    fun renderShouldIncludeBothMcpAndSkillToolsWhenBothAreRegistered() = runBlocking {
-        // Register MCP tools
-        val mcpExecutor = MockMCPToolExecutor()
-        val mcpSpecs = listOf(
+    @DisplayName("render should include both custom service and SKILL tools when both are registered")
+    fun renderShouldIncludeBothCustomServiceAndSkillToolsWhenBothAreRegistered() = runBlocking {
+        val serviceExecutor = MockServiceToolExecutor()
+        val serviceSpecs = listOf(
             ToolSpec(
-                domain = "mcp.api-server",
+                domain = "service.api-server",
                 method = "call",
                 arguments = listOf(ToolSpec.Arg("endpoint", "String")),
                 returnType = "Any?",
                 description = "Call an API endpoint"
             )
         )
-        registry.register(mcpExecutor, mcpSpecs)
+        registry.register(serviceExecutor, serviceSpecs)
 
         // Register SKILL
         val skill = TestSkillWithToolSpec()
@@ -158,14 +153,14 @@ class ToolCallSpecificationRendererTest {
         val rendered = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 
         // Built-in tools should be present
-        assertTrue(rendered.contains("// domain: driver"), "Should contain built-in driver domain")
+        assertTrue(rendered.contains("// domain: tab"), "Should contain built-in tab domain")
 
-        // Both MCP and SKILL tools should be present
+        // Both custom service and SKILL tools should be present
         assertTrue(rendered.contains("// CustomTool"), "Should contain CustomTool section")
 
-        // MCP tools
-        assertTrue(rendered.contains("mcp.api-server.call("), "Should contain MCP call method")
-        assertTrue(rendered.contains("endpoint: String"), "Should contain MCP endpoint parameter")
+        // Custom service tools
+        assertTrue(rendered.contains("service.api-server.call("), "Should contain service call method")
+        assertTrue(rendered.contains("endpoint: String"), "Should contain service endpoint parameter")
 
         // Skill tools
         assertTrue(rendered.contains("skill.run("), "Should contain skill.run method")
@@ -173,7 +168,7 @@ class ToolCallSpecificationRendererTest {
     }
 
     @Test
-        @DisplayName("render should properly format tool specifications with various parameter types")
+    @DisplayName("render should properly format tool specifications with various parameter types")
     fun renderShouldProperlyFormatToolSpecificationsWithVariousParameterTypes() {
         val executor = ComplexToolExecutor()
         val specs = listOf(
@@ -205,7 +200,7 @@ class ToolCallSpecificationRendererTest {
     }
 
     @Test
-        @DisplayName("render without custom domains should only include built-in tools")
+    @DisplayName("render without custom domains should only include built-in tools")
     fun renderWithoutCustomDomainsShouldOnlyIncludeBuiltInTools() {
         // Register some custom tools
         val executor = DbToolExecutor()
@@ -222,7 +217,7 @@ class ToolCallSpecificationRendererTest {
         val rendered = ToolCallSpecificationRenderer.render(includeCustomDomains = false)
 
         // Built-in tools should be present
-        assertTrue(rendered.contains("// domain: driver"), "Should contain built-in driver domain")
+        assertTrue(rendered.contains("// domain: tab"), "Should contain built-in tab domain")
 
         // Custom tools should NOT be present
         assertFalse(rendered.contains("// CustomTool"), "Should NOT contain CustomTool section")
@@ -230,28 +225,32 @@ class ToolCallSpecificationRendererTest {
     }
 
     @Test
-        @DisplayName("render should filter custom domains based on filter function")
+    @DisplayName("render should filter custom domains based on filter function")
     fun renderShouldFilterCustomDomainsBasedOnFilterFunction() {
         // Register multiple custom tools
-        registry.register(DbToolExecutor(), listOf(
-            ToolSpec(domain = "db", method = "query", arguments = emptyList(), returnType = "String")
-        ))
-        registry.register(MockMCPToolExecutor(), listOf(
-            ToolSpec(domain = "mcp.test", method = "fetch", arguments = emptyList(), returnType = "String")
-        ))
+        registry.register(
+            DbToolExecutor(), listOf(
+                ToolSpec(domain = "db", method = "query", arguments = emptyList(), returnType = "String")
+            )
+        )
+        registry.register(
+            MockServiceToolExecutor(), listOf(
+                ToolSpec(domain = "service.test", method = "fetch", arguments = emptyList(), returnType = "String")
+            )
+        )
 
-        // Filter to include only MCP domains
+        // Filter to include only service domains
         val rendered = ToolCallSpecificationRenderer.render(
             includeCustomDomains = true,
-            customDomainFilter = { it.startsWith("mcp.") }
+            customDomainFilter = { it.startsWith("service.") }
         )
 
         // Built-in tools should be present
-        assertTrue(rendered.contains("// domain: driver"), "Should contain built-in driver domain")
+        assertTrue(rendered.contains("// domain: tab"), "Should contain built-in tab domain")
 
-        // Only MCP tools should be in custom section
+        // Only service tools should be in custom section
         assertTrue(rendered.contains("// CustomTool"), "Should contain CustomTool section")
-        assertTrue(rendered.contains("mcp.test.fetch"), "Should contain MCP fetch method")
+        assertTrue(rendered.contains("service.test.fetch"), "Should contain service fetch method")
         assertFalse(rendered.contains("db.query"), "Should NOT contain filtered db.query method")
     }
 
@@ -274,7 +273,7 @@ class ToolCallSpecificationRendererTest {
         val rendered = ToolCallSpecificationRenderer.renderJson(includeCustomDomains = false)
 
         // Should include built-in driver tools
-        assertTrue(rendered.contains(""""domain": "driver""""), "Should contain driver domain")
+        assertTrue(rendered.contains(""""domain": "tab""""), "Should contain driver domain")
         assertTrue(rendered.contains(""""method": "navigate""""), "Should contain navigate method")
         assertTrue(rendered.contains(""""method": "click""""), "Should contain click method")
 
@@ -356,7 +355,7 @@ class ToolCallSpecificationRendererTest {
         assertTrue(specs.isNotEmpty(), "Should parse built-in specifications")
 
         // Should include driver domain tools
-        val driverTools = specs.filter { it.domain == "driver" }
+        val driverTools = specs.filter { it.domain == "tab" }
         assertTrue(driverTools.isNotEmpty(), "Should include driver tools")
 
         // Should include browser domain tools
@@ -373,7 +372,7 @@ class ToolCallSpecificationRendererTest {
         val specs = ToolCallSpecificationRenderer.parseBuiltInSpecifications()
 
         // Find navigate method which has a url parameter
-        val navigate = specs.find { it.domain == "driver" && it.method == "navigate" }
+        val navigate = specs.find { it.domain == "tab" && it.method == "navigate" }
         assertNotNull(navigate, "Should find navigate method")
         assertEquals(1, navigate!!.arguments.size, "navigate should have 1 argument")
         assertEquals("url", navigate.arguments[0].name, "First argument should be url")
@@ -385,7 +384,7 @@ class ToolCallSpecificationRendererTest {
         val specs = ToolCallSpecificationRenderer.parseBuiltInSpecifications()
 
         // Find waitForSelector which has a default timeout
-        val waitForSelector = specs.find { it.domain == "driver" && it.method == "waitForSelector" }
+        val waitForSelector = specs.find { it.domain == "tab" && it.method == "waitForSelector" }
         assertNotNull(waitForSelector, "Should find waitForSelector method")
 
         val timeoutArg = waitForSelector!!.arguments.find { it.name == "timeoutMillis" }
@@ -398,12 +397,12 @@ class ToolCallSpecificationRendererTest {
         val specs = ToolCallSpecificationRenderer.parseBuiltInSpecifications()
 
         // Find exists method which returns Boolean
-        val exists = specs.find { it.domain == "driver" && it.method == "exists" }
+        val exists = specs.find { it.domain == "tab" && it.method == "exists" }
         assertNotNull(exists, "Should find exists method")
         assertEquals("Boolean", exists!!.returnType, "exists should return Boolean")
 
         // Find navigate which returns Unit (no return type specified)
-        val navigate = specs.find { it.domain == "driver" && it.method == "navigate" }
+        val navigate = specs.find { it.domain == "tab" && it.method == "navigate" }
         assertNotNull(navigate, "Should find navigate method")
         assertEquals("Unit", navigate!!.returnType, "navigate should return Unit")
     }
@@ -438,27 +437,27 @@ class ToolCallSpecificationRendererTest {
 
     private class DbToolExecutor : AbstractToolExecutor() {
         override val domain: String = "db"
-        override val targetClass: KClass<*> = Any::class
+        override val receiverClass: KClass<*> = Any::class
 
         override suspend fun callFunctionOn(
             domain: String,
             functionName: String,
             args: Map<String, Any?>,
-            target: Any
+            receiver: Any
         ): Any? {
             return null
         }
     }
 
-    private class MockMCPToolExecutor : AbstractToolExecutor() {
-        override val domain: String = "mcp.test-server"
-        override val targetClass: KClass<*> = Any::class
+    private class MockServiceToolExecutor : AbstractToolExecutor() {
+        override val domain: String = "service.test-server"
+        override val receiverClass: KClass<*> = Any::class
 
         override suspend fun callFunctionOn(
             domain: String,
             functionName: String,
             args: Map<String, Any?>,
-            target: Any
+            receiver: Any
         ): Any? {
             return null
         }
@@ -466,13 +465,13 @@ class ToolCallSpecificationRendererTest {
 
     private class ComplexToolExecutor : AbstractToolExecutor() {
         override val domain: String = "complex"
-        override val targetClass: KClass<*> = Any::class
+        override val receiverClass: KClass<*> = Any::class
 
         override suspend fun callFunctionOn(
             domain: String,
             functionName: String,
             args: Map<String, Any?>,
-            target: Any
+            receiver: Any
         ): Any? {
             return null
         }

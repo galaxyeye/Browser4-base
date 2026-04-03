@@ -1,10 +1,14 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.cdt.kt.protocol.commands.DOMSnapshot
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotNodeEx
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
+import ai.platon.cdt.kt.protocol.commands.DOMSnapshot
+import ai.platon.cdt.kt.protocol.support.annotations.Experimental
+import ai.platon.cdt.kt.protocol.support.annotations.Optional
+import ai.platon.cdt.kt.protocol.support.annotations.ParamName
+import ai.platon.cdt.kt.protocol.types.domsnapshot.CaptureSnapshot
 import ai.platon.pulsar.common.getLogger
 
 /**
@@ -15,13 +19,13 @@ class DomSnapshotHandler(private val devTools: RemoteDevTools) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 
-    private val domSnapshot: DOMSnapshot get() = devTools.domSnapshot
+    private val cdpDOMSnapshot: DOMSnapshot get() = devTools.domSnapshot
 
     /**
      * Enhanced capture with absolute coordinates and stacking context analysis.
      * This method provides comprehensive layout information for interaction indices.
      */
-    suspend fun capture(
+    suspend fun captureSnapshot(
         includeStyles: Boolean = true,
         includePaintOrder: Boolean = true,
         includeDomRects: Boolean = true,
@@ -29,25 +33,19 @@ class DomSnapshotHandler(private val devTools: RemoteDevTools) {
         devicePixelRatio: Double = 1.0
     ): Map<Int, SnapshotNodeEx> {
         val computedStyles = if (includeStyles) REQUIRED_COMPUTED_STYLES else emptyList()
-        val capture = try {
-            domSnapshot.captureSnapshot(
-                computedStyles,
-                includePaintOrder = includePaintOrder,
-                includeDOMRects = includeDomRects,
-                includeBlendedBackgroundColors = null,
-                includeTextColorOpacities = null,
-            )
-        } catch (e: Exception) {
-            logger.warn("DOMSnapshot.captureSnapshot failed | err={}", e.toString())
-            tracer?.debug("captureSnapshot exception", e)
-            return emptyMap()
-        }
+        val snapshot = captureSnapshot(
+            computedStyles,
+            includePaintOrder = includePaintOrder,
+            includeDOMRects = includeDomRects,
+            includeBlendedBackgroundColors = null,
+            includeTextColorOpacities = null,
+        )
 
         val byBackend = mutableMapOf<Int, SnapshotNodeEx>()
-        val strings = capture.strings
+        val strings = snapshot.strings
 
         var totalRows = 0
-        for (doc in capture.documents) {
+        for (doc in snapshot.documents) {
             val nodeTree = doc.nodes
             val layout = doc.layout
 
@@ -131,7 +129,7 @@ class DomSnapshotHandler(private val devTools: RemoteDevTools) {
                 val boundsRect = scaleRectToCssPx(rawBoundsRect)?.roundTo(1)
                 val absoluteBounds = if (includeAbsoluteCoords) boundsRect else null
 
-                val snap = SnapshotNodeEx(
+                val snapshotEx = SnapshotNodeEx(
                     isClickable = isClickable,
                     cursorStyle = cursor,
                     bounds = boundsRect,
@@ -143,7 +141,7 @@ class DomSnapshotHandler(private val devTools: RemoteDevTools) {
                     absoluteBounds = absoluteBounds
                 )
 
-                byBackend[backendId] = snap
+                byBackend[backendId] = snapshotEx
             }
         }
 
@@ -153,8 +151,47 @@ class DomSnapshotHandler(private val devTools: RemoteDevTools) {
 
         tracer?.trace(
             "DOMSnapshot captured | entries={} rowsApprox={} styles={} paintOrder={}",
-            byBackend.size, totalRows, includeStyles, includePaintOrder)
+            byBackend.size, totalRows, includeStyles, includePaintOrder
+        )
+
         return byBackend
+    }
+
+    /**
+     * Returns a document snapshot, including the full DOM tree of the root node (including iframes,
+     * template contents, and imported documents) in a flattened array, as well as layout and
+     * white-listed computed style information for the nodes. Shadow DOM in the returned DOM tree is
+     * flattened.
+     * @param computedStyles Whitelist of computed styles to return.
+     * @param includePaintOrder Whether to include layout object paint orders into the snapshot.
+     * @param includeDOMRects Whether to include DOM rectangles (offsetRects, clientRects, scrollRects) into the snapshot
+     * @param includeBlendedBackgroundColors Whether to include blended background colors in the snapshot (default: false).
+     * Blended background color is achieved by blending background colors of all elements
+     * that overlap with the current element.
+     * @param includeTextColorOpacities Whether to include text color opacity in the snapshot (default: false).
+     * An element might have the opacity property set that affects the text color of the element.
+     * The final text color opacity is computed based on the opacity of all overlapping elements.
+     */
+    private suspend fun captureSnapshot(
+        @ParamName("computedStyles") computedStyles: List<String>,
+        @ParamName("includePaintOrder") @Optional includePaintOrder: Boolean? = null,
+        @ParamName("includeDOMRects") @Optional includeDOMRects: Boolean? = null,
+        @ParamName("includeBlendedBackgroundColors") @Optional @Experimental includeBlendedBackgroundColors: Boolean? = null,
+        @ParamName("includeTextColorOpacities") @Optional @Experimental includeTextColorOpacities: Boolean? = null,
+    ): CaptureSnapshot {
+        return try {
+            cdpDOMSnapshot.captureSnapshot(
+                computedStyles,
+                includePaintOrder = includePaintOrder,
+                includeDOMRects = includeDOMRects,
+                includeBlendedBackgroundColors = includeBlendedBackgroundColors,
+                includeTextColorOpacities = includeTextColorOpacities
+            )
+        } catch (e: Exception) {
+            logger.warn("DOMSnapshot.captureSnapshot failed | err={}", e.toString())
+            tracer?.debug("captureSnapshot exception", e)
+            CaptureSnapshot(emptyList(), emptyList())
+        }
     }
 
     companion object {

@@ -14,29 +14,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 🔍 Find repo root
-$repoRoot = git rev-parse --show-toplevel 2>$null
-if (-not $repoRoot) {
-    $repoRoot = Get-Location
-}
-$repoRoot = (Resolve-Path $repoRoot).Path
-Set-Location $repoRoot
-
-$configPath = Join-Path $repoRoot "coworker\scripts\config.ps1"
-if (Test-Path $configPath) {
-    . $configPath
-}
-if (-not $COPILOT) {
-    $COPILOT = @('gh', 'copilot')
-}
-if ($COPILOT -is [string]) {
-    throw "COPILOT must be defined as a PowerShell array in $configPath"
-}
-if ($COPILOT.Count -lt 2) {
-    throw "COPILOT must include an executable and at least one argument"
-}
-$copilotExecutable = $COPILOT[0]
-$copilotBaseArgs = @($COPILOT | Select-Object -Skip 1)
+$configPath = Join-Path (Split-Path -Parent $PSScriptRoot) "config.ps1"
+. $configPath
+$repoRoot = Get-WorkspaceRoot
+$ghCopilotHelper = Join-Path $PSScriptRoot 'gh-copilot.ps1'
+. $ghCopilotHelper
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
+$copilotExecutable = $copilotCommand.Executable
+$copilotBaseArgs = $copilotCommand.BaseArgs
 
 $parsedDate = Get-Date $Date
 $year = $parsedDate.ToString("yyyy")
@@ -46,7 +31,7 @@ $day = $parsedDate.ToString("dd")
 $dateStr = $parsedDate.ToString("yyyy-MM-dd")
 $compactDate = $parsedDate.ToString("yyyyMMdd")
 
-$logDir = Join-Path $repoRoot "coworker\tasks\300logs\$year\$month\$day"
+$logDir = Join-Path (Resolve-TasksPath '300logs') "$year\$month\$day"
 $memoryFile = Join-Path $logDir "MEMORY.$compactDate.md"
 
 if (-not (Test-Path $logDir)) {
@@ -229,5 +214,5 @@ CONSTRAINTS:
         '--allow-all-tools'
     ))
 
-    Start-Process -FilePath $copilotExecutable -ArgumentList $copilotArgList -NoNewWindow -Wait
+    Start-Process -FilePath $copilotExecutable -ArgumentList $copilotArgList -WorkingDirectory $repoRoot -NoNewWindow -Wait
 }

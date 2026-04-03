@@ -3,9 +3,11 @@ package ai.platon.browser4.driver.chrome.dom.model
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.FBNLocator
 import ai.platon.browser4.driver.chrome.dom.LocatorMap
-import ai.platon.browser4.driver.chrome.dom.model.MicroDOMTreeNodeHelper.Companion.estimatedSize
 import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import ai.platon.browser4.driver.chrome.dom.util.DOMUtils
+import ai.platon.browser4.driver.chrome.dom.util.InteractiveNodeListBuilder
+import ai.platon.browser4.driver.chrome.dom.util.InteractiveNodeListBuilder.Companion.estimatedSize
+import ai.platon.browser4.driver.chrome.dom.util.NanoDOMTreeBuilder
 import ai.platon.browser4.driver.common.BrowserSettings.Companion.VIEWPORT
 import ai.platon.pulsar.common.math.roundTo
 import ai.platon.pulsar.common.serialize.json.Pson
@@ -68,6 +70,7 @@ object DefaultIncludeAttributes {
     val ATTRIBUTES = listOf(
         "title", "type", "checked", "id", "name", "role", "value",
         "placeholder", "data-date-format", "alt", "aria-label",
+        "href", "src", "action", "target", "rel", "download",
         "aria-expanded", "data-state", "aria-checked", "aria-valuemin",
         "aria-valuemax", "aria-valuenow", "aria-placeholder", "pattern",
         "min", "max", "minlength", "maxlength", "step", "pseudo",
@@ -246,7 +249,7 @@ data class SnapshotNodeEx constructor(
 /**
  * Enhanced DOM tree node containing merged information from DOM, AX, and Snapshot trees.
  */
-data class DOMTreeNodeEx constructor(
+data class MergedDOMTreeNode constructor(
     // DOM Node data
     val nodeId: Int = 0,
     val backendNodeId: Int? = null,
@@ -264,9 +267,9 @@ data class DOMTreeNodeEx constructor(
     val sessionId: String? = null,
 
     // Tree structure
-    val children: List<DOMTreeNodeEx> = emptyList(),
-    val shadowRoots: List<DOMTreeNodeEx> = emptyList(),
-    val contentDocument: DOMTreeNodeEx? = null,
+    val children: List<MergedDOMTreeNode> = emptyList(),
+    val shadowRoots: List<MergedDOMTreeNode> = emptyList(),
+    val contentDocument: MergedDOMTreeNode? = null,
 
     // Snapshot data
     val snapshotNode: SnapshotNodeEx? = null,
@@ -296,16 +299,20 @@ data class DOMTreeNodeEx constructor(
      * - Else, return the lowercase tag name (or "*")
      */
     fun cssSelector(): String = CSSSelectorUtils.generateCSSSelector(this)
+
+    fun toJson() = Pson.toJson(this)
+
+    fun toYaml() = Pson.toYaml(this)
 }
 
-typealias DOMTreeEx = DOMTreeNodeEx
+typealias MergedDOMTree = MergedDOMTreeNode
 
 /**
- * Simplified node for LLM serialization.
+ * An optimized DOM tree.
  */
-data class TinyNode(
-    val originalNode: DOMTreeNodeEx,
-    val children: List<TinyNode> = emptyList(),
+data class OptimizedDOMTreeNode(
+    val originalNode: MergedDOMTreeNode,
+    val children: List<OptimizedDOMTreeNode> = emptyList(),
     val shouldDisplay: Boolean = true,
     val interactiveIndex: Int? = null,
     val isNew: Boolean = false,
@@ -315,7 +322,7 @@ data class TinyNode(
     val isCompoundComponent: Boolean = false
 )
 
-typealias TinyTree = TinyNode
+typealias OptimizedDOMTree = OptimizedDOMTreeNode
 
 /**
  * DOM interacted element for agent interaction.
@@ -342,7 +349,7 @@ data class DOMInteractedElement(
 /**
  * Cleaned original node without children_nodes and shadow_roots.
  * Enhanced with additional snapshot information for LLM consumption.
- * This prevents duplication since SimplifiedNode.children already contains them.
+ * This prevents duplication since children nodes already contains them.
  */
 data class CleanedDOMTreeNode constructor(
     /**
@@ -398,7 +405,7 @@ data class InteractiveDOMTreeNode(
     /**
      * Locator format: `frameIndex,backendNodeId`
      * */
-    val locator: String? = null,
+    val backendNodeId: String? = null,
     val slimHTML: String? = null,
     val textBefore: String? = null,
     val scrollable: Boolean? = null,   // null means false
@@ -436,7 +443,7 @@ data class InteractiveDOMTreeNode(
 
         return buildString {
             append("[")
-            append(locator)
+            append(backendNodeId)
             append("]")
             append("{")
             append(viewportIndex ?: 1)
@@ -467,67 +474,45 @@ class InteractiveDOMTreeNodeList(
 }
 
 /**
- * Serializable DOMTreeNode structure.
- * Enhanced with compound component marking and paint order information.
- *
- * Naming conversion: mini -> tiny -> micro -> nano -> pico -> ...
+ * Serializable DOM tree node structure. Enhanced with compound component marking and paint order information.
  */
-data class MicroDOMTreeNode(
+data class SerializableDOMTreeNode(
     val shouldDisplay: Boolean? = null,
     val interactiveIndex: Int? = null,
     val ignoredByPaintOrder: Boolean? = null,
     val excludedByParent: Boolean? = null,
     val isCompoundComponent: Boolean? = null,
     val originalNode: CleanedDOMTreeNode? = null,
-    val children: List<MicroDOMTreeNode>? = null,
+    val children: List<SerializableDOMTreeNode>? = null,
     val shouldShowScrollInfo: Boolean? = null,
     val scrollInfoText: String? = null
 ) {
     private val seenChunks = mutableListOf<Pair<Double, Double>>()
 
-    val links = mutableListOf<String>()
+    fun buildInteractiveNodeList(currentViewportIndex: Int, lastViewportIndex: Int): InteractiveDOMTreeNodeList =
+        InteractiveNodeListBuilder(this, false, currentViewportIndex, lastViewportIndex)
+            .build()
 
-    fun toJson() = Pson.toJson(this)
-
-    fun toInteractiveDOMTreeNodeList(currentViewportIndex: Int, lastViewportIndex: Int): InteractiveDOMTreeNodeList =
-        MicroDOMTreeNodeHelper(this, false, currentViewportIndex, lastViewportIndex)
-            .toInteractiveDOMTreeNodeList()
-
-    fun toInteractiveDOMTreeNodeList(): InteractiveDOMTreeNodeList =
-        MicroDOMTreeNodeHelper(this, true).toInteractiveDOMTreeNodeList()
+    fun buildInteractiveNodeList(): InteractiveDOMTreeNodeList =
+        InteractiveNodeListBuilder(this, true).build()
 
     fun toNanoTree(): NanoDOMTree = toNanoTreeInRange(0.0, 1000000.0)
 
     fun toNanoTreeUnfiltered(): NanoDOMTree {
-        val helper = MicroToNanoTreeHelper(this, seenChunks)
-        return helper.toNanoTreeUnfiltered()
+        val builder = NanoDOMTreeBuilder(this, seenChunks)
+        return builder.buildUnfiltered()
     }
 
     fun toNanoTreeInRange(startY: Double = 0.0, endY: Double = 100000.0): NanoDOMTree {
-        val helper = MicroToNanoTreeHelper(this, seenChunks)
-        return helper.toNanoTreeInRange(startY, endY)
+        val builder = NanoDOMTreeBuilder(this, seenChunks)
+        return builder.build(startY, endY)
     }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as MicroDOMTreeNode
-
-        return toJson() == other.toJson()
-    }
-
-    override fun hashCode(): Int = toJson().hashCode()
 }
 
-typealias MicroDOMTree = MicroDOMTreeNode
+typealias SerializableDOMTree = SerializableDOMTreeNode
 
 /**
- * Serializable DOMTreeNode structure.
- * Enhanced with compound component marking and paint order information.
- *
- * Naming conversion to compress the tree for LLM input:
- * mini -> tiny -> micro -> nano -> pico -> femto -> atto -> zepto -> yocto
+ * Serializable DOM tree node structure.
  * */
 data class NanoDOMTreeNode(
     /**
@@ -554,32 +539,29 @@ data class NanoDOMTreeNode(
     @JsonIgnore
     val absoluteBounds: CompactRect? = null,
     @JsonIgnore
-    val microTreeNode: MicroDOMTree? = null,
+    val serializableTreeNode: SerializableDOMTree? = null,
 ) {
     @get:JsonIgnore
-    val lazyJson: String by lazy { DOMSerializer.toJson(this) }
+    val ariaSnapshot: String by lazy { NanoAriaSnapshotRenderer.render(this) }
 
     @get:JsonIgnore
-    val lazyYaml: String by lazy { DOMSerializer.toYaml(this) }
+    val ref: Int get() = FBNLocator.parseRelaxed(locator)?.backendNodeId ?: 0
 }
 
 typealias NanoDOMTree = NanoDOMTreeNode
 
 data class DOMState constructor(
-    val microTree: MicroDOMTree,
-    val interactiveNodes: List<MicroDOMTreeNode> = listOf(),
+    val serializableTree: SerializableDOMTree,
+    val interactiveNodes: List<SerializableDOMTreeNode> = listOf(),
     val frameIds: List<String> = listOf(),
-    val selectorMap: Map<String, DOMTreeNodeEx> = mapOf(),
-    val locatorMap: LocatorMap = LocatorMap()
+    val selectorMap: Map<String, MergedDOMTreeNode> = mapOf(),
+    val locatorMap: LocatorMap = LocatorMap(),
+    @get:JsonIgnore
+    val optimizedDOMTree: OptimizedDOMTree? = null
 ) {
     @get:JsonIgnore
-    val nanoTreeLazyJson: String get() = microTree.toNanoTree().lazyJson
-
-    @get:JsonIgnore
-    val nanoTreeLazyYaml: String get() = microTree.toNanoTree().lazyYaml
-
-    @get:JsonIgnore
-    val nanoTree get() = microTree.toNanoTree()
+    val ariaSnapshot: String get() = optimizedDOMTree?.let(AriaSnapshotRenderer::render)
+        ?: serializableTree.toNanoTreeUnfiltered().ariaSnapshot
 
     fun getAbsoluteFBNLocator(locator: String?): FBNLocator? {
         if (locator == null) {
@@ -687,7 +669,7 @@ data class BrowserUseState(
     val domState: DOMState
 ) {
     fun getAllInteractiveElements(): InteractiveDOMTreeNodeList {
-        return domState.microTree.toInteractiveDOMTreeNodeList()
+        return domState.serializableTree.buildInteractiveNodeList()
     }
 
     fun getInteractiveElements(): InteractiveDOMTreeNodeList {
@@ -698,7 +680,7 @@ data class BrowserUseState(
         val processingViewport = scrollState.processingViewport
         val viewportsTotal = scrollState.viewportsTotal
 
-        return domState.microTree.toInteractiveDOMTreeNodeList(
+        return domState.serializableTree.buildInteractiveNodeList(
             currentViewportIndex = processingViewport, lastViewportIndex = viewportsTotal
         )
     }
@@ -706,7 +688,7 @@ data class BrowserUseState(
     companion object {
         val DUMMY: BrowserUseState = BrowserUseState(
             BrowserState(""),
-            DOMState(MicroDOMTree())
+            DOMState(SerializableDOMTree())
         )
     }
 }

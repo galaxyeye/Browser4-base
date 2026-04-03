@@ -23,40 +23,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 🔍 Find repo root
-$repoRoot = git rev-parse --show-toplevel 2>$null
-if (-not $repoRoot) {
-    $repoRoot = Get-Location
-}
-# Ensure absolute path
-$repoRoot = (Resolve-Path $repoRoot).Path
-Set-Location $repoRoot
-
-$configPath = Join-Path $repoRoot "coworker\scripts\config.ps1"
-if (Test-Path $configPath) {
-    . $configPath
-}
-if (-not $COPILOT) {
-    $COPILOT = @('gh', 'copilot')
-}
-if ($COPILOT -is [string]) {
-    throw "COPILOT must be defined as a PowerShell array in $configPath"
-}
-if ($COPILOT.Count -lt 2) {
-    throw "COPILOT must include an executable and at least one argument"
-}
-$copilotExecutable = $COPILOT[0]
-$copilotBaseArgs = @($COPILOT | Select-Object -Skip 1)
+$configPath = Join-Path (Split-Path -Parent $PSScriptRoot) "config.ps1"
+. $configPath
+$repoRoot = Get-WorkspaceRoot
+$ghCopilotHelper = Join-Path $PSScriptRoot 'gh-copilot.ps1'
+. $ghCopilotHelper
 
 $parsedDate = Get-Date $Date
 $year = $parsedDate.ToString("yyyy")
 $month = $parsedDate.ToString("MM")
 $day = $parsedDate.ToString("dd")
 
-$logsBaseDir = Join-Path $repoRoot "coworker\tasks\300logs"
+$logsBaseDir = Resolve-TasksPath '300logs'
 
 # Function to run gh copilot
-function Invoke-GhCopilot {
+function Invoke-CoworkerMemoryCopilot {
     param(
         [string]$Prompt,
         [switch]$CaptureOutput
@@ -68,36 +49,7 @@ function Invoke-GhCopilot {
         $Prompt = $Prompt.Substring(0, 25000) + " ... [Truncated]"
     }
 
-    if ($CaptureOutput) {
-        # Arguments for direct invocation (no extra quotes needed for array elements)
-        $directArgs = @($copilotBaseArgs + @(
-            '--',
-            '-p',
-            $Prompt,
-            '--allow-all-tools'
-        ))
-
-        # Executing directly to capture output
-        # Note: gh copilot output might include ANSI codes, we might need to strip them?
-        # Typically gh copilot outputs markdown.
-
-        $output = & $copilotExecutable @directArgs 2>&1 | Out-String
-        return $output
-    } else {
-        # Arguments for Start-Process (might need quotes for complex strings depending on PS version/OS)
-        # But generally, Start-Process ArgumentList array is safe.
-        # The original code added quotes, let's keep it for safety in the Start-Process path.
-        $safePrompt = $Prompt.Replace('"', '\"')
-        $processArgs = @($copilotBaseArgs + @(
-            '--',
-            '-p',
-            "`"$safePrompt`"",
-            '--allow-all-tools'
-        ))
-
-        # Use Start-Process to handle arguments safely and stream to console
-        Start-Process -FilePath $copilotExecutable -ArgumentList $processArgs -NoNewWindow -Wait
-    }
+    return Invoke-GHCopilot -Prompt $Prompt -AdditionalArguments @('--allow-all-tools') -RepoRoot $repoRoot -WorkingDirectory $repoRoot -CaptureOutput:$CaptureOutput
 }
 
 if ($Type -eq "daily") {
@@ -169,7 +121,7 @@ DAILY MEMORIES:
 $combinedContent
 "@
 
-    Invoke-GhCopilot -Prompt $prompt
+    Invoke-CoworkerMemoryCopilot -Prompt $prompt
 }
 elseif ($Type -eq "yearly") {
     $targetDir = "$logsBaseDir\$year"
@@ -232,7 +184,7 @@ MONTHLY MEMORIES:
 $combinedContent
 "@
 
-    Invoke-GhCopilot -Prompt $prompt
+    Invoke-CoworkerMemoryCopilot -Prompt $prompt
 }
 elseif ($Type -eq "global") {
     $targetFile = "$logsBaseDir\MEMORY.md"
@@ -258,7 +210,7 @@ elseif ($Type -eq "global") {
         $combinedContent += "`n`n=== MEMORY: $($file.Name) ===`n$content"
     }
 
-    Invoke-GhCopilot -Prompt $prompt
+    Invoke-CoworkerMemoryCopilot -Prompt $prompt
 }
 elseif ($Type -eq "init") {
     $year = $parsedDate.ToString("yyyy")
@@ -294,10 +246,8 @@ elseif ($Type -eq "init") {
             # Compress
             $compressPrompt = "Compress the following daily memory content to under 3000 characters. Preserve key insights and structural learnings. content:`n$dailyContent"
 
-            # Compress using gh copilot
-            # We need to capture the output here.
-            # But wait, Invoke-GhCopilot prints to host by default unless I use -CaptureOutput
-            $compressedContent = Invoke-GhCopilot -Prompt $compressPrompt -CaptureOutput
+            # Compress using gh copilot and capture the replacement markdown for the memory file.
+            $compressedContent = Invoke-CoworkerMemoryCopilot -Prompt $compressPrompt -CaptureOutput
 
             if (-not [string]::IsNullOrWhiteSpace($compressedContent)) {
                  # The output might contain explanation text. Copilot CLI usually just answers if prompted correctly.

@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import org.apache.commons.lang3.StringUtils
 
 open class Locator(
@@ -12,7 +12,6 @@ open class Locator(
         XPATH("xpath"),
         HASH("hash"),
         BACKEND_NODE_ID("backend"),
-        @Deprecated("Use `backend:` instead of fbn: for better consistency and clarity. The frame context can be determined from the backend node id itself.")
         FRAME_BACKEND_NODE_ID("fbn"),
         NODE_ID("node"),
         INDEX("index");
@@ -83,6 +82,8 @@ class FBNLocator(
 
     constructor(frameId: Int, backendNodeId: Int): this(frameId.toString(), backendNodeId)
 
+    val ref get() = "e$backendNodeId"
+
     val isRelative: Boolean get() = StringUtils.isNumeric(frameId)
 
     val isAbsolute: Boolean get() = !isRelative
@@ -116,37 +117,23 @@ class FBNLocator(
 }
 
 class LocatorMap {
-    private val map = mutableMapOf<Locator, DOMTreeNodeEx>()
+    private val map = mutableMapOf<Locator, MergedDOMTreeNode>()
 
-    fun put(locator: Locator, node: DOMTreeNodeEx): DOMTreeNodeEx? {
+    fun put(locator: Locator, node: MergedDOMTreeNode): MergedDOMTreeNode? {
         return map.put(locator, node)
     }
 
-    operator fun get(locator: Locator): DOMTreeNodeEx? {
+    operator fun get(locator: Locator): MergedDOMTreeNode? {
         return map[locator]
     }
 
-    fun put(type: Locator.Type, selector: String, node: DOMTreeNodeEx) {
+    fun put(type: Locator.Type, selector: String, node: MergedDOMTreeNode) {
         map[Locator(type, selector)] = node
     }
 
-    fun select(key: String): DOMTreeNodeEx? {
-        // Support legacy string keys like plain hash, and prefixed forms like xpath:, backend:, node:, index:
-        // Try prefixed first
-        val colon = key.indexOf(':')
-        if (colon > 0) {
-            val typeStr = key.take(colon)
-            val selector = key.substring(colon + 1)
-            val type = Locator.Type.entries.firstOrNull { it.text == typeStr }
-            if (type != null) return get(Locator(type, selector))
-        }
-        // Fallback: treat as element hash without prefix
-        return map.entries.firstOrNull { it.key.type == Locator.Type.HASH && it.key.selector == key }?.value
-    }
-
-    fun toStringMap(): Map<String, DOMTreeNodeEx> {
+    fun toStringMap(): Map<String, MergedDOMTreeNode> {
         // Preserve insertion order similar to linkedMapOf in previous implementation
-        val out = LinkedHashMap<String, DOMTreeNodeEx>(map.size)
+        val out = LinkedHashMap<String, MergedDOMTreeNode>(map.size)
         map.forEach { (k, v) ->
             out[k.absoluteSelector] = v
         }

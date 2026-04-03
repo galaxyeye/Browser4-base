@@ -2,20 +2,21 @@ package ai.platon.pulsar.agentic.inference
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
 import ai.platon.browser4.driver.chrome.dom.model.TabState
-import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT
-import ai.platon.pulsar.agentic.inference.action.TASK_COMPLETE_SCHEMA_PROMPT
+import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_COMPLETE_SCHEMA
+import ai.platon.pulsar.agentic.inference.action.OBSERVE_RESPONSE_ELEMENT_SCHEMA
+import ai.platon.pulsar.agentic.inference.history.DefaultHistoryRenderStrategy
+import ai.platon.pulsar.agentic.inference.history.HistoryRenderStrategy
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
 import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.prompts.buildMainSystemPromptV1
 import ai.platon.pulsar.agentic.prompts.buildToolUseSections
-import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationRenderer
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.KStrings
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.ai.llm.PromptTemplate
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.serialize.json.Pson
-import java.util.*
 
 /**
  * Description:
@@ -26,16 +27,15 @@ import java.util.*
  * - Produces structured fragments for system/user roles
  * - Minimizes extra text to steer LLM behavior
  */
-class PromptBuilder() {
+class PromptBuilder(
+    private val historyRenderStrategy: HistoryRenderStrategy = DefaultHistoryRenderStrategy()
+) {
 
     companion object {
-        var locale: Locale = Locale.CHINESE
-
-        val isZH = locale in listOf(Locale.CHINESE, Locale.SIMPLIFIED_CHINESE, Locale.TRADITIONAL_CHINESE)
-
-        val language = if (isZH) "中文" else "English"
-
-        const val MAX_ACTIONS = 1
+        /**
+         * The working language for the prompt. English is generally better for LLM understanding.
+         * */
+        const val workingLanguage = "EN"
 
         fun buildResponseSchema(): String {
             return buildObserveResultSchema(returnAction = true)
@@ -48,13 +48,13 @@ class PromptBuilder() {
          * */
         fun buildObserveResultSchema(returnAction: Boolean): String {
             // English is better for LLM to understand JSON
-            val schema1 = OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT
+            val schema1 = OBSERVE_RESPONSE_ELEMENT_SCHEMA
 
             val schema2 = """
 {
   "elements": [
     {
-      "locator": string,
+      "ref": string,
       "description": string
     }
   ]
@@ -64,83 +64,62 @@ class PromptBuilder() {
             return if (returnAction) schema1 else schema2
         }
 
-        val TOOL_CALL_RULE_CONTENT = """
-- domain: 工具域，如 driver, browser, skill.debug.scraping 等，可用点号区分子域
-- method: 方法名，如 click, fill, extract 等
-- 输出结果中，定位节点时 `selector` 字段始终填入 `locator` 的值
-- 确保 `locator` 与对应的可交互元素列表中的 `locator` 完全匹配，或者与无障碍树节点属性完全匹配，准确定位该节点
-- JSON 格式输出时，禁止包含任何额外文本
-- 从`## 浏览器状态`段落获得所有打开标签页的信息
-- 如需检索信息，新建标签页而非复用当前页
-- 使用 `click(selector, "Ctrl")` 新建标签页，在**新标签页**打开链接。系统若为 macOS，自动将 Ctrl 映射为 Meta
-- 如果目标页面在**新标签页**打开，使用 `browser.switchTab(tabId: String)` 切换到目标页面，从`## 浏览器状态`段落获得 `tabId`
-- 若预期元素缺失，尝试刷新页面、滚动或返回上一页
-- 若向字段输入内容：1. 无需先滚动和聚焦（工具内部处理）2. 可能需1) 回车 2) 显式搜索按钮 3) 下拉选项以完成操作。
-- 若填写输入框后操作序列中断，通常是因为页面发生了变化（例如输入框下方弹出了建议选项）
-- 若出现验证码，尽可能尝试解决；若无法解决，则启用备用策略（例如换其他站点、回退上一步）
-- 若页面因输入文本等操作发生变化，需判断是否要交互新出现的元素（例如从列表中选择正确选项）。
-- 若上一步操作序列因页面变化而中断，需补全未执行的剩余操作。例如，若你尝试输入文本并点击搜索按钮，但点击未执行（因页面变化），应在下一步重试点击操作。
-- 始终考虑最终目标：<user_request>包含的内容。若用户指定了明确步骤，这些步骤始终具有最高优先级。
-- 若<user_request>中包含具体页面信息（如商品类型、评分、价格、地点等），尝试使用筛选功能以提高效率。
-- 如无必要，不要登录页面。没有凭证时，绝对不要尝试登录。
-- 始终先判断任务属于两类哪一种：
-    1. 非常具体的逐步指令
-       - 精确地遵循这些步骤，不要跳过，尽力完成每一项要求。
-    2. 开放式任务：
-       - 自行规划并有创造性地完成任务。
-       - 如果你在开放式任务中被卡住（例如遇到登录或验证码），可以重新评估任务并尝试替代方案，例如有时即使出现登录弹窗，页面的某些部分仍可访问，或者可以通过网络搜索获得信息。
+        val TOOL_CALL_RULE_CONTENT_V1 = """
+Tool call rules:
 
-    """.trimIndent()
+- `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
+- `method`: tool method such as `click`, `fill`, or `extract`.
+- When selecting a node, always set `selector` to the same value as `ref` in aria snapshot, e.g., click(selector=`e123`).
+- `ref` must exactly match either the interactive element list or the relevant accessibility-tree node attributes.
+- Output JSON only. Do not add any explanatory text.
+- Read all open-tab information from `## Browser State`.
+- Open a new tab for side lookups instead of reusing the current tab.
+- Use `click(selector, "Ctrl")` to open a link in a new tab. On macOS, `Ctrl` maps to `Meta`.
+- If a page opens in a new tab, switch with `browser.switchTab(tabId: String)` using the `tabId` from `## Browser State`.
+- If an expected element is missing, try refresh, scroll, or back.
+- When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
+- If typing changes the page, decide whether new elements now require interaction.
+- If a page change interrupted a planned sequence, continue the unfinished steps on the next turn.
+- Keep the final objective in `<user_request>` as the top priority. Explicit user steps override your own plan.
+- If `<user_request>` includes concrete filters such as type, rating, price, or location, use page filters when available.
+- Avoid login unless it is necessary, and never attempt login without credentials.
+- Classify the task first:
+  1. **Specific step-by-step instructions**: follow them exactly and do not skip steps.
+  2. **Open-ended task**: plan autonomously, and if blocked by login or CAPTCHA, try alternative ways to complete the goal.
+""".trimIndent()
 
-        val TOOL_CALL_RULE_CONTENT_EN = """
-Browser use guidelines:
+        val TOOL_CALL_RULE_CONTENT_V2 = """
+Tool call rules:
 
-* **domain**: Method domain, such as `driver`, `browser`, `skill.debug.scraping`, etc. Subdomains may be separated by dots.
-* **method**: Method name, such as `click`, `fill`, `extract`, etc.
-* In output results, when locating a node, always set the `selector` field to the value of `locator`.
-* Ensure the `locator` exactly matches the corresponding `locator` in the interactive element list, or fully matches the accessibility tree node attributes, to precisely identify the target node.
-* When outputting JSON, do not include any additional text.
-* Obtain information about all open tabs from the `## Browser State` section.
-* When searching for information, open a new tab instead of reusing the current one.
-* Use `click(selector, "Ctrl")` to open links in a **new tab**. On macOS, `Ctrl` is automatically mapped to `Meta`.
-* If the target page opens in a **new tab**, use `browser.switchTab(tabId: String)` to switch to it. Retrieve `tabId` from the `## Browser State` section.
-* If an expected element is missing, attempt to refresh the page, scroll, or navigate back.
-* When entering text into a field:
+- `domain`: tool domain such as `tab`, `browser`, or `skill.debug.scraping`; subdomains use dots.
+- The `ref` attribute in aria snapshot is a unique node reference, format: [ref=e123], prefer `ref` to locate DOM nodes when possible.
+  - click a node with [ref=e123] -> tab.click('e123')
+  - fill a node with [ref=e123] -> tab.fill('e123', 'hello')
+- Output JSON only. No explanatory text.
+- When entering text, do not pre-scroll or pre-focus. You may still need to press Enter, click Search, or choose a dropdown option.
+- If typing changes the page, decide whether new elements now require interaction.
+- Keep the final objective in `<user_request>` as the top priority. Explicit user steps override your own plan.
+- Avoid login unless it is necessary, and never attempt login without credentials.
+- Classify the task first:
+  1. **Specific step-by-step instructions**: follow them exactly and do not skip steps.
+  2. **Open-ended task**: plan autonomously, and if blocked by login or CAPTCHA, try alternative ways to complete the goal.
+""".trimIndent()
 
-  1. No need to scroll or focus first (handled internally).
-  2. You may need to: (1) press Enter, (2) explicitly click a search button, or (3) select from a dropdown to complete the action.
-* If the operation sequence is interrupted after filling an input field, it is typically due to page changes (e.g., suggestion options appearing below the field).
-* If a CAPTCHA appears, attempt to resolve it whenever possible; if unsuccessful, apply fallback strategies (e.g., switch sites or go back).
-* If the page changes due to text input or other actions, determine whether interaction with newly appeared elements is required (e.g., selecting the correct option from a list).
-* If a previous operation sequence was interrupted due to page changes, complete the remaining steps. For example, if you attempted to input text and click the search button but the click was not executed (due to page changes), retry the click in the next step.
-* Always keep the ultimate objective in mind: the content within `<user_request>`. If explicit steps are provided, they take highest priority.
-* If `<user_request>` includes specific page criteria (e.g., product type, rating, price, location), use filtering features whenever possible to improve efficiency.
-* Do not log in unless necessary. Never attempt to log in without credentials.
-* Always first determine which of the following two categories the task belongs to:
-
-  1. **Highly specific step-by-step instructions**
-
-     * Follow the steps precisely. Do not skip any. Fulfill each requirement to the best of your ability.
-  2. **Open-ended tasks**
-
-     * Plan autonomously and complete the task creatively.
-     * If blocked during an open-ended task (e.g., login prompt or CAPTCHA), reassess and attempt alternative approaches. For example, even if a login modal appears, parts of the page may still be accessible, or the required information may be obtainable via web search.
-
-        """.trimIndent()
+        val TOOL_CALL_RULE_CONTENT = TOOL_CALL_RULE_CONTENT_V2
 
         /**
          * TODO: move to skill
          * */
         val EXTRACTION_TOOL_NOTE_CONTENT = """
-使用 `agent.extract` 满足高级数据提取要求，仅当 `textContent`, `selectFirstTextOrNull` 不能满足要求时使用。
+Use `agent.extract` only for advanced extraction cases that cannot be satisfied by `textContent` or `selectFirstTextOrNull`.
 
-参数说明：
+Parameters:
 
-1. `instruction`: 准确描述 1. 数据提取目标 2. 数据提取要求
-2. `schema`: 数据提取结果的 schema 要求，以 JSON 格式描述，并且遵循下面结构
-3. instruction 负责『做什么』，schema 负责『输出形状』；出现冲突时以 schema 为准
+1. `instruction`: clearly describe the extraction goal and constraints.
+2. `schema`: define the required JSON output shape using the structure below.
+3. `instruction` defines intent, while `schema` defines structure. If they conflict, follow `schema`.
 
-Schema 参数结构：
+Schema structure:
 ```
 class ExtractionField(
     val name: String,
@@ -153,7 +132,7 @@ class ExtractionField(
 class ExtractionSchema(val fields: List<ExtractionField>)
 ```
 
-例：
+Example:
 ```
 {
   "fields": [
@@ -190,44 +169,16 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 
 """
 
-        val INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT = """
-(Interactive Elements)
+        const val SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT = """
+Choose the single best tool call for the requested browser action.
 
-可交互元素列表包含页面 DOM 可交互元素的主要信息，包括元素简化 HTML 表示，文本内容，前后文本，所在视口，坐标和大小等。
-
-列表格式：
-[locator]{viewport}(x,y,width,height)<slimNode>textContent</slimNode>Text-Before-This-Interactive-Element-And-After-Previous-Interactive-Element
-
-- 默认列出当前焦点视口，第1，2视口和最后一视口元素。
-- 节点唯一定位符 `locator` 由两个整数组成，不含括号，同无障碍树保持一致。
-- `viewport` 为节点所在视口序号，1-based，不含括号。
-- 注意：网页内容变化可能导致视口位置随时发生变化。
-- `x,y,width,height` 为节点坐标和尺寸。
-
-        """.trimIndent()
-
-        val A11Y_TREE_NOTE_CONTENT = """
-(Accessibility Tree)
-
-无障碍树包含页面 DOM 关键节点的主要信息，包括节点文本内容，可见性，可交互性，坐标和尺寸等。
-
-- 除非特别指定，无障碍树仅包含网页当前视口内的节点信息，并包含少量视口外节点，以保证信息充分。
-- 节点唯一定位符 `locator`。
-- 对所有节点：`invisible` 默认为 `false`，`scrollable` 默认为 `false`, `interactive` 默认为 `false`。
-- 对于坐标和尺寸，若未显式赋值，则视为 `0`。涉及属性：`clientRects`, `scrollRects`, `bounds`。
-
-        """.trimIndent()
-
-        const val SINGLE_ACTION_GENERATION_PROMPT = """
-根据动作描述和网页内容，选择最合适一个或多个工具。
-
-## 动作描述
+## Action Description
 
 {{ACTION_DESCRIPTIONS}}
 
 ---
 
-## 工具列表
+## Tool List
 
 ```kotlin
 {{TOOL_CALL_SPECIFICATION}}
@@ -235,21 +186,19 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 
 ---
 
-## 网页内容
+## ARIA Snapshot
 
-网页内容以无障碍树的形式呈现:
-
-{{NANO_TREE_LAZY_JSON}}
+{{ARIA_ACCESSIBILITY_TREE}}
 
 ---
 
-## 输出要求
+## Output Requirements
 
-- 仅输出 JSON 内容，无多余文字
-- domain 取值 driver
-- method 和 arguments 遵循 `## 工具列表` 的函数表达式
+- Output JSON only. No extra text.
+- `domain` must be `tab`.
+- `method` and `arguments` must match the function expressions in `## Tool List`.
 
-输出格式：
+Output format:
 {{OUTPUT_SCHEMA_ACT}}
 
 ---
@@ -260,12 +209,14 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 {
   "elements": [
     {
-      "locator": "Web page node locator",
-      "description": "Description of the current locator and tool selection",
-      "screenshotContentSummary": "Summary of the current screenshot content",
-      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
-      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-      "thinking": "A structured <think>-style reasoning block."
+      "ref": "Web page node reference, e.g., `e123`",
+      "description": "Description of the current node selected and tool selection",
+      "screenshotContentSummary": "Summary of the current screenshot content if provided",
+      "currentPageContentSummary": "Summary of the current web page text content, based on the aria snapshot or web content extraction results",
+      "memory": "1-3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+      "thinking": "A structured <think>-style reasoning block.",
+      "evaluationPreviousGoal": "A concise one-sentence analysis of the previous action, clearly stating success, failure, or uncertainty.",
+      "nextGoal": "A clear one-sentence statement of the next direct goal and action to take."
     }
   ]
 }
@@ -275,70 +226,55 @@ class ExtractionSchema(val fields: List<ExtractionField>)
 {
   "elements": [
     {
-      "locator": "Web page node locator",
-      "description": "Description of the current locator and tool selection",
-      "domain": "Tool domain, such as `driver`",
+      "ref": "Web page node reference",
+      "description": "Description of the current selected node and tool selection",
+      "domain": "Tool domain, such as `tab`",
       "method": "Method name, such as `click`",
       "arguments": [
         {
           "name": "Parameter name, such as `selector`",
-          "value": "Parameter value, such as `0,4`"
+          "value": "Parameter value, such as `ref123`"
         }
       ],
-      "screenshotContentSummary": "Summary of the current screenshot content",
-      "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
-      "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
-      "thinking": "A structured <think>-style reasoning block."
+      "screenshotContentSummary": "Summary of the current screenshot content if provided",
+      "currentPageContentSummary": "Summary of the current web page text content, based on the aria snapshot or web content extraction results",
+      "memory": "1-3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
+      "thinking": "A structured <think>-style reasoning block.",
+      "evaluationPreviousGoal": "A concise one-sentence analysis of the previous action, clearly stating success, failure, or uncertainty.",
+      "nextGoal": "A clear one-sentence statement of the next direct goal and action to take."
     }
   ]
 }
         """.trimIndent()
 
         val OBSERVE_GUIDE_SYSTEM_MESSAGE = """
-## 总体要求
+## Goal
 
-你正在通过根据用户希望观察的页面内容来查找元素，帮助用户实现浏览器操作自动化。
-你将获得：
-- 一条关于待观察元素的指令
-- 一个包含网页所有可交互元素信息的列表
-- 一个展示页面语义结构的分层无障碍树（accessibility tree）。该树是DOM（文档对象模型）与无障碍树的混合体。
+Identify the page elements that best match the observation request and support browser automation.
 
-如果存在符合指令的元素，则返回这些元素的数组；否则返回空数组。
+You will receive:
+- an instruction describing the target element
+- a list of interactive page elements
+- a hierarchical accessibility tree that combines DOM and accessibility information
 
----
-
-## 浏览器状态说明
-
-浏览器状态包括：
-- 当前 URL：你当前查看页面的 URL。
-- 打开的标签页：带有 id 的打开标签页。
+Return an array of matching elements, or an empty array when no suitable match exists.
 
 ---
 
-## 视觉信息说明
+## Browser State
 
-- 视觉信息如存在，作为首要事实依据（GROUND TRUTH）
-
----
-
-## 可交互元素说明
-
-$INTERACTIVE_ELEMENT_LIST_NOTE_CONTENT
+Browser state includes:
+- the current URL
+- all open tabs with their IDs
 
 ---
 
-## 无障碍树说明
+## Output Requirements
 
-$A11Y_TREE_NOTE_CONTENT
+- Use the JSON format below exactly and output JSON only.
+- Return at most one element, and never leave `domain` or `method` empty.
 
----
-
-## 输出要求
-
-- 输出严格使用下面 JSON 格式，仅输出 JSON 内容，无多余文字
-- 最多一个元素，domain & method 字段不得为空
-
-输出格式:
+Output format:
 {{OUTPUT_SCHEMA_PLACEHOLDER}}
 
 ---
@@ -347,15 +283,12 @@ ${buildToolUseSections()}
 
 """
 
-        fun compactPrompt(prompt: String, maxWidth: Int = 200): String {
+        fun compactPromptForHuman(prompt: String, maxWidth: Int = 200): String {
             val boundaries = """
-你正在通过根据用户希望观察的页面内容来查找元素
-否则返回空数组。
+Identify the page elements that best match the observation request
+Return an array of matching elements
 
-## 工具列表说明
----
-
-## 无障碍树说明
+## ARIA Snapshot
 ---
             """.trimIndent()
 
@@ -379,10 +312,10 @@ ${buildMainSystemPromptV1()}
 
         initObserveUserInstruction(context.instruction, messages)
 
-        buildResolveMessageListStart(context, context.stateHistory, messages)
+        buildMultistepMessageListStart(context, context.stateHistory, messages)
 
         // browser state, viewport info, interactive elements, DOM
-        buildObserveUserMessageLast(messages, context)
+        buildBrowserStateMessageForBrowserInteraction(messages, context)
 
         return messages
     }
@@ -392,14 +325,14 @@ ${buildMainSystemPromptV1()}
         val messages = AgentMessageList()
 
         // observe guide
-        buildSingleObserveGuideSystemPrompt(messages, params)
+        buildSingleObserveSystemPrompt(messages, params)
         // browser state, viewport info, interactive elements, DOM
-        buildObserveUserMessageLast(messages, context)
+        buildBrowserStateMessageForBrowserInteraction(messages, context)
 
         return messages
     }
 
-    fun buildResolveMessageListStart(
+    fun buildMultistepMessageListStart(
         context: ExecutionContext, stateHistory: AgentHistory,
         messages: AgentMessageList,
     ): AgentMessageList {
@@ -409,7 +342,7 @@ ${buildMainSystemPromptV1()}
 
         messages.addSystem(systemMsg)
         messages.addLastIfAbsent("user", buildUserRequestMessage(instruction), name = "user_request")
-        messages.addUser(buildAgentStateHistoryMessage(stateHistory))
+        messages.addUser(buildAgentStateHistoryMessage(stateHistory, context.stateHistoryPath))
         if (context.screenshotB64 != null) {
             messages.addUser(buildBrowserVisionInfo())
         }
@@ -425,94 +358,32 @@ ${buildMainSystemPromptV1()}
     fun buildObserveGuideSystemExtraPrompt(userProvidedInstructions: String?): SimpleMessage? {
         if (userProvidedInstructions.isNullOrBlank()) return null
 
-        val contentCN = """
-## 用户自定义指令
+        val content = """
+## User Preferences
 
-在执行操作时请牢记用户的指令。如果这些指令与当前任务无关，请忽略。
+Keep these user-provided instructions in mind while acting. Ignore them if they are unrelated to the current task.
 
-用户指令：
+User instructions:
 $userProvidedInstructions
 
 ---
 
 """.trim()
 
-        val contentEN = contentCN
-
-        val content = if (isZH) contentCN else contentEN
-
         return SimpleMessage("system", content)
     }
 
-    fun buildExtractSystemPrompt(userProvidedInstructions: String? = null): SimpleMessage {
-        val userInstructions = buildObserveGuideSystemExtraPrompt(userProvidedInstructions)
-
-        val content = """
-# 系统指南
-
-你正在代表用户提取内容。如果用户要求你提取“列表”信息或“全部”信息，你必须提取用户请求的所有信息。
-
-你将获得：
-1. 一条指令
-2. 一个要从中提取内容的 DOM 元素列表
-
-- 从 DOM 元素中原样打印精确文本，包含所有符号、字符和换行。
-- 如果没有发现新的信息，打印 null 或空字符串。
-
-$userInstructions
-
-"""
-
-        return SimpleMessage(role = "system", content = content)
-    }
-
-    fun buildAgentStateHistoryMessage(agentHistory: AgentHistory): String {
-        val history = agentHistory.states
-        if (history.isEmpty()) {
-            return ""
-        }
-
-        val headingSize = 2
-        val tailingSize = 8
-        val totalSize = headingSize + tailingSize
-        val stateHistory = when {
-            history.size <= totalSize -> history
-            else -> history.take(headingSize) + history.takeLast(tailingSize)
-        }
-
-        val historyJsonl = stateHistory.joinToString("\n") {
-            Pson.toJson(
-                mapOf(
-                    "step" to it.step,
-                    "toolCall" to it.actionDescription?.pseudoExpression,
-                    "nextGoal" to it.nextGoal,
-                    "thinking" to it.thinking,
-                    "exception" to it.exception?.message,
-                    "summary" to it.summary,
-                    "keyFindings" to it.keyFindings
-                )
-            )
-        }
-
-        val msg = """
-## 执行轨迹（按序）
-
-(仅保留 $totalSize 步骤)
-
-<agent_history>
-$historyJsonl
-</agent_history>
-
----
-
-		""".trimIndent()
-
-        return msg
+    fun buildAgentStateHistoryMessage(agentHistory: AgentHistory, stateHistoryPath: String? = null): String {
+        return historyRenderStrategy.render(agentHistory, stateHistoryPath)
     }
 
     fun buildBrowserVisionInfo(): String {
         val visionInfo = """
-## 视觉信息
+## Visual Evidence
+
+- The screenshot below was captured after a browser-interaction action (e.g., click, navigate, scroll, fill, switchTab).
+- Screenshots are not captured after non-browser actions (e.g., file I/O, data extraction, system queries) to save tokens.
+- If you need visual confirmation after a non-browser action, use `tab.ariaSnapshot()` or request a screenshot explicitly.
 
 [Current page screenshot provided as base64 image]
 
@@ -527,19 +398,19 @@ $historyJsonl
         val agentState = requireNotNull(context.agentState)
         val toolCallResult = requireNotNull(context.agentState.prevState?.toolCallResult)
         val evaluate = toolCallResult.evaluate
-        val evalResult = evaluate?.value?.toString()
-        val exception = evaluate?.exception?.cause
+        val evalResult = evaluate.value?.toString()
+        val exception = evaluate.exception?.cause
         val evalMessage = when {
-            exception != null -> "[执行异常]\n" + exception.brief()
-            evalResult.isNullOrBlank() -> "[执行成功]"
-            else -> "[执行成功] 输出结果：$evalResult"
+            exception != null -> "[Execution Error]\n" + exception.brief()
+            evalResult.isNullOrBlank() -> "[Execution Succeeded]"
+            else -> "[Execution Succeeded] Output: $evalResult"
         }.let { Strings.compactInline(it, 5000) }
-        val help = evaluate?.exception?.help?.takeIf { it.isNotBlank() }
-        val helpMessage = help?.let { "帮助信息：\n```\n$it\n```" } ?: ""
+        val help = evaluate.exception?.help?.takeIf { it.isNotBlank() }
+        val helpMessageOrEmpty = help?.let { "Help:\n```\n$it\n```" } ?: ""
         val lastModelError = agentState.actionDescription?.modelResponse?.modelError
-        val lastModelMessage = if (lastModelError != null) {
+        val lastModelErrorOrEmpty = if (lastModelError != null) {
             """
-上步模型错误：
+Previous model error:
 
 $lastModelError
 
@@ -547,30 +418,30 @@ $lastModelError
         } else ""
 
         return """
-## 上步输出
+## Previous Step Result
 
-上步操作：${agentState.prevState?.method}
-上步期望结果：${agentState.prevState?.nextGoal}
+Previous action: ${agentState.prevState?.actionDescription?.pseudoExpression}
+Expected result: ${agentState.prevState?.nextGoal}
 
-上步执行结果：
+Execution result:
 ```
 $evalMessage
 ```
 
-$helpMessage
-$lastModelMessage
+$helpMessageOrEmpty
+$lastModelErrorOrEmpty
 ---
         """.trimIndent()
     }
 
     fun buildUserRequestMessage(userRequest: String): String {
         val msg = """
-# 当前任务
+# Current Task
 
-## 用户输入
+## User Request
 <user_request>
-
 $userRequest
+</user_request>
 
 ---
 
@@ -582,9 +453,9 @@ $userRequest
     fun initExtractUserInstruction(instruction: String? = null): String {
         if (instruction.isNullOrBlank()) {
             return """
-从网页中提取关键数据结构。
+Extract the key data structure from the page.
 
-- 每次提供一个视口高度(viewport height)内的所有无障碍树 DOM 节点，你的数据来源是无障碍树
+- The source data is the accessibility-tree DOM nodes for one viewport-height chunk at a time.
 
 """.trimIndent()
         }
@@ -592,20 +463,44 @@ $userRequest
         return instruction
     }
 
+    fun buildExtractSystemPrompt(userProvidedInstructions: String? = null): SimpleMessage {
+        val userInstructions = buildObserveGuideSystemExtraPrompt(userProvidedInstructions)
+
+        val content = """
+# System Instructions
+
+Extract content on the user's behalf. If the user asks for a list or for all results, return all requested information.
+
+You will receive:
+1. an instruction
+2. a list of DOM elements to extract from
+
+- Reproduce exact text from the DOM, including symbols, characters, and line breaks.
+- If no new information is found, return `null` or an empty string.
+
+<user_request>
+$userInstructions
+</user_request>
+
+"""
+
+        return SimpleMessage(role = "system", content = content)
+    }
+
     fun buildExtractUserRequestPrompt(params: ExtractParams): String {
         return """
-## 用户指令
+## User Request
 <user_request>
 ${params.instruction}
 </user_request>
         """.trimIndent()
     }
 
-    fun buildExtractUserPrompt(params: ExtractParams): SimpleMessage {
+    fun buildExtractPageContentUserPrompt(params: ExtractParams): SimpleMessage {
         val browserState = params.agentState.browserUseState.browserState
 
         val scrollState = browserState.scrollState
-        // Height in pixels of the page area above the current viewport. (被隐藏在视口上方的部分的高度)
+        // Height in pixels of the page area above the current viewport.
         val hiddenTopHeight = scrollState.hiddenTopHeight
         val hiddenBottomHeight = scrollState.hiddenBottomHeight
         val viewportHeight = scrollState.viewportHeight
@@ -623,25 +518,30 @@ ${params.instruction}
         )
         val startY = scrollState.y.coerceAtLeast(0.0)
         val endY = (scrollState.y + viewportHeight).coerceAtLeast(0.0)
-        val nanoTree = domState.microTree.toNanoTreeInRange(startY, endY)
+        val nanoTree = domState.serializableTree.toNanoTreeInRange(startY, endY)
 
         val schema = params.schema
 
         val content = """
-## 视口信息
+## Viewport State
 
 $viewPortJson
 
 ---
 
-## 无障碍树
-（仅当前视口范围内）
-${nanoTree.lazyJson}
+## ARIA Snapshot
+
+- Current viewport range only
+- `ref` is a unique node reference that can be used for tab tools to locate the node, e.g., click node with [ref=e123] -> tab.click('e123')
+
+```yaml
+${nanoTree.ariaSnapshot}
+```
 
 ---
 
-## 输出要求
-你必须返回一个严格符合以下JSON Schema的有效JSON对象。不要包含任何额外说明。
+## Output Requirements
+Return a valid JSON object that strictly matches the following JSON Schema. Do not include extra explanation.
 
 ${schema.toJsonSchema()}
 
@@ -650,19 +550,20 @@ ${schema.toJsonSchema()}
         return SimpleMessage(role = "user", content = content)
     }
 
-    fun buildMetadataSystemPrompt(): SimpleMessage {
+    fun buildExtractionEvaluationSystemPrompt(): SimpleMessage {
         val metadataSystemPromptCN: String = """
-你是一名 AI 助手，负责评估一次抽取任务的进展和完成状态。
+You are an AI assistant that evaluates extraction progress and completion status.
 
-- 每次提取当前视口范围内的数据
-- 视口之上的数据已处理，视口之下的数据待处理
+- Each extraction covers only the current viewport range.
+- Data above the current viewport has already been processed.
+- Data below the current viewport has not been processed yet.
 
-请分析抽取响应，判断任务是否已经完成或是否需要更多信息。
-严格遵循以下标准：
-1. 一旦当前抽取响应已经满足了指令，必须将完成状态设为 true 并停止处理，不论是否还有未查看视口。
-2. 只有在以下两个条件同时成立时，才将完成状态设为 false：
-   - 指令尚未被满足
-   - 仍然有剩余视口数据未提取（viewportsTotal > processingViewport）
+Analyze the extraction response and decide whether the task is complete or whether more information is needed.
+Follow these rules exactly:
+1. If the current extraction response already satisfies the instruction, set completion to `true` and stop, even if more viewports remain.
+2. Set completion to `false` only when both conditions are true:
+   - the instruction is not yet satisfied
+   - unprocessed viewport data still remains (`viewportsTotal > processingViewport`)
 
 """.trimIndent()
 
@@ -672,7 +573,7 @@ ${schema.toJsonSchema()}
         )
     }
 
-    fun buildMetadataUserPrompt(
+    fun buildExtractionEvaluationUserPrompt(
         instruction: String,
         extractionResponse: Any,
         agentState: AgentState,
@@ -682,7 +583,7 @@ ${schema.toJsonSchema()}
          * */
         val browserUseState = agentState.browserUseState
         val scrollState = browserUseState.browserState.scrollState
-        // Height in pixels of the page area above the current viewport. (被隐藏在视口上方的部分的高度)
+        // Height in pixels of the page area above the current viewport.
         val hiddenTopHeight = scrollState.hiddenTopHeight
         val hiddenBottomHeight = scrollState.hiddenBottomHeight
         val viewportHeight = scrollState.viewportHeight
@@ -703,19 +604,19 @@ ${schema.toJsonSchema()}
 
         val content =
             """
-## 用户指令
+## User Request
 
 <user_request>
 $instruction
 </user_request>
 
-## 视口信息
+## Viewport State
 
 $viewPortJson
 
 ---
 
-## 提取结果
+## Extraction Result
 
 $extractedJson
 
@@ -726,7 +627,7 @@ $extractedJson
         return SimpleMessage(role = "user", content = content)
     }
 
-    private fun buildSingleObserveGuideSystemPrompt(messages: AgentMessageList, params: ObserveParams) {
+    private fun buildSingleObserveSystemPrompt(messages: AgentMessageList, params: ObserveParams) {
         val schema =
             if (params.returnAction) OBSERVE_GUIDE_OUTPUT_SCHEMA_RETURN_ACTIONS else OBSERVE_GUIDE_OUTPUT_SCHEMA
 
@@ -748,10 +649,6 @@ $extractedJson
     ): AgentMessageList {
         val instruction2 = when {
             !instruction.isNullOrBlank() -> instruction
-            isZH -> """
-根据上下文和当前进展，选择最适合工具推进任务执行，最终目标是完成用户任务。
-                """.trimIndent()
-
             else -> """
 Based on the context and current progress, select the most appropriate tool to advance the task toward user completion.
                 """.trimIndent()
@@ -761,7 +658,14 @@ Based on the context and current progress, select the most appropriate tool to a
         return messages
     }
 
-    private fun buildObserveUserMessageLast(messages: AgentMessageList, context: ExecutionContext) {
+    private fun buildBrowserStateMessageForBrowserInteraction(messages: AgentMessageList, context: ExecutionContext) {
+        val step = context.step
+        val lastToolCall = context.prevAgentState?.actionDescription?.toolCall
+        val lastDomain = lastToolCall?.domain
+        if (step > 1 && !ToolSpecification.isBrowserInteraction(lastDomain)) {
+            return
+        }
+
         val prevBrowserState = context.agentState.prevState?.browserUseState?.browserState
         val browserState = context.agentState.browserUseState.browserState
 
@@ -773,7 +677,7 @@ Based on the context and current progress, select the most appropriate tool to a
         val newTabsJson = if (newTabs.isNotEmpty()) DOMSerializer.toJson(newTabs) else null
         val newTabsMessage = if (newTabs.isEmpty()) "" else {
             """
-上一步新打开的标签页：
+Tabs opened in the previous step:
 
 $newTabsJson
 
@@ -781,7 +685,7 @@ $newTabsJson
         }
 
         val scrollState = browserState.scrollState
-        // Height in pixels of the page area above the current viewport. (被隐藏在视口上方的部分的高度)
+        // Height in pixels of the page area above the current viewport.
         val hiddenTopHeight = scrollState.hiddenTopHeight
         val hiddenBottomHeight = scrollState.hiddenBottomHeight
         val viewportHeight = scrollState.viewportHeight
@@ -791,8 +695,9 @@ $newTabsJson
         val processingViewport = scrollState.processingViewport
         val viewportsTotal = scrollState.viewportsTotal
 
-        val interactiveElements = context.agentState.browserUseState.getInteractiveElements()
-        val viewPortJson = Pson.toJson(
+        // TODO: should we provide the interactive elements?
+        // val interactiveElements = context.agentState.browserUseState.getInteractiveElements()
+        val viewPortInfo = Pson.toJson(
             "processingViewport" to processingViewport,
             "viewportHeight" to viewportHeight,
             "viewportsTotal" to viewportsTotal,
@@ -802,10 +707,10 @@ $newTabsJson
         val delta = viewportHeight * 0.5
         val startY = (scrollState.y - delta).coerceAtLeast(0.0)
         val endY = (scrollState.y + viewportHeight + delta).coerceAtLeast(0.0)
-        val nanoTree = domState.microTree.toNanoTreeInRange(startY, endY)
+        val nanoTree = domState.serializableTree.toNanoTreeInRange(startY, endY)
 
-        fun contentCN() = """
-## 浏览器状态
+        fun contentEN() = """
+## Browser State
 
 <browser_state>
 ${browserState.lazyJson}
@@ -815,39 +720,29 @@ $newTabsMessage
 
 ---
 
-## 视口信息
+## Viewport State
 
-$viewPortJson
+$viewPortInfo
 
-- 默认每次查看一个视口高度(viewport height)内的所有 DOM 节点
-- 注意：网页内容变化可能导致视口位置和视口序号随时发生变化。
-- 默认提供的无障碍树仅包含第`i`个视口内的 DOM 节点，并包含少量视口外邻近节点，以保证信息完整
-- 如需查看下一视口，调用 `scrollBy(viewportHeight)` 向下滚动一屏获取更多信息
-
-## 可交互元素
-
-聚焦第${processingViewport}视口可交互元素。
-
-${interactiveElements.lazyString}
-
-## 无障碍树
-
-聚焦第${processingViewport}视口节点。
-
-```json
-${nanoTree.lazyJson}
-```
+- By default, inspect one viewport-height chunk of DOM nodes at a time.
+- Viewport position and numbering may change whenever the page content changes.
+- The provided accessibility tree focuses on viewport `i` and includes a small amount of nearby off-screen context.
+- To inspect the next viewport, call `scrollBy(viewportHeight)`.
 
 ---
 
+## ARIA Snapshot
+
+Focused on nodes in viewport ${processingViewport}.
+
+```yaml
+${nanoTree.ariaSnapshot}
+```
+
+---
 """
 
-        fun contentEN() = contentCN()
-
-        val content = when {
-            isZH -> contentCN()
-            else -> contentEN()
-        }
+        val content = contentEN()
 
         messages.addLast("user", content)
     }
@@ -855,9 +750,9 @@ ${nanoTree.lazyJson}
     fun buildObserveActToolUsePrompt(action: String): String {
         val instruction =
             """
-## 用户输入
+## User Request
 
-根据以下动作选择一个工具来执行该动作：$action。查找动作、工具和目标最相关的页面元素。分析执行后的影响和预期结果。
+Choose one tool to execute this action: $action. Find the page element most relevant to the action, tool, and goal. Consider the expected result and likely impact after execution.
 
 ---
 
@@ -867,23 +762,22 @@ ${nanoTree.lazyJson}
     }
 
     fun buildSummaryPrompt(goal: String, agentHistory: AgentHistory): Pair<String, String> {
-        val system = "你是总结助理，请基于执行轨迹对原始目标进行总结，输出 JSON。"
+        val system = "Generate a JSON summary based on the execution trajectory for the original goal."
 
         val history = buildAgentStateHistoryMessage(agentHistory)
 
         val user = """
-## 原始目标
+## Original Goal
+
 $goal
 
 ---
 
 $history
 
-## 输出要求
+## Output Schema
 
-严格输出 JSON，无多余文字：
-
-$TASK_COMPLETE_SCHEMA_PROMPT
+$OBSERVE_RESPONSE_COMPLETE_SCHEMA
 
 ---
 

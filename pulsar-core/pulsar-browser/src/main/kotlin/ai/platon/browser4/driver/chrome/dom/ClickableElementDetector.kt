@@ -1,13 +1,13 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 
 class ClickableElementDetector {
     /**
      * Check if this node is clickable/interactive using enhanced scoring
      */
-    fun isInteractive(node: DOMTreeNodeEx): Boolean {
+    fun isInteractive(node: MergedDOMTreeNode): Boolean {
         // Skip non-element nodes
         if (node.nodeType != NodeType.ELEMENT_NODE) return false
 

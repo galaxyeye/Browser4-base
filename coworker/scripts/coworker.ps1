@@ -24,8 +24,11 @@ param(
     [string]$TaskFile
 )
 
-GH_DEBUG=api      # 打印 API 请求
-# GH_DEBUG=1        # 打印调试信息
+# $env:GH_DEBUG = 'api'      # 打印 API 请求
+# $env:GH_DEBUG = '1'        # 打印调试信息
+
+$configScriptPath = Join-Path $PSScriptRoot 'config.ps1'
+. $configScriptPath
 
 # Handle specified TaskFile
 if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
@@ -35,35 +38,15 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
     }
 }
 
-$repoRoot = (git rev-parse --show-toplevel 2>$null)
-if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
-}
-Set-Location $repoRoot
-
-# Import common utility script
-. $repoRoot\bin\common\Util.ps1
-
-Fix-Encoding-UTF8
+$repoRoot = Get-WorkspaceRoot
 
 $tasksRoot = Join-Path $repoRoot "coworker\tasks"
-$scriptsDir = Join-Path $repoRoot "coworker\scripts"
-$configPath = Join-Path $scriptsDir "config.ps1"
-if (Test-Path $configPath) {
-    . $configPath
-}
-if (-not $COPILOT) {
-    $COPILOT = @('gh', 'copilot')
-}
-if ($COPILOT -is [string]) {
-    throw "COPILOT must be defined as a PowerShell array in $configPath"
-}
-if ($COPILOT.Count -lt 2) {
-    throw "COPILOT must include an executable and at least one argument"
-}
-$copilotExecutable = $COPILOT[0]
-$copilotBaseArgs = @($COPILOT | Select-Object -Skip 1)
+$scriptsDir = $PSScriptRoot
+$ghCopilotHelper = Join-Path $scriptsDir "workers\gh-copilot.ps1"
+. $ghCopilotHelper
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
+$copilotExecutable = $copilotCommand.Executable
+$copilotBaseArgs = $copilotCommand.BaseArgs
 $taskRoots = @(
     @{
         Prepare = (Join-Path $tasksRoot "0draft")
@@ -97,7 +80,7 @@ if (-not [string]::IsNullOrWhiteSpace($TaskFile)) {
         # Move directly to createdDir with original name
         $destPath = Join-Path $createdDir $fileItem.Name
         Move-Item -Path $fileItem.FullName -Destination $destPath -Force
-        Write-Host "Moved specified task file to: $destPath"
+        Write-ConsoleLine -Message "Moved specified task file to: $destPath"
     } else {
         Write-Error "Specified task file not found: $TaskFile"
         exit 1
@@ -119,22 +102,47 @@ $scriptStartTime = (Get-Date).ToUniversalTime()
 $copilotNameTimeoutSeconds = 60
 $copilotRunTimeoutSeconds = 6000
 
-function New-CopilotArgumentList {
+function New-CopilotPromptArguments {
     param(
-        [Parameter(Mandatory=$true)]
-        [string[]]$Arguments
+        [Parameter(Mandatory = $true)]
+        [string]$Prompt,
+        [string[]]$AdditionalArguments = @()
     )
 
-    return @($script:copilotBaseArgs + $Arguments)
+    return @(New-GHCopilotArguments -BaseArgs $script:copilotBaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments)
 }
 
 function Format-CopilotCommand {
     param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string[]]$Arguments
     )
 
-    return "{0} {1}" -f $script:copilotExecutable, ((New-CopilotArgumentList -Arguments $Arguments) -join ' ')
+    return Format-GHCopilotCommand -Executable $script:copilotExecutable -Arguments $Arguments
+}
+
+function Write-ConsoleLine {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Message,
+        [System.ConsoleColor]$ForegroundColor,
+        [switch]$ErrorStream
+    )
+
+    $isRedirected = if ($ErrorStream) { [Console]::IsErrorRedirected } else { [Console]::IsOutputRedirected }
+    if ($isRedirected) {
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Message + [Environment]::NewLine)
+        $stream = if ($ErrorStream) { [Console]::OpenStandardError() } else { [Console]::OpenStandardOutput() }
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush()
+        return
+    }
+
+    if ($PSBoundParameters.ContainsKey('ForegroundColor')) {
+        Write-Host $Message -ForegroundColor $ForegroundColor
+    } else {
+        Write-Host $Message
+    }
 }
 
 # ============================================================================
@@ -155,9 +163,9 @@ function Write-LogMessage {
 
     # Write to console
     switch ($Level) {
-        'INFO' { Write-Host $logEntry }
-        'WARN' { Write-Host $logEntry -ForegroundColor Yellow }
-        'ERROR' { Write-Host $logEntry -ForegroundColor Red }
+        'INFO' { Write-ConsoleLine -Message $logEntry }
+        'WARN' { Write-ConsoleLine -Message $logEntry -ForegroundColor Yellow }
+        'ERROR' { Write-ConsoleLine -Message $logEntry -ForegroundColor Red }
     }
 
     # Append to script log file
@@ -176,6 +184,72 @@ function Write-LogVerbose {
 
     # Append to script log file only (not console)
     $logEntry | Out-File -FilePath $scriptLogPath -Append -Encoding UTF8
+}
+
+function Read-TaskFileContent {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (!(Test-Path -Path $Path -PathType Leaf)) {
+        throw "Task file not found: $Path"
+    }
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -eq 0) {
+        return ""
+    }
+
+    if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+        return [System.Text.Encoding]::UTF8.GetString($bytes, 3, $bytes.Length - 3)
+    }
+
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+        return [System.Text.Encoding]::Unicode.GetString($bytes, 2, $bytes.Length - 2)
+    }
+
+    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) {
+        return [System.Text.Encoding]::BigEndianUnicode.GetString($bytes, 2, $bytes.Length - 2)
+    }
+
+    $strictUtf8 = [System.Text.UTF8Encoding]::new($false, $true)
+    try {
+        return $strictUtf8.GetString($bytes)
+    } catch {
+        [System.Text.Encoding]::RegisterProvider([System.Text.CodePagesEncodingProvider]::Instance)
+
+        $candidateCodePages = @(
+            [System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ANSICodePage,
+            [Console]::InputEncoding.CodePage,
+            [Console]::OutputEncoding.CodePage
+        ) | Where-Object { $_ -gt 0 } | Select-Object -Unique
+
+        foreach ($codePage in $candidateCodePages) {
+            if ($codePage -eq 65001) {
+                continue
+            }
+
+            try {
+                return ([System.Text.Encoding]::GetEncoding($codePage)).GetString($bytes)
+            } catch {
+                Write-LogVerbose "Failed decoding $Path with code page ${codePage}: $_"
+            }
+        }
+
+        return [System.Text.Encoding]::UTF8.GetString($bytes)
+    }
+}
+
+function Convert-TaskFileToUtf8 {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [string]$Content
+    )
+
+    [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($false))
 }
 
 function Ensure-DraftPlaceholders {
@@ -218,23 +292,13 @@ Prompt: $promptSample
 "@
 
     try {
-        # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-        $safeNamingPrompt = $namingPrompt.Replace('"', '\"')
+        $nameArguments = New-CopilotPromptArguments -Prompt $namingPrompt
 
-        # Pass arguments as an array to avoid fragile manual escaping/quoting.
-        # This is more reliable on Windows PowerShell when prompts contain quotes or newlines.
-        $nameArgList = @(
-            'copilot'
-            '--'
-            '-p'
-            "`"$safeNamingPrompt`""
-        )
-
-        Write-LogVerbose ("Executing GH Copilot for naming: {0}" -f (Format-CopilotCommand -Arguments $nameArgList))
+        Write-LogVerbose ("Executing GH Copilot for naming: {0}" -f (Format-CopilotCommand -Arguments $nameArguments))
 
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
-        $nameProcess = Start-Process -FilePath $copilotExecutable -ArgumentList (New-CopilotArgumentList -Arguments $nameArgList) -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+        $nameProcess = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $namingPrompt -WorkingDirectory $repoRoot -StdOutPath $nameStdOut -StdErrPath $nameStdErr -NoNewWindow
 
         $waited = $false
         try {
@@ -359,14 +423,14 @@ foreach ($taskRoot in $taskRoots) {
     Ensure-DraftPlaceholders -DraftDirectory $draftDir
 
     # 1. Process 0draft
-    $prepareFiles = Get-ChildItem -Path $draftDir -File
+    $prepareFiles = Get-CoworkerQueueFiles -Path $draftDir
     foreach ($file in $prepareFiles) {
         Write-LogMessage "[PREPARE] Task: $($file.Name)" INFO
     }
 
     # 2. Process 3_1complete (newly added to show pending reviews)
     if (Test-Path $finishedDir) {
-        $finishedFiles = Get-ChildItem -Path $finishedDir -Recurse -File
+        $finishedFiles = Get-CoworkerQueueFiles -Path $finishedDir -Recurse
         foreach ($file in $finishedFiles) {
             # Only show files from the last 24 hours to avoid noise
             if ($file.LastWriteTimeUtc -ge (Get-Date).ToUniversalTime().AddDays(-1)) {
@@ -376,7 +440,7 @@ foreach ($taskRoot in $taskRoots) {
     }
 
     # 3. Process 4review
-    $reviewFiles = Get-ChildItem -Path $reviewDir -File
+    $reviewFiles = Get-CoworkerQueueFiles -Path $reviewDir
     foreach ($file in $reviewFiles) {
         Write-LogMessage "[REVIEW] Task: $($file.Name)" INFO
     }
@@ -384,11 +448,11 @@ foreach ($taskRoot in $taskRoots) {
     # 4. Process 5approved
     # If there are any files in 5approved or its subdirectories, move them to 6git-pushed with date-based organization, and then call the commit script
     if (Test-Path $approvedDir) {
-        $approvedFiles = Get-ChildItem -Path $approvedDir -Recurse -File
+        $approvedFiles = Get-CoworkerQueueFiles -Path $approvedDir -Recurse
         if ($approvedFiles.Count -gt 0) {
             # Move files to pushed directory
             foreach ($file in $approvedFiles) {
-                Write-Host "Moving approved task to pushed: $($file.FullName)" -ForegroundColor Green
+                Write-ConsoleLine -Message "Moving approved task to pushed: $($file.FullName)" -ForegroundColor Green
 
                 # Create date-based subdirectory: YYYY/MMDD
                 $pushedSubDir = Join-Path $pushedDir "$currentYear\$currentDate"
@@ -420,7 +484,7 @@ foreach ($taskRoot in $taskRoots) {
     # 4. Process 6git-pushed (last 2 days)
     # Recursively find files in 6git-pushed
     if (Test-Path $pushedDir) {
-        $pushedFiles = Get-ChildItem -Path $pushedDir -Recurse -File
+        $pushedFiles = Get-CoworkerQueueFiles -Path $pushedDir -Recurse
         $twoDaysAgo = (Get-Date).ToUniversalTime().AddDays(-2)
         foreach ($file in $pushedFiles) {
             if ($file.LastWriteTimeUtc -ge $twoDaysAgo) {
@@ -429,7 +493,7 @@ foreach ($taskRoot in $taskRoots) {
         }
     }
 
-    $files = Get-ChildItem -Path $createdDir -File
+    $files = Get-CoworkerQueueFiles -Path $createdDir
 
     # Process each task file found in the created directory
     foreach ($file in $files) {
@@ -438,7 +502,8 @@ foreach ($taskRoot in $taskRoots) {
         $descriptiveName = ""
 
         # Read content for fallback title
-        $content = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+        $content = Read-TaskFileContent -Path $file.FullName
+        Convert-TaskFileToUtf8 -Path $file.FullName -Content $content
         $safeTitle = $file.BaseName -replace '[\\/*?:"<>|]', '_'
         if ([string]::IsNullOrWhiteSpace($safeTitle)) { $safeTitle = "task" }
 
@@ -572,9 +637,6 @@ Do not move **this** task file, just execute the task based on its content, the 
 
         Write-LogVerbose "Task log will be written to: $taskLogPath"
 
-        # Change working directory to repository root
-        Push-Location $repoRoot
-
         Write-LogMessage "Executing Copilot for task: $workingBaseName" INFO
         Write-LogVerbose "Prompt length: $($prompt.Length) characters"
 
@@ -591,18 +653,7 @@ Copilot Execution Output:
 "@ | Out-File -FilePath $taskLogPath -Encoding UTF8
 
         try {
-            # Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-            $safePrompt = $prompt.Replace('"', '\"')
-
-            # Pass arguments as an array to avoid fragile manual escaping/quoting.
-            # This keeps quotes/newlines intact in the -p prompt.
-            $copilotArgList = @(
-                '--'
-                '-p'
-                "`"$safePrompt`""
-                '--allow-all-tools'
-                '--allow-all-paths'
-            )
+            $copilotArguments = New-CopilotPromptArguments -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths')
 
             # Define paths for temporary output and error logs (for copilot external tool)
             $stdOutLog = $copilotLogPath + ".stdout"
@@ -612,7 +663,7 @@ Copilot Execution Output:
 
             # Execute Copilot tool with the task prompt
             # Capture both standard output and error output to separate files
-            $process = Start-Process -FilePath $copilotExecutable -ArgumentList (New-CopilotArgumentList -Arguments $copilotArgList) -NoNewWindow -PassThru -RedirectStandardOutput $stdOutLog -RedirectStandardError $stdErrLog
+            $process = Start-GHCopilotProcess -Executable $copilotExecutable -BaseArgs $copilotBaseArgs -Prompt $prompt -AdditionalArguments @('--allow-all-tools', '--allow-all-paths') -WorkingDirectory $repoRoot -StdOutPath $stdOutLog -StdErrPath $stdErrLog -NoNewWindow
 
             $lastOutputLineCount = 0
 
@@ -628,7 +679,7 @@ Copilot Execution Output:
                         $newLines = $currentLines[$lastOutputLineCount..($currentLineCount - 1)]
                         foreach ($line in $newLines) {
                             if (-not [string]::IsNullOrWhiteSpace($line)) {
-                                Write-Host $line
+                                Write-ConsoleLine -Message $line
                             }
                         }
                         $lastOutputLineCount = $currentLineCount
@@ -643,7 +694,7 @@ Copilot Execution Output:
                         if ($elapsed.TotalSeconds -gt $copilotRunTimeoutSeconds) {
                             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
                             Write-LogMessage "Copilot timed out after ${copilotRunTimeoutSeconds}s" WARN
-                            Write-Host "[TIMEOUT] Copilot execution exceeded ${copilotRunTimeoutSeconds}s timeout" -ForegroundColor Yellow
+                            Write-ConsoleLine -Message "[TIMEOUT] Copilot execution exceeded ${copilotRunTimeoutSeconds}s timeout" -ForegroundColor Yellow
                             break
                         }
                     }
@@ -659,7 +710,7 @@ Copilot Execution Output:
                     $newLines = $remainingLines[$lastOutputLineCount..($remainingLines.Count - 1)]
                     foreach ($line in $newLines) {
                         if (-not [string]::IsNullOrWhiteSpace($line)) {
-                            Write-Host $line
+                            Write-ConsoleLine -Message $line
                         }
                     }
                 }
@@ -669,10 +720,10 @@ Copilot Execution Output:
             if (Test-Path $stdErrLog) {
                 $errContent = @(Get-Content $stdErrLog -Encoding UTF8 -ErrorAction SilentlyContinue)
                 if ($errContent) {
-                    Write-Host "`n[STDERR OUTPUT]" -ForegroundColor Yellow
+                    Write-ConsoleLine -Message "`n[STDERR OUTPUT]" -ForegroundColor Yellow -ErrorStream
                     foreach ($line in $errContent) {
                         if (-not [string]::IsNullOrWhiteSpace($line)) {
-                            Write-Host $line -ForegroundColor Yellow
+                            Write-ConsoleLine -Message $line -ForegroundColor Yellow -ErrorStream
                         }
                     }
                 }
@@ -714,10 +765,6 @@ Copilot Log: $copilotLogPath
             # Handle any errors that occur during Copilot execution
             Write-LogMessage "Failed to execute copilot: $_" ERROR
             "Error executing copilot: $_" | Out-File -FilePath $taskLogPath -Append -Encoding UTF8
-        }
-        finally {
-            # Always return to the original directory after execution
-            Pop-Location
         }
 
         # Move completed task from working directory to finished or approved directory

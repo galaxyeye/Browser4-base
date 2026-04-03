@@ -7,19 +7,19 @@ This document compares two formats for describing Agent Tools in the system prom
 ## Tool Specification Size
 | Format | Lines | Characters |
 |--------|-------|------------|
-| Kotlin | 50 | 2178 |
-| JSON | 339 | 7718 |
+| Kotlin | 49 | 2083 |
+| JSON | 332 | 7522 |
 
 ## Full System Prompt Size
 | Format | Lines | Characters |
 |--------|-------|------------|
-| Kotlin | 280 | 8144 |
-| JSON | 569 | 13688 |
+| Kotlin | 255 | 8527 |
+| JSON | 538 | 13970 |
 
 ## Key Differences
 
 ### Kotlin Format Advantages
-- **Compact**: ~72% smaller than JSON
+- **Compact**: ~73% smaller than JSON
 - **Familiar**: Natural syntax for Kotlin/Java developers
 - **Token efficient**: Fewer tokens = lower API costs
 - **Human readable**: Easy to scan and understand quickly
@@ -55,7 +55,7 @@ Example:
 ## Recommendation
 
 For token-efficient LLM interactions, the **Kotlin format** is preferred as it uses
-41% fewer characters in the system prompt.
+39% fewer characters in the system prompt.
 
 For tool/function calling APIs that require JSON schemas, the **JSON format**
 provides better compatibility with OpenAI, Anthropic, and other providers' APIs.

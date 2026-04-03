@@ -19,7 +19,7 @@ object ToolSpecGenerator {
     fun generateAllOnce() {
         if (isGenerated.compareAndSet(false, true)) {
             var sourceCode = LLMUtils.readSourceFileFromResource("pulsar-core", "WebDriver.kt")
-            extractInterface("driver", sourceCode, "WebDriver").toCollection(webDriverToolSpecs)
+            extractInterface("tab", sourceCode, "WebDriver").toCollection(webDriverToolSpecs)
             require(webDriverToolSpecs.isNotEmpty()) { "WebDriver's tool call list is empty" }
 
             sourceCode = LLMUtils.readSourceFileFromResource("pulsar-agentic", "PerceptiveAgent.kt")

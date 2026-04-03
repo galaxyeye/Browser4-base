@@ -4,8 +4,6 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.common.AgentFileSystem
 import ai.platon.pulsar.agentic.common.AgentShell
-import ai.platon.pulsar.agentic.mcp.MCPPluginRegistry
-import ai.platon.pulsar.agentic.mcp.MCPToolExecutor
 import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.agentic.skills.SkillContext
 import ai.platon.pulsar.agentic.skills.SkillRegistry
@@ -15,9 +13,7 @@ import ai.platon.pulsar.agentic.tools.builtin.*
 import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import java.nio.file.Path
 
 class AgentToolExecutor constructor(
@@ -44,23 +40,18 @@ class AgentToolExecutor constructor(
             sharedResources = mutableMapOf(
                 "session" to session,
                 "agent" to agent,
-                "driver" to driver,
+                "tab" to driver,
             ),
         )
     }
     val skillTarget: SkillToolTarget by lazy { SkillToolTarget(skillContext, SkillRegistry.instance) }
     val skills: SkillToolExecutor = SkillToolExecutor()
 
-    val mcpExecutors: List<MCPToolExecutor> by lazy {
-        val registry = MCPPluginRegistry.instance
-        registry.getRegisteredServers().mapNotNull { serverName ->
-            registry.getClientManager(serverName)?.let { MCPToolExecutor(it) }
-        }
-    }
-
     val domainAlias = mapOf(
-        "driver" to "driver",
-        "WebDriver" to "driver",
+        "tab" to "tab",
+        "Tab" to "tab",
+        "driver" to "tab",
+        "WebDriver" to "tab",
 
         "fs" to "fs",
         "AgentFileSystem" to "fs",
@@ -72,14 +63,14 @@ class AgentToolExecutor constructor(
 
     val concreteExecutors: List<ToolExecutor> by lazy {
         listOf(
-            WebDriverToolExecutor(),
+            BrowserTabToolExecutor(),
             BrowserToolExecutor(),
             FileSystemToolExecutor(),
             ShellToolExecutor(),
             AgentToolExecutor(),
             system,
             skills
-        ) + mcpExecutors
+        )
     }
 
     val executor by lazy { BasicToolCallExecutor(concreteExecutors) }
@@ -125,6 +116,18 @@ class AgentToolExecutor constructor(
         return customExecutor?.help(method) ?: ""
     }
 
+    fun normalizeToolCall(tc: ToolCall): ToolCall {
+        val normalizedDomain = normalizeDomain(tc.domain)
+        val spec = getToolSpec(normalizedDomain, tc.method) ?: getToolSpec(tc.domain, tc.method)
+        val normalizedArguments = normalizeArguments(tc.arguments, spec)
+
+        if (normalizedDomain == tc.domain && normalizedArguments == tc.arguments) {
+            return tc
+        }
+
+        return tc.copy(domain = normalizedDomain, arguments = normalizedArguments)
+    }
+
     /**
      * Returns all tool specifications from all concrete executors, grouped by domain.
      *
@@ -137,7 +140,7 @@ class AgentToolExecutor constructor(
     /**
      * Returns the tool specification for a specific domain and method, or null if not found.
      *
-     * @param domain The tool domain (e.g. "driver", "fs").
+     * @param domain The tool domain (e.g. "tab", "fs").
      * @param method The method name within the domain.
      * @return The [ToolSpec] for the given domain and method, or null.
      */
@@ -156,88 +159,50 @@ class AgentToolExecutor constructor(
      * @return A [TcEvaluate] with the execution result or exception.
      */
     @Throws(UnsupportedOperationException::class)
-    suspend fun executeToolCall(tc: ToolCall): TcEvaluate {
-        var topDomain = tc.domain.split(".").first()
+    suspend fun execute(tc: ToolCall): ToolCallResult {
+        val normalized = normalizeToolCall(tc)
+        var topDomain = normalized.domain.split(".").first()
         topDomain = domainAlias.getOrDefault(topDomain, topDomain)
-        return when (topDomain) {
-            "driver" -> executor.callFunctionOn(tc, driver)
-            "browser" -> executor.callFunctionOn(tc, driver.browser)
-            "fs" -> executor.callFunctionOn(tc, fs)
-            "shell" -> executor.callFunctionOn(tc, shell)
-            "agent" -> executor.callFunctionOn(tc, agent)
-            "system" -> executor.callFunctionOn(tc, system)
-            "skill" -> executor.callFunctionOn(tc, skillTarget)
-            "mcp" -> executor.callFunctionOn(tc, Any())
+        val evaluate = when (topDomain) {
+            "tab" -> executor.callFunctionOn(normalized, driver)
+            "browser" -> executor.callFunctionOn(normalized, driver.browser)
+            "fs" -> executor.callFunctionOn(normalized, fs)
+            "shell" -> executor.callFunctionOn(normalized, shell)
+            "agent" -> executor.callFunctionOn(normalized, agent)
+            "system" -> executor.callFunctionOn(normalized, system)
+            "skill" -> executor.callFunctionOn(normalized, skillTarget)
             else -> {
-                val customExecutor = CustomToolRegistry.instance.get(tc.domain)
+                val customExecutor = CustomToolRegistry.instance.get(normalized.domain)
                 if (customExecutor != null) {
-                    val target = _customTargets[tc.domain]
+                    val target = _customTargets[normalized.domain]
                         ?: throw UnsupportedOperationException(
-                            "Custom domain '${tc.domain}' is registered but no target object is available.")
-                    customExecutor.callFunctionOn(tc, target)
+                            "Custom domain '${normalized.domain}' is registered but no target object is available.")
+                    customExecutor.callFunctionOn(normalized, target)
                 } else {
-                    throw UnsupportedOperationException("Unsupported domain: ${tc.domain}")
+                    throw UnsupportedOperationException("Unsupported domain: ${normalized.domain}")
                 }
             }
         }
+
+        return onDidToolCall(tc, evaluate)
     }
 
-    @Throws(UnsupportedOperationException::class)
-    suspend fun execute(actionDescription: ActionDescription, message: String? = null): ToolCallResult {
-        // Fast path: respect user interruption immediately
-        val cancelled = runCatching { !currentCoroutineContext().isActive }.getOrDefault(false)
-        if (cancelled) {
-            return ToolCallResult(
-                success = false,
-                evaluate = null,
-                message = "USER interrupted",
-                actionDescription = actionDescription,
-            )
+    private suspend fun onDidToolCall(
+        tc: ToolCall, evaluate: TcEvaluate, actionDescription: ActionDescription? = null, message: String? = null
+    ): ToolCallResult {
+        val tcResult = ToolCallResult(
+            evaluate = evaluate,
+            message = message,
+            actionDescription = actionDescription,
+        )
+
+        val method = tc.method
+        when (method) {
+            "switchTab" -> onDidSwitchTab(evaluate)
+            "navigate" -> onDidNavigate(driver, tc, evaluate)
         }
 
-        try {
-            val tc = requireNotNull(actionDescription.toolCall) { "Tool call is required" }
-
-            val topDomain = tc.domain.split(".").first()
-            // First try built-in tool domains
-            val evaluate = when (topDomain) {
-                "driver" -> executor.callFunctionOn(tc, driver)
-                "browser" -> executor.callFunctionOn(tc, driver.browser)
-                "fs" -> executor.callFunctionOn(tc, fs)
-                "shell" -> executor.callFunctionOn(tc, shell)
-                "agent" -> executor.callFunctionOn(tc, agent)
-                "system" -> executor.callFunctionOn(tc, system)
-                "skill" -> executor.callFunctionOn(tc, skillTarget)
-                "mcp" -> executor.callFunctionOn(tc, Any())
-                else -> {
-                    // Check if this is a custom tool domain
-                    val customExecutor = CustomToolRegistry.instance.get(tc.domain)
-                    if (customExecutor != null) {
-                        val target = _customTargets[tc.domain]
-                            ?: throw UnsupportedOperationException(
-                                "❓ Custom domain '${tc.domain}' is registered but no target object is available. " +
-                                        "Use registerCustomTarget() to provide the target object."
-                            )
-                        customExecutor.callFunctionOn(tc, target)
-                    } else {
-                        throw UnsupportedOperationException("❓ Unsupported domain: ${tc.domain} | $tc")
-                    }
-                }
-            }
-
-            val tcResult = ToolCallResult(
-                success = true,
-                evaluate = evaluate,
-                message = message,
-                actionDescription = actionDescription,
-            )
-
-            val method = tc.method
-            when (method) {
-                "switchTab" -> onDidSwitchTab(evaluate)
-                "navigate" -> onDidNavigate(driver, tc, evaluate)
-            }
-
+        if (actionDescription != null) {
             val timeoutMs = 3_000L
             val oldUrl = actionDescription.agentState?.browserUseState?.browserState?.url
             val pseudoExpression = actionDescription.pseudoExpression
@@ -250,20 +215,9 @@ class AgentToolExecutor constructor(
                     return tcResult
                 }
             }
-
-            return tcResult
-        } catch (e: Exception) {
-            logger.warn("Failed to execute tool call | $actionDescription", e)
-
-            val ad = actionDescription
-            val expression = ad.pseudoExpression ?: ad.cssFriendlyExpression ?: ad.expression ?: ""
-            return ToolCallResult(
-                success = false,
-                evaluate = TcEvaluate(expression, e),
-                message = e.message,
-                actionDescription = actionDescription,
-            )
         }
+
+        return tcResult
     }
 
     /**
@@ -286,6 +240,9 @@ class AgentToolExecutor constructor(
         session.bindDriver(frontDriver)
     }
 
+    /**
+     * TODO: add an option to driver.navigate() to wait
+     * */
     @Suppress("UNUSED_PARAMETER")
     private suspend fun onDidNavigate(driver: WebDriver, toolCall: ToolCall, evaluate: TcEvaluate) {
         driver.waitForNavigation()
@@ -293,19 +250,39 @@ class AgentToolExecutor constructor(
         delay(3000)
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private suspend fun onDidScrollToBottom(driver: WebDriver, toolCall: ToolCall, evaluate: TcEvaluate) {
-        val expression = """
-(() => {
-    const docEl = document.documentElement, body = document.body;
-    if (!docEl || !body) return true;
-    const total = Math.min(Math.max(docEl.scrollHeight, body.scrollHeight, docEl.clientHeight), 15000);
-    const vh = window.innerHeight || docEl.clientHeight || 800;
-    const target = Math.max(0, total - vh);
-    return Math.abs(window.scrollY - target) < 2;
-})()
-"""
+    /**
+     *
+     * */
+    private fun normalizeDomain(domain: String): String {
+        val parts = domain.split(".")
+        if (parts.isEmpty()) {
+            return domain
+        }
 
-        driver.waitUntil(5_000) { (driver.evaluateValue(expression) as? Boolean) == true }
+        val topDomain = domainAlias.getOrDefault(parts.first(), parts.first())
+
+        return if (parts.size == 1) topDomain else listOf(topDomain).plus(parts.drop(1)).joinToString(".")
+    }
+
+    private fun normalizeArguments(arguments: Map<String, Any?>, spec: ToolSpec?): MutableMap<String, Any?> {
+        if (arguments.isEmpty() || spec == null) {
+            return arguments.toMutableMap()
+        }
+
+        val normalized = linkedMapOf<String, Any?>()
+
+        arguments.entries
+            .filter { it.key.toIntOrNull() == null }
+            .forEach { (key, value) -> normalized[key] = value }
+
+        arguments.entries
+            .mapNotNull { entry -> entry.key.toIntOrNull()?.let { it to entry.value } }
+            .sortedBy { it.first }
+            .forEach { (index, value) ->
+                val targetName = spec.arguments.getOrNull(index)?.name ?: index.toString()
+                normalized.putIfAbsent(targetName, value)
+            }
+
+        return normalized.toMutableMap()
     }
 }

@@ -1,10 +1,11 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.browser4.driver.chrome.dom.Locator
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.browser4.driver.chrome.dom.model.ViewportSpec
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeIOException
@@ -90,8 +91,6 @@ class PulsarWebDriver(
 
     val isNetworkIdle get() = networkManager.isIdle
 
-    var injectedScriptIdentifier: String? = null
-
     var fingerprintApplier: ((WebDriver) -> Unit)? = null
 
     /**
@@ -99,7 +98,7 @@ class PulsarWebDriver(
      * */
     override val implementation: Any get() = devTools
 
-    override val domService: DomService get() = page.domService
+    override val snapshotService: SnapshotService get() = page.snapshotService
 
     init {
         fingerprintApplier?.invoke(this)
@@ -180,12 +179,6 @@ class PulsarWebDriver(
         }
     }
 
-    // Unittest failed
-//    override suspend fun selectAttributeAll(selector: String, attrName: String, start: Int, limit: Int): List<String> {
-//        val name = "selectAttributeAll"
-//        return driverHelper.invokeOnPage(name) { page.getAttributeAll(selector, attrName, start, limit) } ?: listOf()
-//    }
-
     @Throws(WebDriverException::class)
     override suspend fun evaluate(expression: String): Any? {
         return driverHelper.invokeOnPage("evaluate") { jsHandler.evaluate(expression) }
@@ -229,10 +222,6 @@ class PulsarWebDriver(
     }
 
     override suspend fun currentUrl(): String {
-        // TODO: find out why mainFrameAPI?.url fails because of timing issue when run agent.observe() via SDK, a possible reason is about multithreading problem
-//        val mainFrameUrl = runCatching { driverHelper.invokeOnPage("currentUrl") { mainFrameAPI?.url } }
-//            .onFailure { logger.warn("Failed to retrieve the mainFrameUrl", it) }
-//            .getOrNull()
         val mainFrameUrl = evaluate("document.URL", navigateUrl)
         navigateUrl = mainFrameUrl ?: navigateUrl
         return navigateUrl ?: userTypedUrl ?: ""
@@ -281,6 +270,15 @@ class PulsarWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun waitForPage(url: String, timeout: Duration): WebDriver? {
         return waitFor("waitForPage", timeout) { browser.findDriver(url) }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver? {
+        return waitFor("waitForFunction", timeout) {
+            val res = evaluate(pageFunction)
+            val isTruthy = res != null && res != false && res != "" && res != 0 && res != 0.0
+            if (isTruthy) this else null
+        }
     }
 
     @Throws(WebDriverException::class)
@@ -341,6 +339,9 @@ class PulsarWebDriver(
         driverHelper.invokeOnPage("mouseMove") { mouse?.moveTo(x, y) }
     }
 
+    /**
+     * TODO: use CDP to implement mouseDown: CDP → Browser Input System → Hit Testing → DOM → JS Event
+     * */
     @Throws(WebDriverException::class)
     override suspend fun mouseDown(button: String, clickCount: Int) {
         if (button == "left") {
@@ -367,6 +368,9 @@ class PulsarWebDriver(
         driverHelper.invokeOnPage("mouseDown") { evaluate(script) }
     }
 
+    /**
+     * TODO: use CDP to implement mouseUp: CDP → Browser Input System → Hit Testing → DOM → JS Event
+     * */
     @Throws(WebDriverException::class)
     override suspend fun mouseUp(button: String, clickCount: Int) {
         if (button == "left") {
@@ -435,19 +439,6 @@ class PulsarWebDriver(
             emulator.click(node, count, position = "center", modifier = null, delayMillis = delayMillis)
             // debugElementOnPoint(node)
         }
-    }
-
-    private suspend fun debugElementOnPoint(node: NodeRef) {
-        val point = emulator.getInteractPoint(node, "center", useRandomOffset = true) ?: return
-        val (x, y) = point
-
-        println("Debugging element at point ($x, $y):")
-
-        var result = evaluateValueDetail("__pulsar_utils__.elementFromPointDeep(100, 100)")
-        printlnPro(result?.value)
-
-        result = evaluateDetail("__pulsar_utils__.elementFromPointDeep($x, $y)")
-        printlnPro(result?.value)
     }
 
     @Throws(WebDriverException::class)
@@ -728,7 +719,7 @@ class PulsarWebDriver(
         return driverHelper.invokeOnElement(selector, "outerHTML") { node ->
             when {
                 node.isNull() -> null
-                // TODO: performance issue for large HTML
+                // TODO: performance issue for large HTML (memory copy), consider accept the raw byte stream and convert to string in native code
                 else -> domAPI?.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
             }
         }
@@ -737,6 +728,13 @@ class PulsarWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun ariaSnapshot(): String {
         return rpc.invokeDeferredSilently("ariaSnapshot") { page.ariaSnapshot() } ?: ""
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun ariaSnapshot(viewports: String): String {
+        val viewportIndices = ViewportSpec.parse(viewports)
+            ?: return ariaSnapshot()
+        return rpc.invokeDeferredSilently("ariaSnapshot") { page.ariaSnapshot(viewportIndices) } ?: ""
     }
 
     /**
@@ -803,7 +801,7 @@ function() {
                             objectId = nd.objectId,
                             returnByValue = true
                         )
-                        // TODO: performance issue for large text
+                        // TODO: performance issue for large text (memory copy)
                         remoteObject?.result?.value?.toString()
                     } else null
                 }
@@ -898,8 +896,8 @@ function() {
     override suspend fun nanoDOMTree(): NanoDOMTree? {
         return rpc.invokeWithRetry("nanoDOMTree") {
             val snapshotOptions = SnapshotOptions()
-            val domState = domService.getDOMState(snapshotOptions = snapshotOptions)
-            domState.microTree.toNanoTreeInRange()
+            val domState = snapshotService.getDOMState(snapshotOptions = snapshotOptions)
+            domState.serializableTree.toNanoTreeInRange()
         }
     }
 
@@ -1312,17 +1310,21 @@ function() {
     }
 
     private suspend fun waitForScrollSettled(selector: String, timeout: Duration = Duration.ofMillis(5_000)) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = page.convertSelectorIfNecessary(selector)
+        val stateKey = "__ps_scroll_${Random.nextLong(Long.MAX_VALUE).toString(16)}"
         val expression = """
 (() => {
   const sel = "$safeSelector";
+  const key = "$stateKey";
   const el = document.querySelector(sel);
   if (!el) return true;
   const r = el.getBoundingClientRect();
   const s = document.scrollingElement || document.documentElement;
-  const isFirst = (typeof el.__pulsar_scroll_prev === 'undefined');
-  const prev = el.__pulsar_scroll_prev || {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
-  el.__pulsar_scroll_prev = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  const map = window[key] || (window[key] = new WeakMap());
+  const curr = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  const isFirst = !map.has(el);
+  const prev = map.get(el) || curr;
+  map.set(el, curr);
   return !isFirst &&
          Math.abs(prev.t - r.top) < 1 &&
          Math.abs(prev.l - r.left) < 1 &&
@@ -1331,20 +1333,28 @@ function() {
 })()
 """
 
-        waitUntil(200, timeout) {
-            val settled = evaluateDetail(expression)
-            settled?.value as? Boolean ?: false
-        }
-
-        evaluateDetail(
-            """
+        try {
+            waitUntil(200, timeout) {
+                val settled = evaluateDetail(expression)
+                settled?.value as? Boolean ?: false
+            }
+        } finally {
+            runCatching {
+                evaluateDetail(
+                    """
 (() => {
   const sel = "$safeSelector";
+  const key = "$stateKey";
   const el = document.querySelector(sel);
-  if (!el) return true;
-  delete el.__pulsar_scroll_prev;
+  if (el && window[key]) {
+    window[key].delete(el);
+  }
+  delete window[key];
+  return true;
 })()
                     """
-        )
+                )
+            }
+        }
     }
 }

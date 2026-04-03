@@ -169,10 +169,12 @@ class Browser4Application {
     )
 }
 
-fun main(args: Array<String>) {
+fun runBrowser4AgentsApplication(args: Array<String>) {
     runApplication<Browser4Application>(*args) {
         addInitializers(PulsarContextInitializer())
         setAdditionalProfiles("agents", "private", "advanced")
         setLogStartupInfo(true)
     }
 }
+
+fun main(args: Array<String>) = runBrowser4AgentsApplication(args)

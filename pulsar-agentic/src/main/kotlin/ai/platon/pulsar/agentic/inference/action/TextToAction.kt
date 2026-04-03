@@ -1,9 +1,10 @@
 package ai.platon.pulsar.agentic.inference.action
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.Locator
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.pulsar.agentic.inference.AgentMessageList
-import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_ACTION_GENERATION_PROMPT
+import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT
 import ai.platon.pulsar.agentic.inference.PromptBuilder.Companion.buildObserveResultSchema
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentState
@@ -36,28 +37,39 @@ open class TextToAction(
     /**
      * Generate EXACT ONE WebDriver action with interactive elements.
      *
-     * @param actionDescriptions The action descriptions
+     * @param action The action descriptions
      * @param driver The driver to use to collect the context, such as interactive elements
      * @return The action description
      * */
     open suspend fun generateActions(
-        actionDescriptions: String, driver: WebDriver, screenshotB64: String? = null
+        action: String, driver: WebDriver, screenshotB64: String? = null
     ): List<ActionDescription> {
         require(driver is AbstractWebDriver)
-        val domService = requireNotNull(driver.domService)
+        val snapshotService = requireNotNull(driver.snapshotService)
 
-        val options = SnapshotOptions()
-        val domState = domService.getDOMState(snapshotOptions = options)
-        val browserUseState = domService.getBrowserUseState()
+        val snapshotOptions = SnapshotOptions(
+            maxDepth = 1000,
+            includeAX = true,
+            includeSnapshot = true,
+            includeStyles = true,
+            includePaintOrder = true,
+            includeDOMRects = true,
+            includeScrollAnalysis = true,
+            includeVisibility = true,
+            includeInteractivity = true
+        )
+
+        val browserUseState = snapshotService.getBrowserUseState(snapshotOptions = snapshotOptions)
+        val domState = browserUseState.domState
         val agentState = AgentState(1, "", browserUseState = browserUseState)
         val toolCallExpressions = ToolCallSpecificationRenderer.render(includeCustomDomains = true)
 
-        val promptTemplate = PromptTemplate(SINGLE_ACTION_GENERATION_PROMPT)
+        val promptTemplate = PromptTemplate(SINGLE_WEB_DRIVER_ACTION_GENERATION_PROMPT)
         val message = promptTemplate.render(
             mapOf(
-                "ACTION_DESCRIPTIONS" to actionDescriptions,
+                "ACTION_DESCRIPTIONS" to action,
                 "TOOL_CALL_SPECIFICATION" to toolCallExpressions,
-                "NANO_TREE_LAZY_JSON" to domState.nanoTreeLazyJson,
+                "ARIA_ACCESSIBILITY_TREE" to domState.ariaSnapshot,
                 "OUTPUT_SCHEMA_ACT" to buildObserveResultSchema(true),
             )
         )
@@ -77,7 +89,7 @@ open class TextToAction(
         val content = response.content
         val elements: ModelObserveResponseElements = mapper.readValue(content)
 
-        return toActionDescription(actionDescriptions, elements, agentState, response).toActionDescriptions()
+        return toActionDescription(action, elements, agentState, response).toActionDescriptions()
     }
 
     fun modelResponseToActionDescription(
@@ -86,7 +98,7 @@ open class TextToAction(
         try {
             val actionDescription = modelResponseToActionDescription0(instruction, agentState, modelResponse)
 
-            val revised = reviseActionDescription(actionDescription)
+            val revised = normalizeActionDescription(actionDescription)
 
             agentState.actionDescription = revised
 
@@ -108,7 +120,7 @@ open class TextToAction(
         val mapper = pulsarObjectMapper()
         return when {
             contentStart.contains("\"taskComplete\"") -> {
-                val complete: ObserveResponseComplete = mapper.readValue(content)
+                val complete: ModelObserveResponseComplete = mapper.readValue(content)
                 ActionDescription(
                     instruction = instruction,
                     isComplete = complete.taskComplete,
@@ -133,7 +145,8 @@ open class TextToAction(
         var content = modelResponse.content.trim()
 
         val errorMessage =
-            "不合格响应，必须按照`## 输出格式`要求输出合法 JSON 格式。客户端已经修正，但以后务必严格遵循格式要求输出。"
+            "Non-compliant response. You must output in a valid JSON format as required by the `## Output Format`. " +
+                    "The client has been corrected, but you must strictly adhere to the format requirements for all future outputs."
         val heading20 = content.take(30)
         val tailing20 = content.takeLast(30)
 
@@ -161,7 +174,7 @@ open class TextToAction(
         } else modelResponse
     }
 
-    fun reviseActionDescription(action: ActionDescription): ActionDescription {
+    fun normalizeActionDescription(action: ActionDescription): ActionDescription {
         requireNotNull(action.modelResponse) { "ModelResponse is required to reviseActionDescription" }
 
         if (action.exception != null) {
@@ -172,12 +185,11 @@ open class TextToAction(
             return action
         }
 
-        // requireNotNull(action.agentState) { "Agent state has to be available" }
-        val observeElements = action.observeElements?.map { reviseObserveElement(it, action) }
+        val observeElements = action.observeElements?.map { normalizeObserveElement(it, action) }
         return action.copy(observeElements = observeElements)
     }
 
-    private fun reviseObserveElement(observeElement: ObserveElement, action: ActionDescription): ObserveElement {
+    private fun normalizeObserveElement(observeElement: ObserveElement, action: ActionDescription): ObserveElement {
         requireNotNull(action.modelResponse) { "ModelResponse is required to reviseObserveElement" }
         if (action.exception != null) {
             return observeElement
@@ -190,30 +202,41 @@ open class TextToAction(
         val domain = toolCall.domain
         val method = toolCall.method
 
-        val locator = observeElement.locator
+        // The `driver`, `WebDriver` domains are deprecated and replaced by `tab`
+        // Only when the `tab` domain requires a locator for tool calls
+        if (!domain.equals("tab", true)) {
+            return observeElement
+        }
+
+        val ref = observeElement.ref
         val arguments = toolCall.arguments
 
-        var node: DOMTreeNodeEx? = null
-        if (!locator.isNullOrBlank()) {
-            val fbnLocator = agentState.browserUseState.domState.getAbsoluteFBNLocator(locator)
-            if (fbnLocator != null) {
-                node = agentState.browserUseState.domState.locatorMap[fbnLocator]
-                if ("selector" in arguments) {
-                    // revise selector
-                    arguments["selector"] = fbnLocator.absoluteSelector
-                }
+        var node: MergedDOMTreeNode? = null
+        if (!ref.isNullOrBlank()) {
+            val locator = if (ref.startsWith("e")) {
+                // playwright compatible format: `e123`, where 123 is the backend node id
+                Locator(Locator.Type.BACKEND_NODE_ID, ref.substring(1).trim())
+            } else {
+                // backward compatibility: try to find FBN locator with ref as simplified backend node id
+                agentState.browserUseState.domState.getAbsoluteFBNLocator(ref)
             }
 
-            if (fbnLocator == null) {
-                logger.warn("FBN locator not found. method={}, locator={}", method, locator)
+            if (locator != null) {
+                node = agentState.browserUseState.domState.locatorMap[locator]
+                if ("selector" in arguments) {
+                    // revise selector
+                    arguments["selector"] = locator.absoluteSelector
+                }
+            } else {
+                logger.warn("Locator not found. method={}, locator={}", method, locator)
             }
         }
 
         // CSS friendly expression
         val cssSelector = node?.cssSelector()
         val expression = toolCall.weakTypeExpression
-        val cssFriendlyExpression = if (locator != null && cssSelector != null) {
-            expression.replace(locator, cssSelector)
+        val cssFriendlyExpression = if (ref != null && cssSelector != null) {
+            expression.replace(ref, cssSelector)
         } else null
 
         // 3. copy new object
@@ -226,28 +249,6 @@ open class TextToAction(
         )
 
         return revisedObserveElement
-    }
-
-    private fun jsonElementToKotlin(e: JsonElement): Any? = when {
-        e.isJsonNull -> null
-        e.isJsonPrimitive -> {
-            val p = e.asJsonPrimitive
-            when {
-                p.isBoolean -> p.asBoolean
-                p.isNumber -> {
-                    val num = p.asNumber
-                    val d = num.toDouble()
-                    val i = num.toInt()
-                    if (d == i.toDouble()) i else d
-                }
-
-                else -> p.asString
-            }
-        }
-
-        e.isJsonArray -> e.asJsonArray.map { jsonElementToKotlin(it) }
-        e.isJsonObject -> e.asJsonObject.entrySet().associate { it.key to jsonElementToKotlin(it.value) }
-        else -> null
     }
 
     companion object {
@@ -279,7 +280,7 @@ open class TextToAction(
                 ?.associate { it.first.toString() to it.second }
 
             val observeElement = ObserveElement(
-                locator = ele.locator?.removeSurrounding("[", "]"),
+                ref = ele.ref?.removeSurrounding("[", "]"),
 
                 screenshotContentSummary = ele.screenshotContentSummary,
                 currentPageContentSummary = ele.currentPageContentSummary,

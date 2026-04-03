@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.pulsar.common.getLogger
@@ -18,12 +18,12 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 
     @Volatile
-    private var lastBackendLookup: Map<Int, DOMTreeNodeEx> = emptyMap()
+    private var lastBackendLookup: Map<Int, MergedDOMTreeNode> = emptyMap()
 
     /**
      * Expose the last backend-node lookup built during document fetch.
      */
-    fun lastBackendNodeLookup(): Map<Int, DOMTreeNodeEx> = lastBackendLookup
+    fun lastBackendNodeLookup(): Map<Int, MergedDOMTreeNode> = lastBackendLookup
 
     /**
      * Get the full DOM document tree.
@@ -32,7 +32,8 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
      * @param maxDepth Maximum depth to traverse (0 means full tree)
      * @return Enhanced DOM tree root node; returns an empty root on failure
      */
-    suspend fun getDocument(target: PageTarget?, maxDepth: Int = 0): DOMTreeNodeEx {
+    suspend fun getDocument(target: PageTarget?, maxDepth: Int = 0): MergedDOMTreeNode {
+        val maxDepth = if (maxDepth > 0) maxDepth else 999999
         val dom = devTools.dom
         val depth = maxDepth.takeIf { it > 0 }
         val document = try {
@@ -48,10 +49,10 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
 
         if (document == null) {
             lastBackendLookup = emptyMap()
-            return DOMTreeNodeEx()
+            return MergedDOMTreeNode()
         }
 
-        val backendIndex = mutableMapOf<Int, DOMTreeNodeEx>()
+        val backendIndex = mutableMapOf<Int, MergedDOMTreeNode>()
         val root = mapNode(
             node = document,
             depth = 0,
@@ -88,15 +89,15 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
         frameId: String?,
         targetId: String?,
         sessionId: String?,
-        backendIndex: MutableMap<Int, DOMTreeNodeEx>
-    ): DOMTreeNodeEx {
+        backendIndex: MutableMap<Int, MergedDOMTreeNode>
+    ): MergedDOMTreeNode {
         // Parse attributes from CDP format (flat list: [name1, value1, name2, value2, ...])
         val attrs = (node.attributes ?: emptyList())
             .chunked(2)
             .associate { (k, v) -> k to v }
 
         // Recursively process children if within depth limit
-        val children: List<DOMTreeNodeEx> = when {
+        val children: List<MergedDOMTreeNode> = when {
             maxDepth == 0 || depth < maxDepth -> {
                 (node.children ?: emptyList()).map {
                     mapNode(
@@ -114,7 +115,7 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
         }
 
         // Process shadow roots if present
-        val shadowRoots: List<DOMTreeNodeEx> = if (maxDepth == 0 || depth < maxDepth) {
+        val shadowRoots: List<MergedDOMTreeNode> = if (maxDepth == 0 || depth < maxDepth) {
             (node.shadowRoots ?: emptyList()).map {
                 mapNode(
                     it,
@@ -131,7 +132,7 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
         }
 
         // Process content document for iframes
-        val contentDocument: DOMTreeNodeEx? = if (maxDepth == 0 || depth < maxDepth) {
+        val contentDocument: MergedDOMTreeNode? = if (maxDepth == 0 || depth < maxDepth) {
             node.contentDocument?.let {
                 mapNode(
                     it,
@@ -147,7 +148,7 @@ class DomTreeHandler(private val devTools: RemoteDevTools) {
             null
         }
 
-        val enhanced = DOMTreeNodeEx(
+        val enhanced = MergedDOMTreeNode(
             nodeId = node.nodeId ?: 0,
             backendNodeId = node.backendNodeId,
             nodeName = node.nodeName ?: "",

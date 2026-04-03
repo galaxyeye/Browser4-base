@@ -1,12 +1,12 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.DefaultIncludeAttributes
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 
 object DOMUtils {
 
-    fun textContent(node: DOMTreeNodeEx): String {
+    fun textContent(node: MergedDOMTreeNode): String {
         val sb = StringBuilder()
 
         fun appendToken(s: String?) {
@@ -37,7 +37,7 @@ object DOMUtils {
         return sb.toString().replace(Regex("\\s+"), " ").trim()
     }
 
-    fun slimHTML(node: DOMTreeNodeEx): String {
+    fun slimHTML(node: MergedDOMTreeNode): String {
         val tagName = node.nodeName.lowercase()
         val sb = StringBuilder()
 

@@ -52,7 +52,7 @@ class DesktopHighlightManager(
                     h.roundToInt(),
                     // Try to show backend_node_id if present in locator "frameIndex,backendNodeId"
                     label = runCatching {
-                        val loc = n.locator
+                        val loc = n.backendNodeId
                         if (!loc.isNullOrBlank()) {
                             val parts = loc.split(',')
                             if (parts.size >= 2) parts[1].trim() else null

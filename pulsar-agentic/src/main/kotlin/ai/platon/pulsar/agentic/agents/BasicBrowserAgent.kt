@@ -5,23 +5,22 @@ import ai.platon.pulsar.agentic.common.AgentPaths
 import ai.platon.pulsar.agentic.event.AgentEventBus
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.inference.AgentMessageList
+import ai.platon.pulsar.agentic.inference.AgentStateManager
 import ai.platon.pulsar.agentic.inference.InferenceEngine
 import ai.platon.pulsar.agentic.inference.PromptBuilder
 import ai.platon.pulsar.agentic.inference.action.ContextToAction
 import ai.platon.pulsar.agentic.inference.detail.ActResultHelper
-import ai.platon.pulsar.agentic.inference.AgentStateManager
-import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.inference.detail.PageStateTracker
 import ai.platon.pulsar.agentic.model.*
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
-import ai.platon.pulsar.common.DateTimes
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
+import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.alwaysTrue
 import ai.platon.pulsar.common.event.EventBus
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.serialize.json.Pson
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,22 +35,26 @@ open class BasicBrowserAgent(
     private val logger = getLogger(BasicBrowserAgent::class)
     private val _startTime: Instant = Instant.now()
     private val _uuid: UUID = UUID.randomUUID()
-    private val _baseDir: Path = AgentPaths.AGENT_BASE_DIR
-        .resolve(DateTimes.PATH_SAFE_FORMATTER_1.format(_startTime))
-        .resolve(_uuid.toString())
+    private val _baseDir: Path = AgentPaths.resolveTimedDirectory(_startTime).resolve(_uuid.toString())
+    private val _logDir = getAgentLogDir()
 
     protected val cta by lazy { ContextToAction(session.sessionConfig) }
     protected val inference by lazy { InferenceEngine(this) }
-    protected val domService get() = inference.domService
+    protected val snapshotService get() = inference.snapshotService
     protected val promptBuilder = PromptBuilder()
 
-    private val lazyToolManager by lazy {
+    private val lazyToolExecutor by lazy {
         AgentToolExecutor(_baseDir, this)
     }
 
     /** The [AgentToolExecutor] used by this agent for tool discovery and execution. */
-    val toolExtractor: AgentToolExecutor get() = lazyToolManager
+    val toolExtractor: AgentToolExecutor get() = lazyToolExecutor
     protected val fs get() = toolExtractor.fs
+
+    val activeDriver get() = session.getOrCreateBoundDriver()
+    val startTime get() = _startTime
+    val baseDir: Path get() = _baseDir
+    val logDir: Path get() = _logDir
 
     protected val pageStateTracker = PageStateTracker(session, config)
     protected val stateManager by lazy { AgentStateManager(this, pageStateTracker) }
@@ -59,10 +62,6 @@ open class BasicBrowserAgent(
     override val uuid get() = _uuid
     override val stateHistory: AgentHistory get() = stateManager.stateHistory
     override val processTrace: List<ProcessTrace> get() = stateManager.processTrace
-
-    val activeDriver get() = session.getOrCreateBoundDriver()
-    val startTime get() = _startTime
-    val baseDir: Path get() = _baseDir
 
     init {
         Files.createDirectories(baseDir)
@@ -156,7 +155,7 @@ open class BasicBrowserAgent(
             withTimeout(config.actTimeoutMs) {
                 doObserveAct(action)
             }
-        } catch (_: TimeoutCancellationException) {
+        } catch (e: TimeoutCancellationException) {
             val msg = "⏳ Action timed out after ${config.actTimeoutMs}ms: ${action.action}"
             stateManager.addTrace(
                 context.agentState,
@@ -164,7 +163,11 @@ open class BasicBrowserAgent(
                 event = "actTimeout",
                 message = "⏳ act TIMEOUT"
             )
-            ActResultHelper.failed(msg, action.action)
+            ActResultHelper.failed(IllegalStateException(msg, e), action.action)
+        }
+
+        if (result.detail != null) {
+            stateManager.addToHistory(context.agentState)
         }
 
         onDidAct(action, result)
@@ -178,49 +181,70 @@ open class BasicBrowserAgent(
         require(observe.agentState == context.agentState) { "Required: observe.agentState == context?.agentState" }
 
         val element = observe.observeElement
-            ?: return ActResultHelper.failed("No observation to act", instruction)
+            ?: return ActResultHelper.failed(IllegalStateException("No observation to act"), instruction)
         val actionDescription =
-            observe.actionDescription ?: return ActResultHelper.failed("No action description to act", instruction)
-        val step = context.step
-        val toolCall = element.toolCall ?: return ActResultHelper.failed("No tool call to act", instruction)
+            observe.actionDescription
+                ?: return ActResultHelper.failed(IllegalStateException("No action description to act"), instruction)
+        val originalToolCall =
+            element.toolCall ?: return ActResultHelper.failed(IllegalStateException("No tool call to act"), instruction)
+        val toolCall = toolExtractor.normalizeToolCall(originalToolCall)
         val method = toolCall.method
 
         logger.info("🛠️ tool.exec sid={} step={} tool={}", context.sid, context.step, toolCall.pseudoExpression)
 
         return try {
-            val result = toolExtractor.execute(actionDescription, "resolve, #$step")
+            val result = toolExtractor.execute(toolCall)
             // Discuss: should we sync browser state after tool call immediately? probably not.
             // stateManager.syncBrowserUseState(context)
 
-            val state = if (result.success) "✅ success" else """☑️ executed"""
+            val state = if (result.isSuccess) "✅ success" else """☑️ executed"""
             val description = MessageFormat.format(
                 "✅ tool.done | {0} {1} | {4} | {2}/{3}",
-                method, state, element.locator, element.cssSelector, element.pseudoExpression
+                method, state, element.backendNodeId, element.cssSelector, element.pseudoExpression
             )
             logger.info(description)
 
-            // Update agent state after tool call
-            stateManager.updateAgentState(context, element, toolCall, result, description = description)
+            val detailedResult = DetailedActResult(
+                actionDescription = actionDescription,
+                toolCallResult = result,
+                description = description
+            )
+            stateManager.updateAgentState(context, detailedResult)
 
             stateManager.addTrace(
                 context.agentState,
                 items = mapOf("tool" to method), event = "toolExecOk", message = description
             )
 
-            DetailedActResult(actionDescription, result, success = result.success, description).toActResult()
+            detailedResult.toActResult()
         } catch (e: Exception) {
             logger.error("❌ observe.act execution failed sid={} msg={}", uuid.toString().take(8), e.message, e)
 
             val description = MessageFormat.format(
                 "❌ observe.act execution failed | {0} | {1}/{2}",
-                method, observe.locator, element.cssSelector
+                method, observe.backendNodeId, element.cssSelector
             )
 
-            stateManager.updateAgentState(
-                context, element, toolCall, description = description, exception = e
+            val failedResult = ToolCallResult(
+                evaluate = TcEvaluate(actionDescription.pseudoExpression ?: toolCall.pseudoExpression, e),
+                message = e.message,
+                actionDescription = actionDescription
+            )
+            val detailedResult = DetailedActResult(
+                actionDescription = actionDescription,
+                toolCallResult = failedResult,
+                description = description,
+                exception = e
+            )
+            stateManager.updateAgentState(context, detailedResult)
+            stateManager.addTrace(
+                context.agentState,
+                items = mapOf("tool" to method),
+                event = "toolExecFailed",
+                message = description
             )
 
-            ActResultHelper.failed(description, toolCall.method)
+            detailedResult.toActResult()
         }
     }
 
@@ -296,7 +320,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_OBSERVE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_OBSERVE,
             agentId = agentId,
             message = "Starting observation",
             metadata = mapOf("instruction" to options.instruction?.take(100))
@@ -315,7 +339,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_OBSERVE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_OBSERVE,
             agentId = agentId,
             message = "Observation completed",
             metadata = mapOf(
@@ -339,7 +363,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_RUN,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_RUN,
             agentId = agentId,
             message = "Starting run with action: ${action.action.take(100)}",
             metadata = mapOf("action" to action.action)
@@ -359,7 +383,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_RUN,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_RUN,
             agentId = agentId,
             message = "Run completed",
             metadata = mapOf(
@@ -382,7 +406,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_ACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_ACT,
             agentId = agentId,
             message = "Starting action: ${action.action.take(100)}",
             metadata = mapOf("action" to action.action)
@@ -401,12 +425,16 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_ACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_ACT,
             agentId = agentId,
-            message = if (result.success) "Action completed successfully" else "Action failed: ${result.message.take(100)}",
+            message = if (result.isSuccess) "Action completed successfully" else "Action failed: ${
+                result.message.take(
+                    100
+                )
+            }",
             metadata = mapOf(
                 "action" to action.action,
-                "success" to result.success,
+                "success" to result.isSuccess,
                 "isComplete" to result.isComplete
             )
         )
@@ -424,7 +452,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_EXTRACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_EXTRACT,
             agentId = agentId,
             message = "Starting extraction: ${options.instruction.take(100)}",
             metadata = mapOf("instruction" to options.instruction)
@@ -443,7 +471,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_EXTRACT,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_EXTRACT,
             agentId = agentId,
             message = if (result.success) "Extraction completed successfully" else "Extraction failed: ${
                 result.message.take(
@@ -469,7 +497,7 @@ open class BasicBrowserAgent(
         val agentId = this.uuid.toString()
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_WILL_SUMMARIZE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_WILL_SUMMARIZE,
             agentId = agentId,
             message = "Starting summarization",
             metadata = mapOf(
@@ -492,7 +520,7 @@ open class BasicBrowserAgent(
 
         // Emit AgentEventBus event for SSE streaming
         AgentEventBus.emitAgentEvent(
-            eventType = AgenticEvents.AgentEventTypes.ON_DID_SUMMARIZE,
+            eventType = AgenticEvents.PerceptiveAgent.ON_DID_SUMMARIZE,
             agentId = agentId,
             message = "Summarization completed",
             metadata = mapOf(
@@ -528,7 +556,7 @@ open class BasicBrowserAgent(
         if (observeResults.isEmpty()) {
             val msg = "⚠️ doObserveAct: No observe result"
             stateManager.addTrace(context.agentState, event = "observeActNoAction", message = msg)
-            return ActResultHelper.failed(msg, action = options.action)
+            return ActResultHelper.failed(IllegalStateException(msg), action = options.action)
         }
 
         val resultsToTry = observeResults.take(config.maxResultsToTry)
@@ -558,7 +586,7 @@ open class BasicBrowserAgent(
 
             }
 
-            if (!actResult.success) {
+            if (!actResult.isSuccess) {
                 lastError = "Candidate ${index + 1} failed: ${actResult.message}"
                 continue
             }
@@ -581,11 +609,11 @@ open class BasicBrowserAgent(
             message = msg
         )
 
-        return ActResultHelper.failed(msg, options.action)
+        return ActResultHelper.failed(IllegalStateException(msg), options.action)
     }
 
     private suspend fun doObserveActObserve(
-        options: Any, context: ExecutionContext, resolve: Boolean
+        options: Any, context: ExecutionContext, multistep: Boolean
     ): ObserveActResult {
         val observeOptions = options as? ObserveOptions
         val drawOverlay = alwaysTrue() || (observeOptions?.drawOverlay ?: false)
@@ -594,10 +622,10 @@ open class BasicBrowserAgent(
             is ObserveOptions -> context.createObserveParams(
                 options,
                 fromAct = false,
-                resolve = resolve
+                multistep = multistep
             )
 
-            is ActionOptions -> context.createObserveActParams(resolve)
+            is ActionOptions -> context.createObserveActParams(multistep)
             else -> throw IllegalArgumentException("Not supported options | $options")
         }
 
@@ -606,53 +634,28 @@ open class BasicBrowserAgent(
         val interactiveElements = context.agentState.browserUseState.getAllInteractiveElements()
         try {
             if (drawOverlay) {
-                domService.addHighlights(interactiveElements)
+                snapshotService.addHighlights(interactiveElements)
             }
 
-            context.screenshotB64 = activeDriver.screenshot()
+            // Only capture screenshot when the previous action was a browser-interaction action
+            // (or on the first step when no previous action exists), to reduce token usage.
+            val lastActionDomain = context.agentState.prevState?.actionDomain
+            val needsScreenshot = ToolSpecification.isBrowserInteraction(lastActionDomain)
+            val screenshotB64 = if (needsScreenshot) activeDriver.screenshot() else null
+            val context = context.copy(screenshotB64 = screenshotB64)
 
             val actionDescription = withTimeout(config.llmInferenceTimeoutMs) {
                 inference.observe(params, context)
             }
 
             val observeResults = actionDescription.toObserveResults(context.agentState)
-            // observeResults.forEach { it.setContext(context) }
 
             return ObserveActResult(observeResults, actionDescription)
         } finally {
             if (drawOverlay) {
-                domService.removeHighlights()
+                snapshotService.removeHighlights()
             }
         }
-    }
-
-    protected suspend fun captureScreenshotWithRetry(context: ExecutionContext): String? {
-        val attempts = 2
-        var lastEx: Exception? = null
-        for (i in 1..attempts) {
-            try {
-                val screenshot = activeDriver.screenshot()
-                if (screenshot != null) {
-                    logger.info(
-                        "📸✅ screenshot.ok sid={} step={} size={} attempt={} ",
-                        context.sid, context.step, screenshot.length, i
-                    )
-                    return screenshot
-                } else {
-                    logger.info("📸⚪ screenshot.null sid={} step={} attempt={}", context.sid, context.step, i)
-                }
-            } catch (e: Exception) {
-                lastEx = e
-                logger.warn("📸⚠️ screenshot attempt {} failed: {}", i, e.message)
-                delay(200)
-            }
-        }
-
-        if (lastEx != null) {
-            logger.error("📸❌ screenshot.fail sid={} msg={}", context.sid, lastEx.message, lastEx)
-        }
-
-        return null
     }
 
     override suspend fun clearHistory() {
@@ -661,5 +664,11 @@ open class BasicBrowserAgent(
 
     override fun close() {
 
+    }
+
+    private fun getAgentLogDir(): Path {
+        val agentId = uuid.toString()
+        val auxLogDir = AppPaths.detectAuxiliaryLogDir().resolve("agent")
+        return auxLogDir.resolve(AppPaths.fromTime(startTime)).resolve(agentId)
     }
 }

@@ -1,15 +1,10 @@
 package ai.platon.pulsar.agentic.tools
 
-import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.builtin.BrowserToolExecutor
 import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
-import ai.platon.pulsar.agentic.tools.builtin.WebDriverToolExecutor
-import ai.platon.pulsar.common.getLogger
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
-import javax.script.ScriptEngineManager
+import ai.platon.pulsar.agentic.tools.builtin.BrowserTabToolExecutor
 import kotlin.reflect.full.isSuperclassOf
 
 /**
@@ -34,54 +29,13 @@ import kotlin.reflect.full.isSuperclassOf
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
  */
 open class BasicToolCallExecutor(
-    val toolExecutors: List<ToolExecutor> = listOf(WebDriverToolExecutor(), BrowserToolExecutor())
+    val toolExecutors: List<ToolExecutor> = listOf(BrowserTabToolExecutor(), BrowserToolExecutor())
 ) {
-    private val logger = getLogger(this)
-    private val engine = ScriptEngineManager().getEngineByExtension("kts")
-
-    /**
-     * Evaluate [expression].
-     *
-     * Slower and unsafe.
-     *
-     * ```kotlin
-     * eval("""driver.click("#submit")""", driver)
-     * ```
-     * */
-    fun eval(expression: String, driver: WebDriver): TcEvaluate {
-        return eval(expression, mapOf("driver" to driver))
-    }
-
-    fun eval(expression: String, browser: Browser): TcEvaluate {
-        return eval(expression, mapOf("browser" to browser))
-    }
-
-    fun eval(expression: String, agent: PerceptiveAgent): TcEvaluate {
-        return eval(expression, mapOf("agent" to agent))
-    }
-
-    fun eval(expression: String, variables: Map<String, Any>): TcEvaluate {
-        return try {
-            variables.forEach { (key, value) -> engine.put(key, value) }
-            val any = engine.eval(expression)
-            TcEvaluate(value = any, expression = expression)
-        } catch (e: Exception) {
-            logger.warn("Error eval expression: {} - {}", expression, e.stackTraceToString())
-            TcEvaluate(expression, e, EVAL_HELP)
-        }
-    }
-
     @Throws(UnsupportedOperationException::class)
-    suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
+    suspend fun callFunctionOn(tc: ToolCall, receiver: Any): TcEvaluate {
         return toolExecutors
-            .firstOrNull { it.targetClass.isSuperclassOf(target::class) }
-            ?.callFunctionOn(tc, target)
-            ?: throw UnsupportedOperationException("❓ Unsupported target ${target::class}")
-    }
-
-    companion object {
-        val EVAL_HELP = """
-Evaluate an Kotlin expression using ScriptEngineManager.
-        """.trimIndent()
+            .firstOrNull { it.receiverClass.isSuperclassOf(receiver::class) }
+            ?.callFunctionOn(tc, receiver)
+            ?: throw UnsupportedOperationException("❓ Unsupported receiver ${receiver::class}")
     }
 }

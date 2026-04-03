@@ -2,7 +2,7 @@
 
 在此处起草您的任务。本区域用于尚未准备就绪的任务草稿，不供执行。
 
-1. 运行 `run_coworker_periodically.ps1` 以启动
+1. 运行 `coworker-scheduler.ps1` 以启动定时自动化
 2. 在 `0draft` 下起草任务（或者任何地方）
 3. 将已完成草稿的任务复制到 `1created` 目录以执行
 4. 执行后，您可以在 `3_1complete` 中找到结果，在 300logs 中找到详细日志
@@ -35,5 +35,5 @@
 
 - [coworker.ps1](../../scripts/coworker.ps1)
 - [coworker.sh](../../scripts/coworker.sh)
-- [run_coworker_periodically.ps1](../../scripts/run_coworker_periodically.ps1)
-- [run_coworker_periodically.sh](../../scripts/run_coworker_periodically.sh)
+- [coworker-scheduler.ps1](../../scripts/coworker-scheduler.ps1)
+- [coworker-scheduler.config.psd1](../../scripts/coworker-scheduler.config.psd1)

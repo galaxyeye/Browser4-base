@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -37,7 +37,7 @@ object HighlightUtils {
      */
     fun createHighlightedScreenshot(
         screenshotB64: String,
-        selectorMap: Map<String, DOMTreeNodeEx>,
+        selectorMap: Map<String, MergedDOMTreeNode>,
         devicePixelRatio: Double,
         filterHighlightIds: Boolean,
     ): String {
@@ -79,7 +79,7 @@ object HighlightUtils {
 
     private fun processElementHighlight(
         elementKey: String,
-        element: DOMTreeNodeEx,
+        element: MergedDOMTreeNode,
         g: Graphics2D,
         devicePixelRatio: Double,
         font: Font,

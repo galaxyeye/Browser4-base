@@ -1,13 +1,20 @@
 package ai.platon.pulsar.rest.api.controller
 
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_LIST_URL
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
+import ai.platon.pulsar.rest.mcp.controller.MCPToolCallResponse
+import ai.platon.pulsar.rest.mcp.controller.MCPToolController
+import ai.platon.pulsar.rest.mcp.service.SessionManager
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.client.expectBody
 import kotlin.test.assertFalse
@@ -22,15 +29,19 @@ import kotlin.test.assertTrue
  * `sdks/browser4-cli/src/cli.ts`.
  *
  * CLI command → MCP tool mapping:
- * - Core: open→open_session, goto→navigate, click, dblclick, fill, drag, hover,
- *         select→select_option, upload, check, uncheck, type→fill, snapshot→aria_snapshot,
- *         eval→evaluate, dialog-accept→dialog_accept, dialog-dismiss→dialog_dismiss,
- *         resize, close→close_session
- * - Navigation: go-back→go_back, go-forward→go_forward, reload
- * - Keyboard: press, keydown, keyup
- * - Mouse: mousemove, mousedown, mouseup, mousewheel
- * - Save as: screenshot, pdf→evaluate
- * - Tabs: tab-list→tab_list, tab-new→tab_new, tab-close→tab_close, tab-select→tab_select
+ * - Core: open→open_session, goto→browser_navigate, click/dblclick→browser_click,
+ *         fill→browser_type, drag→browser_drag, hover→browser_hover,
+ *         select→browser_select_option, upload→browser_file_upload,
+ *         check→browser_check, uncheck→browser_uncheck, type→browser_press_sequentially,
+ *         snapshot→browser_snapshot, eval→browser_evaluate,
+ *         dialog-accept/dialog-dismiss→browser_handle_dialog, resize→browser_resize,
+ *         close→close_session
+ * - Navigation: go-back→browser_navigate_back, go-forward→browser_navigate_forward, reload→browser_reload
+ * - Keyboard: press→browser_press_key, keydown→browser_keydown, keyup→browser_keyup
+ * - Mouse: mousemove→browser_mouse_move_xy, mousedown→browser_mouse_down,
+ *         mouseup→browser_mouse_up, mousewheel→browser_mouse_wheel
+ * - Save as: screenshot→browser_take_screenshot
+ * - Tabs: tab-list/tab-new/tab-close/tab-select→browser_tabs
  * - Session management: list→list_sessions, close-all→close_all_sessions,
  *                       kill-all→kill_all_sessions, delete-data→delete_session_data
  */
@@ -38,6 +49,11 @@ import kotlin.test.assertTrue
 class MCPToolControllerE2ETest : RestAPITestBase() {
     private val logger = LoggerFactory.getLogger(MCPToolControllerE2ETest::class.java)
     private val objectMapper = jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+
+    @Autowired
+    lateinit var sessionManager: SessionManager
 
     /**
      * Complete mapping from browser4-cli commands to MCP tool names.
@@ -46,44 +62,43 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     private val cliCommandToMcpTool = mapOf(
         // Core
         "open" to "open_session",
-        "goto" to "navigate",
-        "click" to "click",
-        "dblclick" to "dblclick",
-        "fill" to "fill",
-        "drag" to "drag",
-        "hover" to "hover",
-        "select" to "select_option",
-        "upload" to "upload",
-        "check" to "check",
-        "uncheck" to "uncheck",
-        "type" to "fill",
-        "snapshot" to "aria_snapshot",
-        "eval" to "evaluate",
-        "dialog-accept" to "dialog_accept",
-        "dialog-dismiss" to "dialog_dismiss",
-        "resize" to "resize",
+        "goto" to "browser_navigate",
+        "click" to "browser_click",
+        "dblclick" to "browser_click",
+        "fill" to "browser_type",
+        "drag" to "browser_drag",
+        "hover" to "browser_hover",
+        "select" to "browser_select_option",
+        "upload" to "browser_file_upload",
+        "check" to "browser_check",
+        "uncheck" to "browser_uncheck",
+        "type" to "browser_press_sequentially",
+        "snapshot" to "browser_snapshot",
+        "eval" to "browser_evaluate",
+        "dialog-accept" to "browser_handle_dialog",
+        "dialog-dismiss" to "browser_handle_dialog",
+        "resize" to "browser_resize",
         "close" to "close_session",
         // Navigation
-        "go-back" to "go_back",
-        "go-forward" to "go_forward",
-        "reload" to "reload",
+        "go-back" to "browser_navigate_back",
+        "go-forward" to "browser_navigate_forward",
+        "reload" to "browser_reload",
         // Keyboard
-        "press" to "press",
-        "keydown" to "keydown",
-        "keyup" to "keyup",
+        "press" to "browser_press_key",
+        "keydown" to "browser_keydown",
+        "keyup" to "browser_keyup",
         // Mouse
-        "mousemove" to "mousemove",
-        "mousedown" to "mousedown",
-        "mouseup" to "mouseup",
-        "mousewheel" to "mousewheel",
+        "mousemove" to "browser_mouse_move_xy",
+        "mousedown" to "browser_mouse_down",
+        "mouseup" to "browser_mouse_up",
+        "mousewheel" to "browser_mouse_wheel",
         // Save as
-        "screenshot" to "screenshot",
-        "pdf" to "evaluate",
+        "screenshot" to "browser_take_screenshot",
         // Tabs
-        "tab-list" to "tab_list",
-        "tab-new" to "tab_new",
-        "tab-close" to "tab_close",
-        "tab-select" to "tab_select",
+        "tab-list" to "browser_tabs",
+        "tab-new" to "browser_tabs",
+        "tab-close" to "browser_tabs",
+        "tab-select" to "browser_tabs",
         // Session management
         "list" to "list_sessions",
         "close-all" to "close_all_sessions",
@@ -98,6 +113,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     fun cleanUpSessions() {
         // Best-effort cleanup of any sessions left open by the test
         try {
+            // sessionManager.deleteAllSessions()
             callTool("kill_all_sessions")
         } catch (e: Exception) {
             logger.debug("Cleanup kill_all_sessions failed (may be expected): {}", e.message)
@@ -109,35 +125,42 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     // Helpers
     // =========================================================================
 
-    private fun callTool(tool: String, arguments: Map<String, Any?> = emptyMap()): Map<String, Any?> {
+    private fun callTool(tool: String, arguments: Map<String, Any?> = emptyMap()): MCPToolCallResponse {
         val request = mapOf("tool" to tool, "arguments" to arguments)
-        return client.post().uri("/mcp/call-tool")
+        val body = client.post().uri("/mcp/call-tool")
             .contentType(MediaType.APPLICATION_JSON)
             .body(request)
             .exchange()
             .expectStatus().is2xxSuccessful
-            .expectBody<Map<String, Any?>>()
+            .expectBody<String>()
             .returnResult()
             .responseBody!!
+
+        val tree = objectMapper.readTree(body)
+        if (tree is ObjectNode && (tree.get("isError") == null || tree.get("isError").isNull)) {
+            tree.put("isError", false)
+        }
+        return objectMapper.treeToValue(tree, MCPToolCallResponse::class.java)
     }
 
-    private fun textContent(response: Map<String, Any?>): String {
-        @Suppress("UNCHECKED_CAST")
-        val content = response["content"] as List<Map<String, Any?>>
-        return content.first()["text"]?.toString().orEmpty()
+    private fun textContent(response: MCPToolCallResponse): String {
+        return response.content.firstOrNull()?.text.orEmpty()
     }
 
-    private fun assertNotError(response: Map<String, Any?>) {
-        assertFalse(response["isError"] == true, "Expected successful MCP response but got: $response")
+    private fun assertNotError(response: MCPToolCallResponse) {
+        assertFalse(response.isError, "Expected successful MCP response but got: $response")
     }
 
-    private fun assertIsError(response: Map<String, Any?>) {
-        assertTrue(response["isError"] == true, "Expected error MCP response but got: $response")
+    private fun assertIsError(response: MCPToolCallResponse) {
+        assertTrue(response.isError, "Expected error MCP response but got: $response")
     }
 
     private fun assertToolRecognized(tool: String, arguments: Map<String, Any?> = emptyMap()) {
         val response = callTool(tool, arguments)
         val text = textContent(response)
+
+        printlnPro(this, "Tool '$tool' response: $response")
+
         assertFalse(text.contains("Unknown tool:"), "Tool '$tool' should be recognized, response: $response")
     }
 
@@ -160,7 +183,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     /** Shorthand: open a session, navigate to the given URL, and return the sessionId. */
     private fun openAndNavigate(url: String = MOCK_PRODUCT_DETAIL_URL): String {
         val sid = openSession()
-        val navResponse = callTool("navigate", mapOf("sessionId" to sid, "url" to url))
+        val navResponse = callTool("browser_navigate", mapOf("sessionId" to sid, "url" to url))
         assertNotError(navResponse)
         return sid
     }
@@ -182,8 +205,19 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
 
         @Suppress("UNCHECKED_CAST")
         val tools = (payload["tools"] as List<String>).toSet()
+        printlnPro(this, tools)
         val missingTools = cliCommandToMcpTool.values.filter { it !in tools }
         assertTrue(missingTools.isEmpty(), "Missing MCP tools for cli commands: $missingTools")
+    }
+
+    @Test
+    @DisplayName("POST /mcp/call-tool accepts frontend-declared Browser4 CLI tool names")
+    fun testFrontendToolNamesAreRecognized() {
+        val sid = openSession()
+
+        assertToolRecognized("browser_navigate", mapOf("sessionId" to sid, "url" to MOCK_PRODUCT_DETAIL_URL))
+        assertToolRecognized("browser_snapshot", mapOf("sessionId" to sid))
+        assertToolRecognized("browser_tabs", mapOf("sessionId" to sid, "action" to "list"))
     }
 
     // =========================================================================
@@ -330,10 +364,17 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     }
 
     @Test
-    @DisplayName("fill types text into an input (cli: fill, type)")
+    @DisplayName("fill types text into an input (cli: fill)")
     fun testFill() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
         assertToolRecognized("fill", mapOf("sessionId" to sid, "selector" to "#productTitle", "text" to "Browser4"))
+    }
+
+    @Test
+    @DisplayName("type appends text into an input (cli: type)")
+    fun testType() {
+        val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
+        assertToolRecognized("type", mapOf("sessionId" to sid, "selector" to "#productTitle", "text" to "Browser4"))
     }
 
     @Test
@@ -349,7 +390,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
         assertToolRecognized(
             "drag",
-            mapOf("sessionId" to sid, "source_selector" to "body", "target_selector" to "body")
+            mapOf("sessionId" to sid, "sourceSelector" to "body", "targetSelector" to "body")
         )
     }
 
@@ -357,7 +398,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("select_option selects a dropdown value (cli: select)")
     fun testSelectOption() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("select_option", mapOf("sessionId" to sid, "selector" to "body", "value" to "1"))
+        assertToolRecognized("select_option", mapOf("sessionId" to sid, "selector" to "body", "values" to listOf("1")))
     }
 
     @Test
@@ -385,7 +426,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     }
 
     // =========================================================================
-    // 5. Content & state — cli: snapshot, eval, screenshot, pdf
+    // 5. Content & state — cli: snapshot, eval, screenshot
     // =========================================================================
 
     @Test
@@ -407,20 +448,6 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     fun testScreenshot() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
         assertToolRecognized("screenshot", mapOf("sessionId" to sid))
-    }
-
-    @Test
-    @DisplayName("evaluate used as pdf fallback (cli: pdf)")
-    fun testPdfFallback() {
-        val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        // pdf in cli.ts calls evaluate with a string expression
-        assertToolRecognized(
-            "evaluate",
-            mapOf(
-                "sessionId" to sid,
-                "expression" to "'PDF generation not directly supported; use screenshot as alternative'"
-            )
-        )
     }
 
     @Test
@@ -491,7 +518,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("mousewheel dispatches a mouse wheel event (cli: mousewheel)")
     fun testMousewheel() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("mousewheel", mapOf("sessionId" to sid, "delta_x" to 0, "delta_y" to 120))
+        assertToolRecognized("mousewheel", mapOf("sessionId" to sid, "deltaX" to 0, "deltaY" to 120))
     }
 
     // =========================================================================
@@ -502,7 +529,7 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("dialog_accept accepts the current dialog (cli: dialog-accept)")
     fun testDialogAccept() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("dialog_accept", mapOf("sessionId" to sid, "prompt_text" to "ok"))
+        assertToolRecognized("dialog_accept", mapOf("sessionId" to sid, "promptText" to "ok"))
     }
 
     @Test
@@ -545,14 +572,14 @@ class MCPToolControllerE2ETest : RestAPITestBase() {
     @DisplayName("tab_close closes a tab (cli: tab-close)")
     fun testTabClose() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("tab_close", mapOf("sessionId" to sid))
+        assertToolRecognized("tab_close", mapOf("sessionId" to sid, "tabId" to "0"))
     }
 
     @Test
-    @DisplayName("tab_select switches to a tab by index (cli: tab-select)")
+    @DisplayName("tab_select switches to a tab by id (cli: tab-select)")
     fun testTabSelect() {
         val sid = openAndNavigate(MOCK_PRODUCT_DETAIL_URL)
-        assertToolRecognized("tab_select", mapOf("sessionId" to sid, "index" to 0))
+        assertToolRecognized("tab_select", mapOf("sessionId" to sid, "tabId" to "0"))
     }
 
     // =========================================================================

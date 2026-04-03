@@ -13,15 +13,10 @@ if (-not (Test-Path $FilePath)) {
 $inputPath = Resolve-Path $FilePath
 $FilePath = $inputPath.Path
 
-$repoRoot = (git rev-parse --show-toplevel 2>$null)
-if (-not $repoRoot) {
-    $repoRoot = $PSScriptRoot
-    while ($repoRoot -and !(Test-Path (Join-Path $repoRoot "coworker"))) {
-        $repoRoot = Split-Path $repoRoot -Parent
-    }
-    if (-not $repoRoot) { $repoRoot = $PSScriptRoot }
-}
-Set-Location $repoRoot
+$ghCopilotHelper = Join-Path $PSScriptRoot "gh-copilot.ps1"
+. $ghCopilotHelper
+$repoRoot = Get-WorkspaceRoot
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
 
 function Get-GeneratedTaskName {
     param (
@@ -60,17 +55,11 @@ function Get-GeneratedTaskName {
     }
 
     try {
-        # Escape double quotes in the prompt
-        $safePrompt = $namingPrompt.Replace('"', '\"')
-        
-        # Use single string for arguments to ensure correct quoting
-        $argsString = "copilot -- -p `"$safePrompt`""
-
         $nameStdOut = [System.IO.Path]::GetTempFileName()
         $nameStdErr = [System.IO.Path]::GetTempFileName()
         
         try {
-            $nameProcess = Start-Process -FilePath "gh" -ArgumentList $argsString -NoNewWindow -PassThru -RedirectStandardOutput $nameStdOut -RedirectStandardError $nameStdErr
+            $nameProcess = Start-GHCopilotProcess -Executable $copilotCommand.Executable -BaseArgs $copilotCommand.BaseArgs -Prompt $namingPrompt -WorkingDirectory $repoRoot -StdOutPath $nameStdOut -StdErrPath $nameStdErr -NoNewWindow
         } catch {
             Write-Host "DEBUG: Start-Process failed: $_"
             return "Error: Start-Process failed"

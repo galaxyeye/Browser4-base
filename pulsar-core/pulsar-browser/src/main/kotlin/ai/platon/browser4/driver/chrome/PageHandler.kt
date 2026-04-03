@@ -1,16 +1,15 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.dom.ChromeCdpDomService
-import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.CDPSnapshotService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
 import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
+import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.util.CDPReturnError
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException
-import ai.platon.cdt.kt.protocol.support.annotations.Experimental
-import ai.platon.cdt.kt.protocol.support.annotations.Optional
 import ai.platon.cdt.kt.protocol.support.annotations.ParamName
 import ai.platon.cdt.kt.protocol.types.dom.Rect
 import ai.platon.cdt.kt.protocol.types.page.Navigate
@@ -40,9 +39,8 @@ class PageHandler(
     private val runtimeAPI get() = devTools.runtime.takeIf { isActive }
 
     private var lastBrowserUseState: BrowserUseState? = null
-    private var lastAriaSnapshot: String? = null
 
-    val domService: DomService by lazy { ChromeCdpDomService(devTools) }
+    val snapshotService: SnapshotService by lazy { CDPSnapshotService(devTools) }
 
     val jsHandler: JsHandler = JsHandler(devTools, this, isolatedWorldManager)
 
@@ -104,7 +102,7 @@ class PageHandler(
     /**
      * Queries for a list of elements using a selector.
      *
-     * Supports two selector formats:
+     * Supports four selector formats:
      * - CSS selector: "div.class", "#id", etc.
      * - XPath selector: "//div[@class='class']", etc.
      * - Backend node ID: "backend:123", "e1233"
@@ -122,10 +120,58 @@ class PageHandler(
      * Fetches the current ARIA snapshot of the page, which is a YAML representation of the accessibility tree.
      * */
     suspend fun ariaSnapshot(): String {
-        val buState = domService.getBrowserUseState(PageTarget(), SnapshotOptions())
-        val snapshot = buState.domState.nanoTreeLazyYaml
+        val buState = snapshotService.getBrowserUseState(PageTarget(), SnapshotOptions())
+        val snapshot = buState.domState.ariaSnapshot
         lastBrowserUseState = buState
         return snapshot
+    }
+
+    /**
+     * Fetches the ARIA snapshot for the specified viewports only.
+     *
+     * @param viewportIndices The 1-based viewport indices to include.
+     * @return The ARIA snapshot YAML covering only the requested viewports.
+     */
+    suspend fun ariaSnapshot(viewportIndices: List<Int>): String {
+        val buState = snapshotService.getBrowserUseState(PageTarget(), SnapshotOptions())
+        lastBrowserUseState = buState
+
+        val scrollState = buState.browserState.scrollState
+        val viewportHeight = scrollState.viewportHeight.toDouble()
+        val serializableTree = buState.domState.serializableTree
+
+        val sortedIndices = viewportIndices.distinct().sorted()
+        // Merge contiguous viewport ranges into Y-axis ranges and build a combined NanoTree
+        val nanoTrees = mergeViewportRanges(sortedIndices).map { (startIdx, endIdx) ->
+            val startY = ((startIdx - 1) * viewportHeight).coerceAtLeast(0.0)
+            val endY = endIdx * viewportHeight
+            serializableTree.toNanoTreeInRange(startY, endY)
+        }
+
+        // Join snapshots from disjoint viewport ranges using YAML document separator
+        return nanoTrees.joinToString("\n---\n") { it.ariaSnapshot }
+    }
+
+    /**
+     * Merge contiguous 1-based viewport indices into (start, end) pairs for efficient range queries.
+     * E.g., [1, 2, 3, 5, 7, 8] → [(1, 3), (5, 5), (7, 8)]
+     */
+    private fun mergeViewportRanges(sortedIndices: List<Int>): List<Pair<Int, Int>> {
+        if (sortedIndices.isEmpty()) return emptyList()
+        val result = mutableListOf<Pair<Int, Int>>()
+        var start = sortedIndices[0]
+        var end = start
+        for (i in 1 until sortedIndices.size) {
+            if (sortedIndices[i] == end + 1) {
+                end = sortedIndices[i]
+            } else {
+                result.add(start to end)
+                start = sortedIndices[i]
+                end = start
+            }
+        }
+        result.add(start to end)
+        return result
     }
 
     @Throws(ChromeDriverException::class)
@@ -405,7 +451,7 @@ class PageHandler(
 
   return null;
 })('%s')
-            """.trimIndent(), Strings.escapeJsString(selector)
+            """.trimIndent(), normalizeCSSSelector(selector)
         )
 
         val result = jsHandler.evaluateValue(expression)
@@ -463,7 +509,7 @@ class PageHandler(
                 node, e.message, selector
             )
             // Fallback to legacy helper (CSS-only); safe stringify to avoid quoting issues
-            val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
+            val safeSelector = normalizeCSSSelector(selector)
             jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             node
         } catch (e: Exception) {
@@ -504,11 +550,26 @@ class PageHandler(
         } catch (e: ChromeRPCException) {
             // As a last resort, attempt legacy JS utility when a CSS selector is available
             if (!selector.isNullOrBlank()) {
-                val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
+                val safeSelector = normalizeCSSSelector(selector)
                 jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             }
             nodeRef
         }
+    }
+
+    fun convertSelectorIfNecessary(selector: String): String {
+        val nodeId = if (selector.startsWith("e")) selector.substring(1).toIntOrNull() else null
+        if (nodeId != null) {
+            val ref = ElementRefCriteria(backendNodeId = nodeId)
+            return snapshotService.findElement(ref)?.cssSelector() ?: selector
+        }
+        return selector
+    }
+
+    fun normalizeCSSSelector(selector: String): String {
+        val cssSelector = convertSelectorIfNecessary(selector)
+        val safeSelector = Strings.escapeJsString(cssSelector)
+        return safeSelector
     }
 
     /**

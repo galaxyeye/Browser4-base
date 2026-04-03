@@ -2,22 +2,21 @@ package ai.platon.pulsar.agentic.agents
 
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
 import ai.platon.pulsar.agentic.*
-import ai.platon.pulsar.agentic.model.ExecutionContext
 import ai.platon.pulsar.agentic.inference.detail.*
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentHistory
-import ai.platon.pulsar.agentic.model.DetailedActResult
-import ai.platon.pulsar.agentic.tools.util.ActionValidator
+import ai.platon.pulsar.agentic.model.ExecutionContext
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.AppContext
+import ai.platon.pulsar.common.NetUtil
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.config.AppConstants
+import ai.platon.pulsar.common.config.AppConstants.SEARCH_ENGINE_URLS
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.external.ResponseState
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
@@ -66,7 +65,6 @@ data class AgentConfig(
     val actTimeoutMs: Long = 10.minutes.inWholeMilliseconds,
     val llmInferenceTimeoutMs: Long = 10.minutes.inWholeMilliseconds,
     val maxResultsToTry: Int = 3,
-    val screenshotEveryNSteps: Int = 1,
     val domSettleTimeoutMs: Long = 5000,
     val domSettleCheckIntervalMs: Long = 100,
     val allowLocalhost: Boolean = false,
@@ -78,10 +76,6 @@ data class AgentConfig(
     // Circuit breaker configuration
     val maxConsecutiveLLMFailures: Int = 5,
     val maxConsecutiveValidationFailures: Int = 8,
-    // Checkpointing configuration
-    val enableCheckpointing: Boolean = false,
-    val checkpointIntervalSteps: Int = 10,
-    val maxCheckpointsPerSession: Int = 5,
 )
 
 open class RobustBrowserAgent(
@@ -97,8 +91,6 @@ open class RobustBrowserAgent(
     protected val agentJob = SupervisorJob()
     protected val agentScope = CoroutineScope(Dispatchers.Default + agentJob)
 
-    protected val actionValidator = ActionValidator()
-
     protected val stepExecutionTimes = ConcurrentHashMap<Int, Long>()
 
     // New components for better separation of concerns
@@ -111,9 +103,6 @@ open class RobustBrowserAgent(
         maxRetries = config.maxRetries, baseDelayMs = config.baseRetryDelayMs, maxDelayMs = config.maxRetryDelayMs
     )
     protected val retryCounter = AtomicInteger(0)
-
-    // Mutex for memory cleanup operations to replace synchronized blocks
-    private val memoryCleanupMutex = Mutex()
 
     companion object {
         // Magic numbers extracted as named constants
@@ -140,7 +129,7 @@ open class RobustBrowserAgent(
      *
      * @param action The action options containing the user's goal and configuration
      * @return Agent history with executed actions
-     * @throws CancellationException if the agent is closed or the operation is cancelled
+     * @throws CancellationException if the agent is closed or the operation is canceled
      */
     override suspend fun run(action: ActionOptions): AgentHistory {
         onWillRun(action)
@@ -180,7 +169,7 @@ open class RobustBrowserAgent(
             }
         } catch (e: CancellationException) {
             logger.info("🛑 act.cancelled action={}", action.action.take(50))
-            ActResult(false, "USER interrupted: ${e.message}", action = action.action)
+            ActResultHelper.failed(e, action.action)
         }
     }
 
@@ -199,7 +188,7 @@ open class RobustBrowserAgent(
             }
         } catch (e: CancellationException) {
             logger.info("🛑 act.cancelled instruction={}", observe.agentState.instruction.take(50))
-            ActResult(false, "USER interrupted: ${e.message}", action = observe.agentState.instruction)
+            ActResultHelper.failed(e, action = observe.actionDescription?.instruction ?: "")
         }
     }
 
@@ -328,21 +317,19 @@ open class RobustBrowserAgent(
             // Not a single-step action, keep it out of AgentState history
             stateManager.addTrace(
                 result.context.agentState, event = "resolveDone", items = mapOf(
-                    "session" to baseContext.sid, "success" to result.result.success, "durationMs" to dur
+                    "session" to baseContext.sid, "success" to result.result.isSuccess, "durationMs" to dur
                 ), message = "✅ resolve DONE"
             )
 
             result
-        } catch (_: TimeoutCancellationException) {
-            val msg =
-                "⏳ Resolve timed out after ${effectiveTimeout}ms (base: ${config.resolveTimeoutMs}ms + " + "retries: ${maxPossibleDelays}ms): $instruction"
+        } catch (e: TimeoutCancellationException) {
             stateManager.addTrace(
                 baseContext.agentState, event = "resolveTimeout", items = mapOf(
                     "timeoutMs" to effectiveTimeout,
                     "instruction" to Strings.compactInline(instruction, COMPACT_INLINE_SESSION_LENGTH)
                 ), message = "⏳ resolve TIMEOUT"
             )
-            val actResult = ActResult(success = false, message = msg, action = instruction)
+            val actResult = ActResultHelper.failed(e, action = instruction)
             ResolveResult(baseContext, actResult)
         } finally {
             // clear history so the next task will have a clean operation trace for summary.
@@ -350,35 +337,6 @@ open class RobustBrowserAgent(
             // 20251122: DO NOT CLEAR HISTORY, is you want to run new task with a new context, use TaskScopedBrowserPerceptiveAgent
             // instead.
             // stateManager.clearHistory()
-        }
-    }
-
-    protected suspend fun generateActions(context: ExecutionContext): ActionDescription {
-        context.screenshotB64 = if (context.step % config.screenshotEveryNSteps == 0) {
-            captureScreenshotWithRetry(context)
-        } else null
-
-        // Prepare messages for model
-        val messages = promptBuilder.buildMultistepAgentMessageListAll(context)
-
-        return try {
-            val actionDescription = cta.generate(messages, context)
-            requireNotNull(context.agentState.actionDescription) {
-                "Field should be set: context.agentState.actionDescription. " + "Step: ${context.step}, Instruction: ${
-                    context.instruction.take(
-                        50
-                    )
-                }. " + "This usually indicates a failure in the LLM response parsing."
-            }
-            circuitBreaker.recordSuccess(CircuitBreaker.FailureType.LLM_FAILURE)
-
-            actionDescription
-        } catch (e: Exception) {
-            handleObserveException(e, context)
-
-            ActionDescription(
-                context.instruction, context = context, exception = e, modelResponse = ModelResponse.INTERNAL_ERROR
-            )
         }
     }
 
@@ -402,19 +360,36 @@ open class RobustBrowserAgent(
         val browserUseState = agentState.browserUseState
         val step = context.step
         val sid = context.sid
-
-        var consecutiveNoOps = noOpsIn
-        val unchangedCount = pageStateTracker.checkStateChange(browserUseState)
-        if (unchangedCount >= 3) {
-            logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={}", sid, step, unchangedCount)
-            consecutiveNoOps++
+        val lastToolCall = agentState.actionDescription?.toolCall
+        val lastDomain = lastToolCall?.domain
+        if (ToolSpecification.isBrowserInteraction(lastDomain)) {
+            // Only browser-interaction actions can change the WebPage state
+            var consecutiveNoOps = noOpsIn
+            val unchangedCount = pageStateTracker.checkStateChange(browserUseState)
+            if (unchangedCount >= 3) {
+                logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={}", sid, step, unchangedCount)
+                consecutiveNoOps++
+            }
+            logger.info("▶️ step.exec sid={} step={}/{} noOps={}", sid, step, config.maxSteps, consecutiveNoOps)
         }
 
-        logger.info("▶️ step.exec sid={} step={}/{} noOps={}", sid, step, config.maxSteps, consecutiveNoOps)
         if (logger.isDebugEnabled) {
             logger.debug("🧩 dom={}", DomDebug.summarizeStr(browserUseState.domState, 5))
         }
+
         return context
+    }
+
+    private suspend fun selectBestSearchEngine(): String {
+        val searchURL = SEARCH_ENGINE_URLS.firstOrNull {
+            withContext(Dispatchers.IO) { NetUtil.testHttpNetwork(it) }
+        }
+
+        if (searchURL != null) {
+            return searchURL
+        }
+
+        return if (AppContext.isCN) AppConstants.SEARCH_ENGINE_URL else AppConstants.SEARCH_ENGINE_EN_URL
     }
 
     protected suspend fun ensureReadyForStep(
@@ -423,7 +398,7 @@ open class RobustBrowserAgent(
         val driver = activeDriver
         val url = driver.url()
         if (url.isBlank() || url == "about:blank") {
-            val searchURL = if (AppContext.isCN) AppConstants.SEARCH_ENGINE_URL else AppConstants.SEARCH_ENGINE_EN_URL
+            val searchURL = selectBestSearchEngine()
             driver.navigate(searchURL)
         }
 
@@ -474,9 +449,8 @@ open class RobustBrowserAgent(
                 context.step,
                 e.message ?: "user interruption"
             )
-            val result = ActResult(
-                success = false, message = "USER interrupted: ${e.message}", action = initContext.instruction
-            )
+
+            val result = ActResultHelper.failed(e, initContext.instruction)
             return ResolveResult(context, result)
         } catch (e: Exception) {
             throw handleResolutionFailure(e, context, startTime)
@@ -509,11 +483,7 @@ open class RobustBrowserAgent(
             }
         }
 
-        val actResult = ActResult(
-            success = false,
-            message = "Failed after ${config.maxRetries + 1} attempts. Last error: ${lastError?.message}",
-            action = action.action
-        )
+        val actResult = ActResultHelper.failed(lastError ?: Exception("Unknown error"), action.action)
 
         return ResolveResult(activeContext, actResult)
     }
@@ -547,11 +517,18 @@ open class RobustBrowserAgent(
             return StepProcessingResult(context, consecutiveNoOps, true)
         }
 
-        if (!actResult.success) {
-            consecutiveNoOps++
-            val stop = handleConsecutiveNoOps(consecutiveNoOps, context)
-            if (stop) {
-                return StepProcessingResult(context, consecutiveNoOps, true)
+        if (!actResult.isSuccess) {
+            // Only count failures of browser-interaction actions as no-ops.
+            // Non-browser actions (fs, agent, system) can fail for reasons
+            // unrelated to page state and should not trigger no-op detection.
+            val lastToolCall = actResult.detail?.actionDescription?.toolCall
+            val lastDomain = lastToolCall?.domain
+            if (ToolSpecification.isBrowserInteraction(lastDomain)) {
+                consecutiveNoOps++
+                val stop = handleConsecutiveNoOps(consecutiveNoOps, actResult, context)
+                if (stop) {
+                    return StepProcessingResult(context, consecutiveNoOps, true)
+                }
             }
         }
 
@@ -567,8 +544,6 @@ open class RobustBrowserAgent(
         try {
             logger.info("🧹 cleanup.partial sid={} step={}", context.sid, context.step)
             circuitBreaker.reset()
-            actionValidator.clearCache()
-            // pageStateTracker.waitForDOMSettle(1000, 100)
         } catch (e: Exception) {
             logger.warn("⚠️ cleanup.partial.fail sid={} msg={}", context.sid, e.message)
         }
@@ -623,10 +598,11 @@ open class RobustBrowserAgent(
     protected fun persistTranscript(instruction: String, finalResp: ModelResponse, context: ExecutionContext) {
         runCatching {
             val ts = Instant.now().toEpochMilli()
-            val path = baseDir.resolve("session-${ts}.log")
+            val path = stateManager.resolveSessionLogDir(context.sessionId).resolve("session-${ts}.log")
             slogger.info("🧾💾 Persisting execution transcript", context)
             val sb = StringBuilder()
             sb.appendLine("SESSION_ID: $uuid")
+            sb.appendLine("TASK_ID: ${context.sessionId}")
             sb.appendLine("TIMESTAMP: ${Instant.now()}")
             sb.appendLine("INSTRUCTION: $instruction")
             sb.appendLine("RESPONSE_STATE: ${finalResp.state}")
@@ -650,17 +626,24 @@ open class RobustBrowserAgent(
         }.onFailure { e -> slogger.logError("🧾❌ Failed to persist transcript", e, context.sessionId) }
     }
 
-    protected suspend fun handleConsecutiveNoOps(consecutiveNoOps: Int, context: ExecutionContext): Boolean {
+    protected suspend fun handleConsecutiveNoOps(
+        consecutiveNoOps: Int,
+        result: ActResult,
+        context: ExecutionContext
+    ): Boolean {
         val step = context.step
+        val expression = result.weakTypeExpression
         stateManager.addTrace(
             context.agentState,
             event = "noop",
             items = mapOf("step" to step, "consecutive" to consecutiveNoOps),
             message = "🕒 no-op"
         )
-        logger.info("🕒 noop sid={} step={} consecutive={}", context.sid, step, consecutiveNoOps)
+        logger.info("🕒 noop sid={} step={} consecutive={} toolCall={} | {}",
+            context.sid, step, consecutiveNoOps, expression, result)
         if (consecutiveNoOps >= config.consecutiveNoOpLimit) {
-            logger.info("⛔ noop.stop sid={} step={} limit={}", context.sid, step, config.consecutiveNoOpLimit)
+            logger.info("⛔ noop.stop sid={} step={} limit={} toolCall={}",
+                context.sid, step, config.consecutiveNoOpLimit, expression)
             return true
         }
         if (isClosed) {
@@ -702,7 +685,6 @@ open class RobustBrowserAgent(
         val sid = context.sessionId
 
         require(action.isComplete) { "Required action.isComplete" }
-        // require(context.agentState.isComplete) { "Required context.agentState.isComplete" }
         context.agentState.also {
             it.isComplete = true
             it.summary = action.summary
@@ -734,22 +716,13 @@ open class RobustBrowserAgent(
         val summary = result.modelResponse
         val context = result.context
         val ok = summary.state != ResponseState.OTHER
-
-        val agentState = result.context.agentState.also {
-            it.instruction = instruction
-            it.isComplete = true
-            it.domain = "summary"
-            it.event = "summary"
-            it.method = "summary"
-            it.step = context.step
-        }
-//        stateManager.addToHistory(agentState)
+        val exception = if (ok) null else IllegalStateException("ResponseState: OTHER")
 
         return ActResult(
-            success = ok,
             message = summary.content,
             action = context.instruction,
-            result = context.agentState.toolCallResult
+            result = context.agentState.toolCallResult,
+            exception = exception
         )
     }
 
@@ -761,13 +734,13 @@ open class RobustBrowserAgent(
             "💥 agent.fail sid={} steps={} dur={} err={}", context.sid, context.step, executionTime, e.message, e
         )
         runCatching { stateManager.removeLastIfStep(context.step) }.onFailure {
-                logger.warn(
-                    "⚠️ rollback failed sid={} step={} msg={}",
-                    context.sid,
-                    context.step,
-                    e.message
-                )
-            }
+            logger.warn(
+                "⚠️ rollback failed sid={} step={} msg={}",
+                context.sid,
+                context.step,
+                e.message
+            )
+        }
         return classifyError(e, context.step)
     }
 }

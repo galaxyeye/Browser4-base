@@ -4,10 +4,13 @@ import ai.platon.pulsar.agentic.event.AgentEventBus
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.skills.Skill
+import ai.platon.pulsar.agentic.skills.SkillContext
+import ai.platon.pulsar.agentic.skills.SkillInstaller
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.tools.builtin.AbstractToolExecutor
 import ai.platon.pulsar.agentic.tools.specs.ToolCallSpecificationProvider
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
+import java.nio.file.Paths
 import kotlin.reflect.KClass
 
 /**
@@ -24,7 +27,7 @@ class SkillToolExecutor(
 
     override val domain: String = "skill"
 
-    override val targetClass: KClass<*> = SkillToolTarget::class
+    override val receiverClass: KClass<*> = SkillToolTarget::class
 
     init {
         // 1) Discovery surface
@@ -60,6 +63,41 @@ class SkillToolExecutor(
             returnType = "SkillResult",
             description = "Run a registered skill by id"
         )
+
+        // 4) Document-driven installation
+        toolSpec["install"] = ToolSpec(
+            domain = domain,
+            method = "install",
+            arguments = listOf(
+                ToolSpec.Arg("sourceDir", "String"),
+                ToolSpec.Arg("overwrite", "Boolean", "false")
+            ),
+            returnType = "InstallResult",
+            description = "Install a skill from a source directory containing SKILL.md. " +
+                "Reads the documentation, deploys skill files, and registers the skill."
+        )
+
+        // 5) Uninstall a skill
+        toolSpec["uninstall"] = ToolSpec(
+            domain = domain,
+            method = "uninstall",
+            arguments = listOf(
+                ToolSpec.Arg("id", "String")
+            ),
+            returnType = "InstallResult",
+            description = "Uninstall a skill by removing its files and unregistering it"
+        )
+
+        // 6) Read skill documentation
+        toolSpec["readDocumentation"] = ToolSpec(
+            domain = domain,
+            method = "readDocumentation",
+            arguments = listOf(
+                ToolSpec.Arg("id", "String")
+            ),
+            returnType = "String",
+            description = "Read the full SKILL.md documentation for a registered skill"
+        )
     }
 
     override fun getToolCallSpecifications(): List<ToolSpec> {
@@ -76,21 +114,21 @@ class SkillToolExecutor(
         domain: String,
         functionName: String,
         args: Map<String, Any?>,
-        target: Any
+        receiver: Any
     ): Any? {
         require(domain == this.domain) { "Unsupported domain: $domain" }
-        require(target is SkillToolTarget) { "Target must be a SkillToolTarget" }
-        
+        require(receiver is SkillToolTarget) { "Target must be a SkillToolTarget" }
+
         // Get agentId from SkillToolTarget context if available
-        val agentId = target.context.sessionId
+        val agentId = receiver.context.sessionId
 
         return when (functionName) {
             "list" -> {
                 val maxChars = (args["maxDescriptionChars"] as? Number)?.toInt() ?: 512
                 val skills = registry.listSkillSummaries(maxDescriptionChars = maxChars)
-                
+
                 onSkillsListed(agentId, skills.size, maxChars)
-                
+
                 skills
             }
 
@@ -98,9 +136,9 @@ class SkillToolExecutor(
                 validateArgs(args, allowed = setOf("id"), required = setOf("id"), functionName)
                 val id = paramString(args, "id", functionName)!!
                 val activation = registry.activateSkill(id)
-                
+
                 onSkillActivated(agentId, id)
-                
+
                 activation
             }
 
@@ -128,7 +166,7 @@ class SkillToolExecutor(
                 val startTime = System.currentTimeMillis()
 
                 return try {
-                    val result = target.execute(id, paramsMap)
+                    val result = receiver.execute(id, paramsMap)
                     val duration = System.currentTimeMillis() - startTime
 
                     onDidRunSkill(agentId, id, duration, result)
@@ -143,6 +181,46 @@ class SkillToolExecutor(
                 }
             }
 
+            "install" -> {
+                validateArgs(args, allowed = setOf("sourceDir", "overwrite"), required = setOf("sourceDir"), functionName)
+                val sourceDir = paramString(args, "sourceDir", functionName)!!
+                val overwrite = (args["overwrite"] as? Boolean) ?: false
+
+                val installer = SkillInstaller(registry)
+                val result = installer.install(
+                    sourceDir = Paths.get(sourceDir),
+                    context = receiver.context,
+                    overwrite = overwrite
+                )
+
+                onSkillInstalled(agentId, result.skillId, result.success, result.message)
+
+                result
+            }
+
+            "uninstall" -> {
+                validateArgs(args, allowed = setOf("id"), required = setOf("id"), functionName)
+                val id = paramString(args, "id", functionName)!!
+
+                val installer = SkillInstaller(registry)
+                val result = installer.uninstall(id, receiver.context)
+
+                onSkillUninstalled(agentId, id, result.success, result.message)
+
+                result
+            }
+
+            "readDocumentation" -> {
+                validateArgs(args, allowed = setOf("id"), required = setOf("id"), functionName)
+                val id = paramString(args, "id", functionName)!!
+
+                val installer = SkillInstaller(registry)
+                val doc = installer.readDocumentation(id)
+                    ?: throw IllegalArgumentException("No documentation found for skill '$id'")
+
+                doc
+            }
+
             else -> throw IllegalArgumentException("Unsupported $domain method: $functionName(${args.keys})")
         }
     }
@@ -151,7 +229,7 @@ class SkillToolExecutor(
 
     private fun onSkillsListed(agentId: String, count: Int, maxDescriptionChars: Int) {
         AgentEventBus.emitSkillEvent(
-            eventType = AgenticEvents.SkillEventTypes.ON_SKILLS_LISTED,
+            eventType = AgenticEvents.Skill.ON_SKILLS_LISTED,
             agentId = agentId,
             message = "Listed $count skills",
             metadata = mapOf(
@@ -163,7 +241,7 @@ class SkillToolExecutor(
 
     private fun onSkillActivated(agentId: String, skillId: String) {
         AgentEventBus.emitSkillEvent(
-            eventType = AgenticEvents.SkillEventTypes.ON_SKILL_ACTIVATED,
+            eventType = AgenticEvents.Skill.ON_SKILL_ACTIVATED,
             agentId = agentId,
             message = "Skill activated: $skillId",
             metadata = mapOf("skillId" to skillId)
@@ -172,7 +250,7 @@ class SkillToolExecutor(
 
     private fun onWillRunSkill(agentId: String, skillId: String, paramsMap: Map<String, Any?>) {
         AgentEventBus.emitSkillEvent(
-            eventType = AgenticEvents.SkillEventTypes.ON_WILL_RUN_SKILL,
+            eventType = AgenticEvents.Skill.ON_WILL_RUN_SKILL,
             agentId = agentId,
             message = "Running skill: $skillId",
             metadata = mapOf(
@@ -184,7 +262,7 @@ class SkillToolExecutor(
 
     private fun onDidRunSkill(agentId: String, skillId: String, duration: Long, result: Any?) {
         AgentEventBus.emitSkillEvent(
-            eventType = AgenticEvents.SkillEventTypes.ON_DID_RUN_SKILL,
+            eventType = AgenticEvents.Skill.ON_DID_RUN_SKILL,
             agentId = agentId,
             message = "Skill completed: $skillId",
             metadata = mapOf(
@@ -197,13 +275,39 @@ class SkillToolExecutor(
 
     private fun onSkillError(agentId: String, skillId: String, duration: Long, e: Exception) {
         AgentEventBus.emitSkillEvent(
-            eventType = AgenticEvents.SkillEventTypes.ON_SKILL_ERROR,
+            eventType = AgenticEvents.Skill.ON_SKILL_ERROR,
             agentId = agentId,
             message = "Skill failed: $skillId - ${e.message}",
             metadata = mapOf(
                 "skillId" to skillId,
                 "duration" to duration,
                 "error" to e.message
+            )
+        )
+    }
+
+    private fun onSkillInstalled(agentId: String, skillId: String, success: Boolean, message: String) {
+        AgentEventBus.emitSkillEvent(
+            eventType = AgenticEvents.Skill.ON_SKILL_INSTALLED,
+            agentId = agentId,
+            message = "Skill installed: $skillId (success=$success)",
+            metadata = mapOf(
+                "skillId" to skillId,
+                "success" to success,
+                "message" to message
+            )
+        )
+    }
+
+    private fun onSkillUninstalled(agentId: String, skillId: String, success: Boolean, message: String) {
+        AgentEventBus.emitSkillEvent(
+            eventType = AgenticEvents.Skill.ON_SKILL_UNINSTALLED,
+            agentId = agentId,
+            message = "Skill uninstalled: $skillId (success=$success)",
+            metadata = mapOf(
+                "skillId" to skillId,
+                "success" to success,
+                "message" to message
             )
         )
     }

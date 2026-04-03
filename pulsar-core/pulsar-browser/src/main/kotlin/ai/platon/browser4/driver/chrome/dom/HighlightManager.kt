@@ -55,7 +55,7 @@ class HighlightManager(
 
                 // Parse backendNodeId from locator: format "frameIndex,backendNodeId"
                 val backendId = try {
-                    val loc = n.locator
+                    val loc = n.backendNodeId
                     if (!loc.isNullOrBlank()) {
                         val parts = loc.split(',')
                         if (parts.size >= 2) parts[1].trim().toIntOrNull() else null

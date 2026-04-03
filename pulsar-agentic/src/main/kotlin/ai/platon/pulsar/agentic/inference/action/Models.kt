@@ -12,7 +12,7 @@ import ai.platon.pulsar.agentic.model.DetailedActResult
  * This structure is parsed in [TextToAction.modelResponseToActionDescription] when the model output contains
  * a `taskComplete` field.
  */
-data class ObserveResponseComplete(
+data class ModelObserveResponseComplete(
     /**
      * Whether the agent believes the whole task is complete.
      */
@@ -44,7 +44,7 @@ data class ObserveResponseComplete(
     val nextSuggestions: List<String>? = null,
 )
 
-const val TASK_COMPLETE_SCHEMA_PROMPT = """
+const val OBSERVE_RESPONSE_COMPLETE_SCHEMA = """
 {"taskComplete":bool,"success":bool,"errorCause":string?,"summary":string,"keyFindings":[string],"nextSuggestions":[string]}
 """
 
@@ -66,13 +66,13 @@ data class ModelObserveResponseElements(
  * This is the primary JSON schema produced by the observe/action-generation prompts.
  *
  * Conversion rules (see [TextToAction.toObserveElement]):
- * - [locator] may be wrapped with brackets, and will be normalized using `removeSurrounding("[", "]")`.
+ * - [ref] may be wrapped with brackets, and will be normalized using `removeSurrounding("[", "]")`.
  * - [arguments] is expected to be a list of `{name: ..., value: ...}` maps; names become argument keys.
  *
  * Serialization notes:
  * - [arguments] uses `Any` to allow booleans/numbers/strings/objects. Keep values JSON-serializable.
  *
- * See also: [OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT]
+ * See also: [OBSERVE_RESPONSE_ELEMENT_SCHEMA]
  */
 data class ModelObserveResponseElement(
     /**
@@ -99,10 +99,10 @@ data class ModelObserveResponseElement(
     val description: String? = null,
 
     /**
-     * Web page node locator for DOM manipulation.
+     * Web page node reference for DOM manipulation.
      * Specified explicitly for easy access and parsing, even if it's also present in [arguments].
      */
-    val locator: String? = null,
+    val ref: String? = null,
 
     /**
      * Long-term memory to persist.
@@ -135,21 +135,20 @@ data class ModelObserveResponseElement(
     val nextGoal: String? = null,
 )
 
-const val OBSERVE_RESPONSE_ELEMENT_SCHEMA_PROMPT = """
+const val OBSERVE_RESPONSE_ELEMENT_SCHEMA = """
 {
   "elements": [
     {
-      "domain": "Tool domain, such as `driver`",
+      "domain": "Tool domain, such as `tab`",
       "method": "Method name, such as `click`",
       "arguments": [
         {
           "name": "Parameter name, such as `selector`",
-          "value": "Parameter value, such as `0,4`"
+          "value": "Parameter value, such as `e123`"
         }
       ],
-      "locator": "Web page node locator for DOM manipulation",
-      "description": "Description of the current locator and tool selection",
-      "screenshotContentSummary": "Summary of the current screenshot content",
+      "description": "Description of the current tool selection",
+      "screenshotContentSummary": "Summary of the current screenshot content if provided",
       "currentPageContentSummary": "Summary of the current web page text content, based on the accessibility tree or web content extraction results",
       "memory": "1–3 specific sentences describing this step and the overall progress. This should include information helpful for future progress tracking, such as the number of pages visited or items found.",
       "thinking": "A structured <think>-style reasoning block.",

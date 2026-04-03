@@ -7,6 +7,7 @@ import ai.platon.pulsar.agentic.event.AgentEventBus
 import ai.platon.pulsar.agentic.event.AgenticEvents
 import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.AgentHistory
+import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.event.EventBus
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.external.ChatModelFactory
@@ -237,7 +238,7 @@ class AgentE2ETest {
             EventBus.register(AgenticEvents.PerceptiveAgent.ON_DID_ACT) { payload ->
                 val map = payload as? Map<String, Any?> ?: return@register null
                 val result = map["result"]
-                eventLogger.info("🎬 Act completed - result: {}", result)
+                eventLogger.info("🎬 Act completed - result: {}", Strings.compactInline(result.toString()))
                 capturedEvents.computeIfAbsent(AgenticEvents.PerceptiveAgent.ON_DID_ACT) {
                     mutableListOf()
                 }.add(map)

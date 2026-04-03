@@ -327,8 +327,8 @@ interface WebDriver : Closeable {
     /**
      * Returns a string representing the current URL that the browser is looking at. @mcp
      *
-     * The current url is always the main frame's `document.documentURI` if the browser succeed to return it, and is displayed in the browser's
-     * address bar.
+     * The current url is always the main frame's `document.documentURI` if the browser succeed to return it, and is
+     * displayed in the browser's address bar.
      *
      * If the browser failed to return a proper url, returns the passed in url to navigate, just like a real user enter
      * a url in the address bar but the browser failed to load the page.
@@ -670,12 +670,23 @@ interface WebDriver : Closeable {
      * val newDriver = driver.waitForPage("https://www.example.com", Duration.ofSeconds(30))
      * ```
      *
+     * TODO: check if waitForPage and waitForNavigation can be merged into one method.
+     *
      * @param url The URL to navigate to.
      * @return The remaining time until timeout when the predicate returns true.
      * */
     @Throws(WebDriverException::class)
     @MCP
     suspend fun waitForPage(url: String, timeout: Duration): WebDriver?
+
+    /**
+     * Returns when the pageFunction returns a truthy value. @mcp
+     *
+     * @param pageFunction A JavaScript function to be evaluated in the page context.
+     * */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver?
 
     /**
      * Wait until the predicate returns true. @mcp
@@ -914,7 +925,7 @@ interface WebDriver : Closeable {
     suspend fun keyUp(key: String)
 
     /**
-     * This method focuses an element with [selector] and clicks it. @mcp
+     * Focus on an element with [selector] and click it. @mcp
      *
      * If there's no element matching `selector`, nothing to do.
      *
@@ -987,6 +998,8 @@ interface WebDriver : Closeable {
      * driver.clickTextMatches("button", "submit")
      * ```
      *
+     * TODO: use playwright style selector which supports text matching, for example: `button:has-text("submit")`
+     *
      * @param selector - A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
      * of an element to focus. If there are multiple elements satisfying the
      * selector, the first will be focused.
@@ -1004,7 +1017,7 @@ interface WebDriver : Closeable {
      * or the element's attribute value doesn't match [pattern], nothing to do.
      *
      * ```kotlin
-     * driver.clickAttributeMatches("button", "type", "submit")
+     * driver.clickMatches("button", "type", "submit")
      * ```
      *
      * @param selector - A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
@@ -1040,26 +1053,6 @@ interface WebDriver : Closeable {
         val selected = selectOption(selector, listOf(value))
         return selected.firstOrNull()
     }
-
-    /**
-     * Clicks the nth anchor element in the DOM. @mcp
-     *
-     * This function searches for all anchor (`<a>`) elements within the specified root element,
-     * and clicks the nth anchor element (0-based index). If the anchor element exists, it returns
-     * the `href` attribute of the clicked anchor element. If the element does not exist, it returns null.
-     *
-     * ```kotlin
-     * driver.clickNthAnchor(100, "body")
-     * ```
-     *
-     * @param n The index of the anchor element to click (0-based).
-     * @param rootSelector The CSS selector of the root element to search within (default is "body").
-     * @return The href attribute of the clicked anchor element, or null if the element does not exist.
-     * @throws WebDriverException If an error occurs while interacting with the WebDriver.
-     */
-    @Throws(WebDriverException::class)
-    @MCP
-    suspend fun clickNthAnchor(n: Int, rootSelector: String = "body"): String?
 
     /**
      * This method check an element with [selector]. If there's no element matching [selector], nothing to do. @mcp
@@ -1108,6 +1101,8 @@ interface WebDriver : Closeable {
      * driver.scrollDown(3)
      * ```
      *
+     * TODO: use mouseWheel instead
+     *
      * @param count The times to scroll down.
      */
     @Throws(WebDriverException::class)
@@ -1120,6 +1115,8 @@ interface WebDriver : Closeable {
      * ```kotlin
      * driver.scrollUp(3)
      * ```
+     *
+     * TODO: use mouseWheel instead
      *
      * @param count The times to scroll up.
      */
@@ -1308,6 +1305,10 @@ interface WebDriver : Closeable {
     @MCP
     suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
 
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseDown(x: Double, y: Double, button: String = "left", modifier: String? = null)
+
     /**
      * Releases a mouse button at the current mouse position. @mcp
      *
@@ -1322,6 +1323,10 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     @MCP
     suspend fun mouseUp(button: String = "left", clickCount: Int = 1)
+
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseUp(x: Double, y: Double, button: String = "left", modifier: String? = null)
 
     /**
      * The mouse moves to the element with [selector]. @mcp
@@ -1643,7 +1648,7 @@ interface WebDriver : Closeable {
     suspend fun setPropertyAll(selector: String, propName: String, propValue: String)
 
     /**
-     * Find hyperlinks in elements matching the CSS query. @mcp
+     * Find hyperlinks in elements matching the CSS query.
      *
      * ```kotlin
      * val hyperlinks = driver.selectHyperlinks("a.product-link")
@@ -1655,11 +1660,10 @@ interface WebDriver : Closeable {
      * @return The hyperlinks in the elements.
      * */
     @Throws(WebDriverException::class)
-    @MCP
     suspend fun selectHyperlinks(selector: String, offset: Int = 1, limit: Int = Int.MAX_VALUE): List<Hyperlink>
 
     /**
-     * Find anchor elements matching the CSS query. @mcp
+     * Find anchor elements matching the CSS query.
      *
      * ```kotlin
      * val anchors = driver.selectAnchors("a.product-link")
@@ -1671,11 +1675,10 @@ interface WebDriver : Closeable {
      * @return The anchors.
      * */
     @Throws(WebDriverException::class)
-    @MCP
     suspend fun selectAnchors(selector: String, offset: Int = 1, limit: Int = Int.MAX_VALUE): List<GeoAnchor>
 
     /**
-     * Find image elements matching the CSS query. @mcp
+     * Find image elements matching the CSS query.
      *
      * ```kotlin
      * val images = driver.selectImages("img.product-image")
@@ -1687,7 +1690,6 @@ interface WebDriver : Closeable {
      * @return The image URLs.
      * */
     @Throws(WebDriverException::class)
-    @MCP
     suspend fun selectImages(selector: String, offset: Int = 1, limit: Int = Int.MAX_VALUE): List<String>
 
     /**
@@ -1781,12 +1783,10 @@ interface WebDriver : Closeable {
     suspend fun evaluateValueDetail(expression: String): JsEvaluation?
 
     @Throws(WebDriverException::class)
-    @ExperimentalApi
     @MCP
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any?
 
     @Throws(WebDriverException::class)
-    @ExperimentalApi
     @MCP
     suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): JsEvaluation?
 
@@ -1836,6 +1836,25 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     @MCP
     suspend fun ariaSnapshot(): String
+
+    /**
+     * Return the ARIA snapshot (accessibility tree in YAML format) for the specified viewports. @mcp
+     *
+     * The [viewports] parameter controls which viewport(s) to include:
+     * - `"all"` — return the full-page snapshot (default).
+     * - `"3"` — return only viewport 3.
+     * - `"1,3,5"` — return viewports 1, 3 and 5.
+     * - `"2-4"` — return viewports 2, 3 and 4.
+     *
+     * Viewport indices are 1-based. The viewport height is determined by the browser's
+     * current viewport dimensions.
+     *
+     * @param viewports A viewport specification string (e.g., `"3"`, `"1,3,5"`, `"2-4"`, `"all"`).
+     * @return The ARIA snapshot YAML covering only the requested viewports.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun ariaSnapshot(viewports: String): String = ariaSnapshot()
 
     /**
      * Calculate the clickable point of an element located by [selector]. @mcp

@@ -55,8 +55,8 @@ class ExecutorsNamedArgsTest {
     @Test
     fun driver_click_uses_named_args() {
         val driver = mockk<WebDriver>(relaxed = true)
-        val executor = WebDriverToolExecutor()
-        val tc = ToolCall(domain = "driver", method = "click", arguments = mutableMapOf("selector" to "#ok", "count" to "2"))
+        val executor = BrowserTabToolExecutor()
+        val tc = ToolCall(domain = "tab", method = "click", arguments = mutableMapOf("selector" to "#ok", "count" to "2"))
 
         runBlocking { executor.callFunctionOn(tc, driver) }
         coVerify { driver.click(selector = "#ok", count = 2) }
@@ -66,9 +66,9 @@ class ExecutorsNamedArgsTest {
     fun driver_drag_uses_named_args() {
         val driver = mockk<WebDriver>(relaxed = true)
         coEvery { driver.drag(any(), any()) } returns Unit
-        val executor = WebDriverToolExecutor()
+        val executor = BrowserTabToolExecutor()
         val tc = ToolCall(
-            domain = "driver",
+            domain = "tab",
             method = "drag",
             arguments = mutableMapOf("sourceSelector" to "#from", "targetSelector" to "#to")
         )

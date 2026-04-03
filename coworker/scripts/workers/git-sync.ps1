@@ -1,40 +1,21 @@
 #!/usr/bin/env pwsh
 
-# 🔍 Find repo root
-$repoRoot = git rev-parse --show-toplevel 2>$null
-if (-not $repoRoot) {
-    Write-Host "Repo root not found. Exiting."
-    exit 1
-}
-
-Set-Location $repoRoot
-
-# 显式为路径添加双引号（用于自然语言提示清晰化）
-$quotedRoot = '"' + $repoRoot + '"'
+$ghCopilotHelper = Join-Path $PSScriptRoot "gh-copilot.ps1"
+. $ghCopilotHelper
+$repoRoot = Get-WorkspaceRoot
+$copilotCommand = Get-GHCopilotCommand -RepoRoot $repoRoot
 
 $prompt = @"
-Commit all changes in $quotedRoot.
+Commit all changes in "$repoRoot".
 Pull from remote.
 Then push to remote.
 If conflicts occur, resolve them automatically.
 "@
 
-# Invoke gh-copilot.ps1 with the prompt
-# . coworker\scripts\workers\gh-copilot.ps1 $prompt
-
-# Escape double quotes in the prompt and wrap in quotes to ensure correct argument parsing
-$safePrompt = $prompt.Replace('"', '\"')
-
-# Pass arguments as an array to avoid fragile manual escaping/quoting.
-$copilotArgList = @(
-    'copilot'
-    '--'
-    '-p'
-    "`"$safePrompt`""
-    '--allow-all-tools'
-)
+$copilotArguments = New-GHCopilotArguments -BaseArgs $copilotCommand.BaseArgs -Prompt $prompt -AdditionalArguments @('--allow-all-tools')
 
 Write-Host "Running:"
-Write-Host "gh $copilotArgList"
+Write-Host (Format-GHCopilotCommand -Executable $copilotCommand.Executable -Arguments $copilotArguments)
 
-Start-Process -FilePath 'gh' -ArgumentList $copilotArgList -NoNewWindow -Wait
+Invoke-GHCopilot -Prompt $prompt -AdditionalArguments @('--allow-all-tools') -RepoRoot $repoRoot -WorkingDirectory $repoRoot
+exit $LASTEXITCODE

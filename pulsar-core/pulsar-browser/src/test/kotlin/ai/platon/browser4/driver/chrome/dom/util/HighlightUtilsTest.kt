@@ -1,7 +1,7 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.awt.Color
@@ -38,7 +38,7 @@ class HighlightUtilsTest {
     fun createHighlightedScreenshot_drawsBoxes() {
         val (b64, originalImg) = pngBase64()
 
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("type" to "button"),

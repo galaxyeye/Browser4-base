@@ -1,7 +1,7 @@
 package ai.platon.pulsar.examples.advanced
 
 import ai.platon.pulsar.common.ResourceLoader
-import ai.platon.pulsar.manual.PRODUCT_DETAIL_URL
+import ai.platon.pulsar.human.manual.PRODUCT_DETAIL_URL
 import ai.platon.pulsar.skeleton.context.PulsarContexts
 
 fun main() {
