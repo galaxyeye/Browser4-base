@@ -118,8 +118,9 @@ pub fn build_command_args(
 
     for (i, name) in arg_names.iter().enumerate() {
         if i < positional.len() {
-            // Try to parse as number
-            if let Ok(n) = positional[i].parse::<f64>() {
+            if let Ok(n) = positional[i].parse::<i64>() {
+                result.insert(name.to_string(), json!(n));
+            } else if let Ok(n) = positional[i].parse::<f64>() {
                 result.insert(name.to_string(), json!(n));
             } else {
                 result.insert(name.to_string(), json!(positional[i]));
@@ -136,7 +137,11 @@ mod tests {
 
     #[test]
     fn test_parse_global_flags_session_name() {
-        let argv = vec!["-s=mysession".to_string(), "goto".to_string(), "https://example.com".to_string()];
+        let argv = vec![
+            "-s=mysession".to_string(),
+            "goto".to_string(),
+            "https://example.com".to_string(),
+        ];
         let flags = parse_global_flags(&argv);
         assert_eq!(flags.session_name.as_deref(), Some("mysession"));
         assert_eq!(flags.args, vec!["goto", "https://example.com"]);
@@ -144,7 +149,10 @@ mod tests {
 
     #[test]
     fn test_parse_global_flags_server_equals() {
-        let argv = vec!["--server=http://localhost:9090".to_string(), "open".to_string()];
+        let argv = vec![
+            "--server=http://localhost:9090".to_string(),
+            "open".to_string(),
+        ];
         let flags = parse_global_flags(&argv);
         assert_eq!(flags.server_url.as_deref(), Some("http://localhost:9090"));
         assert_eq!(flags.args, vec!["open"]);
@@ -173,7 +181,11 @@ mod tests {
 
     #[test]
     fn test_parse_raw_args_options() {
-        let raw = vec!["click".to_string(), "e15".to_string(), "--submit=true".to_string()];
+        let raw = vec![
+            "click".to_string(),
+            "e15".to_string(),
+            "--submit=true".to_string(),
+        ];
         let map = parse_raw_args(&raw);
         assert_eq!(map.get("submit"), Some(&json!(true)));
     }
@@ -199,7 +211,16 @@ mod tests {
         let mut raw = HashMap::new();
         raw.insert("_".to_string(), json!(["mousemove", "100", "200"]));
         let result = build_command_args(&raw, &["x", "y"]).unwrap();
-        assert_eq!(result.get("x"), Some(&json!(100.0)));
-        assert_eq!(result.get("y"), Some(&json!(200.0)));
+        assert_eq!(result.get("x"), Some(&json!(100)));
+        assert_eq!(result.get("y"), Some(&json!(200)));
+    }
+
+    #[test]
+    fn test_build_command_args_decimal_numeric_coercion() {
+        let mut raw = HashMap::new();
+        raw.insert("_".to_string(), json!(["mousewheel", "1.5", "-2.25"]));
+        let result = build_command_args(&raw, &["dx", "dy"]).unwrap();
+        assert_eq!(result.get("dx"), Some(&json!(1.5)));
+        assert_eq!(result.get("dy"), Some(&json!(-2.25)));
     }
 }

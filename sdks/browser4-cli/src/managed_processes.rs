@@ -44,11 +44,9 @@ pub fn read_managed_server_processes(registry_path: Option<&Path>) -> Vec<Manage
         .unwrap_or_else(|| managed_server_registry_path(None));
 
     match fs::read_to_string(&path) {
-        Ok(raw) => {
-            serde_json::from_str::<ManagedServerProcessRegistry>(&raw)
-                .map(|r| r.processes)
-                .unwrap_or_default()
-        }
+        Ok(raw) => serde_json::from_str::<ManagedServerProcessRegistry>(&raw)
+            .map(|r| r.processes)
+            .unwrap_or_default(),
         Err(_) => vec![],
     }
 }

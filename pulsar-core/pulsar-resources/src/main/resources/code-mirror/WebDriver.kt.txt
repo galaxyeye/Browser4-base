@@ -327,8 +327,8 @@ interface WebDriver : Closeable {
     /**
      * Returns a string representing the current URL that the browser is looking at. @mcp
      *
-     * The current url is always the main frame's `document.documentURI` if the browser succeed to return it, and is displayed in the browser's
-     * address bar.
+     * The current url is always the main frame's `document.documentURI` if the browser succeed to return it, and is
+     * displayed in the browser's address bar.
      *
      * If the browser failed to return a proper url, returns the passed in url to navigate, just like a real user enter
      * a url in the address bar but the browser failed to load the page.
@@ -670,6 +670,8 @@ interface WebDriver : Closeable {
      * val newDriver = driver.waitForPage("https://www.example.com", Duration.ofSeconds(30))
      * ```
      *
+     * TODO: check if waitForPage and waitForNavigation can be merged into one method.
+     *
      * @param url The URL to navigate to.
      * @return The remaining time until timeout when the predicate returns true.
      * */
@@ -996,6 +998,8 @@ interface WebDriver : Closeable {
      * driver.clickTextMatches("button", "submit")
      * ```
      *
+     * TODO: use playwright style selector which supports text matching, for example: `button:has-text("submit")`
+     *
      * @param selector - A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
      * of an element to focus. If there are multiple elements satisfying the
      * selector, the first will be focused.
@@ -1013,7 +1017,7 @@ interface WebDriver : Closeable {
      * or the element's attribute value doesn't match [pattern], nothing to do.
      *
      * ```kotlin
-     * driver.clickAttributeMatches("button", "type", "submit")
+     * driver.clickMatches("button", "type", "submit")
      * ```
      *
      * @param selector - A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
@@ -1097,6 +1101,8 @@ interface WebDriver : Closeable {
      * driver.scrollDown(3)
      * ```
      *
+     * TODO: use mouseWheel instead
+     *
      * @param count The times to scroll down.
      */
     @Throws(WebDriverException::class)
@@ -1109,6 +1115,8 @@ interface WebDriver : Closeable {
      * ```kotlin
      * driver.scrollUp(3)
      * ```
+     *
+     * TODO: use mouseWheel instead
      *
      * @param count The times to scroll up.
      */
@@ -1349,8 +1357,8 @@ interface WebDriver : Closeable {
     /**
      * Drags the element identified by [sourceSelector] onto the element identified by [targetSelector]. @mcp
      *
-     * The implementation measures the centers of the source and target elements in the DOM and then delegates
-     * to [dragAndDrop] using the computed offset.
+     * The implementation dispatches an HTML5 drag sequence between the source and target elements using a shared
+     * `DataTransfer` payload so selector-to-selector drag flows can be asserted reliably by automation clients.
      *
      * @param sourceSelector The selector of the element to drag.
      * @param targetSelector The selector of the element to drop onto.
@@ -1363,22 +1371,62 @@ interface WebDriver : Closeable {
             (() => {
                 const source = document.querySelector($encodedSource);
                 const target = document.querySelector($encodedTarget);
-                if (!source || !target) return JSON.stringify({ dx: 0, dy: 0 });
+                if (!source || !target) {
+                    return JSON.stringify({
+                        ok: false,
+                        error: !source && !target
+                            ? 'Source and target elements were not found'
+                            : !source
+                                ? 'Source element was not found'
+                                : 'Target element was not found'
+                    });
+                }
+                if (typeof DataTransfer === 'undefined' || typeof DragEvent === 'undefined') {
+                    return JSON.stringify({
+                        ok: false,
+                        error: 'HTML5 drag-and-drop APIs are not available in the current page context'
+                    });
+                }
+
                 const sourceRect = source.getBoundingClientRect();
                 const targetRect = target.getBoundingClientRect();
-                return JSON.stringify({
-                    dx: targetRect.x - sourceRect.x + targetRect.width / 2 - sourceRect.width / 2,
-                    dy: targetRect.y - sourceRect.y + targetRect.height / 2 - sourceRect.height / 2
-                });
+                const sourceX = Math.round(sourceRect.left + sourceRect.width / 2);
+                const sourceY = Math.round(sourceRect.top + sourceRect.height / 2);
+                const targetX = Math.round(targetRect.left + targetRect.width / 2);
+                const targetY = Math.round(targetRect.top + targetRect.height / 2);
+                const dataTransfer = new DataTransfer();
+
+                const fire = (element, type, clientX, clientY) => {
+                    const event = new DragEvent(type, {
+                        bubbles: true,
+                        cancelable: true,
+                        composed: true,
+                        dataTransfer,
+                        clientX,
+                        clientY
+                    });
+                    element.dispatchEvent(event);
+                };
+
+                fire(source, 'dragstart', sourceX, sourceY);
+                fire(target, 'dragenter', targetX, targetY);
+                fire(target, 'dragover', targetX, targetY);
+                fire(target, 'drop', targetX, targetY);
+                fire(source, 'dragend', targetX, targetY);
+
+                return JSON.stringify({ ok: true });
             })()
         """.trimIndent()
-        val result = evaluate(script) as? String ?: """{"dx":0,"dy":0}"""
+        val result = evaluate(script) as? String
+            ?: """{"ok":false,"error":"Failed to execute drag script"}"""
         val parsed = pulsarObjectMapper().readTree(result)
-        dragAndDrop(
-            sourceSelector,
-            parsed.path("dx").asInt(),
-            parsed.path("dy").asInt()
-        )
+        if (!parsed.path("ok").asBoolean(false)) {
+            val error = parsed.path("error").asText("Unknown drag failure")
+            throw WebDriverException(
+                "Failed to drag '$sourceSelector' to '$targetSelector': $error",
+                driver = this
+            )
+        }
     }
 
     /**
@@ -1775,12 +1823,10 @@ interface WebDriver : Closeable {
     suspend fun evaluateValueDetail(expression: String): JsEvaluation?
 
     @Throws(WebDriverException::class)
-    @ExperimentalApi
     @MCP
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any?
 
     @Throws(WebDriverException::class)
-    @ExperimentalApi
     @MCP
     suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): JsEvaluation?
 

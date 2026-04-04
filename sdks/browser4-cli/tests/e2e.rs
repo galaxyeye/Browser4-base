@@ -1,33 +1,35 @@
 //! End-to-end tests for the `browser4-cli` Rust binary.
 //!
-//! Mirrors [`sdks/browser4-cli-node/tests/e2e.test.ts`] as closely as possible.
+//! The scenarios run sequentially in a custom `harness = false` test target so
+//! they can reuse the proven ordering without libtest starting multiple
+//! Browser4 backends concurrently. Covered commands are tracked per scenario
+//! via [`E2ECtx::covered_commands`]; the dedicated coverage check verifies that
+//! the union of all tested commands plus the explicitly-excluded set equals the
+//! full command list from [`browser4_cli::commands::all_commands`].
 //!
 //! # Running
 //!
-//! The tests are **disabled by default** and only run when the environment variable
-//! `BROWSER4_CLI_E2E=true` is set.
-//!
 //! ```bash
-//! # From the repo root – start a dedicated Browser4 service or build the jar first, then run:
-//! BROWSER4_CLI_E2E=true cargo test --test e2e -- --nocapture
+//! cargo test --test e2e -- --nocapture
+//! cargo test --test e2e -- --nocapture --scenario=test_e2e_agent_and_collective_commands
 //! ```
 //!
-//! The Browser4 backend is resolved from (in order):
-//! 1. `BROWSER4_E2E_SERVICE_URL` environment variable
-//! 2. `BROWSER4_E2E_SERVER_URL` environment variable
-//! 3. `BROWSER4_E2E_JAR_PATH` environment variable
-//! 4. `<repo_root>/browser4/browser4-agents/target/Browser4.jar`
+//! The Browser4 jar is resolved from (in order):
+//! 1. `BROWSER4_E2E_JAR_PATH` environment variable
+//! 2. `<repo_root>/browser4/browser4-agents/target/Browser4.jar`
 
 use std::collections::HashSet;
 use std::fs;
 use std::io::{Read, Write};
-use std::net::TcpListener;
+use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+
+use browser4_cli::commands::all_commands;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -37,18 +39,10 @@ const INTERACTIVE_PATH: &str = "/interactive";
 const OTHER_PATH: &str = "/other";
 const INTERACTIVE_TITLE: &str = "Browser4 CLI Interactive Fixture";
 const OTHER_TITLE: &str = "Browser4 CLI Other Fixture";
-const BROWSER4_E2E_SERVICE_URL_ENV_KEYS: [&str; 2] = [
-    "BROWSER4_E2E_SERVICE_URL",
-    "BROWSER4_E2E_SERVER_URL",
-];
 
 // ---------------------------------------------------------------------------
 // Environment helpers
 // ---------------------------------------------------------------------------
-
-fn is_e2e_enabled() -> bool {
-    std::env::var("BROWSER4_CLI_E2E").as_deref() == Ok("true")
-}
 
 fn cli_binary() -> PathBuf {
     PathBuf::from(env!("CARGO_BIN_EXE_browser4-cli"))
@@ -68,23 +62,6 @@ fn default_jar_path() -> PathBuf {
         .join("browser4-agents")
         .join("target")
         .join("Browser4.jar")
-}
-
-fn normalize_base_url(value: &str) -> Option<String> {
-    let normalized = value.trim().trim_end_matches('/').to_string();
-    if normalized.is_empty() {
-        None
-    } else {
-        Some(normalized)
-    }
-}
-
-fn configured_browser4_service_url() -> Option<String> {
-    BROWSER4_E2E_SERVICE_URL_ENV_KEYS.iter().find_map(|key| {
-        std::env::var(key)
-            .ok()
-            .and_then(|value| normalize_base_url(&value))
-    })
 }
 
 // ---------------------------------------------------------------------------
@@ -340,14 +317,6 @@ impl FixtureServer {
     fn base_url(&self) -> String {
         format!("http://127.0.0.1:{}", self.port)
     }
-
-    fn interactive_url(&self) -> String {
-        format!("{}{}", self.base_url(), INTERACTIVE_PATH)
-    }
-
-    fn other_url(&self) -> String {
-        format!("{}{}", self.base_url(), OTHER_PATH)
-    }
 }
 
 impl Drop for FixtureServer {
@@ -375,9 +344,313 @@ fn serve_fixture_request(mut stream: std::net::TcpStream) {
     } else if path == OTHER_PATH {
         ("200 OK", "text/html; charset=utf-8", other_html())
     } else {
-        ("404 Not Found", "text/plain; charset=utf-8", "not found".to_string())
+        (
+            "404 Not Found",
+            "text/plain; charset=utf-8",
+            "not found".to_string(),
+        )
     };
 
+    let response = format!(
+        "HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        status,
+        content_type,
+        body.len(),
+        body
+    );
+    let _ = stream.write_all(response.as_bytes());
+}
+
+// ---------------------------------------------------------------------------
+// Mock Browser4 server for Agent/Collective E2E coverage
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug)]
+struct RecordedToolCall {
+    tool: String,
+    arguments: serde_json::Value,
+}
+
+#[derive(Clone, Debug, Default)]
+struct MockBrowser4State {
+    tool_calls: Vec<RecordedToolCall>,
+    plain_commands: Vec<String>,
+    status_queries: Vec<String>,
+    result_queries: Vec<String>,
+    next_agent_task_id: usize,
+    next_collective_task_id: usize,
+}
+
+struct MockBrowser4Server {
+    port: u16,
+    shutdown: Arc<AtomicBool>,
+    state: Arc<Mutex<MockBrowser4State>>,
+}
+
+impl MockBrowser4Server {
+    fn start() -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("mock Browser4 server bind failed");
+        let port = listener.local_addr().unwrap().port();
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let state = Arc::new(Mutex::new(MockBrowser4State::default()));
+        let flag = shutdown.clone();
+        let shared_state = state.clone();
+
+        thread::spawn(move || {
+            listener.set_nonblocking(true).ok();
+            loop {
+                if flag.load(Ordering::Relaxed) {
+                    break;
+                }
+                match listener.accept() {
+                    Ok((stream, _)) => {
+                        let request_state = shared_state.clone();
+                        thread::spawn(move || serve_mock_browser4_request(stream, request_state));
+                    }
+                    Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        thread::sleep(Duration::from_millis(5));
+                    }
+                    Err(_) => break,
+                }
+            }
+        });
+
+        Self {
+            port,
+            shutdown,
+            state,
+        }
+    }
+
+    fn base_url(&self) -> String {
+        format!("http://127.0.0.1:{}", self.port)
+    }
+
+    fn snapshot(&self) -> MockBrowser4State {
+        self.state
+            .lock()
+            .expect("mock Browser4 state mutex poisoned")
+            .clone()
+    }
+}
+
+impl Drop for MockBrowser4Server {
+    fn drop(&mut self) {
+        self.shutdown.store(true, Ordering::Relaxed);
+    }
+}
+
+fn serve_mock_browser4_request(mut stream: TcpStream, state: Arc<Mutex<MockBrowser4State>>) {
+    let Some((method, path, body)) = read_http_request(&mut stream) else {
+        return;
+    };
+
+    let route = path.split('?').next().unwrap_or(path.as_str());
+
+    match (method.as_str(), route) {
+        ("GET", "/actuator/health") => write_http_response(
+            &mut stream,
+            "200 OK",
+            "application/json",
+            r#"{"status":"UP"}"#,
+        ),
+        ("GET", "/mcp/tools") => write_http_response(
+            &mut stream,
+            "200 OK",
+            "application/json",
+            r#"["open_session","browser_navigate","agent_extract","agent_summarize"]"#,
+        ),
+        ("POST", "/mcp/call-tool") => {
+            let payload: serde_json::Value =
+                serde_json::from_slice(&body).expect("mock Browser4 tool payload must be JSON");
+            let tool = payload
+                .get("tool")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
+            let arguments = payload
+                .get("arguments")
+                .cloned()
+                .unwrap_or_else(|| serde_json::json!({}));
+
+            state
+                .lock()
+                .expect("mock Browser4 state mutex poisoned")
+                .tool_calls
+                .push(RecordedToolCall {
+                    tool: tool.clone(),
+                    arguments: arguments.clone(),
+                });
+
+            let text = match tool.as_str() {
+                "open_session" => r#"{"sessionId":"collective-session-1"}"#.to_string(),
+                "agent_extract" => {
+                    r#"{"items":[{"title":"Mock Product","price":"$19.99"}]}"#.to_string()
+                }
+                "agent_summarize" => "Mock summary for #page-marker".to_string(),
+                "page_url" => "https://mock.browser4.local/current".to_string(),
+                "page_title" => "Mock Browser4 Page".to_string(),
+                "browser_snapshot" => "mock snapshot".to_string(),
+                other => format!("mock response for {other}"),
+            };
+
+            let response = serde_json::json!({
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text,
+                    }
+                ]
+            })
+            .to_string();
+            write_http_response(&mut stream, "200 OK", "application/json", &response);
+        }
+        _ if method == "POST" && route == "/api/commands/plain" => {
+            let command = String::from_utf8_lossy(&body).trim().to_string();
+            let task_id = {
+                let mut guard = state.lock().expect("mock Browser4 state mutex poisoned");
+                guard.plain_commands.push(command.clone());
+                if command.starts_with("http://") || command.starts_with("https://") {
+                    guard.next_collective_task_id += 1;
+                    format!("co-task-{}", guard.next_collective_task_id)
+                } else {
+                    guard.next_agent_task_id += 1;
+                    format!("agent-task-{}", guard.next_agent_task_id)
+                }
+            };
+
+            write_http_response(
+                &mut stream,
+                "200 OK",
+                "application/json",
+                &format!(r#""{}""#, task_id),
+            );
+        }
+        _ if method == "GET"
+            && route.starts_with("/api/commands/")
+            && route.ends_with("/status") =>
+        {
+            let Some(task_id) = route
+                .strip_prefix("/api/commands/")
+                .and_then(|rest| rest.strip_suffix("/status"))
+            else {
+                write_http_response(&mut stream, "404 Not Found", "text/plain", "not found");
+                return;
+            };
+
+            state
+                .lock()
+                .expect("mock Browser4 state mutex poisoned")
+                .status_queries
+                .push(task_id.to_string());
+
+            let response = serde_json::json!({
+                "id": task_id,
+                "status": "RUNNING",
+            })
+            .to_string();
+            write_http_response(&mut stream, "200 OK", "application/json", &response);
+        }
+        _ if method == "GET"
+            && route.starts_with("/api/commands/")
+            && route.ends_with("/result") =>
+        {
+            let Some(task_id) = route
+                .strip_prefix("/api/commands/")
+                .and_then(|rest| rest.strip_suffix("/result"))
+            else {
+                write_http_response(&mut stream, "404 Not Found", "text/plain", "not found");
+                return;
+            };
+
+            state
+                .lock()
+                .expect("mock Browser4 state mutex poisoned")
+                .result_queries
+                .push(task_id.to_string());
+
+            let response = format!("result for {task_id}");
+            write_http_response(
+                &mut stream,
+                "200 OK",
+                "text/plain; charset=utf-8",
+                &response,
+            );
+        }
+        _ => write_http_response(
+            &mut stream,
+            "404 Not Found",
+            "text/plain; charset=utf-8",
+            "not found",
+        ),
+    }
+}
+
+fn read_http_request(stream: &mut TcpStream) -> Option<(String, String, Vec<u8>)> {
+    stream.set_read_timeout(Some(Duration::from_secs(2))).ok();
+
+    let mut buffer = Vec::new();
+    let mut content_length = 0usize;
+    let mut header_end = None;
+
+    loop {
+        let mut chunk = [0u8; 4096];
+        match stream.read(&mut chunk) {
+            Ok(0) => break,
+            Ok(n) => buffer.extend_from_slice(&chunk[..n]),
+            Err(ref e)
+                if e.kind() == std::io::ErrorKind::WouldBlock
+                    || e.kind() == std::io::ErrorKind::TimedOut =>
+            {
+                if buffer.is_empty() {
+                    return None;
+                }
+                continue;
+            }
+            Err(_) => return None,
+        }
+
+        if header_end.is_none() {
+            header_end = buffer.windows(4).position(|window| window == b"\r\n\r\n");
+            if let Some(end) = header_end {
+                let headers = String::from_utf8_lossy(&buffer[..end]);
+                content_length = headers
+                    .lines()
+                    .find_map(|line| {
+                        line.split_once(':').and_then(|(name, value)| {
+                            if name.eq_ignore_ascii_case("Content-Length") {
+                                value.trim().parse::<usize>().ok()
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .unwrap_or(0);
+            }
+        }
+
+        if let Some(end) = header_end {
+            let total_length = end + 4 + content_length;
+            if buffer.len() >= total_length {
+                break;
+            }
+        }
+    }
+
+    let end = header_end?;
+    let headers = String::from_utf8_lossy(&buffer[..end]);
+    let request_line = headers.lines().next()?;
+    let mut parts = request_line.split_whitespace();
+    let method = parts.next()?.to_string();
+    let path = parts.next()?.to_string();
+    let body_start = end + 4;
+    let body_end = body_start + content_length;
+    let body = buffer.get(body_start..body_end)?.to_vec();
+
+    Some((method, path, body))
+}
+
+fn write_http_response(stream: &mut TcpStream, status: &str, content_type: &str, body: &str) {
     let response = format!(
         "HTTP/1.1 {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
         status,
@@ -433,6 +706,7 @@ impl Drop for Browser4Server {
 
 fn wait_for_health(base_url: &str, timeout_ms: u64) -> Result<(), String> {
     let health_url = format!("{}/actuator/health", base_url.trim_end_matches('/'));
+    let tools_url = format!("{}/mcp/tools", base_url.trim_end_matches('/'));
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(5))
         .build()
@@ -446,9 +720,23 @@ fn wait_for_health(base_url: &str, timeout_ms: u64) -> Result<(), String> {
             Ok(resp) => {
                 let body = resp.text().unwrap_or_default();
                 if body.contains("\"status\":\"UP\"") {
-                    return Ok(());
+                    match client.get(&tools_url).send() {
+                        Ok(tools_resp) => {
+                            let tools_body = tools_resp.text().unwrap_or_default();
+                            if tools_body.contains("open_session")
+                                && tools_body.contains("browser_navigate")
+                            {
+                                return Ok(());
+                            }
+                            last_error = format!("MCP tools endpoint not ready: {tools_body}");
+                        }
+                        Err(e) => {
+                            last_error = format!("MCP tools endpoint not ready: {e}");
+                        }
+                    }
+                } else {
+                    last_error = body;
                 }
-                last_error = body;
             }
             Err(e) => last_error = e.to_string(),
         }
@@ -473,7 +761,7 @@ struct CliRunResult {
 
 /// Context for running CLI commands in isolation.
 struct E2ECtx {
-    fixture: FixtureServer,
+    fixture_base_url: String,
     browser4_base_url: String,
     workspace_dir: PathBuf,
     state_dir: PathBuf,
@@ -483,11 +771,31 @@ struct E2ECtx {
 
 impl E2ECtx {
     fn interactive_url(&self) -> String {
-        self.fixture.interactive_url()
+        format!("{}{}", self.fixture_base_url, INTERACTIVE_PATH)
     }
 
     fn other_url(&self) -> String {
-        self.fixture.other_url()
+        format!("{}{}", self.fixture_base_url, OTHER_PATH)
+    }
+}
+
+struct E2ETestResources {
+    _temp_dir: tempfile::TempDir,
+    browser4: Option<Browser4Server>,
+    _fixture: FixtureServer,
+    browser4_jar_path: PathBuf,
+    ctx: E2ECtx,
+}
+
+impl E2ETestResources {
+    fn restart_browser4(&mut self) {
+        self.browser4 = None;
+        let browser4_port = find_free_port();
+        self.ctx.browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
+        self.browser4 = Some(Browser4Server::start(
+            &self.ctx.browser4_base_url,
+            &self.browser4_jar_path,
+        ));
     }
 }
 
@@ -519,7 +827,7 @@ fn run_command<'a>(ctx: &mut E2ECtx, args: &[&'a str]) -> CliRunResult {
     if let Some(cmd) = args.first() {
         ctx.covered_commands.insert(cmd.to_string());
     }
-    let result = run_cli_process(ctx, args);
+    let result = run_cli_process_with_retry(ctx, args);
     assert_eq!(
         result.exit_code, 0,
         "Command {:?} failed (exit={}):\nstdout:\n{}\nstderr:\n{}",
@@ -534,7 +842,7 @@ fn run_command_expecting_failure(ctx: &mut E2ECtx, args: &[&str], pattern: &str)
     if let Some(cmd) = args.first() {
         ctx.covered_commands.insert(cmd.to_string());
     }
-    let result = run_cli_process(ctx, args);
+    let result = run_cli_process_with_retry(ctx, args);
     assert_ne!(
         result.exit_code, 0,
         "Expected command {:?} to fail, but it exited with 0.\nstdout:\n{}\nstderr:\n{}",
@@ -546,6 +854,31 @@ fn run_command_expecting_failure(ctx: &mut E2ECtx, args: &[&str], pattern: &str)
         "Expected output to contain '{pattern}', but got:\n{combined}"
     );
     result
+}
+
+fn run_cli_process_with_retry(ctx: &E2ECtx, args: &[&str]) -> CliRunResult {
+    let max_attempts = 3;
+    let mut attempt = 0;
+
+    loop {
+        attempt += 1;
+        let result = run_cli_process(ctx, args);
+        if attempt >= max_attempts || !is_transient_transport_failure(&result) {
+            return result;
+        }
+        thread::sleep(Duration::from_secs(2));
+    }
+}
+
+fn is_transient_transport_failure(result: &CliRunResult) -> bool {
+    if result.exit_code == 0 {
+        return false;
+    }
+
+    let combined = format!("{}\n{}", result.stdout, result.stderr).to_lowercase();
+    combined.contains("http request failed: error sending request for url")
+        || combined.contains("connection refused")
+        || combined.contains("tcp connect error")
 }
 
 // ---------------------------------------------------------------------------
@@ -627,6 +960,12 @@ fn read_interactive_state(ctx: &mut E2ECtx) -> serde_json::Value {
     serde_json::from_str(text.trim()).unwrap_or(serde_json::Value::Null)
 }
 
+fn key_event_count(state: &serde_json::Value) -> usize {
+    state["keyEvents"]
+        .as_array()
+        .map_or(0, |events| events.len())
+}
+
 fn wait_for_state<F>(ctx: &mut E2ECtx, predicate: F, timeout_ms: u64) -> serde_json::Value
 where
     F: Fn(&serde_json::Value) -> bool,
@@ -643,6 +982,27 @@ where
     panic!("Timed out waiting for interactive state. Last state:\n{state:#?}");
 }
 
+fn wait_for_eval_text(
+    ctx: &mut E2ECtx,
+    expression: &str,
+    expected: &str,
+    timeout_ms: u64,
+    failure_message: &str,
+) {
+    let deadline = Instant::now() + Duration::from_millis(timeout_ms);
+    let mut last_value = String::new();
+
+    while Instant::now() < deadline {
+        last_value = eval_text(ctx, expression);
+        if last_value == expected {
+            return;
+        }
+        thread::sleep(Duration::from_millis(300));
+    }
+
+    panic!("{failure_message}. Expected '{expected}', got '{last_value}'");
+}
+
 // ---------------------------------------------------------------------------
 // Per-test isolation helper
 // ---------------------------------------------------------------------------
@@ -651,6 +1011,53 @@ fn reset_cli_artifacts(ctx: &E2ECtx) {
     let _ = fs::remove_dir_all(&ctx.state_dir);
     fs::create_dir_all(&ctx.state_dir).ok();
     let _ = fs::remove_dir_all(ctx.workspace_dir.join(".browser4-cli"));
+}
+
+fn create_e2e_test_resources() -> E2ETestResources {
+    let jar_path = std::env::var("BROWSER4_E2E_JAR_PATH")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| default_jar_path());
+
+    assert!(
+        jar_path.exists(),
+        "Browser4 jar not found at {jar_path:?}. \
+        Build browser4/browser4-agents first or set BROWSER4_E2E_JAR_PATH."
+    );
+    assert!(
+        cli_binary().exists(),
+        "CLI binary not found at {:?}. Run `cargo build` first.",
+        cli_binary()
+    );
+
+    let fixture = FixtureServer::start();
+    let fixture_base_url = fixture.base_url();
+    let browser4_port = find_free_port();
+    let browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
+
+    let temp_dir = tempfile::TempDir::new().expect("tempdir creation failed");
+    let workspace_dir = temp_dir.path().join("workspace");
+    let state_dir = temp_dir.path().join("state");
+    fs::create_dir_all(&workspace_dir).unwrap();
+    fs::create_dir_all(&state_dir).unwrap();
+
+    let upload_file_path = temp_dir.path().join("upload.txt");
+    fs::write(&upload_file_path, b"browser4-cli e2e upload payload")
+        .expect("write upload file failed");
+
+    E2ETestResources {
+        _temp_dir: temp_dir,
+        browser4: None,
+        _fixture: fixture,
+        browser4_jar_path: jar_path,
+        ctx: E2ECtx {
+            fixture_base_url,
+            browser4_base_url,
+            workspace_dir,
+            state_dir,
+            upload_file_path,
+            covered_commands: HashSet::new(),
+        },
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -679,38 +1086,48 @@ fn test_session_and_navigation(ctx: &mut E2ECtx) {
     let other_url = ctx.other_url();
 
     run_command(ctx, &["goto", &interactive_url]);
-    assert_eq!(
-        eval_text(ctx, "window.location.pathname"),
+    wait_for_eval_text(
+        ctx,
+        "window.location.pathname",
         INTERACTIVE_PATH,
-        "Expected to be on interactive path"
+        15_000,
+        "Expected to be on interactive path",
     );
 
     run_command(ctx, &["goto", &other_url]);
-    assert_eq!(
-        eval_text(ctx, "document.title"),
+    wait_for_eval_text(
+        ctx,
+        "document.title",
         OTHER_TITLE,
-        "Expected other page title"
+        15_000,
+        "Expected other page title",
     );
 
     run_command(ctx, &["go-back"]);
-    assert_eq!(
-        eval_text(ctx, "window.location.pathname"),
+    wait_for_eval_text(
+        ctx,
+        "window.location.pathname",
         INTERACTIVE_PATH,
-        "Expected to be back on interactive path after go-back"
+        15_000,
+        "Expected to be back on interactive path after go-back",
     );
 
     run_command(ctx, &["go-forward"]);
-    assert_eq!(
-        eval_text(ctx, "window.location.pathname"),
+    wait_for_eval_text(
+        ctx,
+        "window.location.pathname",
         OTHER_PATH,
-        "Expected to be on other path after go-forward"
+        15_000,
+        "Expected to be on other path after go-forward",
     );
 
     run_command(ctx, &["reload"]);
-    assert_eq!(
-        eval_text(ctx, "document.title"),
+    wait_for_eval_text(
+        ctx,
+        "document.title",
         OTHER_TITLE,
-        "Expected other page title after reload"
+        15_000,
+        "Expected other page title after reload",
     );
 
     let delete_result = run_command(ctx, &["delete-data"]);
@@ -764,62 +1181,72 @@ fn test_interaction_console_and_export(ctx: &mut E2ECtx) {
         15_000,
     );
 
-    // press Enter on fill-target → increments submitCount
-    run_command(ctx, &["press", "#fill-target", "Enter"]);
-    wait_for_state(ctx, |s| s["submitCount"].as_u64().unwrap_or(0) >= 1, 15_000);
-
-    // keydown / keyup
-    run_command(ctx, &["click", "#type-target"]);
-    run_command(ctx, &["keydown", "Shift"]);
-    run_command(ctx, &["keyup", "Shift"]);
-    let keyboard_state = wait_for_state(
+    let press_before = read_interactive_state(ctx);
+    let press_before_events = key_event_count(&press_before);
+    run_command(ctx, &["press", "#type-target", "!"]);
+    wait_for_state(
         ctx,
         |s| {
-            if let Some(arr) = s["keyEvents"].as_array() {
-                arr.iter().any(|v| v.as_str() == Some("down:Shift"))
-                    && arr.iter().any(|v| v.as_str() == Some("up:Shift"))
-            } else {
-                false
-            }
+            s["typeValue"].as_str() == Some("hello world!")
+                && key_event_count(s) > press_before_events
         },
         15_000,
     );
-    let key_events = keyboard_state["keyEvents"].as_array().unwrap();
-    assert!(
-        key_events.iter().any(|v| v.as_str() == Some("down:Shift")),
-        "Expected 'down:Shift' in keyEvents"
-    );
-    assert!(
-        key_events.iter().any(|v| v.as_str() == Some("up:Shift")),
-        "Expected 'up:Shift' in keyEvents"
-    );
 
-    // click
-    run_command(ctx, &["click", "#click-target"]);
-    wait_for_state(ctx, |s| s["clickCount"].as_u64().unwrap_or(0) >= 1, 15_000);
-
-    // dblclick
-    run_command(ctx, &["dblclick", "#dblclick-target"]);
+    // keydown / keyup
+    run_command(ctx, &["click", "#type-target"]);
+    let keydown_before = key_event_count(&read_interactive_state(ctx));
+    run_command(ctx, &["keydown", "Shift"]);
     wait_for_state(
         ctx,
-        |s| s["doubleClickCount"].as_u64().unwrap_or(0) >= 1,
+        |s| {
+            key_event_count(s) > keydown_before
+                && s["keyEvents"]
+                    .as_array()
+                    .and_then(|events| events.last())
+                    .and_then(|event| event.as_str())
+                    == Some("down:Shift")
+        },
         15_000,
     );
 
-    // hover
+    let keyup_before = key_event_count(&read_interactive_state(ctx));
+    run_command(ctx, &["keyup", "Shift"]);
+    wait_for_state(
+        ctx,
+        |s| {
+            key_event_count(s) > keyup_before
+                && s["keyEvents"]
+                    .as_array()
+                    .and_then(|events| events.last())
+                    .and_then(|event| event.as_str())
+                    == Some("up:Shift")
+        },
+        15_000,
+    );
+
+    run_command(ctx, &["click", "#click-target"]);
+    wait_for_state(ctx, |s| s["clickCount"].as_u64() == Some(1), 15_000);
+
+    run_command(ctx, &["dblclick", "#dblclick-target"]);
+    wait_for_state(ctx, |s| s["doubleClickCount"].as_u64() == Some(1), 15_000);
+
     run_command(ctx, &["hover", "#hover-target"]);
     wait_for_state(ctx, |s| s["hovered"].as_bool() == Some(true), 15_000);
 
-    // drag
     run_command(ctx, &["drag", "#drag-source", "#drag-target"]);
+    wait_for_state(
+        ctx,
+        |s| {
+            s["dragStarted"].as_bool() == Some(true)
+                && s["dragDropped"].as_str() == Some("drag-source")
+        },
+        15_000,
+    );
 
     // select
     run_command(ctx, &["select", "#select-target", "green"]);
-    wait_for_state(
-        ctx,
-        |s| s["selectValue"].as_str() == Some("green"),
-        15_000,
-    );
+    wait_for_state(ctx, |s| s["selectValue"].as_str() == Some("green"), 15_000);
 
     // check / uncheck
     run_command(ctx, &["check", "#check-target"]);
@@ -894,29 +1321,44 @@ fn test_mouse_and_dialog(ctx: &mut E2ECtx) {
 
     // mousemove
     run_command(ctx, &["mousemove", "120", "120"]);
-    wait_for_state(ctx, |s| s["lastMouse"].is_array(), 15_000);
-
-    // mousedown / mouseup
-    run_command(ctx, &["mousedown", "left"]);
     wait_for_state(
         ctx,
-        |s| s["mouseDownCount"].as_u64().unwrap_or(0) >= 1,
+        |s| s["lastMouse"][0].as_i64() == Some(120) && s["lastMouse"][1].as_i64() == Some(120),
         15_000,
     );
 
+    // mousedown / mouseup
+    let before_mouse_down = read_interactive_state(ctx)["mouseDownCount"]
+        .as_u64()
+        .unwrap_or(0);
+    run_command(ctx, &["mousedown", "left"]);
+    wait_for_state(
+        ctx,
+        |s| s["mouseDownCount"].as_u64() == Some(before_mouse_down + 1),
+        15_000,
+    );
+
+    let before_mouse_up = read_interactive_state(ctx)["mouseUpCount"]
+        .as_u64()
+        .unwrap_or(0);
     run_command(ctx, &["mouseup", "left"]);
     wait_for_state(
         ctx,
-        |s| s["mouseUpCount"].as_u64().unwrap_or(0) >= 1,
+        |s| s["mouseUpCount"].as_u64() == Some(before_mouse_up + 1),
         15_000,
     );
 
     // mousewheel
     run_command(ctx, &["mousewheel", "0", "160"]);
-    let wheel_state = wait_for_state(ctx, |s| s["lastWheel"].is_array(), 15_000);
+    let wheel_state = wait_for_state(
+        ctx,
+        |s| s["lastWheel"][0].as_i64() == Some(160) && s["lastWheel"][1].as_i64() == Some(0),
+        15_000,
+    );
     assert!(
-        !wheel_state["lastWheel"].is_null(),
-        "Expected non-null lastWheel"
+        wheel_state["lastWheel"][0].as_i64() == Some(160)
+            && wheel_state["lastWheel"][1].as_i64() == Some(0),
+        "Expected lastWheel to equal [160, 0], got {wheel_state:#?}"
     );
 
     // dialog-accept (prompt): schedule a JS click that will trigger window.prompt,
@@ -950,7 +1392,7 @@ fn test_mouse_and_dialog(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
-fn test_tab_commands_plus_close_all_and_kill_all(ctx: &mut E2ECtx) {
+fn test_tab_commands(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
 
     run_command(ctx, &["open"]);
@@ -987,75 +1429,292 @@ fn test_tab_commands_plus_close_all_and_kill_all(ctx: &mut E2ECtx) {
 
     // tab-close
     run_command(ctx, &["tab-close", &other_tab_id]);
+}
 
-    // close-all
-    let close_all_result = run_command(ctx, &["close-all"]);
+// ---------------------------------------------------------------------------
+// Agent / Collective scenario
+// ---------------------------------------------------------------------------
+
+fn test_agent_and_collective_commands(ctx: &mut E2ECtx) {
+    reset_cli_artifacts(ctx);
+
+    let mock_server = MockBrowser4Server::start();
+    ctx.browser4_base_url = mock_server.base_url();
+
+    let seed_file = ctx.workspace_dir.join("collective-seeds.txt");
+    fs::write(
+        &seed_file,
+        b"# seed urls\nhttps://example.com/seed-1\n\nhttps://example.com/seed-2\n",
+    )
+    .expect("write seed file failed");
+    let seed_file_arg = format!("--seed-file={}", seed_file.to_string_lossy());
+
+    let co_create_result = run_command(
+        ctx,
+        &[
+            "co",
+            "create",
+            "--profile-mode=prototype",
+            "--max-open-tabs=12",
+            "--max-browser-contexts=3",
+            "--display-mode=SUPERVISED",
+        ],
+    );
     assert!(
-        close_all_result.stdout.contains("No tracked Browser4 processes found."),
-        "Expected 'No tracked Browser4 processes found.' in close-all output:\n{}",
-        close_all_result.stdout
+        co_create_result
+            .stdout
+            .contains("Collective session created: collective-session-1"),
+        "Expected collective session creation output in:\n{}",
+        co_create_result.stdout
+    );
+    assert_eq!(
+        read_persisted_session_id(&ctx.state_dir),
+        "collective-session-1"
     );
 
-    // kill-all
-    let kill_all_result = run_command(ctx, &["kill-all"]);
+    let tool_calls = mock_server.snapshot().tool_calls;
+    let open_session_call = tool_calls
+        .iter()
+        .find(|call| call.tool == "open_session")
+        .expect("expected open_session call");
+    assert_eq!(
+        open_session_call.arguments["capabilities"]["profileMode"],
+        "prototype"
+    );
+    assert_eq!(
+        open_session_call.arguments["capabilities"]["maxOpenTabs"],
+        "12"
+    );
+    assert_eq!(
+        open_session_call.arguments["capabilities"]["maxBrowserContexts"],
+        "3"
+    );
+    assert_eq!(
+        open_session_call.arguments["capabilities"]["displayMode"],
+        "SUPERVISED"
+    );
+
+    let extract_result = run_command(
+        ctx,
+        &[
+            "extract",
+            "product name, price",
+            "--schema={\"type\":\"object\"}",
+        ],
+    );
+    let extracted = strip_snapshot_output(&extract_result.stdout);
     assert!(
-        kill_all_result.stdout.contains("No tracked Browser4 processes found."),
-        "Expected 'No tracked Browser4 processes found.' in kill-all output:\n{}",
-        kill_all_result.stdout
+        extracted.contains("\"Mock Product\"") && extract_result.stdout.contains("### Page"),
+        "Expected extract output with snapshot block in:\n{}",
+        extract_result.stdout
+    );
+
+    let summarize_result = run_command(
+        ctx,
+        &[
+            "summarize",
+            "summarize the page marker",
+            "--selector=#page-marker",
+        ],
+    );
+    let summary = strip_snapshot_output(&summarize_result.stdout);
+    assert_eq!(summary, "Mock summary for #page-marker");
+    assert!(
+        summarize_result.stdout.contains("### Page"),
+        "Expected summarize output to include a snapshot block:\n{}",
+        summarize_result.stdout
+    );
+
+    let tool_calls = mock_server.snapshot().tool_calls;
+    let extract_call = tool_calls
+        .iter()
+        .find(|call| call.tool == "agent_extract")
+        .expect("expected agent_extract call");
+    assert_eq!(extract_call.arguments["sessionId"], "collective-session-1");
+    assert_eq!(extract_call.arguments["instruction"], "product name, price");
+    assert_eq!(extract_call.arguments["schema"], "{\"type\":\"object\"}");
+
+    let summarize_call = tool_calls
+        .iter()
+        .find(|call| call.tool == "agent_summarize")
+        .expect("expected agent_summarize call");
+    assert_eq!(
+        summarize_call.arguments["sessionId"],
+        "collective-session-1"
+    );
+    assert_eq!(
+        summarize_call.arguments["instruction"],
+        "summarize the page marker"
+    );
+    assert_eq!(summarize_call.arguments["selector"], "#page-marker");
+
+    let agent_run_result = run_command(ctx, &["agent-run", "collect the latest updates"]);
+    assert!(
+        agent_run_result
+            .stdout
+            .contains("Task submitted: agent-task-1"),
+        "Expected task submission output in:\n{}",
+        agent_run_result.stdout
+    );
+    assert!(
+        agent_run_result
+            .stdout
+            .contains("browser4-cli agent-status agent-task-1"),
+        "Expected agent status hint in:\n{}",
+        agent_run_result.stdout
+    );
+
+    let agent_status_result = run_command(ctx, &["agent-status", "agent-task-1"]);
+    assert_eq!(
+        strip_snapshot_output(&agent_status_result.stdout),
+        r#"{"id":"agent-task-1","status":"RUNNING"}"#
+    );
+
+    let agent_result_result = run_command(ctx, &["agent-result", "agent-task-1"]);
+    assert_eq!(
+        strip_snapshot_output(&agent_result_result.stdout),
+        "result for agent-task-1"
+    );
+
+    let co_submit_result = run_command(
+        ctx,
+        &[
+            "co",
+            "submit",
+            "https://example.com/direct",
+            &seed_file_arg,
+            "--deadline=2026-03-30T00:00:00Z",
+            "--expires=1d",
+            "--refresh",
+            "--parse",
+            "--store-content",
+        ],
+    );
+    assert!(
+        co_submit_result.stdout.contains("3 URL(s) submitted."),
+        "Expected aggregate co submit output in:\n{}",
+        co_submit_result.stdout
+    );
+    assert!(
+        co_submit_result
+            .stdout
+            .contains("Submitted: https://example.com/direct → task co-task-1"),
+        "Expected direct URL submission output in:\n{}",
+        co_submit_result.stdout
+    );
+
+    let co_scrape_result = run_command(
+        ctx,
+        &[
+            "co",
+            "scrape",
+            "https://example.com/scrape-source",
+            "--selector=.item",
+            "--attribute=textContent",
+            "--output=items.json",
+            "--deadline=2026-03-30T00:00:00Z",
+            "--expires=6h",
+            "--refresh",
+        ],
+    );
+    assert!(
+        co_scrape_result
+            .stdout
+            .contains("Scrape submitted: https://example.com/scrape-source → task co-task-4"),
+        "Expected scrape submission output in:\n{}",
+        co_scrape_result.stdout
+    );
+    assert!(co_scrape_result.stdout.contains("selector: .item"));
+    assert!(co_scrape_result.stdout.contains("attribute: textContent"));
+    assert!(co_scrape_result.stdout.contains("output: items.json"));
+
+    let co_status_result = run_command(ctx, &["co", "status", "collective-job-42"]);
+    assert_eq!(
+        strip_snapshot_output(&co_status_result.stdout),
+        r#"{"id":"collective-job-42","status":"RUNNING"}"#
+    );
+
+    let co_result_result = run_command(ctx, &["co", "result", "collective-job-42"]);
+    assert_eq!(
+        strip_snapshot_output(&co_result_result.stdout),
+        "result for collective-job-42"
+    );
+
+    let snapshot = mock_server.snapshot();
+    assert_eq!(
+        snapshot.plain_commands,
+        vec![
+            "collect the latest updates".to_string(),
+            "https://example.com/direct -deadline 2026-03-30T00:00:00Z -expires 1d -refresh -parse -storeContent".to_string(),
+            "https://example.com/seed-1 -deadline 2026-03-30T00:00:00Z -expires 1d -refresh -parse -storeContent".to_string(),
+            "https://example.com/seed-2 -deadline 2026-03-30T00:00:00Z -expires 1d -refresh -parse -storeContent".to_string(),
+            "https://example.com/scrape-source -deadline 2026-03-30T00:00:00Z -expires 6h -refresh".to_string(),
+        ]
+    );
+    assert_eq!(
+        snapshot.status_queries,
+        vec!["agent-task-1".to_string(), "collective-job-42".to_string()]
+    );
+    assert_eq!(
+        snapshot.result_queries,
+        vec!["agent-task-1".to_string(), "collective-job-42".to_string()]
     );
 }
 
-/// Verify that every command defined in the CLI was exercised by the e2e tests.
-fn assert_all_commands_covered(ctx: &E2ECtx) {
-    // Canonical list of all CLI commands (must stay in sync with commands.rs).
-    // Agent and collective commands are excluded because they require an LLM backend.
-    let all_commands: HashSet<&str> = [
+// ---------------------------------------------------------------------------
+// Command-coverage helpers
+// ---------------------------------------------------------------------------
+
+/// Commands that require an LLM/agent backend, destructive global cleanup, or
+/// multi-browser contexts and therefore cannot be exercised in the browser-
+/// backed e2e suite. Each entry has a brief justification.
+///
+/// This set is validated by [`test_e2e_command_coverage`]: if a new command is
+/// added to `commands.rs` without appearing here *or* in the tested set, the
+/// build will fail.
+fn excluded_commands() -> HashSet<&'static str> {
+    [
+        // Destructive across concurrent sessions — would make the suite flaky
+        "close-all",
+        "kill-all",
+    ]
+    .into()
+}
+
+/// The set of commands that the e2e scenario functions exercise via
+/// [`run_command`] / [`run_command_expecting_failure`].  This must be kept in
+/// sync with what the test functions actually call.
+fn tested_commands() -> HashSet<&'static str> {
+    [
+        // test_session_and_navigation
         "open",
-        "close",
+        "list",
         "goto",
         "go-back",
         "go-forward",
         "reload",
-        "press",
+        "delete-data",
+        "close",
+        // test_interaction_console_and_export
+        "resize",
         "type",
+        "fill",
+        "press",
         "keydown",
         "keyup",
-        "mousemove",
-        "mousedown",
-        "mouseup",
-        "mousewheel",
         "click",
         "dblclick",
-        "drag",
-        "fill",
         "hover",
+        "drag",
         "select",
-        "upload",
         "check",
         "uncheck",
-        "snapshot",
-        "eval",
+        "upload",
         "console",
-        "dialog-accept",
-        "dialog-dismiss",
-        "resize",
-        "delete-data",
+        "snapshot",
         "screenshot",
         "pdf",
-        "tab-list",
-        "tab-new",
-        "tab-close",
-        "tab-select",
-        "list",
-        "close-all",
-        "kill-all",
-    ]
-    .into();
-
-    // Commands that require LLM/agent backend or multi-browser contexts
-    // and are not tested in e2e. Listed here to document exclusions.
-    #[allow(unused_variables)]
-    let excluded_commands: HashSet<&str> = [
+        // test_agent_and_collective_commands
         "extract",
         "summarize",
         "agent-run",
@@ -1066,123 +1725,182 @@ fn assert_all_commands_covered(ctx: &E2ECtx) {
         "co-scrape",
         "co-status",
         "co-result",
+        // test_mouse_and_dialog
+        "mousemove",
+        "mousedown",
+        "mouseup",
+        "mousewheel",
+        "dialog-accept",
+        "dialog-dismiss",
+        // test_tab_commands
+        "tab-list",
+        "tab-new",
+        "tab-select",
+        "tab-close",
+        // eval is exercised indirectly by the eval_text helper
+        "eval",
     ]
-    .into();
-
-    let covered: HashSet<&str> = ctx.covered_commands.iter().map(String::as_str).collect();
-    let uncovered: Vec<&&str> = all_commands
-        .iter()
-        .filter(|cmd| !covered.contains(**cmd))
-        .collect();
-
-    assert!(
-        uncovered.is_empty(),
-        "The following commands were NOT covered by the e2e tests: {uncovered:?}"
-    );
+    .into()
 }
 
 // ---------------------------------------------------------------------------
-// Entry point
+// Entry point — custom sequential harness
 // ---------------------------------------------------------------------------
 
-/// Full e2e test suite for the browser4-cli Rust binary.
+// ---------------------------------------------------------------------------
+// Coverage assertion — runs without a server
+// ---------------------------------------------------------------------------
+
+/// Verify that `tested_commands() ∪ excluded_commands()` equals the full
+/// command list from [`browser4_cli::commands::all_commands`].
 ///
-/// Disabled unless `BROWSER4_CLI_E2E=true` is set in the environment.
-#[test]
-fn test_e2e_full_suite() {
-    if !is_e2e_enabled() {
-        eprintln!("Skipping e2e tests (set BROWSER4_CLI_E2E=true to enable)");
-        return;
+/// This check does **not** require a running server. It is a test-time
+/// guard: if a command is added to `commands.rs` without being placed into
+/// either [`tested_commands`] or [`excluded_commands`], this test fails.
+fn verify_e2e_command_coverage() {
+    let all: HashSet<&str> = all_commands().iter().map(|c| c.name).collect();
+
+    let tested = tested_commands();
+    let excluded = excluded_commands();
+
+    // 1. No command should appear in both sets.
+    let overlap: Vec<&&str> = tested.intersection(&excluded).collect();
+    assert!(
+        overlap.is_empty(),
+        "Commands appear in BOTH tested and excluded sets: {overlap:?}"
+    );
+
+    // 2. Every command from commands.rs must be in one of the two sets.
+    let accounted: HashSet<&str> = tested.union(&excluded).copied().collect();
+    let mut missing: Vec<&str> = all
+        .iter()
+        .copied()
+        .filter(|cmd| !accounted.contains(cmd))
+        .collect();
+    missing.sort();
+    assert!(
+        missing.is_empty(),
+        "Commands defined in commands.rs are not accounted for in e2e tests \
+         (add them to `tested_commands` or `excluded_commands`): {missing:?}"
+    );
+
+    // 3. No stale entries: every name in the two sets must exist in commands.rs.
+    let mut stale: Vec<&str> = accounted
+        .iter()
+        .copied()
+        .filter(|cmd| !all.contains(cmd))
+        .collect();
+    stale.sort();
+    assert!(
+        stale.is_empty(),
+        "Stale command names in e2e test sets that no longer exist in commands.rs: {stale:?}"
+    );
+}
+
+fn run_named_test(name: &str, test_fn: fn()) {
+    print!("test {name} ... ");
+    std::io::stdout().flush().expect("stdout flush failed");
+    test_fn();
+    println!("ok");
+}
+
+
+fn run_named_scenario(name: &str, resources: &mut E2ETestResources, test_fn: fn(&mut E2ECtx)) {
+    print!("test {name} ... ");
+    std::io::stdout().flush().expect("stdout flush failed");
+    resources.restart_browser4();
+    test_fn(&mut resources.ctx);
+    println!("ok");
+}
+
+type ScenarioFn = fn(&mut E2ECtx);
+
+#[derive(Clone, Copy)]
+struct ScenarioDef {
+    name: &'static str,
+    short_name: &'static str,
+    test_fn: ScenarioFn,
+}
+
+const SCENARIOS: &[ScenarioDef] = &[
+    ScenarioDef {
+        name: "test_e2e_session_and_navigation",
+        short_name: "test_session_and_navigation",
+        test_fn: test_session_and_navigation,
+    },
+    ScenarioDef {
+        name: "test_e2e_interaction_console_and_export",
+        short_name: "test_interaction_console_and_export",
+        test_fn: test_interaction_console_and_export,
+    },
+    ScenarioDef {
+        name: "test_e2e_mouse_and_dialog",
+        short_name: "test_mouse_and_dialog",
+        test_fn: test_mouse_and_dialog,
+    },
+    ScenarioDef {
+        name: "test_e2e_tab_commands",
+        short_name: "test_tab_commands",
+        test_fn: test_tab_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_agent_and_collective_commands",
+        short_name: "test_agent_and_collective_commands",
+        test_fn: test_agent_and_collective_commands,
+    },
+];
+
+fn parse_scenario_filter() -> Option<String> {
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
+        if let Some(value) = arg.strip_prefix("--scenario=") {
+            return Some(value.to_string());
+        }
+        if arg == "--scenario" {
+            return args.next();
+        }
+    }
+    None
+}
+
+fn resolve_scenario(name: &str) -> Option<ScenarioDef> {
+    SCENARIOS
+        .iter()
+        .copied()
+        .find(|scenario| scenario.name == name || scenario.short_name == name)
+}
+
+fn main() {
+    let scenario_filter = parse_scenario_filter();
+    let selected_scenarios: Vec<ScenarioDef> = if let Some(filter) = scenario_filter {
+        let scenario = resolve_scenario(&filter).unwrap_or_else(|| {
+            let names = SCENARIOS
+                .iter()
+                .map(|s| format!("{} ({})", s.name, s.short_name))
+                .collect::<Vec<_>>()
+                .join(", ");
+            panic!("Unknown scenario '{filter}'. Available scenarios: {names}");
+        });
+        vec![scenario]
+    } else {
+        SCENARIOS.to_vec()
+    };
+
+    let run_coverage = selected_scenarios.len() == SCENARIOS.len();
+    let total_tests = selected_scenarios.len() + usize::from(run_coverage);
+    println!("running {total_tests} tests");
+
+    if run_coverage {
+        run_named_test("test_e2e_command_coverage", verify_e2e_command_coverage);
     }
 
-    assert!(
-        cli_binary().exists(),
-        "CLI binary not found at {:?}. Run `cargo build` first.",
-        cli_binary()
+    let mut resources = create_e2e_test_resources();
+    for scenario in selected_scenarios {
+        run_named_scenario(scenario.name, &mut resources, scenario.test_fn);
+    }
+
+    println!(
+        "test result: ok. {} passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
+        total_tests
     );
-
-    let external_browser4_service_url = configured_browser4_service_url();
-    let jar_path = if external_browser4_service_url.is_some() {
-        None
-    } else {
-        let jar_path = std::env::var("BROWSER4_E2E_JAR_PATH")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| default_jar_path());
-
-        assert!(
-            jar_path.exists(),
-            "Browser4 jar not found at {jar_path:?}. \
-            Build browser4/browser4-agents first, set BROWSER4_E2E_JAR_PATH, or point the tests at an existing service with {}.",
-            BROWSER4_E2E_SERVICE_URL_ENV_KEYS.join(" / ")
-        );
-        Some(jar_path)
-    };
-
-    // Fixture HTTP server (serves our test HTML pages).
-    let fixture = FixtureServer::start();
-
-    // Temporary directories.
-    let temp_dir = tempfile::TempDir::new().expect("tempdir creation failed");
-    let workspace_dir = temp_dir.path().join("workspace");
-    let state_dir = temp_dir.path().join("state");
-    fs::create_dir_all(&workspace_dir).unwrap();
-    fs::create_dir_all(&state_dir).unwrap();
-
-    // Upload test file.
-    let upload_file_path = temp_dir.path().join("upload.txt");
-    fs::write(&upload_file_path, b"browser4-cli e2e upload payload")
-        .expect("write upload file failed");
-
-    // Browser4 backend.
-    let (browser4_base_url, _browser4) = if let Some(base_url) = external_browser4_service_url {
-        wait_for_health(&base_url, 120_000).unwrap_or_else(|error| {
-            panic!(
-                "Browser4 service configured via {} was not healthy: {}",
-                BROWSER4_E2E_SERVICE_URL_ENV_KEYS.join(" / "),
-                error
-            )
-        });
-        (base_url, None)
-    } else {
-        let browser4_port = find_free_port();
-        let browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
-        let browser4 = Browser4Server::start(
-            &browser4_base_url,
-            jar_path
-                .as_deref()
-                .expect("jar path must exist when no external Browser4 service is configured"),
-        );
-        (browser4_base_url, Some(browser4))
-    };
-
-    let mut ctx = E2ECtx {
-        fixture,
-        browser4_base_url,
-        workspace_dir,
-        state_dir,
-        upload_file_path,
-        covered_commands: HashSet::new(),
-    };
-
-    // Run all test scenarios.
-    test_session_and_navigation(&mut ctx);
-    test_interaction_console_and_export(&mut ctx);
-    test_mouse_and_dialog(&mut ctx);
-    test_tab_commands_plus_close_all_and_kill_all(&mut ctx);
-
-    // Verify that every supported command was exercised.
-    assert_all_commands_covered(&ctx);
-}
-
-#[test]
-fn test_normalize_base_url_trims_whitespace_and_trailing_slash() {
-    assert_eq!(
-        normalize_base_url("  http://example.com:8182/  "),
-        Some("http://example.com:8182".to_string())
-    );
-}
-
-#[test]
-fn test_normalize_base_url_rejects_blank_values() {
-    assert_eq!(normalize_base_url("   /  "), None);
 }

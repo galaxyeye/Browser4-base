@@ -94,8 +94,8 @@ fn get_bool(map: &HashMap<String, Value>, key: &str) -> Option<bool> {
     map.get(key).and_then(|v| v.as_bool())
 }
 
-fn get_num(map: &HashMap<String, Value>, key: &str) -> Option<f64> {
-    map.get(key).and_then(|v| v.as_f64())
+fn get_number_value(map: &HashMap<String, Value>, key: &str) -> Option<Value> {
+    map.get(key).filter(|v| v.is_number()).cloned()
 }
 
 // ---------------------------------------------------------------------------
@@ -268,8 +268,8 @@ pub fn all_commands() -> Vec<CommandDef> {
             tool_name_fn: |_| "browser_mouse_move_xy".to_string(),
             tool_params_fn: |args| {
                 json!({
-                    "x": get_num(args, "x").unwrap_or(0.0),
-                    "y": get_num(args, "y").unwrap_or(0.0),
+                    "x": get_number_value(args, "x").unwrap_or_else(|| json!(0)),
+                    "y": get_number_value(args, "y").unwrap_or_else(|| json!(0)),
                 })
             },
         },
@@ -318,8 +318,8 @@ pub fn all_commands() -> Vec<CommandDef> {
             tool_name_fn: |_| "browser_mouse_wheel".to_string(),
             tool_params_fn: |args| {
                 json!({
-                    "deltaY": get_num(args, "dx").unwrap_or(0.0),
-                    "deltaX": get_num(args, "dy").unwrap_or(0.0),
+                    "deltaY": get_number_value(args, "dx").unwrap_or_else(|| json!(0)),
+                    "deltaX": get_number_value(args, "dy").unwrap_or_else(|| json!(0)),
                 })
             },
         },
@@ -569,8 +569,8 @@ pub fn all_commands() -> Vec<CommandDef> {
             tool_name_fn: |_| "browser_resize".to_string(),
             tool_params_fn: |args| {
                 json!({
-                    "width": get_num(args, "w").unwrap_or(0.0),
-                    "height": get_num(args, "h").unwrap_or(0.0),
+                    "width": get_number_value(args, "w").unwrap_or_else(|| json!(0)),
+                    "height": get_number_value(args, "h").unwrap_or_else(|| json!(0)),
                 })
             },
         },
@@ -650,12 +650,12 @@ pub fn all_commands() -> Vec<CommandDef> {
             description: "Close a browser tab",
             category: Category::Tabs,
             hidden: false,
-            args: &[ArgDef { name: "index", description: "Tab index. If omitted, current tab is closed.", optional: true }],
+            args: &[ArgDef { name: "tabId", description: "Tab ID. If omitted, current tab is closed.", optional: true }],
             options: &[],
             tool_name_fn: |_| "browser_tabs".to_string(),
             tool_params_fn: |args| {
                 let mut p = json!({ "action": "close" });
-                if let Some(i) = get_num(args, "index") { p["index"] = json!(i as i64); }
+                if let Some(tab_id) = get_opt_str(args, "tabId") { p["tabId"] = json!(tab_id); }
                 p
             },
         },
@@ -664,13 +664,13 @@ pub fn all_commands() -> Vec<CommandDef> {
             description: "Select a browser tab",
             category: Category::Tabs,
             hidden: false,
-            args: &[ArgDef { name: "index", description: "Tab index", optional: false }],
+            args: &[ArgDef { name: "tabId", description: "Tab ID", optional: false }],
             options: &[],
             tool_name_fn: |_| "browser_tabs".to_string(),
             tool_params_fn: |args| {
                 json!({
                     "action": "select",
-                    "index": get_num(args, "index").unwrap_or(0.0) as i64,
+                    "tabId": get_str(args, "tabId").unwrap_or_default(),
                 })
             },
         },
@@ -897,7 +897,11 @@ mod tests {
         let cmds = all_commands();
         let mut names = std::collections::HashSet::new();
         for cmd in &cmds {
-            assert!(names.insert(cmd.name), "Duplicate command name: {}", cmd.name);
+            assert!(
+                names.insert(cmd.name),
+                "Duplicate command name: {}",
+                cmd.name
+            );
         }
     }
 
@@ -905,9 +909,24 @@ mod tests {
     fn test_commands_map_contains_expected() {
         let map = commands_map();
         for expected in &[
-            "open", "close", "goto", "click", "type", "fill", "snapshot", "screenshot",
-            "extract", "summarize", "agent-run", "agent-status", "agent-result",
-            "co-create", "co-submit", "co-scrape", "co-status", "co-result",
+            "open",
+            "close",
+            "goto",
+            "click",
+            "type",
+            "fill",
+            "snapshot",
+            "screenshot",
+            "extract",
+            "summarize",
+            "agent-run",
+            "agent-status",
+            "agent-result",
+            "co-create",
+            "co-submit",
+            "co-scrape",
+            "co-status",
+            "co-result",
         ] {
             assert!(map.contains_key(*expected), "Missing command: {}", expected);
         }
@@ -1035,7 +1054,10 @@ mod tests {
         let map = commands_map();
         let cmd = map.get("co-submit").unwrap();
         let mut args = HashMap::new();
-        args.insert("url".to_string(), json!("https://www.amazon.com/dp/B08PP5MSVB"));
+        args.insert(
+            "url".to_string(),
+            json!("https://www.amazon.com/dp/B08PP5MSVB"),
+        );
         args.insert("deadline".to_string(), json!("2026-02-24T23:59:59Z"));
         assert_eq!((cmd.tool_name_fn)(&args), "__co_submit__");
         let params = (cmd.tool_params_fn)(&args);
@@ -1075,7 +1097,10 @@ mod tests {
         let map = commands_map();
         let cmd = map.get("co-scrape").unwrap();
         let mut args = HashMap::new();
-        args.insert("url".to_string(), json!("https://www.amazon.com/dp/B08PP5MSVB"));
+        args.insert(
+            "url".to_string(),
+            json!("https://www.amazon.com/dp/B08PP5MSVB"),
+        );
         args.insert("selector".to_string(), json!(".product-title"));
         args.insert("attribute".to_string(), json!("textContent"));
         args.insert("output".to_string(), json!("title.txt"));
@@ -1108,9 +1133,58 @@ mod tests {
     }
 
     #[test]
+    fn test_resize_params_preserve_integer_numbers() {
+        let map = commands_map();
+        let cmd = map.get("resize").unwrap();
+        let mut args = HashMap::new();
+        args.insert("w".to_string(), json!(1280));
+        args.insert("h".to_string(), json!(900));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["width"], json!(1280));
+        assert_eq!(params["height"], json!(900));
+    }
+
+    #[test]
+    fn test_mousewheel_params_preserve_decimal_numbers() {
+        let map = commands_map();
+        let cmd = map.get("mousewheel").unwrap();
+        let mut args = HashMap::new();
+        args.insert("dx".to_string(), json!(1.5));
+        args.insert("dy".to_string(), json!(-2.25));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["deltaY"], json!(1.5));
+        assert_eq!(params["deltaX"], json!(-2.25));
+    }
+
+    #[test]
+    fn test_tab_select_uses_tab_id_parameter() {
+        let map = commands_map();
+        let cmd = map.get("tab-select").unwrap();
+        let mut args = HashMap::new();
+        args.insert("tabId".to_string(), json!("tab-123"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["action"], json!("select"));
+        assert_eq!(params["tabId"], json!("tab-123"));
+        assert!(params.get("index").is_none());
+    }
+
+    #[test]
+    fn test_tab_close_uses_optional_tab_id_parameter() {
+        let map = commands_map();
+        let cmd = map.get("tab-close").unwrap();
+        let mut args = HashMap::new();
+        args.insert("tabId".to_string(), json!("tab-123"));
+        let params = (cmd.tool_params_fn)(&args);
+        assert_eq!(params["action"], json!("close"));
+        assert_eq!(params["tabId"], json!("tab-123"));
+        assert!(params.get("index").is_none());
+    }
+
+    #[test]
     fn test_collective_commands_in_collective_category() {
         let cmds = all_commands();
-        let collective_cmds: Vec<&str> = cmds.iter()
+        let collective_cmds: Vec<&str> = cmds
+            .iter()
             .filter(|c| c.category == Category::Collective)
             .map(|c| c.name)
             .collect();
