@@ -18,13 +18,13 @@ fi
 cd "$repo_root" || exit 1
 
 print_usage() {
-  echo "Usage: test.sh [test-types...] [maven-args...]"
+  echo "Usage: test.sh [test-types...] [additional-args...]"
   echo ""
   echo "Test Types:"
   echo "  fast        Run fast unit tests only"
   echo "  it          Run integration tests"
   echo "  e2e         Run end-to-end tests"
-  echo "  nodejs-sdk  Run Browser4 CLI tests from sdks/browser4-cli"
+  echo "  browser4-cli Run Rust Browser4 CLI tests from sdks/browser4-cli"
   echo "  core        Run core module supplementary tests"
   echo "  rest        Run REST module tests"
   echo "  skills      Run skills-focused agentic tests"
@@ -35,8 +35,8 @@ print_usage() {
   echo "  test.sh fast                       # Run fast unit tests"
   echo "  test.sh it                         # Run integration tests"
   echo "  test.sh e2e                        # Run end-to-end tests"
-  echo "  test.sh nodejs-sdk                 # Run Browser4 CLI tests"
-  echo "  test.sh nodejs-sdk -- --coverage   # Run Browser4 CLI tests with coverage"
+  echo "  test.sh browser4-cli               # Run Browser4 CLI tests"
+  echo "  test.sh browser4-cli -- --nocapture # Pass extra cargo test args"
   echo "  test.sh skills                     # Run skills-focused agentic tests"
   echo "  test.sh mcp                        # Run MCP-focused agentic tests"
   echo "  test.sh browser4                   # Run all Browser4 main tests"
@@ -44,9 +44,9 @@ print_usage() {
   exit 1
 }
 
-exit_removed_test_type() {
+exit_unknown_test_type() {
   local test_type=$1
-  echo "Error: Test type '$test_type' is no longer available in this checkout because the corresponding module was removed. Use 'nodejs-sdk' for sdks/browser4-cli tests." >&2
+  echo "Error: Unknown test type '$test_type'. Valid test types: fast, it, e2e, browser4-cli, core, rest, skills, mcp, browser4." >&2
   exit 1
 }
 
@@ -145,65 +145,54 @@ run_maven_tests() {
   echo "=========================================="
 }
 
-run_nodejs_sdk_tests() {
-  local nodejs_sdk_dir="$repo_root/sdks/browser4-cli"
+run_browser4_cli_tests() {
+  local browser4_cli_dir="$repo_root/sdks/browser4-cli"
 
   echo "=========================================="
-  echo "Running nodejs-sdk tests..."
+  echo "Running Browser4 CLI tests..."
   echo "=========================================="
 
-  if [[ ! -d "$nodejs_sdk_dir" ]]; then
-    echo "Error: Browser4 CLI directory not found at $nodejs_sdk_dir" >&2
+  if [[ ! -d "$browser4_cli_dir" ]]; then
+    echo "Error: Browser4 CLI directory not found at $browser4_cli_dir" >&2
     exit 1
   fi
 
-  if ! command -v node >/dev/null 2>&1; then
-    echo "Error: node is not installed or not in PATH" >&2
+  if ! command -v cargo >/dev/null 2>&1; then
+    echo "Error: cargo is not installed or not in PATH" >&2
     exit 1
   fi
 
-  pushd "$nodejs_sdk_dir" > /dev/null || exit 1
+  pushd "$browser4_cli_dir" > /dev/null || exit 1
   echo "Working directory: $(pwd)"
 
-  if [[ ! -d "$nodejs_sdk_dir/node_modules" ]]; then
-    echo "Installing dependencies..."
-    npm install
-    if [[ $? -ne 0 ]]; then
-      echo "Error: Failed to install dependencies" >&2
-      popd > /dev/null || true
-      exit 1
-    fi
-  fi
-
-  if [[ ! -f "$nodejs_sdk_dir/node_modules/.bin/jest" ]]; then
-    echo "Error: jest is not installed. Install it with: npm install" >&2
+  if [[ ! -f "$browser4_cli_dir/Cargo.toml" ]]; then
+    echo "Error: Cargo.toml not found in $browser4_cli_dir" >&2
     popd > /dev/null || true
     exit 1
   fi
 
-  npm test -- "${AdditionalMvnArgs[@]}"
+  cargo test "${AdditionalMvnArgs[@]}"
   local exit_code=$?
   popd > /dev/null || true
 
   if [[ $exit_code -ne 0 ]]; then
     echo ""
     echo "=========================================="
-    echo "❌ nodejs-sdk tests failed with exit code $exit_code"
+    echo "❌ Browser4 CLI tests failed with exit code $exit_code"
     echo "=========================================="
     exit $exit_code
   fi
 
   echo ""
   echo "=========================================="
-  echo "✅ nodejs-sdk tests completed successfully"
+  echo "✅ Browser4 CLI tests completed successfully"
   echo "=========================================="
 }
 
-KnownTestTypes=(fast it e2e nodejs-sdk core rest skills mcp browser4)
-RemovedTestTypes=(kotlin-sdk python-sdk)
+KnownTestTypes=(fast it e2e browser4-cli core rest skills mcp browser4)
 TestTypes=()
 MavenTests=()
-SDKTests=()
+CLITests=()
 AdditionalMvnArgs=()
 ParsingTestTypes=true
 
@@ -216,10 +205,7 @@ while [[ $# -gt 0 ]]; do
     -h|-help|--help)
       print_usage
       ;;
-    kotlin-sdk|python-sdk)
-      exit_removed_test_type "$1"
-      ;;
-    fast|it|e2e|nodejs-sdk|core|rest|skills|mcp|browser4)
+    fast|it|e2e|browser4-cli|core|rest|skills|mcp|browser4)
       if [[ "$ParsingTestTypes" == "true" ]]; then
         TestTypes+=("$1")
       else
@@ -227,6 +213,9 @@ while [[ $# -gt 0 ]]; do
       fi
       ;;
     *)
+      if [[ "$ParsingTestTypes" == "true" && "$1" != -* ]]; then
+        exit_unknown_test_type "$1"
+      fi
       ParsingTestTypes=false
       AdditionalMvnArgs+=("$1")
       ;;
@@ -241,8 +230,8 @@ fi
 for type in "${TestTypes[@]}"; do
   if [[ "$type" == "browser4" ]]; then
     MavenTests+=(fast core it e2e rest)
-  elif [[ "$type" == "nodejs-sdk" ]]; then
-    SDKTests+=("$type")
+  elif [[ "$type" == "browser4-cli" ]]; then
+    CLITests+=("$type")
   else
     MavenTests+=("$type")
   fi
@@ -264,10 +253,10 @@ for type in "${MavenTests[@]}"; do
 done
 MavenTests=("${UniqueMavenTests[@]}")
 
-UniqueSDKTests=()
-for type in "${SDKTests[@]}"; do
+UniqueCLITests=()
+for type in "${CLITests[@]}"; do
   found=false
-  for known in "${UniqueSDKTests[@]}"; do
+  for known in "${UniqueCLITests[@]}"; do
     if [[ "$known" == "$type" ]]; then
       found=true
       break
@@ -275,19 +264,19 @@ for type in "${SDKTests[@]}"; do
   done
 
   if [[ "$found" == "false" ]]; then
-    UniqueSDKTests+=("$type")
+    UniqueCLITests+=("$type")
   fi
 done
-SDKTests=("${UniqueSDKTests[@]}")
+CLITests=("${UniqueCLITests[@]}")
 
 if [[ ${#MavenTests[@]} -gt 0 ]]; then
   run_maven_tests "${MavenTests[@]}"
 fi
 
-for test_type in "${SDKTests[@]}"; do
+for test_type in "${CLITests[@]}"; do
   case "$test_type" in
-    nodejs-sdk)
-      run_nodejs_sdk_tests
+    browser4-cli)
+      run_browser4_cli_tests
       ;;
   esac
 done

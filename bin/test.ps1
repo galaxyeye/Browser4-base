@@ -23,13 +23,13 @@ if (-not (Test-Path (Join-Path $repoRoot 'VERSION'))) {
 Set-Location $repoRoot
 
 function Print-Usage {
-    Write-Host "Usage: test.ps1 [test-types...] [maven-args...]"
+    Write-Host "Usage: test.ps1 [test-types...] [additional-args...]"
     Write-Host ""
     Write-Host "Test Types:"
     Write-Host "  fast        Run fast unit tests only"
     Write-Host "  it          Run integration tests"
     Write-Host "  e2e         Run end-to-end tests"
-    Write-Host "  nodejs-sdk  Run Browser4 CLI tests from sdks\browser4-cli"
+    Write-Host "  browser4-cli Run Rust Browser4 CLI tests from sdks\browser4-cli"
     Write-Host "  core        Run core module supplementary tests"
     Write-Host "  rest        Run REST module tests"
     Write-Host "  skills      Run skills-focused agentic tests"
@@ -40,8 +40,8 @@ function Print-Usage {
     Write-Host "  test.ps1 fast                       # Run fast unit tests"
     Write-Host "  test.ps1 it                         # Run integration tests"
     Write-Host "  test.ps1 e2e                        # Run end-to-end tests"
-    Write-Host "  test.ps1 nodejs-sdk                 # Run Browser4 CLI tests"
-    Write-Host "  test.ps1 nodejs-sdk -- --coverage   # Run Browser4 CLI tests with coverage"
+    Write-Host "  test.ps1 browser4-cli               # Run Browser4 CLI tests"
+    Write-Host "  test.ps1 browser4-cli -- --nocapture # Pass extra cargo test args"
     Write-Host "  test.ps1 skills                     # Run skills-focused agentic tests"
     Write-Host "  test.ps1 mcp                        # Run MCP-focused agentic tests"
     Write-Host "  test.ps1 browser4                   # Run all Browser4 main tests"
@@ -49,8 +49,8 @@ function Print-Usage {
     exit 1
 }
 
-function Exit-RemovedTestType([string]$testType) {
-    Write-Error "Test type '$testType' is no longer available in this checkout because the corresponding module was removed. Use 'nodejs-sdk' for sdks\browser4-cli tests."
+function Exit-UnknownTestType([string]$testType) {
+    Write-Error "Unknown test type '$testType'. Valid test types: fast, it, e2e, browser4-cli, core, rest, skills, mcp, browser4."
     exit 1
 }
 
@@ -152,60 +152,51 @@ function Invoke-MavenTests([string[]]$testTypes, [string[]]$additionalMvnArgs) {
     }
 }
 
-function Invoke-NodejsSdkTests([string[]]$additionalArgs) {
-    $nodejsSdkDir = Join-Path $repoRoot 'sdks\browser4-cli'
+function Invoke-Browser4CliTests([string[]]$additionalArgs) {
+    $browser4CliDir = Join-Path $repoRoot 'sdks\browser4-cli'
 
     Write-Host "=========================================="
-    Write-Host "Running nodejs-sdk tests..."
+    Write-Host "Running Browser4 CLI tests..."
     Write-Host "=========================================="
 
-    if (-not (Test-Path $nodejsSdkDir)) {
-        Write-Error "Browser4 CLI directory not found at $nodejsSdkDir"
+    if (-not (Test-Path $browser4CliDir)) {
+        Write-Error "Browser4 CLI directory not found at $browser4CliDir"
         exit 1
     }
 
-    $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
-    if (-not $nodeCmd) {
-        Write-Error "Node.js is not installed or not in PATH"
+    $cargoCmd = Get-Command cargo -ErrorAction SilentlyContinue
+    if (-not $cargoCmd) {
+        Write-Error "cargo is not installed or not in PATH"
         exit 1
     }
 
-    Push-Location $nodejsSdkDir
+    Push-Location $browser4CliDir
     try {
         Write-Host "Working directory: $(Get-Location)"
 
-        if (-not (Test-Path "$nodejsSdkDir\node_modules")) {
-            Write-Host "Installing dependencies..."
-            & npm install
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "Failed to install dependencies"
-                exit $LASTEXITCODE
-            }
-        }
-
-        if (-not (Test-Path "$nodejsSdkDir\node_modules\.bin\jest.cmd")) {
-            Write-Error "jest is not installed. Install it with: npm install"
+        if (-not (Test-Path "$browser4CliDir\Cargo.toml")) {
+            Write-Error "Cargo.toml not found in $browser4CliDir"
             exit 1
         }
 
-        $npmArgs = @('test', '--') + $additionalArgs
-        & npm @npmArgs
+        $cargoArgs = @('test') + $additionalArgs
+        & cargo @cargoArgs
         $exitCode = $LASTEXITCODE
         if ($exitCode -ne 0) {
             Write-Host ""
             Write-Host "=========================================="
-            Write-Host "❌ nodejs-sdk tests failed with exit code $exitCode"
+            Write-Host "❌ Browser4 CLI tests failed with exit code $exitCode"
             Write-Host "=========================================="
             exit $exitCode
         }
 
         Write-Host ""
         Write-Host "=========================================="
-        Write-Host "✅ nodejs-sdk tests completed successfully"
+        Write-Host "✅ Browser4 CLI tests completed successfully"
         Write-Host "=========================================="
     }
     catch {
-        Write-Error "Failed to execute nodejs-sdk tests: $_"
+        Write-Error "Failed to execute Browser4 CLI tests: $_"
         exit 1
     }
     finally {
@@ -213,10 +204,9 @@ function Invoke-NodejsSdkTests([string[]]$additionalArgs) {
     }
 }
 
-$knownTestTypes = @('fast', 'it', 'e2e', 'nodejs-sdk', 'core', 'rest', 'skills', 'mcp', 'browser4')
-$removedTestTypes = @('kotlin-sdk', 'python-sdk')
+$knownTestTypes = @('fast', 'it', 'e2e', 'browser4-cli', 'core', 'rest', 'skills', 'mcp', 'browser4')
 $testTypes = @()
-$additionalMvnArgs = @()
+$additionalArgs = @()
 $parsingTestTypes = $true
 
 if ($args.Count -eq 0) {
@@ -228,16 +218,16 @@ foreach ($arg in $args) {
         Print-Usage
     }
 
-    if ($arg -in $removedTestTypes) {
-        Exit-RemovedTestType $arg
-    }
-
     if ($parsingTestTypes -and ($arg -in $knownTestTypes)) {
         $testTypes += $arg
     }
     else {
+        if ($parsingTestTypes -and -not ($arg.StartsWith('-'))) {
+            Exit-UnknownTestType $arg
+        }
+
         $parsingTestTypes = $false
-        $additionalMvnArgs += $arg
+        $additionalArgs += $arg
     }
 }
 
@@ -246,7 +236,7 @@ if ($testTypes.Count -eq 0) {
 }
 
 $mavenTests = @()
-$sdkTests = @()
+$cliTests = @()
 
 foreach ($type in $testTypes) {
     if ($type -eq 'browser4') {
@@ -254,8 +244,8 @@ foreach ($type in $testTypes) {
         continue
     }
 
-    if ($type -eq 'nodejs-sdk') {
-        $sdkTests += $type
+    if ($type -eq 'browser4-cli') {
+        $cliTests += $type
         continue
     }
 
@@ -263,14 +253,14 @@ foreach ($type in $testTypes) {
 }
 
 $mavenTests = $mavenTests | Select-Object -Unique
-$sdkTests = $sdkTests | Select-Object -Unique
+$cliTests = $cliTests | Select-Object -Unique
 
 if ($mavenTests.Count -gt 0) {
-    Invoke-MavenTests -testTypes $mavenTests -additionalMvnArgs $additionalMvnArgs
+    Invoke-MavenTests -testTypes $mavenTests -additionalMvnArgs $additionalArgs
 }
 
-if ($sdkTests -contains 'nodejs-sdk') {
-    Invoke-NodejsSdkTests -additionalArgs $additionalMvnArgs
+if ($cliTests -contains 'browser4-cli') {
+    Invoke-Browser4CliTests -additionalArgs $additionalArgs
 }
 
 exit 0

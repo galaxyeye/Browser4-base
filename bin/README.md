@@ -44,7 +44,7 @@ Comprehensive test runner for the current Maven reactors plus the Browser4 CLI p
 
 **Usage:**
 ```bash
-./bin/test.sh [test-types...] [maven-args...]
+./bin/test.sh [test-types...] [additional-args...]
 ```
 
 **Test Types:**
@@ -56,15 +56,15 @@ Comprehensive test runner for the current Maven reactors plus the Browser4 CLI p
 - `skills`: Run skills module tests
 - `mcp`: Run MCP module tests
 - `browser4`: Run all Browser4 main tests (`fast`, `core`, `rest`, `it`, `e2e`)
-- `nodejs-sdk`: Run Browser4 CLI tests from `sdks/browser4-cli`
+- `browser4-cli`: Run Rust Browser4 CLI tests from `sdks/browser4-cli`
 
 **Examples:**
 ```bash
 ./bin/test.sh fast                       # Run unit tests
 ./bin/test.sh it                         # Run integration tests
 ./bin/test.sh browser4                   # Run all main tests
-./bin/test.sh nodejs-sdk                 # Run Browser4 CLI tests
-./bin/test.sh nodejs-sdk -- --coverage   # Run Browser4 CLI tests with coverage
+./bin/test.sh browser4-cli               # Run Browser4 CLI tests
+./bin/test.sh browser4-cli -- --nocapture # Pass extra cargo test args
 ```
 
 ### `version.ps1`, `version.sh`
