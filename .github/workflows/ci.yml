@@ -81,7 +81,6 @@ jobs:
           excluded_groups: 'Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,Integration,E2E,SDK,ManualOnly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
           timeout_minutes: '35'
 
-
       - name: Check Test Status
         if: false && inputs.skip_tests != true # Temporarily disable tests in CI pipeline
         run: |
@@ -158,6 +157,11 @@ jobs:
           fi
           echo "🔧 Chrome: $(google-chrome-stable --version 2>/dev/null || google-chrome --version 2>/dev/null || echo 'not found')"
 
+          # /home/runner/work/Browser4/Browser4/browser4/browser4-agents/target/Browser4.jar
+
+          echo "Working directory: $(pwd)"
+          ROOT_DIR="/home/runner/work/Browser4/Browser4"
+          cd "$ROOT_DIR"
           JAR_PATH="$(pwd)/browser4/browser4-agents/target/Browser4.jar"
           if [ ! -f "$JAR_PATH" ]; then
             echo "❌ Browser4 jar not found at $JAR_PATH"
@@ -170,7 +174,7 @@ jobs:
           echo "Working directory: $(pwd)"
           cd sdks/browser4-cli
           cargo test --test e2e -- --test-threads=1 --nocapture
-          cd ../..
+          cd "$ROOT_DIR"
 
           echo "::endgroup::"
 
