@@ -275,16 +275,6 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ---
 
-## 📜 SDK
-
-SDKs are available under `sdks/`, current language support includes:
-
-- [Kotlin](sdks/browser4-sdk-kotlin) (native API, REST client)
-- [Python](sdks/browser4-sdk-python) (REST client)
-- [Node.js](sdks/browser4-sdk-nodejs) (REST client)
-
----
-
 ## ✨ Features
 
 Status: [Available] in repo, [Experimental] in active iteration, [Planned] not in repo, [Indicative] performance target.
