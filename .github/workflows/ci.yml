@@ -160,9 +160,13 @@ jobs:
           # /home/runner/work/Browser4/Browser4/browser4/browser4-agents/target/Browser4.jar
 
           echo "Working directory: $(pwd)"
+          ls
           ROOT_DIR="/home/runner/work/Browser4/Browser4"
+
           cd "$ROOT_DIR"
-          JAR_PATH="$(pwd)/browser4/browser4-agents/target/Browser4.jar"
+          mvn -rf .\browser4\browser4-agents\
+
+          JAR_PATH="$ROOT_DIR/browser4/browser4-agents/target/Browser4.jar"
           if [ ! -f "$JAR_PATH" ]; then
             echo "❌ Browser4 jar not found at $JAR_PATH"
             exit 1
