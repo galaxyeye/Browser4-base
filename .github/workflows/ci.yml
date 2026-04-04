@@ -80,6 +80,7 @@ jobs:
           excluded_groups: 'Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,Integration,E2E,SDK,ManualOnly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
           timeout_minutes: '35'
 
+
       - name: Check Test Status
         if: false && inputs.skip_tests != true # Temporarily disable tests in CI pipeline
         run: |
@@ -148,10 +149,25 @@ jobs:
         run: |
           echo "::group::🧪 browser4-cli E2E Tests"
 
-          cd sdks/browser4-cli
-          BROWSER4_CLI_E2E=true \
-          BROWSER4_E2E_SERVICE_URL="http://localhost:8182" \
-            cargo test --test e2e -- --nocapture
+          # Ensure Chrome is available (required by the Browser4 server under test)
+          if ! command -v google-chrome-stable &>/dev/null && ! command -v google-chrome &>/dev/null; then
+            echo "Installing Google Chrome..."
+            sudo apt-get update -qq
+            sudo apt-get install -y google-chrome-stable
+          fi
+          echo "🔧 Chrome: $(google-chrome-stable --version 2>/dev/null || google-chrome --version 2>/dev/null || echo 'not found')"
+
+          # Build maven module $(pwd)/browser4/browser4-agents to generate the Browser4.jar required by the CLI tests
+          echo "Building browser4-agents module to generate Browser4.jar..."
+          cd browser4/browser4-agents
+          mvn clean package -DskipTests -T 1C
+
+          JAR_PATH="$(pwd)/browser4/browser4-agents/target/Browser4.jar"
+          if [ ! -f "$JAR_PATH" ]; then
+            echo "❌ Browser4 jar not found at $JAR_PATH"
+            exit 1
+          fi
+          echo "✅ Browser4 jar: $JAR_PATH"
 
           echo "::endgroup::"
 
