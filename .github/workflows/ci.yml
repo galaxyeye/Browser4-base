@@ -170,6 +170,7 @@ jobs:
           echo "Working directory: $(pwd)"
           cd sdks/browser4-cli
           cargo test --test e2e -- --test-threads=1 --nocapture
+          cd ../..
 
           echo "::endgroup::"
 
