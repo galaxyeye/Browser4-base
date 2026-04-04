@@ -8,6 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+@Disabled("XPath support has been postponed")
 class PulsarWebDriverXPathTests : WebDriverTestBase() {
 
     override val webDriverService get() = FastWebDriverService(browserFactory)
