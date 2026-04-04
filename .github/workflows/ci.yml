@@ -71,7 +71,7 @@ jobs:
 
       - name: Run Tests
         id: run-tests
-        if: false && inputs.skip_tests != true # Temporarily disable tests in CI pipeline
+        if: inputs.skip_tests != true # Temporarily disable tests in CI pipeline
         uses: ./.github/actions/run-tests
         with:
           maven_profiles: 'all-modules'
@@ -82,7 +82,7 @@ jobs:
           timeout_minutes: '35'
 
       - name: Check Test Status
-        if: false && inputs.skip_tests != true # Temporarily disable tests in CI pipeline
+        if: inputs.skip_tests != true # Temporarily disable tests in CI pipeline
         run: |
           if [ "${{ steps.run-tests.outputs.test_status }}" != "success" ]; then
             echo "❌ Tests failed with status: ${{ steps.run-tests.outputs.test_status }}"
@@ -136,7 +136,7 @@ jobs:
           echo "Running browser4-cli E2E tests..."
           echo "Working directory: $(pwd)"
           cd sdks/browser4-cli
-          cargo test --test e2e -- --test-threads=1 --nocapture
+          BROWSER4_CLI_E2E=true cargo test --test e2e -- --test-threads=1 --nocapture
           cd "$ROOT_DIR"
 
           echo "::endgroup::"
