@@ -311,16 +311,6 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ---
 
-## 📜 SDK
-
-Kotlin, Python, and Rust SDKs are available under `sdks/`; Node.js SDK is planned.
-
-- **Kotlin SDK**: JVM-based SDK with coroutines support
-- **Python SDK**: Async/await support with modern Python features
-- **Rust SDK**: Native performance with tokio async runtime (New! 🎉)
-
----
-
 ## ✨ Features
 
 Status: [Available] in repo, [Experimental] in active iteration, [Planned] not in repo, [Indicative] performance target.

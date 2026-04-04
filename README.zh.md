@@ -313,14 +313,6 @@ Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/downloa
 
 ---
 
-## 📜 SDK
-
-Kotlin、Python 和 Rust SDK 已提供（见 `sdks/`），Node.js SDK 正在筹备中。
-
-- **Kotlin SDK**: 基于 JVM 的 SDK，支持协程
-- **Python SDK**: 支持 async/await 的现代 Python SDK
-- **Rust SDK**: 原生性能，使用 tokio 异步运行时（全新发布！🎉）
-
 ## 📜 文档
 
 * 🛠️ [配置指南](docs/config.md)
