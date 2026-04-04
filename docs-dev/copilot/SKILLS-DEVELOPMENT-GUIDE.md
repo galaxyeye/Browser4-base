@@ -160,10 +160,10 @@ Content-Type: application/json
 
 **File**: `pulsar-rest/.../MCPToolController.kt`
 
-1. **callTool()** (line ~150): Routes to `dispatchToAgentToolExecutor()` for non-session tools
-2. **normalizeFrontendToolCall()** (line ~357): `"browser_navigate"` → `"navigate"` via `FRONTEND_TOOL_NAME_ALIASES`
+1. **callTool()**: Routes to `dispatchToAgentToolExecutor()` for non-session tools
+2. **normalizeFrontendToolCall()**: `"browser_navigate"` → `"navigate"` via `FRONTEND_TOOL_NAME_ALIASES`
 3. **normalizeToolArguments()**: Removes `sessionId`, converts snake_case → camelCase
-4. **resolveMcpToolCall()** (line ~312): Matches `"navigate"` against tool specs → `ToolCall("tab", "navigate", args)`
+4. **resolveMcpToolCall()**: Matches `"navigate"` against tool specs → `ToolCall("tab", "navigate", args)`
 5. **Execute**: `agent.toolExtractor.execute(toolCall)`
 
 ### 2.8 Backend: BrowserTabToolExecutor
@@ -286,11 +286,10 @@ private val FRONTEND_TOOL_NAME_ALIASES: Map<String, String> = mapOf(
 )
 ```
 
-> **Note**: If the MCP tool name already matches the auto-generated snake_case
-> conversion of the WebDriver method (e.g., `"my_tool"` for method `myTool()`),
-> then you may not need an explicit alias — the generic `resolveMcpToolCall()`
-> mapper will handle it. But explicit aliases are recommended for clarity and
-> for frontend-specific naming (e.g., `browser_` prefix).
+> **Note**: This step is required for all commands that use a `browser_` prefixed
+> MCP tool name. The generic `resolveMcpToolCall()` mapper only matches the
+> internal name (e.g., `"my_tool"`) — it does not strip the `browser_` prefix
+> automatically. Always add the alias to ensure proper routing.
 
 ### Step 3: Implement the Backend Tool Function (Kotlin)
 
@@ -658,24 +657,27 @@ If this doesn't apply, use camelCase in the CLI `tool_params_fn` directly.
 
 ## Appendix: Complete `goto` Code Trace
 
-For reference, here is every file and line involved in `browser4-cli goto https://browser4.io/`:
+For reference, here is every file and function involved in `browser4-cli goto https://browser4.io/`:
+
+> **Note**: Line numbers are approximate and may shift as the code evolves.
+> Use method/function names for reliable lookup.
 
 ```
-1. sdks/browser4-cli/src/main.rs:810-833     → main() entry, parse args
-2. sdks/browser4-cli/src/args.rs:29-89       → parse_global_flags, parse_raw_args, build_command_args
-3. sdks/browser4-cli/src/main.rs:835-976     → run() — lookup command, dispatch
-4. sdks/browser4-cli/src/commands.rs:151-163  → goto CommandDef
-5. sdks/browser4-cli/src/daemon.rs:15-42      → ensure_server_running
-6. sdks/browser4-cli/src/main.rs:954-962      → default dispatch → handle_tool_command
-7. sdks/browser4-cli/src/main.rs:489-513      → handle_tool_command → with_session
-8. sdks/browser4-cli/src/main.rs:109-137      → with_session: session recovery logic
-9. sdks/browser4-cli/src/http.rs:35-80        → call_tool: POST /mcp/call-tool
-10. MCPToolController.kt:149-172               → callTool: route request
-11. MCPToolController.kt:278-307               → dispatchToAgentToolExecutor
-12. MCPToolController.kt:357-393               → normalizeFrontendToolCall: "browser_navigate" → "navigate"
-13. MCPToolController.kt:312-343               → resolveMcpToolCall: → ToolCall("tab","navigate")
-14. BrowserTabToolExecutor.kt:45-62            → callFunctionOn: "navigate" → driver.navigate(url)
-15. WebDriver.kt:268-273                       → navigate(url: String) interface
-16. PulsarWebDriver.kt:112-127                 → navigate() CDP implementation
-17. sdks/browser4-cli/src/main.rs:143-167      → post_command_snapshot (page_url, page_title, snapshot)
+1. sdks/browser4-cli/src/main.rs           → main() entry, parse args
+2. sdks/browser4-cli/src/args.rs            → parse_global_flags, parse_raw_args, build_command_args
+3. sdks/browser4-cli/src/main.rs            → run() — lookup command, dispatch
+4. sdks/browser4-cli/src/commands.rs        → goto CommandDef (in all_commands())
+5. sdks/browser4-cli/src/daemon.rs          → ensure_server_running
+6. sdks/browser4-cli/src/main.rs            → default dispatch → handle_tool_command
+7. sdks/browser4-cli/src/main.rs            → handle_tool_command → with_session
+8. sdks/browser4-cli/src/main.rs            → with_session: session recovery logic
+9. sdks/browser4-cli/src/http.rs            → call_tool: POST /mcp/call-tool
+10. MCPToolController.kt                     → callTool: route request
+11. MCPToolController.kt                     → dispatchToAgentToolExecutor
+12. MCPToolController.kt                     → normalizeFrontendToolCall: "browser_navigate" → "navigate"
+13. MCPToolController.kt                     → resolveMcpToolCall: → ToolCall("tab","navigate")
+14. BrowserTabToolExecutor.kt                → callFunctionOn: "navigate" → driver.navigate(url)
+15. WebDriver.kt                             → navigate(url: String) interface
+16. PulsarWebDriver.kt                       → navigate() CDP implementation
+17. sdks/browser4-cli/src/main.rs            → post_command_snapshot (page_url, page_title, snapshot)
 ```
