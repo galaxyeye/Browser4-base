@@ -30,6 +30,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use browser4_cli::commands::all_commands;
+use browser4_cli::managed_processes::kill_all_browsers;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1869,6 +1870,7 @@ fn resolve_scenario(name: &str) -> Option<ScenarioDef> {
         .find(|scenario| scenario.name == name || scenario.short_name == name)
 }
 
+
 fn main() {
     let scenario_filter = parse_scenario_filter();
     let selected_scenarios: Vec<ScenarioDef> = if let Some(filter) = scenario_filter {
@@ -1902,4 +1904,6 @@ fn main() {
         "test result: ok. {} passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
         total_tests
     );
+
+    kill_all_browsers();
 }

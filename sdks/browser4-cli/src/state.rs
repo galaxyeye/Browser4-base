@@ -107,6 +107,29 @@ pub fn clear_state(state_dir: Option<&Path>, session_name: Option<&str>) {
     let _ = fs::remove_file(path);
 }
 
+/// Clear the default CLI state plus all named session state files.
+pub fn clear_all_state(state_dir: Option<&Path>) {
+    let dir = state_dir
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(resolve_default_state_dir);
+
+    clear_state(Some(&dir), None);
+
+    let sessions_dir = dir.join("sessions");
+    if !sessions_dir.exists() {
+        return;
+    }
+
+    if let Ok(entries) = fs::read_dir(sessions_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().map_or(false, |ext| ext == "json") {
+                let _ = fs::remove_file(path);
+            }
+        }
+    }
+}
+
 /// Convert a CLI element ref into the selector format expected by Browser4.
 ///
 /// Supported forms:
@@ -221,5 +244,29 @@ mod tests {
         assert!(state_file(tmp.path(), Some("auth")).exists());
         assert!(state_file(tmp.path(), Some("public")).exists());
         assert!(!state_file(tmp.path(), None).exists());
+    }
+
+    #[test]
+    fn test_clear_all_state_removes_default_and_named_sessions() {
+        let tmp = TempDir::new().unwrap();
+        let default_state = CliState {
+            session_id: Some("default123".to_string()),
+            ..CliState::default()
+        };
+        let named_state = CliState {
+            session_id: Some("named123".to_string()),
+            session_name: Some("named".to_string()),
+            ..CliState::default()
+        };
+
+        write_state(&default_state, Some(tmp.path()), None).unwrap();
+        write_state(&named_state, Some(tmp.path()), Some("named")).unwrap();
+        fs::write(tmp.path().join("sessions").join("notes.txt"), "keep").unwrap();
+
+        clear_all_state(Some(tmp.path()));
+
+        assert!(!state_file(tmp.path(), None).exists());
+        assert!(!state_file(tmp.path(), Some("named")).exists());
+        assert!(tmp.path().join("sessions").join("notes.txt").exists());
     }
 }

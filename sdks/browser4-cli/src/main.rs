@@ -40,7 +40,8 @@ use managed_processes::{
 };
 use snapshot::{resolve_output_path, save_binary, save_snapshot};
 use state::{
-    clear_state, read_state, resolve_default_state_dir, write_state, CliState, MousePosition,
+    clear_all_state, clear_state, read_state, resolve_default_state_dir, write_state, CliState,
+    MousePosition,
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -388,20 +389,7 @@ async fn handle_close_all(client: &Client, base_url: &str) -> Result<(), String>
     }
 
     let shutdown_result = shutdown_managed_server_processes(false, None, 5_000, 250);
-    clear_state(None, None);
-
-    // Clear all named session states
-    let state_dir = resolve_default_state_dir().join("sessions");
-    if state_dir.exists() {
-        if let Ok(entries) = std::fs::read_dir(state_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().map_or(false, |ext| ext == "json") {
-                    let _ = std::fs::remove_file(path);
-                }
-            }
-        }
-    }
+    clear_all_state(None);
 
     if close_results.is_empty() {
         println!("No reachable Browser4 servers responded to close-all.");
@@ -420,7 +408,7 @@ async fn handle_close_all(client: &Client, base_url: &str) -> Result<(), String>
 
 async fn handle_kill_all() -> Result<(), String> {
     let result = shutdown_managed_server_processes(true, None, 5_000, 250);
-    clear_state(None, None);
+    clear_all_state(None);
     log_shutdown_result("Killed", &result);
 
     let browser_pids = kill_all_browsers();

@@ -290,7 +290,7 @@ fn force_stop(pid: u32) {
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
-                &format!("Stop-Process -Id {} -Force", pid),
+                &format!("Stop-Process -Id {} -Force -ErrorAction SilentlyContinue", pid),
             ])
             .status();
     }
