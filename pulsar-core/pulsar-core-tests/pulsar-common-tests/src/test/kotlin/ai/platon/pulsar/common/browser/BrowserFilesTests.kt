@@ -37,7 +37,7 @@ class BrowserFilesTests {
 
     @Test
         @DisplayName("when deleteTemporaryUserDataDirWithLock then userDataDir is deleted")
-    fun whenDeletetemporaryuserdatadirwithlockThenUserdatadirIsDeleted() {
+    fun whenDeletetemporaryuserdatadirwithlockThenUserDataDirIsDeleted() {
         val userDataDir = tempContextGroupDir.resolve("user_data_dir")
         Files.createDirectories(userDataDir)
         deleteTemporaryUserDataDirWithLock(userDataDir)
@@ -45,7 +45,7 @@ class BrowserFilesTests {
 
     @Test
         @DisplayName("when parallel deleteTemporaryUserDataDirWithLock then userDataDirs are deleted")
-    fun whenParallelDeletetemporaryuserdatadirwithlockThenUserdatadirsAreDeleted() {
+    fun whenParallelDeletetemporaryuserdatadirwithlockThenUserDataDirsAreDeleted() {
         val userDataDirs = IntRange(0, 200).map { tempContextGroupDir.resolve("user_data_dir.$it") }
         userDataDirs.forEach { Files.createDirectories(it) }
         userDataDirs.parallelStream().forEach { deleteTemporaryUserDataDirWithLock(it) }
@@ -61,7 +61,7 @@ class BrowserFilesTests {
 
     @Test
         @DisplayName("when computeNextSequentialContextDir then next sequential context dir is created")
-    fun whenComputenextsequentialcontextdirThenNextSequentialContextDirIsCreated() {
+    fun whenComputeNextSequentialContextDirThenNextSequentialContextDirIsCreated() {
         val path = BrowserFiles.computeNextSequentialContextDir(group)
         // logPrintln(path)
         assertTrue("directory should exists: $contextBaseDir") { Files.exists(contextBaseDir) }
@@ -70,7 +70,7 @@ class BrowserFilesTests {
 
     @Test
         @DisplayName("when parallel computeNextSequentialContextDir then multiple context dirs are created")
-    fun whenParallelComputenextsequentialcontextdirThenMultipleContextDirsAreCreated() {
+    fun whenParallelComputeNextSequentialContextDirThenMultipleContextDirsAreCreated() {
         val numAgents = 13
         IntRange(1, 100).toList().parallelStream().forEach {
             val path = BrowserFiles.computeNextSequentialContextDir(group, maxAgents = numAgents)
