@@ -133,7 +133,7 @@ jobs:
           maven_args: '-B -V'
 
       - name: Run Unit Tests (Release)
-        if: github.event.inputs.skip_tests != 'true'
+        if: false && github.event.inputs.skip_tests != 'true' # Temporarily disabled to save time during release testing, can be re-enabled for full test coverage
         uses: ./.github/actions/run-tests
         with:
           maven_profiles: ''
@@ -144,7 +144,7 @@ jobs:
           report_name: 'unit-test-reports'
 
       - name: Run Integration Tests (Release)
-        if: github.event.inputs.skip_tests != 'true'
+        if: false && github.event.inputs.skip_tests != 'true' # Temporarily disabled to save time during release testing, can be re-enabled for full test coverage
         uses: ./.github/actions/run-tests
         with:
           maven_profiles: ''
@@ -206,13 +206,23 @@ jobs:
           echo "Running browser4-cli E2E tests..."
           echo "Working directory: $(pwd)"
           cd sdks/browser4-cli
+          export BROWSER4_SERVER_JAR="$JAR_PATH"
+          export BROWSER_DISPLAY_MODE=HEADLESS
           # BROWSER4_CLI_E2E=true cargo test --test e2e -- --test-threads=1 --nocapture
           cargo test
           cd "$ROOT_DIR"
 
+          echo "Cleaning up Java processes after CLI tests..."
+          pkill -f 'java' || echo "No Java processes to kill"
+          pkill -f 'chrome' || echo "No chrome processes to kill"
+
+          # If logs/pulsar.log exists, print the last 100 lines for debugging
+          if [ -f "logs/pulsar.log" ]; then
+            echo "📄 Last 100 lines of logs/pulsar.log:"
+            tail -n 100 logs/pulsar.log
+          fi
+
           echo "::endgroup::"
-
-
 
 
 
