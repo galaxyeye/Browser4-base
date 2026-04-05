@@ -1,7 +1,7 @@
 package ai.platon.pulsar.common
 
-import org.apache.commons.collections4.queue.CircularFifoQueue
 import org.apache.commons.lang3.RandomStringUtils
+import org.junit.jupiter.api.DisplayName
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import kotlin.test.Test
@@ -15,7 +15,8 @@ class TestCollections {
         val chunkSize = 100
         val chunks = IntRange(1, 1000).toList().chunked(chunkSize)
         chunks.forEach {
-            assertEquals(chunkSize, it.size) }
+            assertEquals(chunkSize, it.size)
+        }
     }
 
     @Test
@@ -27,7 +28,8 @@ class TestCollections {
     }
 
     @Test
-    fun `When group by than the order of keys are reserved`() {
+    @DisplayName("When group by than the order of keys are reserved")
+    fun whenGroupByThanTheOrderOfKeysAreReserved() {
         val sortedEntries = IntRange(1, 100).map {
             Random(10).nextInt() to RandomStringUtils.secure().nextAlphanumeric(10)
         }.shuffled().sortedBy { it.first }

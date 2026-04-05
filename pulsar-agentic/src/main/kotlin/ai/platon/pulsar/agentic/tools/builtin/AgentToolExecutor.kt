@@ -2,7 +2,7 @@ package ai.platon.pulsar.agentic.tools.builtin
 
 import ai.platon.pulsar.agentic.PerceptiveAgent
 import ai.platon.pulsar.agentic.model.ExtractionSchema
-import ai.platon.pulsar.agentic.tools.specs.SourceCodeToToolCallSpec
+import ai.platon.pulsar.agentic.tools.specs.ToolSpecGenerator
 import ai.platon.pulsar.common.getLogger
 import kotlin.reflect.KClass
 
@@ -11,10 +11,10 @@ class AgentToolExecutor : AbstractToolExecutor() {
 
     override val domain = "agent"
 
-    override val targetClass: KClass<*> = PerceptiveAgent::class
+    override val receiverClass: KClass<*> = PerceptiveAgent::class
 
     init {
-        SourceCodeToToolCallSpec.perceptiveAgentToolCallList.associateByTo(toolSpec) { it.method }
+        ToolSpecGenerator.agentToolSpecs.associateByTo(toolSpec) { it.method }
     }
 
     override fun help(method: String): String {
@@ -30,12 +30,12 @@ class AgentToolExecutor : AbstractToolExecutor() {
     @Suppress("UNUSED_PARAMETER")
     @Throws(IllegalArgumentException::class)
     override suspend fun callFunctionOn(
-        domain: String, functionName: String, args: Map<String, Any?>, target: Any
+        domain: String, functionName: String, args: Map<String, Any?>, receiver: Any
     ): Any? {
         require(domain == this.domain) { "Unsupported domain: $domain" }
         require(functionName.isNotBlank()) { "Function name must not be blank" }
 
-        val agent = requireNotNull(target as? PerceptiveAgent) { "Target must be a PerceptiveAgent" }
+        val agent = requireNotNull(receiver as? PerceptiveAgent) { "Target must be a PerceptiveAgent" }
 
         return when (functionName) {
             // agent.act(action: String)
@@ -94,7 +94,7 @@ class AgentToolExecutor : AbstractToolExecutor() {
         } catch (e: IllegalArgumentException) {
             val message = e.message + "\n\n" + help(functionName)
             val revised = IllegalArgumentException(message, e)
-            throw e
+            throw revised
         }
     }
 

@@ -22,7 +22,7 @@ class ScreenshotHandler(
     /**
      * Capture page screenshot.
      * */
-    suspend fun captureScreenshot(fullPage: Boolean): String? {
+    suspend fun screenshot(fullPage: Boolean): String? {
         if (!fullPage) {
             return page?.captureScreenshot()
         }
@@ -55,8 +55,8 @@ class ScreenshotHandler(
         return result
     }
 
-    suspend fun captureScreenshot(selector: String): String? {
-        val node = pageHandler.resolveSelector(selector)
+    suspend fun screenshot(selector: String): String? {
+        val node = pageHandler.querySelector(selector)
         if (node == null) {
             logger.info("No such element <{}>", selector)
             return null
@@ -65,9 +65,9 @@ class ScreenshotHandler(
         return captureScreenshotWithoutVi(node, selector)
     }
 
-    suspend fun captureScreenshot(clip: RectD) = captureScreenshot0(null, clip)
+    suspend fun screenshot(clip: RectD) = captureScreenshot0(null, clip)
 
-    suspend fun captureScreenshot(viewport: Viewport) = captureScreenshot0(null, viewport)
+    suspend fun screenshot(viewport: Viewport) = captureScreenshot0(null, viewport)
 
     private suspend fun captureScreenshotWithoutVi(node: NodeRef, selector: String): String? {
         val nodeClip = calculateNodeClip(node, selector)

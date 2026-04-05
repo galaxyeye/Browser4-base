@@ -1,14 +1,14 @@
 package ai.platon.pulsar.examples.fuse
 
 import ai.platon.pulsar.agentic.context.AgenticContexts
-import ai.platon.pulsar.test.server.DemoSiteStarter
+import ai.platon.pulsar.test.server.MockSiteStarter
 
 suspend fun main() {
     val session = AgenticContexts.getOrCreateSession()
 
     // Use local mock site instead of external site so actions are deterministic.
     val url = "http://localhost:18080/generated/tta/act/act-demo.html"
-    val starter = DemoSiteStarter()
+    val starter = MockSiteStarter()
     starter.start(url)
     session.registerClosable(starter)
 
@@ -17,7 +17,10 @@ suspend fun main() {
     var page = session.open(url)
     var document = session.parse(page)
     var fields = session.extract(document, mapOf("title" to "#title"))
-    var result = agent.act("search for 'browser' (RESULTS will display in the same page)")
+    var result = agent.act("scroll to the bottom")
+    result = agent.act("scroll to the top")
+    result = agent.act("enter 'pulsar' into the search box and submit the form (RESULTS will display in the same page)")
+    result = agent.act("click search button")
     var content = driver.selectFirstTextOrNull("body")
     content = driver.selectFirstTextOrNull("body")
     var history = agent.run("find the search box, type 'web scraping' and submit the form (RESULTS will display in the same page)")

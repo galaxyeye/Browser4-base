@@ -165,6 +165,7 @@ open class WebDriverContext(
             FetchResult.crawlRetry(task, "Driver pool exception")
         } catch (e: WebDriverException) {
             logger.warn("{}. [WebDriverException] Retry task {} in crawl scope | caused by: {}", task.page.id, task.id, e.message)
+            logger.warn("Failed to execute fetch task", e)
             FetchResult.crawlRetry(task, e)
         }
     }

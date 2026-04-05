@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import java.util.Locale
 
@@ -14,7 +14,7 @@ object CSSSelectorUtils {
      * - Else, fall back to stable attributes like data-*, aria-label, name, type, role
      * - Else, return the lowercase tag name (or "*")
      */
-    fun generateCSSSelector(node: DOMTreeNodeEx): String {
+    fun generateCSSSelector(node: MergedDOMTreeNode): String {
         // Only meaningful for elements
         if (node.nodeType != NodeType.ELEMENT_NODE) {
             return node.nodeName.lowercase(Locale.ROOT).ifBlank { "*" }

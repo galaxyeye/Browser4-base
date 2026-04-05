@@ -13,7 +13,7 @@ data class PageTarget(
  * Options controlling snapshot breadth/depth and expensive fields.
  */
 data class SnapshotOptions(
-    val maxDepth: Int = 1000, // 0 means full tree TODO: it seems a bug with 0 for full tree logic
+    val maxDepth: Int = 1000, // maxDepth < 0 means full tree
     val includeAX: Boolean = true,
     val includeSnapshot: Boolean = true,
     val includeStyles: Boolean = true,
@@ -29,7 +29,7 @@ data class SnapshotOptions(
  */
 data class TargetTrees(
     val snapshot: Map<String, Any>? = null,
-    val domTree: DOMTreeEx = DOMTreeEx(),
+    val domTree: MergedDOMTree = MergedDOMTree(),
     val axTree: List<AXNodeEx> = emptyList(),
     val devicePixelRatio: Double = 1.0,
     val cdpTiming: Map<String, Long> = emptyMap(),
@@ -39,7 +39,7 @@ data class TargetTrees(
     val snapshotByBackendId: Map<Int, SnapshotNodeEx> = emptyMap(),
     val axByBackendId: Map<Int, AXNodeEx> = emptyMap(),
     val axTreeByFrameId: Map<String, List<AXNodeEx>> = emptyMap(),
-    val domByBackendId: Map<Int, DOMTreeNodeEx> = emptyMap()
+    val domByBackendId: Map<Int, MergedDOMTreeNode> = emptyMap()
 )
 
 /**
@@ -50,22 +50,4 @@ data class ElementRefCriteria(
     val xPath: String? = null,
     val elementHash: String? = null,
     val backendNodeId: Int? = null
-)
-
-/**
- * Current page targets information.
- */
-data class CurrentPageTargets(
-    val pageSession: Map<String, Any>,
-    val iframeSessions: List<Map<String, Any>> = emptyList()
-)
-
-/**
- * Propagating bounds for filtering children in serialization.
- */
-data class PropagatingBounds(
-    val tag: String,
-    val bounds: DOMRect,
-    val nodeId: Int,
-    val depth: Int
 )

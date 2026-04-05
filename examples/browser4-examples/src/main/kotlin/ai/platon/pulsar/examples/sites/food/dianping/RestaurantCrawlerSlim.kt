@@ -40,7 +40,7 @@ class RestaurantCrawlerSlim(val session: PulsarSession) {
         browseEvent.onFeatureComputed.addLast { page, driver ->
             fieldSelectors.forEach { (name, selector) ->
                 if (driver.exists(selector)) {
-                    val screenshot = driver.captureScreenshot(selector)
+                    val screenshot = driver.screenshot(selector)
 
                     val path = AppFiles.createTempFile("screenshot", "png")
                     val bytes = Base64.getDecoder().decode(screenshot)

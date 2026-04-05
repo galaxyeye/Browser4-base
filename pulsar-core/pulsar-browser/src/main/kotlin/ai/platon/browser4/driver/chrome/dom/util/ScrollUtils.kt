@@ -1,7 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMRect
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 
 /**
  * Utility functions for scroll-related logic.
@@ -18,7 +17,7 @@ object ScrollUtils {
      * - Allow scrolling only if CSS overflow allows (auto/scroll/overlay)
      * - If no CSS info, allow only common scrollable container tags
      */
-    fun isActuallyScrollable(node: DOMTreeNodeEx): Boolean {
+    fun isActuallyScrollable(node: MergedDOMTreeNode): Boolean {
         // Respect CDP detection first
         if (node.isScrollable == true) {
             return true
@@ -64,7 +63,7 @@ object ScrollUtils {
      * @param node The DOM node
      * @return Human-readable scroll info or null if not scrollable
      */
-    fun getScrollInfoText(node: DOMTreeNodeEx): String? {
+    fun getScrollInfoText(node: MergedDOMTreeNode): String? {
         if (!isActuallyScrollable(node)) return null
 
         val snapshot = node.snapshotNode ?: return null
@@ -112,7 +111,7 @@ object ScrollUtils {
      * @param ancestors List of ancestor nodes
      * @return true if scroll info should be shown
      */
-    fun shouldShowScrollInfo(node: DOMTreeNodeEx, ancestors: List<DOMTreeNodeEx>): Boolean {
+    fun shouldShowScrollInfo(node: MergedDOMTreeNode, ancestors: List<MergedDOMTreeNode>): Boolean {
         if (!isActuallyScrollable(node)) return false
 
         // Check if any ancestor is also scrollable in the same direction

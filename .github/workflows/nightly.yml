@@ -3,8 +3,12 @@ name: Nightly Build
 on:
   schedule:
     # Runs at 00:00 UTC every day
-    # This is a full nightly build including Docker image building and E2E tests
-    # For lighter-weight integration-only tests, see integration-tests.yml
+    # This is a comprehensive nightly build including:
+    # - All unit tests (Fast + Slow)
+    # - Integration tests
+    # - Docker image building
+    # - Python SDK tests
+    # Note: E2E tests run separately in e2e-tests.yml (manual only)
     - cron: '0 0 * * *'
   # Allow manual workflow runs
   workflow_dispatch:
@@ -56,14 +60,15 @@ jobs:
           skip_tests: 'true'
           timeout_minutes: '15'
 
-      - name: Run Tests
+      - name: Run Comprehensive Tests
         id: run-tests
         uses: ./.github/actions/run-tests
         with:
-          # Run integration tests in nightly build using new test strategy
+          # Nightly: All unit tests (Fast + Slow) + Integration tests
           maven_profiles: 'all-modules,pulsar-tests,integration-tests'
-          # Allow Integration tests but exclude E2E and SDK (includes legacy tags)
-          excluded_groups: 'E2E,SDK,MustRunExplicitly,E2ETest'
+          # Include: Unit (Fast + Slow) + Integration
+          # Exclude: E2E (manual only), SDK (separate workflows), ManualOnly
+          excluded_groups: 'E2E,SDK,ManualOnly,E2ETest,RequiresBrowser,RequiresAI'
           run_pulsar_tests: 'true'
           timeout_minutes: '60'
 

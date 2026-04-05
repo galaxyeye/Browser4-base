@@ -56,7 +56,7 @@ object MetricsConfig {
         if (tagsEnv.isBlank()) {
             mapOf(
                 "service" to "pulsar-agentic",
-                "version" to "4.5.0"
+                "version" to "4.6.0-SNAPSHOT"
             )
         } else {
             tagsEnv.split(",")

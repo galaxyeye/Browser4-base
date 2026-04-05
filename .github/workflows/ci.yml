@@ -5,6 +5,8 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+-ci.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+-ci.[0-9]+'
+  # CI pipeline for tagged releases: Fast unit tests + Docker build + SDK tests
+  # Note: Comprehensive tests (including Slow + Integration) run in nightly.yml
   workflow_dispatch:
     inputs:
       skip_tests:
@@ -65,22 +67,22 @@ jobs:
         with:
           skip_tests: ${{ inputs.skip_tests || 'true' }}
           timeout_minutes: '15'
+          maven_profiles: 'all-modules'
 
       - name: Run Tests
         id: run-tests
-        if: inputs.skip_tests != true
+        if: inputs.skip_tests != true # Temporarily disable tests in CI pipeline
         uses: ./.github/actions/run-tests
         with:
           maven_profiles: 'all-modules'
-          # Run only Fast unit tests by default (test-strategy.md)
+          # CI Pipeline: Run only Fast unit tests (same as PR tests)
+          # Comprehensive tests (Slow + Integration) run in nightly.yml
           # Exclude: Slow, Heavy, Integration, E2E, SDK, and all environment-dependent tests
-          # Includes legacy tags for backward compatibility
-#          excluded_groups: 'Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,Integration,E2E,SDK,MustRunExplicitly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
-          excluded_groups: 'Slow,Heavy,RequiresServer,RequiresDocker,Integration,E2E,SDK,MustRunExplicitly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
+          excluded_groups: 'Slow,Heavy,RequiresServer,RequiresBrowser,RequiresAI,RequiresDocker,Integration,E2E,SDK,ManualOnly,IntegrationTest,E2ETest,HeavyTest,SkippableLowerLevelTest,TestInfraCheck,OptionalTest'
           timeout_minutes: '35'
 
       - name: Check Test Status
-        if: inputs.skip_tests != true
+        if: inputs.skip_tests != true # Temporarily disable tests in CI pipeline
         run: |
           if [ "${{ steps.run-tests.outputs.test_status }}" != "success" ]; then
             echo "❌ Tests failed with status: ${{ steps.run-tests.outputs.test_status }}"
@@ -94,6 +96,50 @@ jobs:
             echo "✅ All tests passed successfully"
             echo "📊 Test Results: ${{ steps.run-tests.outputs.passed_count }} tests passed"
           fi
+
+      - name: Setup Rust Toolchain
+        id: rust-setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust Build Artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: sdks/browser4-cli
+
+      - name: Run browser4-cli E2E Tests
+        id: e2e-cli
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          echo "::group::🧪 browser4-cli E2E Tests"
+
+          # Ensure Chrome is available (required by the Browser4 server under test)
+          if ! command -v google-chrome-stable &>/dev/null && ! command -v google-chrome &>/dev/null; then
+            echo "Installing Google Chrome..."
+            sudo apt-get update -qq
+            sudo apt-get install -y google-chrome-stable
+          fi
+          echo "🔧 Chrome: $(google-chrome-stable --version 2>/dev/null || google-chrome --version 2>/dev/null || echo 'not found')"
+
+          echo "Working directory: $(pwd)"
+          ls
+          ROOT_DIR=$(git rev-parse --show-toplevel)
+
+          JAR_PATH="$ROOT_DIR/browser4/browser4-agents/target/Browser4.jar"
+          if [ ! -f "$JAR_PATH" ]; then
+            echo "❌ Browser4 jar not found at $JAR_PATH"
+            exit 1
+          fi
+          echo "✅ Browser4 jar: $JAR_PATH"
+
+          # Run the CLI tests
+          echo "Running browser4-cli E2E tests..."
+          echo "Working directory: $(pwd)"
+          cd sdks/browser4-cli
+          BROWSER4_CLI_E2E=true cargo test --test e2e -- --test-threads=1 --nocapture
+          cd "$ROOT_DIR"
+
+          echo "::endgroup::"
 
       - name: Cleanup Docker system to free space
         run: |
@@ -131,12 +177,6 @@ jobs:
           timeout_minutes: '5'
           container_name: ${{ env.CONTAINER_NAME }}
 
-      - name: Run Python SDK Tests
-        id: python-sdk-tests
-        uses: ./.github/actions/run-python-sdk-tests
-        with:
-          network_name: ${{ env.NETWORK_NAME }}
-
       - name: Pipeline Summary
         if: always()
         shell: bash
@@ -148,10 +188,10 @@ jobs:
           echo "  - Dependencies: ${{ steps.deps.outcome }}"
           echo "  - Maven Build: ${{ steps.build-maven.outcome }}"
           echo "  - Unit Tests: ${{ steps.run-tests.outcome || 'skipped' }}"
+          echo "  - CLI E2E Tests: ${{ steps.e2e-cli.outcome }}"
           echo "  - Docker Build: ${{ steps.build.outcome }}"
           echo "  - Application: ${{ steps.app.outcome }}"
           echo "  - Health Check: ${{ steps.health.outcome }}"
-          echo "  - Python SDK Tests: ${{ steps.python-sdk-tests.outcome || 'skipped' }}"
 
           echo ""
           echo "🌐 Infrastructure:"

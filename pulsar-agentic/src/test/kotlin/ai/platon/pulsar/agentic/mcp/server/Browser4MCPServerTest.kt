@@ -1,9 +1,16 @@
 package ai.platon.pulsar.agentic.mcp.server
 
-import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
+import ai.platon.pulsar.agentic.model.TcEvaluate
+import ai.platon.pulsar.agentic.model.ToolCallResult
+import ai.platon.pulsar.agentic.model.ToolSpec
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
+import ai.platon.pulsar.agentic.tools.builtin.ToolExecutor
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -14,21 +21,83 @@ import org.junit.jupiter.api.Test
  * Unit tests for [Browser4MCPServer].
  *
  * These tests verify that:
- * - All expected MCP tools are registered with correct names.
- * - Each tool returns a non-error result when the underlying WebDriver succeeds.
- * - Each tool returns an error result (isError = true) when the WebDriver throws.
+ * - All expected MCP tools are registered based on executor tool specs from [AgentToolExecutor].
+ * - Each tool handler routes its call through [AgentToolExecutor.execute].
+ * - Each tool returns a non-error result when the manager succeeds.
+ * - Each tool returns an error result (isError = true) when the manager throws or returns an exception.
  */
 @DisplayName("Browser4MCPServer")
 class Browser4MCPServerTest {
 
-    private lateinit var driver: WebDriver
+    private lateinit var toolManager: AgentToolExecutor
+    private lateinit var driverExecutor: ToolExecutor
+    private lateinit var fsExecutor: ToolExecutor
+    private lateinit var systemExecutor: ToolExecutor
     private lateinit var mcpServer: Browser4MCPServer
 
     @BeforeEach
     fun setUp() {
-        driver = mockk(relaxed = true)
+        driverExecutor = mockk(relaxed = true)
+        every { driverExecutor.domain } returns "tab"
+        every { driverExecutor.getToolSpecs() } returns mapOf(
+            "navigate" to ToolSpec(
+                domain = "tab", method = "navigate",
+                arguments = listOf(ToolSpec.Arg("url", "String", null)),
+                returnType = "Unit", description = "Navigate the browser to the given URL."
+            ),
+            "click" to ToolSpec(
+                domain = "tab", method = "click",
+                arguments = listOf(
+                    ToolSpec.Arg("selector", "String", null),
+                    ToolSpec.Arg("modifier", "String", "null")
+                ),
+                returnType = "Unit", description = "Click an element."
+            ),
+            "scrollToTop" to ToolSpec(
+                domain = "tab", method = "scrollToTop",
+                arguments = emptyList(),
+                returnType = "Double", description = "Scroll to top."
+            ),
+            "getText" to ToolSpec(
+                domain = "tab", method = "getText",
+                arguments = listOf(ToolSpec.Arg("selector", "String", null)),
+                returnType = "String?", description = "Get text of an element."
+            ),
+        )
+
+        fsExecutor = mockk(relaxed = true)
+        every { fsExecutor.domain } returns "fs"
+        every { fsExecutor.getToolSpecs() } returns mapOf(
+            "writeString" to ToolSpec(
+                domain = "fs", method = "writeString",
+                arguments = listOf(
+                    ToolSpec.Arg("filename", "String", null),
+                    ToolSpec.Arg("content", "String", null),
+                ),
+                returnType = "Unit", description = "Write a string to a file."
+            ),
+            "readString" to ToolSpec(
+                domain = "fs", method = "readString",
+                arguments = listOf(ToolSpec.Arg("filename", "String", null)),
+                returnType = "String", description = "Read a file."
+            ),
+        )
+
+        systemExecutor = mockk(relaxed = true)
+        every { systemExecutor.domain } returns "system"
+        every { systemExecutor.getToolSpecs() } returns mapOf(
+            "help" to ToolSpec(
+                domain = "system", method = "help",
+                arguments = listOf(ToolSpec.Arg("domain", "String", null)),
+                returnType = "String", description = "Return documentation for a tool domain."
+            )
+        )
+
+        toolManager = mockk(relaxed = true)
+        every { toolManager.concreteExecutors } returns listOf(driverExecutor, fsExecutor, systemExecutor)
+
         mcpServer = Browser4MCPServer(
-            driver = driver,
+            toolManager = toolManager,
             serverInfo = Implementation(name = "browser4-test", version = "0.0.0")
         )
     }
@@ -38,208 +107,137 @@ class Browser4MCPServerTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("registers all expected navigation tools")
-    fun registersNavigationTools() {
+    @DisplayName("registers driver tools discovered from AgentToolManager")
+    fun registersDriverToolsFromManager() {
         val names = mcpServer.server.tools.keys
-        assertTrue(names.contains("navigate_to"), "Expected navigate_to")
-        assertTrue(names.contains("go_back"), "Expected go_back")
-        assertTrue(names.contains("go_forward"), "Expected go_forward")
-        assertTrue(names.contains("reload"), "Expected reload")
-        assertTrue(names.contains("current_url"), "Expected current_url")
-    }
-
-    @Test
-    @DisplayName("registers all expected element interaction tools")
-    fun registersInteractionTools() {
-        val names = mcpServer.server.tools.keys
+        assertTrue(names.contains("navigate"), "Expected navigate")
         assertTrue(names.contains("click"), "Expected click")
-        assertTrue(names.contains("type"), "Expected type")
-        assertTrue(names.contains("fill"), "Expected fill")
-        assertTrue(names.contains("hover"), "Expected hover")
-        assertTrue(names.contains("scroll_to"), "Expected scroll_to")
-        assertTrue(names.contains("check"), "Expected check")
-        assertTrue(names.contains("uncheck"), "Expected uncheck")
-        assertTrue(names.contains("press"), "Expected press")
-    }
-
-    @Test
-    @DisplayName("registers all expected page content tools")
-    fun registersContentTools() {
-        val names = mcpServer.server.tools.keys
+        assertTrue(names.contains("scroll_to_top"), "Expected scroll_to_top")
         assertTrue(names.contains("get_text"), "Expected get_text")
-        assertTrue(names.contains("get_html"), "Expected get_html")
-        assertTrue(names.contains("get_attribute"), "Expected get_attribute")
-        assertTrue(names.contains("page_source"), "Expected page_source")
-        assertTrue(names.contains("screenshot"), "Expected screenshot")
     }
 
     @Test
-    @DisplayName("registers all expected wait and JavaScript tools")
-    fun registersWaitAndJsTools() {
+    @DisplayName("registers fs tools with domain prefix")
+    fun registersFsToolsWithDomainPrefix() {
         val names = mcpServer.server.tools.keys
-        assertTrue(names.contains("wait_for_selector"), "Expected wait_for_selector")
-        assertTrue(names.contains("wait_for_navigation"), "Expected wait_for_navigation")
-        assertTrue(names.contains("evaluate"), "Expected evaluate")
+        assertTrue(names.contains("fs_write_string"), "Expected fs_write_string")
+        assertTrue(names.contains("fs_read_string"), "Expected fs_read_string")
     }
 
     @Test
-    @DisplayName("exposes exactly 21 tools")
-    fun registersCorrectToolCount() {
-        assertEquals(21, mcpServer.server.tools.size,
-            "Expected exactly 21 registered tools, got: ${mcpServer.server.tools.keys}")
+    @DisplayName("registers system tools without domain prefix")
+    fun registersSystemToolsWithoutPrefix() {
+        val names = mcpServer.server.tools.keys
+        assertTrue(names.contains("help"), "Expected help")
+        assertFalse(names.contains("system_help"), "Expected NO system_help prefix")
+    }
+
+    @Test
+    @DisplayName("total tool count matches sum of executor tool specs")
+    fun toolCountMatchesExecutorSpecs() {
+        val expected = driverExecutor.getToolSpecs().size +
+                fsExecutor.getToolSpecs().size +
+                systemExecutor.getToolSpecs().size
+        assertEquals(expected, mcpServer.server.tools.size,
+            "Expected $expected tools, got: ${mcpServer.server.tools.keys}")
+    }
+
+    @Test
+    @DisplayName("driver methods use snake_case without domain prefix")
+    fun driverMethodsUseSnakeCaseWithoutPrefix() {
+        assertTrue(mcpServer.server.tools.containsKey("scroll_to_top"), "Expected scroll_to_top")
+        assertFalse(mcpServer.server.tools.containsKey("driver_scroll_to_top"), "Expected NO driver_ prefix")
     }
 
     // -------------------------------------------------------------------------
-    // Happy path — successful tool invocations
+    // Tool invocation routes through AgentToolManager
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to returns success message when WebDriver succeeds")
-    fun navigateToReturnsSuccessMessage() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } returns Unit
+    @DisplayName("navigate tool handler routes call through AgentToolManager.execute")
+    fun navigateToolRoutesCallThroughManager() = runBlocking {
+        coEvery { toolManager.execute(any()) } returns toolCallResult(value = "Navigated to https://example.com")
 
-        val tool = mcpServer.server.tools["navigate_to"]!!
-        val request = buildRequest("navigate_to", mapOf("url" to "https://example.com"))
+        val tool = mcpServer.server.tools["navigate"]!!
+        val request = buildRequest("navigate", mapOf("url" to "https://example.com"))
         val result = tool.handler(request)
 
-        assertFalse(result.isError == true, "Expected isError=false")
-        val text = (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)?.text
-        assertTrue(text?.contains("https://example.com") == true)
+        assertFalse(result.isError == true, "Expected success result")
+        coVerify(exactly = 1) {
+            toolManager.execute(match { tc ->
+                tc.domain == "tab" && tc.method == "navigate" &&
+                        tc.arguments["url"] == "https://example.com"
+            })
+        }
     }
 
     @Test
-    @DisplayName("get_text returns element text when WebDriver succeeds")
-    fun getTextReturnsElementText() = runBlocking {
-        coEvery { driver.selectFirstTextOrNull("h1") } returns "Page Title"
+    @DisplayName("fs_write_string tool handler routes call through AgentToolManager.execute")
+    fun fsWriteStringRoutesCallThroughManager() = runBlocking {
+        coEvery { toolManager.execute(any()) } returns toolCallResult(value = "OK")
 
-        val tool = mcpServer.server.tools["get_text"]!!
-        val request = buildRequest("get_text", mapOf("selector" to "h1"))
+        val tool = mcpServer.server.tools["fs_write_string"]!!
+        val request = buildRequest("fs_write_string", mapOf("filename" to "out.txt", "content" to "hello"))
         val result = tool.handler(request)
 
         assertFalse(result.isError == true)
-        val text = (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)?.text
-        assertEquals("Page Title", text)
+        coVerify(exactly = 1) {
+            toolManager.execute(match { tc ->
+                tc.domain == "fs" && tc.method == "writeString" &&
+                        tc.arguments["filename"] == "out.txt" && tc.arguments["content"] == "hello"
+            })
+        }
     }
 
     @Test
-    @DisplayName("evaluate returns JS result when WebDriver succeeds")
-    fun evaluateReturnsJsResult() = runBlocking {
-        coEvery { driver.evaluate("document.title") } returns "My Page"
+    @DisplayName("tool handler returns the value from AgentToolManager result")
+    fun toolHandlerReturnsResultValue() = runBlocking {
+        coEvery { toolManager.execute(any()) } returns toolCallResult(value = "navigated")
 
-        val tool = mcpServer.server.tools["evaluate"]!!
-        val request = buildRequest("evaluate", mapOf("expression" to "document.title"))
-        val result = tool.handler(request)
-
-        assertFalse(result.isError == true)
-        val text = (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)?.text
-        assertEquals("My Page", text)
-    }
-
-    @Test
-    @DisplayName("current_url returns the current URL from the driver")
-    fun currentUrlReturnsDriverUrl() = runBlocking {
-        coEvery { driver.currentUrl() } returns "https://example.com/page"
-
-        val tool = mcpServer.server.tools["current_url"]!!
-        val result = tool.handler(buildRequest("current_url", emptyMap()))
+        val tool = mcpServer.server.tools["navigate"]!!
+        val result = tool.handler(buildRequest("navigate", mapOf("url" to "https://example.com")))
 
         assertFalse(result.isError == true)
-        val text = (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)?.text
-        assertEquals("https://example.com/page", text)
+        val text = (result.content.firstOrNull() as? TextContent)?.text
+        assertEquals("navigated", text)
     }
 
     // -------------------------------------------------------------------------
-    // Error handling — WebDriver failures produce isError=true results
+    // Error handling
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("navigate_to returns error result when WebDriver throws")
-    fun navigateToReturnsErrorOnFailure() = runBlocking {
-        coEvery { driver.navigateTo(any<String>()) } throws RuntimeException("CDP connection lost")
+    @DisplayName("tool handler returns error when AgentToolManager throws")
+    fun toolHandlerReturnsErrorOnManagerException() = runBlocking {
+        coEvery { toolManager.execute(any()) } throws RuntimeException("driver crashed")
 
-        val tool = mcpServer.server.tools["navigate_to"]!!
-        val request = buildRequest("navigate_to", mapOf("url" to "https://example.com"))
-        val result = tool.handler(request)
+        val tool = mcpServer.server.tools["navigate"]!!
+        val result = tool.handler(buildRequest("navigate", mapOf("url" to "https://example.com")))
 
-        assertTrue(result.isError == true, "Expected isError=true")
-        assertTrue(
-            (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)
-                ?.text?.contains("CDP connection lost") == true,
-            "Expected error message in content"
+        assertTrue(result.isError == true, "Expected error result when manager throws")
+        val text = (result.content.firstOrNull() as? TextContent)?.text
+        assertTrue(text?.contains("driver crashed") == true)
+    }
+
+    @Test
+    @DisplayName("tool handler returns error when TcEvaluate contains an exception")
+    fun toolHandlerReturnsErrorWhenEvaluateHasException() = runBlocking {
+        val evaluate = TcEvaluate(
+            expression = "driver.navigate(url=\"bad\")",
+            cause = RuntimeException("navigation failed"),
         )
-    }
+        coEvery { toolManager.execute(any()) } returns toolCallResult(evaluate = evaluate)
 
-    @Test
-    @DisplayName("click returns error result when WebDriver throws")
-    fun clickReturnsErrorOnFailure() = runBlocking {
-        coEvery { driver.click(any()) } throws RuntimeException("Element not found")
+        val tool = mcpServer.server.tools["navigate"]!!
+        val result = tool.handler(buildRequest("navigate", mapOf("url" to "https://bad.url")))
 
-        val tool = mcpServer.server.tools["click"]!!
-        val request = buildRequest("click", mapOf("selector" to "#btn"))
-        val result = tool.handler(request)
-
-        assertTrue(result.isError == true)
-    }
-
-    @Test
-    @DisplayName("get_text returns error result when WebDriver throws")
-    fun getTextReturnsErrorOnFailure() = runBlocking {
-        coEvery { driver.selectFirstTextOrNull(any()) } throws RuntimeException("Timeout")
-
-        val tool = mcpServer.server.tools["get_text"]!!
-        val request = buildRequest("get_text", mapOf("selector" to "h1"))
-        val result = tool.handler(request)
-
-        assertTrue(result.isError == true)
-    }
-
-    @Test
-    @DisplayName("evaluate returns error result when WebDriver throws")
-    fun evaluateReturnsErrorOnFailure() = runBlocking {
-        coEvery { driver.evaluate(any()) } throws RuntimeException("SyntaxError")
-
-        val tool = mcpServer.server.tools["evaluate"]!!
-        val request = buildRequest("evaluate", mapOf("expression" to "invalid js ("))
-        val result = tool.handler(request)
-
-        assertTrue(result.isError == true)
+        assertTrue(result.isError == true, "Expected error result when TcEvaluate has exception")
     }
 
     // -------------------------------------------------------------------------
-    // Missing required parameters produce error results
+    // Helper
     // -------------------------------------------------------------------------
 
-    @Test
-    @DisplayName("navigate_to returns error when url parameter is missing")
-    fun navigateToMissingUrlReturnsError() = runBlocking {
-        val tool = mcpServer.server.tools["navigate_to"]!!
-        val request = buildRequest("navigate_to", emptyMap())
-        val result = tool.handler(request)
-
-        assertTrue(result.isError == true)
-        val text = (result.content.firstOrNull() as? io.modelcontextprotocol.kotlin.sdk.types.TextContent)?.text
-        assertTrue(text?.contains("url") == true)
-    }
-
-    @Test
-    @DisplayName("click returns error when selector parameter is missing")
-    fun clickMissingSelectorReturnsError() = runBlocking {
-        val tool = mcpServer.server.tools["click"]!!
-        val request = buildRequest("click", emptyMap())
-        val result = tool.handler(request)
-
-        assertTrue(result.isError == true)
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Builds a [CallToolRequest] with the given tool name and string arguments.
-     * Each value in [arguments] is wrapped in a [JsonPrimitive]; the server code
-     * strips surrounding JSON quotes with `toString().trim('"')`.
-     */
     private fun buildRequest(
         toolName: String,
         arguments: Map<String, String>
@@ -255,4 +253,14 @@ class Browser4MCPServerTest {
             )
         )
     }
+
+
+    private fun toolCallResult(value: Any? = null, evaluate: TcEvaluate? = null): ToolCallResult {
+        val resolvedEvaluate = evaluate ?: TcEvaluate(value = value)
+        return ToolCallResult(
+            evaluate = resolvedEvaluate,
+            message = resolvedEvaluate.exception?.message,
+        )
+    }
+
 }

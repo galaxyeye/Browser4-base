@@ -4,7 +4,7 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar</artifactId>
-        <version>4.5.0-SNAPSHOT</version>
+        <version>4.6.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -20,6 +20,11 @@
             <groupId>ai.platon.cdt</groupId>
             <artifactId>cdt-kotlin-client</artifactId>
             <version>${cdt-kotlin-client.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
 
         <dependency>
@@ -97,10 +102,8 @@
     </dependencies>
 
     <properties>
-        <!-- required by org.glassfish.tyrus.client.ClientManager -->
-        <tyrus.version>1.13.1</tyrus.version>
         <!-- Reflect, org.javassist:javassist, required by ProxyClasses -->
         <javassist.version>3.30.2-GA</javassist.version>
-        <cdt-kotlin-client.version>4.0.0</cdt-kotlin-client.version>
+        <cdt-kotlin-client.version>4.0.5</cdt-kotlin-client.version>
     </properties>
 </project>

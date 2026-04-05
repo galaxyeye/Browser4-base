@@ -9,70 +9,6 @@ package ai.platon.pulsar.agentic.event
 object AgenticEvents {
 
     /**
-     * AgentEventBus event type constants for agent lifecycle events.
-     * Used with AgentEventBus.emitAgentEvent().
-     */
-    object AgentEventTypes {
-        const val ON_WILL_RUN = "agent.onWillRun"
-        const val ON_DID_RUN = "agent.onDidRun"
-        const val ON_WILL_OBSERVE = "agent.onWillObserve"
-        const val ON_DID_OBSERVE = "agent.onDidObserve"
-        const val ON_WILL_ACT = "agent.onWillAct"
-        const val ON_DID_ACT = "agent.onDidAct"
-        const val ON_WILL_EXTRACT = "agent.onWillExtract"
-        const val ON_DID_EXTRACT = "agent.onDidExtract"
-        const val ON_WILL_SUMMARIZE = "agent.onWillSummarize"
-        const val ON_DID_SUMMARIZE = "agent.onDidSummarize"
-    }
-
-    /**
-     * AgentEventBus event type constants for inference events.
-     * Used with AgentEventBus.emitInferenceEvent().
-     */
-    object InferenceEventTypes {
-        const val ON_WILL_INFER = "inference.onWillInfer"
-        const val ON_DID_INFER = "inference.onDidInfer"
-        const val ON_WILL_EXTRACT_INFER = "inference.onWillExtractInfer"
-        const val ON_DID_EXTRACT_INFER = "inference.onDidExtractInfer"
-        const val ON_WILL_SUMMARIZE_INFER = "inference.onWillSummarizeInfer"
-        const val ON_DID_SUMMARIZE_INFER = "inference.onDidSummarizeInfer"
-    }
-
-    /**
-     * AgentEventBus event type constants for tool execution events.
-     * Used with AgentEventBus.emitToolEvent().
-     */
-    object ToolEventTypes {
-        const val ON_WILL_EXECUTE_TOOL = "tool.onWillExecuteTool"
-        const val ON_DID_EXECUTE_TOOL = "tool.onDidExecuteTool"
-        const val ON_TOOL_ERROR = "tool.onToolError"
-    }
-
-    /**
-     * AgentEventBus event type constants for MCP (Model Context Protocol) events.
-     * Used with AgentEventBus.emitMCPEvent().
-     */
-    object MCPEventTypes {
-        const val ON_WILL_CALL_MCP = "mcp.onWillCallMCP"
-        const val ON_DID_CALL_MCP = "mcp.onDidCallMCP"
-        const val ON_MCP_CONNECTED = "mcp.onMCPConnected"
-        const val ON_MCP_DISCONNECTED = "mcp.onMCPDisconnected"
-        const val ON_MCP_ERROR = "mcp.onMCPError"
-    }
-
-    /**
-     * AgentEventBus event type constants for skill execution events.
-     * Used with AgentEventBus.emitSkillEvent().
-     */
-    object SkillEventTypes {
-        const val ON_WILL_RUN_SKILL = "skill.onWillRunSkill"
-        const val ON_DID_RUN_SKILL = "skill.onDidRunSkill"
-        const val ON_SKILL_ACTIVATED = "skill.onSkillActivated"
-        const val ON_SKILLS_LISTED = "skill.onSkillsListed"
-        const val ON_SKILL_ERROR = "skill.onSkillError"
-    }
-
-    /**
      * Events emitted by PerceptiveAgent implementations.
      */
     object PerceptiveAgent {
@@ -203,6 +139,20 @@ object AgenticEvents {
     }
 
     /**
+     * AgentEventBus event type constants for skill execution events.
+     * Used with AgentEventBus.emitSkillEvent().
+     */
+    object Skill {
+        const val ON_WILL_RUN_SKILL = "skill.onWillRunSkill"
+        const val ON_DID_RUN_SKILL = "skill.onDidRunSkill"
+        const val ON_SKILL_ACTIVATED = "skill.onSkillActivated"
+        const val ON_SKILLS_LISTED = "skill.onSkillsListed"
+        const val ON_SKILL_ERROR = "skill.onSkillError"
+        const val ON_SKILL_INSTALLED = "skill.onSkillInstalled"
+        const val ON_SKILL_UNINSTALLED = "skill.onSkillUninstalled"
+    }
+
+    /**
      * Returns all event types as a list for easy iteration.
      */
     fun getAllEventTypes(): List<String> = listOf(
@@ -228,5 +178,4 @@ object AgenticEvents {
         ContextToAction.ON_WILL_GENERATE,
         ContextToAction.ON_DID_GENERATE
     )
-
 }

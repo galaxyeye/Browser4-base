@@ -87,18 +87,18 @@ class Browser4Application {
         val builder = StringBuilder()
         builder.appendLine("====================================================================================")
         builder.appendLine(llmHelp)
-        builder.appendLine("------------------------------------------------------------------------------")
-        builder.appendLine("Example 1: 使用 Web UI (Using the Web UI):")
-        builder.appendLine(urls.frontend)
-        builder.appendLine("------------------------------------------------------------------------------")
-        builder.appendLine("Example 2: Open task - Ask Browser4 for Anything:")
-        builder.appendLine(buildOpenTaskExample(urls.commandEndpoint))
-        builder.appendLine("------------------------------------------------------------------------------")
-        builder.appendLine("Example 3: Automation/Extraction Task - Zero Code:")
-        builder.appendLine(buildScrapingExample(urls.commandEndpoint))
-        builder.appendLine("------------------------------------------------------------------------------")
-        builder.appendLine("Example 4: For Advanced Extract Task — LLM + X-SQL: Precise, Flexible, Powerful:")
-        builder.appendLine(buildAdvancedScrapingExample(urls.commandEndpoint))
+//        builder.appendLine("------------------------------------------------------------------------------")
+//        builder.appendLine("Example 1: 使用 Web UI (Using the Web UI):")
+//        builder.appendLine(urls.frontend)
+//        builder.appendLine("------------------------------------------------------------------------------")
+//        builder.appendLine("Example 2: Open task - Ask Browser4 for Anything:")
+//        builder.appendLine(buildOpenTaskExample(urls.commandEndpoint))
+//        builder.appendLine("------------------------------------------------------------------------------")
+//        builder.appendLine("Example 3: Automation/Extraction Task - Zero Code:")
+//        builder.appendLine(buildScrapingExample(urls.commandEndpoint))
+//        builder.appendLine("------------------------------------------------------------------------------")
+//        builder.appendLine("Example 4: For Advanced Extract Task — LLM + X-SQL: Precise, Flexible, Powerful:")
+//        builder.appendLine(buildAdvancedScrapingExample(urls.commandEndpoint))
         return builder.toString()
     }
 
@@ -169,10 +169,12 @@ class Browser4Application {
     )
 }
 
-fun main(args: Array<String>) {
+fun runBrowser4AgentsApplication(args: Array<String>) {
     runApplication<Browser4Application>(*args) {
         addInitializers(PulsarContextInitializer())
         setAdditionalProfiles("agents", "private", "advanced")
         setLogStartupInfo(true)
     }
 }
+
+fun main(args: Array<String>) = runBrowser4AgentsApplication(args)

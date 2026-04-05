@@ -1,11 +1,11 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.dom.ChromeCdpDomService
-import ai.platon.browser4.driver.chrome.dom.DomService
 import ai.platon.browser4.driver.chrome.dom.Locator
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
+import ai.platon.browser4.driver.chrome.dom.model.ViewportSpec
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeIOException
@@ -17,20 +17,20 @@ import ai.platon.cdt.kt.protocol.types.fetch.RequestPattern
 import ai.platon.cdt.kt.protocol.types.network.ErrorReason
 import ai.platon.cdt.kt.protocol.types.network.LoadNetworkResourceOptions
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
+import ai.platon.cdt.kt.protocol.types.runtime.CallArgument
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.browser.BrowserType
-import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.detail.*
-import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.crawl.common.InternalURLUtil
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.common.annotations.Beta
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
@@ -77,7 +77,7 @@ class PulsarWebDriver(
 
     private val rpc = RobustRPC(this)
     private val networkManager by lazy { NetworkManager(this, rpc) }
-    private val messageWriter = MiscMessageMessageWriter()
+    private val messageWriter = MultiSinkMessageWriter()
 
     private val driverHelper get() = WebDriverHelper(this, rpc, page, fetchAPI, messageWriter)
 
@@ -91,8 +91,6 @@ class PulsarWebDriver(
 
     val isNetworkIdle get() = networkManager.isIdle
 
-    var injectedScriptIdentifier: String? = null
-
     var fingerprintApplier: ((WebDriver) -> Unit)? = null
 
     /**
@@ -100,7 +98,7 @@ class PulsarWebDriver(
      * */
     override val implementation: Any get() = devTools
 
-    override val domService: DomService get() = ChromeCdpDomService(devTools)
+    override val snapshotService: SnapshotService get() = page.snapshotService
 
     init {
         fingerprintApplier?.invoke(this)
@@ -111,7 +109,7 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun navigateTo(entry: NavigateEntry) {
+    override suspend fun navigate(entry: NavigateEntry) {
         userTypedUrl = entry.url
 
         navigateHistory.add(entry)
@@ -123,7 +121,7 @@ class PulsarWebDriver(
             enableAPIAgents()
         }
 
-        driverHelper.invokeOnPage("navigateTo") {
+        driverHelper.invokeOnPage("navigate") {
             navigateInvaded(entry)
         }
     }
@@ -181,12 +179,6 @@ class PulsarWebDriver(
         }
     }
 
-    // Unittest failed
-//    override suspend fun selectAttributeAll(selector: String, attrName: String, start: Int, limit: Int): List<String> {
-//        val name = "selectAttributeAll"
-//        return driverHelper.invokeOnPage(name) { page.getAttributeAll(selector, attrName, start, limit) } ?: listOf()
-//    }
-
     @Throws(WebDriverException::class)
     override suspend fun evaluate(expression: String): Any? {
         return driverHelper.invokeOnPage("evaluate") { jsHandler.evaluate(expression) }
@@ -230,10 +222,6 @@ class PulsarWebDriver(
     }
 
     override suspend fun currentUrl(): String {
-        // TODO: find out why mainFrameAPI?.url fails because of timing issue when run agent.observe() via SDK, a possible reason is about multithreading problem
-//        val mainFrameUrl = runCatching { driverHelper.invokeOnPage("currentUrl") { mainFrameAPI?.url } }
-//            .onFailure { logger.warn("Failed to retrieve the mainFrameUrl", it) }
-//            .getOrNull()
         val mainFrameUrl = evaluate("document.URL", navigateUrl)
         navigateUrl = mainFrameUrl ?: navigateUrl
         return navigateUrl ?: userTypedUrl ?: ""
@@ -285,6 +273,15 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
+    override suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver? {
+        return waitFor("waitForFunction", timeout) {
+            val res = evaluate(pageFunction)
+            val isTruthy = res != null && res != false && res != "" && res != 0 && res != 0.0
+            if (isTruthy) this else null
+        }
+    }
+
+    @Throws(WebDriverException::class)
     override suspend fun isVisible(selector: String): Boolean {
         return page.isVisible(selector)
     }
@@ -328,8 +325,78 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
+    override suspend fun mouseWheel(deltaX: Double, deltaY: Double) {
+        driverHelper.invokeOnPage("mouseWheel") { mouse?.wheel(deltaX, deltaY) }
+    }
+
+    @Throws(WebDriverException::class)
     override suspend fun moveMouseTo(x: Double, y: Double) {
         driverHelper.invokeOnPage("moveMouseTo") { mouse?.moveTo(x, y) }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun mouseMove(x: Double, y: Double) {
+        driverHelper.invokeOnPage("mouseMove") { mouse?.moveTo(x, y) }
+    }
+
+    /**
+     * TODO: use CDP to implement mouseDown: CDP → Browser Input System → Hit Testing → DOM → JS Event
+     * */
+    @Throws(WebDriverException::class)
+    override suspend fun mouseDown(button: String, clickCount: Int) {
+        if (button == "left") {
+            driverHelper.invokeOnPage("mouseDown") { mouse?.down(clickCount = clickCount) }
+            return
+        }
+
+        val btnIndex = when (button) {
+            "right" -> 2
+            "middle" -> 1
+            else -> 0
+        }
+        val currentX = mouse?.currentX ?: 0.0
+        val currentY = mouse?.currentY ?: 0.0
+        val script = """
+            (() => {
+                const x = $currentX;
+                const y = $currentY;
+                const target = document.elementFromPoint(x, y);
+                if (!target) return;
+                target.dispatchEvent(new MouseEvent('mousedown', { button: $btnIndex, buttons: 1, bubbles: true, clientX: x, clientY: y, detail: $clickCount }));
+            })()
+        """.trimIndent()
+        driverHelper.invokeOnPage("mouseDown") { evaluate(script) }
+    }
+
+    /**
+     * TODO: use CDP to implement mouseUp: CDP → Browser Input System → Hit Testing → DOM → JS Event
+     * */
+    @Throws(WebDriverException::class)
+    override suspend fun mouseUp(button: String, clickCount: Int) {
+        if (button == "left") {
+            driverHelper.invokeOnPage("mouseUp") {
+                mouse?.up(mouse?.currentX ?: 0.0, mouse?.currentY ?: 0.0, clickCount = clickCount)
+            }
+            return
+        }
+
+        val btnIndex = when (button) {
+            "right" -> 2
+            "middle" -> 1
+            else -> 0
+        }
+        val currentX = mouse?.currentX ?: 0.0
+        val currentY = mouse?.currentY ?: 0.0
+        val script = """
+            (() => {
+                const x = $currentX;
+                const y = $currentY;
+                const target = document.elementFromPoint(x, y);
+                if (!target) return;
+                target.dispatchEvent(new MouseEvent('mouseup', { button: $btnIndex, bubbles: true, clientX: x, clientY: y, detail: $clickCount }));
+            })()
+        """.trimIndent()
+        driverHelper.invokeOnPage("mouseUp") { evaluate(script) }
     }
 
     @Throws(WebDriverException::class)
@@ -374,25 +441,148 @@ class PulsarWebDriver(
         }
     }
 
-    private suspend fun debugElementOnPoint(node: NodeRef) {
-        val point = emulator.getInteractPoint(node, "center", useRandomOffset = true) ?: return
-        val (x, y) = point
-
-        println("Debugging element at point ($x, $y):")
-
-        var result = evaluateValueDetail("__pulsar_utils__.elementFromPointDeep(100, 100)")
-        printlnPro(result?.value)
-
-        result = evaluateDetail("__pulsar_utils__.elementFromPointDeep($x, $y)")
-        printlnPro(result?.value)
-    }
-
     @Throws(WebDriverException::class)
     override suspend fun click(selector: String, modifier: String) {
         driverHelper.invokeOnElement(selector, "click", scrollIntoView = true) { node ->
             val delayMillis = randomDelayMillis("click")
             waitForScrollSettled(selector)
             emulator.click(node, 1, position = "center", modifier = modifier, delayMillis = delayMillis)
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun selectOption(selector: String, values: List<String>): List<String> {
+        val mapper = jacksonObjectMapper()
+        val jsonValues = mapper.writeValueAsString(values)
+
+        val functionDeclaration = """
+            function(jsonValues) {
+                const values = JSON.parse(jsonValues);
+                const element = this;
+                if (!element || element.tagName !== 'SELECT') {
+                    throw new Error('Element is not a <select> element');
+                }
+
+                const optionsToSelect = new Set(values);
+                const selectedValues = [];
+                let hasChanged = false;
+
+                // Handle single select: only select the first match
+                if (!element.multiple) {
+                    for (let i = 0; i < element.options.length; i++) {
+                        const option = element.options[i];
+                        if (optionsToSelect.has(option.value) || optionsToSelect.has(option.label) || optionsToSelect.has(option.text)) {
+                            if (!option.selected) {
+                                option.selected = true;
+                                hasChanged = true;
+                            }
+                            selectedValues.push(option.value);
+                            break;
+                        }
+                    }
+                } else {
+                    // Handle multiple select
+                    // Deselect all, then select specified ones.
+                    for (let i = 0; i < element.options.length; i++) {
+                        const option = element.options[i];
+                        const shouldSelect = optionsToSelect.has(option.value) || optionsToSelect.has(option.label) || optionsToSelect.has(option.text);
+
+                        if (shouldSelect != option.selected) {
+                            option.selected = shouldSelect;
+                            hasChanged = true;
+                        }
+
+                        if (shouldSelect) {
+                            selectedValues.push(option.value);
+                        }
+                    }
+                }
+
+                if (hasChanged) {
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                return selectedValues;
+            }
+        """.trimIndent()
+
+        val result = driverHelper.invokeOnElement(selector, "selectOption") { node ->
+            // node.objectId is likely null here because querySelector doesn't resolve object.
+            // We must resolve it manually.
+            val remoteObject = domAPI?.resolveNode(nodeId = node.nodeId)
+            val objectId = remoteObject?.objectId ?: node.objectId
+
+            if (objectId == null) {
+                return@invokeOnElement listOf<String>()
+            }
+
+            if (runtimeAPI == null) {
+                throw WebDriverException("runtimeAPI is null")
+            }
+
+            val res = runtimeAPI?.callFunctionOn(
+                functionDeclaration,
+                objectId = objectId,
+                arguments = listOf(CallArgument(value = jsonValues)),
+                returnByValue = true
+            )
+
+            if (res?.exceptionDetails != null) {
+                throw WebDriverException("JS Error in selectOption: " + res.exceptionDetails?.exception?.description)
+            }
+
+            val resultValue = res?.result?.value
+
+            if (resultValue is List<*>) {
+                resultValue.filterIsInstance<String>()
+            } else {
+                listOf()
+            }
+        }
+
+        return result ?: listOf()
+    }
+
+    override suspend fun dblclick(selector: String) {
+        dblclick(selector, "")
+    }
+
+    /**
+     * focus on an element with [selector] and dblclick it with [modifier] pressed
+     * */
+    @Throws(WebDriverException::class)
+    override suspend fun dblclick(selector: String, modifier: String) {
+        driverHelper.invokeOnElement(selector, "dblclick") {
+            val node = page.focusOnSelector(selector) ?: return@invokeOnElement
+            emulator.click(node, 2)
+            gap("dblclick")
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun resize(width: Int, height: Int) {
+        driverHelper.invokeOnPage("resize") {
+            emulationAPI?.setDeviceMetricsOverride(
+                width = width,
+                height = height,
+                deviceScaleFactor = 0.0,
+                mobile = false
+            )
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun dialogAccept(promptText: String?) {
+        driverHelper.invokeOnPage("dialogAccept") {
+            pageAPI?.handleJavaScriptDialog(accept = true, promptText = promptText)
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun dialogDismiss() {
+        driverHelper.invokeOnPage("dialogDismiss") {
+            pageAPI?.handleJavaScriptDialog(accept = false)
         }
     }
 
@@ -436,9 +626,30 @@ class PulsarWebDriver(
     }
 
     @Throws(WebDriverException::class)
+    override suspend fun upload(selector: String, paths: List<String>) {
+        driverHelper.invokeOnElement(selector, "upload", focus = true) { node ->
+            domAPI?.setFileInputFiles(files = paths, nodeId = node.nodeId)
+        }
+    }
+
+    @Throws(WebDriverException::class)
     override suspend fun press(selector: String, key: String) {
         driverHelper.invokeOnElement(selector, "press", focus = true) { _ ->
             keyboard?.press(key, randomDelayMillis("press"))
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun keyDown(key: String) {
+        driverHelper.invokeOnPage("keyDown") {
+            keyboard?.down(key)
+        }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun keyUp(key: String) {
+        driverHelper.invokeOnPage("keyUp") {
+            keyboard?.up(key)
         }
     }
 
@@ -508,10 +719,40 @@ class PulsarWebDriver(
         return driverHelper.invokeOnElement(selector, "outerHTML") { node ->
             when {
                 node.isNull() -> null
-                // TODO: performance issue for large HTML
+                // TODO: performance issue for large HTML (memory copy), consider accept the raw byte stream and convert to string in native code
                 else -> domAPI?.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
             }
         }
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun ariaSnapshot(): String {
+        return rpc.invokeDeferredSilently("ariaSnapshot") { page.ariaSnapshot() } ?: ""
+    }
+
+    @Throws(WebDriverException::class)
+    override suspend fun ariaSnapshot(viewports: String): String {
+        val viewportIndices = ViewportSpec.parse(viewports)
+            ?: return ariaSnapshot()
+        return rpc.invokeDeferredSilently("ariaSnapshot") { page.ariaSnapshot(viewportIndices) } ?: ""
+    }
+
+    /**
+     * Queries for a list of elements using a selector.
+     *
+     * Supports two selector formats:
+     * - CSS selector: "div.class", "#id", etc.
+     * - XPath selector: "//div[@class='class']", etc.
+     * - Backend node ID: "backend:123", "e1233"
+     * - Frame backend node ID: "fbn:FRAMExID,123"
+     *
+     * @param selector CSS selector or "backend:nodeId" format
+     * @return nodeId or null if not found
+     */
+    @Beta
+    @Throws(WebDriverException::class)
+    override suspend fun querySelectorAll(selector: String): List<NodeRef> {
+        return driverHelper.invokeOnPage("select") { page.querySelectorAll(selector) } ?: listOf()
     }
 
     @Throws(WebDriverException::class)
@@ -560,7 +801,7 @@ function() {
                             objectId = nd.objectId,
                             returnByValue = true
                         )
-                        // TODO: performance issue for large text
+                        // TODO: performance issue for large text (memory copy)
                         remoteObject?.result?.value?.toString()
                     } else null
                 }
@@ -598,45 +839,45 @@ function() {
 
     /**
      * This method scrolls element into view if needed, and then uses
-     * {@link screenshot.captureScreenshot} to take a screenshot of the element.
+     * {@link screenshot.screenshot} to take a screenshot of the element.
      * If the element is detached from DOM, the method throws an error.
      */
     @Throws(WebDriverException::class)
-    override suspend fun captureScreenshot(fullPage: Boolean): String? {
+    override suspend fun screenshot(fullPage: Boolean): String? {
         return try {
-            rpc.invokeWithRetry("captureScreenshot") {
-                screenshot.captureScreenshot(fullPage)
+            rpc.invokeWithRetry("screenshot") {
+                screenshot.screenshot(fullPage)
             }
         } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "captureScreenshot")
+            rpc.handleChromeException(e, "screenshot")
             null
         }
     }
 
     /**
      * This method scrolls element into view if needed, and then uses
-     * {@link page.captureScreenshot} to take a screenshot of the element.
+     * {@link page.screenshot} to take a screenshot of the element.
      * If the element is detached from DOM, the method throws an error.
      */
     @Throws(WebDriverException::class)
-    override suspend fun captureScreenshot(selector: String): String? {
+    override suspend fun screenshot(selector: String): String? {
         return try {
             page.scrollIntoViewIfNeeded(selector) ?: return null
             // Force the page stop all navigations and pending resource fetches.
-            rpc.invokeWithRetry("captureScreenshot") { screenshot.captureScreenshot(selector) }
+            rpc.invokeWithRetry("screenshot") { screenshot.screenshot(selector) }
         } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "captureScreenshot")
+            rpc.handleChromeException(e, "screenshot")
             null
         }
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun captureScreenshot(rect: RectD): String? {
+    override suspend fun screenshot(rect: RectD): String? {
         return try {
             // Force the page stop all navigations and pending resource fetches.
-            rpc.invokeWithRetry("captureScreenshot") { screenshot.captureScreenshot(rect) }
+            rpc.invokeWithRetry("screenshot") { screenshot.screenshot(rect) }
         } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "captureScreenshot")
+            rpc.handleChromeException(e, "screenshot")
             null
         }
     }
@@ -655,8 +896,8 @@ function() {
     override suspend fun nanoDOMTree(): NanoDOMTree? {
         return rpc.invokeWithRetry("nanoDOMTree") {
             val snapshotOptions = SnapshotOptions()
-            val domState = domService.getDOMState(snapshotOptions = snapshotOptions)
-            domState.microTree.toNanoTreeInRange()
+            val domState = snapshotService.getDOMState(snapshotOptions = snapshotOptions)
+            domState.serializableTree.toNanoTreeInRange()
         }
     }
 
@@ -721,7 +962,7 @@ function() {
                 pageAPI?.stopLoading()
             } else {
                 // go to about:blank, so the browser stops the previous page and releases all resources
-                navigateTo(ChromeImpl.ABOUT_BLANK_PAGE)
+                navigate(ChromeImpl.ABOUT_BLANK_PAGE)
             }
         } catch (e: ChromeIOException) {
             if (!e.isOpen || !devTools.isOpen) {
@@ -1069,17 +1310,21 @@ function() {
     }
 
     private suspend fun waitForScrollSettled(selector: String, timeout: Duration = Duration.ofMillis(5_000)) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = page.convertSelectorIfNecessary(selector)
+        val stateKey = "__ps_scroll_${Random.nextLong(Long.MAX_VALUE).toString(16)}"
         val expression = """
 (() => {
   const sel = "$safeSelector";
+  const key = "$stateKey";
   const el = document.querySelector(sel);
   if (!el) return true;
   const r = el.getBoundingClientRect();
   const s = document.scrollingElement || document.documentElement;
-  const isFirst = (typeof el.__pulsar_scroll_prev === 'undefined');
-  const prev = el.__pulsar_scroll_prev || {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
-  el.__pulsar_scroll_prev = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  const map = window[key] || (window[key] = new WeakMap());
+  const curr = {t:r.top,l:r.left,st:s.scrollTop,sl:s.scrollLeft};
+  const isFirst = !map.has(el);
+  const prev = map.get(el) || curr;
+  map.set(el, curr);
   return !isFirst &&
          Math.abs(prev.t - r.top) < 1 &&
          Math.abs(prev.l - r.left) < 1 &&
@@ -1088,21 +1333,28 @@ function() {
 })()
 """
 
-        waitUntil(200, timeout) {
-            val settled = evaluateDetail(expression)
-            settled?.value as? Boolean ?: false
-        }
-
-        evaluateDetail(
-            """
+        try {
+            waitUntil(200, timeout) {
+                val settled = evaluateDetail(expression)
+                settled?.value as? Boolean ?: false
+            }
+        } finally {
+            runCatching {
+                evaluateDetail(
+                    """
 (() => {
   const sel = "$safeSelector";
+  const key = "$stateKey";
   const el = document.querySelector(sel);
-  if (!el) return true;
-  delete el.__pulsar_scroll_prev;
+  if (el && window[key]) {
+    window[key].delete(el);
+  }
+  delete window[key];
+  return true;
 })()
                     """
-        )
+                )
+            }
+        }
     }
 }
-

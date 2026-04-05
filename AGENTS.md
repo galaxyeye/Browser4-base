@@ -77,8 +77,9 @@ mvnw.cmd -q -DskipTests
 | `pulsar-core` | Core engine: sessions, scheduling, DOM, browser control |
 | `pulsar-agentic` | AI agents implementation, MCP, skills registration |
 | `pulsar-rest` | Spring Boot REST layer & command endpoints |
-| `sdks/*` | Client SDKs (Kotlin, Python) |
-| `browser4/*` | Product aggregation (SPA & packaging) |
+| `sdks/*` | Browser4 CLI + skill assets (`sdks/browser4-cli`, `sdks/skill`) |
+| `browser4/*` | Product packaging (`browser4/browser4-agents`) |
+| `examples/*` | Runnable examples (`examples/browser4-examples`) |
 | `pulsar-tests` | E2E & heavy integration & scenario tests |
 | `pulsar-tests-common` | Shared test base classes and utilities |
 | `pulsar-benchmarks` | JMH benchmarks |
@@ -119,7 +120,7 @@ Key options:
 - Use explicit return types
 - Apply null-safety patterns (`require`/`check`/`?:`)
 - Public APIs require KDoc documentation
-- Store AI generated task docs in `docs-dev`
+- Store AI generated task docs in `docs-dev/copilot/`
 
 **KDoc Template:**
 ```kotlin
@@ -153,7 +154,12 @@ To keep iteration fast, **don’t run full test suites by default**.
 - Upgrade scope when risk increases (cross-module, public API/DTO/serialization, Spring wiring, dependency bumps,
   concurrency/I/O, browser/CDP lifecycle)
 
-See [TESTING.md](TESTING.md) for details and trade-offs.
+See [TESTING.md](docs/TESTING.md) for details and trade-offs.
+
+### Test Commands in This Repository
+- Use `bin/test.ps1` on Windows for scoped runs: `fast`, `it`, `e2e`, `core`, `rest`, `skills`, `mcp`, `browser4-cli`, `browser4`
+- Maven profile switches in root `pom.xml` are property-driven: `-DrunITs=true`, `-DrunE2ETests=true`, `-DrunSDKTests=true`, `-DrunCoreTests=true`, `-DrunRestTests=true`
+- `sdks/browser4-cli/tests/e2e.rs`: all e2e scenarios must start and depend on Browser4.jar; this includes single-scenario runs via `--scenario`.
 
 ### Test Location
 - Module unit tests: `src/test/kotlin/...`
@@ -165,8 +171,8 @@ See [TESTING.md](TESTING.md) for details and trade-offs.
 - Integration tests: `<ClassName>IT.kt`
 - E2E tests: `<ClassName>E2ETest.kt`
 - **Method names: Use camelCase (NOT backtick naming)**
-  - ✅ `testUserLoginWithValidCredentials()` + `@DisplayName("test user login with valid credentials")`
-  - ❌ `` `test user login with valid credentials` ``
+    - ✅ `testUserLoginWithValidCredentials()` + `@DisplayName("test user login with valid credentials")`
+    - ❌ `` `test user login with valid credentials` ``
 
 ### Test Performance Targets
 - Unit tests: <100ms
@@ -187,6 +193,7 @@ Default: 8182
 ### Configuration Files
 - `application.properties` — Main configuration
 - `application-*.properties` — Profile-specific overrides
+- `application-private.properties` — Private overrides (ignored by Git), secrets should be set here or via environment variables
 
 ### Key Configuration Properties
 ```properties
@@ -220,18 +227,19 @@ browser.display.mode=GUI  # GUI | HEADLESS | SUPERVISED
 
 ## Common Issues & Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| `mvnw` no execute permission | `chmod +x mvnw` |
-| JDK version mismatch | Ensure JDK 17+ in `JAVA_HOME` |
-| Windows parameter escaping | Use `-D"key.with.dots=value"` |
-| Port 8182 in use | Override `server.port` or use `application-local.properties` |
-| CDP retry log storms | Use existing retry utilities, lower log level |
+| Issue | Solution                                                    |
+|-------|-------------------------------------------------------------|
+| `mvnw` no execute permission | `chmod +x mvnw`                                             |
+| JDK version mismatch | Ensure JDK 17+ in `JAVA_HOME`                               |
+| Windows parameter escaping | Use `-D"key.with.dots=value"`                               |
+| Port 8182 in use | Override `server.port` or use root `application.properties` |
+| CDP retry log storms | Use existing retry utilities, lower log level               |
 
 ## Documentation References
 
 - [Configuration Guide](docs/config.md)
 - [Build Guide](docs/build.md)
+- [Testing Taxonomy](docs/TESTING.md)
 - [Advanced Guide](docs/advanced-guides.md)
 - [REST API Examples](docs/rest-api-examples.md)
 - [Concepts](docs/concepts.md)
@@ -244,9 +252,9 @@ browser.display.mode=GUI  # GUI | HEADLESS | SUPERVISED
 
 Browser4 is built around three core concepts:
 
-1. **Sessions** - Manage page loading and state
+1. **Sessions** - Main interface to manage page loading, fetching, parsing, extracting, AI chatting, page state, persistence, and more
 2. **Agents** - Autonomous browser agents with reasoning capabilities
-3. **Drivers** - Low-level browser control with human-like behaviors
+3. **WebDrivers** - Low-level browser control with human-like behaviors
 
 ### Task Planning and Execution
 
@@ -295,18 +303,22 @@ When given a task, Claude should:
 
 **Common Patterns:**
 ```kotlin
-// Loading a page
-val page = session.load(url, "-expires 1d -refresh")
-
-// Browser interaction
-val driver = session.driver()
-driver.click("button.submit")
-driver.type("#search", "query")
-driver.waitFor(".results")
-
-// Extraction
-val elements = driver.selectAll(".product")
-val data = elements.map { it.attr("data-price") }
+val session = AgenticContexts.getOrCreateSession()
+val agent = session.companionAgent
+val driver = session.getOrCreateBoundDriver()
+var page = session.open(url)
+var document = session.parse(page)
+var fields = session.extract(document, mapOf("title" to "#title"))
+var result = agent.act("scroll to the bottom")
+result = agent.act("scroll to the top")
+result = agent.act("enter 'pulsar' into the search box and submit the form (RESULTS will display in the same page)")
+result = agent.act("click search button")
+var content = driver.selectFirstTextOrNull("body")
+content = driver.selectFirstTextOrNull("body")
+var history = agent.run("find the search box, type 'web scraping' and submit the form (RESULTS will display in the same page)")
+page = session.capture(driver)
+document = session.parse(page)
+fields = session.extract(document, mapOf("title" to "#title"))
 ```
 
 ### MCP (Model Context Protocol) Integration
@@ -415,4 +427,4 @@ Before submitting changes, verify:
 
 ---
 
-*Last updated: 2026-02-08*
+*Last updated: 2026-03-14*

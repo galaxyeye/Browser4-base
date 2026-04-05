@@ -1,11 +1,12 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.util.HashUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentHashMap
+import org.junit.jupiter.api.DisplayName
 
 class HashUtilsTests {
 
@@ -23,9 +24,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash with default config includes all components`() {
+        @DisplayName("elementHash with default config includes all components")
+    fun elementhashWithDefaultConfigIncludesAllComponents() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("id" to "submit-btn", "class" to "btn primary"),
@@ -44,9 +46,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash with legacy config excludes backend and session IDs`() {
+        @DisplayName("elementHash with legacy config excludes backend and session IDs")
+    fun elementhashWithLegacyConfigExcludesBackendAndSessionIds() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("id" to "submit-btn", "class" to "btn primary"),
@@ -64,9 +67,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash with backend node config uses only backend and session`() {
+        @DisplayName("elementHash with backend node config uses only backend and session")
+    fun elementhashWithBackendNodeConfigUsesOnlyBackendAndSession() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("id" to "submit-btn", "class" to "btn primary"),
@@ -99,9 +103,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash includes parent branch hash when provided`() {
+        @DisplayName("elementHash includes parent branch hash when provided")
+    fun elementhashIncludesParentBranchHashWhenProvided() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("id" to "submit-btn")
@@ -117,9 +122,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash uses static attributes correctly`() {
+        @DisplayName("elementHash uses static attributes correctly")
+    fun elementhashUsesStaticAttributesCorrectly() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "INPUT",
             attributes = mapOf(
@@ -140,9 +146,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash fallback strategy works for nodes without meaningful attributes`() {
+        @DisplayName("elementHash fallback strategy works for nodes without meaningful attributes")
+    fun elementhashFallbackStrategyWorksForNodesWithoutMeaningfulAttributes() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "DIV",
             attributes = mapOf("data-random" to "value"), // Not in STATIC_ATTRIBUTES
@@ -164,9 +171,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash caching works correctly`() {
+        @DisplayName("elementHash caching works correctly")
+    fun elementhashCachingWorksCorrectly() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("id" to "test-btn")
@@ -182,13 +190,14 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `parentBranchHash creates consistent hash for ancestor path`() {
+        @DisplayName("parentBranchHash creates consistent hash for ancestor path")
+    fun parentbranchhashCreatesConsistentHashForAncestorPath() {
         // Arrange
         val ancestors = listOf(
-            DOMTreeNodeEx(nodeId = 1, nodeName = "HTML"),
-            DOMTreeNodeEx(nodeId = 2, nodeName = "BODY", attributes = mapOf("class" to "main-body")),
-            DOMTreeNodeEx(nodeId = 3, nodeName = "DIV", attributes = mapOf("id" to "container", "class" to "wrapper extra")),
-            DOMTreeNodeEx(nodeId = 4, nodeName = "BUTTON", attributes = mapOf("class" to "btn primary"))
+            MergedDOMTreeNode(nodeId = 1, nodeName = "HTML"),
+            MergedDOMTreeNode(nodeId = 2, nodeName = "BODY", attributes = mapOf("class" to "main-body")),
+            MergedDOMTreeNode(nodeId = 3, nodeName = "DIV", attributes = mapOf("id" to "container", "class" to "wrapper extra")),
+            MergedDOMTreeNode(nodeId = 4, nodeName = "BUTTON", attributes = mapOf("class" to "btn primary"))
         )
 
         // Act
@@ -201,15 +210,16 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `parentBranchHash handles special elements correctly`() {
+        @DisplayName("parentBranchHash handles special elements correctly")
+    fun parentbranchhashHandlesSpecialElementsCorrectly() {
         // Arrange
-        val shadowHost = DOMTreeNodeEx(
+        val shadowHost = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "DIV",
-            shadowRoots = listOf(DOMTreeNodeEx(nodeId = 10, nodeName = "DIV"))
+            shadowRoots = listOf(MergedDOMTreeNode(nodeId = 10, nodeName = "DIV"))
         )
-        val iframe = DOMTreeNodeEx(nodeId = 2, nodeName = "IFRAME", attributes = mapOf("src" to "test.html"))
-        val slot = DOMTreeNodeEx(nodeId = 3, nodeName = "SLOT", attributes = mapOf("name" to "content"))
+        val iframe = MergedDOMTreeNode(nodeId = 2, nodeName = "IFRAME", attributes = mapOf("src" to "test.html"))
+        val slot = MergedDOMTreeNode(nodeId = 3, nodeName = "SLOT", attributes = mapOf("name" to "content"))
         val ancestors = listOf(shadowHost, iframe, slot)
 
         // Act
@@ -221,11 +231,12 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `parentBranchHash caching works correctly`() {
+        @DisplayName("parentBranchHash caching works correctly")
+    fun parentbranchhashCachingWorksCorrectly() {
         // Arrange
         val ancestors = listOf(
-            DOMTreeNodeEx(nodeId = 1, nodeName = "HTML"),
-            DOMTreeNodeEx(nodeId = 2, nodeName = "BODY")
+            MergedDOMTreeNode(nodeId = 1, nodeName = "HTML"),
+            MergedDOMTreeNode(nodeId = 2, nodeName = "BODY")
         )
 
         // Act
@@ -238,9 +249,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `simpleElementHash uses default configuration`() {
+        @DisplayName("simpleElementHash uses default configuration")
+    fun simpleelementhashUsesDefaultConfiguration() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "INPUT",
             attributes = mapOf("type" to "text", "placeholder" to "Enter text")
@@ -255,9 +267,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash with custom sessionId override`() {
+        @DisplayName("elementHash with custom sessionId override")
+    fun elementhashWithCustomSessionidOverride() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             sessionId = "original-session"
@@ -273,9 +286,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `elementHash handles null and empty values gracefully`() {
+        @DisplayName("elementHash handles null and empty values gracefully")
+    fun elementhashHandlesNullAndEmptyValuesGracefully() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "DIV",
             attributes = emptyMap(),
@@ -292,9 +306,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `all hash configurations produce different hashes for same node`() {
+        @DisplayName("all hash configurations produce different hashes for same node")
+    fun allHashConfigurationsProduceDifferentHashesForSameNode() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "BUTTON",
             attributes = mapOf("id" to "test-btn", "class" to "btn"),
@@ -314,9 +329,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `hash configurations are deterministic`() {
+        @DisplayName("hash configurations are deterministic")
+    fun hashConfigurationsAreDeterministic() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "INPUT",
             attributes = mapOf("type" to "email", "required" to "true"),
@@ -336,9 +352,10 @@ class HashUtilsTests {
     }
 
     @Test
-    fun `fallback identifier includes helpful attributes`() {
+        @DisplayName("fallback identifier includes helpful attributes")
+    fun fallbackIdentifierIncludesHelpfulAttributes() {
         // Arrange
-        val node = DOMTreeNodeEx(
+        val node = MergedDOMTreeNode(
             nodeId = 1,
             nodeName = "INPUT",
             attributes = mapOf(

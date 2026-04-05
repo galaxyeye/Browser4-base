@@ -1,207 +1,284 @@
 #!/bin/bash
 
-# Find the first parent directory that contains a VERSION file
-APP_HOME=$(cd "$(dirname "$0")">/dev/null || exit 1; pwd)
-while [[ ! -f "$APP_HOME/VERSION" && "$APP_HOME" != "/" ]]; do
-  APP_HOME=$(dirname "$APP_HOME")
-done
-[[ -f "$APP_HOME/VERSION" ]] && cd "$APP_HOME" || exit 1
+script_dir=$(cd "$(dirname "$0")" > /dev/null || exit 1; pwd)
+repo_root=$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null)
 
-function print_usage {
-  echo "Usage: test.sh [test-type] [maven-args...]"
+if [[ -z "$repo_root" ]]; then
+  repo_root="$script_dir"
+  while [[ ! -f "$repo_root/VERSION" && "$repo_root" != "/" ]]; do
+    repo_root=$(dirname "$repo_root")
+  done
+fi
+
+if [[ ! -f "$repo_root/VERSION" ]]; then
+  echo "Error: Could not locate the repository root from $script_dir" >&2
+  exit 1
+fi
+
+cd "$repo_root" || exit 1
+
+print_usage() {
+  echo "Usage: test.sh [test-types...] [additional-args...]"
   echo ""
   echo "Test Types:"
   echo "  fast        Run fast unit tests only"
   echo "  it          Run integration tests"
   echo "  e2e         Run end-to-end tests"
-  echo "  sdk         Run Kotlin SDK tests"
-  echo "  python-sdk  Run Python SDK tests"
-  echo "  nodejs-sdk  Run NodeJS SDK tests"
+  echo "  browser4-cli Run Rust Browser4 CLI tests from sdks/browser4-cli"
   echo "  core        Run core module supplementary tests"
   echo "  rest        Run REST module tests"
-  echo "  all         Run all tests (integration, e2e, sdk)"
+  echo "  skills      Run skills-focused agentic tests"
+  echo "  mcp         Run MCP-focused agentic tests"
+  echo "  browser4    Run all Browser4 main tests (fast, core, rest, it, e2e)"
   echo ""
   echo "Examples:"
   echo "  test.sh fast                       # Run fast unit tests"
   echo "  test.sh it                         # Run integration tests"
   echo "  test.sh e2e                        # Run end-to-end tests"
-  echo "  test.sh sdk                        # Run Kotlin SDK tests"
-  echo "  test.sh python-sdk                 # Run Python SDK tests"
-  echo "  test.sh python-sdk -m integration  # Run Python SDK integration tests only"
-  echo "  test.sh nodejs-sdk                 # Run NodeJS SDK tests"
-  echo "  test.sh nodejs-sdk --coverage      # Run NodeJS SDK tests with coverage"
-  echo "  test.sh all                        # Run all tests"
-  echo "  test.sh it -pl pulsar-core         # Run integration tests for pulsar-core only"
+  echo "  test.sh browser4-cli               # Run Browser4 CLI tests"
+  echo "  test.sh browser4-cli -- --nocapture # Pass extra cargo test args"
+  echo "  test.sh skills                     # Run skills-focused agentic tests"
+  echo "  test.sh mcp                        # Run MCP-focused agentic tests"
+  echo "  test.sh browser4                   # Run all Browser4 main tests"
+  echo "  test.sh it -pl pulsar-core         # Pass additional Maven args through"
   exit 1
 }
 
-# Maven command
-MvnCmd="./mvnw"
+exit_unknown_test_type() {
+  local test_type=$1
+  echo "Error: Unknown test type '$test_type'. Valid test types: fast, it, e2e, browser4-cli, core, rest, skills, mcp, browser4." >&2
+  exit 1
+}
 
-# Validate Maven wrapper exists and is executable
-if [[ ! -x "$APP_HOME/mvnw" ]]; then
-    echo "Error: Maven wrapper not found or not executable at $APP_HOME/mvnw"
+run_maven_tests() {
+  local -a test_types=("$@")
+  local -a mvn_test_args=("test" "-P=-examples")
+  local -a modules=()
+  local -a test_patterns=()
+  local joined_modules=""
+  local joined_patterns=""
+  local has_fast=false
+  local has_it=false
+  local has_e2e=false
+  local has_core=false
+  local has_rest=false
+  local has_skills=false
+  local has_mcp=false
+
+  echo "=========================================="
+  echo "Running Maven tests: ${test_types[*]}"
+  echo "=========================================="
+
+  for type in "${test_types[@]}"; do
+    case "$type" in
+      fast) has_fast=true ;;
+      it) has_it=true ;;
+      e2e) has_e2e=true ;;
+      core) has_core=true ;;
+      rest) has_rest=true ;;
+      skills) has_skills=true ;;
+      mcp) has_mcp=true ;;
+    esac
+  done
+
+  [[ "$has_it" == "true" ]] && mvn_test_args+=("-DrunITs=true")
+  [[ "$has_e2e" == "true" ]] && mvn_test_args+=("-DrunE2ETests=true")
+  if [[ "$has_core" == "true" ]]; then
+    mvn_test_args+=("-DrunCoreTests=true" "-Ppulsar-core-tests")
+    modules+=(
+      "pulsar-core/pulsar-resources"
+      "pulsar-core/pulsar-common"
+      "pulsar-core/pulsar-dom"
+      "pulsar-core/pulsar-persist"
+      "pulsar-core/pulsar-plugins"
+      "pulsar-core/pulsar-third"
+      "pulsar-core/pulsar-skeleton"
+      "pulsar-core/pulsar-browser"
+      "pulsar-core/pulsar-spring-support"
+      "pulsar-core/pulsar-ql-common"
+      "pulsar-core/pulsar-ql"
+      "pulsar-core/pulsar-core-tests"
+      "pulsar-core/pulsar-core-tests/pulsar-common-tests"
+      "pulsar-core/pulsar-core-tests/pulsar-dom-tests"
+      "pulsar-core/pulsar-core-tests/pulsar-ql-tests"
+    )
+  fi
+
+  if [[ "$has_skills" == "true" || "$has_mcp" == "true" ]]; then
+    modules+=("pulsar-agentic")
+
+    if [[ "$has_fast" == "false" && "$has_it" == "false" && "$has_e2e" == "false" && "$has_core" == "false" && "$has_rest" == "false" ]]; then
+      [[ "$has_skills" == "true" ]] && test_patterns+=("*Skill*")
+      [[ "$has_mcp" == "true" ]] && test_patterns+=("*MCP*")
+
+      if [[ ${#test_patterns[@]} -gt 0 ]]; then
+        joined_patterns=$(IFS=, ; echo "${test_patterns[*]}")
+        mvn_test_args+=("-Dtest=$joined_patterns" "-Dsurefire.failIfNoSpecifiedTests=false")
+      fi
+    fi
+  fi
+
+  if [[ "$has_fast" == "true" || "$has_rest" == "true" ]]; then
+    modules=()
+  fi
+
+  if [[ ${#modules[@]} -gt 0 ]]; then
+    joined_modules=$(IFS=, ; echo "${modules[*]}")
+    mvn_test_args+=("-pl" "$joined_modules" "-am")
+  fi
+
+  mvn_test_args+=("${AdditionalMvnArgs[@]}")
+
+  ./mvnw "${mvn_test_args[@]}"
+  local exit_code=$?
+  if [[ $exit_code -ne 0 ]]; then
+    echo ""
+    echo "=========================================="
+    echo "❌ Maven tests failed with exit code $exit_code"
+    echo "=========================================="
+    exit $exit_code
+  fi
+
+  echo ""
+  echo "=========================================="
+  echo "✅ Maven tests completed successfully"
+  echo "=========================================="
+}
+
+run_browser4_cli_tests() {
+  local browser4_cli_dir="$repo_root/sdks/browser4-cli"
+
+  echo "=========================================="
+  echo "Running Browser4 CLI tests..."
+  echo "=========================================="
+
+  if [[ ! -d "$browser4_cli_dir" ]]; then
+    echo "Error: Browser4 CLI directory not found at $browser4_cli_dir" >&2
     exit 1
-fi
+  fi
 
-# Default test type is fast
-TestType="fast"
+  if ! command -v cargo >/dev/null 2>&1; then
+    echo "Error: cargo is not installed or not in PATH" >&2
+    exit 1
+  fi
+
+  pushd "$browser4_cli_dir" > /dev/null || exit 1
+  echo "Working directory: $(pwd)"
+
+  if [[ ! -f "$browser4_cli_dir/Cargo.toml" ]]; then
+    echo "Error: Cargo.toml not found in $browser4_cli_dir" >&2
+    popd > /dev/null || true
+    exit 1
+  fi
+
+  cargo test "${AdditionalMvnArgs[@]}"
+  local exit_code=$?
+  popd > /dev/null || true
+
+  if [[ $exit_code -ne 0 ]]; then
+    echo ""
+    echo "=========================================="
+    echo "❌ Browser4 CLI tests failed with exit code $exit_code"
+    echo "=========================================="
+    exit $exit_code
+  fi
+
+  echo ""
+  echo "=========================================="
+  echo "✅ Browser4 CLI tests completed successfully"
+  echo "=========================================="
+}
+
+KnownTestTypes=(fast it e2e browser4-cli core rest skills mcp browser4)
+TestTypes=()
+MavenTests=()
+CLITests=()
 AdditionalMvnArgs=()
+ParsingTestTypes=true
 
-# Parse command-line arguments
 if [[ $# -eq 0 ]]; then
   print_usage
 fi
 
-if [[ $# -gt 0 ]]; then
-  case $1 in
-    fast|it|e2e|sdk|python-sdk|nodejs-sdk|core|rest|all)
-      TestType=$1
-      shift
-      ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     -h|-help|--help)
       print_usage
       ;;
+    fast|it|e2e|browser4-cli|core|rest|skills|mcp|browser4)
+      if [[ "$ParsingTestTypes" == "true" ]]; then
+        TestTypes+=("$1")
+      else
+        AdditionalMvnArgs+=("$1")
+      fi
+      ;;
     *)
-      echo "Error: Invalid argument '$1'"
-      echo ""
-      print_usage
+      if [[ "$ParsingTestTypes" == "true" && "$1" != -* ]]; then
+        exit_unknown_test_type "$1"
+      fi
+      ParsingTestTypes=false
+      AdditionalMvnArgs+=("$1")
       ;;
   esac
+  shift
+done
+
+if [[ ${#TestTypes[@]} -eq 0 ]]; then
+  TestTypes=(fast)
 fi
 
-# Collect remaining arguments
-AdditionalMvnArgs=("$@")
+for type in "${TestTypes[@]}"; do
+  if [[ "$type" == "browser4" ]]; then
+    MavenTests+=(fast core it e2e rest)
+  elif [[ "$type" == "browser4-cli" ]]; then
+    CLITests+=("$type")
+  else
+    MavenTests+=("$type")
+  fi
+done
 
-# Execute tests based on type
-echo "=========================================="
-echo "Running $TestType tests..."
-echo "=========================================="
-
-case $TestType in
-  fast)
-    echo "Running fast unit tests (default behavior)..."
-    $MvnCmd test "${AdditionalMvnArgs[@]}"
-    ;;
-  it)
-    echo "Running integration tests..."
-    $MvnCmd test -DrunITs=true "${AdditionalMvnArgs[@]}"
-    ;;
-  e2e)
-    echo "Running end-to-end tests..."
-    $MvnCmd test -DrunE2ETests=true -P all-modules -pl pulsar-tests,pulsar-tests/pulsar-e2e-tests -am "${AdditionalMvnArgs[@]}"
-    ;;
-  sdk)
-    echo "Running SDK tests..."
-    $MvnCmd test -DrunSDKTests=true -P all-modules -pl sdks/kotlin-sdk-tests -am "${AdditionalMvnArgs[@]}"
-    ;;
-  python-sdk)
-    echo "Running Python SDK tests..."
-    PythonSdkDir="$APP_HOME/sdks/browser4-sdk-python"
-
-    if [[ ! -d "$PythonSdkDir" ]]; then
-      echo "Error: Python SDK directory not found at $PythonSdkDir"
-      exit 1
+UniqueMavenTests=()
+for type in "${MavenTests[@]}"; do
+  found=false
+  for known in "${UniqueMavenTests[@]}"; do
+    if [[ "$known" == "$type" ]]; then
+      found=true
+      break
     fi
+  done
 
-    # Check if Python is available
-    if ! command -v python3 &> /dev/null; then
-      echo "Error: python3 is not installed or not in PATH"
-      exit 1
+  if [[ "$found" == "false" ]]; then
+    UniqueMavenTests+=("$type")
+  fi
+done
+MavenTests=("${UniqueMavenTests[@]}")
+
+UniqueCLITests=()
+for type in "${CLITests[@]}"; do
+  found=false
+  for known in "${UniqueCLITests[@]}"; do
+    if [[ "$known" == "$type" ]]; then
+      found=true
+      break
     fi
+  done
 
-    cd "$PythonSdkDir"
-    echo "Working directory: $(pwd)"
+  if [[ "$found" == "false" ]]; then
+    UniqueCLITests+=("$type")
+  fi
+done
+CLITests=("${UniqueCLITests[@]}")
 
-    # Check if venv exists and activate it
-    if [[ -d "$PythonSdkDir/venv" ]]; then
-      echo "Activating virtual environment..."
-      source "$PythonSdkDir/venv/bin/activate"
-    fi
-
-    # Check if pytest is available
-    if ! python3 -m pytest --version &> /dev/null; then
-      echo "Error: pytest is not installed. Install it with: pip install pytest"
-      echo "Or install all dev dependencies with: pip install -e \".[dev]\" in $PythonSdkDir"
-      exit 1
-    fi
-
-    python3 -m pytest "${AdditionalMvnArgs[@]}"
-    ExitCode=$?
-    cd "$APP_HOME"
-    exit $ExitCode
-    ;;
-  nodejs-sdk)
-    echo "Running NodeJS SDK tests..."
-    NodejsSdkDir="$APP_HOME/sdks/browser4-sdk-nodejs"
-
-    if [[ ! -d "$NodejsSdkDir" ]]; then
-      echo "Error: NodeJS SDK directory not found at $NodejsSdkDir"
-      exit 1
-    fi
-
-    # Check if Node.js is available
-    if ! command -v node &> /dev/null; then
-      echo "Error: node is not installed or not in PATH"
-      exit 1
-    fi
-
-    cd "$NodejsSdkDir"
-    echo "Working directory: $(pwd)"
-
-    # Check if node_modules exists
-    if [[ ! -d "$NodejsSdkDir/node_modules" ]]; then
-      echo "Installing dependencies..."
-      npm install
-      if [[ $? -ne 0 ]]; then
-        echo "Error: Failed to install dependencies"
-        cd "$APP_HOME"
-        exit 1
-      fi
-    fi
-
-    # Check if jest is available
-    if [[ ! -f "$NodejsSdkDir/node_modules/.bin/jest" ]]; then
-      echo "Error: jest is not installed. Install it with: npm install"
-      cd "$APP_HOME"
-      exit 1
-    fi
-
-    npm test -- "${AdditionalMvnArgs[@]}"
-    ExitCode=$?
-    cd "$APP_HOME"
-    exit $ExitCode
-    ;;
-  core)
-    echo "Running core module supplementary tests..."
-    $MvnCmd test -DrunCoreTests=true -Ppulsar-core-tests -pl pulsar-core,pulsar-core/pulsar-core-tests -am "${AdditionalMvnArgs[@]}"
-    ;;
-  rest)
-    echo "Running REST module tests..."
-    $MvnCmd test -DrunRestTests=true "${AdditionalMvnArgs[@]}"
-    ;;
-  all)
-    echo "Running all tests (integration, e2e, sdk)..."
-    $MvnCmd test -Pall-modules -DrunITs=true -DrunE2ETests=true -DrunSDKTests=true "${AdditionalMvnArgs[@]}"
-    ;;
-  *)
-    echo "Error: Unknown test type '$TestType'"
-    print_usage
-    ;;
-esac
-
-ExitCode=$?
-
-if [[ $ExitCode -eq 0 ]]; then
-  echo ""
-  echo "=========================================="
-  echo "✅ $TestType tests completed successfully"
-  echo "=========================================="
-else
-  echo ""
-  echo "=========================================="
-  echo "❌ $TestType tests failed with exit code $ExitCode"
-  echo "=========================================="
+if [[ ${#MavenTests[@]} -gt 0 ]]; then
+  run_maven_tests "${MavenTests[@]}"
 fi
 
-exit $ExitCode
+for test_type in "${CLITests[@]}"; do
+  case "$test_type" in
+    browser4-cli)
+      run_browser4_cli_tests
+      ;;
+  esac
+done
+
+exit 0

@@ -106,10 +106,11 @@ val result = agent.run("""
    ```
    如有乱码问题（Windows）：
    ```shell
-   ./bin/run-examples.ps1
+   ./bin/run-agent-examples.ps1
    ```
 
    在 `browser4-examples` 模块中探索并运行示例，直观了解 Browser4 的能力。
+   Java 兼容示例已移除，请改用 Kotlin API、SDK 或 CLI 工具。
 
 Docker 部署请参见我们的 [Docker Hub 仓库](https://hub.docker.com/r/galaxyeye88/browser4)。
 
@@ -135,6 +136,41 @@ val task = """
 
 agent.run(task)
 ```
+
+### CLI & SKILLS
+
+Browser4 CLI is a powerful command-line interface for direct browser control and automation, designed for both human
+users and AI agents. It provides a simple syntax to perform complex browser interactions without writing code.
+
+Browser4 CLI is compatible with Playwright and supports a wide range of commands for navigation, interaction, and data extraction.
+It can be used in scripts, terminal sessions, or integrated into AI agents through SKILLS.
+
+```shell
+# open new browser
+browser4-cli open
+# navigate to a page
+browser4-cli goto https://browser4.io/
+# take a snapshot
+browser4-cli snapshot
+# interact with the page using refs from the snapshot
+browser4-cli click e15
+browser4-cli type "page.click"
+browser4-cli press Enter
+# take a screenshot
+browser4-cli screenshot
+# close the browser
+browser4-cli close
+```
+
+Build CLI from source:
+
+[README.md](sdks/browser4-cli/README.md)
+
+Browser4 CLI is designed for use by AI agents through SKILLS + CLI.
+
+[SKILL.md](sdks/skill/SKILL.md)
+
+---
 
 ### 工作流自动化
 
@@ -269,17 +305,16 @@ Invoke-WebRequest -Uri https://github.com/platonai/PulsarRPAPro/releases/downloa
 
 ## 📦 模块概览
 
-| 模块 | 说明 |
-|--------|-------------|
-| `pulsar-core` | 核心引擎：会话、调度、DOM、浏览器控制 |
-| `pulsar-agentic` | 智能体实现、MCP 与技能注册 |
+| 模块 | 说明                      |
+|--------|-------------------------|
+| `pulsar-core` | 核心引擎：会话、调度、DOM、浏览器控制    |
+| `pulsar-agentic` | 智能体实现、MCP 与技能注册         |
 | `pulsar-rest` | Spring Boot REST 层与命令端点 |
-| `pulsar-tools` | CLI 工具与运维辅助组件 |
-| `browser4-spa` | 面向浏览器智能体的单页应用 |
-| `browser4-agents` | 智能体与爬虫编排及产品打包 |
-| `sdks` | Kotlin/Python SDK 及其测试与示例 |
-| `examples` | 可运行示例与演示工程 |
-| `pulsar-tests` | 重型集成与场景测试 |
+| `pulsar-tools` | 高阶智能体工具                 |
+| `browser4-agents` | 智能体与爬虫编排及产品打包           |
+| `sdks` | Rust 实现的 CLI，支持 SKILLS  |
+| `examples` | 可运行示例与演示工程              |
+| `pulsar-tests` | 重型集成与场景测试               |
 
 ---
 

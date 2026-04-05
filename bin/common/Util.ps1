@@ -7,14 +7,24 @@ function Fix-Encoding-UTF8 {
     # Switch it to UTF-8 to avoid mojibake when printing Chinese text.
     try {
         if ($IsWindows -or $env:OS -eq "Windows_NT") {
-            cmd /c chcp 65001 > $null
+            # Check current code page first
+            $currentCP = [Console]::OutputEncoding.CodePage
+            if ($currentCP -ne 65001) {
+                # Attempt to change to UTF-8
+                [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+                if ($PSVersionTable.PSVersion.Major -le 5) {
+                    # Only change chcp for older PowerShell to avoid side effects
+                    cmd /c chcp 65001 > $null
+                }
+            }
         }
     } catch {
         # Best-effort only; continue even if code page can't be changed.
     }
 
-    # 强制 PowerShell 使用 UTF-8 输出
-    $OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    # Force PowerShell to use UTF-8 for IO
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 
     # 强制 Maven 使用 UTF-8（尤其是 exec:java）

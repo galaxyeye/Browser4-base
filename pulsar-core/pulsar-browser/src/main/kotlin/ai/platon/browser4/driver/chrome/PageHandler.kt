@@ -1,11 +1,15 @@
 package ai.platon.browser4.driver.chrome
 
+import ai.platon.browser4.driver.chrome.dom.CDPSnapshotService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.Locator
+import ai.platon.browser4.driver.chrome.dom.model.BrowserUseState
+import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
+import ai.platon.browser4.driver.chrome.dom.model.PageTarget
+import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.util.CDPReturnError
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeRPCException
-import ai.platon.cdt.kt.protocol.support.annotations.Experimental
-import ai.platon.cdt.kt.protocol.support.annotations.Optional
 import ai.platon.cdt.kt.protocol.support.annotations.ParamName
 import ai.platon.cdt.kt.protocol.types.dom.Rect
 import ai.platon.cdt.kt.protocol.types.page.Navigate
@@ -16,43 +20,6 @@ import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
-
-/**
- * NodeId does not explicitly prohibit 0, but as seen in the internal implementation (Chromium source code):
- * - All valid nodes are assigned NodeIds starting from 1
- * - `0` is reserved as an "invalid / null node"
- *
- * DOM.NodeId #
- * Unique DOM node identifier.
- * Type: integer
- *
- * DOM.BackendNodeId #
- * Unique DOM node identifier used to reference a node that may not have been pushed to the front-end.
- * Type: integer
- *
- * References:
- * - [NodeId](https://chromedevtools.github.io/devtools-protocol/tot/DOM/#type-NodeId)
- * */
- data class NodeRef constructor(
-    val nodeId: Int = 0,
-    // backend node id is more stable
-    val backendNodeId: Int = 0,
-    // objectId is ephemeral; do not cache across calls. Always resolve a fresh objectId when needed.
-    val objectId: String? = null
-) {
-    /**
-     * Check if the node may exist.
-     *
-     * At least one of nodeId and backendNodeId is positive.
-     * */
-    fun mayExist(): Boolean {
-        return nodeId > 0 || backendNodeId > 0
-    }
-
-    fun isNull(): Boolean {
-        return nodeId == 0 && backendNodeId == 0
-    }
-}
 
 class PageHandler(
     private val devTools: RemoteDevTools,
@@ -71,7 +38,11 @@ class PageHandler(
     private val cssAPI get() = devTools.css.takeIf { isActive }
     private val runtimeAPI get() = devTools.runtime.takeIf { isActive }
 
-    val jsHandler = JsHandler(devTools, this, isolatedWorldManager)
+    private var lastBrowserUseState: BrowserUseState? = null
+
+    val snapshotService: SnapshotService by lazy { CDPSnapshotService(devTools) }
+
+    val jsHandler: JsHandler = JsHandler(devTools, this, isolatedWorldManager)
 
     val mouse = Mouse(devTools)
     val keyboard = Keyboard(devTools)
@@ -83,11 +54,11 @@ class PageHandler(
 
     @Throws(ChromeDriverException::class)
     suspend fun navigate(
-        @ParamName("url") url: String,
-        @Optional @ParamName("referrer") referrer: String? = null,
-        @Optional @ParamName("transitionType") transitionType: TransitionType? = null,
-        @Optional @ParamName("frameId") frameId: String? = null,
-        @Experimental @Optional @ParamName("referrerPolicy") referrerPolicy: ReferrerPolicy? = null
+        url: String,
+        referrer: String? = null,
+        transitionType: TransitionType? = null,
+        frameId: String? = null,
+        referrerPolicy: ReferrerPolicy? = null
     ): Navigate? {
         return pageAPI?.navigate(url, referrer, transitionType, frameId, referrerPolicy)
     }
@@ -111,24 +82,223 @@ class PageHandler(
         return nodeId != null && nodeId > 0
     }
 
-    @Deprecated("Use resolveSelector instead", ReplaceWith("resolveSelector(selector)"))
+    /**
+     * Queries for an element using a selector.
+     *
+     * Supports two selector formats:
+     * - CSS selector: "div.class", "#id", etc.
+     * - XPath selector: "//div[@class='class']", etc.
+     * - Backend node ID: "backend:123", "e1233"
+     * - Frame backend node ID: "fbn:FRAMExID,123"
+     *
+     * @param selector CSS selector or "backend:nodeId" format
+     * @return nodeId or null if not found
+     */
     @Throws(ChromeDriverException::class)
     suspend fun querySelector(selector: String): NodeRef? {
         return resolveSelector(selector)
     }
 
     /**
-     * Queries for an element using a CSS selector or backend node ID.
+     * Queries for a list of elements using a selector.
      *
-     * Supports two selector formats:
-     * 1. CSS selector: "div.class", "#id", etc.
-     * 2. Backend node ID: "backend:123"
+     * Supports four selector formats:
+     * - CSS selector: "div.class", "#id", etc.
+     * - XPath selector: "//div[@class='class']", etc.
+     * - Backend node ID: "backend:123", "e1233"
+     * - Frame backend node ID: "fbn:FRAMExID,123"
      *
      * @param selector CSS selector or "backend:nodeId" format
      * @return nodeId or null if not found
      */
     @Throws(ChromeDriverException::class)
-    suspend fun resolveSelector(selector: String): NodeRef? {
+    suspend fun querySelectorAll(selector: String): List<NodeRef>? {
+        return resolveSelectorAll(selector)
+    }
+
+    /**
+     * Fetches the current ARIA snapshot of the page, which is a YAML representation of the accessibility tree.
+     * */
+    suspend fun ariaSnapshot(): String {
+        val buState = snapshotService.getBrowserUseState(PageTarget(), SnapshotOptions())
+        val snapshot = buState.domState.ariaSnapshot
+        lastBrowserUseState = buState
+        return snapshot
+    }
+
+    /**
+     * Fetches the ARIA snapshot for the specified viewports only.
+     *
+     * @param viewportIndices The 1-based viewport indices to include.
+     * @return The ARIA snapshot YAML covering only the requested viewports.
+     */
+    suspend fun ariaSnapshot(viewportIndices: List<Int>): String {
+        val buState = snapshotService.getBrowserUseState(PageTarget(), SnapshotOptions())
+        lastBrowserUseState = buState
+
+        val scrollState = buState.browserState.scrollState
+        val viewportHeight = scrollState.viewportHeight.toDouble()
+        val serializableTree = buState.domState.serializableTree
+
+        val sortedIndices = viewportIndices.distinct().sorted()
+        // Merge contiguous viewport ranges into Y-axis ranges and build a combined NanoTree
+        val nanoTrees = mergeViewportRanges(sortedIndices).map { (startIdx, endIdx) ->
+            val startY = ((startIdx - 1) * viewportHeight).coerceAtLeast(0.0)
+            val endY = endIdx * viewportHeight
+            serializableTree.toNanoTreeInRange(startY, endY)
+        }
+
+        // Join snapshots from disjoint viewport ranges using YAML document separator
+        return nanoTrees.joinToString("\n---\n") { it.ariaSnapshot }
+    }
+
+    /**
+     * Merge contiguous 1-based viewport indices into (start, end) pairs for efficient range queries.
+     * E.g., [1, 2, 3, 5, 7, 8] → [(1, 3), (5, 5), (7, 8)]
+     */
+    private fun mergeViewportRanges(sortedIndices: List<Int>): List<Pair<Int, Int>> {
+        if (sortedIndices.isEmpty()) return emptyList()
+        val result = mutableListOf<Pair<Int, Int>>()
+        var start = sortedIndices[0]
+        var end = start
+        for (i in 1 until sortedIndices.size) {
+            if (sortedIndices[i] == end + 1) {
+                end = sortedIndices[i]
+            } else {
+                result.add(start to end)
+                start = sortedIndices[i]
+                end = start
+            }
+        }
+        result.add(start to end)
+        return result
+    }
+
+    @Throws(ChromeDriverException::class)
+    private suspend fun resolveSelectorAll(selector: String): List<NodeRef>? {
+        return try {
+            resolveSelectorAll0(selector)
+        } catch (e: CDPReturnError) {
+            // code: -32000 message: "Could not find node with given id"
+            // This exception is expected, will change this log to debug
+            if (e.errorCode != -32000L) {
+                // -32000L is expected, no log needed
+                logger.warn("Exception resolveSelectorAll | {} {} | {}", e.errorCode, e.errorMessage, e.brief())
+            }
+            null
+        } catch (e: Exception) {
+            logger.warn("[Unexpected] exception ", e)
+            null
+        }
+    }
+
+    @Throws(ChromeDriverException::class)
+    private suspend fun resolveSelectorAll0(selector: String): List<NodeRef>? {
+        // Parse the selector into a Locator object. If parsing fails, return null.
+        val locator = Locator.parse(selector) ?: return null
+
+        require(Locator.Type.CSS_PATH.text.isEmpty())
+
+        // Determine the type of the locator and resolve accordingly.
+        return when (locator.type) {
+            // For CSS_PATH type, use resolveCSSSelectorAll0 to resolve the selector.
+            Locator.Type.CSS_PATH -> resolveCSSSelectorAll0(selector)
+
+            Locator.Type.XPATH -> resolveXPathAll(locator.selector)
+
+            // For BACKEND_NODE_ID and FRAME_BACKEND_NODE_ID types, use the single resolver and wrap in list.
+            Locator.Type.BACKEND_NODE_ID, Locator.Type.FRAME_BACKEND_NODE_ID -> {
+                // Optimized: handle BACKEND_NODE_ID directly to avoid re-parsing in resolveSelector0
+                if (locator.type == Locator.Type.BACKEND_NODE_ID) {
+                    val backendNodeId = locator.selector.toIntOrNull()
+                    if (backendNodeId != null) {
+                        val node = resolveByBackendNodeId(backendNodeId)
+                        if (node != null) listOf(node) else null
+                    } else {
+                        null
+                    }
+                } else {
+                    // Fallback to resolveSelector0 for complex types like FRAME_BACKEND_NODE_ID
+                    val nodeRef = resolveSelector0(selector)
+                    if (nodeRef != null) listOf(nodeRef) else null
+                }
+            }
+
+            else -> throw UnsupportedOperationException("Unsupported selector $selector")
+        }
+    }
+
+    @Throws(ChromeDriverException::class)
+    private suspend fun resolveCSSSelectorAll0(selector: String): List<NodeRef>? {
+        val rootId = domAPI?.getDocument()?.nodeId ?: return null
+
+        val nodeIds = try {
+            domAPI?.querySelectorAll(rootId, selector)
+        } catch (e: CDPReturnError) {
+            if (e.errorCode != -32000L) {
+                logger.warn(
+                    "Exception from domAPI?.querySelectorAll | selector={}, errorCode={}, errorMessage={} | {}",
+                    selector, e.errorCode, e.errorMessage, e.brief()
+                )
+            }
+            null
+        } catch (e: Exception) {
+            logger.warn("Unexpected exception from domAPI?.querySelectorAll ", e)
+            null
+        }
+
+        if (nodeIds.isNullOrEmpty()) {
+            return null
+        }
+
+        // Optimized: map directly to NodeRefs without resolving each one via CDP if possible.
+        // querySelectorAll returns nodeIds which are already valid.
+        return nodeIds.map { nodeId -> NodeRef(nodeId, 0, null) }
+    }
+
+    @Throws(ChromeDriverException::class)
+    private suspend fun resolveXPathAll(xpath: String): List<NodeRef>? {
+        require(xpath.startsWith("//"))
+
+        return try {
+            domAPI?.getDocument()?.nodeId ?: return null
+
+            val searchResult = domAPI?.performSearch(xpath, true) ?: return null
+            val nodeIds = if (searchResult.resultCount > 0) {
+                // Retrieve all matching nodes
+                val results = domAPI?.getSearchResults(searchResult.searchId, fromIndex = 0, toIndex = searchResult.resultCount)
+                // Clean up search results to avoid resource leak
+                try {
+                    domAPI?.discardSearchResults(searchResult.searchId)
+                } catch (_: Exception) {
+                }
+                results
+            } else {
+                null
+            }
+
+            if (nodeIds.isNullOrEmpty()) {
+                return null
+            }
+
+            return nodeIds.map { nodeId -> NodeRef(nodeId, 0, null) }
+        } catch (e: CDPReturnError) {
+            if (e.errorCode != -32000L) {
+                logger.warn(
+                    "Exception from domAPI?.performSearch/getSearchResults" +
+                            " | xpath={}, errorCode={}, errorMessage={} | {}",
+                    xpath, e.errorCode, e.errorMessage, e.brief()
+                )
+            }
+            null
+        } catch (e: Exception) {
+            logger.warn("Unexpected exception from domAPI?.performSearch/getSearchResults ", e)
+            null
+        }
+    }
+
+    @Throws(ChromeDriverException::class)
+    private suspend fun resolveSelector(selector: String): NodeRef? {
         return try {
             resolveSelector0(selector)
         } catch (e: CDPReturnError) {
@@ -281,7 +451,7 @@ class PageHandler(
 
   return null;
 })('%s')
-            """.trimIndent(), Strings.escapeJsString(selector)
+            """.trimIndent(), normalizeCSSSelector(selector)
         )
 
         val result = jsHandler.evaluateValue(expression)
@@ -306,7 +476,7 @@ class PageHandler(
      */
     @Throws(ChromeDriverException::class)
     suspend fun focusOnSelector(selector: String): NodeRef? {
-        val nodeRef = resolveSelector(selector) ?: return null
+        val nodeRef = querySelector(selector) ?: return null
 
         // Fix: Only use nodeId parameter, others should be null
         domAPI?.focus(nodeRef.nodeId)
@@ -339,7 +509,7 @@ class PageHandler(
                 node, e.message, selector
             )
             // Fallback to legacy helper (CSS-only); safe stringify to avoid quoting issues
-            val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
+            val safeSelector = normalizeCSSSelector(selector)
             jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             node
         } catch (e: Exception) {
@@ -350,7 +520,7 @@ class PageHandler(
 
     /**
      * Scrolls the specified rect of the given node into view if not already visible.
-     * Note: exactly one between nodeId, backendNodeId and objectId should be passed
+     * Note: exactly one of nodeId, backendNodeId and objectId should be passed
      * to identify the node.
      * - nodeId Identifier of the node.
      * - backendNodeId Identifier of the backend node.
@@ -380,11 +550,26 @@ class PageHandler(
         } catch (e: ChromeRPCException) {
             // As a last resort, attempt legacy JS utility when a CSS selector is available
             if (!selector.isNullOrBlank()) {
-                val safeSelector = pulsarObjectMapper().writeValueAsString(selector)
+                val safeSelector = normalizeCSSSelector(selector)
                 jsHandler.evaluate("__pulsar_utils__.scrollIntoView($safeSelector)")
             }
             nodeRef
         }
+    }
+
+    fun convertSelectorIfNecessary(selector: String): String {
+        val nodeId = if (selector.startsWith("e")) selector.substring(1).toIntOrNull() else null
+        if (nodeId != null) {
+            val ref = ElementRefCriteria(backendNodeId = nodeId)
+            return snapshotService.findElement(ref)?.cssSelector() ?: selector
+        }
+        return selector
+    }
+
+    fun normalizeCSSSelector(selector: String): String {
+        val cssSelector = convertSelectorIfNecessary(selector)
+        val safeSelector = Strings.escapeJsString(cssSelector)
+        return safeSelector
     }
 
     /**
@@ -440,8 +625,10 @@ class PageHandler(
             // code: -32000 message: "Could not find node with given id"
             // This exception is expected, will change this log to debug
             if (e.errorCode != -32000L) {
-                logger.warn("Exception from domAPI?.querySelector | selector={}, errorCode={}, errorMessage={} | {}",
-                    selector, e.errorCode, e.errorMessage, e.brief())
+                logger.warn(
+                    "Exception from domAPI?.querySelector | selector={}, errorCode={}, errorMessage={} | {}",
+                    selector, e.errorCode, e.errorMessage, e.brief()
+                )
             }
             null
         } catch (e: Exception) {
@@ -453,21 +640,7 @@ class PageHandler(
             return null
         }
 
-        val node = try {
-            domAPI?.describeNode(nodeId, null, null, null, null)
-        } catch (e: Exception) {
-            logger.warn("Exception from domAPI?.describeNode | selector=$selector, nodeId=$nodeId", e)
-            null
-        }
-
-        node ?: return null
-
-        if (node.nodeId == 0 && node.backendNodeId == 0) {
-            logger.info("Both nodeId and backendNodeId are not found (value: 0)")
-            return null
-        }
-
-        return resolveNode(node.nodeId, node.backendNodeId)
+        return NodeRef(nodeId, 0, null)
     }
 
     /**
@@ -482,27 +655,6 @@ class PageHandler(
      */
     @Throws(ChromeDriverException::class)
     private suspend fun resolveXPath(xpath: String): NodeRef? {
-        val selector = "#preferencesSection"
-        val r = domAPI?.performSearch(selector)
-        println("resultCount for selector: " + r?.resultCount)
-
-        val xpath2 = "//*[@id='preferencesSection']/h2"
-        val r2 = domAPI?.performSearch(xpath2, true)
-        println("resultCount for xpath2: " + r2?.resultCount)
-
-        val xpath3 = "//*[@id=preferencesSection]/h2"
-        val r3 = domAPI?.performSearch(xpath3, true)
-        println("resultCount for xpath3: " + r3?.resultCount)
-
-        var node = resolveXPath1(xpath)
-
-        println("nodeId: " + node?.nodeId)
-
-        return node
-    }
-
-    @Throws(ChromeDriverException::class)
-    private suspend fun resolveXPath1(xpath: String): NodeRef? {
         require(xpath.startsWith("//"))
 
         val nodeId = try {
@@ -513,7 +665,10 @@ class PageHandler(
                 // Only retrieve the first matching node if results exist
                 val results = domAPI?.getSearchResults(searchResult.searchId, fromIndex = 0, toIndex = 1)
                 // Clean up search results to avoid resource leak
-                try { domAPI?.discardSearchResults(searchResult.searchId) } catch (_: Exception) { }
+                try {
+                    domAPI?.discardSearchResults(searchResult.searchId)
+                } catch (_: Exception) {
+                }
                 results?.firstOrNull()
             } else {
                 null
@@ -524,9 +679,11 @@ class PageHandler(
             // code: -32000 message: "Invalid search result range" (when toIndex > resultCount)
             // These exceptions are expected when element not found
             if (e.errorCode != -32000L) {
-                logger.warn("Exception from domAPI?.performSearch/getSearchResults" +
-                        " | xpath={}, errorCode={}, errorMessage={} | {}",
-                    xpath, e.errorCode, e.errorMessage, e.brief())
+                logger.warn(
+                    "Exception from domAPI?.performSearch/getSearchResults" +
+                            " | xpath={}, errorCode={}, errorMessage={} | {}",
+                    xpath, e.errorCode, e.errorMessage, e.brief()
+                )
             }
             null
         } catch (e: Exception) {
@@ -538,21 +695,7 @@ class PageHandler(
             return null
         }
 
-        val node = try {
-            domAPI?.describeNode(nodeId, null, null, null, null)
-        } catch (e: Exception) {
-            logger.warn("Exception from domAPI?.describeNode | nodeId=$nodeId", e)
-            null
-        }
-
-        node ?: return null
-
-        if (node.nodeId == 0 && node.backendNodeId == 0) {
-            logger.info("Both nodeId and backendNodeId are not found (value: 0)")
-            return null
-        }
-
-        return resolveNode(node.nodeId, node.backendNodeId)
+        return NodeRef(nodeId, 0, null)
     }
 
     @Throws(ChromeDriverException::class)
@@ -566,11 +709,19 @@ class PageHandler(
      */
     @Throws(ChromeDriverException::class)
     private suspend fun resolveNode(nodeId: Int?, backendNodeId: Int?): NodeRef? {
+        // If we already have a nodeId, verify it's valid or just use it.
+        // However, we need to return a NodeRef which might need backendNodeId if not provided.
+        // Usually, resolveNode is called when we want to ensure we have a valid nodeId for a backendNodeId,
+        // or we have a nodeId and want to get a stable reference.
+
         return try {
             // Protocol return error: "-32000/Either nodeId or backendNodeId must be specified."
-            val remoteObject = if (nodeId != null) {
+            val remoteObject = if (nodeId != null && nodeId > 0) {
+                // If nodeId is provided, we might not need to resolve it again unless we want to verify it exists
+                // But the original code resolved it. Let's keep the behavior but check if it's necessary.
+                // Resolving a nodeId returns a RemoteObject.
                 domAPI?.resolveNode(nodeId, null, null, null)
-            } else if (backendNodeId != null) {
+            } else if (backendNodeId != null && backendNodeId > 0) {
                 domAPI?.resolveNode(null, backendNodeId, null, null)
             } else {
                 return null
@@ -582,10 +733,20 @@ class PageHandler(
                 return null
             }
 
-            // Use DOM.requestNode to get the nodeId from the runtime object
+            // Use DOM.requestNode to get the nodeId from the runtime object.
+            // This is crucial when we started with a backendNodeId.
+            // When started with nodeId, it should return the same nodeId.
             val resolvedNodeId = domAPI?.requestNode(tempObjectId) ?: 0
+
             // Release the remote object to avoid memory leaks
-            try { runtimeAPI?.releaseObject(tempObjectId) } catch (_: Exception) { }
+            try {
+                runtimeAPI?.releaseObject(tempObjectId)
+            } catch (_: Exception) {
+            }
+
+            if (resolvedNodeId == 0) {
+                return null
+            }
 
             // Do NOT cache objectId; return only ids that are stable across calls
             NodeRef(resolvedNodeId, backendNodeId ?: 0, null)
@@ -595,49 +756,16 @@ class PageHandler(
         }
     }
 
-    /**
-     * Resolves a backend node ID to a regular node ID.
-     *
-     * @param backendNodeId The backend node ID
-     * @return nodeId or null if resolution fails
-     */
-    @Throws(ChromeDriverException::class)
-    private suspend fun resolveBackendNodeId(backendNodeId: Int?): Int? {
-        backendNodeId ?: return null
-
-        return try {
-            // Use DOM.resolveNode to convert backendNodeId to a runtime object
-            val remoteObject = domAPI?.resolveNode(null, backendNodeId, null, null)
-
-            val tempObjectId = remoteObject?.objectId
-            if (tempObjectId == null) {
-                logger.warn("Failed to resolve backend node ID: {}", backendNodeId)
-                return null
-            }
-
-            // Use DOM.requestNode to get the nodeId from the runtime object
-            val nodeId = domAPI?.requestNode(tempObjectId)
-
-            // Release the remote object to avoid memory leaks
-            try { runtimeAPI?.releaseObject(tempObjectId) } catch (_: Exception) { }
-
-            nodeId
-        } catch (e: Exception) {
-            logger.warn("Exception resolving backend node ID {}: {}", backendNodeId, e.message)
-            null
-        }
-    }
-
     @Throws(ChromeDriverException::class)
     private suspend fun <T> invokeOnElement(selector: String, action: suspend (NodeRef) -> T): T? {
-        val node = resolveSelector(selector) ?: return null
+        val node = querySelector(selector) ?: return null
 
         return action(node)
     }
 
     @Throws(ChromeDriverException::class)
     private suspend fun predicateOnElement(selector: String, action: suspend (NodeRef) -> Boolean): Boolean {
-        val node = resolveSelector(selector) ?: return false
+        val node = querySelector(selector) ?: return false
 
         if (node.nodeId > 0) {
             return action(node)

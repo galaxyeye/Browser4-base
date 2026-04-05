@@ -10,22 +10,26 @@ import kotlin.reflect.KClass
 interface ToolExecutor {
 
     val domain: String
-    val targetClass: KClass<*>
+    val receiverClass: KClass<*>
 
-    suspend fun callFunctionOn(tc: ToolCall, target: Any = Any()): TcEvaluate
-
-    @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(tc, target)"))
-    suspend fun execute(tc: ToolCall, target: Any): TcEvaluate = callFunctionOn(tc, target)
+    suspend fun callFunctionOn(tc: ToolCall, receiver: Any = Any()): TcEvaluate
 
     fun help(): String
     fun help(method: String): String
+
+    /**
+     * Returns all tool specifications registered in this executor, keyed by method name.
+     */
+    fun getToolSpecs(): Map<String, ToolSpec>
 }
 
 abstract class AbstractToolExecutor : ToolExecutor {
 
-    private val logger = getLogger(this)
+    private val logger = getLogger(AbstractToolExecutor::class)
 
     protected val toolSpec = mutableMapOf<String, ToolSpec>()
+
+    override fun getToolSpecs(): Map<String, ToolSpec> = toolSpec.toMap()
 
     override fun help(): String {
         return toolSpec.values.mapNotNull { it.description }.joinToString("\n")
@@ -39,14 +43,14 @@ abstract class AbstractToolExecutor : ToolExecutor {
         """.trimIndent()
     }
 
-    override suspend fun callFunctionOn(tc: ToolCall, target: Any): TcEvaluate {
+    override suspend fun callFunctionOn(tc: ToolCall, receiver: Any): TcEvaluate {
         val domain = tc.domain
         val functionName = tc.method
         val args = tc.arguments
         val pseudoExpression = tc.pseudoExpression
 
         return try {
-            val r = callFunctionOn(domain, functionName, args, target)
+            val r = callFunctionOn(domain, functionName, args, receiver)
 
             val className = if (r == null) "null" else r::class.qualifiedName
             val value = if (r == Unit) null else r
@@ -59,11 +63,7 @@ abstract class AbstractToolExecutor : ToolExecutor {
     }
 
     @Throws(IllegalArgumentException::class)
-    abstract suspend fun callFunctionOn(domain: String, functionName: String, args: Map<String, Any?>, target: Any): Any?
-
-    @Deprecated("Use callFunctionOn instead.", ReplaceWith("callFunctionOn(domain, functionName, args, target)"))
-    @Throws(IllegalArgumentException::class)
-    open suspend fun execute(domain: String, functionName: String, args: Map<String, Any?>, target: Any): Any? = callFunctionOn(domain, functionName, args, target)
+    abstract suspend fun callFunctionOn(domain: String, functionName: String, args: Map<String, Any?>, receiver: Any): Any?
 
     // ---------------- Shared helpers for named parameter executors ----------------
     protected fun validateArgs(

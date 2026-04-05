@@ -53,6 +53,11 @@ object DateTimes {
     val PATH_SAFE_FORMATTER_3 = DateTimeFormatter.ofPattern("MMdd.HHmm").withZone(ZoneId.systemDefault())!!
     val PATH_SAFE_FORMATTER_4 = DateTimeFormatter.ofPattern("MMdd.HHmmss").withZone(ZoneId.systemDefault())!!
 
+    val PATH_SAFE_YEAR = DateTimeFormatter.ofPattern("yyyy").withZone(ZoneId.systemDefault())!!
+    val PATH_SAFE_MONTH = DateTimeFormatter.ofPattern("MM").withZone(ZoneId.systemDefault())!!
+    val PATH_SAFE_DAY = DateTimeFormatter.ofPattern("dd").withZone(ZoneId.systemDefault())!!
+    val PATH_SAFE_MONTH_DAY = DateTimeFormatter.ofPattern("MMdd").withZone(ZoneId.systemDefault())!!
+
     val PATH_SAFE_FORMATTER_11 = DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss").withZone(ZoneId.systemDefault())!!
     val PATH_SAFE_FORMATTER_12 = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss").withZone(ZoneId.systemDefault())!!
 

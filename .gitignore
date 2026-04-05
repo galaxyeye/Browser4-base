@@ -90,6 +90,7 @@ buildNumber.properties
 
 #.idea/markdown-navigator/
 logs/
+coworker/tasks/300logs/scheduler/scheduled-tasks.status.json
 lib/
 repo/
 derby.log
@@ -118,5 +119,8 @@ application-private.properties
 /test-results/
 /release_notes.md
 /node_modules/
+/**/node_modules/**
 */**/py/dom/
 */**/human-private/
+*/**/.browser4-cli/
+/**/dist/**

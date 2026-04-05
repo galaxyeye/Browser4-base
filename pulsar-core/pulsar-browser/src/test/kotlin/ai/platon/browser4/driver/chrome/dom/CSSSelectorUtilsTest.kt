@@ -1,16 +1,18 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class CSSSelectorUtilsTest {
 
     @Test
-    fun `uses id when valid css identifier`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("uses id when valid css identifier")
+    fun usesIdWhenValidCssIdentifier() {
+        val node = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("id" to "main")
         )
@@ -19,8 +21,9 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `uses attribute selector when id is not a valid css identifier and escapes`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("uses attribute selector when id is not a valid css identifier and escapes")
+    fun usesAttributeSelectorWhenIdIsNotAValidCssIdentifierAndEscapes() {
+        val node = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("id" to "a\"b\\c")
         )
@@ -30,8 +33,9 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `uses up to three stable classes in order`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("uses up to three stable classes in order")
+    fun usesUpToThreeStableClassesInOrder() {
+        val node = MergedDOMTreeNode(
             nodeName = "div",
             attributes = mapOf(
                 "class" to "btn  x__ y.. hashed-123 primary card"
@@ -49,8 +53,9 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `class selector without tag when tag is wildcard`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("class selector without tag when tag is wildcard")
+    fun classSelectorWithoutTagWhenTagIsWildcard() {
+        val node = MergedDOMTreeNode(
             nodeName = "", // will become "*"
             attributes = mapOf("class" to "btn primary")
         )
@@ -59,8 +64,9 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `falls back to preferred attributes`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("falls back to preferred attributes")
+    fun fallsBackToPreferredAttributes() {
+        val node = MergedDOMTreeNode(
             nodeName = "SPAN",
             attributes = mapOf("aria-label" to "Close")
         )
@@ -69,8 +75,9 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `input prefers value attribute`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("input prefers value attribute")
+    fun inputPrefersValueAttribute() {
+        val node = MergedDOMTreeNode(
             nodeName = "INPUT",
             attributes = mapOf("value" to "Search")
         )
@@ -79,8 +86,9 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `last resort is lowercase tag`() {
-        val node = DOMTreeNodeEx(
+    @DisplayName("last resort is lowercase tag")
+    fun lastResortIsLowercaseTag() {
+        val node = MergedDOMTreeNode(
             nodeName = "Section",
             attributes = emptyMap()
         )
@@ -89,15 +97,16 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `non-element returns name lowercased or star when blank`() {
-        val textWithName = DOMTreeNodeEx(
+    @DisplayName("non-element returns name lowercased or star when blank")
+    fun nonElementReturnsNameLowercasedOrStarWhenBlank() {
+        val textWithName = MergedDOMTreeNode(
             nodeType = NodeType.TEXT_NODE,
             nodeName = "#TEXT",
             nodeValue = "hello"
         )
         assertEquals("#text", CSSSelectorUtils.generateCSSSelector(textWithName))
 
-        val textBlankName = DOMTreeNodeEx(
+        val textBlankName = MergedDOMTreeNode(
             nodeType = NodeType.TEXT_NODE,
             nodeName = "",
             nodeValue = "hello"
@@ -108,27 +117,28 @@ class CSSSelectorUtilsTest {
     // New tests for tree scenarios
 
     @Test
-    fun `selectors in a simple tree`() {
-        val li1 = DOMTreeNodeEx(
+    @DisplayName("selectors in a simple tree")
+    fun selectorsInASimpleTree() {
+        val li1 = MergedDOMTreeNode(
             nodeName = "LI",
             attributes = mapOf("class" to "item primary abcd1234"),
             children = listOf(
-                DOMTreeNodeEx(nodeType = NodeType.TEXT_NODE, nodeName = "#text", nodeValue = "Home")
+                MergedDOMTreeNode(nodeType = NodeType.TEXT_NODE, nodeName = "#text", nodeValue = "Home")
             )
         )
-        val li2 = DOMTreeNodeEx(
+        val li2 = MergedDOMTreeNode(
             nodeName = "LI",
             attributes = mapOf("class" to "item secondary"),
             children = listOf(
-                DOMTreeNodeEx(nodeType = NodeType.TEXT_NODE, nodeName = "#text", nodeValue = "About")
+                MergedDOMTreeNode(nodeType = NodeType.TEXT_NODE, nodeName = "#text", nodeValue = "About")
             )
         )
-        val ul = DOMTreeNodeEx(
+        val ul = MergedDOMTreeNode(
             nodeName = "UL",
             attributes = mapOf("class" to "menu main"),
             children = listOf(li1, li2)
         )
-        val root = DOMTreeNodeEx(
+        val root = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("id" to "root"),
             children = listOf(ul)
@@ -144,17 +154,18 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `deeply nested node selector remains based on itself`() {
-        val deepChild = DOMTreeNodeEx(
+    @DisplayName("deeply nested node selector remains based on itself")
+    fun deeplyNestedNodeSelectorRemainsBasedOnItself() {
+        val deepChild = MergedDOMTreeNode(
             nodeName = "SPAN",
             attributes = mapOf("aria-label" to "Badge")
         )
-        val mid = DOMTreeNodeEx(
+        val mid = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("class" to "container hashed__999"),
             children = listOf(deepChild)
         )
-        val root = DOMTreeNodeEx(
+        val root = MergedDOMTreeNode(
             nodeName = "SECTION",
             attributes = mapOf("id" to "profile"),
             children = listOf(mid)
@@ -167,15 +178,17 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `shadow root descendants are handled as regular nodes for selector`() {
-        val insideShadow = DOMTreeNodeEx(
+    @DisplayName("shadow root descendants are handled as regular nodes for selector")
+    fun shadowRootDescendantsAreHandledAsRegularNodesForSelector() {
+        val insideShadow = MergedDOMTreeNode(
             nodeName = "INPUT",
-            attributes = mapOf("id" to "a b", "value" to "Ignored because id present"))
-        val host = DOMTreeNodeEx(
+            attributes = mapOf("id" to "a b", "value" to "Ignored because id present")
+        )
+        val host = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("class" to "host"),
             shadowRoots = listOf(
-                DOMTreeNodeEx(nodeName = "#SHADOW-ROOT", children = listOf(insideShadow))
+                MergedDOMTreeNode(nodeName = "#SHADOW-ROOT", children = listOf(insideShadow))
             )
         )
         // Host uses classes
@@ -185,11 +198,13 @@ class CSSSelectorUtilsTest {
     }
 
     @Test
-    fun `wildcard tag in tree yields class-only selector`() {
-        val child = DOMTreeNodeEx(
+    @DisplayName("wildcard tag in tree yields class-only selector")
+    fun wildcardTagInTreeYieldsClassOnlySelector() {
+        val child = MergedDOMTreeNode(
             nodeName = "",
-            attributes = mapOf("class" to "chip primary"))
-        val parent = DOMTreeNodeEx(
+            attributes = mapOf("class" to "chip primary")
+        )
+        val parent = MergedDOMTreeNode(
             nodeName = "DIV",
             attributes = mapOf("class" to "container"),
             children = listOf(child)

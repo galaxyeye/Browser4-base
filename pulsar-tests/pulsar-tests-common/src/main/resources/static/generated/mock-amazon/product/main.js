@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         input.setAttribute('aria-expanded','false');
     }
 
-    function navigateToProduct(){
+    function navigateProduct(){
         // Same behavior: navigate to product page (self)
         window.location.href = 'index.html';
     }
@@ -89,14 +89,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateActive(items);
             } else if(e.key === 'Enter') {
                 e.preventDefault();
-                navigateToProduct();
+                navigateProduct();
             } else if(e.key === 'Escape') {
                 hide();
             }
         } else if(e.key === 'Enter') {
             if(input.value.trim()){
                 e.preventDefault();
-                navigateToProduct();
+                navigateProduct();
             }
         }
     });
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
     list.addEventListener('click', e=>{
         const item = e.target.closest('.autocomplete-item');
         if(!item) return;
-        navigateToProduct();
+        navigateProduct();
     });
 
     document.addEventListener('click', e=>{
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const searchBtn = document.querySelector('.search-btn');
     if(searchBtn){
-        searchBtn.addEventListener('click', ()=>{ navigateToProduct(); });
+        searchBtn.addEventListener('click', ()=>{ navigateProduct(); });
     }
 })();
 
@@ -283,7 +283,7 @@ function createSectionContent(sectionType) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="review-filters">
                         <div class="filter-buttons">
                             <button class="filter-btn active">All reviews</button>
@@ -294,7 +294,7 @@ function createSectionContent(sectionType) {
                             <button class="filter-btn">Verified purchase</button>
                         </div>
                     </div>
-                    
+
                     <div class="reviews-list">
                         <div class="review-item">
                             <div class="review-header">
@@ -319,7 +319,7 @@ function createSectionContent(sectionType) {
                             </div>
                             <div class="helpful-count">23 people found this helpful</div>
                         </div>
-                        
+
                         <div class="review-item">
                             <div class="review-header">
                                 <div class="review-avatar">SM</div>
@@ -339,7 +339,7 @@ function createSectionContent(sectionType) {
                             </div>
                             <div class="helpful-count">15 people found this helpful</div>
                         </div>
-                        
+
                         <div class="review-item">
                             <div class="review-header">
                                 <div class="review-avatar">MR</div>
@@ -359,7 +359,7 @@ function createSectionContent(sectionType) {
                             </div>
                             <div class="helpful-count">31 people found this helpful</div>
                         </div>
-                        
+
                         <div class="review-item">
                             <div class="review-header">
                                 <div class="review-avatar">LK</div>
@@ -379,7 +379,7 @@ function createSectionContent(sectionType) {
                             </div>
                             <div class="helpful-count">8 people found this helpful</div>
                         </div>
-                        
+
                         <div class="review-item">
                             <div class="review-header">
                                 <div class="review-avatar">TC</div>
@@ -403,7 +403,7 @@ function createSectionContent(sectionType) {
                             <div class="helpful-count">19 people found this helpful</div>
                         </div>
                     </div>
-                    
+
                     <div class="load-more-reviews">
                         <button class="load-more-btn">See more reviews</button>
                     </div>
@@ -551,7 +551,7 @@ function createSectionContent(sectionType) {
                     <h2>Product Description</h2>
                     <div class="description-text">
                         <p>The Premium Tablet delivers exceptional performance and versatility in a sleek, portable design. With its stunning 10.1-inch Full HD display, you'll enjoy crystal-clear visuals whether you're streaming videos, browsing the web, or working on documents.</p>
-                        
+
                         <h3>Key Features:</h3>
                         <ul>
                             <li><strong>Powerful Performance:</strong> Octa-core processor ensures smooth multitasking and responsive performance</li>
@@ -560,7 +560,7 @@ function createSectionContent(sectionType) {
                             <li><strong>Versatile Connectivity:</strong> Wi-Fi 6, Bluetooth 5.0, and optional cellular connectivity</li>
                             <li><strong>Premium Build:</strong> Sleek aluminum body with Gorilla Glass protection</li>
                         </ul>
-                        
+
                         <p>Perfect for students, professionals, and entertainment enthusiasts alike. The tablet comes with the latest Android operating system and access to millions of apps through the Google Play Store.</p>
                     </div>
                 </div>

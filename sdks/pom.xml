@@ -15,7 +15,7 @@
     <parent>
         <groupId>ai.platon.pulsar</groupId>
         <artifactId>pulsar</artifactId>
-        <version>4.5.0-SNAPSHOT</version>
+        <version>4.6.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>sdks</artifactId>
@@ -26,10 +26,4 @@
     <build>
         <defaultGoal>package</defaultGoal>
     </build>
-
-    <modules>
-        <module>browser4-sdk-kotlin</module>
-        <module>kotlin-sdk-tests</module>
-        <module>kotlin-sdk-examples</module>
-    </modules>
 </project>

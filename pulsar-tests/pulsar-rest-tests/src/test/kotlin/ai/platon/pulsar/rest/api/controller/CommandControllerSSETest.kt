@@ -3,6 +3,7 @@ package ai.platon.pulsar.rest.api.controller
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -17,7 +18,8 @@ class CommandControllerSSETest : RestAPITestBase() {
      * Test [CommandController.streamEvents]
      * */
     @Test
-    fun `Test submitCommand with pageSummaryPrompt + SSE`() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt + SSE")
+    fun testSubmitCommandWithPageSummaryPromptSse() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -39,7 +41,8 @@ class CommandControllerSSETest : RestAPITestBase() {
      * Test [CommandController.streamEvents]
      * */
     @Test
-    fun `Test submitCommand with pageSummaryPrompt, dataExtractionRules + SSE`() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt, dataExtractionRules + SSE")
+    fun testSubmitCommandWithPageSummaryPromptDataExtractionRulesSse() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -103,7 +106,7 @@ class CommandControllerSSETest : RestAPITestBase() {
         // Don’t overfit here: different environments may emit different JSON structures.
         // The contract we enforce is just: it’s an SSE stream and contains data frames.
         check(lines.any { it.startsWith("data:") }) {
-            "Expected SSE data frames for command $id but got: ${lines.take(20).joinToString("\\n") }"
+            "Expected SSE data frames for command $id but got: ${lines.take(20).joinToString("\\n")}"
         }
     }
 }

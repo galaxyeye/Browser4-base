@@ -337,7 +337,7 @@ class PulsarBrowser(
         mutableReusedDrivers.clear()
         mutableDrivers.clear()
 
-        logger.info("Closing browser with {} drivers/devtools ... | #{}", dyingDrivers.size, id.contextDir)
+        logger.info("Closing browser with {} drivers/devtools ... | {}", dyingDrivers.size, id.contextDir.toUri())
 
         dyingDrivers.forEach { (id, driver) ->
             kotlin.runCatching { driver.close() }.onFailure { warnForClose(this, it) }

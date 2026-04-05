@@ -1,5 +1,7 @@
 package ai.platon.browser4.driver.chrome
 
+import org.junit.jupiter.api.DisplayName
+
 /**
  * Tests for backend node ID support in PageHandler selectors.
  *
@@ -9,7 +11,8 @@ package ai.platon.browser4.driver.chrome
 class PageHandlerBackendNodeIdTests {
 
 //    @Test
-//    fun `test backend node ID selector format parsing`() {
+//        @DisplayName("test backend node ID selector format parsing")
+    fun testBackendNodeIdSelectorFormatParsing() {
 //        val devTools = mock(RemoteDevTools::class.java)
 //        val confuser = mock(ScriptConfuser::class.java)
 //        val domAPI = mock(DOM::class.java)
@@ -37,10 +40,11 @@ class PageHandlerBackendNodeIdTests {
 //        verify(domAPI).resolveNode(null, backendNodeId, null, null)
 //        verify(domAPI).requestNode("object-id-123")
 //        verify(runtimeAPI).releaseObject("object-id-123")
-//    }
+    }
 //
 //    @Test
-//    fun `test regular CSS selector still works`() {
+//        @DisplayName("test regular CSS selector still works")
+    fun testRegularCssSelectorStillWorks() {
 //        val devTools = mock(RemoteDevTools::class.java)
 //        val confuser = mock(ScriptConfuser::class.java)
 //        val domAPI = mock(DOM::class.java)
@@ -58,10 +62,11 @@ class PageHandlerBackendNodeIdTests {
 //
 //        assertEquals(789, nodeId)
 //        verify(domAPI).querySelector(1, "div.test")
-//    }
+    }
 //
 //    @Test
-//    fun `test invalid backend node ID format returns null`() {
+//        @DisplayName("test invalid backend node ID format returns null")
+    fun testInvalidBackendNodeIdFormatReturnsNull() {
 //        val devTools = mock(RemoteDevTools::class.java)
 //        val confuser = mock(ScriptConfuser::class.java)
 //
@@ -81,10 +86,11 @@ class PageHandlerBackendNodeIdTests {
 //            val nodeId = pageHandler.querySelector(selector)
 //            assertNull(nodeId, "Selector '$selector' should return null")
 //        }
-//    }
+    }
 //
 //    @Test
-//    fun `test focusOnSelector with backend node ID`() {
+//        @DisplayName("test focusOnSelector with backend node ID")
+    fun testFocusonselectorWithBackendNodeId() {
 //        val devTools = mock(RemoteDevTools::class.java)
 //        val confuser = mock(ScriptConfuser::class.java)
 //        val domAPI = mock(DOM::class.java)
@@ -110,10 +116,11 @@ class PageHandlerBackendNodeIdTests {
 //        assertEquals(555, resultNodeId)
 //        verify(domAPI).focus(555, null, null)
 //        verify(runtimeAPI).releaseObject("obj-999")
-//    }
+    }
 //
 //    @Test
-//    fun `test querySelectorAll with backend node ID returns single element list`() {
+//        @DisplayName("test querySelectorAll with backend node ID returns single element list")
+    fun testQueryselectorallWithBackendNodeIdReturnsSingleElementList() {
 //        val devTools = mock(RemoteDevTools::class.java)
 //        val confuser = mock(ScriptConfuser::class.java)
 //        val domAPI = mock(DOM::class.java)
@@ -138,5 +145,5 @@ class PageHandlerBackendNodeIdTests {
 //
 //        assertEquals(1, nodeIds.size)
 //        assertEquals(888, nodeIds[0])
-//    }
+    }
 }

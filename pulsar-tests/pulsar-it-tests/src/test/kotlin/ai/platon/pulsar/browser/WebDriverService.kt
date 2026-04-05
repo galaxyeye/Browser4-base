@@ -9,7 +9,6 @@ import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 open class WebDriverService(
     val browserFactory: BrowserFactory,
@@ -98,7 +97,7 @@ open class WebDriverService(
     }
 
     open suspend fun open(url: String, driver: WebDriver, scrollCount: Int = 3) {
-        driver.navigateTo(url)
+        driver.navigate(url)
 
         driver.waitForNavigation()
         driver.waitForSelector("body")
@@ -115,7 +114,7 @@ open class WebDriverService(
     }
 
     open suspend fun openEnhanced(url: String, driver: WebDriver, scrollCount: Int = 3) {
-        driver.navigateTo(url)
+        driver.navigate(url)
         driver.waitForNavigation()
         driver.waitForSelector("body")
 
@@ -146,7 +145,7 @@ open class FastWebDriverService(
     requiredPageSize: Int = 1
 ) : WebDriverService(browserFactory, requiredPageSize) {
     override suspend fun openEnhanced(url: String, driver: WebDriver, scrollCount: Int) {
-        driver.navigateTo(url)
+        driver.navigate(url)
 
         driver.waitForNavigation()
         driver.waitForSelector("body")

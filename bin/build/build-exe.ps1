@@ -1,7 +1,5 @@
 #!/usr/bin/env pwsh
 
-Set-Location "D:\workspace\Browser4\Browser4-feat"
-
 # 1) 清理旧的 jpackage 输出（否则 jpackage 会报“目标目录已存在”）
 if (Test-Path "browser4\browser4-agents\target\jpackage") {
     Remove-Item -Recurse -Force "browser4\browser4-agents\target\jpackage"

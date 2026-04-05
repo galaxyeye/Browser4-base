@@ -12,6 +12,10 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Resolve-Path "$ScriptDir\..\.."
 $ReportDir = Join-Path $ProjectRoot "target\dependency-reports"
 
+$MvnLogFlags = "-Dorg.slf4j.simpleLogger.defaultLogLevel=warn"
+$VersionsLogFlags = "-Dorg.slf4j.simpleLogger.log.org.codehaus.mojo.versions=info"
+$DependencyLogFlags = "-Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.dependency=info"
+
 # Create report directory
 New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
 
@@ -63,7 +67,7 @@ Print-Header "1. Checking for Dependency Updates"
 Write-Host "Generating dependency update report..."
 
 $depUpdatesFile = Join-Path $ReportDir "dependency-updates.txt"
-& $MvnCmd versions:display-dependency-updates -q 2>&1 | Out-File -FilePath $depUpdatesFile
+& $MvnCmd versions:display-dependency-updates $MvnLogFlags $VersionsLogFlags "-Dversions.outputFile=$depUpdatesFile" 2>&1 | Out-Null
 
 $content = Get-Content $depUpdatesFile -Raw
 if ($content -match "No dependencies in Dependencies") {
@@ -80,7 +84,7 @@ Print-Header "2. Checking for Plugin Updates"
 Write-Host "Generating plugin update report..."
 
 $pluginUpdatesFile = Join-Path $ReportDir "plugin-updates.txt"
-& $MvnCmd versions:display-plugin-updates -q 2>&1 | Out-File -FilePath $pluginUpdatesFile
+& $MvnCmd versions:display-plugin-updates $MvnLogFlags $VersionsLogFlags "-Dversions.outputFile=$pluginUpdatesFile" 2>&1 | Out-Null
 
 $content = Get-Content $pluginUpdatesFile -Raw
 if ($content -match "All plugins have a version specified" -or 
@@ -95,7 +99,7 @@ Print-Header "3. Checking for Property Updates"
 Write-Host "Generating property update report..."
 
 $propUpdatesFile = Join-Path $ReportDir "property-updates.txt"
-& $MvnCmd versions:display-property-updates -q 2>&1 | Out-File -FilePath $propUpdatesFile
+& $MvnCmd versions:display-property-updates $MvnLogFlags $VersionsLogFlags "-Dversions.outputFile=$propUpdatesFile" 2>&1 | Out-Null
 Write-Host "✓ Report generated: $propUpdatesFile" -ForegroundColor Green
 
 # 4. Analyze dependencies
@@ -103,7 +107,7 @@ Print-Header "4. Analyzing Dependency Usage"
 Write-Host "Analyzing declared dependencies..."
 
 $depAnalysisFile = Join-Path $ReportDir "dependency-analysis.txt"
-& $MvnCmd dependency:analyze -q 2>&1 | Out-File -FilePath $depAnalysisFile
+& $MvnCmd dependency:analyze $MvnLogFlags $DependencyLogFlags -DscriptableOutput=true 2>&1 | Set-Content -Path $depAnalysisFile -Encoding UTF8
 
 $content = Get-Content $depAnalysisFile -Raw
 if ($content -match "Used undeclared dependencies") {
@@ -121,7 +125,8 @@ Print-Header "5. Checking for Duplicate Dependencies"
 Write-Host "Generating dependency tree..."
 
 $depTreeFile = Join-Path $ReportDir "dependency-tree.txt"
-& $MvnCmd dependency:tree -q 2>&1 | Out-File -FilePath $depTreeFile
+if (Test-Path $depTreeFile) { Remove-Item $depTreeFile }
+& $MvnCmd dependency:tree $MvnLogFlags $DependencyLogFlags -DoutputFile="$depTreeFile" -DappendOutput=true 2>&1 | Out-Null
 
 $content = Get-Content $depTreeFile -Raw
 if ($content -match "omitted for conflict") {
@@ -141,7 +146,8 @@ if ($Full) {
     Write-Host "Note: First run will download CVE database" -ForegroundColor Yellow
     
     $securityLogFile = Join-Path $ReportDir "security-check.log"
-    $securityResult = & $MvnCmd dependency-check:check -q 2>&1 | Out-File -FilePath $securityLogFile
+    # Note: dependency-check plugin might use a different logger package, usually org.owasp
+    $securityResult = & $MvnCmd dependency-check:check $MvnLogFlags 2>&1 | Out-File -FilePath $securityLogFile
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ No high severity vulnerabilities found" -ForegroundColor Green

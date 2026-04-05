@@ -11,7 +11,7 @@ WebDriver
 
 最主要的方法有：
 
-- .navigateTo(): 加载新网页。
+- .navigate(): 加载新网页。
 - .scrollDown(): 在网页上向下滚动以完全加载页面。大多数现代网页支持使用 ajax 技术的延迟加载，即网页内容只有在滚动到视图中时才开始加载。
 - .pageSource(): 获得网页源代码。
 
@@ -85,7 +85,7 @@ class WebDriverDemo(private val session: PulsarSession) {
         driver.type(searchBoxSelector, text)
 
         println("capture screenshot over $selector ...")
-        driver.captureScreenshot(selector)
+        driver.screenshot(selector)
 
         println("evaluate 1 + 1 ...")
         val result = driver.evaluate("1 + 1")

@@ -1,9 +1,8 @@
 package ai.platon.pulsar.agentic
 
-import ai.platon.pulsar.agentic.agents.ObserveActBrowserAgent
+import ai.platon.pulsar.agentic.agents.RobustBrowserAgent
 import ai.platon.pulsar.agentic.context.AbstractAgenticContext
 import ai.platon.pulsar.agentic.inference.SessionActExecutor
-import ai.platon.pulsar.agentic.model.ActionDescription
 import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.ql.SessionConfig
@@ -18,21 +17,13 @@ interface AgenticSession : PulsarSession {
     val companionAgent: PerceptiveAgent
 
     /**
-     * Perform an action described by [action].
-     *
-     * @param action The action description that describes the action to be performed by the webdriver.
-     * @return The response from the model, though in this implementation, the return value is not explicitly used.
-     */
-    suspend fun performAct(action: ActionDescription): ToolCallResult
-
-    /**
      * Instructs the webdriver to perform a series of actions based on the given prompt.
      * This function converts the prompt into a sequence of webdriver actions, which are then executed.
      *
-     * @param actionDescriptions The textual prompt that describes the actions to be performed by the webdriver.
+     * @param action The textual prompt that describes the actions to be performed by the webdriver.
      * @return The response from the model, though in this implementation, the return value is not explicitly used.
      */
-    suspend fun plainActs(actionDescriptions: String): List<ToolCallResult>
+    suspend fun act(action: String): List<ToolCallResult>
 }
 
 abstract class AbstractAgenticSession(
@@ -52,14 +43,12 @@ open class BasicAgenticSession(
 
     private val executor by lazy { SessionActExecutor(this) }
 
-    override suspend fun performAct(action: ActionDescription) = executor.performAct(action)
-
-    override suspend fun plainActs(actionDescriptions: String) = executor.performActs(actionDescriptions)
+    override suspend fun act(action: String) = executor.performActs(action)
 
     @Synchronized
-    private fun createCompanionAgent(): ObserveActBrowserAgent {
+    private fun createCompanionAgent(): RobustBrowserAgent {
         getOrCreateBoundDriver()
-        return ObserveActBrowserAgent(this).also { registerClosable(it) }
+        return RobustBrowserAgent(this).also { registerClosable(it) }
     }
 }
 
@@ -73,14 +62,12 @@ open class AbstractAgenticQLSession(
 
     private val executor by lazy { SessionActExecutor(this) }
 
-    override suspend fun performAct(action: ActionDescription) = executor.performAct(action)
-
-    override suspend fun plainActs(actionDescriptions: String) = executor.performActs(actionDescriptions)
+    override suspend fun act(action: String) = executor.performActs(action)
 
     @Synchronized
-    private fun createCompanionAgent(): ObserveActBrowserAgent {
+    private fun createCompanionAgent(): RobustBrowserAgent {
         getOrCreateBoundDriver()
-        return ObserveActBrowserAgent(this).also { registerClosable(it) }
+        return RobustBrowserAgent(this).also { registerClosable(it) }
     }
 }
 

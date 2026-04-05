@@ -1,11 +1,7 @@
 #!/bin/bash
 
-# Find the first parent directory containing the VERSION file
-AppHome="$(dirname "$(readlink -f "$0")")"
-while [[ "$AppHome" != "/" && ! -f "$AppHome/VERSION" ]]; do
-    AppHome="$(dirname "$AppHome")"
-done
-cd "$AppHome" || exit 1
+repoRoot=$(git rev-parse --show-toplevel 2>null)
+cd "$repoRoot" || exit 1
 
 # Configuration parameters
 DOCKERFILE="${DOCKERFILE:-docker/browser4-prod/Dockerfile}"

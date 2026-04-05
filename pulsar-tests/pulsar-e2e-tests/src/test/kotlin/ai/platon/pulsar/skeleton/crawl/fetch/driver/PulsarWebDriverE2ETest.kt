@@ -9,6 +9,7 @@ import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.persist.model.ActiveDOMMessage
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import java.io.IOException
 import java.nio.file.Path
@@ -50,7 +51,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun `When navigate to a HTML page then the navigate state are correct`() = runEnhancedWebDriverTest(browser) { driver ->
+    @DisplayName("When navigate to a HTML page then the navigate state are correct")
+    fun whennavigateAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
         openEnhanced(e2eProductUrl, driver, 1)
 
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
@@ -72,7 +74,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun `When navigate to a HTML page then mainRequestCookies are captured`() = runEnhancedWebDriverTest(browser) { driver ->
+    @DisplayName("When navigate to a HTML page then mainRequestCookies are captured")
+    fun whenNavigateAHtmlPageThenMainRequestCookiesAreCaptured() = runEnhancedWebDriverTest(browser) { driver ->
         // Navigate to the page with cookies
         openEnhanced(e2eProductUrl, driver, 1)
 
@@ -97,7 +100,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun `when open a HTML page then script is injected`() = runEnhancedWebDriverTest(e2eOriginUrl, browser) { driver ->
+    @DisplayName("when open a HTML page then script is injected")
+    fun whenOpenAHtmlPageThenScriptIsInjected() = runEnhancedWebDriverTest(e2eOriginUrl, browser) { driver ->
         var detail = driver.evaluateDetail("typeof(window)")
         printlnPro(detail)
         // assertNotNull(detail?.value)
@@ -123,7 +127,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun `open a HTML page and compute metadata`() = runEnhancedWebDriverTest(e2eOriginUrl, browser) { driver ->
+    @DisplayName("open a HTML page and compute metadata")
+    fun openAHtmlPageAndComputeMetadata() = runEnhancedWebDriverTest(e2eOriginUrl, browser) { driver ->
         driver.evaluate("__pulsar_utils__.scrollToMiddle()")
         var detail = driver.evaluateDetail("__pulsar_utils__.compute()")
         printlnPro(detail)
@@ -152,7 +157,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
     @Test
     fun test_selectAttributeAll() = runEnhancedWebDriverTest(browser) { driver ->
-        driver.navigateTo(e2eProductUrl)
+        driver.navigate(e2eProductUrl)
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
         val title = driver.selectFirstTextOrNull("#productTitle")
         Assumptions.assumeTrue { navbarMain != null || title != null }
@@ -206,16 +211,6 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun testClickNthAnchor() = runEnhancedWebDriverTest(mockAmazonProductUrl, browser) { driver ->
-        driver.clickNthAnchor(100, "body")
-//        logPrintln(href)
-
-        driver.waitForNavigation()
-        driver.waitForSelector("body")
-        driver.scrollDown(5)
-    }
-
-    @Test
     fun testMouseMove() = runEnhancedWebDriverTest(mockAmazonProductUrl, browser) { driver ->
         repeat(10) { i ->
             val x = 100.0 + 2 * i
@@ -246,7 +241,7 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
     @Test
     fun testKeyPress() = runEnhancedWebDriverTest(browser) { driver ->
-        driver.navigateTo(e2eProductUrl)
+        driver.navigate(e2eProductUrl)
         delay(1000)
 
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
@@ -309,9 +304,9 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    @Tag("MustRunExplicitly")
+    @Tag("ManualOnly")
     fun testTypeText() = runEnhancedWebDriverTest(browser) { driver ->
-        driver.navigateTo(e2eProductUrl)
+        driver.navigate(e2eProductUrl)
         driver.waitForSelector("#productTitle")
 
         assertTrue { driver.exists("#productTitle") }
@@ -381,8 +376,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
 
         val paths = mutableListOf<Path>()
         fieldSelectors.entries.take(3).forEach { (name, selector) ->
-            val screenshot = driver.runCatching { captureScreenshot(selector) }
-                .onFailure { logger.info("Failed to captureScreenshot | $name - $selector") }
+            val screenshot = driver.runCatching { screenshot(selector) }
+                .onFailure { logger.info("Failed to screenshot | $name - $selector") }
                 .getOrNull()
 
             if (screenshot != null) {
@@ -407,7 +402,8 @@ open class PulsarWebDriverE2ETest : WebDriverTestBase() {
     }
 
     @Test
-    fun `When call queryClientRects then return client rects`() = runEnhancedWebDriverTest(e2eProductUrl, browser) { driver ->
+    @DisplayName("When call queryClientRects then return client rects")
+    fun whenCallQueryClientRectsThenReturnClientRects() = runEnhancedWebDriverTest(e2eProductUrl, browser) { driver ->
         val navbarMain = driver.selectFirstTextOrNull("#navbar-main")
         val title = driver.selectFirstTextOrNull("#productTitle")
         Assumptions.assumeTrue { navbarMain != null || title != null }

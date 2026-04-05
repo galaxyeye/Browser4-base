@@ -39,7 +39,7 @@ class OverlayExample : BrowserExampleBase() {
         }
 
         page.onFrameAttached {
-            page.captureScreenshot()
+            page.captureSnapshot()
             highlight("#productTitle")
         }
 

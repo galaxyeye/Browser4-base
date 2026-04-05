@@ -1,25 +1,28 @@
 package ai.platon.browser4.driver.chrome.dom
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotNodeEx
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DisplayName
 
 class ClickableElementDetectorTest {
 
     private val detector = ClickableElementDetector()
 
     @Test
-    fun `button tag is interactive`() {
-        val node = DOMTreeNodeEx(nodeName = "button")
+        @DisplayName("button tag is interactive")
+    fun buttonTagIsInteractive() {
+        val node = MergedDOMTreeNode(nodeName = "button")
         assertTrue(detector.isInteractive(node))
     }
 
     @Test
-    fun `div with onclick is interactive`() {
-        val node = DOMTreeNodeEx(
+        @DisplayName("div with onclick is interactive")
+    fun divWithOnclickIsInteractive() {
+        val node = MergedDOMTreeNode(
             nodeName = "div",
             attributes = mapOf("onclick" to "doIt()")
         )
@@ -27,8 +30,9 @@ class ClickableElementDetectorTest {
     }
 
     @Test
-    fun `div with role button is interactive`() {
-        val node = DOMTreeNodeEx(
+        @DisplayName("div with role button is interactive")
+    fun divWithRoleButtonIsInteractive() {
+        val node = MergedDOMTreeNode(
             nodeName = "div",
             attributes = mapOf("role" to "button")
         )
@@ -36,12 +40,13 @@ class ClickableElementDetectorTest {
     }
 
     @Test
-    fun `small iframe is not interactive, large iframe is`() {
-        val small = DOMTreeNodeEx(
+        @DisplayName("small iframe is not interactive, large iframe is")
+    fun smallIframeIsNotInteractiveLargeIframeIs() {
+        val small = MergedDOMTreeNode(
             nodeName = "iframe",
             snapshotNode = SnapshotNodeEx(bounds = DOMRect(0.0, 0.0, 80.0, 80.0))
         )
-        val large = DOMTreeNodeEx(
+        val large = MergedDOMTreeNode(
             nodeName = "iframe",
             snapshotNode = SnapshotNodeEx(bounds = DOMRect(0.0, 0.0, 200.0, 200.0))
         )
@@ -50,14 +55,16 @@ class ClickableElementDetectorTest {
     }
 
     @Test
-    fun `html and body are not interactive`() {
-        assertFalse(detector.isInteractive(DOMTreeNodeEx(nodeName = "html")))
-        assertFalse(detector.isInteractive(DOMTreeNodeEx(nodeName = "body")))
+        @DisplayName("html and body are not interactive")
+    fun htmlAndBodyAreNotInteractive() {
+        assertFalse(detector.isInteractive(MergedDOMTreeNode(nodeName = "html")))
+        assertFalse(detector.isInteractive(MergedDOMTreeNode(nodeName = "body")))
     }
 
     @Test
-    fun `cursor pointer implies interactive`() {
-        val node = DOMTreeNodeEx(
+        @DisplayName("cursor pointer implies interactive")
+    fun cursorPointerImpliesInteractive() {
+        val node = MergedDOMTreeNode(
             nodeName = "span",
             snapshotNode = SnapshotNodeEx(cursorStyle = "pointer")
         )
@@ -65,8 +72,9 @@ class ClickableElementDetectorTest {
     }
 
     @Test
-    fun `icon sized element with aria-label is interactive`() {
-        val node = DOMTreeNodeEx(
+        @DisplayName("icon sized element with aria-label is interactive")
+    fun iconSizedElementWithAriaLabelIsInteractive() {
+        val node = MergedDOMTreeNode(
             nodeName = "span",
             attributes = mapOf("aria-label" to "open"),
             snapshotNode = SnapshotNodeEx(bounds = DOMRect(0.0, 0.0, 20.0, 20.0))

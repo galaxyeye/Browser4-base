@@ -15,6 +15,7 @@ import ai.platon.browser4.driver.chrome.util.ReflectUtils
 import ai.platon.browser4.driver.chrome.util.SuspendAwareHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicLong
@@ -70,7 +71,7 @@ class DevToolsInvocationHandler(impl: Any) : SuspendAwareHandler(impl) {
     lateinit var devTools: RemoteDevTools
 
     // Use a dedicated scope for bridging suspend invocations without blocking
-    private val invocationScope = CoroutineScope(Dispatchers.Default)
+    private val invocationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Throws(ChromeIOException::class, ChromeRPCException::class)
     override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
@@ -96,7 +97,7 @@ class DevToolsInvocationHandler(impl: Any) : SuspendAwareHandler(impl) {
         val isSuspend = method.parameterTypes.lastOrNull()
             ?.let { Continuation::class.java.isAssignableFrom(it) } == true
         if (isSuspend) {
-            require(args != null && args.isNotEmpty()) { "args must not be null or empty for suspend method" }
+            require(!args.isNullOrEmpty()) { "args must not be null or empty for suspend method" }
             @Suppress("UNCHECKED_CAST")
             val cont = args.last() as Continuation<Any?>
             invocationScope.launch(cont.context) {

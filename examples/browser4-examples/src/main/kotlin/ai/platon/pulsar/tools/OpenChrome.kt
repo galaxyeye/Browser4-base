@@ -6,9 +6,9 @@ suspend fun main() {
     val browser = DefaultBrowserFactory().launchDefaultBrowser()
     val driver = browser.newDriver()
 
-    driver.navigateTo("about:blank")
-    driver.navigateTo("https://www.amazon.in")
+    driver.navigate("about:blank")
 
+    println("Chrome launched. Press Enter to close...")
     readlnOrNull()
 
     browser.close()

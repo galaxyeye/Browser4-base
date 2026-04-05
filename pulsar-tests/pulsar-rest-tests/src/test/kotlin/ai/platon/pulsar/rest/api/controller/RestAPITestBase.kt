@@ -6,6 +6,7 @@ import ai.platon.pulsar.test.TestUrls
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Import
 
@@ -20,7 +21,8 @@ open class RestAPITestBase : IntegrationTestBase() {
 
         @JvmStatic
         @BeforeAll
-        fun `Ensure resources are prepared`() {
+        @DisplayName("Ensure resources are prepared")
+        fun ensureResourcesArePrepared() {
         }
     }
 
@@ -51,10 +53,13 @@ open class RestAPITestBase : IntegrationTestBase() {
 
     @BeforeEach
     fun setUp() {
+        // wait for the mock EC server to be ready before running tests
+        assertThat(getJson("/actuator/health").body).contains("UP")
     }
 
     @Test
-    fun `When say hello then returns hello`() {
+    @DisplayName("When say hello then returns hello")
+    fun whenSayHelloThenReturnsHello() {
         assertThat(getHtml("/api/system/hello").body).contains("hello")
     }
 }

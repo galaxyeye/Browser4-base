@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom.util
 
-import ai.platon.browser4.driver.chrome.dom.model.DOMTreeNodeEx
+import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,9 +32,9 @@ object XPathUtils {
      * @return XPath string
      */
     fun generateXPath(
-        node: DOMTreeNodeEx,
-        ancestors: List<DOMTreeNodeEx> = emptyList(),
-        siblings: Map<Int, List<DOMTreeNodeEx>> = emptyMap()
+        node: MergedDOMTreeNode,
+        ancestors: List<MergedDOMTreeNode> = emptyList(),
+        siblings: Map<Int, List<MergedDOMTreeNode>> = emptyMap()
     ): String {
         // Only generate XPath for element nodes
         if (node.nodeType != NodeType.ELEMENT_NODE) {
@@ -111,7 +111,7 @@ object XPathUtils {
     /**
      * Build cache key for XPath calculation.
      */
-    private fun buildXPathCacheKey(node: DOMTreeNodeEx, ancestors: List<DOMTreeNodeEx>): String {
+    private fun buildXPathCacheKey(node: MergedDOMTreeNode, ancestors: List<MergedDOMTreeNode>): String {
         return buildString {
             append(node.nodeId)
             append(":")
@@ -125,9 +125,9 @@ object XPathUtils {
      * Includes tag name, optional id predicate, and index for disambiguation.
      */
     private fun buildXPathSegment(
-        node: DOMTreeNodeEx,
-        parent: DOMTreeNodeEx?,
-        siblings: Map<Int, List<DOMTreeNodeEx>>,
+        node: MergedDOMTreeNode,
+        parent: MergedDOMTreeNode?,
+        siblings: Map<Int, List<MergedDOMTreeNode>>,
         insideBoundary: Boolean = false
     ): String {
         val tag = node.nodeName.lowercase()
@@ -203,7 +203,7 @@ object XPathUtils {
      * Generate a simplified XPath for display purposes.
      * Uses only tag names and IDs, without indices.
      */
-    fun generateSimpleXPath(node: DOMTreeNodeEx, ancestors: List<DOMTreeNodeEx> = emptyList()): String {
+    fun generateSimpleXPath(node: MergedDOMTreeNode, ancestors: List<MergedDOMTreeNode> = emptyList()): String {
         val parts = ancestors.mapNotNull { ancestor ->
             if (ancestor.nodeType != NodeType.ELEMENT_NODE) return@mapNotNull null
 

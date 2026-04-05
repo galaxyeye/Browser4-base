@@ -69,7 +69,7 @@ open class DefaultBrowseRPA: BrowseRPA {
         val display = driver.browser.id.display
         logger.info("Visiting with browser #{} | {}", display, url)
 
-        driver.navigateTo(url)
+        driver.navigate(url)
         driver.waitForSelector("body")
         var n = 2 + Random.nextInt(5)
         while (n-- > 0 && isActive) {

@@ -47,7 +47,7 @@ open class BrowserSettings constructor(
         @JvmStatic
         fun withBrowser(browserType: BrowserType, conf: MutableConfig? = null): Companion {
             if (browserType == BrowserType.PLAYWRIGHT_CHROME) {
-                System.err.println("Warning: PLAYWRIGHT is not thread safe! @see https://playwright.dev/java/docs/multithreading")
+                System.err.println("Warning: PLAYWRIGHT is not thread safe! @see https://browser4.io/java/docs/multithreading")
             }
 
             if (conf == null) {
@@ -533,7 +533,7 @@ open class BrowserSettings constructor(
      * */
     @Deprecated("Use dualWorldScriptLoader for dual-world architecture")
     val scriptLoader = ScriptLoader(confuser, jsPropertyNames)
-    
+
     /**
      * The dual-world script loader.
      * Separates Page World scripts (stealth) from Isolated World scripts (runtime).
@@ -564,6 +564,7 @@ open class BrowserSettings constructor(
             .addArgument("window-size", formatViewPort())
             .addArgument("pageLoadStrategy", pageLoadStrategy)
             .addArgument("throwExceptionOnScriptError", "true")
+            .addArgument("disable-blink-features", "AutomationControlled")
 //            .addArgument("start-maximized")
 
         return chromeOptions

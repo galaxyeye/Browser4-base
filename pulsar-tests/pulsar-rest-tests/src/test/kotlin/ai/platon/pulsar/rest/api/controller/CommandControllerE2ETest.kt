@@ -1,13 +1,17 @@
 package ai.platon.pulsar.rest.api.controller
 
 import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.rest.api.TestHelper.MOCK_PRODUCT_DETAIL_URL
 import ai.platon.pulsar.rest.api.entities.CommandRequest
 import ai.platon.pulsar.rest.api.entities.CommandStatus
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.client.expectBody
+import java.time.Duration
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -20,7 +24,8 @@ class CommandControllerE2ETest : RestAPITestBase() {
      * Test [CommandController.submitCommand]
      * */
     @Test
-    fun `Test submitCommand with pageSummaryPrompt + sync mode`() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt + sync mode")
+    fun testSubmitCommandWithPageSummaryPromptSyncMode() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -57,7 +62,8 @@ class CommandControllerE2ETest : RestAPITestBase() {
      * Test [CommandController.streamEvents]
      * */
     @Test
-    fun `Test submitCommand with pageSummaryPrompt, dataExtractionRules + sync mode`() {
+    @DisplayName("Test submitCommand with pageSummaryPrompt, dataExtractionRules + sync mode")
+    fun testSubmitCommandWithPageSummaryPromptDataExtractionRulesSyncMode() {
         val pageType = "productDetailPage"
         val url = requireNotNull(urls[pageType])
 
@@ -91,7 +97,8 @@ class CommandControllerE2ETest : RestAPITestBase() {
     }
 
     @Test
-    fun `test executeCommand with X-SQL + sync mode`() {
+    @DisplayName("test executeCommand with X-SQL + sync mode")
+    fun testExecuteCommandWithXSqlSyncMode() {
         val sqlTemplate = sqlTemplates["productDetailPage"]!!.template
         val request = CommandRequest(
             MOCK_PRODUCT_DETAIL_URL,
@@ -120,5 +127,67 @@ class CommandControllerE2ETest : RestAPITestBase() {
 
         assertNull(result.pageSummary)
         assertNotNull(result.xsqlResultSet)
+    }
+
+    /**
+     * Test [CommandController.submitCommand]
+     * */
+    @Test
+    @Tag("Slow")
+    @Tag("ManualOnly")
+    @DisplayName("test statefulAgentRunner.execute() sets agentHistory on status")
+    fun testExecuteAgentCommandSetsAgentHistoryOnStatus() {
+        // A very, very simple task
+        val request = "Open the browser"
+        val commandId = submitPlainCommandAsync(request)
+        val status = waitForAgentHistory(commandId)
+
+        assertNotNull(status)
+
+        printlnPro(Pson.toJson(status))
+
+        assertNotNull(status)
+
+        // The async status endpoint should expose agent execution history as soon as the run starts progressing.
+        assertNotNull(status.agentState)
+    }
+
+    private fun submitPlainCommandAsync(request: String): String {
+        val rawBody = client.post().uri("/api/commands/plain?async=true")
+            .body(request)
+            .exchange()
+            .expectStatus().is2xxSuccessful
+            .expectBody<String>()
+            .returnResult()
+            .responseBody
+
+        val body = rawBody?.trim()
+        check(!body.isNullOrBlank()) { "Expected non-blank async command id body" }
+
+        return body.removeSurrounding("\"").trim().also {
+            check(it.isNotBlank()) { "Expected non-blank command id but got: $body" }
+        }
+    }
+
+    private fun waitForAgentHistory(commandId: String): CommandStatus? {
+        val deadline = Instant.now().plus(Duration.ofMinutes(8))
+        var lastStatus: CommandStatus? = null
+
+        while (Instant.now().isBefore(deadline)) {
+            lastStatus = client.get().uri("/api/commands/$commandId/status")
+                .exchange()
+                .expectStatus().is2xxSuccessful
+                .expectBody<CommandStatus>()
+                .returnResult()
+                .responseBody
+
+            if (lastStatus?.agentState != null || lastStatus?.isDone == true) {
+                return lastStatus
+            }
+
+            Thread.sleep(Duration.ofSeconds(2).toMillis())
+        }
+
+        return lastStatus
     }
 }

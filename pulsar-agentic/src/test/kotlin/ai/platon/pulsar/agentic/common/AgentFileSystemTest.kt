@@ -322,7 +322,7 @@ class AgentFileSystemTest {
     fun describeReturnsFormattedFileDescriptions() = runBlocking {
         fs.writeString("file1.txt", "Short content")
         fs.writeString("file2.md", "Line 1\nLine 2\nLine 3")
-        
+
         val description = fs.describe()
         assertTrue(description.contains("file1.txt"))
         assertTrue(description.contains("file2.md"))
@@ -332,22 +332,11 @@ class AgentFileSystemTest {
     }
 
     @Test
-    @DisplayName("describe excludes todolist.md")
-    fun describeExcludesTodolistMd() = runBlocking {
-        fs.writeString("todolist.md", "Task 1\nTask 2")
-        fs.writeString("other.txt", "Other content")
-        
-        val description = fs.describe()
-        assertFalse(description.contains("todolist.md"))
-        assertTrue(description.contains("other.txt"))
-    }
-
-    @Test
     @DisplayName("describe truncates large files with preview")
     fun describeTruncatesLargeFilesWithPreview() = runBlocking {
         val largeContent = (1..100).joinToString("\n") { "Line $it with some content to make it longer" }
         fs.writeString("large.txt", largeContent)
-        
+
         val description = fs.describe()
         assertTrue(description.contains("large.txt"))
         assertTrue(description.contains("more lines"))
@@ -357,7 +346,7 @@ class AgentFileSystemTest {
     @DisplayName("describe handles empty file")
     fun describeHandlesEmptyFile() = runBlocking {
         fs.writeString("empty.txt", "")
-        
+
         val description = fs.describe()
         assertTrue(description.contains("empty.txt"))
         assertTrue(description.contains("[empty file]"))
@@ -369,11 +358,11 @@ class AgentFileSystemTest {
         val fileName1 = fs.saveExtractedContent("Content 1")
         val fileName2 = fs.saveExtractedContent("Content 2")
         val fileName3 = fs.saveExtractedContent("Content 3")
-        
+
         assertEquals("extracted_content_0.md", fileName1)
         assertEquals("extracted_content_1.md", fileName2)
         assertEquals("extracted_content_2.md", fileName3)
-        
+
         assertTrue(fs.listFiles().contains(fileName1))
         assertTrue(fs.listFiles().contains(fileName2))
         assertTrue(fs.listFiles().contains(fileName3))
@@ -384,7 +373,7 @@ class AgentFileSystemTest {
     fun getStateCapturesFileSystemState() = runBlocking {
         fs.writeString("test1.txt", "Content 1")
         fs.writeString("test2.md", "Content 2")
-        
+
         val state = fs.getState()
         assertEquals(2, state.files.size)
         assertTrue(state.files.containsKey("test1.txt"))
@@ -398,27 +387,9 @@ class AgentFileSystemTest {
     fun getStateIncludesExtractedContentCount() = runBlocking {
         fs.saveExtractedContent("Content 1")
         fs.saveExtractedContent("Content 2")
-        
+
         val state = fs.getState()
         assertEquals(2, state.extractedContentCount)
-    }
-
-    @Test
-    @DisplayName("getTodoContents returns todolist content")
-    fun getTodoContentsReturnsTodolistContent() = runBlocking {
-        fs.writeString("todolist.md", "- Task 1\n- Task 2\n- Task 3")
-        
-        val contents = fs.getTodoContents()
-        assertTrue(contents.contains("Task 1"))
-        assertTrue(contents.contains("Task 2"))
-        assertTrue(contents.contains("Task 3"))
-    }
-
-    @Test
-    @DisplayName("getTodoContents returns empty string when todolist not found")
-    fun getTodoContentsReturnsEmptyStringWhenTodolistNotFound() = runBlocking {
-        val contents = fs.getTodoContents()
-        assertEquals("", contents)
     }
 
     @Test
@@ -427,7 +398,7 @@ class AgentFileSystemTest {
         // Create a test file outside the agent file system
         val externalFile = tempDir.resolve("external.txt")
         java.nio.file.Files.writeString(externalFile, "External content")
-        
+
         val result = fs.readString(externalFile.toString(), externalFile = true)
         assertTrue(result.contains("External content"))
         assertTrue(result.contains("<content>"))
@@ -465,7 +436,7 @@ class AgentFileSystemTest {
             }
             jobs.forEach { it.join() }
         }
-        
+
         assertEquals(20, fs.listFiles().size)
         for (i in 1..20) {
             val content = fs.readString("file$i.txt")
@@ -477,7 +448,7 @@ class AgentFileSystemTest {
     @DisplayName("concurrent append operations maintain data integrity")
     fun concurrentAppendOperationsMaintainDataIntegrity() = runBlocking {
         fs.writeString("shared.txt", "Initial\n")
-        
+
         coroutineScope {
             val jobs = (1..10).map { i ->
                 launch {
@@ -486,7 +457,7 @@ class AgentFileSystemTest {
             }
             jobs.forEach { it.join() }
         }
-        
+
         val content = fs.readString("shared.txt")
         // All lines should be present
         for (i in 1..10) {
@@ -498,11 +469,11 @@ class AgentFileSystemTest {
     @DisplayName("verifies files are persisted to disk")
     fun verifiesFilesArePersistedToDisk() = runBlocking {
         fs.writeString("test.txt", "Disk content")
-        
+
         // Check that the file exists on disk
         val diskPath = fs.dataDir.resolve("test.txt")
         assertTrue(java.nio.file.Files.exists(diskPath))
-        
+
         // Verify content matches
         val diskContent = java.nio.file.Files.readString(diskPath)
         assertEquals("Disk content", diskContent)

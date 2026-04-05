@@ -6,6 +6,7 @@ import ai.platon.pulsar.agentic.agents.AgentConfig
 import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -25,6 +26,7 @@ class PageStateTracker(
     private val logger = getLogger(this)
 
     private val activeDriver get() = session.getOrCreateBoundDriver()
+    private var lastURL: String? = null
     private var lastPageStateHash: Int? = null
     private var sameStateCount = 0
 
@@ -32,6 +34,7 @@ class PageStateTracker(
     private val recentHashes: ArrayDeque<Int> = ArrayDeque()
     private val maxRecentHashes = 10
 
+    private val domStateHandle = "_ds_" + UUID.randomUUID().toString().filter { it.isLetterOrDigit() }.take(8)
     private val domSettleJsLoaded = AtomicBoolean(false)
     private var domSettleJs: String? = null
 
@@ -42,15 +45,10 @@ class PageStateTracker(
      * @param browserUseState The current browser state
      * @return Hash code representing the page state
      */
-    suspend fun calculatePageStateHash(browserUseState: BrowserUseState): Int {
-        val driver = requireNotNull(activeDriver)
-
-        // Combine URL, DOM structure, and interactive elements for fingerprint
-        val urlHash = driver.currentUrl().hashCode()
-        // Prefer cached microTree JSON from DOMState to avoid repeated serialization cost
-//        val domJson = browserUseState.domState.microTree.toNanoTreeInRange().lazyJson
-//        val domHash = domJson.hashCode()
-        val domHash = browserUseState.domState.microTree.hashCode()
+    fun calculatePageStateHash(browserUseState: BrowserUseState): Int {
+        // Combine URL, scroll state, DOM structure for fingerprint
+        val urlHash = browserUseState.browserState.url.hashCode()
+        val domHash = browserUseState.domState.ariaSnapshot.hashCode()
         // Quantize scroll ratio to reduce noise from tiny jitters (bucket to percentage 0..100)
         val scrollBucket = (browserUseState.browserState.scrollState.scrollYRatio * 100).toInt()
         val scrollHash = scrollBucket
@@ -65,7 +63,16 @@ class PageStateTracker(
      * @param browserUseState The current browser state
      * @return Number of consecutive times the same state has been observed
      */
-    suspend fun checkStateChange(browserUseState: BrowserUseState): Int {
+    fun checkStateChange(browserUseState: BrowserUseState): Int {
+        val currentURL = browserUseState.browserState.url
+        // Navigated to a new page
+        if (currentURL != lastURL) {
+            sameStateCount = 0
+            lastPageStateHash = 0
+            lastURL = currentURL
+            return 0
+        }
+
         val currentStateHash = calculatePageStateHash(browserUseState)
 
         if (currentStateHash == lastPageStateHash) {
@@ -77,7 +84,9 @@ class PageStateTracker(
         lastPageStateHash = currentStateHash
         // Maintain a ring buffer of recent hashes for loop detection
         recentHashes.addLast(currentStateHash)
-        if (recentHashes.size > maxRecentHashes) recentHashes.removeFirst()
+        if (recentHashes.size > maxRecentHashes) {
+            recentHashes.removeFirst()
+        }
         return sameStateCount
     }
 
@@ -131,7 +140,8 @@ class PageStateTracker(
         val driver = activeDriver
 
         if (domSettleJsLoaded.compareAndSet(false, true)) {
-            domSettleJs = ResourceLoader.readString("js/dom_settle.js")
+            val rawJs = ResourceLoader.readString("js/dom_settle.js")
+            domSettleJs = rawJs.replace("__DOM_STATE_VAR__", domStateHandle)
         }
 
         val js = requireNotNull(domSettleJs) { "dom_settle Js is null" }
@@ -151,7 +161,7 @@ class PageStateTracker(
      * @param checkIntervalMs Interval between stability checks
      */
     suspend fun waitForDOMSettle(timeoutMs: Long, checkIntervalMs: Long) {
-        val driver = requireNotNull(activeDriver)
+        val driver = activeDriver
 
         driver.waitForSelector("body", timeoutMs)
         // Install once to avoid re-parsing the script below on each poll
@@ -167,7 +177,7 @@ class PageStateTracker(
                 // Call the cached function with minimal JS to reduce parser/bridge overhead
                 val signatureNum = (driver.evaluateValue(
                     """
-                    (() => { try { const f = window.__pulsar_GetDomSignature; return typeof f === 'function' ? f() : -1; } catch(e) { return -1; } })()
+                    (() => { try { const s = window['$domStateHandle']; return s && typeof s.getSignature === 'function' ? s.getSignature() : -1; } catch(e) { return -1; } })()
                     """.trimIndent()
                 ) as? Number)?.toLong()
 

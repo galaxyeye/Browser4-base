@@ -7,7 +7,10 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -117,6 +120,14 @@ fun pulsarObjectMapper(): ObjectMapper = jacksonObjectMapper()
     .registerModule(doubleBindModule())
     .registerModule(JavaTimeModule())
 
+fun pulsarYamlMapper(): ObjectMapper =
+    ObjectMapper(YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)).apply {
+        registerModule(KotlinModule.Builder().build())
+        setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY)
+        registerModule(doubleBindModule())
+        registerModule(JavaTimeModule())
+    }
+
 /**
  * jacksonObjectMapper with support:
  * 1. kotlin
@@ -127,17 +138,24 @@ fun prettyPulsarObjectMapper(): ObjectMapper = pulsarObjectMapper()
     .configure(SerializationFeature.INDENT_OUTPUT, true)
 
 object PulsarJackson {
-    private val mapper = pulsarObjectMapper()
-    private val prettyMapper = prettyPulsarObjectMapper()
+    private val mapper get() = pulsarObjectMapper()
+    private val prettyMapper get() = prettyPulsarObjectMapper()
+    private val yamlMapper get() = pulsarYamlMapper()
 
-    fun toJson(value: Any) = mapper.writeValueAsString(value)!!
-    fun toPrettyJson(value: Any) = prettyMapper.writeValueAsString(value)!!
+    fun toJson(vararg value: Pair<String, Any>): String = mapper.writeValueAsString(mapOf(*value))!!
 
-    fun toJsonOrNull(value: Any) = runCatching { mapper.writeValueAsString(value) }.getOrNull()
-    fun toPrettyJsonOrNull(value: Any) = runCatching { prettyMapper.writeValueAsString(value) }.getOrNull()
+    fun toJson(value: Any): String = mapper.writeValueAsString(value)!!
+    fun toPrettyJson(value: Any): String = prettyMapper.writeValueAsString(value)!!
 
-    fun toJsonOrString(value: Any) = toJsonOrNull(value) ?: value.toString()
-    fun toPrettyJsonOrString(value: Any) = toPrettyJsonOrNull(value) ?: value.toString()
+    fun toJsonOrNull(value: Any): String? = runCatching { mapper.writeValueAsString(value) }.getOrNull()
+    fun toPrettyJsonOrNull(value: Any): String? = runCatching { prettyMapper.writeValueAsString(value) }.getOrNull()
+
+    fun toJsonOrString(value: Any): String = toJsonOrNull(value) ?: value.toString()
+    fun toPrettyJsonOrString(value: Any): String = toPrettyJsonOrNull(value) ?: value.toString()
+
+    fun toYaml(value: Any): String = yamlMapper.writeValueAsString(value)!!
+    fun toYamlOrNull(value: Any): String? = runCatching { yamlMapper.writeValueAsString(value) }.getOrNull()
+    fun toYamlOrString(value: Any): String = toYamlOrNull(value) ?: value.toString()
 
     fun readTree(json: String): JsonNode? = mapper.readTree(json)
     fun readTreeOrNull(json: String): JsonNode? = runCatching { mapper.readTree(json) }.getOrNull()

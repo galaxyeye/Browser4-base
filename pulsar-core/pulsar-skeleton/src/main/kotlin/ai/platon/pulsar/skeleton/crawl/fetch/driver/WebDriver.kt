@@ -1,21 +1,26 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NodeRef
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.ExperimentalApi
+import ai.platon.pulsar.common.ai.llm.MCP
+import ai.platon.pulsar.common.serialize.json.Pson
+import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.dom.nodes.GeoAnchor
 import ai.platon.pulsar.external.ModelResponse
+import com.google.common.annotations.Beta
 import org.jsoup.Connection
 import java.io.Closeable
 import java.time.Duration
 
 /**
- * [WebDriver] defines a concise interface to visit and manipulate webpages.
+ * [WebDriver] defines a concise interface to visit and manipulate webpages. @mcp
  *
  * The webpage is rendered to a Document Object Model (DOM) in a real browser, and the interface provides methods to
  * control the browser, select textContent and attributes of Elements, and interact with the webpage.
@@ -32,7 +37,7 @@ import java.time.Duration
  * * Interact with the webpage
  *
  * Key methods:
- * * [navigateTo]: navigate to a URL.
+ * * [navigate]: navigate to a URL.
  * * [currentUrl]: get the current URL displayed in the address bar.
  * * [scrollDown]: scroll down on a webpage to fully load the page. Most modern webpages support lazy loading
  * using ajax tech, where the page content only starts to load when it is scrolled into view.
@@ -48,8 +53,8 @@ import java.time.Duration
  * In the Document Object Model (DOM), the relationship between `document.URL`, `document.documentURI`,
  * `document.location`, and the URL displayed in the browser's address bar is as follows:
  * * `driver.currentUrl()`:
- *    - This ready-only property displayed in the browser's address bar is what users see and can edit directly.
- *    - This ready-only property can be either navigated or not.
+ *    - This read-only property displayed in the browser's address bar is what users see and can edit directly.
+ *    - This read-only property can be either navigated or not.
  *    - When the page is loaded or when `document.location` is modified, the address bar is updated to reflect the new URL.
  *    - It is typically synchronized with `document.URL` and `document.location.href` (a property of `document.location`).
  * * `driver.url()`, `document.URL`:
@@ -122,14 +127,19 @@ import java.time.Duration
  */
 interface WebDriver : Closeable {
     /**
-     * The driver id.
+     * The driver id, starts with 1. The id is unique in process scope.
      * */
     val id: Int
 
     /**
-     * The parent driver id.
+     * The parent driver id. The id is unique in process scope.
      * */
     val parentSid: Int
+
+    /**
+     * The guid of the driver.
+     * */
+    val guid: String
 
     /**
      * The browser of the driver.
@@ -138,8 +148,7 @@ interface WebDriver : Closeable {
     val browser: Browser
 
     /**
-     * Web pages for the page open from the current page, via window.open(), link click, form submission,
-     * etc.
+     * Web pages for the page open from the current page, via window.open(), link click, form submission, etc.
      *
      * TODO: NOT IMPLEMENTED
      * */
@@ -151,8 +160,7 @@ interface WebDriver : Closeable {
     val opener: WebDriver?
 
     /**
-     * Web pages for the page open from the current page, via window.open(), link click, form submission,
-     * etc.
+     * Web pages for the page open from the current page, via window.open(), link click, form submission, etc.
      * */
     val outgoingPages: Set<WebDriver>
 
@@ -201,20 +209,7 @@ interface WebDriver : Closeable {
     val timeoutPolicy: Map<String, Duration>
 
     /**
-     * Returns a JvmWebDriver to support other JVM languages, such as java, clojure, scala, and so on,
-     * the other JVM languages might have difficulty to handle kotlin suspend methods.
-     *
-     * JvmWebDriver is not recommended, use Kotlin native suspend methods instead, or use SDK instead.
-     *
-     * @see JvmWebDriver
-     * */
-    @ExperimentalApi
-    fun jvm(): JvmWebDriver
-
-    /**
-     * Adds a script which would be evaluated in one of the following scenarios:
-     *
-     * * Whenever the page is navigated.
+     * Adds a script which would be evaluated whenever the page is navigated. @mcp
      *
      * The script is evaluated after the document was created but before any of
      * its scripts were run. This is useful to amend the JavaScript environment, e.g.
@@ -229,7 +224,7 @@ interface WebDriver : Closeable {
     suspend fun addInitScript(script: String)
 
     /**
-     * Blocks resource URLs from loading.
+     * Blocks resource URLs from loading. @mcp
      *
      * @param urlPatterns URL patterns to block. Wildcards ('*') are allowed.
      */
@@ -237,7 +232,7 @@ interface WebDriver : Closeable {
     suspend fun addBlockedURLs(urlPatterns: List<String>)
 
     /**
-     * Opens the specified URL in the web driver.
+     * Opens the specified URL in the web driver. @mcp
      *
      * This function navigates the web driver to the provided URL and waits for the navigation to complete.
      * It is a suspend function, meaning it can be used within coroutines for asynchronous execution.
@@ -251,54 +246,62 @@ interface WebDriver : Closeable {
      * @throws WebDriverException If an error occurs during navigation or waiting for the navigation to complete.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun open(url: String) {
         // Navigates the web driver to the specified URL.
-        navigateTo(url)
+        navigate(url)
         // Waits for the navigation to complete before proceeding.
         waitForNavigation()
     }
 
     /**
-     * Navigates current page to the given URL.
+     * Navigates current page to the given URL. @mcp
      *
      * ```kotlin
-     * driver.navigateTo("https://www.example.com")
+     * driver.navigate("https://www.example.com")
      * driver.waitForNavigation()
      * ```
      *
      * @param url URL to navigate page to.
      */
     @Throws(WebDriverException::class)
-    suspend fun navigateTo(url: String)
+    @MCP
+    suspend fun navigate(url: String)
+
+    @Deprecated("Use navigate(url: String) instead", ReplaceWith("navigate(url)"))
+    @Throws(WebDriverException::class)
+    suspend fun navigateTo(url: String) = navigate(url)
 
     /**
-     * Navigates current page to the given URL.
+     * Navigates current page to the given URL. @mcp
      *
      * ```kotlin
      * val entry = NavigateEntry("https://www.example.com?timestamp=11712067353", pageUrl = "https://www.example.com")
-     * driver.navigateTo(entry)
+     * driver.navigate(entry)
      * driver.waitForNavigation()
      * ```
      *
      * @param entry NavigateEntry to navigate page to.
      */
     @Throws(WebDriverException::class)
-    suspend fun navigateTo(entry: NavigateEntry)
+    @MCP
+    suspend fun navigate(entry: NavigateEntry)
+
+    @Deprecated("Use navigate(entry: NavigateEntry) instead", ReplaceWith("navigate(entry)"))
+    @Throws(WebDriverException::class)
+    suspend fun navigateTo(entry: NavigateEntry) = navigate(entry)
 
     /**
-     * Reloads the current page, equivalent to pressing F5 or clicking the browser's reload button.
+     * Reloads the current page. @mcp
      *
-     * ```kotlin
-     * driver.reload()
-     * ```
-     *
-     * @throws WebDriverException If an error occurs during the reload.
-     */
+     * This method should trigger a reload of the current page, similar to how a user would refresh the page in a browser.
+     * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun reload()
 
     /**
-     * Navigates the browser to the previous page in the navigation history.
+     * Navigates the browser to the previous page in the navigation history. @mcp
      *
      * This method is expected to use the browser's navigation history to move back to the previous page.
      * It should handle any exceptions that may occur during the navigation process.
@@ -306,10 +309,11 @@ interface WebDriver : Closeable {
      * @throws WebDriverException If an error occurs while navigating back.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun goBack()
 
     /**
-     * Navigates the browser to the next page in the navigation history.
+     * Navigates the browser to the next page in the navigation history. @mcp
      *
      * This method is expected to use the browser's navigation history to move forward to the next page.
      * It should handle any exceptions that may occur during the navigation process.
@@ -317,12 +321,14 @@ interface WebDriver : Closeable {
      * @throws WebDriverException If an error occurs while navigating forward.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun goForward()
 
     /**
-     * Returns a string representing the current URL that the browser is looking at. The current url is always
-     * the main frame's `document.documentURI` if the browser succeed to return it, and is displayed in the browser's
-     * address bar.
+     * Returns a string representing the current URL that the browser is looking at. @mcp
+     *
+     * The current url is always the main frame's `document.documentURI` if the browser succeed to return it, and is
+     * displayed in the browser's address bar.
      *
      * If the browser failed to return a proper url, returns the passed in url to navigate, just like a real user enter
      * a url in the address bar but the browser failed to load the page.
@@ -337,10 +343,11 @@ interface WebDriver : Closeable {
      *
      * @return A string containing the URL of the document, or the passed in url to navigate.
      */
+    @MCP
     suspend fun currentUrl(): String
 
     /**
-     * The URL read-only property of the Document interface returns the document location as a string.
+     * The URL read-only property of the Document interface returns the document location as a string. @mcp
      *
      * This property equals to javascript `document.URL`.
      * The `document.URL` property returns the same value. The `document.documentURI` property can be used on
@@ -351,10 +358,11 @@ interface WebDriver : Closeable {
      * @return A string containing the URL of the document
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun url(): String
 
     /**
-     * Returns the document location as a string.
+     * Returns the document location as a string. @mcp
      *
      * This property equals to javascript `document.documentURI`.
      *
@@ -365,10 +373,11 @@ interface WebDriver : Closeable {
      *
      * @return The document's documentURI.
      * */
+    @MCP
     suspend fun documentURI(): String
 
     /**
-     * Returns the document's baseURI.
+     * Returns the document's baseURI. @mcp
      *
      * The baseURI is a property of Node, it's the absolute base URL of the
      * document containing the node. A baseURI is used to resolve relative URLs.
@@ -380,10 +389,11 @@ interface WebDriver : Closeable {
      *
      * @return The document's baseURI.
      * */
+    @MCP
     suspend fun baseURI(): String
 
     /**
-     * The referrer property returns the URI of the page that linked to this page.
+     * The referrer property returns the URI of the page that linked to this page. @mcp
      *
      * The value is an empty string if the user navigated to the page directly (not through a link, but, for example,
      * by using a bookmark).
@@ -394,10 +404,13 @@ interface WebDriver : Closeable {
      * @return The document's referrer.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun referrer(): String
 
     /**
-     * Returns the source of the last loaded page. If the page has been modified after loading (for
+     * Returns the source of the last loaded page. @mcp
+     *
+     * If the page has been modified after loading (for
      * example, by JavaScript) there is no guarantee that the returned text is that of the modified
      * page.
      *
@@ -413,36 +426,41 @@ interface WebDriver : Closeable {
      * @return The source of the current page
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun pageSource(): String?
 
     /**
-     * Returns the title of the current page.
+     * Returns the title of the current page. @mcp
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun title(): String
 
     /**
-     * Retrieve a nano version of the DOM tree, which is based on the accessibility tree, enhanced by DOM and document snapshot.
+     * Retrieves a lightweight version of the DOM tree (NanoDOMTree). @mcp
      *
-     * References:
+     * The NanoDOMTree is based on the accessibility tree and enhanced with DOM and document snapshot information.
+     * It is designed to be a compact representation suitable for AI processing and analysis.
      *
-     * - [ai.platon.cdt.kt.protocol.commands.Accessibility.getFullAXTree]
-     * - [ai.platon.cdt.kt.protocol.commands.DOM.getDocument]
-     * - [ai.platon.cdt.kt.protocol.types.domsnapshot.DocumentSnapshot]
+     * @return A [NanoDOMTree] representing the current page state, or null if retrieval fails.
      * */
+    @MCP
     suspend fun nanoDOMTree(): NanoDOMTree?
 
     /**
-     * Chat with the AI model about the specified element.
+     * Interact with an AI model using the context of the element selected by [selector]. @mcp
      *
-     * @param prompt The prompt to chat with
-     * @param selector The selector to find the element
-     * @return The response from the model
+     * The AI model receives the element's content and structure as context along with the provided prompt.
+     *
+     * @param prompt The question or instruction for the AI model.
+     * @param selector The CSS selector of the element to use as context.
+     * @return A [ModelResponse] containing the model's answer.
      */
+    @MCP
     suspend fun chat(prompt: String, selector: String): ModelResponse
 
     /**
-     * Returns the cookies of the current page.
+     * Returns the cookies of the current page. @mcp
      *
      * ```kotlin
      * val cookies = driver.getCookies()
@@ -451,10 +469,11 @@ interface WebDriver : Closeable {
      * @return The cookies of the current page.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun getCookies(): List<Map<String, String>>
 
     /**
-     * Deletes browser cookies with matching name and url or domain/path pair.
+     * Deletes browser cookies with matching name and url or domain/path pair. @mcp
      *
      * ```kotlin
      * driver.deleteCookies("name", "https://www.example.com")
@@ -469,10 +488,11 @@ interface WebDriver : Closeable {
      * @param path If specified, deletes only cookies with the exact path.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun deleteCookies(name: String, url: String? = null, domain: String? = null, path: String? = null)
 
     /**
-     * Clears browser cookies.
+     * Clears browser cookies. @mcp
      *
      * ```kotlin
      * driver.clearBrowserCookies()
@@ -481,10 +501,11 @@ interface WebDriver : Closeable {
      * @see Browser.clearCookies
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun clearBrowserCookies()
 
     /**
-     * Wait until the element identified by the selector becomes present in the DOM or timeout.
+     * Wait until the element identified by the selector becomes present in the DOM or timeout. @mcp
      *
      * ```kotlin
      * val remainingTime = driver.waitForSelector("h2.title")
@@ -494,10 +515,11 @@ interface WebDriver : Closeable {
      * @return The remaining time until timeout when the element becomes present.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForSelector(selector: String): Duration = waitForSelector(selector) {}
 
     /**
-     * Wait until the element identified by the selector becomes present in the DOM or timeout.
+     * Wait until the element identified by the selector becomes present in the DOM or timeout. @mcp
      *
      * ```kotlin
      * val remainingTime = driver.waitForSelector("h2.title", 30000)
@@ -507,11 +529,12 @@ interface WebDriver : Closeable {
      * @return The remaining time until timeout when the element becomes present.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForSelector(selector: String, timeoutMillis: Long): Long =
         waitForSelector(selector, timeoutMillis) {}
 
     /**
-     * Wait for the element identified by the selector to become present in the DOM, or until timeout.
+     * Wait for the element identified by the selector to become present in the DOM, or until timeout. @mcp
      *
      * ```kotlin
      * val remainingTime = driver.waitForSelector("h2.title", Duration.ofSeconds(30))
@@ -521,10 +544,12 @@ interface WebDriver : Closeable {
      * @return The remaining time until timeout when the element becomes present.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForSelector(selector: String, timeout: Duration): Duration = waitForSelector(selector, timeout) {}
 
     /**
-     * Wait for the element identified by the selector to become present in the DOM, or until timeout.
+     * Wait for the element identified by the selector to become present in the DOM, or until timeout. @mcp
+     *
      * This method periodically checks for the existence of the element. If the element is not found during a check,
      * the action will be executed, such as scrolling the page down.
      *
@@ -537,10 +562,12 @@ interface WebDriver : Closeable {
      * @param action The action to execute when the element is not found.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForSelector(selector: String, action: suspend () -> Unit): Duration
 
     /**
-     * Wait for the element identified by the selector to become present in the DOM, or until timeout.
+     * Wait for the element identified by the selector to become present in the DOM, or until timeout. @mcp
+     *
      * This method periodically checks for the existence of the element. If the element is not found during a check,
      * the action will be executed, such as scrolling the page down.
      *
@@ -555,11 +582,13 @@ interface WebDriver : Closeable {
      * @return The remaining time until timeout when the element becomes present.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForSelector(selector: String, timeoutMillis: Long, action: suspend () -> Unit): Long =
         waitForSelector(selector, Duration.ofMillis(timeoutMillis), action).toMillis()
 
     /**
-     * Wait for the element identified by the selector to become present in the DOM, or until timeout.
+     * Wait for the element identified by the selector to become present in the DOM, or until timeout. @mcp
+     *
      * This method periodically checks for the existence of the element. If the element is not found during a check,
      * the action will be executed, such as scrolling the page down.
      *
@@ -574,14 +603,15 @@ interface WebDriver : Closeable {
      * @return The remaining time until timeout when the element becomes present.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForSelector(selector: String, timeout: Duration, action: suspend () -> Unit): Duration
 
     /**
-     * Wait until the current url changes or timeout.
+     * Wait until the current url changes or timeout. @mcp
      *
      * ```kotlin
      * val url = "https://www.example.com"
-     * driver.navigateTo(url)
+     * driver.navigate(url)
      * var remainingTime = driver.waitForNavigation()
      * if (remainingTime > 0) {
      *   driver.click("a[href='/next']")
@@ -590,14 +620,15 @@ interface WebDriver : Closeable {
      * ```
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForNavigation(oldUrl: String = ""): Duration
 
     /**
-     * Wait until the current url changes or timeout.
+     * Wait until the current url changes or timeout. @mcp
      *
      * ```kotlin
      * val url = "https://www.example.com"
-     * driver.navigateTo(url)
+     * driver.navigate(url)
      * var remainingTime = driver.waitForNavigation(1000)
      * if (remainingTime > 0) {
      *   driver.click("a[href='/next']")
@@ -608,16 +639,17 @@ interface WebDriver : Closeable {
      * @param timeoutMillis The maximum time to wait for the url to change.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForNavigation(oldUrl: String = "", timeoutMillis: Long): Long =
         waitForNavigation(oldUrl, Duration.ofMillis(timeoutMillis)).toMillis()
 
     /**
-     * Wait until the current url changes or timeout.
+     * Wait until the current url changes or timeout. @mcp
      *
      * ```kotlin
      * val timeout = Duration.ofSeconds(30)
      * val url = "https://www.example.com"
-     * driver.navigateTo(url)
+     * driver.navigate(url)
      * var remainingTime = driver.waitForNavigation(timeout)
      * if (remainingTime > 0) {
      *   driver.click("a[href='/next']")
@@ -628,23 +660,36 @@ interface WebDriver : Closeable {
      * @param timeout The maximum time to wait for the url to change.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForNavigation(oldUrl: String = "", timeout: Duration): Duration
 
     /**
-     * Await navigation to the specified URL page or timeout if necessary.
+     * Await navigation to the specified URL page or timeout if necessary. @mcp
      *
      * ```kotlin
      * val newDriver = driver.waitForPage("https://www.example.com", Duration.ofSeconds(30))
      * ```
      *
+     * TODO: check if waitForPage and waitForNavigation can be merged into one method.
+     *
      * @param url The URL to navigate to.
      * @return The remaining time until timeout when the predicate returns true.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun waitForPage(url: String, timeout: Duration): WebDriver?
 
     /**
-     * Wait until the predicate returns true.
+     * Returns when the pageFunction returns a truthy value. @mcp
+     *
+     * @param pageFunction A JavaScript function to be evaluated in the page context.
+     * */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver?
+
+    /**
+     * Wait until the predicate returns true. @mcp
      *
      * ```kotlin
      * val remainingTime = driver.waitUntil {
@@ -659,7 +704,7 @@ interface WebDriver : Closeable {
     suspend fun waitUntil(predicate: suspend () -> Boolean): Duration
 
     /**
-     * Wait until the predicate returns true.
+     * Wait until the predicate returns true. @mcp
      *
      * ```kotlin
      * val remainingTime = driver.waitUntil(10000) {
@@ -676,7 +721,7 @@ interface WebDriver : Closeable {
         waitUntil(Duration.ofMillis(timeoutMillis), predicate).toMillis()
 
     /**
-     * Wait until the predicate returns true.
+     * Wait until the predicate returns true. @mcp
      *
      * ```kotlin
      * val remainingTime = driver.waitUntil(Duration.ofSeconds(10)) {
@@ -696,7 +741,7 @@ interface WebDriver : Closeable {
     //
 
     /**
-     * Returns whether the element exists.
+     * Returns whether the element exists. @mcp
      *
      * ```kotlin
      * driver.exists("h2.title")
@@ -706,10 +751,11 @@ interface WebDriver : Closeable {
      * @return Whether the element exists.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun exists(selector: String): Boolean
 
     /**
-     * Returns whether the element is hidden.
+     * Returns whether the element is hidden. @mcp
      *
      * ```kotlin
      * driver.isHidden("input[name='q']")
@@ -719,10 +765,11 @@ interface WebDriver : Closeable {
      * @return Whether the element is hidden.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun isHidden(selector: String): Boolean = !isVisible(selector)
 
     /**
-     * Returns whether the element is visible.
+     * Returns whether the element is visible. @mcp
      *
      * ```kotlin
      * driver.isVisible("input[name='q']")
@@ -732,10 +779,11 @@ interface WebDriver : Closeable {
      * @return Whether the element is visible.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun isVisible(selector: String): Boolean
 
     /**
-     * Returns whether the element is checked.
+     * Returns whether the element is checked. @mcp
      *
      * ```kotlin
      * driver.isChecked("input[name='agree']")
@@ -745,23 +793,25 @@ interface WebDriver : Closeable {
      * @return Whether the element is checked.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun isChecked(selector: String): Boolean
 
     /////////////////////////////////////////////////
     // Interacts with the Webpage
 
     /**
-     * Brings the browser window to the front.
+     * Brings the browser window to the front. @mcp
      *
      * ```kotlin
      * driver.bringToFront()
      * ```
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun bringToFront()
 
     /**
-     * This method hovers over the element.
+     * This method hovers over the element. @mcp
      *
      * 1. Scroll the element into view if needed.
      * 2. Move mouse to hover over a random position near the center of the element.
@@ -771,11 +821,13 @@ interface WebDriver : Closeable {
      * ```
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun hover(selector: String)
 
     /**
-     * This method fetches an element with `selector` and focuses it. If there's no
-     * element matching `selector`, nothing to do.
+     * This method fetches an element with `selector` and focuses it. @mcp
+     *
+     * If there's no element matching `selector`, nothing to do.
      *
      * ```kotlin
      * driver.focus("input[name='q']")
@@ -785,10 +837,11 @@ interface WebDriver : Closeable {
      * of an element to focus. If there are multiple elements satisfying the selector, the first will be focused.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun focus(selector: String)
 
     /**
-     * This method emulates inserting text that doesn't come from a key press.
+     * This method emulates inserting text that doesn't come from a key press. @mcp
      *
      * ```kotlin
      * driver.type("input[name='q']", "Hello, World!")
@@ -800,10 +853,11 @@ interface WebDriver : Closeable {
      * @param text The text to insert.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun type(selector: String, text: String)
 
     /**
-     * This method emulates inserting text that doesn't come from a key press.
+     * This method emulates inserting text that doesn't come from a key press. @mcp
      *
      * Unlike [type], this method clears the existing value before typing.
      *
@@ -817,10 +871,11 @@ interface WebDriver : Closeable {
      * @param text The text to fill.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun fill(selector: String, text: String)
 
     /**
-     * Shortcut for keyboard down and keyboard up.
+     * Shortcut for keyboard down and keyboard up. @mcp
      *
      * The key is specified as a string, which can be a single character, a key name, or a combination of both.
      * For example, 'a', 'A', 'KeyA', 'Enter', 'Shift+A', and 'Control+Shift+Tab' are all valid keys.
@@ -836,11 +891,43 @@ interface WebDriver : Closeable {
      *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun press(selector: String, key: String)
 
     /**
-     * This method focuses an element with [selector] and clicks it. If there's no
-     * element matching `selector`, nothing to do.
+     * Presses and holds a keyboard key on the currently focused element. @mcp
+     *
+     * ```kotlin
+     * driver.keyDown("Shift")
+     * driver.keyDown("Control")
+     * ```
+     *
+     * @param key A key to press and hold. The key can be a single character, a key name, or a combination of both.
+     *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun keyDown(key: String)
+
+    /**
+     * Releases a previously pressed keyboard key on the currently focused element. @mcp
+     *
+     * ```kotlin
+     * driver.keyUp("Shift")
+     * driver.keyUp("Control")
+     * ```
+     *
+     * @param key A key to release. The key can be a single character, a key name, or a combination of both.
+     *      See [Code values for keyboard events](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values)
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun keyUp(key: String)
+
+    /**
+     * Focus on an element with [selector] and click it. @mcp
+     *
+     * If there's no element matching `selector`, nothing to do.
      *
      * ```kotlin
      * driver.click("button[type='submit']")
@@ -852,34 +939,67 @@ interface WebDriver : Closeable {
      * @param count The number of times to click.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun click(selector: String, count: Int = 1)
 
     /**
-     * Focuses on an element with [selector] and clicks it while holding [modifier] key pressed.
+     * Focus on an element with [selector] and click it with [modifier] pressed. @mcp
      *
-     * Typical use case is Ctrl+click (open link in new tab) or Shift+click (extend selection).
-     *
-     * ```kotlin
-     * // Ctrl+click to open a link in a new tab
-     * driver.click("a.product-link", "Meta")
-     * ```
-     *
-     * @param selector A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
-     * of an element to click. If there are multiple elements satisfying the selector, the first will be used.
-     * @param modifier The modifier key to hold while clicking (e.g. `"Alt"`, `"Control"`, `"Meta"`, `"Shift"`).
-     * @throws WebDriverException If an error occurs while interacting with the element.
-     */
+     * @param selector The selector of the element to click.
+     * @param modifier The keyboard modifier to press while clicking (e.g., "Shift", "Control", "Alt").
+     * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun click(selector: String, modifier: String)
 
     /**
-     * This method clicks an element with [selector] whose text content matches [pattern], and then focuses it.
+     * Focus on an element with [selector] and double-click it. @mcp
+     *
+     * @param selector The selector of the element to double-click.
+     * */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun dblclick(selector: String)
+
+    /**
+     * Focus on an element with [selector] and double-click it with [modifier] pressed. @mcp
+     *
+     * @param selector The selector of the element to double-click.
+     * @param modifier The keyboard modifier to press while double-clicking.
+     * */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun dblclick(selector: String, modifier: String)
+
+    /**
+     * Resizes the viewport to the specified width and height. @mcp
+     * */
+    @MCP
+    suspend fun resize(width: Int, height: Int)
+
+    /**
+     * Accepts the dialog. @mcp
+     * */
+    @MCP
+    suspend fun dialogAccept(promptText: String? = null)
+
+    /**
+     * Dismisses the dialog. @mcp
+     * */
+    @MCP
+    suspend fun dialogDismiss()
+
+    /**
+     * This method clicks an element with [selector] whose text content matches [pattern], and then focuses it. @mcp
+     *
      * If there's no element matching [selector], or the element's text content doesn't match [pattern], nothing to do.
      *
      * ```kotlin
      * driver.clickTextMatches("button", "submit")
      * ```
      *
+     * TODO: use playwright style selector which supports text matching, for example: `button:has-text("submit")`
+     *
      * @param selector - A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
      * of an element to focus. If there are multiple elements satisfying the
      * selector, the first will be focused.
@@ -887,48 +1007,55 @@ interface WebDriver : Closeable {
      * @param count The number of times to click.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun clickTextMatches(selector: String, pattern: String, count: Int = 1)
 
     /**
-     * This method clicks an element with [selector] whose attribute name is [attrName] and value matches [pattern],
-     * and then focuses it. If there's no element matching [selector], or the element has no attribute [attrName],
+     * This method clicks an element with [selector] whose attribute name is [attrName] and value matches [pattern], and then focuses it. @mcp
+     *
+     * If there's no element matching [selector], or the element has no attribute [attrName],
      * or the element's attribute value doesn't match [pattern], nothing to do.
      *
      * ```kotlin
-     * driver.clickAttributeMatches("button", "type", "submit")
+     * driver.clickMatches("button", "type", "submit")
      * ```
      *
      * @param selector - A [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
      * of an element to focus. If there are multiple elements satisfying the
      * selector, the first will be focused.
      * @param attrName The attribute name to match.
-     * @param pattern The pattern to match the text content.
+     * @param pattern The pattern to match the attribute value.
      * @param count The number of times to click.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun clickMatches(selector: String, attrName: String, pattern: String, count: Int = 1)
 
     /**
-     * Clicks the nth anchor element in the DOM.
+     * Selects one or more options in a <select> element. @mcp
      *
-     * This function searches for all anchor (`<a>`) elements within the specified root element,
-     * and clicks the nth anchor element (0-based index). If the anchor element exists, it returns
-     * the `href` attribute of the clicked anchor element. If the element does not exist, it returns null.
-     *
-     * ```kotlin
-     * driver.clickNthAnchor(100, "body")
-     * ```
-     *
-     * @param n The index of the anchor element to click (0-based).
-     * @param rootSelector The CSS selector of the root element to search within (default is "body").
-     * @return The href attribute of the clicked anchor element, or null if the element does not exist.
-     * @throws WebDriverException If an error occurs while interacting with the WebDriver.
+     * @param selector A selector to query the element
+     * @param values The values or labels of the options to select
+     * @return The list of selected option values
      */
-    @Throws(WebDriverException::class)
-    suspend fun clickNthAnchor(n: Int, rootSelector: String = "body"): String?
+    @MCP
+    suspend fun selectOption(selector: String, values: List<String>): List<String>
 
     /**
-     * This method check an element with [selector]. If there's no element matching [selector], nothing to do.
+     * Selects an option in a <select> element. @mcp
+     *
+     * @param selector A selector to query the element
+     * @param value The value or label of the option to select
+     * @return The selected option value, or null if not found
+     */
+    @MCP
+    suspend fun selectOption(selector: String, value: String): String? {
+        val selected = selectOption(selector, listOf(value))
+        return selected.firstOrNull()
+    }
+
+    /**
+     * This method check an element with [selector]. If there's no element matching [selector], nothing to do. @mcp
      *
      * @param selector - A
      * [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
@@ -936,10 +1063,11 @@ interface WebDriver : Closeable {
      * selector, the first will be checked.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun check(selector: String)
 
     /**
-     * This method uncheck an element with [selector]. If there's no element matching [selector], nothing to do.
+     * This method uncheck an element with [selector]. If there's no element matching [selector], nothing to do. @mcp
      *
      * @param selector - A
      * [selector](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
@@ -947,11 +1075,13 @@ interface WebDriver : Closeable {
      * selector, the first will be focused.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun uncheck(selector: String)
 
     /**
-     * This method fetches an element with [selector], scrolls it into view if needed. If there's no element matching
-     * [selector], the method does nothing.
+     * This method fetches an element with [selector], scrolls it into view if needed. @mcp
+     *
+     * If there's no element matching [selector], the method does nothing.
      *
      * ```kotlin
      * driver.scrollTo("h2.title")
@@ -961,34 +1091,41 @@ interface WebDriver : Closeable {
      * the [selector], the first will be selected.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollTo(selector: String): Double
 
     /**
-     * The current page frame scrolls down for [count] times.
+     * The current page frame scrolls down for [count] times. @mcp
      *
      * ```kotlin
      * driver.scrollDown(3)
      * ```
      *
+     * TODO: use mouseWheel instead
+     *
      * @param count The times to scroll down.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollDown(count: Int = 1): Double
 
     /**
-     * The current page frame scrolls up for [count] times.
+     * The current page frame scrolls up for [count] times. @mcp
      *
      * ```kotlin
      * driver.scrollUp(3)
      * ```
      *
+     * TODO: use mouseWheel instead
+     *
      * @param count The times to scroll up.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollUp(count: Int = 1): Double
 
     /**
-     * Scrolls the current page frame vertically by the given number of pixels.
+     * Scrolls the current page frame vertically by the given number of pixels. @mcp
      *
      * Positive values scroll down, negative values scroll up. The target position is clamped to the
      * scrollable range [0, scrollHeight - viewportHeight].
@@ -1016,30 +1153,33 @@ interface WebDriver : Closeable {
      * @throws WebDriverException If the underlying browser interaction fails.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollBy(pixels: Double = 200.0, smooth: Boolean = true): Double
 
     /**
-     * The current page frame scrolls to the top.
+     * The current page frame scrolls to the top. @mcp
      *
      * ```kotlin
      * driver.scrollToTop()
      * ```
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollToTop(): Double
 
     /**
-     * The current page frame scrolls to the bottom.
+     * The current page frame scrolls to the bottom. @mcp
      *
      * ```kotlin
      * driver.scrollToBottom()
      * ```
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollToBottom(): Double
 
     /**
-     * The current page frame scrolls to the middle.
+     * The current page frame scrolls to the middle. @mcp
      *
      * ```kotlin
      * driver.scrollToMiddle(0.2)
@@ -1050,10 +1190,11 @@ interface WebDriver : Closeable {
      * @param ratio The ratio of the page to scroll to, 0.0 means the top, 1.0 means the bottom.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollToMiddle(ratio: Double): Double
 
     /**
-     * Scroll to the 2.5th viewport position.
+     * Scroll to the 2.5th viewport position. @mcp
      *
      * ```kotlin
      * driver.scrollToViewport(1.0)
@@ -1066,10 +1207,11 @@ interface WebDriver : Closeable {
      * 1.00 means at the top of the first screen, 2.50 means halfway through the second screen.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun scrollToViewport(n: Double, smooth: Boolean = true): Double
 
     /**
-     * The mouse wheels down for [count] times.
+     * The mouse wheels down for [count] times. @mcp
      *
      * ```kotlin
      * driver.mouseWheelDown(3)
@@ -1080,11 +1222,13 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to wheel vertically.
      * @param delayMillis The delay time in milliseconds.
      */
+    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun mouseWheelDown(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = 150.0, delayMillis: Long = 0)
 
     /**
-     * The mouse wheels up for [count] times.
+     * The mouse wheels up for [count] times. @mcp
      *
      * ```kotlin
      * driver.mouseWheelUp(3)
@@ -1095,11 +1239,30 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to wheel vertically.
      * @param delayMillis The delay time in milliseconds.
      */
+    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun mouseWheelUp(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = -150.0, delayMillis: Long = 0)
 
     /**
-     * The mouse moves to the position specified by [x] and [y].
+     * Scrolls the mouse wheel by the provided deltas. @mcp
+     *
+     * Positive [deltaY] scrolls down and negative [deltaY] scrolls up.
+     *
+     * ```kotlin
+     * driver.mouseWheel(0.0, 150.0)
+     * driver.mouseWheel(0.0, -150.0)
+     * ```
+     *
+     * @param deltaX The distance to wheel horizontally.
+     * @param deltaY The distance to wheel vertically.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun mouseWheel(deltaX: Double = 0.0, deltaY: Double = 150.0)
+
+    /**
+     * The mouse moves to the position specified by [x] and [y]. @mcp
      *
      * ```kotlin
      * driver.moveMouseTo(100.0, 200.0)
@@ -1108,11 +1271,65 @@ interface WebDriver : Closeable {
      * @param x The x coordinate to move to.
      * @param y The y coordinate to move to.
      */
+    @Deprecated("Use mouseMove instead", replaceWith = ReplaceWith("mouseMove(x, y)"))
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun moveMouseTo(x: Double, y: Double)
 
     /**
-     * The mouse moves to the element with [selector].
+     * Moves the mouse to the position specified by [x] and [y]. @mcp
+     *
+     * ```kotlin
+     * driver.mouseMove(100.0, 200.0)
+     * ```
+     *
+     * @param x The x coordinate to move to.
+     * @param y The y coordinate to move to.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun mouseMove(x: Double, y: Double)
+
+    /**
+     * Presses a mouse button at the current mouse position. @mcp
+     *
+     * ```kotlin
+     * driver.mouseDown()
+     * driver.mouseDown("right")
+     * ```
+     *
+     * @param button The mouse button to press. Supported values are `left`, `middle`, and `right`.
+     * @param clickCount The click count associated with the press event.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun mouseDown(button: String = "left", clickCount: Int = 1)
+
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseDown(x: Double, y: Double, button: String = "left", modifier: String? = null)
+
+    /**
+     * Releases a mouse button at the current mouse position. @mcp
+     *
+     * ```kotlin
+     * driver.mouseUp()
+     * driver.mouseUp("right")
+     * ```
+     *
+     * @param button The mouse button to release. Supported values are `left`, `middle`, and `right`.
+     * @param clickCount The click count associated with the release event.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun mouseUp(button: String = "left", clickCount: Int = 1)
+
+//    @Throws(WebDriverException::class)
+//    @MCP
+//    suspend fun mouseUp(x: Double, y: Double, button: String = "left", modifier: String? = null)
+
+    /**
+     * The mouse moves to the element with [selector]. @mcp
      *
      * ```kotlin
      * driver.moveMouseTo("h2.title")
@@ -1122,20 +1339,98 @@ interface WebDriver : Closeable {
      * @param deltaY The distance to the top of the element.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun moveMouseTo(selector: String, deltaX: Int, deltaY: Int = 0)
 
     /**
-     * Performs a drag, dragenter, dragover, and drop in sequence.
+     * Performs a drag, dragenter, dragover, and drop in sequence. @mcp
      *
      * @param selector - selector of the element to drag from.
      * @param deltaX The distance to drag horizontally.
      * @param deltaY The distance to drag vertically.
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun dragAndDrop(selector: String, deltaX: Int, deltaY: Int = 0)
 
+
     /**
-     * Returns the document's HTML markup.
+     * Drags the element identified by [sourceSelector] onto the element identified by [targetSelector]. @mcp
+     *
+     * The implementation dispatches an HTML5 drag sequence between the source and target elements using a shared
+     * `DataTransfer` payload so selector-to-selector drag flows can be asserted reliably by automation clients.
+     *
+     * @param sourceSelector The selector of the element to drag.
+     * @param targetSelector The selector of the element to drop onto.
+     */
+    @MCP
+    suspend fun drag(sourceSelector: String, targetSelector: String) {
+        val encodedSource = Pson.toJson(sourceSelector)
+        val encodedTarget = Pson.toJson(targetSelector)
+        val script = """
+            (() => {
+                const source = document.querySelector($encodedSource);
+                const target = document.querySelector($encodedTarget);
+                if (!source || !target) {
+                    return JSON.stringify({
+                        ok: false,
+                        error: !source && !target
+                            ? 'Source and target elements were not found'
+                            : !source
+                                ? 'Source element was not found'
+                                : 'Target element was not found'
+                    });
+                }
+                if (typeof DataTransfer === 'undefined' || typeof DragEvent === 'undefined') {
+                    return JSON.stringify({
+                        ok: false,
+                        error: 'HTML5 drag-and-drop APIs are not available in the current page context'
+                    });
+                }
+
+                const sourceRect = source.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                const sourceX = Math.round(sourceRect.left + sourceRect.width / 2);
+                const sourceY = Math.round(sourceRect.top + sourceRect.height / 2);
+                const targetX = Math.round(targetRect.left + targetRect.width / 2);
+                const targetY = Math.round(targetRect.top + targetRect.height / 2);
+                const dataTransfer = new DataTransfer();
+
+                const fire = (element, type, clientX, clientY) => {
+                    const event = new DragEvent(type, {
+                        bubbles: true,
+                        cancelable: true,
+                        composed: true,
+                        dataTransfer,
+                        clientX,
+                        clientY
+                    });
+                    element.dispatchEvent(event);
+                };
+
+                fire(source, 'dragstart', sourceX, sourceY);
+                fire(target, 'dragenter', targetX, targetY);
+                fire(target, 'dragover', targetX, targetY);
+                fire(target, 'drop', targetX, targetY);
+                fire(source, 'dragend', targetX, targetY);
+
+                return JSON.stringify({ ok: true });
+            })()
+        """.trimIndent()
+        val result = evaluate(script) as? String
+            ?: """{"ok":false,"error":"Failed to execute drag script"}"""
+        val parsed = pulsarObjectMapper().readTree(result)
+        if (!parsed.path("ok").asBoolean(false)) {
+            val error = parsed.path("error").asText("Unknown drag failure")
+            throw WebDriverException(
+                "Failed to drag '$sourceSelector' to '$targetSelector': $error",
+                driver = this
+            )
+        }
+    }
+
+    /**
+     * Returns the document's HTML markup. @mcp
      *
      * ```kotlin
      * val html = driver.outerHTML()
@@ -1146,10 +1441,11 @@ interface WebDriver : Closeable {
      * @return The HTML markup of the document.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun outerHTML(): String?
 
     /**
-     * Returns the node's HTML markup, the node is located by [selector].
+     * Returns the node's HTML markup, the node is located by [selector]. @mcp
      *
      * If the node does not exist, returns null.
      *
@@ -1161,44 +1457,52 @@ interface WebDriver : Closeable {
      * @return The HTML markup of the node.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun outerHTML(selector: String): String?
 
     /**
-     * Returns the document's text content.
+     * Returns the text content of the document or a specific element. @mcp
      *
-     * If the document does not exist, returns null.
+     * If [selector] is null, returns the text content of the entire document (usually `document.body.innerText`).
+     * If [selector] is provided, returns the text content of the first matching element.
+     *
+     * If the document or element does not exist, returns null.
      *
      * ```kotlin
-     * val text = driver.textContent()
+     * val bodyText = driver.textContent()
+     * val titleText = driver.textContent("h1.title")
      * ```
      *
-     * @return The text content of the document.
+     * @param selector The CSS selector of the element. If null, targets the document body.
+     * @return The text content, or null if not found.
      * */
+    @MCP
     suspend fun textContent(selector: String? = null): String?
 
     /**
-     * Extracts field values from the current page using a map of field names to CSS selectors.
+     * Extracts multiple fields from the page using CSS selectors. @mcp
      *
-     * Each key in [fields] is a logical field name; the corresponding value is a CSS selector
-     * used to locate the element on the page. The text content of the first matching element is
-     * returned for each selector. If no element matches, the result for that field is `null`.
-     *
-     * ```kotlin
-     * val data = driver.extract(mapOf(
-     *     "title"  to "h1.title",
-     *     "price"  to "span.price",
-     *     "rating" to "div.rating"
-     * ))
-     * val title = data["title"]
-     * ```
-     *
-     * @param fields A map from logical field names to CSS selectors.
-     * @return A map from field names to extracted text values, or `null` for fields with no match.
-     */
+     * @param fields A map where keys are field names and values are CSS selectors.
+     * @return A map containing the extracted text content for each field. Values are null if the selector matches nothing.
+     * */
     suspend fun extract(fields: Map<String, String>): Map<String, String?>
 
     /**
-     * Returns the node's text content, the node is located by [selector].
+     * Use querySelectorAll to get all matched elements, and then return their NodeRefs. @mcp
+     *
+     * Note that the NodeRefs may become stale after certain operations, so they should be used immediately after selection.
+     *
+     * @param selector selector string, supported selector types include CSS selector, XPath, and backend node id.
+     * The type is determined by the prefix of the selector string, e.g. "css:div" for CSS selector, "xpath://div" for XPath,
+     * "e123" for backendNodeId. If no prefix is provided, CSS selector is used by default.
+     * @return a list of NodeRefs for the matched elements, or an empty list if no elements are matched or an error occurs.
+     * */
+    @Beta
+    @Throws(WebDriverException::class)
+    suspend fun querySelectorAll(selector: String): List<NodeRef>
+
+    /**
+     * Returns the node's text content, the node is located by [selector]. @mcp
      *
      * If the node does not exist, returns null.
      *
@@ -1210,10 +1514,11 @@ interface WebDriver : Closeable {
      * @return The text content of the node.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectFirstTextOrNull(selector: String): String?
 
     /**
-     * Returns a list of text contents of all the elements matching the specified selector within the page.
+     * Returns a list of text contents of all the elements matching the specified selector within the page. @mcp
      *
      * If no elements match the selector, returns an empty list.
      *
@@ -1225,10 +1530,11 @@ interface WebDriver : Closeable {
      * @return The text contents of the nodes.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectTextAll(selector: String): List<String>
 
     /**
-     * Returns the node's attribute value, the node is located by [selector], the attribute is [attrName].
+     * Returns the node's attribute value, the node is located by [selector], the attribute is [attrName]. @mcp
      *
      * If the node does not exist, or the attribute does not exist, returns null.
      *
@@ -1241,10 +1547,11 @@ interface WebDriver : Closeable {
      * @return The attribute value of the node.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectFirstAttributeOrNull(selector: String, attrName: String): String?
 
     /**
-     * Returns the node's attribute values, the node is located by [selector].
+     * Returns the node's attribute values, the node is located by [selector]. @mcp
      *
      * If the node do not exist, or the attribute does not exist, returns an empty list.
      *
@@ -1256,10 +1563,11 @@ interface WebDriver : Closeable {
      * @return The attribute pairs of the nodes.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectAttributes(selector: String): Map<String, String>
 
     /**
-     * Returns the nodes' attribute values, the nodes are located by [selector], the attribute is [attrName].
+     * Returns the nodes' attribute values, the nodes are located by [selector], the attribute is [attrName]. @mcp
      *
      * If the nodes do not exist, or the attribute does not exist, returns an empty list.
      *
@@ -1274,10 +1582,11 @@ interface WebDriver : Closeable {
      * @return The attribute values of the nodes.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectAttributeAll(selector: String, attrName: String, start: Int = 0, limit: Int = 10000): List<String>
 
     /**
-     * Set the attribute of an element located by [selector].
+     * Set the attribute of an element located by [selector]. @mcp
      *
      * ```kotlin
      * driver.setAttribute("h2.title", "class", "header")
@@ -1288,10 +1597,11 @@ interface WebDriver : Closeable {
      * @param attrValue The attribute value to set.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun setAttribute(selector: String, attrName: String, attrValue: String)
 
     /**
-     * Set the attribute of all elements matching the CSS query.
+     * Set the attribute of all elements matching the CSS query. @mcp
      *
      * ```kotlin
      * driver.setAttributeAll("h2.title", "class", "header")
@@ -1302,11 +1612,12 @@ interface WebDriver : Closeable {
      * @param attrValue The attribute value to set.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun setAttributeAll(selector: String, attrName: String, attrValue: String)
 
 
     /**
-     * Returns the node's property value, the node is located by [selector], the property is [propName].
+     * Returns the node's property value, the node is located by [selector], the property is [propName]. @mcp
      *
      * If the node does not exist, or the property does not exist, returns null.
      *
@@ -1319,10 +1630,11 @@ interface WebDriver : Closeable {
      * @return The property value of the node.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectFirstPropertyValueOrNull(selector: String, propName: String): String?
 
     /**
-     * Returns the nodes' property values, the nodes are located by [selector], the property is [propName].
+     * Returns the nodes' property values, the nodes are located by [selector], the property is [propName]. @mcp
      *
      * If the nodes do not exist, or the property does not exist, returns an empty list.
      *
@@ -1337,6 +1649,7 @@ interface WebDriver : Closeable {
      * @return The property values of the nodes.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun selectPropertyValueAll(
         selector: String,
         propName: String,
@@ -1345,7 +1658,7 @@ interface WebDriver : Closeable {
     ): List<String>
 
     /**
-     * Set the property of an element located by [selector].
+     * Set the property of an element located by [selector]. @mcp
      *
      * ```kotlin
      * driver.setProperty("input#input", "value")
@@ -1356,10 +1669,11 @@ interface WebDriver : Closeable {
      * @param propValue The property value to set.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun setProperty(selector: String, propName: String, propValue: String)
 
     /**
-     * Set the property of all elements matching the CSS query.
+     * Set the property of all elements matching the CSS query. @mcp
      *
      * ```kotlin
      * driver.setPropertyAll("input#input", "value")
@@ -1370,8 +1684,8 @@ interface WebDriver : Closeable {
      * @param propValue The property value to set.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun setPropertyAll(selector: String, propName: String, propValue: String)
-
 
     /**
      * Find hyperlinks in elements matching the CSS query.
@@ -1419,8 +1733,9 @@ interface WebDriver : Closeable {
     suspend fun selectImages(selector: String, offset: Int = 1, limit: Int = Int.MAX_VALUE): List<String>
 
     /**
-     * Executes JavaScript in the context of the currently selected frame or window. If the result is not JavaScript object,
-     * it is not returned.
+     * Executes JavaScript in the context of the currently selected frame or window. @mcp
+     *
+     * If the result is not JavaScript object, it is not returned.
      *
      * If you want to execute a function, convert it to IIFE (Immediately Invoked Function Expression).
      *
@@ -1450,212 +1765,246 @@ interface WebDriver : Closeable {
      * @return Remote object value in case of primitive values or null.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun evaluate(expression: String): Any?
 
     /**
-     * Executes JavaScript and returns the result or [defaultValue] if evaluation returns null or incompatible type.
+     * Executes JavaScript and returns the result, or [defaultValue] if the result is null or incompatible. @mcp
      *
-     * ```kotlin
-     * val count = driver.evaluate("document.querySelectorAll('a').length", 0)
-     * ```
-     *
-     * @param expression JavaScript expression to evaluate.
-     * @param defaultValue The value to return when the result is null or cannot be cast to [T].
-     * @return The evaluation result cast to [T], or [defaultValue] if the result is null or incompatible.
+     * @param expression The JavaScript expression to evaluate.
+     * @param defaultValue The value to return if evaluation fails or returns null.
+     * @return The evaluation result or [defaultValue].
      */
     @Throws(WebDriverException::class)
     suspend fun <T> evaluate(expression: String, defaultValue: T): T
 
     /**
-     * Executes JavaScript and returns detailed evaluation metadata, including the result and any exception info.
+     * returns detailed evaluation metadata (beta). @mcp
      *
-     * This is a beta API. Prefer [evaluate] for standard use cases.
-     *
-     * @param expression JavaScript expression to evaluate.
-     * @return A [JsEvaluation] object with evaluation details, or null if unavailable.
-     */
+     * @param expression The JavaScript expression to evaluate.
+     * @return A [JsEvaluation] object containing the result and metadata.
+     * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun evaluateDetail(expression: String): JsEvaluation?
 
     /**
-     * Executes JavaScript and returns the result, serializing JavaScript objects to JSON when possible.
+     * Executes JavaScript and returns the result as a JSON-serializable value. @mcp
      *
-     * Unlike [evaluate], this method attempts to serialize non-primitive JavaScript objects (arrays,
-     * plain objects, etc.) to their JSON representation. Primitives and strings are returned as-is.
-     * Returns null if the expression evaluates to `undefined` or `null`.
+     * If the result is an object, it is serialized to a Map or List.
+     * If the result is a primitive, it is returned as is.
+     * If the result is null or undefined, null is returned.
      *
-     * ```kotlin
-     * val links = driver.evaluateValue("Array.from(document.querySelectorAll('a')).map(a => a.href)")
-     * ```
-     *
-     * @param expression JavaScript expression to evaluate.
-     * @return The evaluation result as a primitive, JSON string, or null.
+     * @param expression The JavaScript expression to evaluate.
+     * @return The result as a JSON-compatible object (Map, List, String, Number, Boolean, or null).
      */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun evaluateValue(expression: String): Any?
 
     /**
-     * Executes JavaScript and returns the JSON-serializable result, or [defaultValue] if null or incompatible type.
+     * Executes JavaScript and returns the result as a JSON-serializable value, or [defaultValue] if null/incompatible. @mcp
      *
-     * ```kotlin
-     * val count = driver.evaluateValue("document.querySelectorAll('a').length", 0)
-     * ```
-     *
-     * @param expression JavaScript expression to evaluate.
-     * @param defaultValue The value to return when the result is null or cannot be cast to [T].
-     * @return The evaluation result cast to [T], or [defaultValue] if the result is null or incompatible.
-     */
+     * @param expression The JavaScript expression to evaluate.
+     * @param defaultValue The value to return if evaluation fails or returns null.
+     * @return The evaluation result or [defaultValue].
+     * */
     @Throws(WebDriverException::class)
     suspend fun <T> evaluateValue(expression: String, defaultValue: T): T
 
     /**
-     * Executes JavaScript and returns detailed evaluation metadata, serializing JavaScript objects to JSON.
+     * Returns detailed value evaluation metadata (beta). @mcp
      *
-     * This is a beta API. Prefer [evaluateValue] for standard use cases.
-     *
-     * @param expression JavaScript expression to evaluate.
-     * @return A [JsEvaluation] object with evaluation details, or null if unavailable.
-     */
+     * @param expression The JavaScript expression to evaluate.
+     * @return A [JsEvaluation] object containing the result value and metadata.
+     * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun evaluateValueDetail(expression: String): JsEvaluation?
 
-    /**
-     * Executes a named function on the element located by [selector] and returns the result as a JSON-serializable value.
-     *
-     * This is an experimental API subject to change.
-     *
-     * @param selector The CSS selector to locate the target element.
-     * @param functionDeclaration A JavaScript function declaration to call on the element.
-     * @return The result of the function call, or null.
-     */
     @Throws(WebDriverException::class)
-    @ExperimentalApi
+    @MCP
     suspend fun evaluateValue(selector: String, functionDeclaration: String): Any?
 
-    /**
-     * Executes a named function on the element located by [selector] and returns detailed evaluation metadata.
-     *
-     * This is an experimental API subject to change.
-     *
-     * @param selector The CSS selector to locate the target element.
-     * @param functionDeclaration A JavaScript function declaration to call on the element.
-     * @return A [JsEvaluation] object with evaluation details, or null if unavailable.
-     */
     @Throws(WebDriverException::class)
-    @ExperimentalApi
+    @MCP
     suspend fun evaluateValueDetail(selector: String, functionDeclaration: String): JsEvaluation?
 
     /**
-     * Capture a screenshot of the current viewport (or primary browsing context) after ensuring any pending layout.
+     * Capture a screenshot of the current viewport (or primary browsing context) after ensuring any pending layout. @mcp
+     *
      * If the backend supports element-centric capture this may represent the full page; implementation specific.
      *
      * The target element (if any) is scrolled into view before capture.
      *
      * ```kotlin
-     * val base64 = driver.captureScreenshot()
+     * val base64 = driver.screenshot()
      * val bytes = Base64.getDecoder().decode(base64)
      * ```
      */
     @Throws(WebDriverException::class)
-    suspend fun captureScreenshot(fullPage: Boolean = false): String?
+    @MCP
+    suspend fun screenshot(fullPage: Boolean = false): String?
 
     /**
-     * Scroll the element matched by [selector] into view (if needed) then take a screenshot of that element's bounding box.
+     * Scroll the element matched by [selector] into view (if needed) then take a screenshot of that element's bounding box. @mcp
+     *
      * Returns a Base64 encoded image (implementation usually PNG/JPEG), PNG by default.
      */
     @Throws(WebDriverException::class)
-    suspend fun captureScreenshot(selector: String): String?
+    @MCP
+    suspend fun screenshot(selector: String): String?
 
     /**
-     * Take a screenshot of the rectangle specified by [rect] in the current page coordinate space. Caller is responsible
-     * for ensuring the rectangle is visible or scrolled into view if the implementation requires it.
+     * Take a screenshot of the rectangle specified by [rect] in the current page coordinate space. @mcp
+     *
+     * Caller is responsible for ensuring the rectangle is visible or scrolled into view if the implementation requires it.
      */
     @Throws(WebDriverException::class)
-    suspend fun captureScreenshot(rect: RectD): String?
+    @MCP
+    suspend fun screenshot(rect: RectD): String?
+
+    @Deprecated("Use screenshot(fullPage = true) instead", ReplaceWith("screenshot(fullPage = true)"))
+    suspend fun captureScreenshot(fullPage: Boolean = false): String? = screenshot(fullPage)
+
+    @Deprecated("Use screenshot(selector) instead", ReplaceWith("screenshot(selector)"))
+    suspend fun captureScreenshot(selector: String): String? = screenshot(selector)
+
+    @Deprecated("Use screenshot(rect) instead", ReplaceWith("screenshot(rect)"))
+    suspend fun captureScreenshot(rect: RectD): String? = screenshot(rect)
+
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun ariaSnapshot(): String
 
     /**
-     * Calculate the clickable point of an element located by [selector].
+     * Return the ARIA snapshot (accessibility tree in YAML format) for the specified viewports. @mcp
+     *
+     * The [viewports] parameter controls which viewport(s) to include:
+     * - `"all"` — return the full-page snapshot (default).
+     * - `"3"` — return only viewport 3.
+     * - `"1,3,5"` — return viewports 1, 3 and 5.
+     * - `"2-4"` — return viewports 2, 3 and 4.
+     *
+     * Viewport indices are 1-based. The viewport height is determined by the browser's
+     * current viewport dimensions.
+     *
+     * @param viewports A viewport specification string (e.g., `"3"`, `"1,3,5"`, `"2-4"`, `"all"`).
+     * @return The ARIA snapshot YAML covering only the requested viewports.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun ariaSnapshot(viewports: String): String = ariaSnapshot()
+
+    /**
+     * Calculate the clickable point of an element located by [selector]. @mcp
+     *
      * If the element does not exist, or is not clickable, returns null.
      *
      * @param selector The selector of the element to calculate the clickable point.
      * @return The clickable point of the element.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun clickablePoint(selector: String): PointD?
 
     /**
-     * Return the bounding box of an element located by [selector].
+     * Return the bounding box of an element located by [selector]. @mcp
+     *
      * If the element does not exist, returns null.
      *
      * @param selector The selector of the element to calculate the bounding box.
      * @return The bounding box of the element.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun boundingBox(selector: String): RectD?
 
     /**
-     * Create a new Jsoup session with the last page's context, which means, the same headers and cookies.
+     * Create a new Jsoup session with the last page's context, which means, the same headers and cookies. @mcp
      *
      * @return The Jsoup session.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun newJsoupSession(): Connection
 
     /**
-     * Load the url as a resource with Jsoup rather than browser rendering, with the last page's context,
-     * which means, the same headers and cookies.
+     * Load the url as a resource with Jsoup rather than browser rendering, with the last page's context. @mcp
+     *
+     * This means, the same headers and cookies.
      *
      * @param url The URL to load.
      * @return The Jsoup response.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun loadJsoupResource(url: String): Connection.Response
 
     /**
-     * Load the url as a resource without browser rendering, with the last page's context, which means, the same headers
-     * and cookies.
+     * Load the url as a resource without browser rendering, with the last page's context. @mcp
+     *
+     * This means, the same headers and cookies.
      *
      * @param url The URL to load.
      * @return The network resource response.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun loadResource(url: String): NetworkResourceResponse
 
     /**
-     * Delay for a given amount of time.
+     * Delay for a given amount of time. @mcp
      *
      * @param millis The amount of time to delay, in milliseconds.
      * */
+    @MCP
     suspend fun delay(millis: Long = 1000) = kotlinx.coroutines.delay(millis)
 
     /**
-     * Delay for a given amount of time.
+     * Delay for a given amount of time. @mcp
      *
      * @param duration The amount of time to delay.
      * */
+    @MCP
     suspend fun delay(duration: Duration) = kotlinx.coroutines.delay(duration.toMillis())
 
     /**
-     * Delay for a given amount of time.
+     * Delay for a given amount of time. @mcp
      *
      * @param duration The amount of time to delay.
      * */
+    @MCP
     suspend fun delay(duration: kotlin.time.Duration) = kotlinx.coroutines.delay(duration.inWholeMilliseconds)
 
     /**
-     * Force the page pauses all navigations and PENDING resource fetches.
+     * Upload files to the element located by [selector]. @mcp
+     *
+     * @param selector The selector of the file input element.
+     * @param paths The list of file paths to upload.
+     */
+    @Throws(WebDriverException::class)
+    @MCP
+    suspend fun upload(selector: String, paths: List<String>)
+
+    /**
+     * Force the page pauses all navigations and PENDING resource fetches. @mcp
+     *
      * If the page loading pauses, the user can still interact with the page,
      * and therefore resources can continue to load.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun pause()
 
     /**
-     * Force the page stop all navigations and RELEASES all resources. Interaction with the
-     * stop page results in undefined behavior and the results should not be trusted.
+     * Force the page stop all navigations and RELEASES all resources. @mcp
+     *
+     * Interaction with the stop page results in undefined behavior and the results should not be trusted.
      *
      * If a web driver stops, it can later be used to visit other pages.
      * */
     @Throws(WebDriverException::class)
+    @MCP
     suspend fun stop()
 }

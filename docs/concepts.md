@@ -131,7 +131,7 @@ The methods in this interface are mainly divided into three categories:
 
 The main methods include:
 
-- `.navigateTo()`: Load a new web page.
+- `.navigate()`: Load a new web page.
 - `.scrollDown()`: Scroll down on the web page to fully load the page. Most modern web pages support lazy loading using AJAX technology, meaning that web page content only begins to load when it scrolls into view.
 - `.pageSource()`: Obtain the web page source code.
 

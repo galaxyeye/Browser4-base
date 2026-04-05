@@ -58,7 +58,7 @@ class KtorTransport : Transport {
         try {
             client = HttpClient(CIO) {
                 install(WebSockets) {
-                    pingInterval = DEFAULT_PING_INTERVAL
+                    pingInterval = DEFAULT_PING_INTERVAL_MS.milliseconds
                 }
                 install(HttpTimeout) {
                     connectTimeoutMillis = DEFAULT_CONNECT_TIMEOUT_MS
@@ -140,9 +140,9 @@ class KtorTransport : Transport {
                             ws.close(CloseReason(CloseReason.Codes.NORMAL, ""))
                         }
                     }
-                }.onFailure { 
+                }.onFailure {
                     logger.debug("WebSocket close timeout or error, forcing closure | {}", uri)
-                    warnForClose(this, it) 
+                    warnForClose(this, it)
                 }
             }
             runCatching { client?.close() }.onFailure { warnForClose(this, it) }
@@ -158,7 +158,9 @@ class KtorTransport : Transport {
     }
 
     /**
-     * On Windows, “localhost” often resolves to IPv6 ::1 first. If Chrome is listening only on IPv4 127.0.0.1 for the DevTools WebSocket, the handshake can silently stall in the socket layer, and Ktor’s webSocketSession may not return quickly without an explicit timeout.
+     * On Windows, “localhost” often resolves to IPv6 ::1 first. If Chrome is listening only on IPv4 127.0.0.1 for the
+     * DevTools WebSocket, the handshake can silently stall in the socket layer, and Ktor’s webSocketSession may not
+     * return quickly without an explicit timeout.
      * */
     private fun normalizeUri(uri: URI): URI {
         // Prefer IPv4 loopback for localhost to avoid potential IPv6-only bind issues on Windows
@@ -173,7 +175,7 @@ class KtorTransport : Transport {
         private const val DEFAULT_CONNECT_TIMEOUT_MS: Long = 10_000
         private const val DEFAULT_REQUEST_TIMEOUT_MS: Long = 20_000
         private const val DEFAULT_SOCKET_TIMEOUT_MS: Long = 20_000
-        private val DEFAULT_PING_INTERVAL: Duration = 15_000.milliseconds
+        private const val DEFAULT_PING_INTERVAL_MS: Long = 15_000
         private const val DEFAULT_KEEP_ALIVE_TIME_MS: Long = 5_000
         private const val CLOSE_TIMEOUT_MS: Long = 3_000
 

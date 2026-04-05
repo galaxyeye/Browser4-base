@@ -8,7 +8,6 @@ import ai.platon.pulsar.common.concurrent.ConcurrentExpiringLRUCache
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.*
 import java.time.Duration
-import java.util.concurrent.Executors
 
 class StatefulAgentRunner(
     val session: AgenticSession
@@ -16,8 +15,7 @@ class StatefulAgentRunner(
     private val logger = getLogger(StatefulAgentRunner::class)
 
     // Create a dedicated dispatcher for long-running command operations
-    private val scrapingExecutor = Executors.newFixedThreadPool(10)
-    private val commandDispatcher = scrapingExecutor.asCoroutineDispatcher()
+    private val commandDispatcher = Dispatchers.IO.limitedParallelism(10)
     private val commanderScope: CoroutineScope = CoroutineScope(
         commandDispatcher + SupervisorJob() + CoroutineName("commander")
     )
@@ -25,12 +23,6 @@ class StatefulAgentRunner(
 
     fun create(): AgentTaskStatus {
         return createCachedStatus()
-    }
-
-    fun submit(plainCommand: String): AgentTaskStatus {
-        val status = createCachedStatus()
-        commanderScope.launch { execute(plainCommand, status) }
-        return status
     }
 
     /**
@@ -52,7 +44,7 @@ class StatefulAgentRunner(
      * Internal method to execute agent command with a pre-created status.
      *
      * The status is updated with the agent's state history reference, allowing callers
-     * to access the latest agent state via [AgentTaskStatus.currentAgentState] during execution.
+     * to access the latest agent state via [AgentTaskStatus.agentState] during execution.
      *
      * This method creates and wires up ServerSideAgentEventHandlers for event collection,
      * following the pattern from StatefulPageVisitor#doVisit. Multiple commands can run
@@ -67,7 +59,7 @@ class StatefulAgentRunner(
             status.serverSideAgentEventHandlers = serverSideAgentEventHandlers
 
             // Start a background job to collect events and update status
-            val eventCollectorJob = CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+            val eventCollectorJob = commanderScope.launch {
                 try {
                     serverSideAgentEventHandlers.eventFlow.collect { event ->
                         status.emitEvent(event.eventType)
@@ -114,11 +106,12 @@ class StatefulAgentRunner(
         status.agentHistory = agent.stateHistory
 
         val history = agent.run(plainCommand)
+
+        status.agentHistory = history
         val finalState = history.finalResult
 
         // AgentState has 'summary' for the final result message
-        val resultSummary = finalState?.summary ?: finalState?.description ?: ""
-        status.message = resultSummary
+        status.message = finalState?.summary ?: finalState?.description ?: ""
         status.refresh(ResourceStatus.SC_OK)
     }
 

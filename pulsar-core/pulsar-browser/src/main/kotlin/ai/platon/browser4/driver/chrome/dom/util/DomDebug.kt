@@ -29,12 +29,12 @@ object DomDebug {
 
     // ----- Helpers -----
 
-    private fun rectOf(n: DOMTreeNodeEx): DOMRect? {
+    private fun rectOf(n: MergedDOMTreeNode): DOMRect? {
         val s = n.snapshotNode
         return s?.clientRects ?: s?.absoluteBounds ?: s?.bounds ?: n.absolutePosition
     }
 
-    private fun labelOfNode(n: DOMTreeNodeEx): String {
+    private fun labelOfNode(n: MergedDOMTreeNode): String {
         val attrs = n.attributes
         val id = attrs["id"]?.let { "#${it}" } ?: ""
         val klass = attrs["class"]?.let { "." + it.split(Regex("\\s+")).take(2).joinToString(".") } ?: ""
@@ -55,13 +55,13 @@ object DomDebug {
         }
     }
 
-    private fun briefWithBounds(n: DOMTreeNodeEx): String {
+    private fun briefWithBounds(n: MergedDOMTreeNode): String {
         val r = rectOf(n)
         val hashShort = n.elementHash?.take(12)
         return "nodeId=${n.nodeId}, name=${n.nodeName}, label=${labelOfNode(n)}, hash=${hashShort}, bounds=${r}"
     }
 
-    private fun briefWithBounds(n: TinyNode): String {
+    private fun briefWithBounds(n: OptimizedDOMTreeNode): String {
         val o = n.originalNode
         val r = rectOf(o)
         val hashShort = o.elementHash?.take(12)
@@ -73,9 +73,9 @@ object DomDebug {
         return "locator=${n.locator}, label=${labelOfNano(n)}, bounds=${r}"
     }
 
-    private fun midTwoWithBounds(root: DOMTreeNodeEx): Pair<DOMTreeNodeEx?, DOMTreeNodeEx?> {
-        val eligible = mutableListOf<DOMTreeNodeEx>()
-        fun dfs(n: DOMTreeNodeEx) {
+    private fun midTwoWithBounds(root: MergedDOMTreeNode): Pair<MergedDOMTreeNode?, MergedDOMTreeNode?> {
+        val eligible = mutableListOf<MergedDOMTreeNode>()
+        fun dfs(n: MergedDOMTreeNode) {
             val r = rectOf(n)
             if (hasNonZeroXY(r)) eligible += n
             n.children.forEach { dfs(it) }
@@ -86,9 +86,9 @@ object DomDebug {
         return middleTwo(eligible)
     }
 
-    private fun midTwoWithBounds(root: TinyNode): Pair<TinyNode?, TinyNode?> {
-        val eligible = mutableListOf<TinyNode>()
-        fun dfs(n: TinyNode) {
+    private fun midTwoWithBounds(root: OptimizedDOMTreeNode): Pair<OptimizedDOMTreeNode?, OptimizedDOMTreeNode?> {
+        val eligible = mutableListOf<OptimizedDOMTreeNode>()
+        fun dfs(n: OptimizedDOMTreeNode) {
             val r = rectOf(n.originalNode)
             if (hasNonZeroXY(r)) eligible += n
             n.children.forEach { dfs(it) }
@@ -111,11 +111,11 @@ object DomDebug {
 
     // ----- Stats calculators -----
 
-    fun stats(root: DOMTreeNodeEx): TreeStats {
+    fun stats(root: MergedDOMTreeNode): TreeStats {
         var maxDepth = 0
         var count = 0
         var leaves = 0
-        fun dfs(n: DOMTreeNodeEx, d: Int) {
+        fun dfs(n: MergedDOMTreeNode, d: Int) {
             count++
             if (d > maxDepth) maxDepth = d
             val totalChildren = n.children.size + n.shadowRoots.size + if (n.contentDocument != null) 1 else 0
@@ -128,11 +128,11 @@ object DomDebug {
         return TreeStats(maxDepth, count, leaves)
     }
 
-    fun stats(root: TinyNode): TreeStats {
+    fun stats(root: OptimizedDOMTreeNode): TreeStats {
         var maxDepth = 0
         var count = 0
         var leaves = 0
-        fun dfs(n: TinyNode, d: Int) {
+        fun dfs(n: OptimizedDOMTreeNode, d: Int) {
             count++
             if (d > maxDepth) maxDepth = d
             if (n.children.isEmpty()) leaves++
@@ -161,11 +161,11 @@ object DomDebug {
 
     // ----- Bounds stats calculators -----
 
-    fun boundsStats(root: DOMTreeNodeEx): BoundsStats {
+    fun boundsStats(root: MergedDOMTreeNode): BoundsStats {
         var zero = 0
         var positive = 0
         var missing = 0
-        fun dfs(n: DOMTreeNodeEx) {
+        fun dfs(n: MergedDOMTreeNode) {
             val r = rectOf(n)
             if (r == null) missing++
             else if (r.width > 0 && r.height > 0) positive++
@@ -178,11 +178,11 @@ object DomDebug {
         return BoundsStats(zero, positive, missing)
     }
 
-    fun boundsStats(root: TinyNode): BoundsStats {
+    fun boundsStats(root: OptimizedDOMTreeNode): BoundsStats {
         var zero = 0
         var positive = 0
         var missing = 0
-        fun dfs(n: TinyNode) {
+        fun dfs(n: OptimizedDOMTreeNode) {
             val o = n.originalNode
             val r = rectOf(o)
             if (r == null) missing++
@@ -243,9 +243,9 @@ object DomDebug {
         return if (remain > 0) "$body +${remain} more" else body
     }
 
-    private fun collectXY(root: DOMTreeNodeEx): List<Pair<Double, Double>> {
+    private fun collectXY(root: MergedDOMTreeNode): List<Pair<Double, Double>> {
         val list = mutableListOf<Pair<Double, Double>>()
-        fun dfs(n: DOMTreeNodeEx) {
+        fun dfs(n: MergedDOMTreeNode) {
             xyOf(rectOf(n))?.let { list += it }
             n.children.forEach { dfs(it) }
             n.shadowRoots.forEach { dfs(it) }
@@ -255,9 +255,9 @@ object DomDebug {
         return list
     }
 
-    private fun collectXY(root: TinyNode): List<Pair<Double, Double>> {
+    private fun collectXY(root: OptimizedDOMTreeNode): List<Pair<Double, Double>> {
         val list = mutableListOf<Pair<Double, Double>>()
-        fun dfs(n: TinyNode) {
+        fun dfs(n: OptimizedDOMTreeNode) {
             xyOf(rectOf(n.originalNode))?.let { list += it }
             n.children.forEach { dfs(it) }
         }
@@ -285,7 +285,7 @@ object DomDebug {
     // ----- Summaries -----
 
     // Helpers to convert nodes to map structures for summaries
-    fun toMidNodeMap(n: DOMTreeNodeEx): Map<String, Any?> = linkedMapOf(
+    fun toMidNodeMap(n: MergedDOMTreeNode): Map<String, Any?> = linkedMapOf(
         "nodeId" to n.nodeId,
         "backendNodeId" to n.backendNodeId,
         "nodeType" to n.nodeType,
@@ -295,7 +295,7 @@ object DomDebug {
         "bounds" to (n.snapshotNode?.clientRects ?: n.absolutePosition),
     )
 
-    fun toMidNodeMap(n: TinyNode): Map<String, Any?> = toMidNodeMap(n.originalNode)
+    fun toMidNodeMap(n: OptimizedDOMTreeNode): Map<String, Any?> = toMidNodeMap(n.originalNode)
     fun toMidNodeMap(n: NanoDOMTree): Map<String, Any?> = linkedMapOf(
         "locator" to n.locator,
         "label" to labelOfNano(n),
@@ -327,7 +327,7 @@ object DomDebug {
         )
     }
 
-    fun summarize(node: DOMTreeNodeEx, includeTreeStats: Boolean = true): Map<String, Any?> {
+    fun summarize(node: MergedDOMTreeNode, includeTreeStats: Boolean = true): Map<String, Any?> {
         val attrs = node.attributes
         val id = attrs["id"]?.let { "#${it}" } ?: ""
         val klass = attrs["class"]?.let { "." + it.split(Regex("\\s+")).take(2).joinToString(".") } ?: ""
@@ -342,7 +342,7 @@ object DomDebug {
         val gt50Sorted = sortedGt50(xyAll)
         val (mid1, mid2) = midPair ?: Pair(null, null)
         return linkedMapOf(
-            "type" to "DOMTreeNodeEx",
+            "type" to "MergedDOMTree",
             "nodeId" to node.nodeId,
             "backendNodeId" to node.backendNodeId,
             "nodeType" to node.nodeType,
@@ -383,7 +383,7 @@ object DomDebug {
         )
     }
 
-    fun summarize(root: TinyNode): Map<String, Any?> {
+    fun summarize(root: OptimizedDOMTreeNode): Map<String, Any?> {
         val s = stats(root)
         val b = boundsStats(root)
         val original = root.originalNode
@@ -519,7 +519,7 @@ object DomDebug {
         val withHash = uniqueNodes.count { !it.elementHash.isNullOrBlank() }
         val withSnapshot = uniqueNodes.count { it.snapshotNode != null }
         val withBounds = uniqueNodes.count { it.snapshotNode?.clientRects != null || it.snapshotNode?.absoluteBounds != null || it.absolutePosition != null }
-        fun labelOf(n: DOMTreeNodeEx): String {
+        fun labelOf(n: MergedDOMTreeNode): String {
             val attrs = n.attributes
             val id = attrs["id"]?.let { "#${it}" } ?: ""
             val klass = attrs["class"]?.let { "." + it.split(Regex("\\s+")).take(2).joinToString(".") } ?: ""
@@ -527,7 +527,7 @@ object DomDebug {
             return (name + id + klass).trim()
         }
         val sample = uniqueNodes.take(3).map { labelOf(it) }
-        val json = DOMSerializer.toJson(state.microTree)
+        val json = DOMSerializer.toJson(state.serializableTree)
         val eligible = uniqueNodes.filter { hasNonZeroXY(rectOf(it)) }
         val (mid1, mid2) = middleTwo(eligible)
         val xyAll = uniqueNodes.mapNotNull { xyOf(rectOf(it)) }

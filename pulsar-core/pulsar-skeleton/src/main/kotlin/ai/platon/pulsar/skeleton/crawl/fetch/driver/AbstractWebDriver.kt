@@ -1,7 +1,8 @@
 package ai.platon.pulsar.skeleton.crawl.fetch.driver
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
-import ai.platon.browser4.driver.chrome.dom.DomService
+import ai.platon.browser4.driver.chrome.dom.SnapshotService
+import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.common.urls.URLUtils
@@ -29,10 +30,10 @@ import kotlin.random.nextInt
 
 @Suppress("unused")
 abstract class AbstractWebDriver(
-    val guid: String,
+    override val guid: String,
     override val browser: AbstractBrowser,
     override val id: Int = ID_SUPPLIER.incrementAndGet()
-) : Comparable<AbstractWebDriver>, AbstractJvmWebDriver(), WebDriver, JvmWebDriver {
+) : Comparable<AbstractWebDriver>, WebDriver {
     companion object {
         private val ID_SUPPLIER = AtomicInteger()
     }
@@ -152,7 +153,7 @@ abstract class AbstractWebDriver(
 
     // TODO: Will move to WebDriver
     @Beta
-    open val domService: DomService? = null
+    open val snapshotService: SnapshotService? = null
 
     /** Idle timeout before a READY driver is considered stale and eligible for recycling/retirement. */
     var idleTimeout: Duration = Duration.ofMinutes(10)
@@ -277,8 +278,6 @@ abstract class AbstractWebDriver(
         canceled.set(true)
     }
 
-    override fun jvm(): JvmWebDriver = this
-
     val mainRequestHeaders: Map<String, Any> get() = navigateEntry.mainRequestHeaders
 
     val mainRequestCookies: List<Map<String, String>> get() = navigateEntry.mainRequestCookies
@@ -294,7 +293,7 @@ abstract class AbstractWebDriver(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun navigateTo(url: String) = navigateTo(NavigateEntry(url))
+    override suspend fun navigate(url: String) = navigate(NavigateEntry(url))
 
     @Throws(WebDriverException::class)
     override suspend fun reload() {
@@ -347,12 +346,12 @@ abstract class AbstractWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun isVisible(selector: String): Boolean {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         return evaluateValue("__pulsar_utils__.isVisible('$safeSelector')") == true
     }
 
     override suspend fun isChecked(selector: String): Boolean {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         return evaluateValue("__pulsar_utils__.isChecked('$safeSelector')") == true
     }
 
@@ -479,18 +478,11 @@ abstract class AbstractWebDriver(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun clickNthAnchor(n: Int, rootSelector: String): String? {
-        val safeRootSelector = Strings.escapeJsString(rootSelector)
-        val result = evaluate("__pulsar_utils__.clickNthAnchor($n, '$safeRootSelector')")
-        return result?.toString()
-    }
-
-    @Throws(WebDriverException::class)
     override suspend fun outerHTML() = outerHTML(":root")
 
     @Throws(WebDriverException::class)
     override suspend fun outerHTML(selector: String): String? {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         val js = """
 (() => {
     const element = document.querySelector(selector);
@@ -516,7 +508,7 @@ abstract class AbstractWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun selectFirstTextOrNull(selector: String): String? {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         val js = """
 ((selector) => {
     const element = document.querySelector(selector);
@@ -528,19 +520,19 @@ abstract class AbstractWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun selectTextAll(selector: String): List<String> {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         val json = evaluate("__pulsar_utils__.selectTextAll('$safeSelector')")?.toString() ?: "[]"
         return jacksonObjectMapper().readValue(json)
     }
 
     @Throws(WebDriverException::class)
     override suspend fun selectFirstAttributeOrNull(selector: String, attrName: String): String? {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         return evaluateValue("__pulsar_utils__.selectFirstAttribute('$safeSelector', '$attrName')")?.toString()
     }
 
     override suspend fun selectAttributes(selector: String): Map<String, String> {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         val json = evaluate("__pulsar_utils__.selectAttributes('$safeSelector')")?.toString() ?: return mapOf()
         val attributes: List<String> = jacksonObjectMapper().readValue(json)
         return attributes.zipWithNext().associate { it }
@@ -549,7 +541,7 @@ abstract class AbstractWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun selectAttributeAll(selector: String, attrName: String, start: Int, limit: Int): List<String> {
         val end = start + limit
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
 
         val expression = "__pulsar_utils__.selectAttributeAll('$safeSelector', '$attrName', $start, $end)"
         val json = evaluate(expression)?.toString() ?: return listOf()
@@ -558,20 +550,20 @@ abstract class AbstractWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun setAttribute(selector: String, attrName: String, attrValue: String) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.setAttribute('$safeSelector', '$attrName', '$attrValue')")
     }
 
     @Throws(WebDriverException::class)
     override suspend fun setAttributeAll(selector: String, attrName: String, attrValue: String) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.setAttributeAll('$safeSelector', '$attrName', '$attrValue')")
     }
 
     // --------------------------- Property helpers ---------------------------
     @Throws(WebDriverException::class)
     override suspend fun selectFirstPropertyValueOrNull(selector: String, propName: String): String? {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         return evaluateValue("__pulsar_utils__.selectFirstPropertyValue('$safeSelector', '$propName')")?.toString()
 //        val safePropName = Strings.escapeForJsString(propName)
         // return evaluateValue(selector, "function() { return this['$safePropName']; }")?.toString()
@@ -582,7 +574,7 @@ abstract class AbstractWebDriver(
         selector: String, propName: String, start: Int, limit: Int
     ): List<String> {
         val end = start + limit
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         val expression = "__pulsar_utils__.selectPropertyValueAll('$safeSelector', '$propName', $start, $end)"
         val json = evaluate(expression)?.toString() ?: return listOf()
         return jacksonObjectMapper().readValue(json)
@@ -590,13 +582,13 @@ abstract class AbstractWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun setProperty(selector: String, propName: String, propValue: String) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.setProperty('$safeSelector', '$propName', '$propValue')")
     }
 
     @Throws(WebDriverException::class)
     override suspend fun setPropertyAll(selector: String, propName: String, propValue: String) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.setPropertyAll('$safeSelector', '$propName', '$propValue')")
     }
 
@@ -606,7 +598,6 @@ abstract class AbstractWebDriver(
      */
     @Throws(WebDriverException::class)
     override suspend fun selectHyperlinks(selector: String, offset: Int, limit: Int): List<Hyperlink> {
-        // TODO: add __pulsar_utils__.selectHyperlinks() and proper relative URL resolution
         val baseURI = baseURI().trimEnd('/')
         return selectAttributeAll(selector, "href", offset, limit).map { Hyperlink("$baseURI/$it") }
     }
@@ -625,25 +616,25 @@ abstract class AbstractWebDriver(
 
     @Throws(WebDriverException::class)
     override suspend fun clickTextMatches(selector: String, pattern: String, count: Int) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.clickTextMatches('$safeSelector', '$pattern')")
     }
 
     @Throws(WebDriverException::class)
     override suspend fun clickMatches(selector: String, attrName: String, pattern: String, count: Int) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.clickMatches('$safeSelector', '$attrName', '$pattern')")
     }
 
     @Throws(WebDriverException::class)
     override suspend fun check(selector: String) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.check('$safeSelector')")
     }
 
     @Throws(WebDriverException::class)
     override suspend fun uncheck(selector: String) {
-        val safeSelector = Strings.escapeJsString(selector)
+        val safeSelector = normalizeCSSSelector(selector)
         evaluate("__pulsar_utils__.uncheck('$safeSelector')")
     }
 
@@ -666,6 +657,24 @@ abstract class AbstractWebDriver(
     override suspend fun waitUntil(predicate: suspend () -> Boolean) = waitUntil(timeout("waitUntil"), predicate)
     override suspend fun waitUntil(timeout: Duration, predicate: suspend () -> Boolean) =
         waitUntil("waitUtil", timeout, predicate)
+
+    /**
+     * Generate a random delay in milliseconds for an action.
+     * @param action Named action bucket (fallbacks: specific -> default -> provided fallback range).
+     * @param fallback Used if policy values are missing / invalid.
+     */
+    fun randomDelayMillis(action: String, fallback: IntRange = 500..1000): Long {
+        val default = delayPolicy["default"] ?: fallback
+        var range = delayPolicy[action] ?: default
+        if (range.first <= 0 || range.last > 10000) {
+            range = fallback
+        }
+        return Random.nextInt(range).toLong()
+    }
+
+    fun timeout(action: String, fallback: Duration = Duration.ofSeconds(60)): Duration {
+        return timeoutPolicy[action] ?: timeoutPolicy["default"] ?: timeoutPolicy[""] ?: fallback
+    }
 
     protected suspend fun waitUntil(type: String, timeout: Duration, predicate: suspend () -> Boolean): Duration {
         return waitUntil(randomDelayMillis(type), timeout, predicate)
@@ -704,7 +713,11 @@ abstract class AbstractWebDriver(
      * this suspending function is waiting, this function immediately resumes with CancellationException.
      * */
     protected suspend fun gap() {
-        if (!isActive) return; delay(randomDelayMillis("gap"))
+        if (!isActive) {
+            return
+        }
+
+        delay(randomDelayMillis("gap"))
     }
 
     /**
@@ -728,25 +741,26 @@ abstract class AbstractWebDriver(
      * this suspending function is waiting, this function immediately resumes with CancellationException.
      * */
     protected suspend fun gap(millis: Long) {
-        if (!isActive) return; delay(millis)
-    }
-
-    /**
-     * Generate a random delay in milliseconds for an action.
-     * @param action Named action bucket (fallbacks: specific -> default -> provided fallback range).
-     * @param fallback Used if policy values are missing / invalid.
-     */
-    fun randomDelayMillis(action: String, fallback: IntRange = 500..1000): Long {
-        val default = delayPolicy["default"] ?: fallback
-        var range = delayPolicy[action] ?: default
-        if (range.first <= 0 || range.last > 10000) {
-            range = fallback
+        if (!isActive) {
+            return
         }
-        return Random.nextInt(range).toLong()
+
+        delay(millis)
     }
 
-    fun timeout(action: String, fallback: Duration = Duration.ofSeconds(60)): Duration {
-        return timeoutPolicy[action] ?: timeoutPolicy["default"] ?: timeoutPolicy[""] ?: fallback
+    protected fun convertSelectorIfNecessary(selector: String): String {
+        val nodeId = if (selector.startsWith("e")) selector.substring(1).toIntOrNull() else null
+        if (nodeId != null) {
+            val ref = ElementRefCriteria(backendNodeId = nodeId)
+            return snapshotService?.findElement(ref)?.cssSelector() ?: selector
+        }
+        return selector
+    }
+
+    protected fun normalizeCSSSelector(selector: String): String {
+        val cssSelector = convertSelectorIfNecessary(selector)
+        val safeSelector = Strings.escapeJsString(cssSelector)
+        return safeSelector
     }
 
     private fun getHeadersAndCookies(): Pair<Map<String, String>, List<Map<String, String>>> = runBlocking {

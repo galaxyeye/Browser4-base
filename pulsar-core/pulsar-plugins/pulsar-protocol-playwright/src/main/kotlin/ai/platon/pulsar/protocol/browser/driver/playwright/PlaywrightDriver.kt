@@ -1,6 +1,7 @@
 package ai.platon.pulsar.protocol.browser.driver.playwright
 
 import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.chrome.NodeRef
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.pulsar.common.NotSupportedException
@@ -13,8 +14,10 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.microsoft.playwright.ElementHandle
+import com.microsoft.playwright.Mouse
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.KeyboardModifier
+import com.microsoft.playwright.options.MouseButton
 import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Connection
 import java.time.Duration
@@ -70,18 +73,18 @@ class PlaywrightDriver(
      * Navigates to a URL without waiting for navigation to complete.
      * @throws RuntimeException if navigation fails
      */
-    override suspend fun navigateTo(entry: NavigateEntry) {
+    override suspend fun navigate(entry: NavigateEntry) {
         navigateHistory.add(entry)
         this.navigateEntry = entry
 
         browser.emit(BrowserEvents.willNavigate, entry)
 
         try {
-            rpc.invokeDeferred("navigateTo") {
-                doNavigateTo(entry)
+            rpc.invokeDeferred("navigate") {
+                donavigate(entry)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "navigateTo", entry.url)
+            rpc.handleWebDriverException(e, "navigate", entry.url)
         }
     }
 
@@ -100,7 +103,7 @@ class PlaywrightDriver(
     /**
      * Navigate to the page and inject scripts.
      * */
-    private fun doNavigateTo(entry: NavigateEntry) {
+    private fun donavigate(entry: NavigateEntry) {
         val url = entry.url
 
         addScriptToEvaluateOnNewDocument()
@@ -332,6 +335,18 @@ class PlaywrightDriver(
         return this
     }
 
+    override suspend fun waitForFunction(pageFunction: String, timeout: Duration): WebDriver? {
+        try {
+            rpc.invokeDeferred("waitForFunction") {
+                page.waitForFunction(pageFunction, null, Page.WaitForFunctionOptions().setTimeout(timeout.toMillis().toDouble()))
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "waitForFunction", "pageFunction: $pageFunction, timeout: $timeout")
+            return null
+        }
+        return this
+    }
+
     /**
      * Checks if an element exists in the DOM.
      * @param selector The CSS selector to check
@@ -466,12 +481,26 @@ class PlaywrightDriver(
         }
     }
 
-    /**
-     * Clicks on an element matching the selector.
-     * @param selector The CSS selector of the element to click
-     * @param count The number of times to click
-     * @throws RuntimeException if clicking fails
-     */
+    override suspend fun keyDown(key: String) {
+        try {
+            rpc.invokeDeferred("keyDown") {
+                page.keyboard().down(key)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "keyDown", "key: $key")
+        }
+    }
+
+    override suspend fun keyUp(key: String) {
+        try {
+            rpc.invokeDeferred("keyUp") {
+                page.keyboard().up(key)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "keyUp", "key: $key")
+        }
+    }
+
     override suspend fun click(selector: String, count: Int) {
         try {
             rpc.invokeDeferred("click") {
@@ -485,6 +514,32 @@ class PlaywrightDriver(
     override suspend fun click(selector: String, modifier: String) {
         val modifier = KeyboardModifier.valueOf(modifier.uppercase())
         page.click(selector, Page.ClickOptions().setModifiers(listOf(modifier)))
+    }
+
+    override suspend fun dblclick(selector: String) {
+        try {
+            rpc.invokeDeferred("click") {
+                page.querySelector(selector).dblclick(ElementHandle.DblclickOptions())
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "click", "selector: $selector")
+        }
+    }
+
+    override suspend fun dblclick(selector: String, modifier: String) {
+        val modifier = KeyboardModifier.valueOf(modifier.uppercase())
+        page.dblclick(selector, Page.DblclickOptions().setModifiers(listOf(modifier)))
+    }
+
+    override suspend fun selectOption(selector: String, values: List<String>): List<String> {
+        return try {
+            rpc.invokeDeferred("selectOption") {
+                page.selectOption(selector, values.toTypedArray())
+            } ?: listOf()
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "selectOption", "selector: $selector, values: $values")
+            listOf()
+        }
     }
 
     override suspend fun clickTextMatches(selector: String, pattern: String, count: Int) {
@@ -525,23 +580,6 @@ class PlaywrightDriver(
         }
     }
 
-    override suspend fun clickNthAnchor(n: Int, rootSelector: String): String? {
-        return try {
-            rpc.invokeDeferred("clickNthAnchor") {
-                val anchors = page.querySelectorAll("$rootSelector a")
-                if (n < anchors.size) {
-                    anchors[n].click()
-                    anchors[n].getAttribute("href")
-                } else {
-                    null
-                }
-            }
-        } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "clickNthAnchor", "n: $n, rootSelector: $rootSelector")
-            null
-        }
-    }
-
     override suspend fun check(selector: String) {
         try {
             rpc.invokeDeferred("check") {
@@ -559,6 +597,47 @@ class PlaywrightDriver(
             }
         } catch (e: Exception) {
             rpc.handleWebDriverException(e, "uncheck", selector)
+        }
+    }
+
+    override suspend fun resize(width: Int, height: Int) {
+        try {
+            rpc.invokeDeferred("resize") {
+                page.setViewportSize(width, height)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "resize", "width: $width, height: $height")
+        }
+    }
+
+    override suspend fun dialogAccept(promptText: String?) {
+        // Playwright handles dialogs via listeners. This imperative method is tricky.
+        // We assume a dialog handler is active or we set one for future dialogs.
+        // For now, we'll try to set a one-time handler.
+        try {
+            rpc.invokeDeferred("dialogAccept") {
+                // If a dialog is already open, this might not work as expected in Playwright
+                // as it requires the handler to be set *before* the dialog appears.
+                // However, if we are in a paused state or using a mechanism that waits,
+                // we might be able to handle it.
+                // Given the constraints, we'll log a warning or leave it as a no-op if no dialog.
+                logger.warn("dialogAccept is not fully supported in PlaywrightDriver in imperative style")
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "dialogAccept")
+        }
+    }
+
+    override suspend fun dialogDismiss() {
+        try {
+            rpc.invokeDeferred("dialogDismiss") {
+//                page.onceDialog { dialog ->
+//                    dialog.dismiss()
+//                }
+                logger.warn("dialogDismiss is not fully supported in PlaywrightDriver in imperative style")
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "dialogDismiss")
         }
     }
 
@@ -672,6 +751,16 @@ class PlaywrightDriver(
         }
     }
 
+    override suspend fun mouseWheel(deltaX: Double, deltaY: Double) {
+        try {
+            rpc.invokeDeferred("mouseWheel") {
+                page.mouse().wheel(deltaX, deltaY)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseWheel", "deltaX: $deltaX, deltaY: $deltaY")
+        }
+    }
+
     override suspend fun moveMouseTo(x: Double, y: Double) {
         try {
             rpc.invokeDeferred("moveMouseTo") {
@@ -679,6 +768,46 @@ class PlaywrightDriver(
             }
         } catch (e: Exception) {
             rpc.handleWebDriverException(e, "moveMouseTo", "x: $x, y: $y")
+        }
+    }
+
+    override suspend fun mouseMove(x: Double, y: Double) {
+        try {
+            rpc.invokeDeferred("mouseMove") {
+                page.mouse().move(x, y)
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseMove", "x: $x, y: $y")
+        }
+    }
+
+    override suspend fun mouseDown(button: String, clickCount: Int) {
+        try {
+            rpc.invokeDeferred("mouseDown") {
+                val mouseButton = when (button.lowercase()) {
+                    "right" -> MouseButton.RIGHT
+                    "middle" -> MouseButton.MIDDLE
+                    else -> MouseButton.LEFT
+                }
+                page.mouse().down(Mouse.DownOptions().setButton(mouseButton).setClickCount(clickCount))
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseDown", "button: $button, clickCount: $clickCount")
+        }
+    }
+
+    override suspend fun mouseUp(button: String, clickCount: Int) {
+        try {
+            rpc.invokeDeferred("mouseUp") {
+                val mouseButton = when (button.lowercase()) {
+                    "right" -> MouseButton.RIGHT
+                    "middle" -> MouseButton.MIDDLE
+                    else -> MouseButton.LEFT
+                }
+                page.mouse().up(Mouse.UpOptions().setButton(mouseButton).setClickCount(clickCount))
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "mouseUp", "button: $button, clickCount: $clickCount")
         }
     }
 
@@ -733,6 +862,14 @@ class PlaywrightDriver(
             rpc.handleWebDriverException(e, "outerHTML", selector)
             null
         }
+    }
+
+    override suspend fun ariaSnapshot(): String {
+        TODO("Not supported by PlaywrightDriver currently")
+    }
+
+    override suspend fun querySelectorAll(selector: String): List<NodeRef> {
+        TODO("Not supported by PlaywrightDriver currently")
     }
 
     override suspend fun selectFirstTextOrNull(selector: String): String? {
@@ -815,9 +952,9 @@ class PlaywrightDriver(
      * @return The screenshot as a base64 encoded string
      * @throws RuntimeException if screenshot capture fails
      */
-    override suspend fun captureScreenshot(fullPage: Boolean): String? {
+    override suspend fun screenshot(fullPage: Boolean): String? {
         return try {
-            rpc.invokeDeferred("captureScreenshot") {
+            rpc.invokeDeferred("screenshot") {
                 val options = Page.ScreenshotOptions()
                 if (fullPage) {
                     options.setFullPage(true)
@@ -826,7 +963,7 @@ class PlaywrightDriver(
                 Base64.getEncoder().encodeToString(src)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "captureScreenshot")
+            rpc.handleWebDriverException(e, "screenshot")
             null
         }
     }
@@ -837,26 +974,26 @@ class PlaywrightDriver(
      * @return The screenshot as a base64 encoded string
      * @throws RuntimeException if screenshot capture fails
      */
-    override suspend fun captureScreenshot(selector: String): String? {
+    override suspend fun screenshot(selector: String): String? {
         return try {
-            rpc.invokeDeferred("captureScreenshot") {
+            rpc.invokeDeferred("screenshot") {
                 val sc = page.querySelector(selector).screenshot()
                 Base64.getEncoder().encodeToString(sc)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "captureScreenshot", selector)
+            rpc.handleWebDriverException(e, "screenshot", selector)
             null
         }
     }
 
-    override suspend fun captureScreenshot(rect: RectD): String? {
+    override suspend fun screenshot(rect: RectD): String? {
         return try {
-            rpc.invokeDeferred("captureScreenshot") {
+            rpc.invokeDeferred("screenshot") {
                 val sc = page.screenshot(Page.ScreenshotOptions().setClip(rect.x, rect.y, rect.width, rect.height))
                 Base64.getEncoder().encodeToString(sc)
             }
         } catch (e: Exception) {
-            rpc.handleWebDriverException(e, "captureScreenshot", "rect: $rect")
+            rpc.handleWebDriverException(e, "screenshot", "rect: $rect")
             null
         }
     }
@@ -940,6 +1077,16 @@ class PlaywrightDriver(
         }
     }
 
+    override suspend fun upload(selector: String, paths: List<String>) {
+        try {
+            rpc.invokeDeferred("upload") {
+                page.setInputFiles(selector, paths.map { java.nio.file.Paths.get(it) }.toTypedArray())
+            }
+        } catch (e: Exception) {
+            rpc.handleWebDriverException(e, "upload", selector)
+        }
+    }
+
     override suspend fun pause() {
         try {
             rpc.invokeDeferred("pause") {
@@ -953,7 +1100,7 @@ class PlaywrightDriver(
     override suspend fun stop() {
         try {
             rpc.invokeDeferred("stop") {
-                navigateTo(ChromeImpl.ABOUT_BLANK_PAGE)
+                navigate(ChromeImpl.ABOUT_BLANK_PAGE)
             }
         } catch (e: Exception) {
             logger.warn("Failed to stop: ${e.message}")

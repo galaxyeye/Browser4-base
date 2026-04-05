@@ -5,11 +5,14 @@ import ai.platon.pulsar.agentic.tools.agent.StatefulAgentRunner
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
 import ai.platon.pulsar.agentic.tools.crawl.StatefulPageVisitor
+import ai.platon.pulsar.agentic.tools.crawl.failed
 import ai.platon.pulsar.common.ResourceStatus
+import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.rest.api.entities.*
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
+import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.springframework.http.codec.ServerSentEvent
@@ -17,12 +20,12 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.FluxSink
 import java.time.Instant
-import java.util.concurrent.Executors
 
 @Service
 class CommandService(
     val session: AgenticSession,
     val conversationService: ConversationService,
+    val loadService: LoadService,
 ) {
     companion object {
         const val FLOW_POLLING_INTERVAL = 1000L
@@ -31,8 +34,7 @@ class CommandService(
     private val logger = getLogger(CommandService::class)
 
     // Create a dedicated dispatcher for long-running command operations
-    private val scrapingExecutor = Executors.newFixedThreadPool(10)
-    private val commandDispatcher = scrapingExecutor.asCoroutineDispatcher()
+    private val commandDispatcher = Dispatchers.IO.limitedParallelism(10)
 
     private val commanderScope: CoroutineScope = CoroutineScope(
         commandDispatcher + SupervisorJob() + CoroutineName("commander")
@@ -65,6 +67,10 @@ class CommandService(
      * @return CommandStatus containing the execution result.
      */
     suspend fun executePlainCommandSync(plainCommand: String): CommandStatus {
+        if (plainCommand.isBlank()) {
+            return CommandStatus.failed(ResourceStatus.SC_BAD_REQUEST)
+        }
+
         val request = conversationService.normalizePlainCommand(plainCommand)
         return if (request != null) {
             // Page visit execution
@@ -91,6 +97,18 @@ class CommandService(
      * @return The command status ID for tracking execution progress.
      */
     suspend fun submitPlainCommandAsync(plainCommand: String): String {
+        val plainCommand = plainCommand.trim()
+
+        if (plainCommand.isBlank()) {
+            val status = statefulPageVisitor.create()
+            status.failed(ResourceStatus.SC_BAD_REQUEST)
+            return status.id
+        }
+
+        if (plainCommand.startsWith("http") && Strings.isSingleLine(plainCommand)) {
+            return loadService.load(plainCommand).contentAsString
+        }
+
         val request = conversationService.normalizePlainCommand(plainCommand)
         return if (request != null) {
             // Standard URL-based async command execution
@@ -116,15 +134,15 @@ class CommandService(
         return status.toCommandStatus()
     }
 
-    suspend fun submitAgentTaskAsync(plainCommand: String): String {
+    fun submitAgentTaskAsync(plainCommand: String): String {
         val status = statefulAgentRunner.create()
-        statefulAgentRunner.execute(plainCommand, status)
+        commanderScope.launch { statefulAgentRunner.execute(plainCommand, status) }
         return status.id
     }
 
     fun getStatus(id: String): CommandStatus? {
-        return statefulPageVisitor.getStatus(id)?.toCommandStatus() ?: statefulAgentRunner.getStatus(id)
-            ?.toCommandStatus()
+        return statefulPageVisitor.getStatus(id)?.toCommandStatus()
+            ?: statefulAgentRunner.getStatus(id)?.toCommandStatus()
     }
 
     fun getResult(id: String): CommandResult? = getStatus(id)?.commandResult
@@ -189,5 +207,10 @@ class CommandService(
 
     suspend fun executePageVisitCommand(request: PageVisitRequest): PageVisitStatus {
         return statefulPageVisitor.visit(request)
+    }
+
+    @PreDestroy
+    fun destroy() {
+        commanderScope.cancel()
     }
 }

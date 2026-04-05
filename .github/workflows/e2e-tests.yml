@@ -1,7 +1,9 @@
 name: E2E Tests
 
 on:
-  # Allow manual workflow runs only (test-strategy.md: MustRunExplicitly)
+  # Manual workflow runs only (test-strategy.md: ManualOnly)
+  # This workflow runs comprehensive E2E tests with browser and AI requirements
+  # For Docker deployment testing only, see docker-e2e-test.yml
   workflow_dispatch:
     inputs:
       debug_mode:
@@ -60,7 +62,7 @@ jobs:
         with:
           maven_profiles: 'all-modules,pulsar-tests,e2e-tests'
           # Run E2E tests only (test-strategy.md: Heavy, RequiresBrowser, RequiresAI)
-          excluded_groups: 'MustRunExplicitly'
+          excluded_groups: 'ManualOnly'
           run_pulsar_tests: 'true'
           timeout_minutes: '90'
 

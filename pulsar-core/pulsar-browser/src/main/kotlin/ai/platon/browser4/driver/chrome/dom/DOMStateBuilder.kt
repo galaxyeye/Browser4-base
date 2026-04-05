@@ -3,18 +3,45 @@ package ai.platon.browser4.driver.chrome.dom
 import ai.platon.browser4.driver.chrome.dom.model.*
 import ai.platon.browser4.driver.chrome.dom.util.ScrollUtils
 
+/**
+ * Builds the compact `DOMState` representation that Browser4 ships to agents and serializers.
+ *
+ * The builder sits between three related node models:
+ *
+ * - `MergedDOMTree` is the richest form. It is the merged DOM/AX/snapshot node produced by snapshot capture and
+ *   still contains full tree structure, geometry, accessibility metadata, and browser-facing identifiers.
+ * - `TinyDOMTreeNode` is an intermediate builder tree. Each tiny node wraps a `MergedDOMTree` in `originalNode`
+ *   and adds traversal decisions made upstream, such as `shouldDisplay`, `interactiveIndex`, paint-order flags,
+ *   and other pruning hints. In other words, tiny nodes keep the original rich payload but annotate it with
+ *   "how should the builder treat this node?" metadata.
+ * - `MicroDOMTreeNode` is the final compact output. It replaces the rich `MergedDOMTree` payload with a
+ *   `CleanedDOMTreeNode`, keeps only the fields that matter to downstream prompting/interaction, and recursively
+ *   serializes children into a smaller LLM-facing tree.
+ *
+ * So the pipeline is intentionally:
+ *
+ * `MergedDOMTree` (raw merged browser model)
+ * -> `OptimizedDOMTreeNode` (builder-oriented wrapper with pruning/display decisions)
+ * -> `SerializableDOMTreeNode` (compact serialized agent model)
+ */
 object DOMStateBuilder {
     /**
-     * Serialize SimplifiedNode tree to JSON string for LLM.
-     * Enhanced with paint-order pruning, compound component marking, and attribute casing alignment.
+     * Builds a `DOMState` from a preprocessed tiny tree.
      *
-     * @param root The simplified node tree root
+     * `DOMTinyTreeBuilder` does the expensive structural filtering first and hands this builder a
+     * `TinyDOMTreeNode` tree. We then preserve those filtering decisions while compacting each node's
+     * embedded `MergedDOMTree` into `CleanedDOMTreeNode` entries inside the final `MicroDOMTreeNode` tree.
+     *
+     * This split keeps Browser4's internal browser model (`MergedDOMTree`) available during transformation,
+     * but prevents the final payload from carrying the full DOM/AX/snapshot graph into prompts.
+     *
+     * @param root The intermediate tiny tree root that still references the original rich browser nodes
      * @param includeAttributes List of attribute names to include (empty = use defaults)
      * @param options Serialization options for enhanced features
-     * @return JSON string
+     * @return The compact DOM state containing the serialized micro tree plus lookup metadata
      */
     fun build(
-        root: TinyNode,
+        root: OptimizedDOMTreeNode,
         includeAttributes: List<String> = emptyList(),
         options: CompactOptions = CompactOptions()
     ): DOMState {
@@ -32,7 +59,7 @@ object DOMStateBuilder {
         // Detect top-level viewport height from the first HTML node's client rects
         val topViewportHeight: Double? = findTopLevelViewportHeight(root)
 
-        val microTree = buildMicroDOMTree(
+        val serializableDOMTree = buildSerializableDOMTreeNode(
             root,
             includeAttributes,
             emptyList(),
@@ -44,25 +71,22 @@ object DOMStateBuilder {
             topViewportHeight = topViewportHeight
         )
 
-        val interactiveNodes = mutableListOf<MicroDOMTreeNode>()
-        collectInteractiveNodes(microTree, interactiveNodes)
+        val interactiveNodes = mutableListOf<SerializableDOMTreeNode>()
+        collectInteractiveNodes(serializableDOMTree, interactiveNodes)
 
         // Export legacy selector map view for backward compatibility and diagnostics/tests
         val legacySelectorMap = locatorMap.toStringMap()
-        return DOMState(microTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap)
+        return DOMState(serializableDOMTree, interactiveNodes, frameIds, legacySelectorMap, locatorMap, root)
     }
 
-    @Deprecated("Use DOMSerializer.toJson(root) instead", ReplaceWith("DOMSerializer.toJson(root)"))
-    fun toJson(root: MicroDOMTree) = DOMSerializer.toJson(root)
-
-    private fun collectInteractiveNodes(root: MicroDOMTree, interactiveNodes: MutableList<MicroDOMTreeNode>) {
+    private fun collectInteractiveNodes(root: SerializableDOMTree, interactiveNodes: MutableList<SerializableDOMTreeNode>) {
         root.takeIf { it.interactiveIndex != null }?.let { interactiveNodes.add(it) }
         root.children?.forEach {
             collectInteractiveNodes(it, interactiveNodes)
         }
     }
 
-    private fun collectFrameIds(root: TinyNode, frameIds: MutableSet<String>) {
+    private fun collectFrameIds(root: OptimizedDOMTreeNode, frameIds: MutableSet<String>) {
         root.originalNode.frameId?.let { frameIds.add(it) }
         root.children.forEach {
             collectFrameIds(it, frameIds)
@@ -70,9 +94,9 @@ object DOMStateBuilder {
     }
 
     // Find the top-level HTML node's client height to use as viewport height
-    private fun findTopLevelViewportHeight(root: TinyNode): Double? {
+    private fun findTopLevelViewportHeight(root: OptimizedDOMTreeNode): Double? {
         var height: Double? = null
-        fun dfs(n: TinyNode) {
+        fun dfs(n: OptimizedDOMTreeNode) {
             if (height != null) return
             val o = n.originalNode
             if (o.nodeName.equals("HTML", ignoreCase = true)) {
@@ -97,17 +121,28 @@ object DOMStateBuilder {
         val preserveOriginalCasing: Boolean = false
     )
 
-    private fun buildMicroDOMTree(
-        node: TinyNode,
+    /**
+     * Recursively converts one `OptimizedDOMTreeNode` subtree into its `SerializableDOMTreeNode` equivalent.
+     *
+     * The important distinction is:
+     * - the optimized node still points at the full `MergedDOMTreeNode` via `originalNode`, so this method can inspect
+     *   geometry, AX role/name data, DOM attributes, and frame metadata while deciding how to serialize.
+     * - the returned serializable node keeps only compact, prompt-safe fields and a cleaned copy of the original node.
+     *
+     * This is where the builder crosses the boundary from an internal transformation tree to the final
+     * agent-facing representation.
+     */
+    private fun buildSerializableDOMTreeNode(
+        node: OptimizedDOMTreeNode,
         includeAttributes: Set<String>,
-        ancestors: List<DOMTreeNodeEx>,
+        ancestors: List<MergedDOMTreeNode>,
         locatorMap: LocatorMap,
         frameIds: List<String>,
         options: CompactOptions,
         depth: Int = 0,
         includeOrder: List<String> = emptyList(),
         topViewportHeight: Double?
-    ): MicroDOMTreeNode {
+    ): SerializableDOMTreeNode {
         // Apply paint-order pruning if enabled
         if (options.enablePaintOrderPruning && shouldPruneByPaintOrder(node, options)) {
             // Return a pruned node with minimal information
@@ -142,7 +177,7 @@ object DOMStateBuilder {
         // Recursively serialize children with enhanced logic (do not filter; prune per-node)
         val childAncestors = ancestors + node.originalNode
         val serializedChildren = node.children.map {
-            buildMicroDOMTree(
+            buildSerializableDOMTreeNode(
                 it,
                 includeAttributes,
                 childAncestors,
@@ -155,7 +190,7 @@ object DOMStateBuilder {
             )
         }
 
-        return MicroDOMTreeNode(
+        return SerializableDOMTreeNode(
             shouldDisplay = node.shouldDisplay.takeIf { it },
             interactiveIndex = node.interactiveIndex,
             ignoredByPaintOrder = node.ignoredByPaintOrder.takeIf { it },
@@ -171,7 +206,7 @@ object DOMStateBuilder {
     /**
      * Determine if a node should be pruned based on paint order.
      */
-    private fun shouldPruneByPaintOrder(node: TinyNode, options: CompactOptions): Boolean {
+    private fun shouldPruneByPaintOrder(node: OptimizedDOMTreeNode, options: CompactOptions): Boolean {
         val paintOrder = node.originalNode.snapshotNode?.paintOrder ?: return false
         return paintOrder > options.maxPaintOrderThreshold
     }
@@ -179,7 +214,7 @@ object DOMStateBuilder {
     /**
      * Detect if a node represents a compound component.
      */
-    private fun detectCompoundComponent(node: TinyNode, options: CompactOptions): Boolean {
+    private fun detectCompoundComponent(node: OptimizedDOMTreeNode, options: CompactOptions): Boolean {
         val originalNode = node.originalNode
         val tag = originalNode.nodeName.lowercase()
 
@@ -232,12 +267,12 @@ object DOMStateBuilder {
      * Create a pruned node with minimal information for high paint-order elements.
      */
     private fun createPrunedNode(
-        node: TinyNode,
-        ancestors: List<DOMTreeNodeEx>,
+        node: OptimizedDOMTreeNode,
+        ancestors: List<MergedDOMTreeNode>,
         locatorMap: LocatorMap,
         frameIds: List<String>,
         topViewportHeight: Double?
-    ): MicroDOMTreeNode {
+    ): SerializableDOMTreeNode {
         val viewportIndex = computeViewportIndex(node.originalNode, topViewportHeight)
 
         val prunedOriginal = CleanedDOMTreeNode(
@@ -270,7 +305,7 @@ object DOMStateBuilder {
         // Add to selector map with enhanced lookup keys
         addToLocatorMap(node.originalNode, frameIds, locatorMap)
 
-        return MicroDOMTreeNode(
+        return SerializableDOMTreeNode(
             shouldDisplay = null, // Pruned nodes are not displayed (null means false)
             interactiveIndex = node.interactiveIndex,
             ignoredByPaintOrder = true, // Mark as ignored by paint order
@@ -284,7 +319,7 @@ object DOMStateBuilder {
     }
 
     // Compute viewport index (1-based) using absolute Y and top-level viewport height
-    fun computeViewportIndex(node: DOMTreeNodeEx, topViewportHeight: Double?): Int? {
+    fun computeViewportIndex(node: MergedDOMTreeNode, topViewportHeight: Double?): Int? {
         val vh = topViewportHeight ?: return null
         if (!vh.isFinite() || vh <= 0.0) return null
         // Prefer absolute bounds from snapshot; fallback to absolutePosition or bounds
@@ -302,7 +337,7 @@ object DOMStateBuilder {
      * Enhanced cleanOriginalNode with attribute casing alignment and improved filtering.
      */
     private fun cleanOriginalNodeEnhanced(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         includeAttributes: Set<String>,
         options: CompactOptions,
         includeOrder: List<String>,
@@ -472,7 +507,7 @@ object DOMStateBuilder {
     }
 
     private fun cleanOriginalNode(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         includeAttributes: Set<String>,
         frameIds: List<String>,
     ): CleanedDOMTreeNode {
@@ -534,7 +569,7 @@ object DOMStateBuilder {
      * Supports element hash, XPath, backend node ID, frame/backend combo and node ID for comprehensive element lookup.
      */
     private fun addToLocatorMap(
-        node: DOMTreeNodeEx,
+        node: MergedDOMTreeNode,
         frameIds: List<String>,
         locatorMap: LocatorMap
     ) {
@@ -567,7 +602,7 @@ object DOMStateBuilder {
         locatorMap.put(Locator.Type.NODE_ID, node.nodeId.toString(), node)
     }
 
-    private fun createNodeLocator(node: DOMTreeNodeEx, frameIds: List<String>): FBNLocator {
+    private fun createNodeLocator(node: MergedDOMTreeNode, frameIds: List<String>): FBNLocator {
         // Returns -1 if the list does not contain element
         val frameIndex = frameIds.indexOf(node.frameId).takeIf { it > 0 } ?: 0
         val backendNodeId = node.backendNodeId ?: 0

@@ -9,9 +9,9 @@ import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
 import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
 import ai.platon.pulsar.common.AppPaths
+import ai.platon.pulsar.common.MultiSinkMessageWriter
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.warnInterruptible
-import ai.platon.pulsar.skeleton.common.message.MiscMessageMessageWriter
 import ai.platon.pulsar.skeleton.crawl.common.InternalURLUtil
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.JsEvaluation
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.JsException
@@ -29,7 +29,7 @@ class WebDriverHelper(
     val rpc: RobustRPC,
     val page: PageHandler,
     val fetchAPI: Fetch?,
-    val messageWriter: MiscMessageMessageWriter
+    val messageWriter: MultiSinkMessageWriter
 ) {
     suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
         runCatching { traceInterestingResources0(entry, event) }.onFailure { warnInterruptible(this, it) }
@@ -131,7 +131,7 @@ class WebDriverHelper(
                 } else if (scrollIntoView) {
                     page.scrollIntoViewIfNeeded(selector)
                 } else {
-                    page.resolveSelector(selector)
+                    page.querySelector(selector)
                 }
 
                 if (node != null) {

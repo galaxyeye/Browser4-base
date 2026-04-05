@@ -1,27 +1,29 @@
 package ai.platon.pulsar.agentic.tools.builtin
 
 import ai.platon.pulsar.agentic.model.ToolCall
-import ai.platon.pulsar.agentic.tools.AgentToolManager
+import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DisplayName
 
 class SystemToolExecutorTest {
 
-    private lateinit var agentToolManager: AgentToolManager
+    private lateinit var agentToolExecutor: AgentToolExecutor
     private lateinit var executor: SystemToolExecutor
 
     @BeforeEach
     fun setUp() {
-        agentToolManager = mockk(relaxed = true)
-        executor = SystemToolExecutor(agentToolManager)
+        agentToolExecutor = mockk(relaxed = true)
+        executor = SystemToolExecutor(agentToolExecutor)
     }
 
     @Test
-    fun `help for help method returns detailed help`() {
+        @DisplayName("help for help method returns detailed help")
+    fun helpForHelpMethodReturnsDetailedHelp() {
         val help = executor.help("help")
 
         assertNotNull(help)
@@ -30,8 +32,9 @@ class SystemToolExecutorTest {
     }
 
     @Test
-    fun `help with domain and method delegates to agent tool manager`() = runBlocking {
-        every { agentToolManager.help("fs", "writeString") } returns "File system help"
+        @DisplayName("help with domain and method delegates to agent tool manager")
+    fun helpWithDomainAndMethodDelegatesToAgentToolManager() = runBlocking {
+        every { agentToolExecutor.help("fs", "writeString") } returns "File system help"
 
         val result = executor.help("fs", "writeString")
 
@@ -39,13 +42,14 @@ class SystemToolExecutorTest {
     }
 
     @Test
-    fun `system help method executes correctly`() = runBlocking {
-        every { agentToolManager.help("driver", "click") } returns "Click help text"
+        @DisplayName("system help method executes correctly")
+    fun systemHelpMethodExecutesCorrectly() = runBlocking {
+        every { agentToolExecutor.help("tab", "click") } returns "Click help text"
 
         val tc = ToolCall(
             domain = "system",
             method = "help",
-            arguments = mutableMapOf("domain" to "driver", "method" to "click")
+            arguments = mutableMapOf("domain" to "tab", "method" to "click")
         )
 
         val result = executor.callFunctionOn(tc, executor)
@@ -54,7 +58,8 @@ class SystemToolExecutorTest {
     }
 
     @Test
-    fun `domain property is system`() {
+        @DisplayName("domain property is system")
+    fun domainPropertyIsSystem() {
         assertEquals("system", executor.domain)
     }
 }

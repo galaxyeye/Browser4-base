@@ -25,7 +25,7 @@ class Screenshot(
 
     suspend fun screenshot(name: String, selector: String): String? {
         try {
-            val screenshot = driver.captureScreenshot(selector)
+            val screenshot = driver.screenshot(selector)
             if (screenshot == null) {
                 logger.info("Failed to take screenshot for {}", selector)
                 return null

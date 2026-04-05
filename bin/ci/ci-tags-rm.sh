@@ -57,22 +57,8 @@ if [[ -z "${pattern}" ]]; then
   exit 1
 fi
 
-# Find the first parent directory containing the VERSION file
-AppHome="$(dirname "$(realpath "$0")")"
-while [[ -n "$AppHome" && ! -f "$AppHome/VERSION" ]]; do
-  AppHome="$(dirname "$AppHome")"
-  # dirname / => /
-  if [[ "$AppHome" == "/" ]]; then
-    break
-  fi
-done
-
-if [[ ! -f "$AppHome/VERSION" ]]; then
-  echo "[ERROR] Could not find VERSION file in any parent directory" >&2
-  exit 1
-fi
-
-cd "$AppHome"
+repoRoot=$(git rev-parse --show-toplevel 2>null)
+cd "$repoRoot" || exit 1
 
 get_matching_tags() {
   # Match full tag name with the regex.

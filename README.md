@@ -91,10 +91,11 @@ val result = agent.run("""
    ```
    If you have encoding problem on Windows:
    ```shell
-   ./bin/run-examples.ps1
+   ./bin/run-agent-examples.ps1
    ```
 
    Explore and run examples in the `browser4-examples` module to see Browser4 in action.
+   Java-compatible examples have been removed; use Kotlin APIs, SDKs, or CLI tools instead.
 
 For Docker deployment, see our [Docker Hub repository](https://hub.docker.com/r/galaxyeye88/browser4).
 
@@ -120,6 +121,41 @@ val task = """
 
 agent.run(task)
 ```
+
+### CLI & SKILLS
+
+Browser4 CLI is a powerful command-line interface for direct browser control and automation, designed for both human
+users and AI agents. It provides a simple syntax to perform complex browser interactions without writing code.
+
+Browser4 CLI is compatible with Playwright and supports a wide range of commands for navigation, interaction, and data extraction.
+It can be used in scripts, terminal sessions, or integrated into AI agents through SKILLS.
+
+```shell
+# open new browser
+browser4-cli open
+# navigate to a page
+browser4-cli goto https://browser4.io/
+# take a snapshot
+browser4-cli snapshot
+# interact with the page using refs from the snapshot
+browser4-cli click e15
+browser4-cli type "page.click"
+browser4-cli press Enter
+# take a screenshot
+browser4-cli screenshot
+# close the browser
+browser4-cli close
+```
+
+Build CLI from source:
+
+[README.md](sdks/browser4-cli/README.md)
+
+Browser4 CLI is designed for use by AI agents through SKILLS + CLI.
+
+[SKILL.md](sdks/skill/SKILL.md)
+
+---
 
 ### Workflow Automation
 
@@ -267,9 +303,8 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 | `pulsar-core`     | Core engine: sessions, scheduling, DOM, browser control |
 | `pulsar-agentic`  | Agent implementation, MCP, and skill registration       |
 | `pulsar-rest`     | Spring Boot REST layer & command endpoints              |
-| `browser4-spa`    | Single Page Application for browser agents              |
 | `browser4-agents` | Agent & crawler orchestration with product packaging    |
-| `sdks`            | Kotlin/Python SDKs plus tests and examples              |
+| `sdks`            | CLI in Rust that supports SKILLS                        |
 | `examples`        | Runnable examples and demos                             |
 | `pulsar-tests`    | E2E & heavy integration & scenario tests                |
 
@@ -335,18 +370,22 @@ Comprehensive documentation is available in the `docs/` directory and on our [Gi
 
 ## 🔧 Proxies - Unblock Websites
 
-<details>
+Browser4 supports proxy rotation and management to access geo-restricted content.
 
-Set the environment variable PROXY_ROTATION_URL to the URL provided by your proxy service:
+**Quick Start:**
+1. Obtain a list of proxy URLs (e.g., from a proxy provider).
+2. Configure `PROXY_ROTATION_URL` in `application.properties`.
+3. Use the `rotateProxies` command in your agent scripts.
 
-```shell
-export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
+**Example:**
+```kotlin
+agent.run("""
+    1. Go to a blocked website
+    2. If blocked, rotate proxy and retry
+    """)
 ```
 
-Each time the rotation URL is accessed, it should return a response containing one or more fresh proxy IPs.
-Ask your proxy provider for such a URL.
-
-</details>
+**Note**: Respect website terms of service and robots.txt rules when scraping.
 
 ---
 
@@ -354,16 +393,3 @@ Ask your proxy provider for such a URL.
 
 Apache 2.0 License. See [LICENSE](LICENSE) for details.
 
----
-
-## 🤝 Support & Community
-
-- 💬 WeChat: galaxyeye
-- 🌐 Weibo: [galaxyeye](https://weibo.com/galaxyeye)
-- 📧 Email: galaxyeye@live.cn, ivincent.zhang@gmail.com
-- 🐦 Twitter: [galaxyeye8](https://x.com/galaxyeye8)
-- 🌍 Website: [browser4.io](https://browser4.io)
-
-<div style="display: flex;">
-  <img src="docs/images/wechat-author.png" width="300" height="365" alt="微信二维码" />
-</div>

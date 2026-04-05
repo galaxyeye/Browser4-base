@@ -1,5 +1,6 @@
 package ai.platon.pulsar.agentic.mcp.server
 
+import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.context.AgenticContexts
 import ai.platon.pulsar.common.getLogger
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
@@ -19,7 +20,7 @@ import kotlinx.io.buffered
  *
  * ### Direct invocation
  * ```bash
- * java -cp browser4-all.jar ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt
+ * java -jar Browser4.jar --app=mcp
  * ```
  *
  * ### Claude Desktop configuration (`claude_desktop_config.json`)
@@ -28,30 +29,34 @@ import kotlinx.io.buffered
  *   "mcpServers": {
  *     "browser4": {
  *       "command": "java",
- *       "args": ["-cp", "/path/to/browser4-all.jar",
- *                "ai.platon.pulsar.agentic.mcp.server.Browser4MCPServerRunnerKt"]
+ *       "args": ["-jar", "/path/to/Browser4.jar", "--app=mcp"],
  *     }
  *   }
  * }
  * ```
  *
  * ## Behaviour
- * 1. Creates an [AgenticSession] and acquires a [WebDriver] bound to a real Chrome browser.
- * 2. Wraps it in a [Browser4MCPServer] to register all tools.
+ * 1. Creates an [ai.platon.pulsar.agentic.AgenticSession] and acquires a companion [BasicBrowserAgent].
+ * 2. Wraps the agent's [ai.platon.pulsar.agentic.tools.AgentToolExecutor] in a [Browser4MCPServer],
+ *    which discovers and registers all tools from the manager.
  * 3. Creates a [StdioServerTransport] that reads JSON-RPC messages from stdin
  *    and writes responses to stdout.
  * 4. Blocks until the MCP client closes the connection (i.e. EOF on stdin).
  * 5. Shuts down the Pulsar context and closes the browser.
  */
-fun main() {
+fun runBrowser4MCPServer(args: Array<String> = emptyArray()) {
+    require(args.isEmpty()) {
+        "MCP mode does not accept application arguments: ${args.joinToString(" ")}"
+    }
+
     val logger = getLogger("Browser4MCPServerRunner")
     logger.info("Starting Browser4 MCP Server (STDIO transport)")
 
     val session = AgenticContexts.createSession()
-    val driver = session.getOrCreateBoundDriver()
+    val agent = session.companionAgent as BasicBrowserAgent
 
     try {
-        val mcpServer = Browser4MCPServer(driver)
+        val mcpServer = Browser4MCPServer(toolManager = agent.toolExtractor)
 
         val transport = StdioServerTransport(
             inputStream = System.`in`.asSource().buffered(),
@@ -68,3 +73,5 @@ fun main() {
         AgenticContexts.shutdown()
     }
 }
+
+fun main(args: Array<String>) = runBrowser4MCPServer(args)

@@ -15,12 +15,12 @@ class MockSiteController {
     fun hello(): String {
         return "Hello, World!"
     }
-    
+
     @GetMapping("text", produces = ["text/plain"])
     fun text(): String {
         return "Hello, World! This is a plain text."
     }
-    
+
     @GetMapping("csv", produces = ["text/csv"])
     fun csv(): String {
         return """
@@ -30,7 +30,7 @@ a,b,c,d,e,f,g
 a,b,c,d,e,f,g
 """.trimIndent()
     }
-    
+
     @GetMapping("json", produces = ["application/json"])
     fun json(): String {
         return """{"message": "Hello, World! This is a json."}"""

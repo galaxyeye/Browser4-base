@@ -12,28 +12,28 @@ object InferencePromptBuilder {
             promptBuilder.buildMultistepAgentMessageListAll(params.context)
         } else {
             // Single step agents uses observe() -> act()
-            promptBuilder.buildObserveMessageListAll(params, params.context)
+            promptBuilder.buildSingleObserveMessageListAll(params, params.context)
         }
     }
 
-    fun buildExtractPrompt(params: ExtractParams): AgentMessageList {
+    fun buildExtractionPrompt(params: ExtractParams): AgentMessageList {
         val messages = AgentMessageList()
 
         messages.addLast(promptBuilder.buildExtractSystemPrompt(params.userProvidedInstructions))
         messages.addUser(promptBuilder.buildExtractUserRequestPrompt(params), "user_request")
-        messages.addLast(promptBuilder.buildExtractUserPrompt(params))
+        messages.addLast(promptBuilder.buildExtractPageContentUserPrompt(params))
 
         return messages
     }
 
-    fun buildMetadataPrompt(
+    fun buildExtractionEvaluationPrompt(
         params: ExtractParams,
         extractedNode: ObjectNode,
     ): AgentMessageList {
         val metadataMessages = AgentMessageList()
-        val metadataSystem = promptBuilder.buildMetadataSystemPrompt()
+        val metadataSystem = promptBuilder.buildExtractionEvaluationSystemPrompt()
         // For metadata, pass the extracted object directly
-        val metadataUser = promptBuilder.buildMetadataUserPrompt(params.instruction, extractedNode, params.agentState)
+        val metadataUser = promptBuilder.buildExtractionEvaluationUserPrompt(params.instruction, extractedNode, params.agentState)
 
         metadataMessages.addLast(metadataSystem)
         metadataMessages.addLast(metadataUser)
@@ -45,9 +45,9 @@ object InferencePromptBuilder {
         val messages = AgentMessageList()
 
         if (instruction.isNullOrBlank()) {
-            messages.addUser("对下述文本给出一个总结。")
+            messages.addUser("Provide a summary for the following text.")
         } else {
-            messages.addUser("根据用户指令，对下述文本给出一个总结。")
+            messages.addUser("Generate a summary of the following text based on the user's instructions.")
             messages.addUser("""<user_request>$instruction</user_request>""")
         }
         messages.addUser("\n\n$textContent\n\n".trimIndent())

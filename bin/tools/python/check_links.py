@@ -2,19 +2,19 @@
 """
 check_links.py
 
-检查文档中所有链接的脚本（支持 Markdown / HTML / reStructuredText-like 文件）
-功能：
-  1) 校验内部链接（相对/绝对路径）是否指向存在的文件（并可选检查锚点/heading）
-  2) 测试外部链接是否可访问（使用 HTTP HEAD 优先，不下载内容以提高速度）
-使用：
+Script to check all links in documentation (supports Markdown / HTML / reStructuredText-like files)
+Features:
+  1) Verify internal links (relative/absolute paths) point to existing files (optionally check anchors/headings)
+  2) Test external links for reachability (uses HTTP HEAD first, does not download content for speed)
+Usage:
   python check_links.py --root . --paths docs README.md --ext md,markdown,html,rst --concurrency 20 --timeout 5
 
-输出：
-  - 在终端列出找到的坏链（以及原因）
-  - 返回非 0 状态码如果检测到坏链（便于 CI 集成）
-依赖：
+Output:
+  - Lists broken links (and reasons) in the terminal
+  - Returns non-zero status code if broken links are detected (for CI integration)
+Dependencies:
   - requests
-可选优化：在 CI 中并行运行（--concurrency 调整并发数）
+Optional optimization: Run in parallel in CI (--concurrency adjusts concurrency)
 """
 
 import re
@@ -23,25 +23,26 @@ import sys
 import argparse
 import logging
 import threading
+import fnmatch
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import defaultdict
 from typing import List, Tuple, Dict, Set, Optional
 import requests
 
 # ---------- 配置 ----------
-MARKDOWN_INLINE_LINK_RE = re.compile(r'(?<!\!)\[[^\]]*\]\(([^)]+)\)')  # 排除图片链接开头的 ![]
+MARKDOWN_INLINE_LINK_RE = re.compile(r'(?<!\!)\[[^\]]*\]\(([^)]+)\)')  # Exclude image links starting with ![]
 MARKDOWN_AUTOLINK_RE = re.compile(r'<(https?://[^ >]+)>')
 MARKDOWN_REF_DEF_RE = re.compile(r'^\s*\[([^\]]+)\]:\s*(\S+)', re.MULTILINE)
 HTML_A_HREF_RE = re.compile(r'<a\s+[^>]*href=["\']([^"\']+)["\']', re.IGNORECASE)
-URL_SCHEME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')  # 匹配 scheme:
+URL_SCHEME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9+.-]*:')  # Match scheme:
 IGNORED_SCHEMES = ('mailto:', 'tel:', 'javascript:', 'data:')
 
-# HTTP 检查的默认参数
+# Default parameters for HTTP checks
 DEFAULT_TIMEOUT = 5  # seconds
 DEFAULT_CONCURRENCY = 20
 USER_AGENT = "check-links-script/1.0 (+https://github.com/)"
 
-# ---------- 工具函数 ----------
+# ---------- Utility Functions ----------
 def is_external_link(url: str) -> bool:
     return url.startswith('http://') or url.startswith('https://')
 
@@ -50,21 +51,21 @@ def is_ignored_scheme(url: str) -> bool:
     return any(lower.startswith(s) for s in IGNORED_SCHEMES)
 
 def normalize_fs_path(path: str) -> str:
-    # 移除 query 或 fragment（对于内部文件链接）
+    # Remove query or fragment (for internal file links)
     p = path.split('?')[0].split('#')[0]
     return os.path.normpath(p)
 
 def github_anchor_from_heading(text: str) -> str:
     """
-    基于 GitHub 风格，从标题文本生成锚点（近似实现）。
-    - 转小写
-    - 去掉标点（保留空格和中划线）
-    - 空格替换为 -
-    - 连续 - 合并
-    这不是完全跟随所有 edge-case，但对常见标题有效。
+    Generate anchor from heading text based on GitHub style (approximate implementation).
+    - Convert to lower case
+    - Remove punctuation (keep spaces and hyphens)
+    - Replace spaces with -
+    - Merge consecutive -
+    This does not cover all edge-cases, but works for common headings.
     """
     t = text.strip().lower()
-    # 移除 github 通常会移除的标点（保留字母数字、空格、-、_）
+    # Remove punctuation usually removed by GitHub (keep alphanumeric, spaces, -, _)
     t = re.sub(r'[^\w\s\-]', '', t, flags=re.UNICODE)
     t = re.sub(r'\s+', '-', t)
     t = re.sub(r'-{2,}', '-', t)
@@ -78,7 +79,7 @@ def extract_markdown_headings(content: str) -> List[str]:
             headings.append(m.group(2).strip())
     return headings
 
-# ---------- 链接提取 ----------
+# ---------- Link Extraction ----------
 def extract_links_from_markdown(content: str) -> List[str]:
     links = []
     links.extend(MARKDOWN_INLINE_LINK_RE.findall(content))
@@ -102,18 +103,18 @@ def extract_links_from_file(path: str) -> List[str]:
     elif ext in ('.html', '.htm'):
         links = extract_links_from_html(content)
     else:
-        # 试探：先用 markdown 提取，再用 html 提取
+        # Heuristic: try extracting as markdown first, then as html
         links = extract_links_from_markdown(content) + extract_links_from_html(content)
     return links
 
-# ---------- 检查函数 ----------
+# ---------- Check Functions ----------
 class LinkResult:
     def __init__(self, source_file: str, link: str, kind: str):
         self.source_file = source_file
         self.link = link
         self.kind = kind  # 'internal' or 'external' or 'ignored'
         self.ok = True
-        self.detail = ""  # 错误信息或状态码等
+        self.detail = ""  # Error message or status code, etc.
 
     def to_dict(self):
         return {
@@ -126,26 +127,26 @@ class LinkResult:
 
 def check_internal_link(source_file: str, link: str, repo_root: str, check_anchor: bool=True) -> LinkResult:
     """
-    校验内部链接指向的文件是否存在；若包含锚点则可选验证锚点是否存在（仅对 Markdown '#' 标题做简单匹配）。
+    Verify if the file pointed to by the internal link exists; if it contains an anchor, optionally verify if the anchor exists (simple match for Markdown '#' headings only).
     """
     res = LinkResult(source_file, link, 'internal')
-    # 锚点
+    # Anchor
     if link.startswith('#'):
-        # 指向当前文件的锚点
+        # Anchor to current file
         target_path = source_file
         anchor = link[1:]
     else:
         parts = link.split('#', 1)
         rel_path = parts[0] if parts[0] != '' else '.'
         anchor = parts[1] if len(parts) > 1 else None
-        # 绝对路径（以 / 开头）相对于 repo_root，否则相对于 source_file 的目录
+        # Absolute path (starts with /) relative to repo_root, otherwise relative to source_file directory
         if rel_path.startswith('/'):
             target_path = os.path.join(repo_root, rel_path.lstrip('/'))
         else:
             source_dir = os.path.dirname(source_file)
             target_path = os.path.normpath(os.path.join(source_dir, rel_path))
 
-    # 如果链接指向目录，尝试补充 index.md 或 README.md
+    # If link points to a directory, try appending index.md or README.md
     if os.path.isdir(target_path):
         for candidate in ('index.md', 'README.md', 'index.html'):
             p = os.path.join(target_path, candidate)
@@ -159,34 +160,34 @@ def check_internal_link(source_file: str, link: str, repo_root: str, check_ancho
         return res
 
     if anchor and check_anchor:
-        # 尝试在目标文件的标题中查找匹配锚点（仅对 Markdown 标题）
+        # Try to find matching anchor in target file headings (Markdown headings only)
         try:
             with open(target_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
             headings = extract_markdown_headings(content)
             generated = {github_anchor_from_heading(h) for h in headings}
-            # 比较锚点（anchor 可能已经是 URL encoded 或者小写）
+            # Compare anchors (anchor might be URL encoded or lower case)
             anchor_norm = anchor.strip().lower()
             anchor_norm = re.sub(r'%20', '-', anchor_norm)  # decode common encoding for spaces
             if anchor_norm not in generated:
                 res.ok = False
                 res.detail = f'anchor not found: #{anchor} in {target_path} (found {len(generated)} headings)'
         except Exception as e:
-            # 读取/解析失败时不阻塞，给出警告
+            # Do not block on read/parse failure, give warning
             res.ok = False
             res.detail = f'failed to read/parse for anchor check: {e}'
     else:
         res.ok = True
     return res
 
-# 缓存外部链接测试结果，避免重复请求
+# Cache external link check results to avoid duplicate requests
 _external_cache_lock = threading.Lock()
 _external_cache: Dict[str, Tuple[bool, str]] = {}
 
 def check_external_link_head(url: str, timeout: float) -> Tuple[bool, str]:
     """
-    使用 HTTP HEAD 优先测试。若 HEAD 返回 405/501 等不允许的状态，则回退到 GET (stream)。
-    返回 (ok, detail)
+    Use HTTP HEAD first. If HEAD returns 405/501 etc., fallback to GET (stream).
+    Returns (ok, detail)
     """
     headers = {
         "User-Agent": USER_AGENT,
@@ -226,39 +227,66 @@ def check_external_link_cached(url: str, timeout: float) -> Tuple[bool, str]:
         _external_cache[url] = (ok, detail)
     return ok, detail
 
-def gather_doc_files(root: str, paths: List[str], exts: Set[str]) -> List[str]:
+def gather_doc_files(root: str, paths: List[str], exts: Set[str], file_patterns: List[str] = None, ignore_file_patterns: List[str] = None) -> List[str]:
     found = []
     if not paths:
         paths = [root]
+    
+    # helper for pattern matching
+    def matches_any(path_str: str, patterns: List[str]) -> bool:
+        if not patterns:
+            return False
+        name = os.path.basename(path_str)
+        return any(fnmatch.fnmatch(path_str, p) or fnmatch.fnmatch(name, p) for p in patterns)
+
     for p in paths:
         full = os.path.join(root, p) if not os.path.isabs(p) and root else p
-        if os.path.isdir(full):
+        
+        candidates = []
+        if os.path.isfile(full):
+            candidates.append(full)
+        elif os.path.isdir(full):
             for dirpath, dirnames, filenames in os.walk(full):
                 for fn in filenames:
-                    if os.path.splitext(fn)[1].lower().lstrip('.') in exts:
-                        found.append(os.path.join(dirpath, fn))
-        elif os.path.isfile(full):
-            if os.path.splitext(full)[1].lower().lstrip('.') in exts:
-                found.append(os.path.normpath(full))
-        else:
-            # allow patterns? 目前忽略不存在路径
-            pass
+                    candidates.append(os.path.join(dirpath, fn))
+        
+        for f_path in candidates:
+            # use relative path for matching if possible, or name
+            rel_path = os.path.relpath(f_path, root)
+            
+            # 1. Check ignore patterns
+            if ignore_file_patterns and matches_any(rel_path, ignore_file_patterns):
+                continue
+            
+            # 2. Check allow patterns (if provided, strictly follow them; otherwise use extensions)
+            if file_patterns:
+                if matches_any(rel_path, file_patterns):
+                    found.append(os.path.normpath(f_path))
+            else:
+                # default behavior: check extension
+                if os.path.splitext(f_path)[1].lower().lstrip('.') in exts:
+                    found.append(os.path.normpath(f_path))
+
     return sorted(set(found))
 
-# ---------- 主流程 ----------
+# ---------- Main Process ----------
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="检查文档链接（内部路径 & 外部可用性）")
-    parser.add_argument('--root', '-r', default='.', help="仓库/项目根目录（用于解析以 '/' 开头的内部链接）")
+    parser = argparse.ArgumentParser(description="Check documentation links (internal paths & external availability)")
+    parser.add_argument('--root', '-r', default='.', help="Repository/project root directory (for resolving internal links starting with '/')")
     parser.add_argument('--paths', '-p', nargs='*', default=['docs', '.'],
-                        help="要扫描的文件或目录（相对于 root），可多次指定；默认 ['docs', '.']，只检查指定扩展名")
+                        help="Files or directories to scan (relative to root), can be specified multiple times; default ['docs', '.'], only scans specified extensions")
     parser.add_argument('--ext', default='md,markdown,html,rst',
-                        help="要扫描的文件扩展名，用逗号分隔（不含点），默认 md,markdown,html,rst")
+                        help="File extensions to scan, comma separated (without dot), default md,markdown,html,rst")
     parser.add_argument('--concurrency', '-c', type=int, default=DEFAULT_CONCURRENCY,
-                        help=f"外部链接并发检查数量（默认 {DEFAULT_CONCURRENCY}）")
+                        help=f"Concurrent external link checks (default {DEFAULT_CONCURRENCY})")
     parser.add_argument('--timeout', '-t', type=float, default=DEFAULT_TIMEOUT,
-                        help=f"HTTP 请求超时时间（秒），默认 {DEFAULT_TIMEOUT}")
+                        help=f"HTTP request timeout (seconds), default {DEFAULT_TIMEOUT}")
     parser.add_argument('--no-anchor-check', dest='anchor_check', action='store_false',
-                        help="禁用对内部链接锚点的检查（更快）")
+                        help="Disable internal link anchor check (faster)")
+    parser.add_argument('--files', nargs='*', help="Only check files matching these glob patterns (e.g. *.md, docs/*)")
+    parser.add_argument('--ignore-files', nargs='*', help="Ignore files matching these glob patterns")
+    parser.add_argument('--links', nargs='*', help="Only check links starting with these prefixes (e.g. http, https)")
+    parser.add_argument('--ignore-links', nargs='*', help="Ignore links starting with these prefixes")
     parser.add_argument('--verbose', '-v', action='store_true')
     args = parser.parse_args(argv)
 
@@ -267,23 +295,30 @@ def main(argv=None):
 
     root = os.path.abspath(args.root)
     exts = {e.strip().lower() for e in args.ext.split(',') if e.strip()}
-    files = gather_doc_files(root, args.paths, exts)
+    
+    files = gather_doc_files(
+        root, 
+        args.paths, 
+        exts, 
+        file_patterns=args.files, 
+        ignore_file_patterns=args.ignore_files
+    )
     if not files:
-        logging.error("未找到任何文档文件（检查 root/paths/ext 设置）")
+        logging.error("No document files found (check root/paths/ext settings)")
         return 2
 
-    logging.info(f"扫描 {len(files)} 个文件（并提取链接）...")
-    # 链接集合： source -> [links]
+    logging.info(f"Scanning {len(files)} files (and extracting links)...")
+    # Link set: source -> [links]
     per_file_links: Dict[str, List[str]] = {}
     for f in files:
         try:
             links = extract_links_from_file(f)
             per_file_links[f] = links
         except Exception as e:
-            logging.warning(f"读取或解析文件失败: {f} : {e}")
+            logging.warning(f"Failed to read or parse file: {f} : {e}")
             per_file_links[f] = []
 
-    # 分类链接，准备检查
+    # Categorize links, prepare for check
     internal_tasks = []
     external_urls: Set[str] = set()
     ignored = []
@@ -293,7 +328,18 @@ def main(argv=None):
             l = l.strip()
             if not l:
                 continue
-            # 排除 mailto/tel 等 scheme
+
+            # User ignore rules
+            if args.ignore_links and any(l.startswith(p) for p in args.ignore_links):
+                ignored.append((src, l))
+                continue
+            
+            # User allow rules (if provided)
+            if args.links and not any(l.startswith(p) for p in args.links):
+                ignored.append((src, l))
+                continue
+
+            # Exclude schemes like mailto/tel
             if is_ignored_scheme(l):
                 ignored.append((src, l))
                 continue
@@ -302,24 +348,24 @@ def main(argv=None):
             else:
                 internal_tasks.append((src, l))
 
-    logging.info(f"发现链接：internal={len(internal_tasks)} external_unique={len(external_urls)} ignored={len(ignored)}")
+    logging.info(f"Found links: internal={len(internal_tasks)} external_unique={len(external_urls)} ignored={len(ignored)}")
 
-    # 1) 检查内部链接（同步即可）
+    # 1) Check internal links (synchronous is fine)
     internal_results: List[LinkResult] = []
     for src, l in internal_tasks:
         r = check_internal_link(src, l, root, check_anchor=args.anchor_check)
         internal_results.append(r)
 
-    # 2) 并发检查外部链接
+    # 2) Concurrent check for external links
     external_results: List[LinkResult] = []
     if external_urls:
-        logging.info(f"并发检查外部链接（并发={args.concurrency} timeout={args.timeout}s）...")
+        logging.info(f"Concurrent check for external links (concurrency={args.concurrency} timeout={args.timeout}s)...")
         with ThreadPoolExecutor(max_workers=args.concurrency) as ex:
             future_map = {ex.submit(check_external_link_cached, url, args.timeout): url for url in external_urls}
             for fut in as_completed(future_map):
                 url = future_map[fut]
                 ok, detail = fut.result()
-                # 为了输出来源，我们需要映射回所有 source 文件中引用该 url 的位置
+                # To output source, we need to map back to all locations where url is referenced in source files
                 for src, links in per_file_links.items():
                     if url in links:
                         lr = LinkResult(src, url, 'external')
@@ -333,19 +379,19 @@ def main(argv=None):
         ig.ok = True
         ig.detail = 'ignored scheme'
 
-    # 合并并汇总
+    # Merge and summarize
     all_results = internal_results + external_results + ignored_results
     broken = [r for r in all_results if not r.ok]
 
-    # 输出结果
+    # Output results
     if broken:
-        logging.error(f"检测到 {len(broken)} 个问题链接：")
+        logging.error(f"Detected {len(broken)} broken links:")
         for r in broken:
             print(f"- {r.source_file} -> {r.link}  [{r.kind}]  : {r.detail}")
     else:
-        logging.info("全部检测通过：未发现坏链。")
+        logging.info("All checks passed: No broken links found.")
 
-    # 简要统计
+    # Brief summary
     total_links = sum(len(v) for v in per_file_links.values())
     print()
     print("Summary:")
@@ -356,7 +402,7 @@ def main(argv=None):
     print(f"  ignored: {len(ignored)}")
     print(f"  broken: {len(broken)}")
 
-    # 可选：将结果写入文件（JSON/CSV） - 留给用户自行扩展
+    # Optional: Write results to file (JSON/CSV) - left for user extension
 
     return 1 if broken else 0
 

@@ -120,7 +120,7 @@ internal class BrowserAccompaniedDriverPoolCloser(
     }
 
     private suspend fun openInformationPage(url: String, browser: Browser) {
-        runCatching { browser.newDriver().navigateTo(url) }.onFailure { warnInterruptible(this, it) }
+        runCatching { browser.newDriver().navigate(url) }.onFailure { warnInterruptible(this, it) }
     }
 
     private fun closeLeastValuableDriverPool(browserId: BrowserId, retiredDriverPool: LoadingWebDriverPool?) {

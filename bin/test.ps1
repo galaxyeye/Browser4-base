@@ -1,212 +1,266 @@
 #!/usr/bin/env pwsh
 
-# Find the first parent directory containing the VERSION file
-$AppHome=(Get-Item -Path $MyInvocation.MyCommand.Path).Directory
-while ($AppHome -ne $null -and !(Test-Path "$AppHome/VERSION")) {
-  $AppHome = Split-Path -Parent $AppHome
-}
-Set-Location $AppHome
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = (git rev-parse --show-toplevel 2>$null)
 
-function Print-Usage {
-  Write-Host "Usage: test.ps1 [test-type] [maven-args...]"
-  Write-Host ""
-  Write-Host "Test Types:"
-  Write-Host "  fast        Run fast unit tests only"
-  Write-Host "  it          Run integration tests"
-  Write-Host "  e2e         Run end-to-end tests"
-  Write-Host "  sdk         Run Kotlin SDK tests"
-  Write-Host "  python-sdk  Run Python SDK tests"
-  Write-Host "  nodejs-sdk  Run NodeJS SDK tests"
-  Write-Host "  core        Run core module supplementary tests"
-  Write-Host "  rest        Run REST module tests"
-  Write-Host "  all         Run all tests (integration, e2e, sdk)"
-  Write-Host ""
-  Write-Host "Examples:"
-  Write-Host "  test.ps1 fast                       # Run fast unit tests"
-  Write-Host "  test.ps1 it                         # Run integration tests"
-  Write-Host "  test.ps1 e2e                        # Run end-to-end tests"
-  Write-Host "  test.ps1 sdk                        # Run Kotlin SDK tests"
-  Write-Host "  test.ps1 python-sdk                 # Run Python SDK tests"
-  Write-Host "  test.ps1 python-sdk -m integration  # Run Python SDK integration tests only"
-  Write-Host "  test.ps1 nodejs-sdk                 # Run NodeJS SDK tests"
-  Write-Host "  test.ps1 nodejs-sdk --coverage      # Run NodeJS SDK tests with coverage"
-  Write-Host "  test.ps1 all                        # Run all tests"
-  Write-Host '  test.ps1 it -pl pulsar-core         # Run integration tests for pulsar-core only'
-  exit 1
+if ([string]::IsNullOrWhiteSpace($repoRoot)) {
+    $repoRoot = $scriptDir
+    while (-not (Test-Path (Join-Path $repoRoot 'VERSION'))) {
+        $parent = Split-Path -Parent $repoRoot
+        if ($parent -eq $repoRoot) {
+            break
+        }
+
+        $repoRoot = $parent
+    }
 }
 
-# Maven command
-$MvnCmd = Join-Path $AppHome '.\mvnw.cmd'
-
-# Validate Maven wrapper exists
-if (!(Test-Path $MvnCmd)) {
-    Write-Error "Maven wrapper not found at $MvnCmd"
+if (-not (Test-Path (Join-Path $repoRoot 'VERSION'))) {
+    Write-Error "Could not locate the repository root from $scriptDir"
     exit 1
 }
 
-# Default test type is fast
-$TestType = "fast"
-$AdditionalMvnArgs = @()
+Set-Location $repoRoot
 
-# Parse command-line arguments
-if ($args.Count -eq 0) {
-  Print-Usage
+function Print-Usage {
+    Write-Host "Usage: test.ps1 [test-types...] [additional-args...]"
+    Write-Host ""
+    Write-Host "Test Types:"
+    Write-Host "  fast        Run fast unit tests only"
+    Write-Host "  it          Run integration tests"
+    Write-Host "  e2e         Run end-to-end tests"
+    Write-Host "  browser4-cli Run Rust Browser4 CLI tests from sdks\browser4-cli"
+    Write-Host "  core        Run core module supplementary tests"
+    Write-Host "  rest        Run REST module tests"
+    Write-Host "  skills      Run skills-focused agentic tests"
+    Write-Host "  mcp         Run MCP-focused agentic tests"
+    Write-Host "  browser4    Run all Browser4 main tests (fast, core, rest, it, e2e)"
+    Write-Host ""
+    Write-Host "Examples:"
+    Write-Host "  test.ps1 fast                       # Run fast unit tests"
+    Write-Host "  test.ps1 it                         # Run integration tests"
+    Write-Host "  test.ps1 e2e                        # Run end-to-end tests"
+    Write-Host "  test.ps1 browser4-cli               # Run Browser4 CLI tests"
+    Write-Host "  test.ps1 browser4-cli -- --nocapture # Pass extra cargo test args"
+    Write-Host "  test.ps1 skills                     # Run skills-focused agentic tests"
+    Write-Host "  test.ps1 mcp                        # Run MCP-focused agentic tests"
+    Write-Host "  test.ps1 browser4                   # Run all Browser4 main tests"
+    Write-Host '  test.ps1 it -pl pulsar-core         # Pass additional Maven args through'
+    exit 1
 }
 
-if ($args.Count -gt 0) {
-  $FirstArg = $args[0]
-  switch ($FirstArg) {
-    { $_ -in "fast", "it", "e2e", "sdk", "python-sdk", "nodejs-sdk", "core", "rest", "all" } {
-      $TestType = $FirstArg
-      if ($args.Count -gt 1) {
-        $AdditionalMvnArgs = $args[1..($args.Count - 1)]
-      }
-    }
-    { $_ -in "-h", "-help", "--help" } {
-      Print-Usage
-    }
-    Default {
-      $AdditionalMvnArgs = $args
-    }
-  }
+function Exit-UnknownTestType([string]$testType) {
+    Write-Error "Unknown test type '$testType'. Valid test types: fast, it, e2e, browser4-cli, core, rest, skills, mcp, browser4."
+    exit 1
 }
 
-# Execute tests based on type
-Write-Host "=========================================="
-Write-Host "Running $TestType tests..."
-Write-Host "=========================================="
-
-$MvnArgs = @("test") + $AdditionalMvnArgs
-
-try {
-  switch ($TestType) {
-    "fast" {
-      Write-Host "Running fast unit tests (default behavior)..."
-      & $MvnCmd @MvnArgs
-    }
-    "it" {
-      Write-Host "Running integration tests..."
-      & $MvnCmd @MvnArgs "-DrunITs=true"
-    }
-    "e2e" {
-      Write-Host "Running end-to-end tests..."
-      & $MvnCmd @MvnArgs "-DrunE2ETests=true" "-P" "all-modules" "-pl" "pulsar-tests,pulsar-tests/pulsar-e2e-tests" "-am"
-    }
-    "sdk" {
-      Write-Host "Running SDK tests..."
-      & $MvnCmd @MvnArgs "-DrunSDKTests=true" "-P" "all-modules" "-pl" "sdks/kotlin-sdk-tests" "-am"
-    }
-    "python-sdk" {
-      Write-Host "Running Python SDK tests..."
-      $PythonSdkDir = Join-Path $AppHome "sdks\browser4-sdk-python"
-
-      if (!(Test-Path $PythonSdkDir)) {
-        Write-Error "Python SDK directory not found at $PythonSdkDir"
+function Invoke-MavenTests([string[]]$testTypes, [string[]]$additionalMvnArgs) {
+    $mvnCmd = Join-Path $repoRoot 'mvnw.cmd'
+    if (-not (Test-Path $mvnCmd)) {
+        Write-Error "Maven wrapper not found at $mvnCmd"
         exit 1
-      }
-
-      # Check if Python is available
-      $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-      if (!$pythonCmd) {
-        $pythonCmd = Get-Command python3 -ErrorAction SilentlyContinue
-      }
-      if (!$pythonCmd) {
-        Write-Error "Python is not installed or not in PATH"
-        exit 1
-      }
-
-      # Check if pytest is available
-      $pytestCheck = & $pythonCmd.Source -m pytest --version 2>&1
-      if ($LASTEXITCODE -ne 0) {
-        Write-Error "pytest is not installed. Install it with: pip install pytest"
-        Write-Host "Or install all dev dependencies with: pip install -e `".[dev]`" in $PythonSdkDir"
-        exit 1
-      }
-
-      Push-Location $PythonSdkDir
-      Write-Host "Working directory: $(Get-Location)"
-      & $pythonCmd.Source -m pytest $AdditionalMvnArgs
-      $ExitCode = $LASTEXITCODE
-      Pop-Location
-      exit $ExitCode
     }
-    "nodejs-sdk" {
-      Write-Host "Running NodeJS SDK tests..."
-      $NodejsSdkDir = Join-Path $AppHome "sdks\browser4-sdk-nodejs"
 
-      if (!(Test-Path $NodejsSdkDir)) {
-        Write-Error "NodeJS SDK directory not found at $NodejsSdkDir"
-        exit 1
-      }
+    Write-Host "=========================================="
+    Write-Host "Running Maven tests: $($testTypes -join ', ')"
+    Write-Host "=========================================="
 
-      # Check if Node.js is available
-      $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
-      if (!$nodeCmd) {
-        Write-Error "Node.js is not installed or not in PATH"
-        exit 1
-      }
+    $mvnTestArgs = @('test', '-P=-examples')
 
-      Push-Location $NodejsSdkDir
-      Write-Host "Working directory: $(Get-Location)"
+    $hasFast = $testTypes -contains 'fast'
+    $hasIT = $testTypes -contains 'it'
+    $hasE2E = $testTypes -contains 'e2e'
+    $hasCore = $testTypes -contains 'core'
+    $hasRest = $testTypes -contains 'rest'
+    $hasSkills = $testTypes -contains 'skills'
+    $hasMcp = $testTypes -contains 'mcp'
 
-      # Check if node_modules exists
-      if (!(Test-Path "$NodejsSdkDir\node_modules")) {
-        Write-Host "Installing dependencies..."
-        & npm install
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "Failed to install dependencies"
-          Pop-Location
-          exit 1
+    if ($hasIT) { $mvnTestArgs += '-DrunITs=true' }
+    if ($hasE2E) { $mvnTestArgs += '-DrunE2ETests=true' }
+    if ($hasCore) {
+        $mvnTestArgs += '-DrunCoreTests=true'
+        $mvnTestArgs += '-Ppulsar-core-tests'
+    }
+
+    $modules = @()
+    if ($hasCore) {
+        $modules += @(
+            'pulsar-core/pulsar-resources',
+            'pulsar-core/pulsar-common',
+            'pulsar-core/pulsar-dom',
+            'pulsar-core/pulsar-persist',
+            'pulsar-core/pulsar-plugins',
+            'pulsar-core/pulsar-third',
+            'pulsar-core/pulsar-skeleton',
+            'pulsar-core/pulsar-browser',
+            'pulsar-core/pulsar-spring-support',
+            'pulsar-core/pulsar-ql-common',
+            'pulsar-core/pulsar-ql',
+            'pulsar-core/pulsar-core-tests',
+            'pulsar-core/pulsar-core-tests/pulsar-common-tests',
+            'pulsar-core/pulsar-core-tests/pulsar-dom-tests',
+            'pulsar-core/pulsar-core-tests/pulsar-ql-tests'
+        )
+    }
+
+    if ($hasSkills -or $hasMcp) {
+        $modules += 'pulsar-agentic'
+
+        if (-not ($hasFast -or $hasIT -or $hasE2E -or $hasCore -or $hasRest)) {
+            $patterns = @()
+            if ($hasSkills) { $patterns += '*Skill*' }
+            if ($hasMcp) { $patterns += '*MCP*' }
+
+            if ($patterns.Count -gt 0) {
+                $mvnTestArgs += "-Dtest=$($patterns -join ',')"
+                $mvnTestArgs += '-Dsurefire.failIfNoSpecifiedTests=false'
+            }
         }
-      }
+    }
 
-      # Check if jest is available
-      if (!(Test-Path "$NodejsSdkDir\node_modules\.bin\jest.cmd")) {
-        Write-Error "jest is not installed. Install it with: npm install"
-        Pop-Location
+    if ($hasFast -or $hasRest) {
+        $modules = @()
+    }
+
+    if ($modules.Count -gt 0) {
+        $mvnTestArgs += '-pl'
+        $mvnTestArgs += ($modules -join ',')
+        $mvnTestArgs += '-am'
+    }
+
+    $mvnTestArgs += $additionalMvnArgs
+
+    try {
+        & $mvnCmd @mvnTestArgs
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            Write-Host ""
+            Write-Host "=========================================="
+            Write-Host "❌ Maven tests failed with exit code $exitCode"
+            Write-Host "=========================================="
+            exit $exitCode
+        }
+
+        Write-Host ""
+        Write-Host "=========================================="
+        Write-Host "✅ Maven tests completed successfully"
+        Write-Host "=========================================="
+    }
+    catch {
+        Write-Error "Failed to execute Maven tests: $_"
         exit 1
-      }
-
-      & npm test -- $AdditionalMvnArgs
-      $ExitCode = $LASTEXITCODE
-      Pop-Location
-      exit $ExitCode
     }
-    "core" {
-      Write-Host "Running core module supplementary tests..."
-      & $MvnCmd @MvnArgs "-DrunCoreTests=true" "-Ppulsar-core-tests" "-pl" "pulsar-core,pulsar-core/pulsar-core-tests" "-am"
-    }
-    "rest" {
-      Write-Host "Running REST module tests..."
-      & $MvnCmd @MvnArgs "-DrunRestTests=true"
-    }
-    "all" {
-      Write-Host "Running all tests (integration, e2e, sdk)..."
-      & $MvnCmd @MvnArgs "-Pall-modules" "-DrunITs=true" "-DrunE2ETests=true" "-DrunSDKTests=true"
-    }
-    Default {
-      Write-Error "Unknown test type '$TestType'"
-      Print-Usage
-    }
-  }
-
-  $ExitCode = $LASTEXITCODE
-
-  if ($ExitCode -eq 0) {
-    Write-Host ""
-    Write-Host "=========================================="
-    Write-Host "✅ $TestType tests completed successfully"
-    Write-Host "=========================================="
-  } else {
-    Write-Host ""
-    Write-Host "=========================================="
-    Write-Host "❌ $TestType tests failed with exit code $ExitCode"
-    Write-Host "=========================================="
-  }
-
-  exit $ExitCode
 }
-catch {
-  Write-Error "Failed to execute tests: $_"
-  exit 1
+
+function Invoke-Browser4CliTests([string[]]$additionalArgs) {
+    $browser4CliDir = Join-Path $repoRoot 'sdks\browser4-cli'
+
+    Write-Host "=========================================="
+    Write-Host "Running Browser4 CLI tests..."
+    Write-Host "=========================================="
+
+    if (-not (Test-Path $browser4CliDir)) {
+        Write-Error "Browser4 CLI directory not found at $browser4CliDir"
+        exit 1
+    }
+
+    $cargoCmd = Get-Command cargo -ErrorAction SilentlyContinue
+    if (-not $cargoCmd) {
+        Write-Error "cargo is not installed or not in PATH"
+        exit 1
+    }
+
+    Push-Location $browser4CliDir
+    try {
+        Write-Host "Working directory: $(Get-Location)"
+
+        if (-not (Test-Path "$browser4CliDir\Cargo.toml")) {
+            Write-Error "Cargo.toml not found in $browser4CliDir"
+            exit 1
+        }
+
+        $cargoArgs = @('test') + $additionalArgs
+        & cargo @cargoArgs
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            Write-Host ""
+            Write-Host "=========================================="
+            Write-Host "❌ Browser4 CLI tests failed with exit code $exitCode"
+            Write-Host "=========================================="
+            exit $exitCode
+        }
+
+        Write-Host ""
+        Write-Host "=========================================="
+        Write-Host "✅ Browser4 CLI tests completed successfully"
+        Write-Host "=========================================="
+    }
+    catch {
+        Write-Error "Failed to execute Browser4 CLI tests: $_"
+        exit 1
+    }
+    finally {
+        Pop-Location
+    }
 }
+
+$knownTestTypes = @('fast', 'it', 'e2e', 'browser4-cli', 'core', 'rest', 'skills', 'mcp', 'browser4')
+$testTypes = @()
+$additionalArgs = @()
+$parsingTestTypes = $true
+
+if ($args.Count -eq 0) {
+    Print-Usage
+}
+
+foreach ($arg in $args) {
+    if ($arg -in '-h', '-help', '--help') {
+        Print-Usage
+    }
+
+    if ($parsingTestTypes -and ($arg -in $knownTestTypes)) {
+        $testTypes += $arg
+    }
+    else {
+        if ($parsingTestTypes -and -not ($arg.StartsWith('-'))) {
+            Exit-UnknownTestType $arg
+        }
+
+        $parsingTestTypes = $false
+        $additionalArgs += $arg
+    }
+}
+
+if ($testTypes.Count -eq 0) {
+    $testTypes += 'fast'
+}
+
+$mavenTests = @()
+$cliTests = @()
+
+foreach ($type in $testTypes) {
+    if ($type -eq 'browser4') {
+        $mavenTests += 'fast', 'core', 'it', 'e2e', 'rest'
+        continue
+    }
+
+    if ($type -eq 'browser4-cli') {
+        $cliTests += $type
+        continue
+    }
+
+    $mavenTests += $type
+}
+
+$mavenTests = $mavenTests | Select-Object -Unique
+$cliTests = $cliTests | Select-Object -Unique
+
+if ($mavenTests.Count -gt 0) {
+    Invoke-MavenTests -testTypes $mavenTests -additionalMvnArgs $additionalArgs
+}
+
+if ($cliTests -contains 'browser4-cli') {
+    Invoke-Browser4CliTests -additionalArgs $additionalArgs
+}
+
+exit 0

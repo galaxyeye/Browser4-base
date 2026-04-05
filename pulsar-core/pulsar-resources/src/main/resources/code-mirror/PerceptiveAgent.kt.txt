@@ -1,6 +1,7 @@
 package ai.platon.pulsar.agentic
 
 import ai.platon.pulsar.agentic.model.*
+import ai.platon.pulsar.common.ai.llm.MCP
 import ai.platon.pulsar.common.Strings
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
@@ -58,26 +59,27 @@ data class ActionOptions(
  *
  * The `toString()` provides a compact, log-friendly summary.
  *
- * @property success Whether the action/tool execution succeeded. 是否成功。
  * @property message Additional status or error message. 状态/错误信息。
  * @property action The user action command that produced this result. 触发该结果的用户动作。
  * @property result The structured tool-call result payload. 工具调用结果。
  * @property detail Internal diagnostics detail; not serialized. 内部诊断信息（不序列化）。
  */
 data class ActResult constructor(
-    val success: Boolean = false,
     val message: String = "",
     val action: String? = null,
     val result: ToolCallResult? = null,
+    val exception: Exception? = null,
     @get:JsonIgnore
     val detail: DetailedActResult? = null
 ) {
     /** Check if the overall task is complete according to the agent. */
     val isComplete: Boolean get() = detail?.actionDescription?.isReallyComplete == true
 
+    val isSuccess: Boolean get() = exception == null && detail?.exception == null && result?.evaluate?.exception == null
+
     /** Expression with weak parameter types (if provided by the model/tool). */
     @get:JsonIgnore
-    val expression get() = result?.actionDescription?.expression
+    val weakTypeExpression get() = result?.actionDescription?.weakTypeExpression
 
     /** Evaluation value returned by the tool call, if available. */
     @get:JsonIgnore
@@ -85,7 +87,7 @@ data class ActResult constructor(
 
     override fun toString(): String {
         val eval = Strings.compactInline(tcEvalValue?.toString(), 50)
-        return "[$action] expr: $expression eval: $eval message: $message"
+        return "[$action] expr: $weakTypeExpression eval: $eval message: $message"
     }
 }
 
@@ -136,10 +138,7 @@ data class ObserveOptions(
 )
 
 data class ObserveResult constructor(
-    // the DOM node locator, format is `frameIndex,backendNodeId`
-    val locator: String? = null,
-
-    // the domain of the tool call, `driver`, `browser`, `fs`, `agent`, etc
+    // the domain of the tool call, `browser`, `tab`, `fs`, `agent`, etc
     val domain: String? = null,
     // the tool call method, `click`, `type`, `scrollBy`, etc
     val method: String? = null,
@@ -147,6 +146,8 @@ data class ObserveResult constructor(
     val arguments: Map<String, Any?>? = null,
     // the tool call description
     val description: String? = null,
+
+    val backendNodeId: Int? = null,
 
     val screenshotContentSummary: String? = null,
     val currentPageContentSummary: String? = null,
@@ -161,14 +162,12 @@ data class ObserveResult constructor(
     // AI: completion next suggestions
     var nextSuggestions: List<String>? = null,
 
-    val backendNodeId: Int? = null,
-
     val observeElement: ObserveElement? = null,
 
     // internal
     val actionDescription: ActionDescription? = null,
 
-    // internal
+    // internal, always update before/after an action
     val agentState: AgentState
 )
 
@@ -197,6 +196,7 @@ interface PerceptiveAgent : AutoCloseable {
      * @param task The user goal or instruction to fulfill.
      * @return The final action result produced by the agent.
      */
+    @MCP
     suspend fun run(task: String): AgentHistory
 
     /**
@@ -216,6 +216,7 @@ interface PerceptiveAgent : AutoCloseable {
      * @param instruction The observation instruction from the user.
      * @return Zero or more observation results describing candidate elements and potential actions.
      */
+    @MCP
     suspend fun observe(instruction: String): List<ObserveResult>
 
     /**
@@ -239,6 +240,7 @@ interface PerceptiveAgent : AutoCloseable {
      * @param selector Optional locator limiting which element's text is summarized.
      * @return The generated summary text.
      */
+    @MCP
     suspend fun summarize(instruction: String? = null, selector: String? = null): String
 
     /**
@@ -247,6 +249,7 @@ interface PerceptiveAgent : AutoCloseable {
      * @param action The action to execute.
      * @return The result of executing the action.
      */
+    @MCP
     suspend fun act(action: String): ActResult
 
     /**
@@ -275,6 +278,7 @@ interface PerceptiveAgent : AutoCloseable {
      * @param instruction The extraction instruction from the user.
      * @return The extraction result produced by the model.
      */
+    @MCP
     suspend fun extract(instruction: String): ExtractResult
 
     /**
@@ -284,6 +288,7 @@ interface PerceptiveAgent : AutoCloseable {
      * @param schema The JSON schema used to constrain the returned data structure.
      * @return The extraction result produced by the model.
      */
+    @MCP
     suspend fun extract(instruction: String, schema: ExtractionSchema): ExtractResult
 
     /**

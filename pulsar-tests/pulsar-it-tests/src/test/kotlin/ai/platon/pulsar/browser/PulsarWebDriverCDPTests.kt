@@ -12,6 +12,7 @@ import ch.qos.logback.classic.Logger
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.slf4j.LoggerFactory
 import java.text.MessageFormat
 import kotlin.test.*
@@ -51,7 +52,7 @@ class PulsarWebDriverCDPTests : WebDriverTestBase() {
 
     @Test
     @Ignore("Disabled temporarily")
-    fun whenNavigateToAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
+    fun whenNavigateAHtmlPageThenTheNavigateStateAreCorrect() = runEnhancedWebDriverTest(browser) { driver ->
         openEnhanced(interactiveUrl, driver, 1)
 
         val navigateEntry = driver.navigateEntry
@@ -69,7 +70,8 @@ class PulsarWebDriverCDPTests : WebDriverTestBase() {
     }
 
     @Test
-    fun `test evaluate`() = runEnhancedWebDriverTest(testURL, browser) { driver ->
+    @DisplayName("test evaluate")
+    fun testEvaluate() = runEnhancedWebDriverTest(testURL, browser) { driver ->
         val code = """1+1"""
 
         val result = driver.evaluate(code)
@@ -77,7 +79,8 @@ class PulsarWebDriverCDPTests : WebDriverTestBase() {
     }
 
     @Test
-    fun `test DOM event`() = runWebDriverDOMEventTest(testURL, browser) { driver ->
+    @DisplayName("test DOM event")
+    fun testDomEvent() = runWebDriverDOMEventTest(testURL, browser) { driver ->
         assertIs<PulsarWebDriver>(driver)
 
         val code = """1+1"""

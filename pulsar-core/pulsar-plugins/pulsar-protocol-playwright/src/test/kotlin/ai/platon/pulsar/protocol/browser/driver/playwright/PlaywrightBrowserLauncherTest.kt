@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 @Tag("OptionalTest")
-@Tag("MustRunExplicitly")
-@Disabled("MustRunExplicitly")
+@Tag("ManualOnly")
+@Disabled("ManualOnly")
 class PlaywrightBrowserLauncherTest: PlaywrightTestBase() {
     private val browserLauncher = PlaywrightBrowserLauncher()
 
@@ -80,7 +80,7 @@ class PlaywrightBrowserLauncherTest: PlaywrightTestBase() {
         val url = "https://www.baidu.com/"
 
         runBlocking {
-            driver.navigateTo(url)
+            driver.navigate(url)
             driver.waitForNavigation()
         }
 

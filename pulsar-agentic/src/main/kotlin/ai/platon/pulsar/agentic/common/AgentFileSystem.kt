@@ -24,7 +24,7 @@ class FileSystemError(message: String, cause: Throwable? = null) : IOException(m
 
 /**
  * Base class for all file types in the agent file system.
- * 
+ *
  * This class provides thread-safe content management using atomic operations.
  * All file content modifications are synchronized to prevent lost updates in
  * concurrent scenarios.
@@ -41,7 +41,7 @@ sealed class BaseFile(
 
     /** Thread-safe content storage using atomic reference */
     private val contentRef = AtomicReference(initialContent)
-    
+
     /** Thread-safe access to file content */
     var content: String
         get() = contentRef.get()
@@ -90,7 +90,7 @@ sealed class BaseFile(
     open fun content(): String = content
 
     val size: Int get() = content.length
-    
+
     /**
      * Calculates the number of lines in the file content.
      * Returns 0 for empty content.
@@ -164,7 +164,7 @@ data class FileSystemState(
  * the base name. No path separators allowed (flat file structure only).
  *
  * @property baseDir The base directory for the file system (default: "target")
- * @property createDefaultFiles Whether to create default files (e.g., todolist.md) on init
+ * @property createDefaultFiles Whether to create default files on init
  */
 class AgentFileSystem(
     private val baseDir: Path = Path.of("target"),
@@ -173,9 +173,6 @@ class AgentFileSystem(
     companion object {
         /** Maximum characters to display in file preview (per half) */
         const val DISPLAY_CHARS = 400
-
-        /** Default files created on initialization */
-        val DEFAULT_FILES = listOf("todolist.md")
     }
 
     private val logger = getLogger(this)
@@ -208,15 +205,6 @@ class AgentFileSystem(
         }
         if (!dataDir.exists()) {
             dataDir.createDirectories()
-        }
-
-        if (createDefaultFiles) {
-            for (full in DEFAULT_FILES) {
-                val (name, ext) = parseFilename(full)
-                val file = createFile(ext, name)
-                files[full] = file
-                file.writeString(dataDir)
-            }
         }
     }
 
@@ -524,14 +512,14 @@ class AgentFileSystem(
             // Create new file with same content (but don't write to disk yet)
             val (destName, destExt) = parseFilename(destFileName)
             val newFile = createFile(destExt, destName, sourceFile.content())
-            
+
             // Write new file to disk first
             newFile.writeString(dataDir)
-            
+
             // Atomically update the map: remove source, add destination
             files.compute(sourceFileName) { _, _ -> null }
             files[destFileName] = newFile
-            
+
             // Delete old file from disk after successful map update
             val oldPath = dataDir.resolve(sourceFile.fullName)
             withContext(Dispatchers.IO) {
@@ -539,8 +527,10 @@ class AgentFileSystem(
                     try {
                         Files.delete(oldPath)
                     } catch (e: IOException) {
-                        logger.warn("Moved file '{}' to '{}' in memory but could not delete old disk file: {}", 
-                            sourceFileName, destFileName, e.message)
+                        logger.warn(
+                            "Moved file '{}' to '{}' in memory but could not delete old disk file: {}",
+                            sourceFileName, destFileName, e.message
+                        )
                     }
                 }
             }
@@ -603,15 +593,13 @@ class AgentFileSystem(
      * Describes all files in the agent file system with a preview of their content.
      *
      * For small files, shows the full content. For large files, shows the first and
-     * last portions with a line count for the middle. The todolist.md file is excluded
-     * from the description.
+     * last portions with a line count for the middle.
      *
      * @return A formatted description of all files
      */
     fun describe(): String {
         return buildString {
             for (file in files.values) {
-                if (file.fullName == "todolist.md") continue
                 val content = file.content()
                 if (content.isEmpty()) {
                     append("<file>\n${file.fullName} - [empty file]\n</file>\n")
@@ -663,20 +651,17 @@ class AgentFileSystem(
     }
 
     /**
-     * Gets the contents of the todolist.md file.
-     *
-     * @return The content of todolist.md, or empty string if not found
-     */
-    fun getTodoContents(): String = getFile("todolist.md")?.content() ?: ""
-
-    /**
      * Gets the current state of the file system for serialization.
      *
      * @return A FileSystemState object containing all files and metadata
      */
     fun getState(): FileSystemState {
         val map = files.mapValues { (_, f) -> FileStateEntry(f::class.simpleName ?: "", f.name, f.content) }
-        return FileSystemState(files = map, baseDir = baseDir.toString(), extractedContentCount = extractedContentCount.get())
+        return FileSystemState(
+            files = map,
+            baseDir = baseDir.toString(),
+            extractedContentCount = extractedContentCount.get()
+        )
     }
 
     /**

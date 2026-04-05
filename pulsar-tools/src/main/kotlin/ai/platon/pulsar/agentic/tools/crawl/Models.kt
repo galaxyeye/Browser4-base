@@ -87,7 +87,7 @@ fun ScrapeResponse.refreshed(lastModifiedTime: Instant): Boolean {
  *
  * @property url The target page URL to process.
  * @property args Optional load arguments to customize page loading behavior.
- * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigateTo").
+ * @property onBrowserLaunchedActions Actions to perform when the browser is launched (e.g., "clearBrowserCookies", "navigate").
  * @property onPageReadyActions Actions to perform when the document is fully loaded (e.g., "scroll down", "click button").
  * @property pageSummaryPrompt A prompt to analyze or discuss the HTML structure of the page.
  * @property dataExtractionRules Specifications for extracting structured fields from the HTML content.
@@ -108,7 +108,7 @@ data class PageVisitRequest @JsonCreator constructor(
     /**
      * Whether to infer/convert [uriExtractionRules] from natural language into a `Regex:` pattern using LLM.
      *
-     * Some LLMs are very slow or unstable when asked to produce regex; set this to false to require callers
+     * Some LLMs are very slow or unstable when asked to produce regex; set this set to be false to require callers
      * to provide a `Regex:` pattern directly.
      *
      * Defaults to true for backward compatibility.

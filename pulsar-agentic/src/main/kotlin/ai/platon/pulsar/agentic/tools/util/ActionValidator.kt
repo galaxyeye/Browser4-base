@@ -37,21 +37,21 @@ class ActionValidator(
             return false
         }
 
-        if (toolCall.domain != "driver") {
+        if (toolCall.domain != "tab") {
             return true
         }
 
         val cacheKey = "${toolCall.method}:${toolCall.arguments}"
         return validationCache.getOrPut(cacheKey) {
             when (toolCall.method) {
-                "open", "navigateTo" -> validateNavigateTo(toolCall.arguments)
+                "open", "navigate", "navigateTo" -> validateNavigate(toolCall.arguments)
                 "click", "fill", "press", "check", "uncheck", "exists", "isVisible", "focus", "hover", "scrollTo",
                 "type", "isHidden", "visible", "isChecked", "bringToFront",
                 "selectFirstTextOrNull", "selectTextAll", "selectFirstAttributeOrNull", "selectAttributes", "selectAttributeAll", "selectImages",
                 "evaluate", "clickablePoint", "boundingBox" -> validateElementAction(toolCall.arguments)
 
                 "waitForNavigation", "waitForSelector" -> validateWaitForNavigation(toolCall.arguments)
-                "captureScreenshot", "outerHTML" -> validateOptionalElementAction(toolCall.arguments)
+                "screenshot", "outerHTML" -> validateOptionalElementAction(toolCall.arguments)
                 // New no-selector actions
                 "scrollDown", "scrollUp" -> true
                 "scrollBy" -> validateScrollBy(toolCall.arguments)
@@ -75,7 +75,7 @@ class ActionValidator(
     /**
      * Validates navigation actions
      */
-    private fun validateNavigateTo(args: Map<String, Any?>?): Boolean {
+    private fun validateNavigate(args: Map<String, Any?>?): Boolean {
         args ?: return true
 
         val url = args["url"]?.toString() ?: return false
