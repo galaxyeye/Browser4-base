@@ -368,24 +368,20 @@ Comprehensive documentation is available in the `docs/` directory and on our [Gi
 
 ---
 
-## 🔧 Proxies - Unblock Websites
+## 🔧 Proxy Configuration - Unblock Website Access
 
-Browser4 supports proxy rotation and management to access geo-restricted content.
+<details>
 
-**Quick Start:**
-1. Obtain a list of proxy URLs (e.g., from a proxy provider).
-2. Configure `PROXY_ROTATION_URL` in `application.properties`.
-3. Use the `rotateProxies` command in your agent scripts.
+Set the environment variable `PROXY_ROTATION_URL` to the rotation URL provided by your proxy service provider:
 
-**Example:**
-```kotlin
-agent.run("""
-    1. Go to a blocked website
-    2. If blocked, rotate proxy and retry
-    """)
+```shell
+export PROXY_ROTATION_URL=https://your-proxy-provider.com/rotation-endpoint
 ```
 
-**Note**: Respect website terms of service and robots.txt rules when scraping.
+Each time you access this rotation URL, it should return a response containing one or more fresh proxy IPs.
+If you need this type of URL, please contact your proxy service provider.
+
+</details>
 
 ---
 
