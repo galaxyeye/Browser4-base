@@ -326,7 +326,7 @@ impl FixtureServer {
     ///   service (see [`fixture_host`]).
     fn start(bind_addr: &str, fixture_host: &str) -> Self {
         let listener = TcpListener::bind(format!("{}:0", bind_addr))
-            .expect("fixture server bind failed");
+            .unwrap_or_else(|e| panic!("fixture server bind failed on {bind_addr}:0 – {e}"));
         let port = listener.local_addr().unwrap().port();
         let shutdown = Arc::new(AtomicBool::new(false));
         let flag = shutdown.clone();
@@ -1083,6 +1083,10 @@ fn create_e2e_test_resources() -> E2ETestResources {
 
     // Bind to 0.0.0.0 when running against an external Docker service so the
     // container can reach the fixture HTTP server on the host machine.
+    // NOTE: 0.0.0.0 temporarily exposes the fixture server on all interfaces for
+    // the duration of the test run; this is intentional and required for Docker
+    // containers to connect back to the host, but should only occur in CI where
+    // the runner is not exposed to untrusted networks.
     let bind_addr = if is_external { "0.0.0.0" } else { "127.0.0.1" };
     let fhost = fixture_host();
     let fixture = FixtureServer::start(bind_addr, &fhost);
