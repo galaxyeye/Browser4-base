@@ -21,7 +21,7 @@
 
     <groupId>ai.platon.pulsar</groupId>
     <artifactId>pulsar</artifactId>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Browser4</name>
@@ -798,7 +798,7 @@
             IntegrationTest,E2ETest,HeavyTest
         </surefire.excludedGroups>
 
-        <pulsar.modules.version>4.6.0-SNAPSHOT</pulsar.modules.version>
+        <pulsar.modules.version>4.7.0-SNAPSHOT</pulsar.modules.version>
     </properties>
 
 </project>
