@@ -88,24 +88,6 @@ jobs:
             echo "📊 Test Results: ${{ steps.run-tests.outputs.passed_count }} tests passed"
           fi
 
-
-
-
-
-
-
-
-
-
-      - name: Setup Rust Toolchain
-        id: rust-setup
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust Build Artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: sdks/browser4-cli
-
       - name: Cleanup Docker system to free space
         run: |
           docker system prune -af
@@ -144,6 +126,15 @@ jobs:
           service_port: '8182'
           timeout_minutes: '5'
           container_name: ${{ env.CONTAINER_NAME }}
+
+      - name: Setup Rust Toolchain
+        id: rust-setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust Build Artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: sdks/browser4-cli
 
       - name: Run browser4-cli E2E Tests
         id: e2e-cli
