@@ -14,9 +14,17 @@
 //! cargo test --test e2e -- --nocapture --scenario=test_e2e_agent_and_collective_commands
 //! ```
 //!
-//! The Browser4 jar is resolved from (in order):
-//! 1. `BROWSER4_E2E_JAR_PATH` environment variable
-//! 2. `<repo_root>/browser4/browser4-agents/target/Browser4.jar`
+//! The Browser4 service is resolved in this order:
+//! 1. `BROWSER4_E2E_SERVICE_URL` environment variable – connect to an already-running
+//!    service (Docker-friendly; no JAR is needed).
+//! 2. `BROWSER4_E2E_SERVER_URL` environment variable – alias for the above.
+//! 3. Auto-start from JAR: `BROWSER4_E2E_JAR_PATH` or
+//!    `<repo_root>/browser4/browser4-agents/target/Browser4.jar`.
+//!
+//! When running against an external Docker service, also set:
+//! - `BROWSER4_E2E_FIXTURE_HOST` – hostname/IP the Browser4 container uses to
+//!   reach the fixture HTTP server on the host (e.g. `host.docker.internal` or
+//!   the Docker bridge gateway IP such as `172.17.0.1`). Defaults to `127.0.0.1`.
 
 use std::collections::HashSet;
 use std::fs;
@@ -63,6 +71,24 @@ fn default_jar_path() -> PathBuf {
         .join("browser4-agents")
         .join("target")
         .join("Browser4.jar")
+}
+
+/// Returns the external Browser4 service URL if one has been provided via
+/// `BROWSER4_E2E_SERVICE_URL` (or its alias `BROWSER4_E2E_SERVER_URL`).
+/// When this is `Some`, the test suite connects to the running service instead
+/// of spawning its own JAR process.
+fn external_service_url() -> Option<String> {
+    std::env::var("BROWSER4_E2E_SERVICE_URL")
+        .or_else(|_| std::env::var("BROWSER4_E2E_SERVER_URL"))
+        .ok()
+        .filter(|s| !s.is_empty())
+}
+
+/// Host name or IP that the Browser4 service (possibly inside Docker) should
+/// use to reach the fixture HTTP server running on the test host.
+/// Defaults to `127.0.0.1` (loopback, suitable for local runs).
+fn fixture_host() -> String {
+    std::env::var("BROWSER4_E2E_FIXTURE_HOST").unwrap_or_else(|_| "127.0.0.1".to_string())
 }
 
 // ---------------------------------------------------------------------------
@@ -284,12 +310,23 @@ fn find_free_port() -> u16 {
 
 struct FixtureServer {
     port: u16,
+    /// Host advertised in fixture URLs that are *sent to* the Browser4 service.
+    /// When the service runs inside Docker this must be the host's reachable
+    /// address (e.g. `host.docker.internal` or the Docker bridge gateway IP).
+    fixture_host: String,
     shutdown: Arc<AtomicBool>,
 }
 
 impl FixtureServer {
-    fn start() -> Self {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("fixture server bind failed");
+    /// Start the fixture HTTP server.
+    ///
+    /// * `bind_addr` – network interface to listen on (`"127.0.0.1"` for
+    ///   local-only, `"0.0.0.0"` when an external Docker service must reach it).
+    /// * `fixture_host` – hostname/IP used in URLs handed to the Browser4
+    ///   service (see [`fixture_host`]).
+    fn start(bind_addr: &str, fixture_host: &str) -> Self {
+        let listener = TcpListener::bind(format!("{}:0", bind_addr))
+            .expect("fixture server bind failed");
         let port = listener.local_addr().unwrap().port();
         let shutdown = Arc::new(AtomicBool::new(false));
         let flag = shutdown.clone();
@@ -312,11 +349,11 @@ impl FixtureServer {
             }
         });
 
-        Self { port, shutdown }
+        Self { port, fixture_host: fixture_host.to_string(), shutdown }
     }
 
     fn base_url(&self) -> String {
-        format!("http://127.0.0.1:{}", self.port)
+        format!("http://{}:{}", self.fixture_host, self.port)
     }
 }
 
@@ -785,11 +822,19 @@ struct E2ETestResources {
     browser4: Option<Browser4Server>,
     _fixture: FixtureServer,
     browser4_jar_path: PathBuf,
+    /// `true` when the Browser4 service was provided externally via
+    /// `BROWSER4_E2E_SERVICE_URL`. In this mode the suite never starts or
+    /// restarts the server process.
+    external_service: bool,
     ctx: E2ECtx,
 }
 
 impl E2ETestResources {
     fn restart_browser4(&mut self) {
+        if self.external_service {
+            // The service is managed externally; nothing to restart.
+            return;
+        }
         self.browser4 = None;
         let browser4_port = find_free_port();
         self.ctx.browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
@@ -1015,25 +1060,37 @@ fn reset_cli_artifacts(ctx: &E2ECtx) {
 }
 
 fn create_e2e_test_resources() -> E2ETestResources {
+    let service_url = external_service_url();
+    let is_external = service_url.is_some();
+
     let jar_path = std::env::var("BROWSER4_E2E_JAR_PATH")
         .map(PathBuf::from)
         .unwrap_or_else(|_| default_jar_path());
 
-    assert!(
-        jar_path.exists(),
-        "Browser4 jar not found at {jar_path:?}. \
-        Build browser4/browser4-agents first or set BROWSER4_E2E_JAR_PATH."
-    );
+    if !is_external {
+        assert!(
+            jar_path.exists(),
+            "Browser4 jar not found at {jar_path:?}. \
+            Build browser4/browser4-agents first, set BROWSER4_E2E_JAR_PATH, \
+            or set BROWSER4_E2E_SERVICE_URL to point to a running service."
+        );
+    }
     assert!(
         cli_binary().exists(),
         "CLI binary not found at {:?}. Run `cargo build` first.",
         cli_binary()
     );
 
-    let fixture = FixtureServer::start();
+    // Bind to 0.0.0.0 when running against an external Docker service so the
+    // container can reach the fixture HTTP server on the host machine.
+    let bind_addr = if is_external { "0.0.0.0" } else { "127.0.0.1" };
+    let fhost = fixture_host();
+    let fixture = FixtureServer::start(bind_addr, &fhost);
     let fixture_base_url = fixture.base_url();
-    let browser4_port = find_free_port();
-    let browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
+
+    let browser4_base_url = service_url.unwrap_or_else(|| {
+        format!("http://127.0.0.1:{}", find_free_port())
+    });
 
     let temp_dir = tempfile::TempDir::new().expect("tempdir creation failed");
     let workspace_dir = temp_dir.path().join("workspace");
@@ -1050,6 +1107,7 @@ fn create_e2e_test_resources() -> E2ETestResources {
         browser4: None,
         _fixture: fixture,
         browser4_jar_path: jar_path,
+        external_service: is_external,
         ctx: E2ECtx {
             fixture_base_url,
             browser4_base_url,

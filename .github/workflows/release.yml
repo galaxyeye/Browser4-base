@@ -162,74 +162,6 @@ jobs:
 
 
 
-      #### Run browser4-cli E2E Tests ####
-      ## TODO: run browser4-cli E2E Tests against the docker containerized Browser4 server to validate real-world usage
-      ## and catch any potential issues with the Docker deployment. This will help ensure that the CLI can successfully
-      ## interact with the server in a production-like environment.
-
-      - name: Setup Rust Toolchain
-        id: rust-setup
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust Build Artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: sdks/browser4-cli
-
-      - name: Run browser4-cli E2E Tests
-        id: e2e-cli
-        timeout-minutes: 15
-        shell: bash
-        run: |
-          echo "::group::🧪 browser4-cli E2E Tests"
-
-          # Ensure Chrome is available (required by the Browser4 server under test)
-          if ! command -v google-chrome-stable &>/dev/null && ! command -v google-chrome &>/dev/null; then
-            echo "Installing Google Chrome..."
-            sudo apt-get update -qq
-            sudo apt-get install -y google-chrome-stable
-          fi
-          echo "🔧 Chrome: $(google-chrome-stable --version 2>/dev/null || google-chrome --version 2>/dev/null || echo 'not found')"
-
-          echo "Working directory: $(pwd)"
-          ls
-          ROOT_DIR=$(git rev-parse --show-toplevel)
-
-          JAR_PATH="$ROOT_DIR/browser4/browser4-agents/target/Browser4.jar"
-          if [ ! -f "$JAR_PATH" ]; then
-            echo "❌ Browser4 jar not found at $JAR_PATH"
-            exit 1
-          fi
-          echo "✅ Browser4 jar: $JAR_PATH"
-
-          # Run the CLI tests
-          echo "Running browser4-cli E2E tests..."
-          echo "Working directory: $(pwd)"
-          cd sdks/browser4-cli
-          export BROWSER4_SERVER_JAR="$JAR_PATH"
-          export BROWSER_DISPLAY_MODE=HEADLESS
-          # BROWSER4_CLI_E2E=true cargo test --test e2e -- --test-threads=1 --nocapture
-          cargo test
-          cd "$ROOT_DIR"
-
-          echo "Cleaning up Java processes after CLI tests..."
-          pkill -f 'java' || echo "No Java processes to kill"
-          pkill -f 'chrome' || echo "No chrome processes to kill"
-
-          # If logs/pulsar.log exists, print the last 100 lines for debugging
-          if [ -f "logs/pulsar.log" ]; then
-            echo "📄 Last 100 lines of logs/pulsar.log:"
-            tail -n 100 logs/pulsar.log
-          fi
-
-          echo "::endgroup::"
-
-
-
-
-
-
-
       - name: Cleanup Docker system to free space
         run: |
           docker system prune -af
@@ -287,10 +219,12 @@ jobs:
           docker network create ${{ env.NETWORK_NAME }} || true
 
           # Start container with health check
+          # --add-host allows the container to reach the test fixture server on the host
           docker run -d --rm \
             --name ${{ env.CONTAINER_NAME }} \
             --network ${{ env.NETWORK_NAME }} \
             -p 8182:8182 \
+            --add-host=host.docker.internal:host-gateway \
             -e OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }} \
             --health-cmd="curl -f http://localhost:8182/actuator/health || exit 1" \
             --health-interval=10s \
@@ -306,6 +240,36 @@ jobs:
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
+      - name: Setup Rust Toolchain
+        id: rust-setup
+        if: success() && github.event.inputs.skip_tests != 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust Build Artifacts
+        if: success() && github.event.inputs.skip_tests != 'true'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: sdks/browser4-cli
+
+      - name: Run browser4-cli E2E Tests
+        id: e2e-cli
+        if: success() && github.event.inputs.skip_tests != 'true'
+        timeout-minutes: 15
+        shell: bash
+        env:
+          BROWSER4_E2E_SERVICE_URL: http://localhost:8182
+          BROWSER4_E2E_FIXTURE_HOST: host.docker.internal
+        run: |
+          echo "::group::🧪 browser4-cli E2E Tests"
+
+          # Run the CLI tests against the already-running Docker container
+          echo "Running browser4-cli E2E tests..."
+          echo "Working directory: $(pwd)"
+          cd sdks/browser4-cli
+          cargo test --test e2e -- --nocapture
+          cd "$(git rev-parse --show-toplevel)"
+
+          echo "::endgroup::"
       - name: Cleanup Docker Container
         if: always()
         uses: ./.github/actions/cleanup-resources
