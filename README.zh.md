@@ -1,4 +1,4 @@
-# 🤖 Browser4
+﻿# 🤖 Browser4
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/galaxyeye88/browser4?style=flat-square)](https://hub.docker.com/r/galaxyeye88/browser4)
 [![License: APACHE2](https://img.shields.io/badge/license-APACHE2-green?style=flat-square)](https://github.com/platonai/browser4/blob/main/LICENSE)
@@ -200,7 +200,7 @@ fields = session.extract(document, mapOf("ratings" to "#ratings"))
 
 ### LLM + X-SQL
 
-适用于高复杂度的数据抽取流水线，包含数十个实体与每个实体数百个字段。
+适用于高复杂度的数据抽取流水线，典型场景包含数十个实体与每个实体数百个字段。
 
 **优势：**
 - 相比传统方法，可多提取 10 倍实体与 100 倍字段
