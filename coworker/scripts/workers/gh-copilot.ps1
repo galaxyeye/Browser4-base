@@ -193,11 +193,16 @@ function Invoke-GHCopilot {
 
     $command = Get-GHCopilotCommand -RepoRoot $RepoRoot
     if ($CaptureOutput) {
+        $captureArguments = @($AdditionalArguments)
+        if ($captureArguments -notcontains '--silent') {
+            $captureArguments += '--silent'
+        }
+
         $stdOutPath = [System.IO.Path]::GetTempFileName()
         $stdErrPath = [System.IO.Path]::GetTempFileName()
 
         try {
-            $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $AdditionalArguments -WorkingDirectory $WorkingDirectory -StdOutPath $stdOutPath -StdErrPath $stdErrPath -NoNewWindow
+            $process = Start-GHCopilotProcess -Executable $command.Executable -BaseArgs $command.BaseArgs -Prompt $Prompt -AdditionalArguments $captureArguments -WorkingDirectory $WorkingDirectory -StdOutPath $stdOutPath -StdErrPath $stdErrPath -NoNewWindow
             $process.WaitForExit()
             $global:LASTEXITCODE = $process.ExitCode
 
