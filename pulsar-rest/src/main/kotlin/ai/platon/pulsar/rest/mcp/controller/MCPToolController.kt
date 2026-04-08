@@ -286,63 +286,47 @@ class MCPToolController(
      * When `async=true` (default), returns the task ID string immediately.
      * When `async=false`, blocks until execution completes and returns the [CommandStatus] as JSON.
      */
-    private suspend fun handleCommandRun(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
-        val args = request.arguments ?: emptyMap()
-        return try {
-            val evaluate = commandToolExecutor.callFunctionOn(
-                ToolCall("command", "run", args.toMutableMap()),
-                commandService
-            )
-            if (evaluate.exception != null) {
-                ResponseEntity.ok(errorResponse("command_run failed: ${evaluate.exception!!.message}"))
-            } else {
-                ResponseEntity.ok(textResponse(evaluate.value?.toString() ?: ""))
-            }
-        } catch (e: Exception) {
-            logger.error("command_run failed | {}", e.message, e)
-            ResponseEntity.ok(errorResponse("command_run failed: ${e.message}"))
-        }
-    }
+    private suspend fun handleCommandRun(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> =
+        dispatchToCommandToolExecutor("command_run", "run", request.arguments ?: emptyMap())
 
     /**
      * Get the status of a command task by its ID.
      */
-    private suspend fun handleCommandStatus(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
-        val args = request.arguments ?: emptyMap()
-        return try {
-            val evaluate = commandToolExecutor.callFunctionOn(
-                ToolCall("command", "status", args.toMutableMap()),
-                commandService
-            )
-            if (evaluate.exception != null) {
-                ResponseEntity.ok(errorResponse("command_status failed: ${evaluate.exception!!.message}"))
-            } else {
-                ResponseEntity.ok(textResponse(evaluate.value?.toString() ?: ""))
-            }
-        } catch (e: Exception) {
-            logger.error("command_status failed | {}", e.message, e)
-            ResponseEntity.ok(errorResponse("command_status failed: ${e.message}"))
-        }
-    }
+    private suspend fun handleCommandStatus(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> =
+        dispatchToCommandToolExecutor("command_status", "status", request.arguments ?: emptyMap())
 
     /**
      * Get the result of a completed command task by its ID.
      */
-    private suspend fun handleCommandResult(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> {
-        val args = request.arguments ?: emptyMap()
+    private suspend fun handleCommandResult(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> =
+        dispatchToCommandToolExecutor("command_result", "result", request.arguments ?: emptyMap())
+
+    /**
+     * Common dispatcher for command tool calls — invokes [commandToolExecutor] and maps
+     * the result to an [MCPToolCallResponse].
+     *
+     * @param toolDisplayName Human-readable tool name for error messages.
+     * @param method The command domain method to invoke (`run`, `status`, or `result`).
+     * @param args The raw request arguments.
+     */
+    private suspend fun dispatchToCommandToolExecutor(
+        toolDisplayName: String,
+        method: String,
+        args: Map<String, Any?>,
+    ): ResponseEntity<MCPToolCallResponse> {
         return try {
             val evaluate = commandToolExecutor.callFunctionOn(
-                ToolCall("command", "result", args.toMutableMap()),
+                ToolCall("command", method, args.toMutableMap()),
                 commandService
             )
             if (evaluate.exception != null) {
-                ResponseEntity.ok(errorResponse("command_result failed: ${evaluate.exception!!.message}"))
+                ResponseEntity.ok(errorResponse("$toolDisplayName failed: ${evaluate.exception!!.message}"))
             } else {
                 ResponseEntity.ok(textResponse(evaluate.value?.toString() ?: ""))
             }
         } catch (e: Exception) {
-            logger.error("command_result failed | {}", e.message, e)
-            ResponseEntity.ok(errorResponse("command_result failed: ${e.message}"))
+            logger.error("{} failed | {}", toolDisplayName, e.message, e)
+            ResponseEntity.ok(errorResponse("$toolDisplayName failed: ${e.message}"))
         }
     }
 
