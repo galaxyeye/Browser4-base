@@ -6,10 +6,6 @@ import ai.platon.pulsar.agentic.tools.command.CommandStatus
 import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
@@ -31,10 +27,6 @@ class CommandController(
     val commandService: CommandService,
 ) {
     private val logger = getLogger(CommandController::class)
-
-    private val sseScope: CoroutineScope = CoroutineScope(
-        Dispatchers.IO + SupervisorJob()
-    )
 
     /**
      * Execute a command with structured JSON input and output.
@@ -109,7 +101,7 @@ class CommandController(
                     logger.error("Error in command status flow", it)
                     sink.error(it)
                 }
-                .launchIn(sseScope)
+                .launchIn(commandService.launchScope())
 
             sink.onDispose { job.cancel() }
         }.map {

@@ -100,26 +100,26 @@ class CommandService(
      * @return The command status ID for tracking execution progress.
      */
     suspend fun submitPlainCommandAsync(plainCommand: String): String {
-        val trimmedCommand = plainCommand.trim()
+        val command = plainCommand.trim()
 
-        if (trimmedCommand.isBlank()) {
+        if (command.isBlank()) {
             val status = statefulPageVisitor.create()
             status.failed(ResourceStatus.SC_BAD_REQUEST)
             return status.id
         }
 
-        if (trimmedCommand.startsWith("http") && Strings.isSingleLine(trimmedCommand)) {
-            return session.load(trimmedCommand).contentAsString
+        if (command.startsWith("http") && Strings.isSingleLine(command)) {
+            return session.load(command).contentAsString
         }
 
-        val request = commandNormalizer?.normalize(trimmedCommand)
+        val request = commandNormalizer?.normalize(command)
         return if (request != null) {
             // Standard URL-based async command execution
             val eventHandlers = PageEventHandlersFactory.create()
             submitPageVisitCommandAsync(request, eventHandlers)
         } else {
             // Agent-based async command execution
-            submitAgentTaskAsync(trimmedCommand)
+            submitAgentTaskAsync(command)
         }
     }
 
@@ -197,14 +197,12 @@ class CommandService(
     }
 
     /**
-     * Launch a coroutine in the command service's scope.
+     * Returns the command service's coroutine scope.
      *
      * This is useful for external callers that need to launch coroutines
      * tied to the command service's lifecycle.
      */
-    fun launchInScope(block: suspend CoroutineScope.() -> Unit): Job {
-        return commanderScope.launch(block = block)
-    }
+    fun launchScope(): CoroutineScope = commanderScope
 
     override fun close() {
         commanderScope.cancel()
