@@ -15,6 +15,7 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -176,6 +177,84 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals("Killed 3 session(s)", result.body!!.content[0].text)
+    }
+
+    @Test
+    fun `test list tools returns registered tools with supported aliases only`() {
+        `when`(sessionManager.getAllSessions()).thenReturn(listOf(managedSession))
+        `when`(agentToolExecutor.getAllToolSpecs()).thenReturn(
+            mapOf(
+                "tab" to mapOf(
+                    "navigate" to ToolSpec(domain = "tab", method = "navigate", description = "desc"),
+                    "title" to ToolSpec(domain = "tab", method = "title", description = "desc"),
+                    "currentUrl" to ToolSpec(domain = "tab", method = "currentUrl", description = "desc"),
+                    "keyDown" to ToolSpec(domain = "tab", method = "keyDown", description = "desc"),
+                    "mouseMove" to ToolSpec(domain = "tab", method = "mouseMove", description = "desc"),
+                    "click" to ToolSpec(domain = "tab", method = "click", description = "desc"),
+                    "dblclick" to ToolSpec(domain = "tab", method = "dblclick", description = "desc"),
+                    "dialog_accept" to ToolSpec(domain = "tab", method = "dialog_accept", description = "desc"),
+                    "dialog_dismiss" to ToolSpec(domain = "tab", method = "dialog_dismiss", description = "desc"),
+                ),
+                "browser" to mapOf(
+                    "switchTab" to ToolSpec(domain = "browser", method = "switchTab", description = "desc"),
+                    "newTab" to ToolSpec(domain = "browser", method = "newTab", description = "desc"),
+                    "closeTab" to ToolSpec(domain = "browser", method = "closeTab", description = "desc"),
+                    "listTabs" to ToolSpec(domain = "browser", method = "listTabs", description = "desc"),
+                ),
+            )
+        )
+
+        val result = controller.listTools(response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        @Suppress("UNCHECKED_CAST")
+        val tools = ((result.body as Map<String, Any>)["tools"] as List<String>).toSet()
+
+        assertTrue(tools.contains("open_session"))
+        assertTrue(tools.contains("navigate"))
+        assertTrue(tools.contains("browser_navigate"))
+        assertTrue(tools.contains("browser_click"))
+        assertTrue(tools.contains("browser_handle_dialog"))
+        assertTrue(tools.contains("browser_keydown"))
+        assertTrue(tools.contains("browser_mouse_move_xy"))
+        assertTrue(tools.contains("browser_tabs"))
+        assertTrue(tools.contains("page_title"))
+        assertTrue(tools.contains("page_url"))
+        assertTrue(tools.contains("keydown"))
+        assertTrue(tools.contains("mousemove"))
+        assertTrue(tools.contains("tab_select"))
+        assertTrue(tools.contains("tab_new"))
+        assertTrue(tools.contains("tab_close"))
+        assertTrue(tools.contains("tab_list"))
+        assertFalse(tools.contains("browser_file_upload"))
+    }
+
+    @Test
+    fun `test list tools creates temporary session when no sessions are active`() {
+        val temporarySession = Mockito.mock(ManagedSession::class.java)
+        val temporaryAgenticSession = Mockito.mock(AgenticSession::class.java)
+        val temporaryAgent = Mockito.mock(BasicBrowserAgent::class.java)
+        val temporaryToolExecutor = Mockito.mock(AgentToolExecutor::class.java)
+
+        `when`(sessionManager.getAllSessions()).thenReturn(emptyList())
+        `when`(sessionManager.createSession(null)).thenReturn(temporarySession)
+        `when`(temporarySession.sessionId).thenReturn("temporary-session")
+        `when`(temporarySession.agenticSession).thenReturn(temporaryAgenticSession)
+        `when`(temporaryAgenticSession.companionAgent).thenReturn(temporaryAgent)
+        `when`(temporaryAgent.toolExtractor).thenReturn(temporaryToolExecutor)
+        `when`(temporaryToolExecutor.getAllToolSpecs()).thenReturn(
+            mapOf(
+                "tab" to mapOf(
+                    "navigate" to ToolSpec(domain = "tab", method = "navigate", description = "desc"),
+                )
+            )
+        )
+
+        val result = controller.listTools(response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        Mockito.verify(sessionManager).createSession(null)
+        Mockito.verify(sessionManager).deleteSession("temporary-session")
     }
 
     @Test
