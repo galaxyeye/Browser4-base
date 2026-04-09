@@ -39,7 +39,7 @@ object ProjectUtils {
      * @param startDir The directory to start the search from.
      * @return The project root directory if found, otherwise null.
      */
-    fun findProjectRootDir(startDir: Path): Path? {
+    fun findProjectRootDir(startDir: Path, deepSearch: Boolean = true): Path? {
         if (isInJar()) {
             return null
         }
@@ -48,6 +48,14 @@ object ProjectUtils {
 
         while (projectRootDir != null && projectRootDir.resolve("VERSION").notExists()) {
             projectRootDir = projectRootDir.parent
+        }
+
+        if (projectRootDir == null && deepSearch) {
+            // Walk in start dir, find `pulsar-common` subdirectory, and then search for projectRootDir upward
+            val moduleDir = startDir.walk().firstOrNull { it.fileName.toString() == "pulsar-common" }
+            if (moduleDir != null) {
+                return findProjectRootDir(moduleDir, false)
+            }
         }
 
         if (projectRootDir == null) {
