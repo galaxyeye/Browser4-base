@@ -4,6 +4,7 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
+import ai.platon.pulsar.agentic.model.TcException
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.model.ToolSpec
@@ -39,6 +40,15 @@ class MCPToolControllerTest {
     private lateinit var commandService: CommandService
 
     @Mock
+    private lateinit var commandAgenticSession: AgenticSession
+
+    @Mock
+    private lateinit var commandAgent: BasicBrowserAgent
+
+    @Mock
+    private lateinit var commandAgentToolExecutor: AgentToolExecutor
+
+    @Mock
     private lateinit var response: HttpServletResponse
 
     @Mock
@@ -67,6 +77,9 @@ class MCPToolControllerTest {
         `when`(managedSession.agenticSession).thenReturn(agenticSession)
         `when`(agenticSession.companionAgent).thenReturn(basicBrowserAgent)
         `when`(basicBrowserAgent.toolExtractor).thenReturn(agentToolExecutor)
+        `when`(commandService.session).thenReturn(commandAgenticSession)
+        `when`(commandAgenticSession.companionAgent).thenReturn(commandAgent)
+        `when`(commandAgent.toolExtractor).thenReturn(commandAgentToolExecutor)
     }
 
     private fun <T> any(): T {
@@ -626,7 +639,7 @@ class MCPToolControllerTest {
     @Test
     fun testCommandRunAsync() = runBlocking {
         val taskId = "task-abc-123"
-        `when`(commandService.submitPlainCommandAsync("https://example.com")).thenReturn(taskId)
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult(taskId))
 
         val request = MCPToolCallRequest(
             tool = "command_run",
@@ -637,14 +650,20 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals(taskId, result.body!!.content[0].text)
-        Mockito.verify(commandService).submitPlainCommandAsync("https://example.com")
+        Mockito.verify(commandAgentToolExecutor).registerCustomTarget("command", commandService)
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("run", captor.value.method)
+        assertEquals("https://example.com", captor.value.arguments["command"])
+        assertEquals(true, captor.value.arguments["async"])
         Unit
     }
 
     @Test
     fun testCommandRunAsyncIsDefault() = runBlocking {
         val taskId = "task-default-async"
-        `when`(commandService.submitPlainCommandAsync("do something")).thenReturn(taskId)
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult(taskId))
 
         val request = MCPToolCallRequest(
             tool = "command_run",
@@ -655,13 +674,20 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals(taskId, result.body!!.content[0].text)
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("run", captor.value.method)
+        assertEquals("do something", captor.value.arguments["command"])
         Unit
     }
 
     @Test
     fun testCommandRunSync() = runBlocking {
         val status = CommandStatus(id = "sync-id", processState = "done")
-        `when`(commandService.executePlainCommandSync("do something")).thenReturn(status)
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(objectMapper.writeValueAsString(status))
+        )
 
         val request = MCPToolCallRequest(
             tool = "command_run",
@@ -672,7 +698,11 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertTrue(result.body!!.content[0].text.contains("sync-id"))
-        Mockito.verify(commandService).executePlainCommandSync("do something")
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("run", captor.value.method)
+        assertEquals(false, captor.value.arguments["async"])
         Unit
     }
 
@@ -680,7 +710,9 @@ class MCPToolControllerTest {
     fun testCommandStatus() = runBlocking {
         val taskId = "task-xyz"
         val status = CommandStatus(id = taskId, processState = "done")
-        `when`(commandService.getStatus(taskId)).thenReturn(status)
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(objectMapper.writeValueAsString(status))
+        )
 
         val request = MCPToolCallRequest(
             tool = "command_status",
@@ -691,7 +723,11 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertTrue(result.body!!.content[0].text.contains(taskId))
-        Mockito.verify(commandService).getStatus(taskId)
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("status", captor.value.method)
+        assertEquals(taskId, captor.value.arguments["id"])
         Unit
     }
 
@@ -699,7 +735,9 @@ class MCPToolControllerTest {
     fun testCommandResult() = runBlocking {
         val taskId = "task-xyz"
         val commandResult = ai.platon.pulsar.agentic.tools.high.command.CommandResult(summary = "done")
-        `when`(commandService.getResult(taskId)).thenReturn(commandResult)
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(objectMapper.writeValueAsString(commandResult))
+        )
 
         val request = MCPToolCallRequest(
             tool = "command_result",
@@ -710,12 +748,28 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertTrue(result.body!!.content[0].text.contains("done"))
-        Mockito.verify(commandService).getResult(taskId)
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("result", captor.value.method)
+        assertEquals(taskId, captor.value.arguments["id"])
         Unit
     }
 
     @Test
     fun testCommandRunMissingCommandReturnsError() = runBlocking {
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(
+                evaluate = TcEvaluate(
+                    expression = "command.run(async=\"true\")",
+                    exception = TcException(
+                        expression = "command.run(async=\"true\")",
+                        cause = IllegalArgumentException("Missing required parameter 'command' for run")
+                    )
+                )
+            )
+        )
+
         val request = MCPToolCallRequest(
             tool = "command_run",
             arguments = mapOf("async" to true)
@@ -725,6 +779,7 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertTrue(result.body!!.isError)
+        assertTrue(result.body!!.content[0].text.contains("Missing required parameter 'command' for run"))
         Unit
     }
 

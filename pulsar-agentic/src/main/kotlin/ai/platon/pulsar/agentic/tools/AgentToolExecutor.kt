@@ -173,6 +173,13 @@ class AgentToolExecutor constructor(
             "fs" -> executor.callFunctionOn(normalized, fs)
             "shell" -> executor.callFunctionOn(normalized, shell)
             "agent" -> executor.callFunctionOn(normalized, agent)
+            "command" -> {
+                val commandTarget = _customTargets["command"]
+                    ?: throw UnsupportedOperationException(
+                        "Command domain '${normalized.domain}' requires a registered CommandService target."
+                    )
+                executor.callFunctionOn(normalized, commandTarget)
+            }
             "system" -> executor.callFunctionOn(normalized, system)
             "skill" -> executor.callFunctionOn(normalized, skillTarget)
             else -> {

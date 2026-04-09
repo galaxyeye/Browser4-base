@@ -4,8 +4,11 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.agents.AgentConfig
 import ai.platon.pulsar.agentic.model.ToolCall
+import ai.platon.pulsar.agentic.tools.high.command.CommandService
 import io.mockk.mockk
+import io.mockk.coEvery
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
@@ -35,5 +38,20 @@ class AgentToolExecutorNormalizeToolCallTest {
 
         assertEquals("browser", normalized.domain)
         assertEquals("tab-2", normalized.arguments["tabId"])
+    }
+
+    @Test
+    fun executeDispatchesCommandToolsThroughRegisteredCommandService() {
+        val executor = AgentToolExecutor(Files.createTempDirectory("agent-tool-command"), agent)
+        val commandService = mockk<CommandService>()
+        coEvery { commandService.submitPlainCommandAsync("do something") } returns "task-123"
+        executor.registerCustomTarget("command", commandService)
+
+        val result = kotlinx.coroutines.runBlocking {
+            executor.execute(ToolCall("command", "run", mutableMapOf("command" to "do something")))
+        }
+
+        assertEquals("task-123", result.evaluate.value)
+        assertNull(result.evaluate.exception)
     }
 }

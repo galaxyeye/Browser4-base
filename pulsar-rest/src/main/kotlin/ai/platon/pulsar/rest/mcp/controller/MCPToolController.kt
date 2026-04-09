@@ -5,7 +5,6 @@ import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.high.command.CommandService
-import ai.platon.pulsar.agentic.tools.builtin.CommandToolExecutor
 import ai.platon.pulsar.rest.mcp.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -130,8 +129,6 @@ class MCPToolController(
     }
 
     private val logger = LoggerFactory.getLogger(MCPToolController::class.java)
-
-    private val commandToolExecutor = CommandToolExecutor()
 
     private data class NormalizedToolCall(
         val tool: String,
@@ -285,7 +282,7 @@ class MCPToolController(
     // =========================================================================
 
     /**
-     * Execute a plain command via [CommandService].
+     * Execute a plain command via the unified [AgentToolExecutor] path.
      *
      * When `async=true` (default), returns the task ID string immediately.
      * When `async=false`, blocks until execution completes and returns the [CommandStatus] as JSON.
@@ -306,8 +303,8 @@ class MCPToolController(
         dispatchToCommandToolExecutor("command_result", "result", request.arguments ?: emptyMap())
 
     /**
-     * Common dispatcher for command tool calls — invokes [commandToolExecutor] and maps
-     * the result to an [MCPToolCallResponse].
+     * Common dispatcher for command tool calls — invokes the command agent's
+     * [AgentToolExecutor] and maps the result to an [MCPToolCallResponse].
      *
      * @param toolDisplayName Human-readable tool name for error messages.
      * @param method The command domain method to invoke (`run`, `status`, or `result`).
@@ -319,10 +316,8 @@ class MCPToolController(
         args: Map<String, Any?>,
     ): ResponseEntity<MCPToolCallResponse> {
         return try {
-            val evaluate = commandToolExecutor.callFunctionOn(
-                ToolCall("command", method, args.toMutableMap()),
-                commandService
-            )
+            val toolExecutor = getCommandAgentToolExecutor()
+            val evaluate = toolExecutor.execute(ToolCall("command", method, args.toMutableMap())).evaluate
             if (evaluate.exception != null) {
                 ResponseEntity.ok(errorResponse("$toolDisplayName failed: ${evaluate.exception!!.message}"))
             } else {
@@ -332,6 +327,12 @@ class MCPToolController(
             logger.error("{} failed | {}", toolDisplayName, e.message, e)
             ResponseEntity.ok(errorResponse("$toolDisplayName failed: ${e.message}"))
         }
+    }
+
+    private fun getCommandAgentToolExecutor(): AgentToolExecutor {
+        val commandAgent = commandService.session.companionAgent as? BasicBrowserAgent
+            ?: throw IllegalStateException("CommandService session agent does not support tools")
+        return commandAgent.toolExtractor.also { it.registerCustomTarget("command", commandService) }
     }
 
     // =========================================================================

@@ -12,7 +12,8 @@ import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.PageEventHandlers
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.io.Closeable
 import java.time.Instant
 
@@ -102,23 +103,33 @@ class CommandService(
     suspend fun submitPlainCommandAsync(plainCommand: String): String {
         val command = plainCommand.trim()
 
+        // 1. Bad command
         if (command.isBlank()) {
             val status = statefulPageVisitor.create()
             status.failed(ResourceStatus.SC_BAD_REQUEST)
             return status.id
         }
 
-        if (command.startsWith("http") && Strings.isSingleLine(command)) {
-            return session.load(command).contentAsString
+        // 2. Single url with optional parameters
+        if (Strings.isSingleLine(command)) {
+            val url = session.normalize(command)
+            if (url.isNotNil) {
+                // TODO: fix me
+                // return session.load(command).contentAsString
+
+                val eventHandlers = PageEventHandlersFactory.create()
+                val request = PageVisitRequest(url = url.urlSpec, args = url.args)
+                submitPageVisitCommandAsync(request, eventHandlers)
+            }
         }
 
         val request = commandNormalizer?.normalize(command)
         return if (request != null) {
-            // Standard URL-based async command execution
+            // 3. Structured page visit command
             val eventHandlers = PageEventHandlersFactory.create()
             submitPageVisitCommandAsync(request, eventHandlers)
         } else {
-            // Agent-based async command execution
+            // 4. Free command
             submitAgentTaskAsync(command)
         }
     }
