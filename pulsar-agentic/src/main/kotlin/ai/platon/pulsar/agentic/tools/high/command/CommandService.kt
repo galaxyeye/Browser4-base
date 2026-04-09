@@ -110,13 +110,11 @@ class CommandService(
             return status.id
         }
 
-        // 2. Single url with optional parameters
+        // 2. Only one single url with optional parameters
+        // it is better to use ScrapeController directly for this kind of commands which supports massive scraping
         if (Strings.isSingleLine(command)) {
             val url = session.normalize(command)
             if (url.isNotNil) {
-                // TODO: fix me
-                // return session.load(command).contentAsString
-
                 val eventHandlers = PageEventHandlersFactory.create()
                 val request = PageVisitRequest(url = url.urlSpec, args = url.args)
                 submitPageVisitCommandAsync(request, eventHandlers)
