@@ -117,7 +117,7 @@ class StatefulPageVisitor(
                 try {
                     // Bind server-side event handlers to THIS coroutine so multiple commands can run concurrently.
                     PulsarEventBus.withServerSideEventHandlers(serverSideEventHandlers) {
-                        visitPageStepByStep(request, status, eventHandlers)
+                        visitAnalyzeAndExtractPage(request, status, eventHandlers)
                     }
                 } finally {
                     // Cancel event collector when command completes
@@ -136,7 +136,7 @@ class StatefulPageVisitor(
         return status
     }
 
-    internal suspend fun visitPageStepByStep(
+    internal suspend fun visitAnalyzeAndExtractPage(
         request: PageVisitRequest,
         status: PageVisitStatus,
         eventHandlers: PageEventHandlers
@@ -152,10 +152,10 @@ class StatefulPageVisitor(
             return
         }
 
-        visitPageStepByStep1(page, document, request, status)
+        analyzeAndExtractPage(page, document, request, status)
     }
 
-    internal suspend fun visitPageStepByStep1(
+    internal suspend fun analyzeAndExtractPage(
         page: WebPage,
         document: FeaturedDocument,
         request: PageVisitRequest,
@@ -170,7 +170,7 @@ class StatefulPageVisitor(
             return
         }
 
-        visitPageStepByStep2(page, document, request, status)
+        analyzeDocumentWithExceptionsHandled(page, document, request, status)
 
         logger.info("Finished executeCommandStepByStep | status: {} | {}", status.status, document.baseURI)
 
@@ -184,11 +184,11 @@ class StatefulPageVisitor(
         status.refresh(ResourceStatus.SC_OK)
     }
 
-    private suspend fun visitPageStepByStep2(
+    private suspend fun analyzeDocumentWithExceptionsHandled(
         page: WebPage, document: FeaturedDocument, request: PageVisitRequest, status: PageVisitStatus
     ) {
         try {
-            visitPageStepByStep3(page, document, request, status)
+            doAnalyzeDocument(page, document, request, status)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -197,7 +197,7 @@ class StatefulPageVisitor(
         }
     }
 
-    private suspend fun visitPageStepByStep3(
+    private suspend fun doAnalyzeDocument(
         page: WebPage, document: FeaturedDocument, request: PageVisitRequest, status: PageVisitStatus
     ) {
         // the 0-based screen number, 0.00 means at the top of the first screen, 1.50 means halfway through the second screen.
