@@ -1,6 +1,6 @@
-package ai.platon.pulsar.agentic.tools.command
+package ai.platon.pulsar.agentic.tools.high.command
 
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitRequest
 
 /**
  * Interface for normalizing plain text commands into structured [PageVisitRequest] objects.

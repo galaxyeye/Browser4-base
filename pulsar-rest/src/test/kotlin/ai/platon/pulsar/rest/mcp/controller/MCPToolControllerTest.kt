@@ -7,8 +7,8 @@ import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.model.ToolSpec
-import ai.platon.pulsar.agentic.tools.command.CommandService
-import ai.platon.pulsar.agentic.tools.command.CommandStatus
+import ai.platon.pulsar.agentic.tools.high.command.CommandService
+import ai.platon.pulsar.agentic.tools.high.command.CommandStatus
 import ai.platon.pulsar.rest.mcp.service.SessionManager
 import ai.platon.pulsar.rest.mcp.service.SessionManager.ManagedSession
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
@@ -698,7 +698,7 @@ class MCPToolControllerTest {
     @Test
     fun testCommandResult() = runBlocking {
         val taskId = "task-xyz"
-        val commandResult = ai.platon.pulsar.agentic.tools.command.CommandResult(summary = "done")
+        val commandResult = ai.platon.pulsar.agentic.tools.high.command.CommandResult(summary = "done")
         `when`(commandService.getResult(taskId)).thenReturn(commandResult)
 
         val request = MCPToolCallRequest(

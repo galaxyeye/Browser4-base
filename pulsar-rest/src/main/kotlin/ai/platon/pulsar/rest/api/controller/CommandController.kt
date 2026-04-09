@@ -1,9 +1,9 @@
 package ai.platon.pulsar.rest.api.controller
 
-import ai.platon.pulsar.agentic.tools.command.CommandResult
-import ai.platon.pulsar.agentic.tools.command.CommandService
-import ai.platon.pulsar.agentic.tools.command.CommandStatus
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.high.command.CommandResult
+import ai.platon.pulsar.agentic.tools.high.command.CommandService
+import ai.platon.pulsar.agentic.tools.high.command.CommandStatus
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitRequest
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.event.impl.PageEventHandlersFactory
 import kotlinx.coroutines.flow.catch

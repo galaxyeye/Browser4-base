@@ -1,11 +1,11 @@
-package ai.platon.pulsar.agentic.tools.command
+package ai.platon.pulsar.agentic.tools.high.command
 
 import ai.platon.pulsar.agentic.model.AgentHistory
 import ai.platon.pulsar.agentic.model.AgentState
-import ai.platon.pulsar.agentic.tools.agent.AgentTaskStatus
-import ai.platon.pulsar.agentic.tools.crawl.PGInstructResult
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
+import ai.platon.pulsar.agentic.tools.high.agent.AgentTaskStatus
+import ai.platon.pulsar.agentic.tools.high.crawl.PGInstructResult
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitStatus
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
 import ai.platon.pulsar.skeleton.crawl.ServerSideEventHandlers

@@ -1,16 +1,16 @@
 package ai.platon.pulsar.rest.api.entities
 
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitRequest
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 
 // Command-related types are now in pulsar-tools module.
 // These typealiases maintain backward compatibility for REST layer consumers.
 typealias CommandRequest = PageVisitRequest
-typealias CommandResult = ai.platon.pulsar.agentic.tools.command.CommandResult
-typealias CommandAgentState = ai.platon.pulsar.agentic.tools.command.CommandAgentState
-typealias CommandAgentHistory = ai.platon.pulsar.agentic.tools.command.CommandAgentHistory
-typealias InstructResult = ai.platon.pulsar.agentic.tools.command.InstructResult
-typealias CommandStatus = ai.platon.pulsar.agentic.tools.command.CommandStatus
+typealias CommandResult = ai.platon.pulsar.agentic.tools.high.command.CommandResult
+typealias CommandAgentState = ai.platon.pulsar.agentic.tools.high.command.CommandAgentState
+typealias CommandAgentHistory = ai.platon.pulsar.agentic.tools.high.command.CommandAgentHistory
+typealias InstructResult = ai.platon.pulsar.agentic.tools.high.command.InstructResult
+typealias CommandStatus = ai.platon.pulsar.agentic.tools.high.command.CommandStatus
 
 /**
  * Request for chat

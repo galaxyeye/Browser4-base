@@ -1,7 +1,7 @@
 package ai.platon.pulsar.heavy.rest
 
 import ai.platon.pulsar.agentic.BasicAgenticSession
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeResponse
 import ai.platon.pulsar.boot.autoconfigure.PulsarContextConfiguration
 import ai.platon.pulsar.common.config.ImmutableConfig
 import ai.platon.pulsar.common.sleepSeconds

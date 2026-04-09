@@ -1,7 +1,7 @@
 package ai.platon.pulsar.rest.api.controller
 
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeResponse
 import ai.platon.pulsar.rest.api.entities.ScrapeStatusRequest
 import ai.platon.pulsar.rest.api.service.ScrapeService
 import jakarta.servlet.http.HttpServletRequest

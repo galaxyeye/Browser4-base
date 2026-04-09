@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.tools.command
+package ai.platon.pulsar.agentic.tools.high.command
 
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.builtin.AbstractToolExecutor

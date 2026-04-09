@@ -1,4 +1,4 @@
-package ai.platon.pulsar.agentic.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.high.crawl.common
 
 import org.apache.commons.lang3.StringUtils
 import java.util.*

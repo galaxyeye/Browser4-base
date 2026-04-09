@@ -1,13 +1,13 @@
-package ai.platon.pulsar.agentic.tools.crawl.service
+package ai.platon.pulsar.agentic.tools.high.crawl.service
 
 import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitRequest
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
-import ai.platon.pulsar.agentic.tools.crawl.common.DegenerateXSQLScrapeHyperlink
-import ai.platon.pulsar.agentic.tools.crawl.common.ScrapeAPIUtils
-import ai.platon.pulsar.agentic.tools.crawl.common.ScrapeHyperlink
-import ai.platon.pulsar.agentic.tools.crawl.common.XSQLScrapeHyperlink
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.high.crawl.common.DegenerateXSQLScrapeHyperlink
+import ai.platon.pulsar.agentic.tools.high.crawl.common.ScrapeAPIUtils
+import ai.platon.pulsar.agentic.tools.high.crawl.common.ScrapeHyperlink
+import ai.platon.pulsar.agentic.tools.high.crawl.common.XSQLScrapeHyperlink
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.dom.FeaturedDocument
 import ai.platon.pulsar.persist.WebPage
