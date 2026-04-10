@@ -2,7 +2,6 @@ package ai.platon.pulsar.examples.skills
 
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.context.AgenticContexts
-import ai.platon.pulsar.agentic.skills.SkillContext
 import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.skills.examples.WebScrapingSkill
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
