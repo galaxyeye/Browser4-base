@@ -1,6 +1,8 @@
 package ai.platon.pulsar.common.code
 
 import ai.platon.pulsar.common.getLogger
+import org.apache.commons.io.filefilter.DirectoryFileFilter
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -52,7 +54,9 @@ object ProjectUtils {
 
         if (projectRootDir == null && deepSearch) {
             // The working directory may not be the project root, try to find the module directory first and then search for the project root.
-            val moduleDir = startDir.walk().firstOrNull { it.fileName.toString() == "pulsar-common" }?.toAbsolutePath()
+            val moduleDir = Files.walk(startDir).filter { it.fileName.toString().endsWith("pulsar-common") }
+                .findFirst().orElse(null)?.toAbsolutePath()
+
             if (moduleDir != null) {
                 return findProjectRootDir(moduleDir, false)
             }
