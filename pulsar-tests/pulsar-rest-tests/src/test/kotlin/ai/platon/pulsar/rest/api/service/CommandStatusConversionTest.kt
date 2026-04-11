@@ -1,10 +1,10 @@
 package ai.platon.pulsar.rest.api.service
 
-import ai.platon.pulsar.agentic.tools.agent.AgentTaskStatus
-import ai.platon.pulsar.agentic.tools.crawl.PageVisitStatus
+import ai.platon.pulsar.agentic.tools.high.agent.AgentTaskStatus
+import ai.platon.pulsar.agentic.tools.high.crawl.PageVisitStatus
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.persist.metadata.ProtocolStatusCodes
-import ai.platon.pulsar.rest.api.entities.toCommandStatus
+import ai.platon.pulsar.agentic.tools.high.command.toCommandStatus
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.test.assertEquals
@@ -22,7 +22,7 @@ class CommandStatusConversionTest {
 
     @Test
         @DisplayName("test PageVisitStatus to CommandStatus conversion with all fields")
-    fun testPagevisitstatusToCommandstatusConversionWithAllFields() {
+    fun testPageVisitStatusToCommandStatusConversionWithAllFields() {
         // Create a PageVisitStatus with all fields set
         val now = Instant.now()
         val pageVisitStatus = PageVisitStatus(
@@ -54,7 +54,7 @@ class CommandStatusConversionTest {
 
     @Test
         @DisplayName("test PageVisitStatus to CommandStatus conversion preserves processState done")
-    fun testPagevisitstatusToCommandstatusConversionPreservesProcessstateDone() {
+    fun testPageVisitStatusToCommandStatusConversionPreservesProcessStateDone() {
         val pageVisitStatus = PageVisitStatus(
             id = "test-done",
             statusCode = ResourceStatus.SC_OK,
@@ -71,7 +71,7 @@ class CommandStatusConversionTest {
 
     @Test
         @DisplayName("test AgentTaskStatus to CommandStatus conversion with all fields")
-    fun testAgenttaskstatusToCommandstatusConversionWithAllFields() {
+    fun testAgentTaskStatusToCommandStatusConversionWithAllFields() {
         // Create an AgentTaskStatus with all fields set
         val now = Instant.now()
         val agentTaskStatus = AgentTaskStatus(
@@ -104,7 +104,7 @@ class CommandStatusConversionTest {
 
     @Test
         @DisplayName("test AgentTaskStatus to CommandStatus conversion does not always mark as done")
-    fun testAgenttaskstatusToCommandstatusConversionDoesNotAlwaysMarkAsDone() {
+    fun testAgentTaskStatusToCommandStatusConversionDoesNotAlwaysMarkAsDone() {
         val agentTaskStatus = AgentTaskStatus(
             id = "agent-created",
             statusCode = ResourceStatus.SC_CREATED,
@@ -121,7 +121,7 @@ class CommandStatusConversionTest {
 
     @Test
         @DisplayName("test AgentTaskStatus to CommandStatus preserves done state")
-    fun testAgenttaskstatusToCommandstatusPreservesDoneState() {
+    fun testAgentTaskStatusToCommandStatusPreservesDoneState() {
         val agentTaskStatus = AgentTaskStatus(
             id = "agent-done",
             statusCode = ResourceStatus.SC_OK,

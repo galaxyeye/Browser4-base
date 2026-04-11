@@ -1,6 +1,6 @@
-package ai.platon.pulsar.agentic.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.high.crawl.common
 
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeRequest
 import ai.platon.pulsar.common.urls.DegenerateUrl
 import ai.platon.pulsar.common.warnUnexpected
 import ai.platon.pulsar.persist.WebPage

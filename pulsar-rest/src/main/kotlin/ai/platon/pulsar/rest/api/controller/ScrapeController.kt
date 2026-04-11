@@ -1,7 +1,7 @@
 package ai.platon.pulsar.rest.api.controller
 
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeResponse
 import ai.platon.pulsar.rest.api.entities.ScrapeStatusRequest
 import ai.platon.pulsar.rest.api.service.ScrapeService
 import jakarta.servlet.http.HttpServletRequest
@@ -23,21 +23,51 @@ class ScrapeController(
     val scrapeService: ScrapeService,
 ) {
     /**
-     * @param sql The sql to execute
+     * @param sql The SQL to execute
      * @return The response
      * */
-    @PostMapping("/e")
+    @PostMapping("execute")
     fun execute(@RequestBody sql: String): ScrapeResponse {
         return scrapeService.executeQuery(ScrapeRequest(sql))
     }
 
     /**
-     * @param sql The sql to execute
+     * @param sql The SQL to execute
+     * @return The response
+     * */
+    @PostMapping("/e")
+    fun executeLegacy(@RequestBody sql: String): ScrapeResponse {
+        return execute(sql)
+    }
+
+    /**
+     * @param sql The SQL to execute
+     * @return The uuid of the scrape task
+     * */
+    @PostMapping("submit")
+    fun submitJob(@RequestBody sql: String): String {
+        return scrapeService.submitJob(ScrapeRequest(sql))
+    }
+
+    /**
+     * @param sql The SQL to execute
      * @return The uuid of the scrape task
      * */
     @PostMapping("s")
-    fun submitJob(@RequestBody sql: String): String {
-        return scrapeService.submitJob(ScrapeRequest(sql))
+    fun submitJobLegacy(@RequestBody sql: String): String {
+        return submitJob(sql)
+    }
+
+    /**
+     * @param status The status of the scrape task to be counted
+     * @return The execution result
+     * */
+    @GetMapping("count", consumes = [MediaType.ALL_VALUE])
+    fun count(
+        @RequestParam(value = "status", required = false) status: Int = 0,
+        httpRequest: HttpServletRequest,
+    ): Int {
+        return scrapeService.count(status)
     }
 
     /**
@@ -45,11 +75,11 @@ class ScrapeController(
      * @return The execution result
      * */
     @GetMapping("c", consumes = [MediaType.ALL_VALUE])
-    fun count(
+    fun countLegacy(
         @RequestParam(value = "status", required = false) status: Int = 0,
         httpRequest: HttpServletRequest,
     ): Int {
-        return scrapeService.count(status)
+        return count(status, httpRequest)
     }
 
     /**

@@ -328,7 +328,7 @@ data class ActionDescription constructor(
     /**
      * AI: whether the task is complete
      * */
-    var isComplete: Boolean = false,
+    var isDecidedComplete: Boolean = false,
     /**
      * AI: the error cause for the task
      * */
@@ -361,6 +361,10 @@ data class ActionDescription constructor(
      * The agent state
      * */
     val agentState: AgentState? = null,
+    /**
+     * A debug purpose trace message
+     * */
+    var trace: String = "",
 ) {
     val observeElement: ObserveElement? get() = observeElements?.firstOrNull()
     val toolCall: ToolCall? get() = observeElement?.toolCall
@@ -373,10 +377,11 @@ data class ActionDescription constructor(
     val cssFriendlyExpression: String? get() = observeElement?.cssFriendlyExpression
     val pseudoExpression: String? get() = observeElement?.pseudoExpression
 
-    val isReallyComplete get() = isComplete || weakTypeExpression?.contains("agent.done") == true
+    val isReallyComplete get() = isDecidedComplete || weakTypeExpression?.contains("agent.done") == true
 
     fun complete(summary: String? = null) {
-        isComplete = true
+        trace += ",complete"
+        isDecidedComplete = true
         if (summary != null) {
             this.summary = summary
         }
@@ -412,7 +417,7 @@ data class ActionDescription constructor(
     }
 
     override fun toString(): String {
-        return if (isComplete) "Completed. Summary: $summary"
+        return if (isDecidedComplete) "Completed. Summary: $summary"
         else (cssFriendlyExpression ?: modelResponse?.toString() ?: "")
     }
 }

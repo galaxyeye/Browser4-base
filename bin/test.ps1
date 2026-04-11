@@ -29,7 +29,7 @@ function Print-Usage {
     Write-Host "  fast        Run fast unit tests only"
     Write-Host "  it          Run integration tests"
     Write-Host "  e2e         Run end-to-end tests"
-    Write-Host "  browser4-cli Run Rust Browser4 CLI tests from sdks\browser4-cli"
+    Write-Host "  cli         Run Rust Browser4 CLI tests from sdks\browser4-cli"
     Write-Host "  core        Run core module supplementary tests"
     Write-Host "  rest        Run REST module tests"
     Write-Host "  skills      Run skills-focused agentic tests"
@@ -40,8 +40,8 @@ function Print-Usage {
     Write-Host "  test.ps1 fast                       # Run fast unit tests"
     Write-Host "  test.ps1 it                         # Run integration tests"
     Write-Host "  test.ps1 e2e                        # Run end-to-end tests"
-    Write-Host "  test.ps1 browser4-cli               # Run Browser4 CLI tests"
-    Write-Host "  test.ps1 browser4-cli -- --nocapture # Pass extra cargo test args"
+    Write-Host "  test.ps1 cli                        # Run Browser4 CLI tests"
+    Write-Host "  test.ps1 cli -- --nocapture         # Pass extra cargo test args"
     Write-Host "  test.ps1 skills                     # Run skills-focused agentic tests"
     Write-Host "  test.ps1 mcp                        # Run MCP-focused agentic tests"
     Write-Host "  test.ps1 browser4                   # Run all Browser4 main tests"
@@ -50,7 +50,7 @@ function Print-Usage {
 }
 
 function Exit-UnknownTestType([string]$testType) {
-    Write-Error "Unknown test type '$testType'. Valid test types: fast, it, e2e, browser4-cli, core, rest, skills, mcp, browser4."
+    Write-Error "Unknown test type '$testType'. Valid test types: fast, it, e2e, cli, core, rest, skills, mcp, browser4."
     exit 1
 }
 
@@ -204,7 +204,7 @@ function Invoke-Browser4CliTests([string[]]$additionalArgs) {
     }
 }
 
-$knownTestTypes = @('fast', 'it', 'e2e', 'browser4-cli', 'core', 'rest', 'skills', 'mcp', 'browser4')
+$knownTestTypes = @('fast', 'it', 'e2e', 'cli', 'browser4-cli', 'core', 'rest', 'skills', 'mcp', 'browser4')
 $testTypes = @()
 $additionalArgs = @()
 $parsingTestTypes = $true
@@ -244,7 +244,7 @@ foreach ($type in $testTypes) {
         continue
     }
 
-    if ($type -eq 'browser4-cli') {
+    if ($type -in @('cli', 'browser4-cli')) {
         $cliTests += $type
         continue
     }
@@ -259,7 +259,7 @@ if ($mavenTests.Count -gt 0) {
     Invoke-MavenTests -testTypes $mavenTests -additionalMvnArgs $additionalArgs
 }
 
-if ($cliTests -contains 'browser4-cli') {
+if (($cliTests | Where-Object { $_ -in @('cli', 'browser4-cli') }).Count -gt 0) {
     Invoke-Browser4CliTests -additionalArgs $additionalArgs
 }
 

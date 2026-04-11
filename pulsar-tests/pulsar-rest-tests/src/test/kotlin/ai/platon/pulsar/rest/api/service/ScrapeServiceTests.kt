@@ -1,6 +1,6 @@
 package ai.platon.pulsar.rest.api.service
 
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeRequest
 import ai.platon.pulsar.boot.autoconfigure.test.PulsarTestContextInitializer
 import ai.platon.pulsar.common.DateTimes
 import ai.platon.pulsar.common.config.ImmutableConfig
@@ -15,6 +15,7 @@ import ai.platon.pulsar.rest.api.config.MockEcServerConfiguration
 import ai.platon.pulsar.rest.api.entities.ScrapeStatusRequest
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -24,7 +25,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
 @SpringBootTest
 @ContextConfiguration(initializers = [PulsarTestContextInitializer::class])
@@ -42,7 +42,7 @@ class ScrapeServiceTests : MockEcServerTestBase() {
     private lateinit var service: ScrapeService
 
     @BeforeEach
-        @DisplayName("Ensure resources are prepared")
+    @DisplayName("Ensure resources are prepared")
     fun ensureResourcesArePrepared() {
         super.setup() // Call parent setup to verify mock server is running
         TestHelper.ensurePage(productListURL)
@@ -50,10 +50,10 @@ class ScrapeServiceTests : MockEcServerTestBase() {
     }
 
     /**
-     * Execute a normal sql
+     * Execute a normal SQL
      * */
     @Test
-        @DisplayName("When perform 1+1 then the result is 2")
+    @DisplayName("When perform 1+1 then the result is 2")
     fun whenPerform11ThenTheResultIs2() {
         val sql = "select 1+1 as sum"
         val request = ScrapeRequest(sql)
@@ -72,7 +72,7 @@ class ScrapeServiceTests : MockEcServerTestBase() {
      * Test [ScrapeService.executeQuery]
      * */
     @Test
-        @DisplayName("When scraping with load_and_select then the result returns synchronously")
+    @DisplayName("When scraping with load_and_select then the result returns synchronously")
     fun whenScrapingWithLoadAndSelectThenTheResultReturnsSynchronously() {
         val startTime = Instant.now()
 
@@ -91,7 +91,7 @@ class ScrapeServiceTests : MockEcServerTestBase() {
     }
 
     @Test
-        @DisplayName("When scrape amazon then the base uri returns asynchronously")
+    @DisplayName("When scrape amazon then the base uri returns asynchronously")
     fun whenScrapeAmazonThenTheBaseUriReturnsAsynchronously() {
         val sql = "select dom_base_uri(dom) as uri from load_and_select('$productListURL', ':root')"
         val request = ScrapeRequest(sql)
@@ -99,7 +99,7 @@ class ScrapeServiceTests : MockEcServerTestBase() {
         val uuid = service.submitJob(request)
 
         assertTrue { uuid.isNotEmpty() }
-        printlnPro(uuid.toString())
+        printlnPro(uuid)
 
         val scrapeStatusRequest = ScrapeStatusRequest(uuid)
         var status = service.getStatus(scrapeStatusRequest)
@@ -115,7 +115,7 @@ class ScrapeServiceTests : MockEcServerTestBase() {
     }
 
     @Test
-        @DisplayName("When scraping with LLM + X-SQL then the result returns synchronously")
+    @DisplayName("When scraping with LLM + X-SQL then the result returns synchronously")
     fun whenScrapingWithLlmXSqlThenTheResultReturnsSynchronously() {
         Assumptions.assumeTrue(ChatModelFactory.isModelConfigured(config))
 
@@ -144,4 +144,3 @@ class ScrapeServiceTests : MockEcServerTestBase() {
         printlnPro("Done scraping with load_and_select, used " + DateTimes.elapsedTime(startTime))
     }
 }
-

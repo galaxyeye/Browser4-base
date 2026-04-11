@@ -2,7 +2,9 @@ package ai.platon.pulsar.rest.mcp.controller
 
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.model.ToolCall
+import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
+import ai.platon.pulsar.agentic.tools.high.command.CommandService
 import ai.platon.pulsar.rest.mcp.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -72,7 +74,8 @@ data class MCPContent(
 )
 @ConditionalOnBean(SessionManager::class)
 class MCPToolController(
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val commandService: CommandService,
 ) {
     companion object {
         private val FRONTEND_TOOL_NAME_ALIASES: Map<String, String> = mapOf(
@@ -162,6 +165,10 @@ class MCPToolController(
                 "close_all_sessions" -> handleCloseAllSessions()
                 "kill_all_sessions" -> handleKillAllSessions()
                 "delete_session_data" -> handleDeleteSessionData(request)
+                // Command tools — delegate to CommandService (no session required)
+                "command_run" -> handleCommandRun(request)
+                "command_status" -> handleCommandStatus(request)
+                "command_result" -> handleCommandResult(request)
                 // All other tools are dispatched to the session's agent
                 else -> dispatchToAgentToolExecutor(request)
             }
@@ -180,25 +187,30 @@ class MCPToolController(
     ): ResponseEntity<Any> {
         addRequestId(response)
 
-        val tools = listOf(
+        val tools = linkedSetOf(
             // Session management
             "open_session", "close_session", "list_sessions",
             "close_all_sessions", "kill_all_sessions", "delete_session_data",
-            // Frontend-declared Browser4 CLI tools
-            "browser_navigate", "browser_snapshot",
-            "browser_navigate_back", "browser_navigate_forward", "browser_reload",
-            "browser_press_key", "browser_press_sequentially",
-            "browser_keydown", "browser_keyup",
-            "browser_mouse_move_xy", "browser_mouse_down", "browser_mouse_up", "browser_mouse_wheel",
-            "browser_click", "browser_drag", "browser_type", "browser_hover", "browser_select_option",
-            "browser_file_upload", "browser_check", "browser_uncheck",
-            "browser_evaluate", "browser_handle_dialog", "browser_resize",
-            "browser_take_screenshot", "browser_tabs",
-            // Internal helper tools still used by browser4-cli
-            "page_url", "page_title"
+            // Command tools (no session required)
+            "command_run", "command_status", "command_result"
         )
 
-        return ResponseEntity.ok(mapOf("tools" to tools))
+        val activeSession = sessionManager.getAllSessions().firstOrNull()
+        val managedSession = activeSession ?: sessionManager.createSession(null)
+        val deleteAfterListing = activeSession == null
+
+        try {
+            val agent = managedSession.agenticSession.companionAgent as? BasicBrowserAgent
+            if (agent != null) {
+                tools.addAll(collectAdvertisedToolNames(agent.toolExtractor.getAllToolSpecs()))
+            }
+        } finally {
+            if (deleteAfterListing) {
+                sessionManager.deleteSession(managedSession.sessionId)
+            }
+        }
+
+        return ResponseEntity.ok(mapOf("tools" to tools.toList()))
     }
 
     // =========================================================================
@@ -263,6 +275,66 @@ class MCPToolController(
         }
 
         return ResponseEntity.ok(textResponse("User data deleted for session"))
+    }
+
+    // =========================================================================
+    // Command tool handlers
+    // TODO: simplify command tool handling
+    // =========================================================================
+
+    /**
+     * Execute a plain command via the unified [AgentToolExecutor] path.
+     *
+     * When `async=true` (default), returns the task ID string immediately.
+     * When `async=false`, blocks until execution completes and returns the [CommandStatus] as JSON.
+     */
+    private suspend fun handleCommandRun(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> =
+        dispatchToCommandToolExecutor("command_run", "run", request.arguments ?: emptyMap())
+
+    /**
+     * Get the status of a command task by its ID.
+     */
+    private suspend fun handleCommandStatus(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> =
+        dispatchToCommandToolExecutor("command_status", "status", request.arguments ?: emptyMap())
+
+    /**
+     * Get the result of a completed command task by its ID.
+     */
+    private suspend fun handleCommandResult(request: MCPToolCallRequest): ResponseEntity<MCPToolCallResponse> =
+        dispatchToCommandToolExecutor("command_result", "result", request.arguments ?: emptyMap())
+
+    /**
+     * Common dispatcher for command tool calls — invokes the command agent's
+     * [AgentToolExecutor] and maps the result to an [MCPToolCallResponse].
+     *
+     * @param toolDisplayName Human-readable tool name for error messages.
+     * @param method The command domain method to invoke (`run`, `status`, or `result`).
+     * @param args The raw request arguments.
+     */
+    private suspend fun dispatchToCommandToolExecutor(
+        toolDisplayName: String,
+        method: String,
+        args: Map<String, Any?>,
+    ): ResponseEntity<MCPToolCallResponse> {
+        return try {
+            val toolExecutor = getCommandAgentToolExecutor()
+            val evaluate = toolExecutor.execute(ToolCall("command", method, args.toMutableMap())).evaluate
+            if (evaluate.exception != null) {
+                ResponseEntity.ok(errorResponse("$toolDisplayName failed: ${evaluate.exception!!.message}"))
+            } else {
+                ResponseEntity.ok(textResponse(evaluate.value?.toString() ?: ""))
+            }
+        } catch (e: Exception) {
+            logger.error("{} failed | {}", toolDisplayName, e.message, e)
+            ResponseEntity.ok(errorResponse("$toolDisplayName failed: ${e.message}"))
+        }
+    }
+
+    private fun getCommandAgentToolExecutor(): AgentToolExecutor {
+        val commandAgent = commandService.session.companionAgent as? BasicBrowserAgent
+            ?: throw IllegalStateException("CommandService session agent does not support tools")
+        // TODO: a native CommandService is required in pulsar-agentic module for better maintainability and testing
+        return commandAgent.toolExtractor.also { it.registerCustomTarget("command", commandService) }
     }
 
     // =========================================================================
@@ -340,6 +412,70 @@ class MCPToolController(
         }
 
         return null
+    }
+
+    private fun collectAdvertisedToolNames(toolSpecs: Map<String, Map<String, ToolSpec>>): Set<String> {
+        val tools = linkedSetOf<String>()
+
+        for ((domain, methods) in toolSpecs) {
+            for (method in methods.keys) {
+                tools.add(toMcpToolName(domain, method))
+            }
+        }
+
+        val tabMethods = toolSpecs["tab"].orEmpty().keys
+        val browserMethods = toolSpecs["browser"].orEmpty().keys
+
+        val legacyTabMappings = mapOf(
+            "keyDown" to "keydown",
+            "keyUp" to "keyup",
+            "mouseMove" to "mousemove",
+            "mouseDown" to "mousedown",
+            "mouseUp" to "mouseup",
+            "mouseWheel" to "mousewheel",
+        )
+        legacyTabMappings.forEach { (method, advertisedName) ->
+            if (method in tabMethods) {
+                tools.add(advertisedName)
+            }
+        }
+
+        if ("title" in tabMethods) {
+            tools.add("page_title")
+        }
+        if ("currentUrl" in tabMethods) {
+            tools.add("page_url")
+        }
+
+        val browserTabAliases = mapOf(
+            "switchTab" to listOf("switch_tab", "tab_select"),
+            "newTab" to listOf("tab_new"),
+            "closeTab" to listOf("close_tab", "tab_close"),
+            "listTabs" to listOf("tab_list"),
+        )
+        browserTabAliases.forEach { (method, aliases) ->
+            if (method in browserMethods) {
+                tools.addAll(aliases)
+            }
+        }
+
+        FRONTEND_TOOL_NAME_ALIASES.forEach { (frontendTool, internalTool) ->
+            if (internalTool in tools) {
+                tools.add(frontendTool)
+            }
+        }
+
+        if ("click" in tabMethods || "dblclick" in tabMethods) {
+            tools.add("browser_click")
+        }
+        if ("dialog_accept" in tabMethods || "dialog_dismiss" in tabMethods) {
+            tools.add("browser_handle_dialog")
+        }
+        if (browserMethods.any { it in browserTabAliases.keys }) {
+            tools.add("browser_tabs")
+        }
+
+        return tools
     }
 
     /**

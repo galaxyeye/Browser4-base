@@ -42,7 +42,7 @@ class TextToActionParsingTest {
         assertEquals("tab", ad.toolCall!!.domain)
         assertEquals("click", ad.toolCall!!.method)
         assertEquals("#submit", ad.toolCall!!.arguments["selector"])
-        assertFalse(ad.isComplete)
+        assertFalse(ad.isDecidedComplete)
         assertNull(ad.summary)
     }
 
@@ -71,7 +71,7 @@ class TextToActionParsingTest {
         assertEquals("type", tc.method)
         assertEquals("hello", tc.arguments["text"]) // named mapping for argument values
 
-        assertFalse(ad.isComplete)
+        assertFalse(ad.isDecidedComplete)
     }
 
     @Test
@@ -89,6 +89,6 @@ class TextToActionParsingTest {
         assertTrue(ad.toolCall == null || ad.cssFriendlyExpression != null)
 //        assertTrue(ad.cssFriendlyExpressions.any { it.startsWith("driver.click(") })
 //        assertTrue(ad.cssFriendlyExpressions.any { it.startsWith("driver.scrollToMiddle(") })
-        assertFalse(ad.isComplete)
+        assertFalse(ad.isDecidedComplete)
     }
 }

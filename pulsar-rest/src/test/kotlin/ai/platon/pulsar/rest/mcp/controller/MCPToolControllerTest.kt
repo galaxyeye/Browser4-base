@@ -4,15 +4,19 @@ import ai.platon.pulsar.agentic.AgenticSession
 import ai.platon.pulsar.agentic.agents.BasicBrowserAgent
 import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
+import ai.platon.pulsar.agentic.model.TcException
 import ai.platon.pulsar.agentic.model.TcEvaluate
 import ai.platon.pulsar.agentic.model.ToolCallResult
 import ai.platon.pulsar.agentic.model.ToolSpec
+import ai.platon.pulsar.agentic.tools.high.command.CommandService
+import ai.platon.pulsar.agentic.tools.high.command.CommandStatus
 import ai.platon.pulsar.rest.mcp.service.SessionManager
 import ai.platon.pulsar.rest.mcp.service.SessionManager.ManagedSession
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -31,6 +35,18 @@ class MCPToolControllerTest {
 
     @Mock
     private lateinit var sessionManager: SessionManager
+
+    @Mock
+    private lateinit var commandService: CommandService
+
+    @Mock
+    private lateinit var commandAgenticSession: AgenticSession
+
+    @Mock
+    private lateinit var commandAgent: BasicBrowserAgent
+
+    @Mock
+    private lateinit var commandAgentToolExecutor: AgentToolExecutor
 
     @Mock
     private lateinit var response: HttpServletResponse
@@ -54,13 +70,16 @@ class MCPToolControllerTest {
     @BeforeEach
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        controller = MCPToolController(sessionManager)
+        controller = MCPToolController(sessionManager, commandService)
 
         // Setup session structure
         `when`(sessionManager.getSession(sessionId)).thenReturn(managedSession)
         `when`(managedSession.agenticSession).thenReturn(agenticSession)
         `when`(agenticSession.companionAgent).thenReturn(basicBrowserAgent)
         `when`(basicBrowserAgent.toolExtractor).thenReturn(agentToolExecutor)
+        `when`(commandService.session).thenReturn(commandAgenticSession)
+        `when`(commandAgenticSession.companionAgent).thenReturn(commandAgent)
+        `when`(commandAgent.toolExtractor).thenReturn(commandAgentToolExecutor)
     }
 
     private fun <T> any(): T {
@@ -171,6 +190,84 @@ class MCPToolControllerTest {
 
         assertEquals(HttpStatus.OK, result.statusCode)
         assertEquals("Killed 3 session(s)", result.body!!.content[0].text)
+    }
+
+    @Test
+    fun `test list tools returns registered tools with supported aliases only`() {
+        `when`(sessionManager.getAllSessions()).thenReturn(listOf(managedSession))
+        `when`(agentToolExecutor.getAllToolSpecs()).thenReturn(
+            mapOf(
+                "tab" to mapOf(
+                    "navigate" to ToolSpec(domain = "tab", method = "navigate", description = "desc"),
+                    "title" to ToolSpec(domain = "tab", method = "title", description = "desc"),
+                    "currentUrl" to ToolSpec(domain = "tab", method = "currentUrl", description = "desc"),
+                    "keyDown" to ToolSpec(domain = "tab", method = "keyDown", description = "desc"),
+                    "mouseMove" to ToolSpec(domain = "tab", method = "mouseMove", description = "desc"),
+                    "click" to ToolSpec(domain = "tab", method = "click", description = "desc"),
+                    "dblclick" to ToolSpec(domain = "tab", method = "dblclick", description = "desc"),
+                    "dialog_accept" to ToolSpec(domain = "tab", method = "dialog_accept", description = "desc"),
+                    "dialog_dismiss" to ToolSpec(domain = "tab", method = "dialog_dismiss", description = "desc"),
+                ),
+                "browser" to mapOf(
+                    "switchTab" to ToolSpec(domain = "browser", method = "switchTab", description = "desc"),
+                    "newTab" to ToolSpec(domain = "browser", method = "newTab", description = "desc"),
+                    "closeTab" to ToolSpec(domain = "browser", method = "closeTab", description = "desc"),
+                    "listTabs" to ToolSpec(domain = "browser", method = "listTabs", description = "desc"),
+                ),
+            )
+        )
+
+        val result = controller.listTools(response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        @Suppress("UNCHECKED_CAST")
+        val tools = ((result.body as Map<String, Any>)["tools"] as List<String>).toSet()
+
+        assertTrue(tools.contains("open_session"))
+        assertTrue(tools.contains("navigate"))
+        assertTrue(tools.contains("browser_navigate"))
+        assertTrue(tools.contains("browser_click"))
+        assertTrue(tools.contains("browser_handle_dialog"))
+        assertTrue(tools.contains("browser_keydown"))
+        assertTrue(tools.contains("browser_mouse_move_xy"))
+        assertTrue(tools.contains("browser_tabs"))
+        assertTrue(tools.contains("page_title"))
+        assertTrue(tools.contains("page_url"))
+        assertTrue(tools.contains("keydown"))
+        assertTrue(tools.contains("mousemove"))
+        assertTrue(tools.contains("tab_select"))
+        assertTrue(tools.contains("tab_new"))
+        assertTrue(tools.contains("tab_close"))
+        assertTrue(tools.contains("tab_list"))
+        assertFalse(tools.contains("browser_file_upload"))
+    }
+
+    @Test
+    fun `test list tools creates temporary session when no sessions are active`() {
+        val temporarySession = Mockito.mock(ManagedSession::class.java)
+        val temporaryAgenticSession = Mockito.mock(AgenticSession::class.java)
+        val temporaryAgent = Mockito.mock(BasicBrowserAgent::class.java)
+        val temporaryToolExecutor = Mockito.mock(AgentToolExecutor::class.java)
+
+        `when`(sessionManager.getAllSessions()).thenReturn(emptyList())
+        `when`(sessionManager.createSession(null)).thenReturn(temporarySession)
+        `when`(temporarySession.sessionId).thenReturn("temporary-session")
+        `when`(temporarySession.agenticSession).thenReturn(temporaryAgenticSession)
+        `when`(temporaryAgenticSession.companionAgent).thenReturn(temporaryAgent)
+        `when`(temporaryAgent.toolExtractor).thenReturn(temporaryToolExecutor)
+        `when`(temporaryToolExecutor.getAllToolSpecs()).thenReturn(
+            mapOf(
+                "tab" to mapOf(
+                    "navigate" to ToolSpec(domain = "tab", method = "navigate", description = "desc"),
+                )
+            )
+        )
+
+        val result = controller.listTools(response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        Mockito.verify(sessionManager).createSession(null)
+        Mockito.verify(sessionManager).deleteSession("temporary-session")
     }
 
     @Test
@@ -537,6 +634,153 @@ class MCPToolControllerTest {
         assertEquals(HttpStatus.OK, result.statusCode)
         assertTrue(result.body!!.isError)
         assertTrue(result.body!!.content[0].text.contains("Unknown tool: unknown_tool"))
+    }
+
+    @Test
+    fun testCommandRunAsync() = runBlocking {
+        val taskId = "task-abc-123"
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult(taskId))
+
+        val request = MCPToolCallRequest(
+            tool = "command_run",
+            arguments = mapOf("command" to "https://example.com", "async" to true)
+        )
+
+        val result = controller.callTool(request, response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertEquals(taskId, result.body!!.content[0].text)
+        Mockito.verify(commandAgentToolExecutor).registerCustomTarget("command", commandService)
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("run", captor.value.method)
+        assertEquals("https://example.com", captor.value.arguments["command"])
+        assertEquals(true, captor.value.arguments["async"])
+        Unit
+    }
+
+    @Test
+    fun testCommandRunAsyncIsDefault() = runBlocking {
+        val taskId = "task-default-async"
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(toolCallResult(taskId))
+
+        val request = MCPToolCallRequest(
+            tool = "command_run",
+            arguments = mapOf("command" to "do something")
+        )
+
+        val result = controller.callTool(request, response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertEquals(taskId, result.body!!.content[0].text)
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("run", captor.value.method)
+        assertEquals("do something", captor.value.arguments["command"])
+        Unit
+    }
+
+    @Test
+    fun testCommandRunSync() = runBlocking {
+        val status = CommandStatus(id = "sync-id", processState = "done")
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(objectMapper.writeValueAsString(status))
+        )
+
+        val request = MCPToolCallRequest(
+            tool = "command_run",
+            arguments = mapOf("command" to "do something", "async" to false)
+        )
+
+        val result = controller.callTool(request, response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertTrue(result.body!!.content[0].text.contains("sync-id"))
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("run", captor.value.method)
+        assertEquals(false, captor.value.arguments["async"])
+        Unit
+    }
+
+    @Test
+    fun testCommandStatus() = runBlocking {
+        val taskId = "task-xyz"
+        val status = CommandStatus(id = taskId, processState = "done")
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(objectMapper.writeValueAsString(status))
+        )
+
+        val request = MCPToolCallRequest(
+            tool = "command_status",
+            arguments = mapOf("id" to taskId)
+        )
+
+        val result = controller.callTool(request, response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertTrue(result.body!!.content[0].text.contains(taskId))
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("status", captor.value.method)
+        assertEquals(taskId, captor.value.arguments["id"])
+        Unit
+    }
+
+    @Test
+    fun testCommandResult() = runBlocking {
+        val taskId = "task-xyz"
+        val commandResult = ai.platon.pulsar.agentic.tools.high.command.CommandResult(summary = "done")
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(objectMapper.writeValueAsString(commandResult))
+        )
+
+        val request = MCPToolCallRequest(
+            tool = "command_result",
+            arguments = mapOf("id" to taskId)
+        )
+
+        val result = controller.callTool(request, response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertTrue(result.body!!.content[0].text.contains("done"))
+        val captor = ArgumentCaptor.forClass(ToolCall::class.java)
+        Mockito.verify(commandAgentToolExecutor).execute(capture(captor))
+        assertEquals("command", captor.value.domain)
+        assertEquals("result", captor.value.method)
+        assertEquals(taskId, captor.value.arguments["id"])
+        Unit
+    }
+
+    @Test
+    fun testCommandRunMissingCommandReturnsError() = runBlocking {
+        `when`(commandAgentToolExecutor.execute(anyToolCall())).thenReturn(
+            toolCallResult(
+                evaluate = TcEvaluate(
+                    expression = "command.run(async=\"true\")",
+                    exception = TcException(
+                        expression = "command.run(async=\"true\")",
+                        cause = IllegalArgumentException("Missing required parameter 'command' for run")
+                    )
+                )
+            )
+        )
+
+        val request = MCPToolCallRequest(
+            tool = "command_run",
+            arguments = mapOf("async" to true)
+        )
+
+        val result = controller.callTool(request, response)
+
+        assertEquals(HttpStatus.OK, result.statusCode)
+        assertTrue(result.body!!.isError)
+        assertTrue(result.body!!.content[0].text.contains("Missing required parameter 'command' for run"))
+        Unit
     }
 
     private fun mockTool(domain: String, method: String) {

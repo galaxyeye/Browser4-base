@@ -10,7 +10,6 @@ import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
 import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
 import ai.platon.pulsar.agentic.tools.builtin.*
-import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.delay
@@ -41,6 +40,7 @@ class AgentToolExecutor constructor(
                 "session" to session,
                 "agent" to agent,
                 "tab" to driver,
+                "driver" to driver,
             ),
         )
     }
@@ -71,6 +71,7 @@ class AgentToolExecutor constructor(
             FileSystemToolExecutor(),
             ShellToolExecutor(),
             AgentToolExecutor(),
+            CommandToolExecutor(),
             system,
             skills
         )
@@ -172,6 +173,14 @@ class AgentToolExecutor constructor(
             "fs" -> executor.callFunctionOn(normalized, fs)
             "shell" -> executor.callFunctionOn(normalized, shell)
             "agent" -> executor.callFunctionOn(normalized, agent)
+            "command" -> {
+                // TODO: we need a real commandTarget in module pulsar-agentic, it is registered in pulsar-rest module currently
+                val commandTarget = _customTargets["command"]
+                    ?: throw UnsupportedOperationException(
+                        "Command domain '${normalized.domain}' requires a registered CommandService target."
+                    )
+                executor.callFunctionOn(normalized, commandTarget)
+            }
             "system" -> executor.callFunctionOn(normalized, system)
             "skill" -> executor.callFunctionOn(normalized, skillTarget)
             else -> {
@@ -191,33 +200,17 @@ class AgentToolExecutor constructor(
     }
 
     private suspend fun onDidToolCall(
-        tc: ToolCall, evaluate: TcEvaluate, actionDescription: ActionDescription? = null, message: String? = null
+        tc: ToolCall, evaluate: TcEvaluate, message: String? = null
     ): ToolCallResult {
         val tcResult = ToolCallResult(
             evaluate = evaluate,
             message = message,
-            actionDescription = actionDescription,
         )
 
         val method = tc.method
         when (method) {
             "switchTab" -> onDidSwitchTab(evaluate)
             "navigate" -> onDidNavigate(driver, tc, evaluate)
-        }
-
-        if (actionDescription != null) {
-            val timeoutMs = 3_000L
-            val oldUrl = actionDescription.agentState?.browserUseState?.browserState?.url
-            val pseudoExpression = actionDescription.pseudoExpression
-            val maybeNavMethod = method in ToolSpecification.MAY_NAVIGATE_ACTIONS
-            if (oldUrl != null && maybeNavMethod) {
-                val remainingTime = driver.waitForNavigation(oldUrl, timeoutMs)
-                if (remainingTime <= 0) {
-                    val navError = "⏳ Navigation timeout after ${timeoutMs}ms for expression: $pseudoExpression"
-                    logger.warn(navError)
-                    return tcResult
-                }
-            }
         }
 
         return tcResult

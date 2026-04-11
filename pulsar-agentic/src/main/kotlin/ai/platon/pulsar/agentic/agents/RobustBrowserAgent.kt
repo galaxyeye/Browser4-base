@@ -13,6 +13,8 @@ import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.AppConstants.SEARCH_ENGINE_URLS
 import ai.platon.pulsar.common.getLogger
+import ai.platon.pulsar.common.printlnPro
+import ai.platon.pulsar.common.serialize.json.Pson
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.external.ResponseState
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -353,32 +355,46 @@ open class RobustBrowserAgent(
     protected suspend fun prepareStep(
         action: ActionOptions, ctxIn: ExecutionContext, noOpsIn: Int
     ): ExecutionContext {
-        val context = ensureReadyForStep(action, "step", ctxIn)
+        val context = buildExecutionContextForStep(action, "step", ctxIn)
         // Note: action.context check removed as it's redundant with context parameter
 
-        val agentState = context.agentState
-        val browserUseState = agentState.browserUseState
+        val prevAgentState = context.prevAgentState ?: return context
+        require(prevAgentState == ctxIn.agentState)
+
+        val prevBrowserUseState = prevAgentState.browserUseState
         val step = context.step
         val sid = context.sid
-        val lastToolCall = agentState.actionDescription?.toolCall
-        val lastDomain = lastToolCall?.domain
-        if (ToolSpecification.isBrowserInteraction(lastDomain)) {
+        val prevToolCall = lastExecutedToolCall(context)
+        if (step == 3 && logger.isDebugEnabled) {
+            require(prevAgentState == context.agentState.prevState) { "Inconsistent step state" }
+            logger.debug("Previous agent state: {}", Pson.toJson(prevAgentState))
+            logger.debug("Agent state: {}", Pson.toJson(context.agentState))
+        }
+        val prevDomain = prevToolCall?.domain
+
+        if (ToolSpecification.isBrowserInteraction(prevDomain)) {
             // Only browser-interaction actions can change the WebPage state
             var consecutiveNoOps = noOpsIn
-            val unchangedCount = pageStateTracker.checkStateChange(browserUseState)
+            val unchangedCount = pageStateTracker.checkStateChange(prevBrowserUseState)
             if (unchangedCount >= 3) {
-                logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={}", sid, step, unchangedCount)
+                logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={} lastTool={}",
+                    sid, step, unchangedCount, prevToolCall?.pseudoExpression)
                 consecutiveNoOps++
             }
-            logger.info("▶️ step.exec sid={} step={}/{} noOps={}", sid, step, config.maxSteps, consecutiveNoOps)
+            logger.info("▶️ step.exec sid={} step={}/{} noOps={} lastTool={}",
+                sid, step, config.maxSteps, consecutiveNoOps, prevToolCall?.pseudoExpression)
         }
 
         if (logger.isDebugEnabled) {
-            logger.debug("🧩 dom={}", DomDebug.summarizeStr(browserUseState.domState, 5))
+            logger.debug("🧩 dom={}", DomDebug.summarizeStr(prevBrowserUseState.domState, 5))
         }
 
         return context
     }
+
+    protected fun lastExecutedToolCall(context: ExecutionContext) =
+        context.prevAgentState?.toolCallResult?.actionDescription?.toolCall
+            ?: context.prevAgentState?.actionDescription?.toolCall
 
     private suspend fun selectBestSearchEngine(): String {
         val searchURL = SEARCH_ENGINE_URLS.firstOrNull {
@@ -392,7 +408,7 @@ open class RobustBrowserAgent(
         return if (AppContext.isCN) AppConstants.SEARCH_ENGINE_URL else AppConstants.SEARCH_ENGINE_EN_URL
     }
 
-    protected suspend fun ensureReadyForStep(
+    protected suspend fun buildExecutionContextForStep(
         action: ActionOptions, event: String, ctxIn: ExecutionContext
     ): ExecutionContext {
         val driver = activeDriver
@@ -418,7 +434,7 @@ open class RobustBrowserAgent(
         var context = initContext
         val startTime = Instant.now()
         try {
-            val action = initActionOptions.copy(fromResolve = true)
+            val action = initActionOptions.copy(fromRunLoop = true)
 
             while (!isClosed && context.step < config.maxSteps) {
                 val stepResult: StepProcessingResult
@@ -426,6 +442,12 @@ open class RobustBrowserAgent(
                     context = prepareStep(action, context, consecutiveNoOps)
 
                     stepResult = step(action, context, consecutiveNoOps)
+
+                    require(stepResult.context.step == context.step) { "Step check failed" }
+                    require(stepResult.context.agentState.actionDescription != null) { "Check failed: stepResult.context.agentState.actionDescription != null" }
+
+                    // The finalize step has no tool call
+                    // require(stepResult.context.agentState.toolCallResult != null) { "Check failed: stepResult.context.agentState.toolCallResult != null" }
 
                     context = stepResult.context
                     consecutiveNoOps = stepResult.consecutiveNoOps
@@ -639,7 +661,7 @@ open class RobustBrowserAgent(
             items = mapOf("step" to step, "consecutive" to consecutiveNoOps),
             message = "🕒 no-op"
         )
-        logger.info("🕒 noop sid={} step={} consecutive={} toolCall={} | {}",
+        logger.info("🕒 noop sid={} step={} consecutive={} toolCall={} | result={}",
             context.sid, step, consecutiveNoOps, expression, result)
         if (consecutiveNoOps >= config.consecutiveNoOpLimit) {
             logger.info("⛔ noop.stop sid={} step={} limit={} toolCall={}",
@@ -684,12 +706,13 @@ open class RobustBrowserAgent(
         val step = context.step
         val sid = context.sessionId
 
-        require(action.isComplete) { "Required action.isComplete" }
+        require(action.isDecidedComplete) { "Required action.isComplete" }
         context.agentState.also {
             it.isComplete = true
             it.summary = action.summary
             it.keyFindings = action.keyFindings
             it.nextSuggestions = action.nextSuggestions
+            it.actionDescription = action
         }
 
         logger.info("✅ task.complete sid={} step={} complete={}", sid.take(8), step, true)

@@ -85,10 +85,8 @@ class SkillRegistry private constructor() {
             val id = skill.metadata.id
 
             if (skills.containsKey(id)) {
-                throw IllegalArgumentException(
-                    "Skill '$id' is already registered. " +
-                        "Use unregister() first if you want to replace it."
-                )
+                logger.warn("Skill with id $id is already registered")
+                return
             }
 
             // Validate dependencies

@@ -24,7 +24,7 @@ print_usage() {
   echo "  fast        Run fast unit tests only"
   echo "  it          Run integration tests"
   echo "  e2e         Run end-to-end tests"
-  echo "  browser4-cli Run Rust Browser4 CLI tests from sdks/browser4-cli"
+  echo "  cli         Run Rust Browser4 CLI tests from sdks/browser4-cli"
   echo "  core        Run core module supplementary tests"
   echo "  rest        Run REST module tests"
   echo "  skills      Run skills-focused agentic tests"
@@ -35,8 +35,8 @@ print_usage() {
   echo "  test.sh fast                       # Run fast unit tests"
   echo "  test.sh it                         # Run integration tests"
   echo "  test.sh e2e                        # Run end-to-end tests"
-  echo "  test.sh browser4-cli               # Run Browser4 CLI tests"
-  echo "  test.sh browser4-cli -- --nocapture # Pass extra cargo test args"
+  echo "  test.sh cli                        # Run Browser4 CLI tests"
+  echo "  test.sh cli -- --nocapture         # Pass extra cargo test args"
   echo "  test.sh skills                     # Run skills-focused agentic tests"
   echo "  test.sh mcp                        # Run MCP-focused agentic tests"
   echo "  test.sh browser4                   # Run all Browser4 main tests"
@@ -46,7 +46,7 @@ print_usage() {
 
 exit_unknown_test_type() {
   local test_type=$1
-  echo "Error: Unknown test type '$test_type'. Valid test types: fast, it, e2e, browser4-cli, core, rest, skills, mcp, browser4." >&2
+  echo "Error: Unknown test type '$test_type'. Valid test types: fast, it, e2e, cli, core, rest, skills, mcp, browser4." >&2
   exit 1
 }
 
@@ -189,7 +189,7 @@ run_browser4_cli_tests() {
   echo "=========================================="
 }
 
-KnownTestTypes=(fast it e2e browser4-cli core rest skills mcp browser4)
+KnownTestTypes=(fast it e2e cli browser4-cli core rest skills mcp browser4)
 TestTypes=()
 MavenTests=()
 CLITests=()
@@ -205,7 +205,7 @@ while [[ $# -gt 0 ]]; do
     -h|-help|--help)
       print_usage
       ;;
-    fast|it|e2e|browser4-cli|core|rest|skills|mcp|browser4)
+    fast|it|e2e|cli|browser4-cli|core|rest|skills|mcp|browser4)
       if [[ "$ParsingTestTypes" == "true" ]]; then
         TestTypes+=("$1")
       else
@@ -230,7 +230,7 @@ fi
 for type in "${TestTypes[@]}"; do
   if [[ "$type" == "browser4" ]]; then
     MavenTests+=(fast core it e2e rest)
-  elif [[ "$type" == "browser4-cli" ]]; then
+  elif [[ "$type" == "cli" || "$type" == "browser4-cli" ]]; then
     CLITests+=("$type")
   else
     MavenTests+=("$type")
@@ -275,7 +275,7 @@ fi
 
 for test_type in "${CLITests[@]}"; do
   case "$test_type" in
-    browser4-cli)
+    cli|browser4-cli)
       run_browser4_cli_tests
       ;;
   esac

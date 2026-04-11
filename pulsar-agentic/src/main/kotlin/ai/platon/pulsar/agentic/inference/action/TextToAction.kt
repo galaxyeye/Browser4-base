@@ -24,7 +24,6 @@ import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.gson.JsonElement
 import java.nio.file.Files
 
 open class TextToAction(
@@ -123,7 +122,7 @@ open class TextToAction(
                 val complete: ModelObserveResponseComplete = mapper.readValue(content)
                 ActionDescription(
                     instruction = instruction,
-                    isComplete = complete.taskComplete,
+                    isDecidedComplete = complete.taskComplete,
                     errorCause = complete.errorCause,
                     summary = complete.summary,
                     keyFindings = complete.keyFindings,
@@ -181,7 +180,7 @@ open class TextToAction(
             return action
         }
 
-        if (action.isComplete) {
+        if (action.isDecidedComplete) {
             return action
         }
 

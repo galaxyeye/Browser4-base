@@ -1,7 +1,7 @@
-package ai.platon.pulsar.agentic.tools.crawl.common
+package ai.platon.pulsar.agentic.tools.high.crawl.common
 
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeRequest
-import ai.platon.pulsar.agentic.tools.crawl.ScrapeResponse
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeRequest
+import ai.platon.pulsar.agentic.tools.high.crawl.ScrapeResponse
 import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.ResourceStatus
 import ai.platon.pulsar.common.brief

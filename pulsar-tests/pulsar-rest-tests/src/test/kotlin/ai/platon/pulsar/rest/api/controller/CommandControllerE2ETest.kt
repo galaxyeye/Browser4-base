@@ -130,7 +130,42 @@ class CommandControllerE2ETest : RestAPITestBase() {
     }
 
     /**
-     * Test [CommandController.submitCommand]
+     * Test [CommandController.submitCommand].
+     *
+     * Example CommandStatus:
+     *
+     * {
+     *   "id": "5eb69939-f42f-431d-a485-d47a10901871",
+     *   "statusCode": 200,
+     *   "event": "PerceptiveAgent.onDidRun",
+     *   "processState": "done",
+     *   "pageStatusCode": 201,
+     *   "pageContentBytes": 0,
+     *   "message": "The browser has been successfully opened and is currently displaying the Microsoft Bing (cn.bing.com) homepage.",
+     *   "commandResult": {
+     *     "summary": "The browser has been successfully opened and is currently displaying the Microsoft Bing (cn.bing.com) homepage."
+     *   },
+     *   "lastModifiedTime": "2026-04-08T14:26:24.866049300Z",
+     *   "finishTime": "2026-04-08T14:26:24.866049300Z",
+     *   "agentHistory": {
+     *     "states": [
+     *       {
+     *         "step": 1,
+     *         "instruction": "Open the browser",
+     *         "summary": "The browser has been successfully opened and is currently displaying the Microsoft Bing (cn.bing.com) homepage.",
+     *         "isComplete": true
+     *       }
+     *     ]
+     *   },
+     *   "isDone": true,
+     *   "status": "OK",
+     *   "agentState": {
+     *     "step": 1,
+     *     "instruction": "Open the browser",
+     *     "summary": "The browser has been successfully opened and is currently displaying the Microsoft Bing (cn.bing.com) homepage.",
+     *     "isComplete": true
+     *   }
+     * }
      * */
     @Test
     @Tag("Slow")
@@ -170,7 +205,7 @@ class CommandControllerE2ETest : RestAPITestBase() {
     }
 
     private fun waitForAgentHistory(commandId: String): CommandStatus? {
-        val deadline = Instant.now().plus(Duration.ofMinutes(8))
+        val deadline = Instant.now().plus(Duration.ofMinutes(3))
         var lastStatus: CommandStatus? = null
 
         while (Instant.now().isBefore(deadline)) {
@@ -181,7 +216,7 @@ class CommandControllerE2ETest : RestAPITestBase() {
                 .returnResult()
                 .responseBody
 
-            if (lastStatus?.agentState != null || lastStatus?.isDone == true) {
+            if (lastStatus?.isDone == true) {
                 return lastStatus
             }
 
