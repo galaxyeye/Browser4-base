@@ -86,7 +86,7 @@ class SkillRegistry private constructor() {
 
             if (skills.containsKey(id)) {
                 logger.warn("Skill with id $id is already registered")
-                return
+                throw IllegalArgumentException("Skill '$id' is already registered")
             }
 
             // Validate dependencies

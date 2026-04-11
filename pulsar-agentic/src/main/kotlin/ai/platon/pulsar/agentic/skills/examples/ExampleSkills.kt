@@ -48,7 +48,7 @@ class WebScrapingSkill : AbstractSkill() {
     }
 
     override val metadata = SkillMetadata(
-        id = "skill.debug.scraping",
+        id = "web-scraping",
         name = "Web Scraping",
         version = "1.0.0",
         description = "Extract data from web pages using CSS selectors",
