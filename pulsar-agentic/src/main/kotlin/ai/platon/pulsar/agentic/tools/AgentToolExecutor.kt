@@ -201,33 +201,17 @@ class AgentToolExecutor constructor(
     }
 
     private suspend fun onDidToolCall(
-        tc: ToolCall, evaluate: TcEvaluate, actionDescription: ActionDescription? = null, message: String? = null
+        tc: ToolCall, evaluate: TcEvaluate, message: String? = null
     ): ToolCallResult {
         val tcResult = ToolCallResult(
             evaluate = evaluate,
             message = message,
-            actionDescription = actionDescription,
         )
 
         val method = tc.method
         when (method) {
             "switchTab" -> onDidSwitchTab(evaluate)
             "navigate" -> onDidNavigate(driver, tc, evaluate)
-        }
-
-        if (actionDescription != null) {
-            val timeoutMs = 3_000L
-            val oldUrl = actionDescription.agentState?.browserUseState?.browserState?.url
-            val pseudoExpression = actionDescription.pseudoExpression
-            val maybeNavMethod = method in ToolSpecification.MAY_NAVIGATE_ACTIONS
-            if (oldUrl != null && maybeNavMethod) {
-                val remainingTime = driver.waitForNavigation(oldUrl, timeoutMs)
-                if (remainingTime <= 0) {
-                    val navError = "⏳ Navigation timeout after ${timeoutMs}ms for expression: $pseudoExpression"
-                    logger.warn(navError)
-                    return tcResult
-                }
-            }
         }
 
         return tcResult

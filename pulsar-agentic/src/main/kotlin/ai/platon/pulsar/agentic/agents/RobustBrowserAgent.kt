@@ -692,12 +692,13 @@ open class RobustBrowserAgent(
         val step = context.step
         val sid = context.sessionId
 
-        require(action.isComplete) { "Required action.isComplete" }
+        require(action.isDecidedComplete) { "Required action.isComplete" }
         context.agentState.also {
             it.isComplete = true
             it.summary = action.summary
             it.keyFindings = action.keyFindings
             it.nextSuggestions = action.nextSuggestions
+            it.actionDescription = action
         }
 
         logger.info("✅ task.complete sid={} step={} complete={}", sid.take(8), step, true)

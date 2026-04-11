@@ -307,6 +307,8 @@ class AgentStateManager(
         context.agentState.actionDescription = detailedActResult.actionDescription
         context.agentState.toolCallResult = toolCallResult
 
+        require(context.agentState.toolCallResult?.actionDescription == context.agentState.actionDescription)
+
         updateAgentState(context, observeElement, toolCall, toolCallResult, description)
 
         writeActionResult(context, detailedActResult)

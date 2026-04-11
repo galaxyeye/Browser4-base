@@ -18,6 +18,7 @@ import ai.platon.pulsar.common.AppPaths
 import ai.platon.pulsar.common.alwaysTrue
 import ai.platon.pulsar.common.event.EventBus
 import ai.platon.pulsar.common.getLogger
+import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.common.serialize.json.Pson
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import kotlinx.coroutines.TimeoutCancellationException
@@ -72,7 +73,7 @@ open class BasicBrowserAgent(
             val map = payload as? Map<String, Any?> ?: return@register null
             val messages = map["messages"] as? AgentMessageList ?: return@register null
             // DO SOMETHING
-            println(eventType + ">>> " + messages.messages.lastOrNull()?.content?.take(200))
+            printlnPro(this, eventType + ">>> " + messages.messages.lastOrNull()?.content?.take(200))
             return@register messages
         }
 
@@ -81,7 +82,7 @@ open class BasicBrowserAgent(
             val map = payload as? Map<String, Any?> ?: return@register null
             val actionDescription = map["actionDescription"] as? ActionDescription ?: return@register null
             // DO SOMETHING
-            println(Pson.toJson(actionDescription))
+            printlnPro(this, Pson.toJson(actionDescription))
             return@register actionDescription
         }
     }
@@ -206,7 +207,7 @@ open class BasicBrowserAgent(
 
             val detailedResult = DetailedActResult(
                 actionDescription = actionDescription,
-                toolCallResult = result,
+                toolCallResult = result.copy(actionDescription = actionDescription),
                 description = description
             )
             stateManager.updateAgentState(context, detailedResult)
@@ -549,7 +550,7 @@ open class BasicBrowserAgent(
 
         val (observeResults, actionDescription) = doObserveActObserve(options, context, options.fromResolve)
 
-        if (actionDescription.isComplete) {
+        if (actionDescription.isDecidedComplete) {
             return ActResultHelper.complete(actionDescription)
         }
 
