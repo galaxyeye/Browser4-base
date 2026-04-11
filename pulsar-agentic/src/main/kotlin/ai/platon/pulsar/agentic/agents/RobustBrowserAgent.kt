@@ -353,32 +353,40 @@ open class RobustBrowserAgent(
     protected suspend fun prepareStep(
         action: ActionOptions, ctxIn: ExecutionContext, noOpsIn: Int
     ): ExecutionContext {
-        val context = ensureReadyForStep(action, "step", ctxIn)
+        val context = buildExecutionContextForStep(action, "step", ctxIn)
         // Note: action.context check removed as it's redundant with context parameter
 
-        val agentState = context.agentState
-        val browserUseState = agentState.browserUseState
+        val prevAgentState = context.prevAgentState ?: return context
+        require(prevAgentState == ctxIn.agentState)
+
+        val prevBrowserUseState = prevAgentState.browserUseState
         val step = context.step
         val sid = context.sid
-        val lastToolCall = agentState.actionDescription?.toolCall
-        val lastDomain = lastToolCall?.domain
-        if (ToolSpecification.isBrowserInteraction(lastDomain)) {
+        val prevToolCall = lastExecutedToolCall(context)
+        val prevDomain = prevToolCall?.domain
+        if (ToolSpecification.isBrowserInteraction(prevDomain)) {
             // Only browser-interaction actions can change the WebPage state
             var consecutiveNoOps = noOpsIn
-            val unchangedCount = pageStateTracker.checkStateChange(browserUseState)
+            val unchangedCount = pageStateTracker.checkStateChange(prevBrowserUseState)
             if (unchangedCount >= 3) {
-                logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={}", sid, step, unchangedCount)
+                logger.info("⚠️ loop.warn sid={} step={} unchangedSteps={} lastCall={}",
+                    sid, step, unchangedCount, prevToolCall?.pseudoExpression)
                 consecutiveNoOps++
             }
-            logger.info("▶️ step.exec sid={} step={}/{} noOps={}", sid, step, config.maxSteps, consecutiveNoOps)
+            logger.info("▶️ step.exec sid={} step={}/{} noOps={} lastCall={}",
+                sid, step, config.maxSteps, consecutiveNoOps, prevToolCall?.pseudoExpression)
         }
 
         if (logger.isDebugEnabled) {
-            logger.debug("🧩 dom={}", DomDebug.summarizeStr(browserUseState.domState, 5))
+            logger.debug("🧩 dom={}", DomDebug.summarizeStr(prevBrowserUseState.domState, 5))
         }
 
         return context
     }
+
+    protected fun lastExecutedToolCall(context: ExecutionContext) =
+        context.prevAgentState?.toolCallResult?.actionDescription?.toolCall
+            ?: context.prevAgentState?.actionDescription?.toolCall
 
     private suspend fun selectBestSearchEngine(): String {
         val searchURL = SEARCH_ENGINE_URLS.firstOrNull {
@@ -392,7 +400,7 @@ open class RobustBrowserAgent(
         return if (AppContext.isCN) AppConstants.SEARCH_ENGINE_URL else AppConstants.SEARCH_ENGINE_EN_URL
     }
 
-    protected suspend fun ensureReadyForStep(
+    protected suspend fun buildExecutionContextForStep(
         action: ActionOptions, event: String, ctxIn: ExecutionContext
     ): ExecutionContext {
         val driver = activeDriver
