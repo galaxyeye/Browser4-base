@@ -10,7 +10,6 @@ import ai.platon.pulsar.agentic.skills.SkillRegistry
 import ai.platon.pulsar.agentic.skills.tools.SkillToolExecutor
 import ai.platon.pulsar.agentic.skills.tools.SkillToolTarget
 import ai.platon.pulsar.agentic.tools.builtin.*
-import ai.platon.pulsar.agentic.tools.specs.ToolSpecification
 import ai.platon.pulsar.common.getLogger
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.delay

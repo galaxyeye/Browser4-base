@@ -170,7 +170,7 @@ class SkillToolExecutor(
 
                 val startTime = System.currentTimeMillis()
 
-                return try {
+                try {
                     val result = receiver.execute(id, paramsMap)
                     val duration = System.currentTimeMillis() - startTime
 
