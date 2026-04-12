@@ -14,6 +14,8 @@ server. Designed for use by AI agents through SKILLS + CLI.
 cd sdks/browser4-cli
 cargo build --release
 # Binary is at target/release/browser4-cli
+# Or install to Cargo bin directory (%USERPROFILE%\.cargo\bin on Windows, ~/.cargo/bin on Unix):
+cargo install --path .
 ```
 
 Or run directly:
