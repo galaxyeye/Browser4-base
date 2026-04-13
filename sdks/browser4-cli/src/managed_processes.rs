@@ -172,13 +172,18 @@ pub fn shutdown_managed_server_processes(
 
 /// Kill all found Browser4 Chrome processes (marked with PULSAR_CHROME).
 pub fn kill_all_browsers() -> Vec<u32> {
-    let pids = find_pulsar_browser_processes();
-    let mut killed = Vec::new();
+    let mut pids = find_pulsar_browser_processes();
+    pids.sort_unstable();
+    pids.dedup();
+
     for pid in &pids {
         force_stop(*pid);
-        killed.push(*pid);
     }
-    killed
+    for pid in &pids {
+        let _ = wait_for_exit(*pid, 5_000, 100);
+    }
+
+    pids
 }
 
 fn find_pulsar_browser_processes() -> Vec<u32> {
@@ -290,7 +295,10 @@ fn force_stop(pid: u32) {
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
-                &format!("Stop-Process -Id {} -Force -ErrorAction SilentlyContinue", pid),
+                &format!(
+                    "Stop-Process -Id {} -Force -ErrorAction SilentlyContinue",
+                    pid
+                ),
             ])
             .status();
     }

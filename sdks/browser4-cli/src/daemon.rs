@@ -6,6 +6,7 @@
 use std::fs;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 
 use reqwest::Client;
 
@@ -21,15 +22,17 @@ pub async fn ensure_server_running(base_url: &str) -> Result<(), String> {
         return Ok(());
     }
 
-    // Check if already running
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(5))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let health_url = format!("{}/actuator/health", base_url.trim_end_matches('/'));
-    if client.get(&health_url).send().await.is_ok() {
-        return Ok(());
+    match probe_server_state(&client, base_url).await {
+        ServerState::Ready => return Ok(()),
+        ServerState::Starting(_) => {
+            return wait_for_server_ready(&client, base_url, Duration::from_secs(60)).await;
+        }
+        ServerState::Unreachable(_) => {}
     }
 
     eprintln!("Browser4 server not running. Starting...");
@@ -151,29 +154,14 @@ async fn start_server(jar_path: &PathBuf, base_url: &str, port: u16) -> Result<(
     // sufficient for our use-case where the parent CLI exits immediately.
     drop(child);
 
-    // Wait for health check (up to 60 seconds)
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(5))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let health_url = format!("http://localhost:{}/actuator/health", port);
-    let start = std::time::Instant::now();
-    let timeout = std::time::Duration::from_secs(60);
-
-    loop {
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        if client.get(&health_url).send().await.is_ok() {
-            eprintln!("Server is up and running.");
-            return Ok(());
-        }
-        if start.elapsed() > timeout {
-            return Err(format!(
-                "Server failed to start within {}s",
-                timeout.as_secs()
-            ));
-        }
-    }
+    wait_for_server_ready(&client, base_url, Duration::from_secs(60)).await?;
+    eprintln!("Server is up and running.");
+    Ok(())
 }
 
 /// Resolve the base URL from CLI state + optional server override arg.
@@ -183,4 +171,67 @@ pub fn resolve_base_url(override_url: Option<&str>, session_name: Option<&str>) 
         .map(|s| s.to_string())
         .unwrap_or(state.base_url);
     base.trim_end_matches('/').to_string()
+}
+
+enum ServerState {
+    Ready,
+    Starting(String),
+    Unreachable(String),
+}
+
+async fn probe_server_state(client: &Client, base_url: &str) -> ServerState {
+    let trimmed = base_url.trim_end_matches('/');
+    let health_url = format!("{trimmed}/actuator/health");
+    let tools_url = format!("{trimmed}/mcp/tools");
+
+    let health_response = match client.get(&health_url).send().await {
+        Ok(response) => response,
+        Err(error) => return ServerState::Unreachable(error.to_string()),
+    };
+    let health_body = match health_response.text().await {
+        Ok(body) => body,
+        Err(error) => return ServerState::Starting(error.to_string()),
+    };
+    if !health_body.contains("\"status\":\"UP\"") {
+        return ServerState::Starting(health_body);
+    }
+
+    let tools_response = match client.get(&tools_url).send().await {
+        Ok(response) => response,
+        Err(error) => return ServerState::Starting(error.to_string()),
+    };
+    let tools_body = match tools_response.text().await {
+        Ok(body) => body,
+        Err(error) => return ServerState::Starting(error.to_string()),
+    };
+    if tools_body.contains("open_session") && tools_body.contains("browser_navigate") {
+        ServerState::Ready
+    } else {
+        ServerState::Starting(format!("MCP tools endpoint not ready: {tools_body}"))
+    }
+}
+
+async fn wait_for_server_ready(
+    client: &Client,
+    base_url: &str,
+    timeout: Duration,
+) -> Result<(), String> {
+    let start = Instant::now();
+    let mut last_error = String::from("unknown");
+
+    while start.elapsed() <= timeout {
+        match probe_server_state(client, base_url).await {
+            ServerState::Ready => return Ok(()),
+            ServerState::Starting(error) | ServerState::Unreachable(error) => {
+                last_error = error;
+            }
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+
+    Err(format!(
+        "Server failed to become MCP-ready within {}s: {}",
+        timeout.as_secs(),
+        last_error
+    ))
 }

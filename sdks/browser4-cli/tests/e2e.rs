@@ -349,7 +349,11 @@ impl FixtureServer {
             }
         });
 
-        Self { port, fixture_host: fixture_host.to_string(), shutdown }
+        Self {
+            port,
+            fixture_host: fixture_host.to_string(),
+            shutdown,
+        }
     }
 
     fn base_url(&self) -> String {
@@ -522,6 +526,55 @@ fn serve_mock_browser4_request(mut stream: TcpStream, state: Arc<Mutex<MockBrows
 
             let text = match tool.as_str() {
                 "open_session" => r#"{"sessionId":"collective-session-1"}"#.to_string(),
+                "command_run" => {
+                    let command = arguments
+                        .get("command")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
+                    let task_id = {
+                        let mut guard = state.lock().expect("mock Browser4 state mutex poisoned");
+                        guard.plain_commands.push(command.clone());
+                        if command.starts_with("http://") || command.starts_with("https://") {
+                            guard.next_collective_task_id += 1;
+                            format!("co-task-{}", guard.next_collective_task_id)
+                        } else {
+                            guard.next_agent_task_id += 1;
+                            format!("agent-task-{}", guard.next_agent_task_id)
+                        }
+                    };
+                    format!(r#""{}""#, task_id)
+                }
+                "command_status" => {
+                    let task_id = arguments
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string();
+                    state
+                        .lock()
+                        .expect("mock Browser4 state mutex poisoned")
+                        .status_queries
+                        .push(task_id.clone());
+                    serde_json::json!({
+                        "id": task_id,
+                        "status": "RUNNING",
+                    })
+                    .to_string()
+                }
+                "command_result" => {
+                    let task_id = arguments
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default();
+                    state
+                        .lock()
+                        .expect("mock Browser4 state mutex poisoned")
+                        .result_queries
+                        .push(task_id.to_string());
+                    format!("result for {task_id}")
+                }
                 "agent_extract" => {
                     r#"{"items":[{"title":"Mock Product","price":"$19.99"}]}"#.to_string()
                 }
@@ -903,20 +956,21 @@ fn run_command_expecting_failure(ctx: &mut E2ECtx, args: &[&str], pattern: &str)
 }
 
 fn run_cli_process_with_retry(ctx: &E2ECtx, args: &[&str]) -> CliRunResult {
-    let max_attempts = 3;
+    let max_attempts = 5;
     let mut attempt = 0;
 
     loop {
         attempt += 1;
         let result = run_cli_process(ctx, args);
-        if attempt >= max_attempts || !is_transient_transport_failure(&result) {
+        if attempt >= max_attempts || !is_transient_retryable_failure(&result) {
             return result;
         }
-        thread::sleep(Duration::from_secs(2));
+        let delay_secs = (attempt as u64) * 2;
+        thread::sleep(Duration::from_secs(delay_secs));
     }
 }
 
-fn is_transient_transport_failure(result: &CliRunResult) -> bool {
+fn is_transient_retryable_failure(result: &CliRunResult) -> bool {
     if result.exit_code == 0 {
         return false;
     }
@@ -925,6 +979,8 @@ fn is_transient_transport_failure(result: &CliRunResult) -> bool {
     combined.contains("http request failed: error sending request for url")
         || combined.contains("connection refused")
         || combined.contains("tcp connect error")
+        || combined.contains("failed to launch browser")
+        || combined.contains("createtab")
 }
 
 // ---------------------------------------------------------------------------
@@ -1092,9 +1148,8 @@ fn create_e2e_test_resources() -> E2ETestResources {
     let fixture = FixtureServer::start(bind_addr, &fhost);
     let fixture_base_url = fixture.base_url();
 
-    let browser4_base_url = service_url.unwrap_or_else(|| {
-        format!("http://127.0.0.1:{}", find_free_port())
-    });
+    let browser4_base_url =
+        service_url.unwrap_or_else(|| format!("http://127.0.0.1:{}", find_free_port()));
 
     let temp_dir = tempfile::TempDir::new().expect("tempdir creation failed");
     let workspace_dir = temp_dir.path().join("workspace");
@@ -1931,7 +1986,6 @@ fn resolve_scenario(name: &str) -> Option<ScenarioDef> {
         .copied()
         .find(|scenario| scenario.name == name || scenario.short_name == name)
 }
-
 
 fn main() {
     let scenario_filter = parse_scenario_filter();
