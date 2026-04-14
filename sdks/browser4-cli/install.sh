@@ -119,7 +119,7 @@ detect_platform() {
       OS="macos"
       ;;
     MINGW*|MSYS*|CYGWIN*)
-      die "This installer is for macOS and Linux shells. On Windows, use sdks/browser4-cli/install.ps1 from an elevated PowerShell session."
+      die "This installer is for macOS and Linux shells. On Windows, download Browser4.jar from the latest release and install browser4-cli from source with cargo install --path . --locked."
       ;;
     *)
       die "Unsupported operating system: $(uname -s)"

@@ -134,10 +134,12 @@ It can be used in scripts, terminal sessions, or integrated into AI agents throu
 # install the latest Unix CLI + Browser4.jar
 curl -fsSL https://raw.githubusercontent.com/platonai/Browser4/master/sdks/browser4-cli/install.sh | bash
 
-# install the latest Windows CLI + Browser4.jar (run in elevated PowerShell)
-$installer = Join-Path $env:TEMP 'browser4-cli-install.ps1'
-Invoke-WebRequest 'https://raw.githubusercontent.com/platonai/Browser4/master/sdks/browser4-cli/install.ps1' -OutFile $installer
-powershell.exe -ExecutionPolicy Bypass -File $installer
+# Windows: download Browser4.jar, then install the CLI from source
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.browser4\lib" | Out-Null
+Invoke-WebRequest 'https://github.com/platonai/Browser4/releases/latest/download/Browser4.jar' -OutFile "$env:USERPROFILE\.browser4\lib\Browser4.jar"
+git clone https://github.com/platonai/Browser4.git
+cd Browser4\sdks\browser4-cli
+cargo install --path . --locked
 
 # open new browser
 browser4-cli open

@@ -26,30 +26,24 @@ Optional environment overrides:
 | `BROWSER4_INSTALL_ROOT` | Override the Cargo install root (default: `~/.local`) |
 | `BROWSER4_LIB_DIR` | Override where `Browser4.jar` is stored (default: `~/.browser4/lib`) |
 
-### Windows PowerShell installer
+### Windows manual install
 
-The repository now also includes a Windows installer that:
+`install.sh` is only supported on macOS and Linux. On Windows, install the CLI manually:
 
-- checks for the required Windows build/runtime dependencies
-- installs Visual C++ Build Tools, Java 17+, Google Chrome, and Rust when they are missing
-- downloads the latest released `Browser4.jar` to `%USERPROFILE%\.browser4\lib\Browser4.jar`
-- downloads the latest tagged Browser4 source and installs `browser4-cli.exe` to `%USERPROFILE%\.cargo\bin`
-
-Run from an elevated PowerShell session:
+1. Install Java 17+, Google Chrome, Rust, and the MSVC C++ build tools.
+2. Download the latest `Browser4.jar` release asset to `%USERPROFILE%\.browser4\lib\Browser4.jar`.
+3. Build and install `browser4-cli.exe` from source into Cargo's bin directory:
 
 ```powershell
-$installer = Join-Path $env:TEMP 'browser4-cli-install.ps1'
-Invoke-WebRequest 'https://raw.githubusercontent.com/platonai/Browser4/master/sdks/browser4-cli/install.ps1' -OutFile $installer
-powershell.exe -ExecutionPolicy Bypass -File $installer
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.browser4\lib" | Out-Null
+Invoke-WebRequest 'https://github.com/platonai/Browser4/releases/latest/download/Browser4.jar' -OutFile "$env:USERPROFILE\.browser4\lib\Browser4.jar"
+
+git clone https://github.com/platonai/Browser4.git
+cd Browser4\sdks\browser4-cli
+cargo install --path . --locked
 ```
 
-Optional environment overrides:
-
-| Variable | Description |
-|---|---|
-| `BROWSER4_INSTALL_VERSION` | Install a specific release tag instead of the latest one |
-| `BROWSER4_INSTALL_ROOT` | Override the Cargo install root (default: `%USERPROFILE%\.cargo`) |
-| `BROWSER4_LIB_DIR` | Override where `Browser4.jar` is stored (default: `%USERPROFILE%\.browser4\lib`) |
+By default, Cargo installs the executable to `%USERPROFILE%\.cargo\bin`. Ensure that directory is on `PATH`.
 
 ## Prerequisites
 
