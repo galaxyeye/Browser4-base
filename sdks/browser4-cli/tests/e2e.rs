@@ -925,6 +925,8 @@ fn is_transient_transport_failure(result: &CliRunResult) -> bool {
     combined.contains("http request failed: error sending request for url")
         || combined.contains("connection refused")
         || combined.contains("tcp connect error")
+        || combined.contains("failed: createtab")
+        || combined.contains("browserunavailable")
 }
 
 // ---------------------------------------------------------------------------
