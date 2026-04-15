@@ -46,8 +46,10 @@ use browser4_cli::managed_processes::kill_all_browsers;
 
 const INTERACTIVE_PATH: &str = "/interactive";
 const OTHER_PATH: &str = "/other";
+const FORM_PATH: &str = "/form";
 const INTERACTIVE_TITLE: &str = "Browser4 CLI Interactive Fixture";
 const OTHER_TITLE: &str = "Browser4 CLI Other Fixture";
+const FORM_TITLE: &str = "Browser4 CLI Form Fixture";
 
 // ---------------------------------------------------------------------------
 // Environment helpers
@@ -295,6 +297,156 @@ fn other_html() -> String {
     )
 }
 
+fn form_html() -> String {
+    format!(
+        r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{title}</title>
+  <style>
+    body {{ margin: 0; font-family: sans-serif; padding: 24px; }}
+    .form-group {{ margin-bottom: 12px; }}
+    label {{ display: block; margin-bottom: 4px; font-weight: bold; }}
+    input, select, textarea {{ padding: 4px 8px; width: 300px; }}
+    button {{ padding: 8px 24px; margin-top: 8px; }}
+    #result-panel {{ margin-top: 24px; padding: 12px; border: 1px solid #ccc; display: none; }}
+    #error-panel {{ margin-top: 12px; padding: 12px; border: 1px solid #c00; color: #c00; display: none; }}
+  </style>
+</head>
+<body>
+  <h1>Registration Form</h1>
+  <form id="registration-form">
+    <div class="form-group">
+      <label for="first-name">First Name</label>
+      <input id="first-name" type="text" required />
+    </div>
+    <div class="form-group">
+      <label for="last-name">Last Name</label>
+      <input id="last-name" type="text" required />
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input id="email" type="email" required />
+    </div>
+    <div class="form-group">
+      <label for="country">Country</label>
+      <select id="country">
+        <option value="">-- select --</option>
+        <option value="us">United States</option>
+        <option value="uk">United Kingdom</option>
+        <option value="jp">Japan</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>
+        <input id="agree-terms" type="checkbox" />
+        I agree to the terms
+      </label>
+    </div>
+    <div class="form-group">
+      <label for="comments">Comments</label>
+      <textarea id="comments" rows="3"></textarea>
+    </div>
+    <button id="submit-btn" type="button">Submit</button>
+    <button id="reset-btn" type="button">Reset</button>
+  </form>
+  <div id="result-panel">
+    <h2>Submission Result</h2>
+    <pre id="result-data"></pre>
+  </div>
+  <div id="error-panel"></div>
+  <pre id="state-log"></pre>
+  <script>
+    window.__browser4State = {{
+      firstName: '',
+      lastName: '',
+      email: '',
+      country: '',
+      agreeTerms: false,
+      comments: '',
+      submitCount: 0,
+      resetCount: 0,
+      lastSubmission: null,
+      validationError: ''
+    }};
+
+    function syncState() {{
+      const s = window.__browser4State;
+      s.firstName = document.getElementById('first-name').value;
+      s.lastName = document.getElementById('last-name').value;
+      s.email = document.getElementById('email').value;
+      s.country = document.getElementById('country').value;
+      s.agreeTerms = document.getElementById('agree-terms').checked;
+      s.comments = document.getElementById('comments').value;
+      document.getElementById('state-log').textContent = JSON.stringify(s);
+    }}
+
+    document.getElementById('submit-btn').addEventListener('click', () => {{
+      const s = window.__browser4State;
+      syncState();
+      const firstName = s.firstName.trim();
+      const lastName = s.lastName.trim();
+      const email = s.email.trim();
+      if (!firstName || !lastName || !email) {{
+        s.validationError = 'All fields are required';
+        document.getElementById('error-panel').textContent = s.validationError;
+        document.getElementById('error-panel').style.display = 'block';
+        document.getElementById('result-panel').style.display = 'none';
+        syncState();
+        return;
+      }}
+      if (!s.agreeTerms) {{
+        s.validationError = 'You must agree to the terms';
+        document.getElementById('error-panel').textContent = s.validationError;
+        document.getElementById('error-panel').style.display = 'block';
+        document.getElementById('result-panel').style.display = 'none';
+        syncState();
+        return;
+      }}
+      s.validationError = '';
+      s.submitCount += 1;
+      s.lastSubmission = {{
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        country: s.country,
+        comments: s.comments
+      }};
+      document.getElementById('error-panel').style.display = 'none';
+      document.getElementById('result-panel').style.display = 'block';
+      document.getElementById('result-data').textContent = JSON.stringify(s.lastSubmission, null, 2);
+      syncState();
+    }});
+
+    document.getElementById('reset-btn').addEventListener('click', () => {{
+      document.getElementById('first-name').value = '';
+      document.getElementById('last-name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('country').value = '';
+      document.getElementById('agree-terms').checked = false;
+      document.getElementById('comments').value = '';
+      document.getElementById('result-panel').style.display = 'none';
+      document.getElementById('error-panel').style.display = 'none';
+      window.__browser4State.resetCount += 1;
+      syncState();
+    }});
+
+    ['first-name', 'last-name', 'email', 'comments'].forEach(id => {{
+      document.getElementById(id).addEventListener('input', syncState);
+    }});
+    document.getElementById('country').addEventListener('change', syncState);
+    document.getElementById('agree-terms').addEventListener('change', syncState);
+
+    console.info('form fixture ready');
+    syncState();
+  </script>
+</body>
+</html>"#,
+        title = FORM_TITLE
+    )
+}
+
 // ---------------------------------------------------------------------------
 // Free-port helper
 // ---------------------------------------------------------------------------
@@ -385,6 +537,8 @@ fn serve_fixture_request(mut stream: std::net::TcpStream) {
         ("200 OK", "text/html; charset=utf-8", interactive_html())
     } else if path == OTHER_PATH {
         ("200 OK", "text/html; charset=utf-8", other_html())
+    } else if path == FORM_PATH {
+        ("200 OK", "text/html; charset=utf-8", form_html())
     } else {
         (
             "404 Not Found",
@@ -866,6 +1020,10 @@ impl E2ECtx {
 
     fn other_url(&self) -> String {
         format!("{}{}", self.fixture_base_url, OTHER_PATH)
+    }
+
+    fn form_url(&self) -> String {
+        format!("{}{}", self.fixture_base_url, FORM_PATH)
     }
 }
 
@@ -1630,6 +1788,316 @@ fn test_batch_commands(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
+fn test_batch_form_submission(ctx: &mut E2ECtx) {
+    reset_cli_artifacts(ctx);
+
+    // Use batch to open page, navigate to form, fill it out, and submit — all
+    // in a single invocation.
+    let form_url = ctx.form_url();
+    let open_command = format!("open {form_url}");
+
+    run_command(
+        ctx,
+        &[
+            "batch",
+            open_command.as_str(),
+            "fill #first-name 'Alice'",
+            "fill #last-name 'Johnson'",
+            "fill #email 'alice@example.com'",
+            "select #country us",
+            "check #agree-terms",
+            "fill #comments 'batch test comment'",
+            "click #submit-btn",
+        ],
+    );
+
+    // Verify the form state reflects our inputs and submission
+    wait_for_state(
+        ctx,
+        |s| {
+            s["firstName"].as_str() == Some("Alice")
+                && s["lastName"].as_str() == Some("Johnson")
+                && s["email"].as_str() == Some("alice@example.com")
+                && s["country"].as_str() == Some("us")
+                && s["agreeTerms"].as_bool() == Some(true)
+                && s["comments"].as_str() == Some("batch test comment")
+                && s["submitCount"].as_u64() == Some(1)
+                && s["validationError"].as_str() == Some("")
+        },
+        15_000,
+    );
+
+    // Verify lastSubmission has the correct data
+    let state = read_interactive_state(ctx);
+    let submission = &state["lastSubmission"];
+    assert_eq!(
+        submission["firstName"].as_str(),
+        Some("Alice"),
+        "Expected firstName in submission"
+    );
+    assert_eq!(
+        submission["email"].as_str(),
+        Some("alice@example.com"),
+        "Expected email in submission"
+    );
+
+    // Test reset and re-submit via batch --json
+    run_command_with_stdin(
+        ctx,
+        &["batch", "--json"],
+        r##"[
+  ["click", "#reset-btn"],
+  ["fill", "#first-name", "Bob"],
+  ["fill", "#last-name", "Smith"],
+  ["fill", "#email", "bob@example.com"],
+  ["select", "#country", "uk"],
+  ["check", "#agree-terms"],
+  ["click", "#submit-btn"]
+]"##,
+    );
+
+    wait_for_state(
+        ctx,
+        |s| {
+            s["submitCount"].as_u64() == Some(2)
+                && s["resetCount"].as_u64() == Some(1)
+                && s["firstName"].as_str() == Some("Bob")
+        },
+        15_000,
+    );
+
+    // Verify second submission data
+    let state = read_interactive_state(ctx);
+    let submission = &state["lastSubmission"];
+    assert_eq!(submission["firstName"].as_str(), Some("Bob"));
+    assert_eq!(submission["lastName"].as_str(), Some("Smith"));
+    assert_eq!(submission["country"].as_str(), Some("uk"));
+
+    run_command(ctx, &["close"]);
+}
+
+fn test_batch_multi_interaction(ctx: &mut E2ECtx) {
+    reset_cli_artifacts(ctx);
+
+    // Test a complex batch with multiple interaction types on the interactive page
+    let interactive_url = ctx.interactive_url();
+    let open_command = format!("open {interactive_url}");
+
+    // Batch: open, type, fill, check, select, click — all in one call
+    run_command(
+        ctx,
+        &[
+            "batch",
+            open_command.as_str(),
+            "type #type-target 'batch multi'",
+            "fill #fill-target 'batch fill'",
+            "check #check-target",
+            "select #select-target blue",
+            "click #click-target",
+            "click #click-target",
+        ],
+    );
+
+    wait_for_state(
+        ctx,
+        |s| {
+            s["typeValue"].as_str() == Some("batch multi")
+                && s["fillValue"].as_str() == Some("batch fill")
+                && s["checkbox"].as_bool() == Some(true)
+                && s["selectValue"].as_str() == Some("blue")
+                && s["clickCount"].as_u64() == Some(2)
+        },
+        15_000,
+    );
+
+    // Test batch with snapshot and screenshot outputs
+    let batch_result = run_command(
+        ctx,
+        &[
+            "batch",
+            "snapshot --filename=batch-snap.yml",
+            "screenshot --filename=batch-screen.png",
+        ],
+    );
+
+    // Verify snapshot file was created
+    let snapshot_path = ctx
+        .workspace_dir
+        .join(".browser4-cli")
+        .join("snapshot")
+        .join("batch-snap.yml");
+    assert!(
+        snapshot_path.exists(),
+        "Batch snapshot file not found at {snapshot_path:?}"
+    );
+
+    // Verify screenshot file was created
+    let screenshot_path = ctx
+        .workspace_dir
+        .join(".browser4-cli")
+        .join("snapshot")
+        .join("batch-screen.png");
+    assert!(
+        screenshot_path.exists(),
+        "Batch screenshot file not found at {screenshot_path:?}"
+    );
+    assert!(
+        fs::metadata(&screenshot_path).unwrap().len() > 0,
+        "Batch screenshot file is empty"
+    );
+
+    // Verify batch output contains references to both outputs
+    assert!(
+        batch_result.stdout.contains("[Snapshot]("),
+        "Expected snapshot link in batch output:\n{}",
+        batch_result.stdout
+    );
+
+    // Uncheck and verify via batch to test state reversal
+    run_command(ctx, &["batch", "uncheck #check-target"]);
+    wait_for_state(ctx, |s| s["checkbox"].as_bool() == Some(false), 15_000);
+
+    run_command(ctx, &["close"]);
+}
+
+fn test_batch_error_handling(ctx: &mut E2ECtx) {
+    reset_cli_artifacts(ctx);
+
+    let interactive_url = ctx.interactive_url();
+    let open_command = format!("open {interactive_url}");
+
+    // First open a session for subsequent tests
+    run_command(ctx, &["batch", open_command.as_str()]);
+
+    // Test: invalid command in the middle without --bail should continue
+    let _result = run_command_expecting_failure(
+        ctx,
+        &[
+            "batch",
+            "type #type-target 'before error'",
+            "this-is-not-a-valid-command",
+            "fill #fill-target 'after error'",
+        ],
+        "1 batch command(s) failed.",
+    );
+    // Fill should have executed despite the error in the middle
+    wait_for_state(
+        ctx,
+        |s| s["fillValue"].as_str() == Some("after error"),
+        15_000,
+    );
+
+    // Test: --bail stops at the first error
+    let _bail_result = run_command_expecting_failure(
+        ctx,
+        &[
+            "batch",
+            "--bail",
+            "type #type-target 'bail test'",
+            "unknown-command-xyz",
+            "fill #fill-target 'should not execute'",
+        ],
+        "Batch command 2 failed",
+    );
+    // Type should have executed (before the error)
+    wait_for_state(
+        ctx,
+        |s| s["typeValue"].as_str() == Some("bail test"),
+        15_000,
+    );
+    // Fill should NOT have executed
+    let fill_value = read_interactive_state(ctx)["fillValue"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    assert_eq!(
+        fill_value, "after error",
+        "Expected fill value unchanged after bail"
+    );
+
+    // Test: multiple errors without bail accumulates failure count
+    let _multi_error = run_command_expecting_failure(
+        ctx,
+        &[
+            "batch",
+            "bad-cmd-1",
+            "bad-cmd-2",
+            "type #type-target 'still works'",
+        ],
+        "2 batch command(s) failed.",
+    );
+    wait_for_state(
+        ctx,
+        |s| s["typeValue"].as_str() == Some("still works"),
+        15_000,
+    );
+
+    run_command(ctx, &["close"]);
+}
+
+fn test_batch_json_edge_cases(ctx: &mut E2ECtx) {
+    reset_cli_artifacts(ctx);
+
+    let interactive_url = ctx.interactive_url();
+    let open_command = format!("open {interactive_url}");
+
+    // Open a session first
+    run_command(ctx, &["batch", open_command.as_str()]);
+
+    // Test: JSON with mixed string and array entries
+    run_command_with_stdin(
+        ctx,
+        &["batch", "--json"],
+        r##"[
+  "type #type-target 'json mixed'",
+  ["fill", "#fill-target", "json array fill"],
+  "click #click-target"
+]"##,
+    );
+    wait_for_state(
+        ctx,
+        |s| {
+            s["typeValue"].as_str() == Some("json mixed")
+                && s["fillValue"].as_str() == Some("json array fill")
+                && s["clickCount"].as_u64() == Some(1)
+        },
+        15_000,
+    );
+
+    // Test: JSON with special characters in values
+    run_command_with_stdin(
+        ctx,
+        &["batch", "--json"],
+        r##"[
+  ["fill", "#fill-target", "special: @#$%&*"]
+]"##,
+    );
+    wait_for_state(
+        ctx,
+        |s| s["fillValue"].as_str() == Some("special: @#$%&*"),
+        15_000,
+    );
+
+    // Test: JSON with --bail (validate that --bail + --json are combinable)
+    // Run with stdin containing an unknown command to trigger failure
+    let bail_json_result = run_cli_process_with_stdin(
+        ctx,
+        &["batch", "--bail", "--json"],
+        Some(r##"["unknown-cmd", "fill #fill-target 'unreachable'"]"##),
+    );
+    assert_ne!(
+        bail_json_result.exit_code, 0,
+        "Expected batch --bail --json with unknown command to fail"
+    );
+    let combined = format!("{}\n{}", bail_json_result.stdout, bail_json_result.stderr);
+    assert!(
+        !combined.contains("unreachable"),
+        "Expected --bail to prevent 'unreachable' command from running:\n{combined}"
+    );
+
+    run_command(ctx, &["close"]);
+}
+
 fn test_mouse_and_dialog(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
     open_resized_interactive_page(ctx);
@@ -2159,6 +2627,34 @@ const SCENARIOS: &[ScenarioDef] = &[
         requires_browser4: true,
         restart_browser4: false,
         test_fn: test_batch_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_batch_form_submission",
+        short_name: "test_batch_form_submission",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_batch_form_submission,
+    },
+    ScenarioDef {
+        name: "test_e2e_batch_multi_interaction",
+        short_name: "test_batch_multi_interaction",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_batch_multi_interaction,
+    },
+    ScenarioDef {
+        name: "test_e2e_batch_error_handling",
+        short_name: "test_batch_error_handling",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_batch_error_handling,
+    },
+    ScenarioDef {
+        name: "test_e2e_batch_json_edge_cases",
+        short_name: "test_batch_json_edge_cases",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_batch_json_edge_cases,
     },
     ScenarioDef {
         name: "test_e2e_form_controls_and_exports",
