@@ -613,6 +613,8 @@ mod tests {
 
     #[test]
     fn test_parse_command_string_escaped_characters() {
+        // Backslash removes the special meaning of the next character rather than
+        // interpreting C-style escape sequences (e.g. `\n` → `n`, not newline).
         let parsed = parse_command_string(r##"fill "#input" "line1\nline2""##).unwrap();
         assert_eq!(parsed, vec!["fill", "#input", "line1nline2"]);
     }
