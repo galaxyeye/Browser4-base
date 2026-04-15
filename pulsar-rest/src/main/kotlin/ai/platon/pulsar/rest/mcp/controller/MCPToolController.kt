@@ -416,7 +416,6 @@ class MCPToolController(
                 val capabilities = step["capabilities"].toAnyMap().takeIf { !it.isNullOrEmpty() }
                 val managedSession = sessionManager.createSession(capabilities)
                 val sessionId = managedSession.sessionId
-                managedSession.driver
                 BatchExecutionResult(index = index, ok = true, sessionId = sessionId, text = "Session opened: $sessionId")
             }
 
