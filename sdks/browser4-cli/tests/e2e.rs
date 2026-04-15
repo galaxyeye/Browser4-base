@@ -1058,6 +1058,11 @@ impl E2ETestResources {
 
     fn restart_browser4(&mut self) {
         self.browser4 = None;
+        // Kill any lingering Chrome processes from the previous server before
+        // starting a fresh one.  Without this, the new Java server may see
+        // stale CDP browser contexts, leading to intermittent
+        // "Cannot find context with specified id" errors.
+        stop_browser4_server_forcibly();
         self.ensure_browser4();
     }
 }
@@ -1189,6 +1194,7 @@ fn is_transient_retryable_failure(result: &CliRunResult) -> bool {
         || combined.contains("tcp connect error")
         || combined.contains("failed to launch browser")
         || combined.contains("createtab")
+        || combined.contains("cannot find context")
 }
 
 // ---------------------------------------------------------------------------
@@ -2596,10 +2602,27 @@ fn run_named_scenario(
         resources.browser4 = None;
     }
     let started_at = Instant::now();
-    test_fn(&mut resources.ctx);
+    // Wrap the test in catch_unwind so that Browser4 and Chrome are always
+    // force-stopped even when the test panics, preventing leaked processes
+    // from contaminating later scenarios.
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        test_fn(&mut resources.ctx);
+    }));
     let duration = started_at.elapsed();
-    println!("ok ({})", format_duration(duration));
-    duration
+
+    // Forcibly stop server and Chrome regardless of success or failure.
+    stop_browser4_server_forcibly();
+
+    match result {
+        Ok(()) => {
+            println!("ok ({})", format_duration(duration));
+            duration
+        }
+        Err(payload) => {
+            println!("FAILED ({})", format_duration(duration));
+            std::panic::resume_unwind(payload);
+        }
+    }
 }
 
 type ScenarioFn = fn(&mut E2ECtx);
@@ -2771,7 +2794,6 @@ fn main() {
             scenario.test_fn,
         );
         timings.push((scenario.name.to_string(), duration));
-        stop_browser4_server_forcibly();
     }
 
     println!(
@@ -2783,5 +2805,6 @@ fn main() {
         println!("  {name}: {}", format_duration(duration));
     }
 
+    // Final safety net: ensure nothing lingers after all scenarios.
     stop_browser4_server_forcibly();
 }
