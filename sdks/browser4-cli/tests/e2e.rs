@@ -2619,7 +2619,12 @@ fn run_named_scenario(
             duration
         }
         Err(payload) => {
-            println!("FAILED ({})", format_duration(duration));
+            let msg = payload
+                .downcast_ref::<&str>()
+                .map(|s| s.to_string())
+                .or_else(|| payload.downcast_ref::<String>().cloned())
+                .unwrap_or_else(|| "<non-string panic>".to_string());
+            println!("FAILED ({}) - {}", format_duration(duration), msg);
             std::panic::resume_unwind(payload);
         }
     }
