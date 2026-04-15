@@ -286,6 +286,7 @@ fn force_stop(pid: u32) {
     {
         let _ = std::process::Command::new("kill")
             .args(["-KILL", &pid.to_string()])
+            .stderr(std::process::Stdio::null())
             .status();
     }
     #[cfg(windows)]

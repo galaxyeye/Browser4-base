@@ -1257,7 +1257,7 @@ fn assert_collective_session_call(mock_server: &MockBrowser4Server) {
     );
 }
 
-fn test_session_lifecycle(ctx: &mut E2ECtx) {
+fn test_session_open_and_list(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
 
     let open_result = run_command(ctx, &["open"]);
@@ -1274,7 +1274,10 @@ fn test_session_lifecycle(ctx: &mut E2ECtx) {
         "Expected session id '{session_id}' in list output:\n{}",
         list_result.stdout
     );
+    // Session remains open for test_session_close
+}
 
+fn test_session_close(ctx: &mut E2ECtx) {
     let close_result = run_command(ctx, &["close"]);
     assert!(
         close_result.stdout.contains("Session closed."),
@@ -1283,7 +1286,7 @@ fn test_session_lifecycle(ctx: &mut E2ECtx) {
     );
 }
 
-fn test_navigation_and_storage(ctx: &mut E2ECtx) {
+fn test_navigation(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
 
     run_command(ctx, &["open"]);
@@ -1335,7 +1338,10 @@ fn test_navigation_and_storage(ctx: &mut E2ECtx) {
         15_000,
         "Expected other page title after reload",
     );
+    // Session remains open for test_storage
+}
 
+fn test_storage(ctx: &mut E2ECtx) {
     let delete_result = run_command(ctx, &["delete-data"]);
     let stripped = strip_snapshot_output(&delete_result.stdout).to_lowercase();
     assert!(
@@ -1347,7 +1353,7 @@ fn test_navigation_and_storage(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
-fn test_interaction_commands(ctx: &mut E2ECtx) {
+fn test_typing_commands(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
     open_resized_interactive_page(ctx);
 
@@ -1377,7 +1383,10 @@ fn test_interaction_commands(ctx: &mut E2ECtx) {
         },
         15_000,
     );
+    // Session and interactive page remain open for test_keyboard_and_pointer_commands
+}
 
+fn test_keyboard_and_pointer_commands(ctx: &mut E2ECtx) {
     run_command(ctx, &["click", "#type-target"]);
     let keydown_before = key_event_count(&read_interactive_state(ctx));
     run_command(ctx, &["keydown", "Shift"]);
@@ -1431,7 +1440,7 @@ fn test_interaction_commands(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
-fn test_form_controls_and_exports(ctx: &mut E2ECtx) {
+fn test_form_controls(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
     open_interactive_page(ctx);
 
@@ -1452,7 +1461,10 @@ fn test_form_controls_and_exports(ctx: &mut E2ECtx) {
         |s| s["uploadName"].as_str() == Some("upload.txt"),
         15_000,
     );
+    // Session and interactive page remain open for test_export_commands
+}
 
+fn test_export_commands(ctx: &mut E2ECtx) {
     run_command_expecting_failure(
         ctx,
         &["console", "info"],
@@ -1496,7 +1508,7 @@ fn test_form_controls_and_exports(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
-fn test_mouse_and_dialog(ctx: &mut E2ECtx) {
+fn test_mouse_commands(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
     open_resized_interactive_page(ctx);
 
@@ -1538,7 +1550,10 @@ fn test_mouse_and_dialog(ctx: &mut E2ECtx) {
             && wheel_state["lastWheel"][1].as_i64() == Some(0),
         "Expected lastWheel to equal [160, 0], got {wheel_state:#?}"
     );
+    // Session and interactive page remain open for test_dialog_commands
+}
 
+fn test_dialog_commands(ctx: &mut E2ECtx) {
     eval_text(
         ctx,
         "(() => { setTimeout(() => document.getElementById('prompt-target').click(), 100); return 'scheduled'; })()",
@@ -1566,7 +1581,7 @@ fn test_mouse_and_dialog(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
-fn test_tab_commands(ctx: &mut E2ECtx) {
+fn test_tab_list_and_new(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
 
     open_interactive_page(ctx);
@@ -1591,7 +1606,13 @@ fn test_tab_commands(ctx: &mut E2ECtx) {
         tab_output.contains(&other_url),
         "Expected other URL in updated tab-list"
     );
+    // Two tabs remain open for test_tab_select_and_close
+}
 
+fn test_tab_select_and_close(ctx: &mut E2ECtx) {
+    let other_url = ctx.other_url();
+    let tab_list_result = run_command(ctx, &["tab-list"]);
+    let tab_output = strip_snapshot_output(&tab_list_result.stdout);
     let other_tab_id = extract_tab_id(&tab_output, &other_url);
 
     run_command(ctx, &["tab-select", &other_tab_id]);
@@ -1831,32 +1852,36 @@ fn excluded_commands() -> HashSet<&'static str> {
 /// sync with what the test functions actually call.
 fn tested_commands() -> HashSet<&'static str> {
     [
-        // test_session_lifecycle
+        // test_session_open_and_list
         "open",
         "list",
+        // test_session_close
         "close",
-        // test_navigation_and_storage
+        // test_navigation
         "goto",
         "go-back",
         "go-forward",
         "reload",
+        // test_storage
         "delete-data",
-        // test_interaction_commands
+        // test_typing_commands
         "resize",
         "type",
         "fill",
         "press",
+        // test_keyboard_and_pointer_commands
         "keydown",
         "keyup",
         "click",
         "dblclick",
         "hover",
         "drag",
-        // test_form_controls_and_exports
+        // test_form_controls
         "select",
         "check",
         "uncheck",
         "upload",
+        // test_export_commands
         "console",
         "snapshot",
         "screenshot",
@@ -1874,16 +1899,18 @@ fn tested_commands() -> HashSet<&'static str> {
         "co-scrape",
         "co-status",
         "co-result",
-        // test_mouse_and_dialog
+        // test_mouse_commands
         "mousemove",
         "mousedown",
         "mouseup",
         "mousewheel",
+        // test_dialog_commands
         "dialog-accept",
         "dialog-dismiss",
-        // test_tab_commands
+        // test_tab_list_and_new
         "tab-list",
         "tab-new",
+        // test_tab_select_and_close
         "tab-select",
         "tab-close",
         // eval is exercised indirectly by the eval_text helper
@@ -1971,6 +1998,9 @@ fn run_named_scenario(
     std::io::stdout().flush().expect("stdout flush failed");
     if requires_browser4 {
         if restart_browser4 {
+            // Kill lingering Chrome processes before restarting Browser4 so that
+            // they don't interfere with the fresh service instance.
+            kill_all_browsers();
             resources.restart_browser4();
         } else {
             resources.ensure_browser4();
@@ -1998,46 +2028,88 @@ struct ScenarioDef {
 
 const SCENARIOS: &[ScenarioDef] = &[
     ScenarioDef {
-        name: "test_e2e_session_lifecycle",
-        short_name: "test_session_lifecycle",
+        name: "test_e2e_session_open_and_list",
+        short_name: "test_session_open_and_list",
         requires_browser4: true,
         restart_browser4: true,
-        test_fn: test_session_lifecycle,
+        test_fn: test_session_open_and_list,
     },
     ScenarioDef {
-        name: "test_e2e_navigation_and_storage",
-        short_name: "test_navigation_and_storage",
+        name: "test_e2e_session_close",
+        short_name: "test_session_close",
         requires_browser4: true,
         restart_browser4: false,
-        test_fn: test_navigation_and_storage,
+        test_fn: test_session_close,
     },
     ScenarioDef {
-        name: "test_e2e_interaction_commands",
-        short_name: "test_interaction_commands",
+        name: "test_e2e_navigation",
+        short_name: "test_navigation",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_navigation,
+    },
+    ScenarioDef {
+        name: "test_e2e_storage",
+        short_name: "test_storage",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_storage,
+    },
+    ScenarioDef {
+        name: "test_e2e_typing_commands",
+        short_name: "test_typing_commands",
         requires_browser4: true,
         restart_browser4: true,
-        test_fn: test_interaction_commands,
+        test_fn: test_typing_commands,
     },
     ScenarioDef {
-        name: "test_e2e_form_controls_and_exports",
-        short_name: "test_form_controls_and_exports",
+        name: "test_e2e_keyboard_and_pointer_commands",
+        short_name: "test_keyboard_and_pointer_commands",
         requires_browser4: true,
         restart_browser4: false,
-        test_fn: test_form_controls_and_exports,
+        test_fn: test_keyboard_and_pointer_commands,
     },
     ScenarioDef {
-        name: "test_e2e_mouse_and_dialog",
-        short_name: "test_mouse_and_dialog",
+        name: "test_e2e_form_controls",
+        short_name: "test_form_controls",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_form_controls,
+    },
+    ScenarioDef {
+        name: "test_e2e_export_commands",
+        short_name: "test_export_commands",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_export_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_mouse_commands",
+        short_name: "test_mouse_commands",
         requires_browser4: true,
         restart_browser4: true,
-        test_fn: test_mouse_and_dialog,
+        test_fn: test_mouse_commands,
     },
     ScenarioDef {
-        name: "test_e2e_tab_commands",
-        short_name: "test_tab_commands",
+        name: "test_e2e_dialog_commands",
+        short_name: "test_dialog_commands",
         requires_browser4: true,
         restart_browser4: false,
-        test_fn: test_tab_commands,
+        test_fn: test_dialog_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_tab_list_and_new",
+        short_name: "test_tab_list_and_new",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_tab_list_and_new,
+    },
+    ScenarioDef {
+        name: "test_e2e_tab_select_and_close",
+        short_name: "test_tab_select_and_close",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_tab_select_and_close,
     },
     ScenarioDef {
         name: "test_e2e_collective_session_and_agent_tools",
@@ -2119,7 +2191,6 @@ fn main() {
             scenario.test_fn,
         );
         timings.push((scenario.name.to_string(), duration));
-        kill_all_browsers();
     }
 
     println!(
