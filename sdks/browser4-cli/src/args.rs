@@ -484,4 +484,271 @@ mod tests {
         let err = parse_batch_json_commands(r#"[["open",1]]"#).unwrap_err();
         assert!(err.contains("string arguments"));
     }
+
+    // -----------------------------------------------------------------------
+    // Batch argument parsing — edge cases
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_parse_batch_args_no_args_no_json_rejects() {
+        let args: Vec<String> = vec![];
+        let err = parse_batch_args(&args).unwrap_err();
+        assert!(
+            err.contains("at least one command"),
+            "Expected 'at least one command' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_args_json_mode_only() {
+        let args = vec!["--json".to_string()];
+        let parsed = parse_batch_args(&args).unwrap();
+        assert_eq!(
+            parsed,
+            BatchArgs {
+                bail: false,
+                json: true,
+                commands: vec![],
+            }
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_args_bail_and_json_combined() {
+        let args = vec!["--bail".to_string(), "--json".to_string()];
+        let parsed = parse_batch_args(&args).unwrap();
+        assert!(parsed.bail);
+        assert!(parsed.json);
+        assert!(parsed.commands.is_empty());
+    }
+
+    #[test]
+    fn test_parse_batch_args_double_dash_separator() {
+        let args = vec![
+            "--bail".to_string(),
+            "--".to_string(),
+            "--looks-like-flag".to_string(),
+            "snapshot".to_string(),
+        ];
+        let parsed = parse_batch_args(&args).unwrap();
+        assert!(parsed.bail);
+        assert!(!parsed.json);
+        assert_eq!(
+            parsed.commands,
+            vec!["--looks-like-flag".to_string(), "snapshot".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_args_single_command() {
+        let args = vec!["open https://example.com".to_string()];
+        let parsed = parse_batch_args(&args).unwrap();
+        assert!(!parsed.bail);
+        assert!(!parsed.json);
+        assert_eq!(parsed.commands, vec!["open https://example.com"]);
+    }
+
+    #[test]
+    fn test_parse_batch_args_many_commands() {
+        let args = vec![
+            "open https://example.com".to_string(),
+            "click #btn".to_string(),
+            "type #input 'hello'".to_string(),
+            "snapshot".to_string(),
+            "screenshot".to_string(),
+            "close".to_string(),
+        ];
+        let parsed = parse_batch_args(&args).unwrap();
+        assert_eq!(parsed.commands.len(), 6);
+    }
+
+    // -----------------------------------------------------------------------
+    // Command string parsing — edge cases
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_parse_command_string_empty_rejects() {
+        let err = parse_command_string("").unwrap_err();
+        assert!(err.contains("empty"), "Expected 'empty' in error: {err}");
+    }
+
+    #[test]
+    fn test_parse_command_string_whitespace_only_rejects() {
+        let err = parse_command_string("   \t  ").unwrap_err();
+        assert!(err.contains("empty"), "Expected 'empty' in error: {err}");
+    }
+
+    #[test]
+    fn test_parse_command_string_trailing_backslash_rejects() {
+        let err = parse_command_string(r"type hello\").unwrap_err();
+        assert!(
+            err.contains("escape"),
+            "Expected 'escape' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_command_string_special_characters() {
+        let parsed = parse_command_string(r##"fill "#email" "user@example.com""##).unwrap();
+        assert_eq!(parsed, vec!["fill", "#email", "user@example.com"]);
+    }
+
+    #[test]
+    fn test_parse_command_string_url_with_query_params() {
+        let parsed = parse_command_string(
+            r#"open "https://example.com/search?q=hello+world&lang=en""#,
+        )
+        .unwrap();
+        assert_eq!(
+            parsed,
+            vec!["open", "https://example.com/search?q=hello+world&lang=en"]
+        );
+    }
+
+    #[test]
+    fn test_parse_command_string_mixed_quotes() {
+        let parsed = parse_command_string(r##"type "#input" 'single quoted'"##).unwrap();
+        assert_eq!(parsed, vec!["type", "#input", "single quoted"]);
+    }
+
+    #[test]
+    fn test_parse_command_string_escaped_characters() {
+        // Backslash removes the special meaning of the next character rather than
+        // interpreting C-style escape sequences (e.g. `\n` → `n`, not newline).
+        let parsed = parse_command_string(r##"fill "#input" "line1\nline2""##).unwrap();
+        assert_eq!(parsed, vec!["fill", "#input", "line1nline2"]);
+    }
+
+    #[test]
+    fn test_parse_command_string_consecutive_spaces() {
+        let parsed = parse_command_string("click   #btn").unwrap();
+        assert_eq!(parsed, vec!["click", "#btn"]);
+    }
+
+    #[test]
+    fn test_parse_command_string_single_token() {
+        let parsed = parse_command_string("snapshot").unwrap();
+        assert_eq!(parsed, vec!["snapshot"]);
+    }
+
+    // -----------------------------------------------------------------------
+    // Batch JSON parsing — edge cases
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_parse_batch_json_commands_empty_array_rejects() {
+        let err = parse_batch_json_commands("[]").unwrap_err();
+        assert!(
+            err.contains("at least one command"),
+            "Expected 'at least one command' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_not_array_rejects() {
+        let err = parse_batch_json_commands(r#"{"cmd":"open"}"#).unwrap_err();
+        assert!(
+            err.contains("must be an array"),
+            "Expected 'must be an array' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_invalid_json_rejects() {
+        let err = parse_batch_json_commands("not json at all").unwrap_err();
+        assert!(
+            err.contains("Invalid batch JSON"),
+            "Expected 'Invalid batch JSON' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_empty_inner_array_rejects() {
+        let err = parse_batch_json_commands(r#"[[]]"#).unwrap_err();
+        assert!(
+            err.contains("must not be empty"),
+            "Expected 'must not be empty' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_numeric_entry_rejects() {
+        let err = parse_batch_json_commands(r#"[42]"#).unwrap_err();
+        assert!(
+            err.contains("string or string array"),
+            "Expected 'string or string array' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_null_entry_rejects() {
+        let err = parse_batch_json_commands(r#"[null]"#).unwrap_err();
+        assert!(
+            err.contains("string or string array"),
+            "Expected 'string or string array' in error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_mixed_formats() {
+        let parsed = parse_batch_json_commands(
+            r##"["open https://example.com", ["click", "#btn"], "snapshot"]"##,
+        )
+        .unwrap();
+        assert_eq!(parsed.len(), 3);
+        assert_eq!(
+            parsed[0],
+            vec!["open".to_string(), "https://example.com".to_string()]
+        );
+        assert_eq!(
+            parsed[1],
+            vec!["click".to_string(), "#btn".to_string()]
+        );
+        assert_eq!(parsed[2], vec!["snapshot".to_string()]);
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_single_command() {
+        let parsed = parse_batch_json_commands(r#"["snapshot"]"#).unwrap();
+        assert_eq!(parsed, vec![vec!["snapshot".to_string()]]);
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_special_chars_in_values() {
+        let parsed = parse_batch_json_commands(
+            r##"[["fill", "#email", "user+test@example.com"]]"##,
+        )
+        .unwrap();
+        assert_eq!(
+            parsed[0],
+            vec![
+                "fill".to_string(),
+                "#email".to_string(),
+                "user+test@example.com".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_unicode_values() {
+        let parsed = parse_batch_json_commands(
+            r##"[["fill", "#name", "日本語テスト"]]"##,
+        )
+        .unwrap();
+        assert_eq!(parsed[0][2], "日本語テスト");
+    }
+
+    #[test]
+    fn test_parse_batch_json_commands_many_commands() {
+        let input = (0..20)
+            .map(|i| format!(r##""click #btn-{i}""##))
+            .collect::<Vec<_>>()
+            .join(",");
+        let json_input = format!("[{input}]");
+        let parsed = parse_batch_json_commands(&json_input).unwrap();
+        assert_eq!(parsed.len(), 20);
+        for (i, cmd) in parsed.iter().enumerate() {
+            assert_eq!(cmd, &vec!["click".to_string(), format!("#btn-{i}")]);
+        }
+    }
 }
