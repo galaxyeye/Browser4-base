@@ -2991,7 +2991,7 @@ fn main() {
             &mut resources,
             scenario.requires_browser4,
             scenario.restart_browser4,
-            false,
+            true,
             scenario.test_fn,
         );
         timings.push(report);

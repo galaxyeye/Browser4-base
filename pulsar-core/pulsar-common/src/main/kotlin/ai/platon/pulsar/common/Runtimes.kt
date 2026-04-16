@@ -174,11 +174,11 @@ object Runtimes {
                 if (childCount > 0) {
                     logger.info("Forcibly killing process {} with {} child process(es)", pid, childCount)
                 }
-                
+
                 destroyChildProcess(handle)
                 if (handle.isAlive) handle.destroy()
                 if (handle.isAlive) handle.destroyForcibly()
-                
+
                 // Verify process was killed
                 if (handle.isAlive) {
                     logger.error("Failed to forcibly kill process {} using ProcessHandle", pid)
@@ -196,11 +196,11 @@ object Runtimes {
             SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC -> "kill -9 $pid"
             else -> "kill -9 $pid"
         }
-        runCatching { 
+        runCatching {
             exec(command)
             logger.info("Executed kill command for pid {}: {}", pid, command)
-        }.onFailure { 
-            logger.warn("Failed to forcibly kill pid {} using command: {}", pid, command, it) 
+        }.onFailure {
+            logger.warn("Failed to forcibly kill pid {} using command: {}", pid, command, it)
         }
     }
 
@@ -378,15 +378,20 @@ object Runtimes {
 
         val info = formatProcessInfo(process)
         val pid = process.pid()
-        
+
         process.destroy()
         if (process.isAlive) {
             process.destroyForcibly()
         }
-        
+
+        var n = 10
+        while (process.isAlive && n-- > 0) {
+            Thread.sleep(200)
+        }
+
         // Verify child was killed
         if (process.isAlive) {
-            logger.warn("Failed to kill child process {} | {}", pid, info)
+            logger.warn("Failed to kill children of process {} | {}", pid, info)
         } else {
             logger.debug("Exit child | {}", info)
         }
