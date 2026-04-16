@@ -32,6 +32,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 import kotlin.io.path.deleteIfExists
@@ -51,6 +52,37 @@ class ChromeLauncher constructor(
         private val logger = LoggerFactory.getLogger(ChromeLauncher::class.java)
 
         private val DEVTOOLS_LISTENING_LINE_PATTERN = Pattern.compile("^DevTools listening on (ws://.+:(\\d+)/.+)$")
+        private val BROWSER_PROCESS_KEYWORDS = listOf("chrome", "chromium", "google-chrome", "chromium-browser")
+
+        internal fun normalizeCommandText(text: String): String {
+            return text.trim().replace("\\", "/")
+        }
+
+        internal fun commandLineContainsUserDataDir(cmdLine: String, userDataDir: String, ignoreCase: Boolean = false): Boolean {
+            if (cmdLine.isBlank() || userDataDir.isBlank()) {
+                return false
+            }
+
+            val normalizedCmd = normalizeCommandText(cmdLine)
+            val normalizedPath = normalizeCommandText(userDataDir)
+            return normalizedCmd.contains(normalizedPath, ignoreCase = ignoreCase)
+        }
+
+        internal fun parseProcessListingLine(line: String): Pair<Long, String>? {
+            val trimmed = line.trim()
+            if (trimmed.isBlank()) {
+                return null
+            }
+
+            val match = Regex("^(\\d+)\\s+(.+)$").find(trimmed) ?: return null
+            val pid = match.groupValues[1].toLongOrNull() ?: return null
+            val commandLine = match.groupValues[2].trim()
+            if (commandLine.isBlank()) {
+                return null
+            }
+
+            return pid to commandLine
+        }
     }
 
     private val closed = AtomicBoolean()
@@ -94,6 +126,7 @@ class ChromeLauncher constructor(
      * @throws ChromeLaunchException If an error occurs during the Chrome process launch.
      */
     @Throws(ChromeLaunchException::class)
+    @Synchronized
     fun launch(chromeBinaryPath: Path, options: ChromeOptions): RemoteChrome {
         // Check if there's already a Chrome process using this userDataDir
         val existingPort = checkExistingChromeProcess()
@@ -121,7 +154,7 @@ class ChromeLauncher constructor(
                 if (e.message?.contains("profile is locked", ignoreCase = true) == true) {
                     if (i < 5) {
                         logger.warn("Chrome profile locked, retrying... ($i) | {}", e.message)
-                        
+
                         // Try to kill the zombie process holding the lock
                         killLockingProcess()
 
@@ -151,71 +184,338 @@ class ChromeLauncher constructor(
         return ChromeImpl(port)
     }
 
+    /**
+     * Launch chrome
+     * */
+    @Throws(ChromeLaunchException::class)
+    @Synchronized
+    fun launch(options: ChromeOptions) = launch(Browsers.searchChromeBinary(), options)
+
+    /**
+     * Launch chrome
+     * */
+    @Throws(ChromeLaunchException::class)
+    @Synchronized
+    fun launch(headless: Boolean) =
+        launch(Browsers.searchChromeBinary(), ChromeOptions().also { it.headless = headless })
+
+    /**
+     * Launch chrome
+     * */
+    @Throws(ChromeLaunchException::class)
+    @Synchronized
+    fun launch() = launch(true)
+
+    /**
+     * Destroy the chrome process forcibly.
+     * */
+    @Synchronized
+    fun destroyForcibly() {
+        try {
+            val pid = Files.readAllLines(pidPath).firstOrNull { it.isNotBlank() }?.toIntOrNull() ?: 0
+            if (pid > 0) {
+                logger.warn("Destroy chrome launcher forcibly, pid: {} | {}", pid, userDataDir)
+                Runtimes.destroyProcessForcibly(pid)
+            }
+        } catch (e: NoSuchFileException) {
+            logger.warn("NoSuchFileException | {}", e.message)
+        } catch (e: IOException) {
+            logger.warn("IOException | {}", e.message)
+        } catch (t: Throwable) {
+            warnInterruptible(this, t, "Failed to destroy chrome launcher forcibly | {}", userDataDir)
+        } finally {
+            clearProcessMarkers()
+        }
+    }
+
+    /**
+     * Stop the chrome process but keep the launcher active.
+     * */
+    @Synchronized
+    fun stop() {
+        shutdownHookRegistry.remove(shutdownHookThread)
+
+        val p = process
+        this.process = null
+        try {
+            if (p != null && p.isAlive) {
+                Runtimes.destroyProcess(p, options.shutdownWaitTime)
+                if (p.isAlive) {
+                    destroyForcibly()
+                }
+            }
+        } catch (t: Throwable) {
+            warnForClose(this, t)
+        } finally {
+            clearProcessMarkers()
+        }
+
+        try {
+            BrowserFiles.runCatching {
+                cleanUpContextTmpDir(temporaryUddExpiry)
+                cleanOldestContextTmpDirs(Duration.ofMinutes(2), recentNToKeep)
+            }.onFailure { warnForClose(this, it) }
+        } catch (t: Throwable) {
+            // ignored
+        }
+    }
+
+    /**
+     * Close the chrome process.
+     * The method throws nothing by design.
+     * */
+    override fun close() {
+        if (closed.compareAndSet(false, true)) {
+            stop()
+        }
+    }
+
+    /**
+     * Returns an exit value. This is just proxy to [Process.exitValue].
+     *
+     * @return Exit value of the process if exited.
+     * @throws [IllegalThreadStateException] if the subprocess has not yet terminated. [     ] If the process hasn't even started.
+     */
+    fun exitValue(): Int {
+        checkNotNull(process) { "Chrome process has not been started" }
+        return process!!.exitValue()
+    }
+
+    /**
+     * Tests whether the subprocess is alive. This is just proxy to [Process.isAlive].
+     *
+     * @return True if the subprocess has not yet terminated.
+     * @throws IllegalThreadStateException if the subprocess has not yet terminated.
+     */
+    @get:Synchronized
+    val isAlive: Boolean get() = process?.isAlive == true
+
+    val shouldBeWorking: Boolean get() = portPath.exists()
+
+    /**
+     * Launches a chrome process given a chrome binary and its arguments.
+     *
+     * Launching chrome processes is CPU consuming, so we do this in a synchronized manner
+     *
+     * @param chromeBinary Chrome binary path.
+     * @param userDataDir Chrome user data dir.
+     * @param chromeOptions Chrome arguments.
+     * @return Port on which devtools is listening.
+     * @throws ChromeLaunchException If an error occurs during chrome process start.
+     */
+    @Throws(ChromeLaunchException::class)
+    @Synchronized
+    private fun launchChromeProcess(chromeBinary: Path, userDataDir: Path, chromeOptions: ChromeOptions): Int {
+        if (!isActive) {
+            return 0
+        }
+
+        check(process == null) { "Chrome process has already been started" }
+        check(!isAlive) { "Chrome process has already been started" }
+
+        var supervisorProcess = options.supervisorProcess
+        if (supervisorProcess != null && Runtimes.locateBinary(supervisorProcess).isEmpty()) {
+            logger.warn("Supervisor program {} can not be located", options.supervisorProcess)
+            supervisorProcess = null
+        }
+
+        if (Runtimes.hasOnlyHeadlessBrowser()) {
+            logger.info("The current environment has no GUI support, force to headless mode")
+            chromeOptions.headless = true
+        }
+
+        val executable = supervisorProcess ?: "$chromeBinary"
+        var arguments = if (supervisorProcess == null) chromeOptions.toList() else {
+            options.supervisorProcessArgs + arrayOf("$chromeBinary") + chromeOptions.toList()
+        }.toMutableList()
+
+        if (userDataDir.startsWith(AppPaths.SYSTEM_DEFAULT_BROWSER_DATA_DIR_PLACEHOLDER)) {
+            // Open the default browser just like a real user daily do,
+            // open a blank page not to choose the profile
+            val args = "--remote-debugging-port=0 --remote-allow-origins=* about:blank"
+            arguments = args.split(" ").toMutableList()
+        } else {
+            arguments.add("--user-data-dir=$userDataDir")
+        }
+
+        return try {
+            Files.createDirectories(portPath.parent)
+
+            // Clean up any existing invalid port files before creating new ones
+            cleanupInvalidPortFile()
+
+            // --- Write launch arguments to file ---
+            writeLaunchArgumentsToFile(executable, arguments)
+
+            // Create port file with "0" to indicate process is starting
+            Files.writeString(portPath, "0", StandardOpenOption.CREATE)
+
+            shutdownHookRegistry.register(shutdownHookThread)
+            process = ProcessLauncher.launch(executable, arguments)
+
+            val p = process ?: throw ChromeLaunchException("Failed to start chrome process")
+
+            // Write PID file to indicate the process is alive
+            Files.writeString(pidPath, p.pid().toString(), StandardOpenOption.CREATE)
+
+            val port = waitForDevToolsServer(p)
+
+            // write port to indicate the process can be connected
+            Files.writeString(portPath, port.toString(), StandardOpenOption.TRUNCATE_EXISTING)
+
+            port
+        } catch (e: IllegalStateException) {
+            stop()
+            throw ChromeLaunchException("IllegalStateException while trying to launch chrome", e)
+        } catch (e: IOException) {
+            stop()
+            throw ChromeLaunchException("IOException while trying to start chrome", e)
+        } catch (e: Exception) {
+            // Close the process if failed to start, it throws nothing by design.
+            stop()
+            throw e
+        }
+    }
+
     private fun killLockingProcess() {
         try {
             logger.info("Attempting to find and kill process holding lock on {}", userDataDir)
-            val allProcesses = ProcessHandle.allProcesses().toList()
-            var found = false
+            val killedByProcessHandle = ProcessHandle.allProcesses()
+                .toList()
+                .asSequence()
+                .filter { isBrowserProcess(it) }
+                .filter { isCommandLineMatch(it.info().commandLine().orElse("") ?: "") }
+                .map { it.pid() }
+                .distinct()
+                .count { pid -> killProcessByPid(pid, "ProcessHandle") }
 
-            // Debug: count chrome processes
-            val chromeProcesses = allProcesses.filter {
-                it.info().command().map { cmd -> cmd.contains("chrome", ignoreCase = true) }.orElse(false)
-            }
-            logger.info("Found {} chrome processes via ProcessHandle", chromeProcesses.size)
-
-            chromeProcesses.forEach { handle ->
-                val cmdLine = handle.info().commandLine().orElse("")
-                
-                if (isCommandLineMatch(cmdLine)) {
-                    logger.warn("Killing process holding lock: pid={}, info={}", handle.pid(), handle.info())
-                    handle.destroyForcibly()
-                    found = true
+            val killedByFallback = if (killedByProcessHandle == 0) {
+                when {
+                    SystemUtils.IS_OS_WINDOWS -> killLockingProcessWindows()
+                    SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_LINUX -> killLockingProcessPosix()
+                    else -> {
+                        logger.warn("No platform-specific fallback is available for {}", System.getProperty("os.name"))
+                        0
+                    }
                 }
+            } else {
+                0
             }
 
-            if (!found && SystemUtils.IS_OS_WINDOWS) {
-                killLockingProcessWindows()
+            val totalKilled = killedByProcessHandle + killedByFallback
+            if (totalKilled > 0) {
+                logger.info("Killed {} browser process(es) holding lock on {}", totalKilled, userDataDir)
+                // Give the OS some time to release file locks and cleanup the process.
+                Thread.sleep(2000)
+            } else {
+                logger.info("No locking browser process found for {}", userDataDir)
             }
-            
-            // Give the OS some time to release file locks and cleanup the process
-            Thread.sleep(2000)
-
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            logger.warn("Interrupted while killing locking process for {}", userDataDir)
         } catch (e: Exception) {
             logger.warn("Failed to kill locking process", e)
         }
     }
 
     private fun isCommandLineMatch(cmdLine: String): Boolean {
-        if (cmdLine.isBlank()) return false
-        val normalizedCmd = cmdLine.replace("\\", "/")
-        val normalizedPath = userDataDir.toAbsolutePath().toString().replace("\\", "/")
-        return normalizedCmd.contains(normalizedPath)
+        return commandLineContainsUserDataDir(
+            cmdLine,
+            userDataDir.toAbsolutePath().toString(),
+            ignoreCase = SystemUtils.IS_OS_WINDOWS
+        )
     }
 
-    private fun killLockingProcessWindows() {
+    private fun killLockingProcessWindows(): Int {
         try {
-            logger.info("Trying wmic fallback to kill locking process")
-            val pb = ProcessBuilder("wmic", "process", "where", "name='chrome.exe'", "get", "commandline,processid")
-            val process = pb.start()
-            val output = String(process.inputStream.readAllBytes())
+            logger.info("Trying PowerShell fallback to kill locking process")
+            val normalizedPath = normalizeCommandText(userDataDir.toAbsolutePath().toString()).replace("'", "''")
+            val command = """
+                ${'$'}path = '$normalizedPath'
+                Get-CimInstance Win32_Process |
+                    Where-Object {
+                        ${'$'}_.Name -match '^(chrome|chromium)\.exe$' -and
+                        ${'$'}_.CommandLine -and
+                        ${'$'}_.CommandLine.Replace('\', '/') -like "*${'$'}path*"
+                    } |
+                    ForEach-Object { "{0}`t{1}" -f ${'$'}_.ProcessId, ${'$'}_.CommandLine }
+            """.trimIndent()
 
-            output.lines().forEach { line ->
-                if (isCommandLineMatch(line)) {
-                    // Extract PID (last token)
-                    val parts = line.trim().split("\\s+".toRegex())
-                    if (parts.isNotEmpty()) {
-                        val pidStr = parts.last()
-                        val pid = pidStr.toLongOrNull()
-                        if (pid != null) {
-                            logger.warn("Killing process holding lock (wmic): pid={}, line={}", pid, line.take(100))
-                            ProcessHandle.of(pid).ifPresent { it.destroyForcibly() }
-                        }
-                    }
-                }
-            }
+            val output = runCommandAndCollectOutput("powershell.exe", "-NoProfile", "-Command", command)
+            return killProcessesFromListing(output, "PowerShell")
         } catch (e: Exception) {
-            logger.warn("Failed to kill locking process via wmic", e)
+            logger.warn("Failed to kill locking process via PowerShell", e)
         }
+        return 0
+    }
+
+    private fun killLockingProcessPosix(): Int {
+        return try {
+            logger.info("Trying POSIX fallback to kill locking process")
+            val command = """
+                if command -v pgrep >/dev/null 2>&1; then
+                    pgrep -af 'chrome|chromium|google-chrome|chromium-browser'
+                else
+                    ps -eo pid=,args= | grep -E -i 'chrome|chromium|google-chrome|chromium-browser' | grep -v grep
+                fi
+            """.trimIndent()
+
+            val output = runCommandAndCollectOutput("bash", "-lc", command)
+            killProcessesFromListing(output, "POSIX")
+        } catch (e: Exception) {
+            logger.warn("Failed to kill locking process via POSIX fallback", e)
+            0
+        }
+    }
+
+    private fun killProcessesFromListing(lines: List<String>, source: String): Int {
+        return lines.asSequence()
+            .mapNotNull(::parseProcessListingLine)
+            .filter { (_, cmdLine) -> isCommandLineMatch(cmdLine) }
+            .map { (pid, _) -> pid }
+            .distinct()
+            .count { pid -> killProcessByPid(pid, source) }
+    }
+
+    private fun killProcessByPid(pid: Long, source: String): Boolean {
+        if (pid <= 0 || pid > Int.MAX_VALUE) {
+            logger.warn("Skipping invalid pid {} from {} while cleaning {}", pid, source, userDataDir)
+            return false
+        }
+
+        logger.warn("Killing process holding lock ({}): pid={} | {}", source, pid, userDataDir)
+        Runtimes.destroyProcessForcibly(pid.toInt())
+        return true
+    }
+
+    private fun isBrowserProcess(handle: ProcessHandle): Boolean {
+        val info = handle.info()
+        val command = info.command().orElse("") ?: ""
+        val commandLine = info.commandLine().orElse("") ?: ""
+        return isBrowserCommand(command) || isBrowserCommand(commandLine)
+    }
+
+    private fun isBrowserCommand(command: String): Boolean {
+        if (command.isBlank()) {
+            return false
+        }
+
+        val normalized = command.lowercase()
+        return BROWSER_PROCESS_KEYWORDS.any { normalized.contains(it) }
+    }
+
+    private fun runCommandAndCollectOutput(vararg command: String): List<String> {
+        val process = ProcessBuilder(*command)
+            .redirectErrorStream(true)
+            .start()
+
+        val output = process.inputStream.bufferedReader().use(BufferedReader::readLines)
+        if (!process.waitFor(10, TimeUnit.SECONDS)) {
+            process.destroyForcibly()
+            logger.warn("Timed out while executing fallback command: {}", command.joinToString(" "))
+        }
+
+        return output
     }
 
     /**
@@ -331,193 +631,6 @@ class ChromeLauncher constructor(
             logger.warn("Failed to cleanup invalid files: {}", e.message)
         }
         return 0
-    }
-
-    /**
-     * Launch chrome
-     * */
-    @Throws(ChromeLaunchException::class)
-    fun launch(options: ChromeOptions) = launch(Browsers.searchChromeBinary(), options)
-
-    /**
-     * Launch chrome
-     * */
-    @Throws(ChromeLaunchException::class)
-    fun launch(headless: Boolean) =
-        launch(Browsers.searchChromeBinary(), ChromeOptions().also { it.headless = headless })
-
-    /**
-     * Launch chrome
-     * */
-    @Throws(ChromeLaunchException::class)
-    fun launch() = launch(true)
-
-    /**
-     * Destroy the chrome process forcibly.
-     * */
-    fun destroyForcibly() {
-        try {
-            val pid = Files.readAllLines(pidPath).firstOrNull { it.isNotBlank() }?.toIntOrNull() ?: 0
-            if (pid > 0) {
-                logger.warn("Destroy chrome launcher forcibly, pid: {} | {}", pid, userDataDir)
-                Runtimes.destroyProcessForcibly(pid)
-            }
-        } catch (e: NoSuchFileException) {
-            logger.warn("NoSuchFileException | {}", e.message)
-        } catch (e: IOException) {
-            logger.warn("IOException | {}", e.message)
-        } catch (t: Throwable) {
-            warnInterruptible(this, t, "Failed to destroy chrome launcher forcibly | {}", userDataDir)
-        } finally {
-            clearProcessMarkers()
-        }
-    }
-
-    /**
-     * Stop the chrome process but keep the launcher active.
-     * */
-    fun stop() {
-        shutdownHookRegistry.remove(shutdownHookThread)
-
-        val p = process
-        this.process = null
-        try {
-            if (p != null && p.isAlive) {
-                Runtimes.destroyProcess(p, options.shutdownWaitTime)
-                if (p.isAlive) {
-                    destroyForcibly()
-                }
-            }
-        } catch (t: Throwable) {
-            warnForClose(this, t)
-        } finally {
-            clearProcessMarkers()
-        }
-
-        try {
-            BrowserFiles.runCatching {
-                cleanUpContextTmpDir(temporaryUddExpiry)
-                cleanOldestContextTmpDirs(Duration.ofMinutes(2), recentNToKeep)
-            }.onFailure { warnForClose(this, it) }
-        } catch (t: Throwable) {
-            // ignored
-        }
-    }
-
-    /**
-     * Close the chrome process.
-     * The method throws nothing by design.
-     * */
-    override fun close() {
-        if (closed.compareAndSet(false, true)) {
-            stop()
-        }
-    }
-
-    /**
-     * Returns an exit value. This is just proxy to [Process.exitValue].
-     *
-     * @return Exit value of the process if exited.
-     * @throws [IllegalThreadStateException] if the subprocess has not yet terminated. [     ] If the process hasn't even started.
-     */
-    fun exitValue(): Int {
-        checkNotNull(process) { "Chrome process has not been started" }
-        return process!!.exitValue()
-    }
-
-    /**
-     * Tests whether the subprocess is alive. This is just proxy to [Process.isAlive].
-     *
-     * @return True if the subprocess has not yet terminated.
-     * @throws IllegalThreadStateException if the subprocess has not yet terminated.
-     */
-    val isAlive: Boolean get() = process?.isAlive == true
-
-    val shouldBeWorking: Boolean get() = portPath.exists()
-
-    /**
-     * Launches a chrome process given a chrome binary and its arguments.
-     *
-     * Launching chrome processes is CPU consuming, so we do this in a synchronized manner
-     *
-     * @param chromeBinary Chrome binary path.
-     * @param userDataDir Chrome user data dir.
-     * @param chromeOptions Chrome arguments.
-     * @return Port on which devtools is listening.
-     * @throws ChromeLaunchException If an error occurs during chrome process start.
-     */
-    @Throws(ChromeLaunchException::class)
-    @Synchronized
-    private fun launchChromeProcess(chromeBinary: Path, userDataDir: Path, chromeOptions: ChromeOptions): Int {
-        if (!isActive) {
-            return 0
-        }
-
-        check(process == null) { "Chrome process has already been started" }
-        check(!isAlive) { "Chrome process has already been started" }
-
-        var supervisorProcess = options.supervisorProcess
-        if (supervisorProcess != null && Runtimes.locateBinary(supervisorProcess).isEmpty()) {
-            logger.warn("Supervisor program {} can not be located", options.supervisorProcess)
-            supervisorProcess = null
-        }
-
-        if (Runtimes.hasOnlyHeadlessBrowser()) {
-            logger.info("The current environment has no GUI support, force to headless mode")
-            chromeOptions.headless = true
-        }
-
-        val executable = supervisorProcess ?: "$chromeBinary"
-        var arguments = if (supervisorProcess == null) chromeOptions.toList() else {
-            options.supervisorProcessArgs + arrayOf("$chromeBinary") + chromeOptions.toList()
-        }.toMutableList()
-
-        if (userDataDir.startsWith(AppPaths.SYSTEM_DEFAULT_BROWSER_DATA_DIR_PLACEHOLDER)) {
-            // Open the default browser just like a real user daily do,
-            // open a blank page not to choose the profile
-            val args = "--remote-debugging-port=0 --remote-allow-origins=* about:blank"
-            arguments = args.split(" ").toMutableList()
-        } else {
-            arguments.add("--user-data-dir=$userDataDir")
-        }
-
-        return try {
-            Files.createDirectories(portPath.parent)
-
-            // Clean up any existing invalid port files before creating new ones
-            cleanupInvalidPortFile()
-
-            // --- Write launch arguments to file ---
-            writeLaunchArgumentsToFile(executable, arguments)
-
-            // Create port file with "0" to indicate process is starting
-            Files.writeString(portPath, "0", StandardOpenOption.CREATE)
-
-            shutdownHookRegistry.register(shutdownHookThread)
-            process = ProcessLauncher.launch(executable, arguments)
-
-            val p = process ?: throw ChromeLaunchException("Failed to start chrome process")
-
-            // Write PID file to indicate the process is alive
-            Files.writeString(pidPath, p.pid().toString(), StandardOpenOption.CREATE)
-
-            val port = waitForDevToolsServer(p)
-
-            // write port to indicate the process can be connected
-            Files.writeString(portPath, port.toString(), StandardOpenOption.TRUNCATE_EXISTING)
-
-            port
-        } catch (e: IllegalStateException) {
-            stop()
-            throw ChromeLaunchException("IllegalStateException while trying to launch chrome", e)
-        } catch (e: IOException) {
-            stop()
-            throw ChromeLaunchException("IOException while trying to start chrome", e)
-        } catch (e: Exception) {
-            // Close the process if failed to start, it throws nothing by design.
-            stop()
-            throw e
-        }
     }
 
     /**
