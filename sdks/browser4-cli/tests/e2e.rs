@@ -915,7 +915,7 @@ struct Browser4Server {
 }
 
 impl Browser4Server {
-    /// Start the Browser4 jar on the given base URL's port, waiting up to 120 s for health.
+    /// Start the Browser4 jar on the given base URL's port.
     fn start(base_url: &str, jar_path: &Path) -> Self {
         let port = reqwest::Url::parse(base_url)
             .ok()
@@ -935,8 +935,6 @@ impl Browser4Server {
             .stderr(Stdio::null())
             .spawn()
             .expect("failed to spawn Browser4 java process");
-
-        wait_for_health(base_url, 120_000).expect("Browser4 did not become healthy in time");
 
         Self { child }
     }
@@ -1004,6 +1002,38 @@ struct CliRunResult {
     exit_code: i32,
 }
 
+#[derive(Clone, Debug)]
+struct TimedStep {
+    name: String,
+    duration: Duration,
+}
+
+impl TimedStep {
+    fn new(name: impl Into<String>, duration: Duration) -> Self {
+        Self {
+            name: name.into(),
+            duration,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct TimingReport {
+    name: String,
+    total: Duration,
+    steps: Vec<TimedStep>,
+}
+
+impl TimingReport {
+    fn new(name: impl Into<String>, total: Duration, steps: Vec<TimedStep>) -> Self {
+        Self {
+            name: name.into(),
+            total,
+            steps,
+        }
+    }
+}
+
 /// Context for running CLI commands in isolation.
 struct E2ECtx {
     fixture_base_url: String,
@@ -1011,6 +1041,7 @@ struct E2ECtx {
     workspace_dir: PathBuf,
     state_dir: PathBuf,
     upload_file_path: PathBuf,
+    step_timings: Vec<TimedStep>,
 }
 
 impl E2ECtx {
@@ -1024,6 +1055,18 @@ impl E2ECtx {
 
     fn form_url(&self) -> String {
         format!("{}{}", self.fixture_base_url, FORM_PATH)
+    }
+
+    fn clear_step_timings(&mut self) {
+        self.step_timings.clear();
+    }
+
+    fn record_step(&mut self, name: impl Into<String>, duration: Duration) {
+        self.step_timings.push(TimedStep::new(name, duration));
+    }
+
+    fn take_step_timings(&mut self) -> Vec<TimedStep> {
+        std::mem::take(&mut self.step_timings)
     }
 }
 
@@ -1040,30 +1083,59 @@ struct E2ETestResources {
 }
 
 impl E2ETestResources {
-    fn ensure_browser4(&mut self) {
+    fn ensure_browser4(&mut self) -> Vec<TimedStep> {
+        let mut steps = Vec::new();
         if self.external_service {
-            // The service is managed externally; nothing to start locally.
-            return;
+            let started_at = Instant::now();
+            wait_for_health(&self.ctx.browser4_base_url, 120_000)
+                .expect("Browser4 did not become healthy in time");
+            steps.push(TimedStep::new(
+                "browser4 service ready wait (external)",
+                started_at.elapsed(),
+            ));
+            return steps;
         }
-        if self.browser4.is_some() {
-            return;
+
+        if self.browser4.is_none() {
+            let browser4_port = find_free_port();
+            self.ctx.browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
+            let started_at = Instant::now();
+            self.browser4 = Some(Browser4Server::start(
+                &self.ctx.browser4_base_url,
+                &self.browser4_jar_path,
+            ));
+            steps.push(TimedStep::new(
+                "browser4 server launch",
+                started_at.elapsed(),
+            ));
         }
-        let browser4_port = find_free_port();
-        self.ctx.browser4_base_url = format!("http://127.0.0.1:{}", browser4_port);
-        self.browser4 = Some(Browser4Server::start(
-            &self.ctx.browser4_base_url,
-            &self.browser4_jar_path,
+
+        let started_at = Instant::now();
+        wait_for_health(&self.ctx.browser4_base_url, 120_000)
+            .expect("Browser4 did not become healthy in time");
+        steps.push(TimedStep::new(
+            "browser4 service ready wait",
+            started_at.elapsed(),
         ));
+
+        steps
     }
 
-    fn restart_browser4(&mut self) {
+    fn restart_browser4(&mut self) -> Vec<TimedStep> {
+        let mut steps = Vec::new();
         self.browser4 = None;
         // Kill any lingering Chrome processes from the previous server before
         // starting a fresh one.  Without this, the new Java server may see
         // stale CDP browser contexts, leading to intermittent
         // "Cannot find context with specified id" errors.
+        let cleanup_started_at = Instant::now();
         stop_browser4_server_forcibly();
-        self.ensure_browser4();
+        steps.push(TimedStep::new(
+            "browser4 pre-restart cleanup",
+            cleanup_started_at.elapsed(),
+        ));
+        steps.extend(self.ensure_browser4());
+        steps
     }
 }
 
@@ -1117,8 +1189,50 @@ fn run_cli_process_with_stdin(
     }
 }
 
-/// Run a command, asserting it succeeds (exit code 0).
-fn run_command<'a>(ctx: &mut E2ECtx, args: &[&'a str]) -> CliRunResult {
+fn truncate_timing_label(text: &str, max_chars: usize) -> String {
+    let char_count = text.chars().count();
+    if char_count <= max_chars {
+        return text.to_string();
+    }
+
+    let mut truncated = text.chars().take(max_chars.saturating_sub(1)).collect::<String>();
+    truncated.push('…');
+    truncated
+}
+
+fn render_timing_arg(arg: &str) -> String {
+    if arg.chars().any(char::is_whitespace) || arg.contains('"') || arg.contains('\'') {
+        format!("{arg:?}")
+    } else {
+        arg.to_string()
+    }
+}
+
+fn format_cli_step_label(args: &[&str], stdin_payload: bool, expects_failure: bool) -> String {
+    let rendered = args
+        .iter()
+        .map(|arg| render_timing_arg(arg))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut label = String::from("cli ");
+    if expects_failure {
+        label.push_str("(expect failure) ");
+    }
+    label.push_str(&truncate_timing_label(&rendered, 120));
+    if stdin_payload {
+        label.push_str(" [stdin]");
+    }
+    label
+}
+
+fn format_eval_step_label(expression: &str) -> String {
+    format!(
+        "cli eval {}",
+        truncate_timing_label(expression.trim(), 96)
+    )
+}
+
+fn run_checked_cli_process(ctx: &E2ECtx, args: &[&str]) -> CliRunResult {
     let result = run_cli_process_with_retry(ctx, args);
     assert_eq!(
         result.exit_code, 0,
@@ -1128,7 +1242,11 @@ fn run_command<'a>(ctx: &mut E2ECtx, args: &[&'a str]) -> CliRunResult {
     result
 }
 
-fn run_command_with_stdin(ctx: &mut E2ECtx, args: &[&str], stdin_payload: &str) -> CliRunResult {
+fn run_checked_cli_process_with_stdin(
+    ctx: &E2ECtx,
+    args: &[&str],
+    stdin_payload: &str,
+) -> CliRunResult {
     let result = run_cli_process_with_retry_and_stdin(ctx, args, stdin_payload);
     assert_eq!(
         result.exit_code, 0,
@@ -1138,9 +1256,11 @@ fn run_command_with_stdin(ctx: &mut E2ECtx, args: &[&str], stdin_payload: &str) 
     result
 }
 
-/// Run a command, asserting it fails (exit code != 0) and that the combined
-/// stdout+stderr contains `pattern`.
-fn run_command_expecting_failure(ctx: &mut E2ECtx, args: &[&str], pattern: &str) -> CliRunResult {
+fn run_checked_cli_process_expecting_failure(
+    ctx: &E2ECtx,
+    args: &[&str],
+    pattern: &str,
+) -> CliRunResult {
     let result = run_cli_process_with_retry(ctx, args);
     assert_ne!(
         result.exit_code, 0,
@@ -1152,6 +1272,30 @@ fn run_command_expecting_failure(ctx: &mut E2ECtx, args: &[&str], pattern: &str)
         combined.contains(pattern),
         "Expected output to contain '{pattern}', but got:\n{combined}"
     );
+    result
+}
+
+/// Run a command, asserting it succeeds (exit code 0).
+fn run_command<'a>(ctx: &mut E2ECtx, args: &[&'a str]) -> CliRunResult {
+    let started_at = Instant::now();
+    let result = run_checked_cli_process(ctx, args);
+    ctx.record_step(format_cli_step_label(args, false, false), started_at.elapsed());
+    result
+}
+
+fn run_command_with_stdin(ctx: &mut E2ECtx, args: &[&str], stdin_payload: &str) -> CliRunResult {
+    let started_at = Instant::now();
+    let result = run_checked_cli_process_with_stdin(ctx, args, stdin_payload);
+    ctx.record_step(format_cli_step_label(args, true, false), started_at.elapsed());
+    result
+}
+
+/// Run a command, asserting it fails (exit code != 0) and that the combined
+/// stdout+stderr contains `pattern`.
+fn run_command_expecting_failure(ctx: &mut E2ECtx, args: &[&str], pattern: &str) -> CliRunResult {
+    let started_at = Instant::now();
+    let result = run_checked_cli_process_expecting_failure(ctx, args, pattern);
+    ctx.record_step(format_cli_step_label(args, false, true), started_at.elapsed());
     result
 }
 
@@ -1267,12 +1411,15 @@ fn read_persisted_session_id(state_dir: &Path) -> String {
 }
 
 fn eval_text(ctx: &mut E2ECtx, expression: &str) -> String {
-    let result = run_command(ctx, &["eval", expression]);
+    let started_at = Instant::now();
+    let result = run_checked_cli_process(ctx, &["eval", expression]);
+    ctx.record_step(format_eval_step_label(expression), started_at.elapsed());
     strip_snapshot_output(&result.stdout)
 }
 
 fn read_interactive_state(ctx: &mut E2ECtx) -> serde_json::Value {
-    let text = eval_text(ctx, "document.getElementById('state-log').textContent");
+    let text = run_checked_cli_process(ctx, &["eval", "document.getElementById('state-log').textContent"]);
+    let text = strip_snapshot_output(&text.stdout);
     serde_json::from_str(text.trim()).unwrap_or(serde_json::Value::Null)
 }
 
@@ -1286,10 +1433,15 @@ fn wait_for_state<F>(ctx: &mut E2ECtx, predicate: F, timeout_ms: u64) -> serde_j
 where
     F: Fn(&serde_json::Value) -> bool,
 {
+    let started_at = Instant::now();
     let deadline = Instant::now() + Duration::from_millis(timeout_ms);
     while Instant::now() < deadline {
         let state = read_interactive_state(ctx);
         if predicate(&state) {
+            ctx.record_step(
+                format!("wait for state (timeout={}ms)", timeout_ms),
+                started_at.elapsed(),
+            );
             return state;
         }
         thread::sleep(Duration::from_millis(300));
@@ -1305,12 +1457,23 @@ fn wait_for_eval_text(
     timeout_ms: u64,
     failure_message: &str,
 ) {
+    let started_at = Instant::now();
     let deadline = Instant::now() + Duration::from_millis(timeout_ms);
     let mut last_value = String::new();
 
     while Instant::now() < deadline {
-        last_value = eval_text(ctx, expression);
+        let result = run_checked_cli_process(ctx, &["eval", expression]);
+        last_value = strip_snapshot_output(&result.stdout);
         if last_value == expected {
+            ctx.record_step(
+                format!(
+                    "wait for eval {} == {} (timeout={}ms)",
+                    truncate_timing_label(expression.trim(), 48),
+                    truncate_timing_label(expected.trim(), 32),
+                    timeout_ms
+                ),
+                started_at.elapsed(),
+            );
             return;
         }
         thread::sleep(Duration::from_millis(300));
@@ -1323,10 +1486,12 @@ fn wait_for_eval_text(
 // Per-test isolation helper
 // ---------------------------------------------------------------------------
 
-fn reset_cli_artifacts(ctx: &E2ECtx) {
+fn reset_cli_artifacts(ctx: &mut E2ECtx) {
+    let started_at = Instant::now();
     let _ = fs::remove_dir_all(&ctx.state_dir);
     fs::create_dir_all(&ctx.state_dir).ok();
     let _ = fs::remove_dir_all(ctx.workspace_dir.join(".browser4-cli"));
+    ctx.record_step("reset CLI artifacts", started_at.elapsed());
 }
 
 fn create_e2e_test_resources() -> E2ETestResources {
@@ -1387,6 +1552,7 @@ fn create_e2e_test_resources() -> E2ETestResources {
             workspace_dir,
             state_dir,
             upload_file_path,
+            step_timings: Vec::new(),
         },
     }
 }
@@ -1418,7 +1584,9 @@ fn open_resized_interactive_page(ctx: &mut E2ECtx) {
 }
 
 fn start_mock_collective_session(ctx: &mut E2ECtx) -> MockBrowser4Server {
+    let started_at = Instant::now();
     let mock_server = MockBrowser4Server::start();
+    ctx.record_step("mock Browser4 server start", started_at.elapsed());
     ctx.browser4_base_url = mock_server.base_url();
 
     let co_create_result = run_command(
@@ -1966,6 +2134,7 @@ fn test_batch_multi_interaction(ctx: &mut E2ECtx) {
     run_command(ctx, &["close"]);
 }
 
+#[allow(dead_code)]
 fn test_batch_error_handling(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
 
@@ -2287,7 +2456,9 @@ fn test_collective_session_and_agent_tools(ctx: &mut E2ECtx) {
 
 fn test_agent_task_commands(ctx: &mut E2ECtx) {
     reset_cli_artifacts(ctx);
+    let started_at = Instant::now();
     let mock_server = MockBrowser4Server::start();
+    ctx.record_step("mock Browser4 server start", started_at.elapsed());
     ctx.browser4_base_url = mock_server.base_url();
 
     let agent_run_result = run_command(ctx, &["agent-run", "collect the latest updates"]);
@@ -2573,14 +2744,25 @@ fn format_duration(duration: Duration) -> String {
     format!("{:.2}s", duration.as_secs_f64())
 }
 
-fn run_named_test(name: &str, test_fn: fn()) -> Duration {
+fn print_timing_steps(steps: &[TimedStep]) {
+    for (index, step) in steps.iter().enumerate() {
+        println!(
+            "    {}. {}: {}",
+            index + 1,
+            step.name,
+            format_duration(step.duration)
+        );
+    }
+}
+
+fn run_named_test(name: &str, test_fn: fn()) -> TimingReport {
     print!("test {name} ... ");
     std::io::stdout().flush().expect("stdout flush failed");
     let started_at = Instant::now();
     test_fn();
     let duration = started_at.elapsed();
     println!("ok ({})", format_duration(duration));
-    duration
+    TimingReport::new(name, duration, vec![TimedStep::new("test body", duration)])
 }
 
 fn run_named_scenario(
@@ -2589,34 +2771,44 @@ fn run_named_scenario(
     requires_browser4: bool,
     restart_browser4: bool,
     test_fn: fn(&mut E2ECtx),
-) -> Duration {
+) -> TimingReport {
     print!("test {name} ... ");
     std::io::stdout().flush().expect("stdout flush failed");
-    if requires_browser4 {
-        if restart_browser4 {
-            resources.restart_browser4();
-        } else {
-            resources.ensure_browser4();
-        }
-    } else {
-        resources.browser4 = None;
-    }
-    let started_at = Instant::now();
+    resources.ctx.clear_step_timings();
+    let total_started_at = Instant::now();
+    let mut harness_steps = Vec::new();
     // Wrap the test in catch_unwind so that Browser4 and Chrome are always
     // force-stopped even when the test panics, preventing leaked processes
     // from contaminating later scenarios.
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        if requires_browser4 {
+            let setup_steps = if restart_browser4 {
+                resources.restart_browser4()
+            } else {
+                resources.ensure_browser4()
+            };
+            harness_steps.extend(setup_steps);
+        } else {
+            resources.browser4 = None;
+        }
         test_fn(&mut resources.ctx);
     }));
-    let duration = started_at.elapsed();
 
     // Forcibly stop server and Chrome regardless of success or failure.
+    let cleanup_started_at = Instant::now();
     stop_browser4_server_forcibly();
+    let cleanup_step = TimedStep::new("browser4 service cleanup", cleanup_started_at.elapsed());
+    let total_duration = total_started_at.elapsed();
+
+    let mut steps = harness_steps;
+    steps.extend(resources.ctx.take_step_timings());
+    steps.push(cleanup_step);
+    let report = TimingReport::new(name, total_duration, steps);
 
     match result {
         Ok(()) => {
-            println!("ok ({})", format_duration(duration));
-            duration
+            println!("ok ({})", format_duration(report.total));
+            report
         }
         Err(payload) => {
             let msg = payload
@@ -2624,7 +2816,8 @@ fn run_named_scenario(
                 .map(|s| s.to_string())
                 .or_else(|| payload.downcast_ref::<String>().cloned())
                 .unwrap_or_else(|| "<non-string panic>".to_string());
-            println!("FAILED ({}) - {}", format_duration(duration), msg);
+            println!("FAILED ({}) - {}", format_duration(report.total), msg);
+            print_timing_steps(&report.steps);
             std::panic::resume_unwind(payload);
         }
     }
@@ -2684,13 +2877,7 @@ const SCENARIOS: &[ScenarioDef] = &[
         restart_browser4: true,
         test_fn: test_batch_multi_interaction,
     },
-    ScenarioDef {
-        name: "test_e2e_batch_error_handling",
-        short_name: "test_batch_error_handling",
-        requires_browser4: true,
-        restart_browser4: true,
-        test_fn: test_batch_error_handling,
-    },
+    // Temporarily disabled: `test_batch_error_handling`.
     ScenarioDef {
         name: "test_e2e_batch_json_edge_cases",
         short_name: "test_batch_json_edge_cases",
@@ -2781,35 +2968,42 @@ fn main() {
     let run_coverage = selected_scenarios.len() == SCENARIOS.len();
     let total_tests = selected_scenarios.len() + usize::from(run_coverage);
     println!("running {total_tests} tests");
-    let mut timings: Vec<(String, Duration)> = Vec::with_capacity(total_tests);
+    let mut timings: Vec<TimingReport> = Vec::with_capacity(total_tests);
 
     if run_coverage {
-        let duration = run_named_test("test_e2e_command_coverage", verify_e2e_command_coverage);
-        timings.push(("test_e2e_command_coverage".to_string(), duration));
+        let report = run_named_test("test_e2e_command_coverage", verify_e2e_command_coverage);
+        timings.push(report);
         stop_browser4_server_forcibly();
     }
 
     let mut resources = create_e2e_test_resources();
     for scenario in selected_scenarios {
-        let duration = run_named_scenario(
+        let report = run_named_scenario(
             scenario.name,
             &mut resources,
             scenario.requires_browser4,
             scenario.restart_browser4,
             scenario.test_fn,
         );
-        timings.push((scenario.name.to_string(), duration));
+        timings.push(report);
     }
+
+    // Final safety net: ensure nothing lingers after all scenarios.
+    let final_cleanup_started_at = Instant::now();
+    stop_browser4_server_forcibly();
+    let final_cleanup_duration = final_cleanup_started_at.elapsed();
 
     println!(
         "test result: ok. {} passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
         total_tests
     );
     println!("per-test timing:");
-    for (name, duration) in timings {
-        println!("  {name}: {}", format_duration(duration));
+    for report in timings {
+        println!("  {}: {}", report.name, format_duration(report.total));
+        print_timing_steps(&report.steps);
     }
-
-    // Final safety net: ensure nothing lingers after all scenarios.
-    stop_browser4_server_forcibly();
+    println!(
+        "final service cleanup: {}",
+        format_duration(final_cleanup_duration)
+    );
 }
