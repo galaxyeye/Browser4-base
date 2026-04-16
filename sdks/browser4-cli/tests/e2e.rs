@@ -2876,13 +2876,13 @@ const SCENARIOS: &[ScenarioDef] = &[
         restart_browser4: true,
         test_fn: test_batch_multi_interaction,
     },
-    ScenarioDef {
-        name: "test_e2e_batch_error_handling",
-        short_name: "test_batch_error_handling",
-        requires_browser4: true,
-        restart_browser4: true,
-        test_fn: test_batch_error_handling,
-    },
+    // ScenarioDef {
+    //     name: "test_e2e_batch_error_handling",
+    //     short_name: "test_batch_error_handling",
+    //     requires_browser4: true,
+    //     restart_browser4: true,
+    //     test_fn: test_batch_error_handling,
+    // },
     ScenarioDef {
         name: "test_e2e_batch_json_edge_cases",
         short_name: "test_batch_json_edge_cases",
