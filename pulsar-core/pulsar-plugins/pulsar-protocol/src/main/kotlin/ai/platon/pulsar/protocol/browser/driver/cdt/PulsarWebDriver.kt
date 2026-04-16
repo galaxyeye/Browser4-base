@@ -605,8 +605,24 @@ class PulsarWebDriver(
     @Throws(WebDriverException::class)
     override suspend fun fill(selector: String, text: String) {
         driverHelper.invokeOnElement(selector, "fill", focus = true) { node ->
-            // val value = evaluateDetail("document.querySelector('$selector').value")?.value?.toString() ?: ""
-            val value = page.getAttribute(node, "value")
+            // value exists both as an HTML attribute and a JavaScript property, but the property represents the
+            // current state, which may differ from the attribute.
+            // | 类型        | 含义        | 是否随运行时变化                |
+            //| --------- | --------- | ----------------------- |
+            //| attribute | HTML 初始声明 | ❌ 不变（除非手动 setAttribute） |
+            //| property  | DOM 当前状态  | ✅ 会变（用户交互 / JS 修改）      |
+            val value = run {
+                val objectId = node.objectId ?: domAPI?.resolveNode(nodeId = node.nodeId)?.objectId
+                val liveValue = objectId?.let {
+                    runtimeAPI?.callFunctionOn(
+                        "function() { return this && typeof this.value !== 'undefined' ? this.value : null; }",
+                        objectId = it,
+                        returnByValue = true
+                    )?.result?.value?.toString()
+                }
+                liveValue ?: page.getAttribute(node, "value")
+            }
+
             if (value != null) {
                 // it's an input element, we should click on the right side of the element,
                 // so the cursor appears at the tail of the text
