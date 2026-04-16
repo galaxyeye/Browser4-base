@@ -2252,6 +2252,9 @@ fn test_batch_json_edge_cases(ctx: &mut E2ECtx) {
         15_000,
     );
 
+    // Open again to avoid dirty data
+    run_command(ctx, &["batch", open_command.as_str()]);
+
     // Test: JSON with special characters in values
     run_command_with_stdin(
         ctx,
@@ -2265,6 +2268,9 @@ fn test_batch_json_edge_cases(ctx: &mut E2ECtx) {
         |s| s["fillValue"].as_str() == Some("special: @#$%&*"),
         15_000,
     );
+
+    // Open again to avoid dirty data
+    run_command(ctx, &["batch", open_command.as_str()]);
 
     // Test: JSON with --bail (validate that --bail + --json are combinable)
     // Run with stdin containing an unknown command to trigger failure
@@ -2837,27 +2843,27 @@ struct ScenarioDef {
 }
 
 const SCENARIOS: &[ScenarioDef] = &[
-    // ScenarioDef {
-    //     name: "test_e2e_session_lifecycle",
-    //     short_name: "test_session_lifecycle",
-    //     requires_browser4: true,
-    //     restart_browser4: true,
-    //     test_fn: test_session_lifecycle,
-    // },
-    // ScenarioDef {
-    //     name: "test_e2e_navigation_and_storage",
-    //     short_name: "test_navigation_and_storage",
-    //     requires_browser4: true,
-    //     restart_browser4: false,
-    //     test_fn: test_navigation_and_storage,
-    // },
-    // ScenarioDef {
-    //     name: "test_e2e_interaction_commands",
-    //     short_name: "test_interaction_commands",
-    //     requires_browser4: true,
-    //     restart_browser4: true,
-    //     test_fn: test_interaction_commands,
-    // },
+    ScenarioDef {
+        name: "test_e2e_session_lifecycle",
+        short_name: "test_session_lifecycle",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_session_lifecycle,
+    },
+    ScenarioDef {
+        name: "test_e2e_navigation_and_storage",
+        short_name: "test_navigation_and_storage",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_navigation_and_storage,
+    },
+    ScenarioDef {
+        name: "test_e2e_interaction_commands",
+        short_name: "test_interaction_commands",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_interaction_commands,
+    },
     ScenarioDef {
         name: "test_e2e_batch_commands",
         short_name: "test_batch_commands",
@@ -2879,13 +2885,13 @@ const SCENARIOS: &[ScenarioDef] = &[
         restart_browser4: true,
         test_fn: test_batch_multi_interaction,
     },
-    // ScenarioDef {
-    //     name: "test_e2e_batch_error_handling",
-    //     short_name: "test_batch_error_handling",
-    //     requires_browser4: true,
-    //     restart_browser4: true,
-    //     test_fn: test_batch_error_handling,
-    // },
+    ScenarioDef {
+        name: "test_e2e_batch_error_handling",
+        short_name: "test_batch_error_handling",
+        requires_browser4: true,
+        restart_browser4: true,
+        test_fn: test_batch_error_handling,
+    },
     ScenarioDef {
         name: "test_e2e_batch_json_edge_cases",
         short_name: "test_batch_json_edge_cases",
@@ -2978,6 +2984,8 @@ fn main() {
     println!("running {total_tests} tests");
     let mut timings: Vec<TimingReport> = Vec::with_capacity(total_tests);
 
+    stop_browser4_server_forcibly();
+
     if run_coverage {
         let report = run_named_test("test_e2e_command_coverage", verify_e2e_command_coverage);
         timings.push(report);
@@ -2985,7 +2993,8 @@ fn main() {
     }
 
     let mut resources = create_e2e_test_resources();
-    let cleanup_browser4 = !cfg!(target_os = "windows");
+    // let cleanup_browser4 = !cfg!(target_os = "windows");
+    let cleanup_browser4 = true;
     for scenario in selected_scenarios {
         let report = run_named_scenario(
             scenario.name,
