@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use crate::state::resolve_default_state_dir;
 
 const DEFAULT_REGISTRY_NAME: &str = "cli-managed-processes.json";
+const BROWSER_PID_MARKER_FILE_NAME: &str = "launcher.pid";
 
 /// Information about a managed Browser4 server process.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -203,7 +204,7 @@ pub fn stop_browser4_server_forcibly() -> ForceStopBrowser4ServerResult {
 
 /// Kill all found Browser4 Chrome processes (marked with PULSAR_CHROME).
 pub fn kill_all_browsers() -> BrowserKillResult {
-    const KILL_TIMEOUT_MS: u64 = 15_000;
+    const KILL_TIMEOUT_MS: u64 = 30_000;
     const WAIT_BETWEEN_SWEEPS_MS: u64 = 250;
     const WAIT_AFTER_KILL_MS: u64 = 2_000;
 
@@ -215,6 +216,7 @@ pub fn kill_all_browsers() -> BrowserKillResult {
     loop {
         let pids = find_unique_pulsar_browser_processes();
         if pids.is_empty() {
+            // println!("No more Browser4 Chrome processes found.");
             break;
         }
 
@@ -236,14 +238,158 @@ pub fn kill_all_browsers() -> BrowserKillResult {
     result.killed_pids.sort_unstable();
     result.killed_pids.dedup();
     result.remaining_pids = find_unique_pulsar_browser_processes();
+
+    // println!("Browser4 Chrome kill complete. Killed: {}, Remaining: {}",
+    //     result.killed_pids.len(),
+    //     result.remaining_pids.len()
+    // );
+
     result
 }
 
 fn find_unique_pulsar_browser_processes() -> Vec<u32> {
     let mut pids = find_pulsar_browser_processes();
+    pids.extend(find_browser_processes_from_markers());
     pids.sort_unstable();
     pids.dedup();
     pids
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct BrowserMarkerPid {
+    pid: u32,
+    marker_dir: PathBuf,
+}
+
+fn find_browser_processes_from_markers() -> Vec<u32> {
+    collect_browser_marker_pid_entries(&browser_marker_search_roots())
+        .into_iter()
+        .filter(|entry| marker_pid_matches_browser(entry))
+        .map(|entry| entry.pid)
+        .collect()
+}
+
+fn browser_marker_search_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+
+    if let Some(home) = dirs::home_dir() {
+        roots.push(home.join(".browser4").join("browser").join("chrome"));
+    }
+
+    let temp_dir = std::env::temp_dir();
+    if let Ok(entries) = fs::read_dir(&temp_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+
+            let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
+                continue;
+            };
+            if !name.starts_with("browser4") {
+                continue;
+            }
+
+            roots.push(path.join("context"));
+            roots.push(path.join("browser").join("chrome"));
+        }
+    }
+
+    roots.retain(|path| path.is_dir());
+    roots.sort();
+    roots.dedup();
+    roots
+}
+
+fn collect_browser_marker_pid_entries(roots: &[PathBuf]) -> Vec<BrowserMarkerPid> {
+    let mut entries = Vec::new();
+    for root in roots {
+        collect_browser_marker_pid_entries_under(root, 0, &mut entries);
+    }
+    entries.sort_by(|left, right| {
+        left.pid
+            .cmp(&right.pid)
+            .then_with(|| left.marker_dir.cmp(&right.marker_dir))
+    });
+    entries.dedup();
+    entries
+}
+
+fn collect_browser_marker_pid_entries_under(
+    dir: &Path,
+    depth: usize,
+    entries: &mut Vec<BrowserMarkerPid>,
+) {
+    const MAX_SEARCH_DEPTH: usize = 6;
+
+    if depth > MAX_SEARCH_DEPTH {
+        return;
+    }
+
+    let Ok(children) = fs::read_dir(dir) else {
+        return;
+    };
+
+    let mut subdirs = Vec::new();
+    let mut marker_found_in_dir = false;
+
+    for child in children.flatten() {
+        let path = child.path();
+        if path.is_dir() {
+            subdirs.push(path);
+            continue;
+        }
+
+        if path.file_name().and_then(|value| value.to_str())
+            == Some(BROWSER_PID_MARKER_FILE_NAME)
+        {
+            if let Some(pid) = read_marker_pid(&path) {
+                entries.push(BrowserMarkerPid {
+                    pid,
+                    marker_dir: dir.to_path_buf(),
+                });
+            }
+            marker_found_in_dir = true;
+        }
+    }
+
+    if marker_found_in_dir {
+        return;
+    }
+
+    for subdir in subdirs {
+        collect_browser_marker_pid_entries_under(&subdir, depth + 1, entries);
+    }
+}
+
+fn read_marker_pid(path: &Path) -> Option<u32> {
+    fs::read_to_string(path)
+        .ok()?
+        .trim()
+        .parse::<u32>()
+        .ok()
+}
+
+fn marker_pid_matches_browser(entry: &BrowserMarkerPid) -> bool {
+    is_process_running(entry.pid)
+        && is_browser_process(entry.pid)
+        && process_command_line(entry.pid)
+            .map(|command_line| command_line_matches_marker_dir(&command_line, &entry.marker_dir))
+            .unwrap_or(false)
+}
+
+fn command_line_matches_marker_dir(command_line: &str, marker_dir: &Path) -> bool {
+    let marker_dir = normalize_process_text(&marker_dir.to_string_lossy());
+    if marker_dir.is_empty() {
+        return false;
+    }
+
+    normalize_process_text(command_line).contains(&marker_dir)
+}
+
+fn normalize_process_text(value: &str) -> String {
+    value.replace('\\', "/").to_ascii_lowercase()
 }
 
 fn find_pulsar_browser_processes() -> Vec<u32> {
@@ -277,6 +423,111 @@ fn find_pulsar_browser_processes() -> Vec<u32> {
     }
 
     pids
+}
+
+fn is_browser_process(pid: u32) -> bool {
+    process_name(pid)
+        .map(|name| matches_browser_name(&name))
+        .unwrap_or(false)
+}
+
+fn matches_browser_name(name: &str) -> bool {
+    matches!(
+        normalize_process_text(name).as_str(),
+        "chrome" | "chrome.exe" | "chromium" | "chromium-browser" | "msedge" | "msedge.exe"
+    )
+}
+
+fn process_name(pid: u32) -> Option<String> {
+    #[cfg(unix)]
+    {
+        use std::process::Command;
+        let output = Command::new("ps")
+            .args(["-o", "comm=", "-p", &pid.to_string()])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if name.is_empty() {
+            None
+        } else {
+            Some(name)
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        use std::process::Command;
+        let output = Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &format!(
+                    "(Get-CimInstance Win32_Process -Filter \"ProcessId = {}\" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)",
+                    pid
+                ),
+            ])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if name.is_empty() {
+            None
+        } else {
+            Some(name)
+        }
+    }
+}
+
+fn process_command_line(pid: u32) -> Option<String> {
+    #[cfg(unix)]
+    {
+        use std::process::Command;
+        let output = Command::new("ps")
+            .args(["-o", "args=", "-p", &pid.to_string()])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let command_line = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if command_line.is_empty() {
+            None
+        } else {
+            Some(command_line)
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        use std::process::Command;
+        let output = Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &format!(
+                    "(Get-CimInstance Win32_Process -Filter \"ProcessId = {}\" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty CommandLine)",
+                    pid
+                ),
+            ])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let command_line = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if command_line.is_empty() {
+            None
+        } else {
+            Some(command_line)
+        }
+    }
 }
 
 fn parse_pid_list(stdout: &[u8]) -> Vec<u32> {
@@ -465,5 +716,51 @@ mod tests {
     fn test_parse_pid_list_ignores_noise() {
         let stdout = b"123\nwarning\n\n456 \nnot-a-pid\n789\r\n";
         assert_eq!(parse_pid_list(stdout), vec![123, 456, 789]);
+    }
+
+    #[test]
+    fn test_collect_browser_marker_pid_entries_discovers_nested_markers() {
+        let tmp = TempDir::new().unwrap();
+        let root = tmp
+            .path()
+            .join("browser4-user")
+            .join("context")
+            .join("tmp")
+            .join("groups")
+            .join("default")
+            .join("cx.1");
+        fs::create_dir_all(root.join("PULSAR_CHROME")).unwrap();
+        fs::write(root.join(BROWSER_PID_MARKER_FILE_NAME), "4321\n").unwrap();
+        fs::write(root.join("ignored.txt"), "noise").unwrap();
+
+        let entries = collect_browser_marker_pid_entries(&[tmp.path().join("browser4-user").join("context")]);
+
+        assert_eq!(
+            entries,
+            vec![BrowserMarkerPid {
+                pid: 4321,
+                marker_dir: root,
+            }]
+        );
+    }
+
+    #[test]
+    fn test_collect_browser_marker_pid_entries_ignores_invalid_marker_contents() {
+        let tmp = TempDir::new().unwrap();
+        let root = tmp.path().join("browser").join("chrome").join("default");
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join(BROWSER_PID_MARKER_FILE_NAME), "not-a-pid").unwrap();
+
+        let entries = collect_browser_marker_pid_entries(&[tmp.path().join("browser")]);
+
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_command_line_matches_marker_dir_normalizes_windows_paths() {
+        let marker_dir = PathBuf::from(r"C:\Users\tester\.browser4\browser\chrome\default");
+        let command_line = r#""C:/Program Files/Google/Chrome/Application/chrome.exe" --user-data-dir=C:/Users/tester/.browser4/browser/chrome/default/chrome --remote-debugging-port=0"#;
+
+        assert!(command_line_matches_marker_dir(command_line, &marker_dir));
     }
 }
