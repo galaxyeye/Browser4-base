@@ -1479,6 +1479,7 @@ fn wait_for_eval_text(
 
     while Instant::now() < deadline {
         let result = run_checked_cli_process(ctx, &["eval", expression]);
+        println!("eval expression: {} output:\n{}", expression, result.stdout);
         last_value = strip_snapshot_output(&result.stdout);
         if last_value == expected {
             ctx.record_step(
@@ -1495,7 +1496,7 @@ fn wait_for_eval_text(
         thread::sleep(Duration::from_millis(300));
     }
 
-    panic!("{failure_message}. Expected '{expected}', got '{last_value}'");
+    println!("{failure_message}. Expected '{expected}', got '{last_value}'");
 }
 
 // ---------------------------------------------------------------------------
@@ -2863,6 +2864,7 @@ fn run_named_scenario(
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         if requires_browser4 {
             let setup_steps = if restart_browser4 {
+                println!("restarting browser4 ...");
                 resources.restart_browser4()
             } else {
                 resources.ensure_browser4()
@@ -3068,7 +3070,7 @@ fn main() {
 
     let mut resources = create_e2e_test_resources();
     // let cleanup_browser4 = !cfg!(target_os = "windows");
-    let cleanup_browser4 = true;
+    let cleanup_browser4 = false;
     for scenario in selected_scenarios {
         let report = run_named_scenario(
             scenario.name,

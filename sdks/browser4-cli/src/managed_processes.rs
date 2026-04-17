@@ -3,13 +3,13 @@
 //! Tracks Browser4 server processes started by this CLI so they can be shut down
 //! later via `close-all` or `kill-all`.
 
+use crate::state::{read_state, resolve_default_state_dir};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::thread::sleep;
-use crate::state::{read_state, resolve_default_state_dir};
 
 const DEFAULT_REGISTRY_NAME: &str = "cli-managed-processes.json";
 const BROWSER_PID_MARKER_FILE_NAME: &str = "launcher.pid";
@@ -198,18 +198,32 @@ pub fn stop_browser4_server_gracefully() -> ShutdownResult {
 
 /// Force-stop all managed Browser4 server processes, then kill all related Chrome processes.
 pub fn stop_browser4_server_forcibly() -> ForceStopBrowser4ServerResult {
+    println!("Force-stopping Browser4 server processes and related browsers...");
+
     let client = reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(2))
         .build()
         .expect("HTTP client construction should not fail");
     let state_dir = resolve_default_state_dir();
 
-    stop_browser4_server_forcibly_with_steps(
+    let result = stop_browser4_server_forcibly_with_steps(
         || notify_close_all_sessions_before_force_stop(&client, None, Some(&state_dir)),
         || stop_browser4_server(true),
         kill_all_browsers,
         || sleep(std::time::Duration::from_secs(5)),
-    )
+    );
+
+    // if this is linux, run "pkill -9 chrome"
+    // TODO: this is a temporary solution
+    if cfg!(target_os = "linux") || cfg!(target_os = "macos")
+    {
+        let _ = std::process::Command::new("pkill")
+            .args(["-9", "chrome"])
+            .status();
+        sleep(std::time::Duration::from_secs(3));
+    }
+
+    result
 }
 
 fn stop_browser4_server_forcibly_with_steps<NotifyCloseAll, StopServer, KillBrowsers, SleepAfter>(
@@ -249,10 +263,7 @@ fn notify_close_all_sessions_before_force_stop(
     }
 
     if !warnings.is_empty() {
-        eprintln!(
-            "kill-all close-all warnings: {}",
-            warnings.join(" | ")
-        );
+        eprintln!("kill-all close-all warnings: {}", warnings.join(" | "));
     }
 }
 
@@ -314,15 +325,14 @@ fn call_close_all_sessions(
         return Err(message.to_string());
     }
 
-    Ok(
-        data.get("content")
-            .and_then(|content| content.as_array())
-            .and_then(|items| items.first())
-            .and_then(|item| item.get("text"))
-            .and_then(|text| text.as_str())
-            .unwrap_or("")
-            .to_string(),
-    )
+    Ok(data
+        .get("content")
+        .and_then(|content| content.as_array())
+        .and_then(|items| items.first())
+        .and_then(|item| item.get("text"))
+        .and_then(|text| text.as_str())
+        .unwrap_or("")
+        .to_string())
 }
 
 /// Kill all found Browser4 Chrome processes (marked with PULSAR_CHROME).
@@ -363,9 +373,10 @@ pub fn kill_all_browsers() -> BrowserKillResult {
     result.remaining_pids = find_unique_pulsar_browser_processes();
 
     if result.killed_pids.len() + result.remaining_pids.len() > 0 {
-        println!("Browser4 Chrome kill complete. Killed: {}, Remaining: {}",
-                 result.killed_pids.len(),
-                 result.remaining_pids.len()
+        println!(
+            "Browser4 Chrome kill complete. Killed: {}, Remaining: {}",
+            result.killed_pids.len(),
+            result.remaining_pids.len()
         );
     }
 
@@ -466,9 +477,7 @@ fn collect_browser_marker_pid_entries_under(
             continue;
         }
 
-        if path.file_name().and_then(|value| value.to_str())
-            == Some(BROWSER_PID_MARKER_FILE_NAME)
-        {
+        if path.file_name().and_then(|value| value.to_str()) == Some(BROWSER_PID_MARKER_FILE_NAME) {
             if let Some(pid) = read_marker_pid(&path) {
                 entries.push(BrowserMarkerPid {
                     pid,
@@ -489,11 +498,7 @@ fn collect_browser_marker_pid_entries_under(
 }
 
 fn read_marker_pid(path: &Path) -> Option<u32> {
-    fs::read_to_string(path)
-        .ok()?
-        .trim()
-        .parse::<u32>()
-        .ok()
+    fs::read_to_string(path).ok()?.trim().parse::<u32>().ok()
 }
 
 fn marker_pid_matches_browser(entry: &BrowserMarkerPid) -> bool {
@@ -858,7 +863,8 @@ mod tests {
         fs::write(root.join(BROWSER_PID_MARKER_FILE_NAME), "4321\n").unwrap();
         fs::write(root.join("ignored.txt"), "noise").unwrap();
 
-        let entries = collect_browser_marker_pid_entries(&[tmp.path().join("browser4-user").join("context")]);
+        let entries =
+            collect_browser_marker_pid_entries(&[tmp.path().join("browser4-user").join("context")]);
 
         assert_eq!(
             entries,
