@@ -248,11 +248,10 @@ async fn download_jar(target_path: &Path) -> Result<(), String> {
         .map_err(|e| format!("Download failed: {e}"))?;
 
     if !response.status().is_success() {
-        let status = response.status();
-        log::error!("Browser4.jar download failed with HTTP status: {}", status);
+        log::error!("Browser4.jar download failed with HTTP status: {}", response.status());
         return Err(format!(
             "Download failed with status: {}",
-            status
+            response.status()
         ));
     }
 

@@ -1,17 +1,32 @@
 //! Logging initialisation for the Browser4 CLI.
 //!
-//! The logger is configured via the `RUST_LOG` environment variable (standard
-//! `env_logger` convention).  When the variable is not set the default filter
-//! is `warn`, which means only warnings and errors are shown.  To enable
-//! verbose output, set `RUST_LOG=browser4_cli=debug` (or `=trace` for even
-//! more detail).
+//! The logger is configured via environment variables using standard
+//! `env_logger` conventions.  When no variable is set the default filter
+//! is `warn`, which means only warnings and errors are shown.
+//!
+//! # Configuration
+//!
+//! The log level is resolved in the following order:
+//! 1. `RUST_LOG` — standard `env_logger` filter syntax (e.g. `browser4_cli=debug`).
+//! 2. `BROWSER4_LOG` — simple level name as a project-specific convenience
+//!    (e.g. `debug`, `info`, `warn`, `error`).
+//! 3. Built-in default: `warn`.
 //!
 //! # Examples
+//!
+//! ```bash
+//! # Show debug output for browser4-cli only
+//! RUST_LOG=browser4_cli=debug browser4-cli snapshot
+//!
+//! # Use the convenience variable for a simple level
+//! BROWSER4_LOG=info browser4-cli open https://example.com
+//! ```
+//!
+//! In code, initialise once at application startup:
 //!
 //! ```
 //! use browser4_cli::logging::init_logger;
 //!
-//! // Initialise once at application startup.
 //! init_logger();
 //! ```
 
