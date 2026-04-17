@@ -35,6 +35,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use browser4_cli::commands::all_commands;
@@ -1479,8 +1480,8 @@ fn wait_for_eval_text(
 
     while Instant::now() < deadline {
         let result = run_checked_cli_process(ctx, &["eval", expression]);
-        println!("eval expression: {} output:\n{}", expression, result.stdout);
         last_value = strip_snapshot_output(&result.stdout);
+        println!("eval expression: {} \nlast_value:\n>>>{}<<<", expression, last_value);
         if last_value == expected {
             ctx.record_step(
                 format!(
@@ -3065,7 +3066,6 @@ fn main() {
     if run_coverage {
         let report = run_named_test("test_e2e_command_coverage", verify_e2e_command_coverage);
         timings.push(report);
-        stop_browser4_server_forcibly();
     }
 
     let mut resources = create_e2e_test_resources();
@@ -3082,6 +3082,10 @@ fn main() {
         );
         timings.push(report);
     }
+
+    println!("All scenarios complete!");
+
+    sleep(Duration::from_secs(5));
 
     // Final safety net: ensure nothing lingers after all scenarios.
     let final_cleanup_started_at = Instant::now();
