@@ -43,6 +43,8 @@ pub async fn call_tool(
     let url = format!("{}/mcp/call-tool", base_url.trim_end_matches('/'));
     let body = json!({ "tool": tool, "arguments": args });
 
+    log::debug!("Calling tool '{}' at {}", tool, url);
+
     let response = client
         .post(&url)
         .header("Content-Type", "application/json")
@@ -68,6 +70,7 @@ pub async fn call_tool(
             .and_then(|item| item.get("text"))
             .and_then(|t| t.as_str())
             .unwrap_or("Unknown MCP error");
+        log::debug!("Tool '{}' returned an error: {}", tool, msg);
         return Err(msg.to_string());
     }
 
@@ -80,6 +83,7 @@ pub async fn call_tool(
         .unwrap_or("")
         .to_string();
 
+    log::debug!("Tool '{}' succeeded ({} bytes).", tool, text.len());
     Ok(text)
 }
 

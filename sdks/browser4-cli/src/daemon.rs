@@ -24,6 +24,7 @@ use crate::state::read_state;
 pub async fn ensure_server_running(base_url: &str) -> Result<(), String> {
     // Skip remote servers
     if !base_url.contains("localhost") && !base_url.contains("127.0.0.1") {
+        log::debug!("Remote server detected ({}); skipping auto-start.", base_url);
         return Ok(());
     }
 
@@ -33,14 +34,19 @@ pub async fn ensure_server_running(base_url: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     match probe_server_state(&client, base_url).await {
-        ServerState::Ready => return Ok(()),
+        ServerState::Ready => {
+            log::debug!("Server at {} is already ready.", base_url);
+            return Ok(());
+        }
         ServerState::Starting(_) => {
+            log::info!("Server at {} is starting; waiting for it to become ready.", base_url);
             return wait_for_server_ready(&client, base_url, Duration::from_secs(60)).await;
         }
         ServerState::Unreachable(_) => {}
     }
 
     eprintln!("Browser4 server not running. Starting...");
+    log::info!("No server detected at {}; launching a new instance.", base_url);
 
     let port = extract_port(base_url);
     let launch_spec = resolve_server_launch_spec(port).await?;
@@ -228,6 +234,7 @@ async fn download_jar(target_path: &Path) -> Result<(), String> {
 
     let url = "https://github.com/platonai/Browser4/releases/latest/download/Browser4.jar";
     eprintln!("Downloading Browser4.jar from {}...", url);
+    log::info!("Downloading Browser4.jar to {} from {}", target_path.display(), url);
 
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(300))
@@ -241,9 +248,11 @@ async fn download_jar(target_path: &Path) -> Result<(), String> {
         .map_err(|e| format!("Download failed: {e}"))?;
 
     if !response.status().is_success() {
+        let status = response.status();
+        log::error!("Browser4.jar download failed with HTTP status: {}", status);
         return Err(format!(
             "Download failed with status: {}",
-            response.status()
+            status
         ));
     }
 
@@ -251,6 +260,7 @@ async fn download_jar(target_path: &Path) -> Result<(), String> {
     fs::write(target_path, &bytes).map_err(|e| e.to_string())?;
 
     eprintln!("Download complete.");
+    log::info!("Browser4.jar downloaded successfully ({} bytes).", bytes.len());
     Ok(())
 }
 
@@ -259,9 +269,17 @@ async fn start_server(
     base_url: &str,
     port: u16,
 ) -> Result<(), String> {
+    log::debug!(
+        "Spawning server process: {} {:?} in {:?}",
+        launch_spec.program.display(),
+        launch_spec.args,
+        launch_spec.working_dir
+    );
     let mut child = command_for_launch_spec(launch_spec)
         .spawn()
         .map_err(|e| format!("Failed to start server: {e}"))?;
+
+    log::debug!("Server process spawned with launcher PID {}.", child.id());
 
     let client = Client::builder()
         .timeout(std::time::Duration::from_secs(5))
@@ -274,10 +292,12 @@ async fn start_server(
             Ok(None) => String::new(),
             Err(wait_error) => format!(" Failed to inspect launcher process: {wait_error}."),
         };
+        log::error!("Server failed to become ready: {}{}", error, exit_context);
         return Err(format!("{error}{exit_context}"));
     }
 
     let managed_pid = resolve_managed_server_pid(child.id());
+    log::debug!("Registering managed server process PID {} on port {}.", managed_pid, port);
     register_managed_server_process(
         ManagedServerProcess {
             pid: managed_pid,
@@ -295,6 +315,7 @@ async fn start_server(
     drop(child);
 
     eprintln!("Server is up and running.");
+    log::info!("Browser4 server is ready at {}.", base_url);
     Ok(())
 }
 
@@ -360,18 +381,24 @@ async fn probe_server_state(client: &Client, base_url: &str) -> ServerState {
     let health_url = format!("{trimmed}/actuator/health");
     let tools_url = format!("{trimmed}/mcp/tools");
 
+    log::trace!("Probing server health at {}", health_url);
     let health_response = match client.get(&health_url).send().await {
         Ok(response) => response,
-        Err(error) => return ServerState::Unreachable(error.to_string()),
+        Err(error) => {
+            log::trace!("Server unreachable at {}: {}", health_url, error);
+            return ServerState::Unreachable(error.to_string());
+        }
     };
     let health_body = match health_response.text().await {
         Ok(body) => body,
         Err(error) => return ServerState::Starting(error.to_string()),
     };
     if !health_body.contains("\"status\":\"UP\"") {
+        log::trace!("Health check not UP yet: {}", health_body);
         return ServerState::Starting(health_body);
     }
 
+    log::trace!("Health UP; checking MCP tools at {}", tools_url);
     let tools_response = match client.get(&tools_url).send().await {
         Ok(response) => response,
         Err(error) => return ServerState::Starting(error.to_string()),
@@ -381,6 +408,7 @@ async fn probe_server_state(client: &Client, base_url: &str) -> ServerState {
         Err(error) => return ServerState::Starting(error.to_string()),
     };
     if tools_body.contains("open_session") && tools_body.contains("browser_navigate") {
+        log::trace!("Server MCP tools ready.");
         ServerState::Ready
     } else {
         ServerState::Starting(format!("MCP tools endpoint not ready: {tools_body}"))
@@ -397,7 +425,10 @@ async fn wait_for_server_ready(
 
     while start.elapsed() <= timeout {
         match probe_server_state(client, base_url).await {
-            ServerState::Ready => return Ok(()),
+            ServerState::Ready => {
+                log::debug!("Server at {} became ready after {}ms.", base_url, start.elapsed().as_millis());
+                return Ok(());
+            }
             ServerState::Starting(error) | ServerState::Unreachable(error) => {
                 last_error = error;
             }

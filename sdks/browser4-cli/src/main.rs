@@ -16,6 +16,7 @@ mod commands;
 mod daemon;
 mod help;
 mod http;
+mod logging;
 mod managed_processes;
 mod snapshot;
 mod state;
@@ -195,6 +196,7 @@ async fn create_session(
     session_name: Option<&str>,
     capabilities: Option<Value>,
 ) -> Result<String, String> {
+    log::debug!("Opening session on {} (name: {:?}).", base_url, session_name);
     let params = capabilities.unwrap_or(json!({}));
     let result = call_tool(client, base_url, "open_session", params).await?;
     // The server response may be a JSON object `{"sessionId":"..."}` or a plain
@@ -209,6 +211,7 @@ async fn create_session(
         result
     };
 
+    log::debug!("Session created: {} (name: {:?}).", session_id, session_name);
     let mut new_state = state.clone();
     new_state.session_id = Some(session_id.clone());
     new_state.base_url = base_url.to_string();
@@ -219,6 +222,11 @@ async fn create_session(
 }
 
 fn invalidate_session(state: &CliState, base_url: &str, session_name: Option<&str>) {
+    log::debug!(
+        "Invalidating stale session {:?} (name: {:?}).",
+        state.session_id,
+        session_name
+    );
     let mut new_state = state.clone();
     new_state.session_id = None;
     new_state.base_url = base_url.to_string();
@@ -242,16 +250,19 @@ where
     let state = require_session(session_name)?;
     let session_id = get_session_id(&state)?.to_string();
 
+    log::debug!("Executing action with session {} (name: {:?}).", session_id, session_name);
     match action(session_id.clone()).await {
         Ok(result) => Ok(result),
         Err(err) => {
             if !is_stale_session_error(&err) {
                 return Err(err);
             }
+            log::warn!("Stale session detected ({}); invalidating.", session_id);
             invalidate_session(&state, base_url, session_name);
             if !recover_stale {
                 return Err(r#"Saved session expired. Run "browser4-cli open" first."#.to_string());
             }
+            log::info!("Recovering stale session by opening a new one.");
             let new_session_id =
                 create_session(client, base_url, &state, session_name, None).await?;
             action(new_session_id).await
@@ -292,6 +303,7 @@ async fn post_command_snapshot(client: &Client, base_url: &str, session_id: &str
 
     let out_path = resolve_output_path(None, "page", "yml");
     if let Err(e) = save_snapshot(&out_path, &snap_result) {
+        log::warn!("Failed to save post-command snapshot: {e}");
         eprintln!("Warning: failed to save snapshot: {e}");
         return;
     }
@@ -463,6 +475,7 @@ fn log_close_all_summary(summary: &CloseAllSummary, command_name: &str) {
     }
 
     if !summary.errors.is_empty() {
+        log::warn!("{} encountered errors: {}", command_name, summary.errors.join(" | "));
         eprintln!("{} warnings: {}", command_name, summary.errors.join(" | "));
     }
 }
@@ -499,6 +512,11 @@ fn log_shutdown_result(action: &str, result: &ShutdownResult) {
             .iter()
             .map(|p| p.to_string())
             .collect();
+        log::warn!(
+            "Browser4 process(es) still running after {}: {}",
+            action.to_lowercase(),
+            pids.join(", ")
+        );
         eprintln!(
             "Browser4 process(es) still running after {}: {}",
             action.to_lowercase(),
@@ -1943,9 +1961,13 @@ async fn handle_batch(global: &args::GlobalFlags) -> Result<(), String> {
 
 #[tokio::main]
 async fn main() {
+    logging::init_logger();
+
     let raw_args: Vec<String> = std::env::args().skip(1).collect();
     let global = parse_global_flags(&raw_args);
     let (command, effective_global) = normalize_command_invocation(&global);
+
+    log::debug!("Dispatching command: {:?}", command);
 
     if let Err(e) = run(&command, &effective_global).await {
         eprintln!("Error: {}", e);
@@ -1979,6 +2001,7 @@ async fn run(command: &str, global: &args::GlobalFlags) -> Result<(), String> {
 
     // Resolve base URL: --server flag > persisted state > default
     let base_url = resolve_base_url(global.server_url.as_deref(), global.session_name.as_deref());
+    log::debug!("Using base URL: {}", base_url);
 
     // Persist server URL override if different from current state
     if let Some(ref server_url) = global.server_url {
