@@ -11,12 +11,6 @@ open class ChromeDriverException(
  * */
 open class ChromeLaunchException(message: String, cause: Throwable? = null): ChromeDriverException(message, cause)
 
-/**
- * Thrown when the connection to Chrome fails.
- * This is a fatal exception and the browser should be closed.
- * */
-open class ChromeLaunchTimeoutException(message: String, cause: Throwable? = null): ChromeLaunchException(message, cause)
-
 open class ChromeProtocolException(
     message: String,
     cause: Throwable? = null,

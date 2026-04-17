@@ -31,7 +31,7 @@ class RobustRPC(
     }
 
     private val logger = getLogger(this)
-    
+
     private val _isActive = AtomicBoolean(false)
 
     val isActive get() = driver.isActive && _isActive.get()
@@ -90,7 +90,11 @@ class RobustRPC(
                 .onFailure { logger.warn("Exception to execute action: [$action], retrying $i/$maxRetry times", it) }
         }
 
-        return result.getOrElse { throw it }
+        if (driver.checkState(action)) {
+            return result.getOrElse { throw it }
+        }
+
+        return null
     }
 
     /**

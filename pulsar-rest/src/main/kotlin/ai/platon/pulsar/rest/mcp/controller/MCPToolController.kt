@@ -5,6 +5,7 @@ import ai.platon.pulsar.agentic.model.ToolCall
 import ai.platon.pulsar.agentic.model.ToolSpec
 import ai.platon.pulsar.agentic.tools.AgentToolExecutor
 import ai.platon.pulsar.agentic.tools.high.command.CommandService
+import ai.platon.pulsar.common.brief
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import ai.platon.pulsar.rest.mcp.service.SessionManager
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -688,8 +689,8 @@ class MCPToolController(
                 ResponseEntity.ok(textResponse(evaluate.value?.toString() ?: ""))
             }
         } catch (e: Exception) {
-            logger.error("MCP tool execution failed | tool={} | normalizedTool={} | {}", request.tool, toolName, e.message, e)
-            ResponseEntity.ok(errorResponse("${request.tool} failed: ${e.message}"))
+            logger.warn("MCP tool execution failed | tool={} | normalizedTool={} | {}", request.tool, toolName, e.brief())
+            ResponseEntity.ok(errorResponse("${request.tool} failed: ${e.brief()}"))
         }
     }
 

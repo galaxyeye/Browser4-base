@@ -4,7 +4,6 @@ import ai.platon.browser4.driver.chrome.common.ChromeOptions
 import ai.platon.browser4.driver.chrome.common.LauncherOptions
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.util.ChromeLaunchException
-import ai.platon.browser4.driver.chrome.util.ChromeLaunchTimeoutException
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.browser.BrowserFiles
 import ai.platon.pulsar.common.browser.BrowserFiles.CDP_URL_FILE_NAME
@@ -26,9 +25,13 @@ import java.nio.channels.FileChannel
 import java.nio.channels.FileLockInterruptionException
 import java.nio.channels.OverlappingFileLockException
 import java.nio.charset.Charset
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
+import java.text.MessageFormat
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -365,6 +368,9 @@ class ChromeLauncher constructor(
             Files.writeString(portPath, port.toString(), StandardOpenOption.TRUNCATE_EXISTING)
 
             port
+        } catch (e: ChromeLaunchException) {
+            stop()
+            throw e
         } catch (e: IllegalStateException) {
             stop()
             throw ChromeLaunchException("IllegalStateException while trying to launch chrome", e)
@@ -640,9 +646,9 @@ class ChromeLauncher constructor(
      *
      * @param process Chrome process.
      * @return DevTools listening port.
-     * @throws ChromeLaunchTimeoutException If timeout expired while waiting for a chrome process.
+     * @throws ChromeLaunchException If timeout expired while waiting for a chrome process.
      */
-    @Throws(ChromeLaunchTimeoutException::class)
+    @Throws(ChromeLaunchException::class)
     private fun waitForDevToolsServer(process: Process): Int {
         var port = 0
         var cdpUrl: String? = null
@@ -652,7 +658,7 @@ class ChromeLauncher constructor(
             BufferedReader(InputStreamReader(process.inputStream, charset)).use { reader ->
                 // Wait for DevTools listening line and extract port number and CDP URL.
                 var line: String? = reader.readLine()
-                while (line != null) {
+                while (process.isAlive && line != null) {
                     if (line.isNotBlank()) {
                         // If chrome launched successfully, the output is like the following:
                         // 2025-09-16 23:16:03.247  INFO [Thread-2] a.p.p.b.d.c.ChromeLauncher - [output] - DevTools listening on ws://127.0.0.1:50658/devtools/browser/ab3ec7cd-f800-4cc7-9ea1-7d3563e30d7c
@@ -696,7 +702,9 @@ class ChromeLauncher constructor(
             val output = processOutput.toString()
             val isAlive = process.isAlive
             val exitValue = if (!isAlive) process.exitValue() else "N/A"
-            logger.warn("Chrome failed to start. Alive: {}, ExitCode: {}\nProcess output:>>>\n{}\n<<<", isAlive, exitValue, output)
+            val message = MessageFormat.format("Failed to start chrome process, alive: {}, exit code: {}\n" +
+                    "Process output:>>>\n{}\n<<<",isAlive, exitValue, output)
+            logger.warn(message)
 
             if (output.contains("Opening in existing browser session") || output.contains("正在现有的浏览器会话中打开")) {
                 throw ChromeLaunchException("Chrome profile is locked by another process | $userDataDir")
@@ -704,7 +712,7 @@ class ChromeLauncher constructor(
 
             handleChromeFailedToStart()
 
-            throw ChromeLaunchTimeoutException("Timeout to waiting for chrome to start | $userDataDir")
+            throw ChromeLaunchException("$message | $userDataDir")
         }
 
         return port
@@ -743,7 +751,7 @@ class ChromeLauncher constructor(
                     perms.addAll(setOf(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_EXECUTE))
                     view.setPermissions(perms)
                 }
-            }.onFailure { logger.warn("Failed to set execute permission for {} | {}", scriptPath, it.message) }
+            }.onFailure { logger.warn("Failed to set execute permission for {} | {}", scriptPath.toUri(), it.message) }
         }
 
         val message = """
@@ -753,7 +761,7 @@ class ChromeLauncher constructor(
 
 Run the script to kill Chrome processes and run the program again:
 
-$scriptPath
+${scriptPath.toUri()}
 
 ===============================================================================
 
