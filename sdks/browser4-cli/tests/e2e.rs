@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! End-to-end tests for the `browser4-cli` Rust binary.
 //!
 //! The scenarios run sequentially in a custom `harness = false` test target so
@@ -2855,6 +2857,14 @@ fn run_named_scenario(
     test_fn: fn(&mut E2ECtx),
 ) -> TimingReport {
     println!("testing {name} ... ");
+
+    // Forcibly stop server and Chrome regardless of success or failure.
+    let cleanup_started_at = Instant::now();
+    if (cleanup_browser4) {
+        stop_browser4_server_forcibly();
+    }
+    let cleanup_step = TimedStep::new("browser4 service cleanup", cleanup_started_at.elapsed());
+
     std::io::stdout().flush().expect("stdout flush failed");
     resources.ctx.clear_step_timings();
     let total_started_at = Instant::now();
@@ -2877,14 +2887,7 @@ fn run_named_scenario(
         test_fn(&mut resources.ctx);
     }));
 
-    // Forcibly stop server and Chrome regardless of success or failure.
-    let cleanup_started_at = Instant::now();
-    if (cleanup_browser4) {
-        stop_browser4_server_forcibly();
-    }
-    let cleanup_step = TimedStep::new("browser4 service cleanup", cleanup_started_at.elapsed());
     let total_duration = total_started_at.elapsed();
-
     let mut steps = harness_steps;
     steps.extend(resources.ctx.take_step_timings());
     steps.push(cleanup_step);
@@ -2942,6 +2945,20 @@ const SCENARIOS: &[ScenarioDef] = &[
         test_fn: test_interaction_commands,
     },
     ScenarioDef {
+        name: "test_e2e_interaction_commands",
+        short_name: "test_interaction_commands",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_interaction_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_interaction_commands",
+        short_name: "test_interaction_commands",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_interaction_commands,
+    },
+    ScenarioDef {
         name: "test_e2e_batch_commands",
         short_name: "test_batch_commands",
         requires_browser4: true,
@@ -2983,41 +3000,41 @@ const SCENARIOS: &[ScenarioDef] = &[
         restart_browser4: false,
         test_fn: test_form_controls_and_exports,
     },
-    // ScenarioDef {
-    //     name: "test_e2e_mouse_and_dialog",
-    //     short_name: "test_mouse_and_dialog",
-    //     requires_browser4: true,
-    //     restart_browser4: false,
-    //     test_fn: test_mouse_and_dialog,
-    // },
-    // ScenarioDef {
-    //     name: "test_e2e_tab_commands",
-    //     short_name: "test_tab_commands",
-    //     requires_browser4: true,
-    //     restart_browser4: false,
-    //     test_fn: test_tab_commands,
-    // },
-    // ScenarioDef {
-    //     name: "test_e2e_collective_session_and_agent_tools",
-    //     short_name: "test_collective_session_and_agent_tools",
-    //     requires_browser4: false,
-    //     restart_browser4: false,
-    //     test_fn: test_collective_session_and_agent_tools,
-    // },
-    // ScenarioDef {
-    //     name: "test_e2e_agent_task_commands",
-    //     short_name: "test_agent_task_commands",
-    //     requires_browser4: false,
-    //     restart_browser4: false,
-    //     test_fn: test_agent_task_commands,
-    // },
-    // ScenarioDef {
-    //     name: "test_e2e_collective_submission_commands",
-    //     short_name: "test_collective_submission_commands",
-    //     requires_browser4: false,
-    //     restart_browser4: false,
-    //     test_fn: test_collective_submission_commands,
-    // },
+    ScenarioDef {
+        name: "test_e2e_mouse_and_dialog",
+        short_name: "test_mouse_and_dialog",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_mouse_and_dialog,
+    },
+    ScenarioDef {
+        name: "test_e2e_tab_commands",
+        short_name: "test_tab_commands",
+        requires_browser4: true,
+        restart_browser4: false,
+        test_fn: test_tab_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_collective_session_and_agent_tools",
+        short_name: "test_collective_session_and_agent_tools",
+        requires_browser4: false,
+        restart_browser4: false,
+        test_fn: test_collective_session_and_agent_tools,
+    },
+    ScenarioDef {
+        name: "test_e2e_agent_task_commands",
+        short_name: "test_agent_task_commands",
+        requires_browser4: false,
+        restart_browser4: false,
+        test_fn: test_agent_task_commands,
+    },
+    ScenarioDef {
+        name: "test_e2e_collective_submission_commands",
+        short_name: "test_collective_submission_commands",
+        requires_browser4: false,
+        restart_browser4: false,
+        test_fn: test_collective_submission_commands,
+    },
 ];
 
 fn parse_scenario_filter() -> Option<String> {

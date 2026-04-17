@@ -208,8 +208,8 @@ pub fn stop_browser4_server_forcibly() -> ForceStopBrowser4ServerResult {
 
     let result = stop_browser4_server_forcibly_with_steps(
         || notify_close_all_sessions_before_force_stop(&client, None, Some(&state_dir)),
-        || stop_browser4_server(true),
         kill_all_browsers,
+        || stop_browser4_server(true),
         || sleep(std::time::Duration::from_secs(5)),
     );
 
@@ -228,8 +228,8 @@ pub fn stop_browser4_server_forcibly() -> ForceStopBrowser4ServerResult {
 
 fn stop_browser4_server_forcibly_with_steps<NotifyCloseAll, StopServer, KillBrowsers, SleepAfter>(
     notify_close_all: NotifyCloseAll,
-    stop_server: StopServer,
     kill_browsers: KillBrowsers,
+    stop_server: StopServer,
     sleep_after: SleepAfter,
 ) -> ForceStopBrowser4ServerResult
 where
@@ -940,12 +940,12 @@ mod tests {
         let result = stop_browser4_server_forcibly_with_steps(
             move || notify_events.lock().unwrap().push("notify".to_string()),
             move || {
-                stop_events.lock().unwrap().push("shutdown".to_string());
-                ShutdownResult::default()
-            },
-            move || {
                 kill_events.lock().unwrap().push("browser-kill".to_string());
                 BrowserKillResult::default()
+            },
+            move || {
+                stop_events.lock().unwrap().push("shutdown".to_string());
+                ShutdownResult::default()
             },
             move || sleep_events.lock().unwrap().push("sleep".to_string()),
         );

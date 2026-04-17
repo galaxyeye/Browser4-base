@@ -146,7 +146,7 @@ fn command_for_launch_spec(launch_spec: &ServerLaunchSpec) -> Command {
 
 fn find_browser4_root() -> Option<PathBuf> {
     for candidate in browser4_root_candidates() {
-        if let Some(root) = find_browser4_root_from(&candidate) {
+        if let Some(root) = find_browser4_root_from(&candidate, true) {
             return Some(root);
         }
     }
@@ -170,25 +170,70 @@ fn browser4_root_candidates() -> Vec<PathBuf> {
     candidates
 }
 
-fn find_browser4_root_from(start: &Path) -> Option<PathBuf> {
-    let mut current = Some(start);
+fn find_browser4_root_from(start: &Path, deep_search: bool) -> Option<PathBuf> {
+    let start_dir = if start.is_dir() { start } else { start.parent()? };
+    let mut current = Some(start_dir);
     while let Some(path) = current {
         if is_browser4_root(path) {
             return Some(path.to_path_buf());
         }
         current = path.parent();
     }
+
+    if deep_search {
+        if let Some(module_dir) = find_browser4_cli_module_dir(start_dir) {
+            return find_browser4_root_from(&module_dir, false);
+        }
+    }
+
     None
 }
 
 fn is_browser4_root(path: &Path) -> bool {
-    path.join("pom.xml").is_file()
+    path.join("VERSION").is_file()
+        && path.join("pom.xml").is_file()
         && path.join("pulsar-rest").is_dir()
         && path
             .join("sdks")
             .join("browser4-cli")
             .join("Cargo.toml")
             .is_file()
+}
+
+fn find_browser4_cli_module_dir(start: &Path) -> Option<PathBuf> {
+    let mut stack = vec![start.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        if is_browser4_cli_module_dir(&dir) {
+            return Some(dir);
+        }
+
+        let entries = match fs::read_dir(&dir) {
+            Ok(entries) => entries,
+            Err(_) => continue,
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() && !should_skip_browser4_root_search(&path) {
+                stack.push(path);
+            }
+        }
+    }
+
+    None
+}
+
+fn is_browser4_cli_module_dir(path: &Path) -> bool {
+    path.file_name().and_then(|name| name.to_str()) == Some("browser4-cli")
+        && path.join("Cargo.toml").is_file()
+}
+
+fn should_skip_browser4_root_search(path: &Path) -> bool {
+    matches!(
+        path.file_name().and_then(|name| name.to_str()),
+        Some(".git" | ".idea" | "node_modules" | "target")
+    )
 }
 
 async fn find_or_download_jar() -> Result<PathBuf, String> {
@@ -422,6 +467,7 @@ mod tests {
         let root = tmp.path().join("Browser4");
         create_dir_all(root.join("pulsar-rest")).unwrap();
         create_dir_all(root.join("sdks").join("browser4-cli")).unwrap();
+        write(root.join("VERSION"), "0.1.0\n").unwrap();
         write(root.join("pom.xml"), "<project />").unwrap();
         write(
             root.join("sdks").join("browser4-cli").join("Cargo.toml"),
@@ -438,7 +484,30 @@ mod tests {
         let nested = root.join("sdks").join("browser4-cli").join("src");
         create_dir_all(&nested).unwrap();
 
-        assert_eq!(find_browser4_root_from(&nested), Some(root));
+        assert_eq!(find_browser4_root_from(&nested, false), Some(root));
+    }
+
+    #[test]
+    fn test_find_browser4_root_from_workspace_parent_with_deep_search() {
+        let tmp = TempDir::new().unwrap();
+        let workspace = tmp.path().join("Browser4Team");
+        let submodules = workspace.join("submodules");
+        create_dir_all(&submodules).unwrap();
+
+        let root = create_browser4_root_in(&submodules);
+
+        assert_eq!(find_browser4_root_from(&workspace, true), Some(root));
+    }
+
+    #[test]
+    fn test_find_browser4_root_from_workspace_parent_without_deep_search() {
+        let tmp = TempDir::new().unwrap();
+        let workspace = tmp.path().join("Browser4Team");
+        create_dir_all(workspace.join("submodules")).unwrap();
+        let root = create_browser4_root_in(&workspace.join("submodules"));
+
+        assert_eq!(find_browser4_root_from(&workspace, false), None);
+        assert_eq!(find_browser4_root_from(&workspace, true), Some(root));
     }
 
     #[test]
@@ -447,7 +516,38 @@ mod tests {
         let outside = tmp.path().join("not-browser4");
         create_dir_all(&outside).unwrap();
 
-        assert_eq!(find_browser4_root_from(&outside), None);
+        assert_eq!(find_browser4_root_from(&outside, false), None);
+    }
+
+    #[test]
+    fn test_is_browser4_root_rejects_missing_version_marker() {
+        let tmp = TempDir::new().unwrap();
+        let root = tmp.path().join("Browser4");
+        create_dir_all(root.join("pulsar-rest")).unwrap();
+        create_dir_all(root.join("sdks").join("browser4-cli")).unwrap();
+        write(root.join("pom.xml"), "<project />").unwrap();
+        write(
+            root.join("sdks").join("browser4-cli").join("Cargo.toml"),
+            "[package]\nname = \"browser4-cli\"\n",
+        )
+        .unwrap();
+
+        assert!(!is_browser4_root(&root));
+    }
+
+    fn create_browser4_root_in(parent: &Path) -> PathBuf {
+        let root = parent.join("Browser4");
+        create_dir_all(&root).unwrap();
+        create_dir_all(root.join("pulsar-rest")).unwrap();
+        create_dir_all(root.join("sdks").join("browser4-cli")).unwrap();
+        write(root.join("VERSION"), "0.1.0\n").unwrap();
+        write(root.join("pom.xml"), "<project />").unwrap();
+        write(
+            root.join("sdks").join("browser4-cli").join("Cargo.toml"),
+            "[package]\nname = \"browser4-cli\"\n",
+        )
+        .unwrap();
+        root
     }
 
     #[cfg(windows)]
