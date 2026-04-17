@@ -42,6 +42,7 @@ use http::{
 };
 use managed_processes::{
     read_managed_server_processes, stop_browser4_server_forcibly,
+    ManagedServerProcess,
     stop_browser4_server_gracefully, ShutdownResult,
 };
 use snapshot::{resolve_output_path, save_binary, save_snapshot};
@@ -373,43 +374,12 @@ async fn handle_close(
 }
 
 async fn handle_close_all(client: &Client, base_url: &str) -> Result<(), String> {
-    // Collect all known base URLs (current + managed processes)
-    let mut base_urls = std::collections::HashSet::new();
-    base_urls.insert(base_url.to_string());
-    for proc in read_managed_server_processes(None) {
-        base_urls.insert(proc.base_url.trim_end_matches('/').to_string());
-    }
-
-    let mut close_results: Vec<String> = Vec::new();
-    let mut close_errors: Vec<String> = Vec::new();
-
-    for url in &base_urls {
-        match call_tool(client, url, "close_all_sessions", json!({})).await {
-            Ok(result) => {
-                if url == base_url {
-                    close_results.push(result);
-                } else {
-                    close_results.push(format!("{}: {}", url, result));
-                }
-            }
-            Err(e) => close_errors.push(format!("{}: {}", url, e)),
-        }
-    }
+    let close_summary = close_all_sessions_across_servers(client, base_url).await;
 
     let shutdown_result = stop_browser4_server_gracefully();
     finalize_global_cleanup("Stopped", &shutdown_result);
 
-    if close_results.is_empty() {
-        println!("No reachable Browser4 servers responded to close-all.");
-    } else {
-        for r in &close_results {
-            println!("{}", r);
-        }
-    }
-
-    if !close_errors.is_empty() {
-        eprintln!("close-all warnings: {}", close_errors.join(" | "));
-    }
+    log_close_all_summary(&close_summary, "close-all");
     Ok(())
 }
 
@@ -443,6 +413,58 @@ async fn handle_kill_all() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+struct CloseAllSummary {
+    results: Vec<String>,
+    errors: Vec<String>,
+}
+
+fn known_server_base_urls(base_url: &str, managed_processes: &[ManagedServerProcess]) -> Vec<String> {
+    let mut base_urls: Vec<String> = managed_processes
+        .iter()
+        .map(|proc| proc.base_url.trim_end_matches('/').to_string())
+        .chain(std::iter::once(base_url.trim_end_matches('/').to_string()))
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+    base_urls.sort();
+    base_urls
+}
+
+async fn close_all_sessions_across_servers(client: &Client, base_url: &str) -> CloseAllSummary {
+    let normalized_base_url = base_url.trim_end_matches('/').to_string();
+    let mut summary = CloseAllSummary::default();
+
+    for url in known_server_base_urls(base_url, &read_managed_server_processes(None)) {
+        match call_tool(client, &url, "close_all_sessions", json!({})).await {
+            Ok(result) => {
+                if url == normalized_base_url {
+                    summary.results.push(result);
+                } else {
+                    summary.results.push(format!("{}: {}", url, result));
+                }
+            }
+            Err(error) => summary.errors.push(format!("{}: {}", url, error)),
+        }
+    }
+
+    summary
+}
+
+fn log_close_all_summary(summary: &CloseAllSummary, command_name: &str) {
+    if summary.results.is_empty() {
+        println!("No reachable Browser4 servers responded to {}.", command_name);
+    } else {
+        for result in &summary.results {
+            println!("{}", result);
+        }
+    }
+
+    if !summary.errors.is_empty() {
+        eprintln!("{} warnings: {}", command_name, summary.errors.join(" | "));
+    }
 }
 
 fn finalize_global_cleanup(action: &str, result: &ShutdownResult) {
@@ -2168,7 +2190,7 @@ fn print_help(command_name: Option<&str>) {
 
 #[cfg(test)]
 mod tests {
-    use super::tracked_selector;
+    use super::*;
     use serde_json::json;
 
     #[test]
@@ -2197,5 +2219,36 @@ mod tests {
         });
 
         assert_eq!(tracked_selector(&params), None);
+    }
+
+    #[test]
+    fn known_server_base_urls_deduplicate_and_trim_trailing_slashes() {
+        let urls = known_server_base_urls(
+            "http://127.0.0.1:9222/",
+            &[
+                ManagedServerProcess {
+                    pid: 1,
+                    base_url: "http://127.0.0.1:9444/".to_string(),
+                    port: 9444,
+                    jar_path: "browser4.jar".to_string(),
+                    started_at: "2026-04-17T00:00:00Z".to_string(),
+                },
+                ManagedServerProcess {
+                    pid: 2,
+                    base_url: "http://127.0.0.1:9222".to_string(),
+                    port: 9222,
+                    jar_path: "browser4.jar".to_string(),
+                    started_at: "2026-04-17T00:00:01Z".to_string(),
+                },
+            ],
+        );
+
+        assert_eq!(
+            urls,
+            vec![
+                "http://127.0.0.1:9222".to_string(),
+                "http://127.0.0.1:9444".to_string(),
+            ]
+        );
     }
 }

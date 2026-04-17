@@ -4,10 +4,12 @@
 //! later via `close-all` or `kill-all`.
 
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::thread::sleep;
-use crate::state::resolve_default_state_dir;
+use crate::state::{read_state, resolve_default_state_dir};
 
 const DEFAULT_REGISTRY_NAME: &str = "cli-managed-processes.json";
 const BROWSER_PID_MARKER_FILE_NAME: &str = "launcher.pid";
@@ -196,12 +198,131 @@ pub fn stop_browser4_server_gracefully() -> ShutdownResult {
 
 /// Force-stop all managed Browser4 server processes, then kill all related Chrome processes.
 pub fn stop_browser4_server_forcibly() -> ForceStopBrowser4ServerResult {
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .expect("HTTP client construction should not fail");
+    let state_dir = resolve_default_state_dir();
+
+    stop_browser4_server_forcibly_with_steps(
+        || notify_close_all_sessions_before_force_stop(&client, None, Some(&state_dir)),
+        || stop_browser4_server(true),
+        kill_all_browsers,
+        || sleep(std::time::Duration::from_secs(5)),
+    )
+}
+
+fn stop_browser4_server_forcibly_with_steps<NotifyCloseAll, StopServer, KillBrowsers, SleepAfter>(
+    notify_close_all: NotifyCloseAll,
+    stop_server: StopServer,
+    kill_browsers: KillBrowsers,
+    sleep_after: SleepAfter,
+) -> ForceStopBrowser4ServerResult
+where
+    NotifyCloseAll: FnOnce(),
+    StopServer: FnOnce() -> ShutdownResult,
+    KillBrowsers: FnOnce() -> BrowserKillResult,
+    SleepAfter: FnOnce(),
+{
+    notify_close_all();
+
     let result = ForceStopBrowser4ServerResult {
-        shutdown: stop_browser4_server(true),
-        browser_kill: kill_all_browsers(),
+        shutdown: stop_server(),
+        browser_kill: kill_browsers(),
     };
-    sleep(std::time::Duration::from_secs(5));
+
+    sleep_after();
     result
+}
+
+fn notify_close_all_sessions_before_force_stop(
+    client: &reqwest::blocking::Client,
+    registry_path: Option<&Path>,
+    state_dir: Option<&Path>,
+) {
+    let mut warnings = Vec::new();
+
+    for base_url in close_all_base_urls_for_force_stop(registry_path, state_dir) {
+        if let Err(error) = call_close_all_sessions(client, &base_url) {
+            warnings.push(format!("{}: {}", base_url, error));
+        }
+    }
+
+    if !warnings.is_empty() {
+        eprintln!(
+            "kill-all close-all warnings: {}",
+            warnings.join(" | ")
+        );
+    }
+}
+
+fn close_all_base_urls_for_force_stop(
+    registry_path: Option<&Path>,
+    state_dir: Option<&Path>,
+) -> Vec<String> {
+    let mut base_urls: HashSet<String> = read_managed_server_processes(registry_path)
+        .into_iter()
+        .map(|proc| proc.base_url.trim_end_matches('/').to_string())
+        .filter(|url| !url.is_empty())
+        .collect();
+
+    let resolved_state_dir = state_dir
+        .map(|path| path.to_path_buf())
+        .unwrap_or_else(resolve_default_state_dir);
+    if resolved_state_dir.join("cli-state.json").exists() {
+        let base_url = read_state(Some(&resolved_state_dir), None)
+            .base_url
+            .trim_end_matches('/')
+            .to_string();
+        if !base_url.is_empty() {
+            base_urls.insert(base_url);
+        }
+    }
+
+    let mut base_urls: Vec<String> = base_urls.into_iter().collect();
+    base_urls.sort();
+    base_urls
+}
+
+fn call_close_all_sessions(
+    client: &reqwest::blocking::Client,
+    base_url: &str,
+) -> Result<String, String> {
+    let response = client
+        .post(format!("{}/mcp/call-tool", base_url.trim_end_matches('/')))
+        .header("Content-Type", "application/json")
+        .json(&json!({ "tool": "close_all_sessions", "arguments": {} }))
+        .send()
+        .map_err(|error| format!("HTTP request failed: {error}"))?;
+
+    let data: Value = response
+        .json()
+        .map_err(|error| format!("Failed to parse response JSON: {error}"))?;
+
+    if data
+        .get("isError")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false)
+    {
+        let message = data
+            .get("content")
+            .and_then(|content| content.as_array())
+            .and_then(|items| items.first())
+            .and_then(|item| item.get("text"))
+            .and_then(|text| text.as_str())
+            .unwrap_or("Unknown MCP error");
+        return Err(message.to_string());
+    }
+
+    Ok(
+        data.get("content")
+            .and_then(|content| content.as_array())
+            .and_then(|items| items.first())
+            .and_then(|item| item.get("text"))
+            .and_then(|text| text.as_str())
+            .unwrap_or("")
+            .to_string(),
+    )
 }
 
 /// Kill all found Browser4 Chrome processes (marked with PULSAR_CHROME).
@@ -241,7 +362,7 @@ pub fn kill_all_browsers() -> BrowserKillResult {
     result.killed_pids.dedup();
     result.remaining_pids = find_unique_pulsar_browser_processes();
 
-    if (result.killed_pids.len() > 0) {
+    if result.killed_pids.len() > 0 {
         println!("Browser4 Chrome kill complete. Killed: {}, Remaining: {}",
                  result.killed_pids.len(),
                  result.remaining_pids.len()
@@ -766,5 +887,68 @@ mod tests {
         let command_line = r#""C:/Program Files/Google/Chrome/Application/chrome.exe" --user-data-dir=C:/Users/tester/.browser4/browser/chrome/default/chrome --remote-debugging-port=0"#;
 
         assert!(command_line_matches_marker_dir(command_line, &marker_dir));
+    }
+
+    #[test]
+    fn test_close_all_base_urls_for_force_stop_include_registry_and_state() {
+        let tmp = TempDir::new().unwrap();
+        let state_dir = tmp.path().join("state");
+        fs::create_dir_all(&state_dir).unwrap();
+        let reg_path = state_dir.join("managed.json");
+
+        register_managed_server_process(
+            ManagedServerProcess {
+                pid: 12345,
+                base_url: "http://localhost:8182/".to_string(),
+                port: 8182,
+                jar_path: "/path/to/Browser4.jar".to_string(),
+                started_at: "2026-01-01T00:00:00Z".to_string(),
+            },
+            Some(&reg_path),
+        );
+
+        fs::write(
+            state_dir.join("cli-state.json"),
+            r#"{"baseUrl":"http://localhost:8183","sessionId":"session-1"}"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            close_all_base_urls_for_force_stop(Some(&reg_path), Some(&state_dir)),
+            vec![
+                "http://localhost:8182".to_string(),
+                "http://localhost:8183".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_stop_browser4_server_forcibly_notifies_before_shutdown_and_browser_kill() {
+        let events = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
+
+        let notify_events = std::sync::Arc::clone(&events);
+        let stop_events = std::sync::Arc::clone(&events);
+        let kill_events = std::sync::Arc::clone(&events);
+        let sleep_events = std::sync::Arc::clone(&events);
+
+        let result = stop_browser4_server_forcibly_with_steps(
+            move || notify_events.lock().unwrap().push("notify".to_string()),
+            move || {
+                stop_events.lock().unwrap().push("shutdown".to_string());
+                ShutdownResult::default()
+            },
+            move || {
+                kill_events.lock().unwrap().push("browser-kill".to_string());
+                BrowserKillResult::default()
+            },
+            move || sleep_events.lock().unwrap().push("sleep".to_string()),
+        );
+
+        assert!(result.shutdown.stopped_pids.is_empty());
+        assert!(result.browser_kill.killed_pids.is_empty());
+        assert_eq!(
+            events.lock().unwrap().as_slice(),
+            ["notify", "shutdown", "browser-kill", "sleep"]
+        );
     }
 }
