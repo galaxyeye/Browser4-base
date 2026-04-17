@@ -702,8 +702,8 @@ class ChromeLauncher constructor(
             val output = processOutput.toString()
             val isAlive = process.isAlive
             val exitValue = if (!isAlive) process.exitValue() else "N/A"
-            val message = MessageFormat.format("Failed to start chrome process, alive: {}, exit code: {}\n" +
-                    "Process output:>>>\n{}\n<<<",isAlive, exitValue, output)
+            val message = String.format("Failed to start chrome process, alive: %s, exit code: %s\n" +
+                    "Process output:>>>\n%s\n<<<", isAlive, exitValue, output)
             logger.warn(message)
 
             if (output.contains("Opening in existing browser session") || output.contains("正在现有的浏览器会话中打开")) {
