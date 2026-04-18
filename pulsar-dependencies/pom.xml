@@ -1,4 +1,4 @@
-<!--  Licensed to the Apache Software Foundation (ASF) under one or more contributor
+﻿<!--  Licensed to the Apache Software Foundation (ASF) under one or more contributor
     license agreements. See the NOTICE file distributed with this work for additional
     information regarding copyright ownership. The ASF licenses this file to
     you under the Apache License, Version 2.0 (the "License"); you may not use
@@ -438,7 +438,7 @@
         <!-- Java Servlet is the foundation web specification in the Java Enterprise Platform. Developers can build
         web applications using the Servlet API to interact with the request/response workflow. -->
         <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api/4.0.1 -->
-        <!-- TODO: This artifact was moved to: jakarta.servlet » jakarta.servlet-api -->
+        <!-- TODO: This artifact was moved to: jakarta.servlet 禄 jakarta.servlet-api -->
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
 
         <io.modelcontextprotocol.version>0.8.1</io.modelcontextprotocol.version>

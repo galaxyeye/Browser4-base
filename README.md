@@ -1,45 +1,45 @@
-# 🤖 Browser4
+﻿# 馃 Browser4
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/galaxyeye88/browser4?style=flat-square)](https://hub.docker.com/r/galaxyeye88/browser4)
 [![License: APACHE2](https://img.shields.io/badge/license-APACHE2-green?style=flat-square)](https://github.com/platonai/browser4/blob/main/LICENSE)
 
 ---
 
-English | [简体中文](README.zh.md) | [中国镜像](https://gitee.com/platonai_galaxyeye/Browser4)
+English | [绠€浣撲腑鏂嘳(README.zh.md) | [涓浗闀滃儚](https://gitee.com/platonai_galaxyeye/Browser4)
 
 <!-- TOC -->
 **Table of Contents**
-- [🤖 Browser4](#-browser4)
-    - [🌟 Introduction](#-introduction)
-        - [✨ Key Capabilities](#-key-capabilities)
-    - [🎥 Demo Videos](#-demo-videos)
-    - [🚀 Quick Start](#-quick-start)
-    - [💡 Usage Examples](#-usage-examples)
+- [馃 Browser4](#-browser4)
+    - [馃専 Introduction](#-introduction)
+        - [鉁?Key Capabilities](#-key-capabilities)
+    - [馃帴 Demo Videos](#-demo-videos)
+    - [馃殌 Quick Start](#-quick-start)
+    - [馃挕 Usage Examples](#-usage-examples)
         - [Browser Agents](#browser-agents)
         - [Workflow Automation](#workflow-automation)
         - [LLM + X-SQL](#llm--x-sql)
         - [High-Speed Parallel Processing](#high-speed-parallel-processing)
         - [Auto Extraction](#auto-extraction)
-    - [📦 Modules Overview](#-modules-overview)
-    - [📜 Documentation](#-documentation)
-    - [🔧 Proxies - Unblock Websites](#-proxies---unblock-websites)
-    - [✨ Features](#-features)
-    - [🤝 Support & Community](#-support--community)
+    - [馃摝 Modules Overview](#-modules-overview)
+    - [馃摐 Documentation](#-documentation)
+    - [馃敡 Proxies - Unblock Websites](#-proxies---unblock-websites)
+    - [鉁?Features](#-features)
+    - [馃 Support & Community](#-support--community)
 <!-- /TOC -->
 
-## 🌟 Introduction
+## 馃専 Introduction
 
-💖 **Browser4: a lightning-fast, coroutine-safe browser engine for your AI** 💖
+馃挅 **Browser4: a lightning-fast, coroutine-safe browser engine for your AI** 馃挅
 
-### ✨ Key Capabilities
+### 鉁?Key Capabilities
 
-* 👽 **Browser Agents** — Fully autonomous browser agents that reason, plan, and execute end-to-end tasks.
-* 🤖 **Browser Automation** — High-performance automation for workflows, navigation, and data extraction.
-* ⚙️ **Machine Learning Agent** - Learns field structures across complex pages without consuming tokens.
-* ⚡  **Extreme Performance** — Fully coroutine-safe; supports 100k ~ 200k complex page visits per machine per day.
-* 🧬 **Data Extraction** — Hybrid of LLM, ML, and selectors for clean data across chaotic pages.
+* 馃懡 **Browser Agents** 鈥?Fully autonomous browser agents that reason, plan, and execute end-to-end tasks.
+* 馃 **Browser Automation** 鈥?High-performance automation for workflows, navigation, and data extraction.
+* 鈿欙笍 **Machine Learning Agent** - Learns field structures across complex pages without consuming tokens.
+* 鈿? **Extreme Performance** 鈥?Fully coroutine-safe; supports 100k ~ 200k complex page visits per machine per day.
+* 馃К **Data Extraction** 鈥?Hybrid of LLM, ML, and selectors for clean data across chaotic pages.
 
-## ⚡ Quick Example: Agentic Workflow
+## 鈿?Quick Example: Agentic Workflow
 
 ```kotlin
 // Give your Agent a mission, not just a script.
@@ -56,17 +56,17 @@ val result = agent.run("""
 
 ---
 
-## 🎥 Demo Videos
+## 馃帴 Demo Videos
 
-🎬 YouTube:
+馃幀 YouTube:
 [![Watch the video](https://img.youtube.com/vi/rJzXNXH3Gwk/0.jpg)](https://youtu.be/rJzXNXH3Gwk)
 
-📺 Bilibili:
+馃摵 Bilibili:
 [https://www.bilibili.com/video/BV1fXUzBFE4L](https://www.bilibili.com/video/BV1fXUzBFE4L)
 
 ---
 
-## 🚀 Quick Start
+## 馃殌 Quick Start
 
 **Prerequisites**: Java 17+
 
@@ -87,7 +87,7 @@ val result = agent.run("""
 
 ---
 
-## 💡 Usage Examples
+## 馃挕 Usage Examples
 
 ### Workflow Automation
 
@@ -182,10 +182,10 @@ val links = LinkExtractors.fromResource("urls.txt")
 session.submitAll(links)
 ```
 
-🎬 YouTube:
+馃幀 YouTube:
 [![Watch the video](https://img.youtube.com/vi/_BcryqWzVMI/0.jpg)](https://www.youtube.com/watch?v=_BcryqWzVMI)
 
-📺 Bilibili:
+馃摵 Bilibili:
 [https://www.bilibili.com/video/BV1kM2rYrEFC](https://www.bilibili.com/video/BV1kM2rYrEFC)
 
 
@@ -193,7 +193,7 @@ session.submitAll(links)
 
 ### Auto Extraction
 
-Automatic, large-scale, high-precision field discovery and extraction powered by self-/unsupervised machine learning — no LLM API calls, no tokens, deterministic and fast.
+Automatic, large-scale, high-precision field discovery and extraction powered by self-/unsupervised machine learning 鈥?no LLM API calls, no tokens, deterministic and fast.
 
 **What it does:**
 - Learns every extractable field on item/detail pages (often dozens to hundreds) with high precision.
@@ -217,10 +217,10 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 **Key Advantages:**
 - High precision: >95% fields discovered; majority with >99% accuracy (indicative on tested domains).
 - Resilient to selector churn & HTML noise.
-- Zero external dependency (no API key) → cost-efficient at scale.
+- Zero external dependency (no API key) 鈫?cost-efficient at scale.
 - Explainable: generated selectors & SQL are transparent and auditable.
 
-👽 Extract data with machine learning agents:
+馃懡 Extract data with machine learning agents:
 
 ![Auto Extraction Result Snapshot](docs/assets/images/amazon.png)
 
@@ -228,7 +228,7 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ---
 
-## 📦 Modules Overview
+## 馃摝 Modules Overview
 
 | Module            | Description                                             |
 |-------------------|---------------------------------------------------------|
@@ -242,7 +242,7 @@ curl -L -o PulsarRPAPro.jar https://github.com/platonai/PulsarRPAPro/releases/do
 
 ---
 
-## ✨ Features
+## 鉁?Features
 
 Status: [Available] in repo, [Experimental] in active iteration, [Planned] not in repo, [Indicative] performance target.
 
@@ -282,7 +282,7 @@ Status: [Available] in repo, [Experimental] in active iteration, [Planned] not i
 
 ---
 
-## 🤝 Support & Community
+## 馃 Support & Community
 
 Join our community for support, feedback, and collaboration!
 
@@ -294,13 +294,13 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
-## 📜 Documentation
+## 馃摐 Documentation
 
 Comprehensive documentation is available in the `docs/` directory and on our [GitHub Pages site](https://platonai.github.io/browser4/).
 
 ---
 
-## 🔧 Proxy Configuration - Unblock Website Access
+## 馃敡 Proxy Configuration - Unblock Website Access
 
 <details>
 
