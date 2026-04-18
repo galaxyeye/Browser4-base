@@ -101,37 +101,6 @@ jobs:
           java_version: ${{ env.JAVA_VERSION }}
           output_file: 'release_notes.md'
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Docker Image
-        id: docker-build
-        uses: ./.github/actions/docker-build
-        with:
-          image_name: 'galaxyeye88/browser4'
-          version: ${{ steps.version.outputs.version }}
-          timeout_minutes: '20'
-          push_image: 'true'
-
-      - name: Tag and Push to GHCR
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          SOURCE="galaxyeye88/browser4:${VERSION}"
-          TARGET="ghcr.io/${{ github.repository_owner }}/browser4:${VERSION}"
-          docker pull "${SOURCE}"
-          docker tag "${SOURCE}" "${TARGET}"
-          docker push "${TARGET}"
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

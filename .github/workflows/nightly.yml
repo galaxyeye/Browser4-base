@@ -49,14 +49,6 @@ jobs:
           timeout_minutes: '45'
           report_name: 'nightly-test-reports'
 
-      - name: Build Docker Image
-        id: docker-build
-        uses: ./.github/actions/docker-build
-        with:
-          image_name: 'galaxyeye88/browser4'
-          version: ${{ env.VERSION }}
-          timeout_minutes: '20'
-
       - name: Run Integration Tests
         id: integration-tests
         uses: ./.github/actions/run-integration-tests

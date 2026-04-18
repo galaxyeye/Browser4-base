@@ -58,14 +58,6 @@ jobs:
           timeout_minutes: '25'
           report_name: 'ci-test-reports'
 
-      - name: Build Docker Image
-        id: docker-build
-        uses: ./.github/actions/docker-build
-        with:
-          image_name: 'galaxyeye88/browser4'
-          version: ${{ env.VERSION }}
-          timeout_minutes: '20'
-
   ci-summary:
     runs-on: ubuntu-latest
     needs: ci-build
