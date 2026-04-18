@@ -114,56 +114,6 @@ Docker 部署请参见我们的 [Docker Hub 仓库](https://hub.docker.com/r/gal
 
 ## 💡 使用示例
 
-### 浏览器智能体
-
-能理解自然语言指令并执行复杂浏览器工作流的自主智能体。
-
-```kotlin
-val agent = AgenticContexts.getOrCreateAgent()
-
-val task = """
-    1. go to amazon.com
-    2. search for pens to draw on whiteboards
-    3. compare the first 4 ones
-    4. write the result to a markdown file
-    """
-
-agent.run(task)
-```
-
-### CLI & SKILLS
-
-Browser4 CLI is a powerful command-line interface for direct browser control and automation, designed for both human
-users and AI agents. It provides a simple syntax to perform complex browser interactions without writing code.
-
-Browser4 CLI is compatible with Playwright and supports a wide range of commands for navigation, interaction, and data extraction.
-It can be used in scripts, terminal sessions, or integrated into AI agents through SKILLS.
-
-```shell
-# open new browser
-browser4-cli open
-# navigate to a page
-browser4-cli goto https://browser4.io/
-# take a snapshot
-browser4-cli snapshot
-# interact with the page using refs from the snapshot
-browser4-cli click e15
-browser4-cli type "page.click"
-browser4-cli press Enter
-# take a screenshot
-browser4-cli screenshot
-# close the browser
-browser4-cli close
-```
-
-Build CLI from source:
-
-[README.md](sdks/browser4-cli/README.md)
-
-Browser4 CLI is designed for use by AI agents through SKILLS + CLI.
-
-[SKILL.md](sdks/skill/SKILL.md)
-
 ---
 
 ### 工作流自动化

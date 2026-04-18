@@ -105,68 +105,6 @@ For Docker deployment, see our [Docker Hub repository](https://hub.docker.com/r/
 
 ## 💡 Usage Examples
 
-### Browser Agents
-
-Autonomous agents that understand natural language instructions and execute complex browser workflows.
-
-```kotlin
-val agent = AgenticContexts.getOrCreateAgent()
-
-val task = """
-    1. go to amazon.com
-    2. search for pens to draw on whiteboards
-    3. compare the first 4 ones
-    4. write the result to a markdown file
-    """
-
-agent.run(task)
-```
-
-### CLI & SKILLS
-
-Browser4 CLI is a powerful command-line interface for direct browser control and automation, designed for both human
-users and AI agents. It provides a simple syntax to perform complex browser interactions without writing code.
-
-Browser4 CLI is compatible with Playwright and supports a wide range of commands for navigation, interaction, and data extraction.
-It can be used in scripts, terminal sessions, or integrated into AI agents through SKILLS.
-
-```shell
-# install the latest Unix CLI (+ Browser4.jar fallback runtime)
-curl -fsSL https://raw.githubusercontent.com/platonai/Browser4/master/sdks/browser4-cli/install.sh | bash
-
-# Windows: keep a Browser4 checkout for localhost Maven auto-start; Browser4.jar remains the fallback runtime
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.browser4\lib" | Out-Null
-Invoke-WebRequest 'https://github.com/platonai/Browser4/releases/latest/download/Browser4.jar' -OutFile "$env:USERPROFILE\.browser4\lib\Browser4.jar"
-git clone https://github.com/platonai/Browser4.git
-cd Browser4\sdks\browser4-cli
-cargo install --path . --locked
-
-# open new browser
-browser4-cli open
-# navigate to a page
-browser4-cli goto https://browser4.io/
-# take a snapshot
-browser4-cli snapshot
-# interact with the page using refs from the snapshot
-browser4-cli click e15
-browser4-cli type "page.click"
-browser4-cli press Enter
-# take a screenshot
-browser4-cli screenshot
-# close the browser
-browser4-cli close
-```
-
-Build CLI from source:
-
-[README.md](sdks/browser4-cli/README.md)
-
-Browser4 CLI is designed for use by AI agents through SKILLS + CLI.
-
-[SKILL.md](sdks/skill/SKILL.md)
-
----
-
 ### Workflow Automation
 
 Low-level browser automation & data extraction with fine-grained control.
