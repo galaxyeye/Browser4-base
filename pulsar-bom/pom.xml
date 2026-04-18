@@ -202,11 +202,6 @@
             </dependency>
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
-                <artifactId>pulsar-protocol-playwright</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-parse</artifactId>
                 <version>${project.version}</version>
             </dependency>
