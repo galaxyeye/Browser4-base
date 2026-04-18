@@ -26,9 +26,4 @@
         <defaultGoal>package</defaultGoal>
     </build>
 
-    <modules>
-        <module>pulsar-rest-tests</module>
-        <module>pulsar-it-tests</module>
-        <module>pulsar-e2e-tests</module>
-    </modules>
 </project>

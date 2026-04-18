@@ -58,9 +58,5 @@
             <artifactId>spring-boot-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>ai.platon.pulsar</groupId>
-            <artifactId>pulsar-agentic</artifactId>
-        </dependency>
     </dependencies>
 </project>
