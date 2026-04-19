@@ -585,7 +585,7 @@
             IntegrationTest,E2ETest,HeavyTest
         </surefire.excludedGroups>
 
-        <pulsar.modules.version>4.7.0-SNAPSHOT</pulsar.modules.version>
+        <pulsar.modules.version>4.7.1-SNAPSHOT</pulsar.modules.version>
     </properties>
 
 </project>
