@@ -6,15 +6,15 @@ import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.dom.Documents
 import ai.platon.pulsar.test.TestUrls
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.DisplayName
 
 @Tag("RequiresServer")
+@Tag("RequiresAI")
 class ChatModelTests {
 
     companion object {
@@ -22,7 +22,8 @@ class ChatModelTests {
         private val args = "-requireSize 200000"
         private val productHtml = ResourceLoader.readString("pages/amazon/B08PP5MSVB.original.htm")
         private val productText = ResourceLoader.readString("prompts/product.txt")
-        private val clusterAnalysisPrompt = ResourceLoader.readString("prompts/data-expert/fulltext/prompt.p1723107189.6.remarkable.txt")
+        private val clusterAnalysisPrompt =
+            ResourceLoader.readString("prompts/data-expert/fulltext/prompt.p1723107189.6.remarkable.txt")
         private val conf = ImmutableConfig(loadDefaults = true)
         private val isModelConfigured get() = ChatModelFactory.isModelConfigured(conf)
         private lateinit var model: BrowserChatModel
@@ -42,7 +43,7 @@ class ChatModelTests {
     }
 
     @Test
-        @DisplayName("introduce model")
+    @DisplayName("introduce model")
     fun introduceModel() {
         val prompt = "introduce yourself, what can you do for me?"
         val response = runBlocking { model.call(prompt) }
@@ -55,7 +56,7 @@ class ChatModelTests {
     }
 
     @Test
-        @DisplayName("should generate answer and return token usage and finish reason stop")
+    @DisplayName("should generate answer and return token usage and finish reason stop")
     fun shouldGenerateAnswerAndReturnTokenUsageAndFinishReasonStop() {
         val document = Documents.parse(productHtml, url)
 
@@ -70,7 +71,7 @@ class ChatModelTests {
     }
 
     @Test
-        @DisplayName("should generate answer from the partial content of a webpage")
+    @DisplayName("should generate answer from the partial content of a webpage")
     fun shouldGenerateAnswerFromThePartialContentOfAWebpage() {
         val text = productText
         val prompt = """
@@ -97,7 +98,7 @@ class ChatModelTests {
     }
 
     @Test
-        @DisplayName("When ask LLM to analyze cluster then it responses with json")
+    @DisplayName("When ask LLM to analyze cluster then it responses with json")
     fun whenAskLlmToAnalyzeClusterThenItResponsesWithJson() {
         val response = runBlocking { model.call(clusterAnalysisPrompt) }
         printlnPro(response.content)
