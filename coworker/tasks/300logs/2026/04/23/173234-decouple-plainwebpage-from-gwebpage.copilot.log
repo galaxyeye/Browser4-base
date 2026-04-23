@@ -1,0 +1,376 @@
+● Read decouple-plainwebpage-from-gwebpage.md
+  │ coworker\tasks\2working\decouple-plainwebpage-from-gwebpage.md
+  └ 26 lines read
+
+● Check git status (shell)
+  │ git --no-pager status --short
+  └ 7 lines...
+
+I’ve got the task scope. Next I’m tracing `PlainWebPage` and its current dependencies so I can make the change without stepping on the existing in-progress edits.
+
+● Read PlainWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPage.kt
+  └ 1 line read
+
+● Read dependency-list.txt
+  │ docs\dependency-list.txt
+  └ 1 line read
+
+● Search (grep)
+  │ "class PlainWebPage|data class PlainWebPage|interface
+  │ WebPage|GWebPage|lastContentLength|contentType" in **/*.kt
+  └ 7 lines found
+
+● Search (grep)
+  │ "GWebPage" in **/*.kt (pulsar-core\pulsar-persist\src)
+  └ 81 lines found
+
+● Search (grep)
+  │ "class PlainWebPage|data class PlainWebPage" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 1 line found
+
+● Search (grep)
+  │ "interface WebPage|abstract class WebPage|open class WebPage" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 1 line found
+
+● Search (grep)
+  │ "lastContentLength|contentType|lastFetchTime|prevFetchTime|fetchCost|pageLoa
+  │ dCost" in **/*.kt (pulsar-core\pulsar-persist\src)
+  └ 42 lines found
+
+● Read PlainWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPage.kt
+  └ L1:240 (240 lines read)
+
+● Read PlainWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPage.kt
+  └ L241:620 (380 lines read)
+
+● Read PlainWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPage.kt
+  └ L621:860 (161 lines read)
+
+● Read WebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPage.
+  │ kt
+  └ L1:260 (260 lines read)
+
+● Read TestWebPage.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\TestWebP
+  │ age.kt
+  └ L1:220 (16 lines read)
+
+I found `PlainWebPage` is still basically a renamed copy of `GoraWebPage`, including a `GWebPage` field and factory methods. I’m reading the surrounding abstractions now to determine the smallest safe refactor that actually turns it into a plain model instead of just renaming the wrapper.
+
+● Read AbstractWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Abstract
+  │ WebPage.kt
+  └ L1:260 (260 lines read)
+
+● Read PageSnapshot.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\PageSnap
+  │ shot.kt
+  └ L1:260 (189 lines read)
+
+● Read GoraWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Go
+  │ raWebPage.kt
+  └ L1:240 (240 lines read)
+
+● Search (grep)
+  │ "PlainWebPage" in **/*.{kt,java,md,txt}
+  └ 15 lines found
+
+● Search (grep)
+  │ "Serializable|@Serializable|data class .*WebPage|Plain.*Page" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 9 lines found
+
+● Show diff for PlainWebPage (shell)
+  │ git --no-pager diff -- pulsar-core/pulsar-persist/src/main/kotlin/ai/platon/
+  │ pulsar/persist/model/PlainWebPage.kt
+  └ 71 lines...
+
+● Show diff for dependency list (shell)
+  │ git --no-pager diff -- docs/dependency-list.txt
+  └ 11 lines...
+
+● Read pom.xml
+  │ pulsar-core\pom.xml
+  └ L1:220 (42 lines read)
+
+● Read pom.xml
+  │ pulsar-core\pulsar-persist\pom.xml
+  └ L1:260 (107 lines read)
+
+● Read pom.xml
+  └ L1:220 (220 lines read)
+
+● Search (grep)
+  │ "cost variables|cost variable|fetchCost|pageLoadCost|cost" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ No matches found
+
+● Search (grep)
+  │ "PlainWebPage\.|PlainWebPage\(|newWebPage\(|newInternalPage\(|box\(" in
+  │ **/*.kt
+  └ 7 lines found
+
+● Search (grep)
+  │ "\bPlainWebPage\b" in **/*.kt
+  └ 9 lines found
+
+● Search (grep)
+  │ "\bPlainWebPage\b" in **/*.{md,txt}
+  └ 6 lines found
+
+I’ve narrowed the safe shape: `PlainWebPage` isn’t referenced anywhere else yet, so I can turn it into an actual plain snapshot model instead of preserving the accidental `GoraWebPage` wrapper API. I’m checking the helper types now so the new class can still capture the useful page state without carrying storage-specific objects.
+
+✗ Read Metadata.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Metadata
+  │ .kt
+  └ Path does not exist
+
+✗ Read ProtocolHeaders.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Protocol
+  │ Headers.kt
+  └ Path does not exist
+
+✗ Read ParseStatus.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\ParseSta
+  │ tus.kt
+  └ Path does not exist
+
+● Read ProtocolStatus.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Protocol
+  │ Status.kt
+  └ L1:220 (220 lines read)
+
+● Search (glob)
+  │ "**/ParseStatus.kt" in pulsar-core\pulsar-persist\src\main\kotlin
+  └ No matches found
+
+● Search (glob)
+  │ "**/Metadata.kt" in pulsar-core\pulsar-persist\src\main\kotlin
+  └ No matches found
+
+● Search (glob)
+  │ "**/ProtocolHeaders.kt" in pulsar-core\pulsar-persist\src\main\kotlin
+  └ No matches found
+
+● Search (grep)
+  │ "class Metadata|interface Metadata|typealias Metadata" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ No matches found
+
+● Search (grep)
+  │ "class ParseStatus|interface ParseStatus|typealias ParseStatus" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ No matches found
+
+● Search (grep)
+  │ "class ProtocolHeaders|interface ProtocolHeaders|typealias ProtocolHeaders"
+  │ in **/*.kt (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ No matches found
+
+● Search (grep)
+  │ "class Metadata|interface Metadata" in **/*.{kt,java}
+  └ 2 lines found
+
+● Search (grep)
+  │ "class ProtocolHeaders|interface ProtocolHeaders" in **/*.{kt,java}
+  └ 1 line found
+
+● Search (grep)
+  │ "class ParseStatus|interface ParseStatus" in **/*.{kt,java}
+  └ 2 lines found
+
+● Edit
+  └ Create ~\.copilot\session-state\5b047c59-f85a-4504-83ac-579a4ec73260\plan.md
+
+● Read Metadata.java
+  │ pulsar-core\pulsar-persist\src\main\java\ai\platon\pulsar\persist\Metadata.j
+  │ ava
+  └ L1:220 (207 lines read)
+
+● Read ProtocolHeaders.java
+  │ pulsar-core\pulsar-persist\src\main\java\ai\platon\pulsar\persist\ProtocolHe
+  │ aders.java
+  └ L1:220 (137 lines read)
+
+● Read ParseStatus.java
+  │ pulsar-core\pulsar-persist\src\main\java\ai\platon\pulsar\persist\ParseStatu
+  │ s.java
+  └ L1:220 (167 lines read)
+
+● Read AbstractWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Abstract
+  │ WebPage.kt
+  └ L260:420 (67 lines read)
+
+● Search (grep)
+  │ "contentAsBytes|contentAsString|contentAsInputStream|contentAsSaxInputSource
+  │ |configuredUrl" in **/*.kt
+  │ (pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist)
+  └ 12 lines found
+
+● Edit
+  └ Delete pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\m
+    odel\PlainWebPage.kt
+
+● Edit
+  └ Create pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\m
+    odel\PlainWebPage.kt
+
+I’ve got the first pass in place. I’m tightening one behavior before validation: when `PlainWebPage` owns raw bytes directly, its length fields should track those bytes naturally instead of inheriting the old Gora-specific semantics.
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\mod
+    el\PlainWebPage.kt
+
+● Edit
+  └ Create pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\m
+    odel\PlainWebPageTest.kt
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\mod
+    el\PlainWebPageTest.kt
+
+● Read PlainWebPageTest.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPageTest.kt
+  └ L1:220 (67 lines read)
+
+● Read PlainWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPage.kt
+  └ L1:260 (229 lines read)
+
+● Run PlainWebPage tests (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist -Dtest=PlainWebPageTest test
+  └ 40 lines...
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\mod
+    el\PlainWebPage.kt
+
+The compiler issue was from keeping a custom setter shape inside a `data class`. I’m simplifying that further: plain native fields with no hidden wrapper behavior, which actually matches the task goal better.
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\mod
+    el\PlainWebPage.kt
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\mod
+    el\PlainWebPageTest.kt
+
+● Run PlainWebPage tests (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist -Dtest=PlainWebPageTest test
+  └ 74 lines...
+
+The code change is in and the module test is green. I’m finishing the required project memory updates now so the task is complete end-to-end.
+
+✗ Read MEMORY.20260423.md
+  │ coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+  └ Path does not exist
+
+✗ Read MEMORY.202604.md
+  │ coworker\tasks\300logs\2026\04\MEMORY.202604.md
+  └ Path does not exist
+
+● Search (glob)
+  │ "coworker\tasks\300logs\2026\04\**\MEMORY.202604*.md"
+  └ No matches found
+
+● List directory coworker\tasks\300logs
+  └ 2 files found
+
+● Search (glob)
+  │ "coworker\tasks\300logs\**"
+  └ No matches found
+
+● List directory coworker\tasks\300logs\scheduler
+  └ 1 file found
+
+● List directory coworker\tasks\300logs\2026
+  └ 1 file found
+
+✗ Read 04
+  │ coworker\tasks\300logs\scheduler\04
+  └ Path does not exist
+
+● List directory coworker\tasks\300logs\2026\04
+  └ 1 file found
+
+● List directory coworker\tasks\300logs\2026\04\23
+  └ 4 files found
+
+● Search (glob)
+  │ "coworker\tasks\300logs\2026\04\23\**"
+  └ No matches found
+
+● Edit
+  │ Create coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+  └ Create coworker\tasks\300logs\2026\04\MEMORY.202604.md
+
+● Edit
+  └ Edit ~\.copilot\session-state\5b047c59-f85a-4504-83ac-579a4ec73260\plan.md
+
+● Memory stored build commands
+  └ The persist module can be targeted from the repo root with Maven using -pl
+    pulsa…
+
+● Read MEMORY.20260423.md
+  │ coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+  └ 3 lines read
+
+● Read MEMORY.202604.md
+  │ coworker\tasks\300logs\2026\04\MEMORY.202604.md
+  └ 3 lines read
+
+● Show diff stats for changed files (shell)
+  │ git --no-pager diff --stat -- pulsar-core/pulsar-persist/src/main/kotlin/ai/
+  │ platon/pulsar/persist/model/PlainWebPage.kt pulsar-core/pulsar-persist/src/t
+  │ est/kotlin/ai/platon/pulsar/persist/model/PlainWebPageTest.kt
+  │ coworker/tasks/300logs/2026/04/23/MEMORY.20260423.md
+  │ coworker/tasks/300logs/2026/04/MEMORY.202604.md
+  └ 4 lines...
+
+● Read PlainWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pl
+  │ ainWebPage.kt
+  └ L1:220 (219 lines read)
+
+● Check final git status (shell)
+  │ git --no-pager status --short -- pulsar-core/pulsar-persist/src/main/kotlin/
+  │ ai/platon/pulsar/persist/model/PlainWebPage.kt pulsar-core/pulsar-persist/sr
+  │ c/test/kotlin/ai/platon/pulsar/persist/model/PlainWebPageTest.kt
+  │ coworker/tasks/300logs/2026/04/23/MEMORY.20260423.md
+  │ coworker/tasks/300logs/2026/04/MEMORY.202604.md
+  └ 5 lines...
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\mod
+    el\PlainWebPage.kt
+
+● Re-run PlainWebPage tests (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist -Dtest=PlainWebPageTest test
+  └ 74 lines...
+
+**Done.** `PlainWebPage` is now a real storage-agnostic snapshot model instead of a renamed `GoraWebPage` wrapper. I replaced `pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\PlainWebPage.kt` with a plain Kotlin `data class` that uses native fields, collections, and byte arrays, plus lightweight `newWebPage`, `newInternalPage`, and `from(WebPage)` helpers. I also added `PlainWebPageTest.kt` to lock in the new plain-model behavior.
+
+I appended the required task summary to `coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md` and created the monthly summary file at `coworker\tasks\300logs\2026\04\MEMORY.202604.md` with the month-to-date summary through `2026-04-23`.
+
+
+=== COPILOT STDERR ===
+
+
+Changes   +322 -804
+Requests  1 Premium (11m 58s)
+Tokens    ↑ 2.7m • ↓ 23.9k • 2.6m (cached) • 14.1k (reasoning)

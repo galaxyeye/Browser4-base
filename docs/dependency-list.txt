@@ -1,0 +1,267 @@
+..\..\mvnw.cmd -Didea.version=2026.1 -Dmaven.ext.class.path=C:\Users\pereg\AppData\Roaming\JetBrains\IntelliJIdea2026.1\plugins\maven\lib\intellij.maven.rt\maven-event-listener.jar -Djansi.passthrough=true -Dstyle.color=always -DskipTests=true -Dmaven.repo.local=D:\Users\pereg\.m2\repository org.apache.maven.plugins:maven-dependency-plugin:3.9.0:list -f pom.xml
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/C:/Users/pereg/.m2/wrapper/dists/apache-maven-3.9.7/744dcc12d591e1ad9413e3296c618fd8/lib/jansi-2.4.1.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/C:/Users/pereg/.m2/wrapper/dists/apache-maven-3.9.7/744dcc12d591e1ad9413e3296c618fd8/lib/guava-33.2.0-jre.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: Final field _cipher in class org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher has been mutated reflectively by class org.eclipse.sisu.bean.BeanPropertyField in unnamed module @3b2da18f (file:/C:/Users/pereg/.m2/wrapper/dists/apache-maven-3.9.7/744dcc12d591e1ad9413e3296c618fd8/lib/org.eclipse.sisu.inject-0.9.0.M2.jar)
+WARNING: Use --enable-final-field-mutation=ALL-UNNAMED to avoid a warning
+WARNING: Mutating final fields will be blocked in a future release unless final field mutation is enabled
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------< ai.platon.pulsar:pulsar-skeleton >------------------
+[INFO] Building Pulsar Skeleton 4.7.2-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- dependency:3.9.0:list (default-cli) @ pulsar-skeleton ---
+[INFO] Can't extract module name from pulsar-resources-4.7.2-SNAPSHOT-tests.jar: zip file is empty
+[INFO]
+[INFO] The following files have been resolved:
+[INFO]    ai.platon.pulsar:pulsar-common:jar:4.7.2-SNAPSHOT:compile -- module pulsar.common (auto)
+[INFO]    org.springframework:spring-core:jar:7.0.2:compile -- module spring.core [auto]
+[INFO]    commons-logging:commons-logging:jar:1.3.2:compile -- module org.apache.commons.logging
+[INFO]    org.apache.httpcomponents.client5:httpclient5:jar:5.5.1:compile -- module org.apache.httpcomponents.client5.httpclient5 [auto]
+[INFO]    org.apache.httpcomponents.core5:httpcore5:jar:5.3.6:compile -- module org.apache.httpcomponents.core5.httpcore5 [auto]
+[INFO]    org.apache.httpcomponents.core5:httpcore5-h2:jar:5.3.6:compile -- module org.apache.httpcomponents.core5.httpcore5.h2 [auto]
+[INFO]    commons-io:commons-io:jar:2.16.1:compile -- module org.apache.commons.io
+[INFO]    commons-codec:commons-codec:jar:1.19.0:compile -- module org.apache.commons.codec
+[INFO]    org.apache.commons:commons-lang3:jar:3.19.0:compile -- module org.apache.commons.lang3
+[INFO]    org.apache.commons:commons-math3:jar:3.6.1:compile -- module commons.math3 (auto)
+[INFO]    com.squareup.okhttp3:okhttp:jar:4.12.0:compile -- module okhttp3 [auto]
+[INFO]    com.squareup.okio:okio:jar:3.6.0:compile -- module okio (auto)
+[INFO]    com.squareup.okio:okio-jvm:jar:3.6.0:compile -- module okio [auto]
+[INFO]    org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.9.10:compile -- module kotlin.stdlib.common (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:2.2.21:compile -- module kotlin.stdlib.jdk8
+[INFO]    org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:2.2.21:compile -- module kotlin.stdlib.jdk7
+[INFO]    org.codehaus.woodstox:stax2-api:jar:4.2.1:compile -- module org.codehaus.stax2
+[INFO]    org.codehaus.woodstox:woodstox-core-asl:jar:4.4.1:compile -- module woodstox.core.asl (auto)
+[INFO]    javax.xml.stream:stax-api:jar:1.0-2:compile -- module stax.api (auto)
+[INFO]    com.fasterxml.jackson.module:jackson-module-kotlin:jar:2.20.1:compile -- module com.fasterxml.jackson.kotlin
+[INFO]    com.fasterxml.jackson.dataformat:jackson-dataformat-properties:jar:2.20.1:compile -- module com.fasterxml.jackson.dataformat.javaprop
+[INFO]    com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.20.1:compile -- module com.fasterxml.jackson.dataformat.yaml
+[INFO]    org.yaml:snakeyaml:jar:2.5:compile -- module org.yaml.snakeyaml
+[INFO]    com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.20.1:compile -- module com.fasterxml.jackson.datatype.jsr310
+[INFO]    org.jetbrains.kotlin:kotlin-serialization:jar:2.2.21:compile -- module kotlin.serialization (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-gradle-plugin-api:jar:2.2.21:compile -- module kotlin.gradle.plugin.api (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-gradle-plugin-annotations:jar:2.2.21:compile -- module kotlin.gradle.plugin.annotations (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-native-utils:jar:2.2.21:compile -- module kotlin.native_utils [auto]
+[INFO]    org.jetbrains.kotlin:kotlin-util-io:jar:2.2.21:compile -- module kotlin.util.io (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-tooling-core:jar:2.2.21:compile -- module kotlin.tooling.core (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-build-tools-api:jar:2.2.21:compile -- module kotlin.build.tools.api (auto)
+[INFO]    org.nibor.autolink:autolink:jar:0.11.0:compile -- module org.nibor.autolink
+[INFO]    org.slf4j:slf4j-api:jar:2.0.17:compile -- module org.slf4j
+[INFO]    ch.qos.logback:logback-classic:jar:1.5.22:compile -- module ch.qos.logback.classic
+[INFO]    ch.qos.logback:logback-core:jar:1.5.22:compile -- module ch.qos.logback.core
+[INFO]    org.apache.logging.log4j:log4j-core:jar:2.25.3:compile -- module org.apache.logging.log4j.core
+[INFO]    org.apache.logging.log4j:log4j-api:jar:2.25.3:compile -- module org.apache.logging.log4j
+[INFO]    ai.platon.pulsar:pulsar-persist:jar:4.7.2-SNAPSHOT:compile -- module pulsar.persist (auto)
+[INFO]    ai.platon.pulsar:gora-shaded-mongodb:jar:0.9:compile -- module gora.shaded.mongodb (auto)
+[INFO]    org.apache.gora:gora-compiler:jar:0.9:compile -- module gora.compiler (auto)
+[INFO]    org.apache.avro:avro-compiler:jar:1.8.2:compile -- module avro.compiler (auto)
+[INFO]    commons-lang:commons-lang:jar:2.6:compile -- module commons.lang (auto)
+[INFO]    org.apache.velocity:velocity:jar:1.7:compile -- module velocity (auto)
+[INFO]    joda-time:joda-time:jar:2.7:compile -- module joda.time (auto)
+[INFO]    org.apache.avro:avro:jar:1.8.2:compile -- module avro (auto)
+[INFO]    org.codehaus.jackson:jackson-core-asl:jar:1.9.13:compile -- module jackson.core.asl (auto)
+[INFO]    org.codehaus.jackson:jackson-mapper-asl:jar:1.9.13:compile -- module jackson.mapper.asl (auto)
+[INFO]    com.thoughtworks.paranamer:paranamer:jar:2.7:compile -- module paranamer (auto)
+[INFO]    org.xerial.snappy:snappy-java:jar:1.1.1.3:compile -- module snappy.java (auto)
+[INFO]    org.tukaani:xz:jar:1.5:compile -- module xz (auto)
+[INFO]    org.apache.hadoop:hadoop-common:jar:2.7.2:compile -- module hadoop.common (auto)
+[INFO]    commons-collections:commons-collections:jar:3.2.2:compile -- module commons.collections (auto)
+[INFO]    ai.platon.pulsar:pulsar-jsoup:jar:1.14.3:compile -- module pulsar.jsoup (auto)
+[INFO]    org.jgrapht:jgrapht-core:jar:1.0.1:compile -- module jgrapht.core (auto)
+[INFO]    org.jgrapht:jgrapht-ext:jar:1.0.1:compile -- module jgrapht.ext (auto)
+[INFO]    org.tinyjee.jgraphx:jgraphx:jar:2.0.0.1:compile -- module jgraphx (auto)
+[INFO]    jgraph:jgraph:jar:5.13.0.0:compile -- module jgraph (auto)
+[INFO]    org.antlr:antlr4-runtime:jar:4.5.3:compile -- module antlr4.runtime (auto)
+[INFO]    ai.platon.pulsar:pulsar-dom:jar:4.7.2-SNAPSHOT:compile -- module pulsar.dom (auto)
+[INFO]    com.udojava:EvalEx:jar:2.0:compile -- module EvalEx (auto)
+[INFO]    org.perf4j:perf4j:jar:0.9.16:compile -- module perf4j (auto)
+[INFO]    ai.platon.pulsar:pulsar-browser:jar:4.7.2-SNAPSHOT:compile -- module pulsar.browser (auto)
+[INFO]    ai.platon.cdt:cdt-kotlin-client:jar:4.0.5:compile -- module cdt.kotlin.client (auto)
+[INFO]    javax.websocket:javax.websocket-api:jar:1.1:compile -- module javax.websocket.api (auto)
+[INFO]    io.dropwizard.metrics:metrics-core:jar:4.2.12:compile -- module com.codahale.metrics [auto]
+[INFO]    io.ktor:ktor-client-core:jar:3.2.3:compile -- module ktor.client.core (auto)
+[INFO]    io.ktor:ktor-http:jar:3.2.3:runtime -- module ktor.http (auto)
+[INFO]    io.ktor:ktor-utils:jar:3.2.3:runtime -- module ktor.utils (auto)
+[INFO]    org.jetbrains.kotlinx:kotlinx-serialization-core:jar:1.9.0:runtime -- module kotlinx.serialization.core (auto)
+[INFO]    io.ktor:ktor-http-cio:jar:3.2.3:runtime -- module ktor.http.cio (auto)
+[INFO]    io.ktor:ktor-io:jar:3.2.3:runtime -- module ktor.io (auto)
+[INFO]    org.jetbrains.kotlinx:kotlinx-io-core:jar:0.7.0:runtime -- module kotlinx.io.core (auto)
+[INFO]    org.jetbrains.kotlinx:kotlinx-io-bytestring:jar:0.7.0:runtime -- module kotlinx.io.bytestring (auto)
+[INFO]    io.ktor:ktor-events:jar:3.2.3:runtime -- module ktor.events (auto)
+[INFO]    io.ktor:ktor-websocket-serialization:jar:3.2.3:runtime -- module ktor.websocket.serialization (auto)
+[INFO]    io.ktor:ktor-serialization:jar:3.2.3:runtime -- module ktor.serialization (auto)
+[INFO]    io.ktor:ktor-sse:jar:3.2.3:runtime -- module ktor.sse (auto)
+[INFO]    io.ktor:ktor-client-core-jvm:jar:3.2.3:compile -- module io.ktor.client.core [auto]
+[INFO]    io.ktor:ktor-http-jvm:jar:3.2.3:compile -- module io.ktor.http [auto]
+[INFO]    io.ktor:ktor-utils-jvm:jar:3.2.3:compile -- module io.ktor.utils [auto]
+[INFO]    org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:jar:1.9.0:compile -- module kotlinx.serialization.core
+[INFO]    io.ktor:ktor-http-cio-jvm:jar:3.2.3:compile -- module io.ktor.http.cio [auto]
+[INFO]    io.ktor:ktor-network-jvm:jar:3.2.3:compile -- module io.ktor.network [auto]
+[INFO]    io.ktor:ktor-io-jvm:jar:3.2.3:compile -- module io.ktor.io [auto]
+[INFO]    org.jetbrains.kotlinx:kotlinx-io-core-jvm:jar:0.7.0:compile -- module kotlinx.io.core
+[INFO]    org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm:jar:0.7.0:compile -- module kotlinx.io.bytestring
+[INFO]    io.ktor:ktor-events-jvm:jar:3.2.3:compile -- module io.ktor.events [auto]
+[INFO]    io.ktor:ktor-websocket-serialization-jvm:jar:3.2.3:compile -- module io.ktor.websocket.serialization [auto]
+[INFO]    io.ktor:ktor-serialization-jvm:jar:3.2.3:compile -- module io.ktor.serialization [auto]
+[INFO]    io.ktor:ktor-sse-jvm:jar:3.2.3:compile -- module io.ktor.sse [auto]
+[INFO]    org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:jar:1.10.2:runtime -- module kotlinx.coroutines.slf4j
+[INFO]    io.ktor:ktor-client-cio:jar:3.2.3:compile -- module ktor.client.cio (auto)
+[INFO]    io.ktor:ktor-websockets:jar:3.2.3:runtime -- module ktor.websockets (auto)
+[INFO]    io.ktor:ktor-network-tls:jar:3.2.3:runtime -- module ktor.network.tls (auto)
+[INFO]    io.ktor:ktor-network:jar:3.2.3:runtime -- module ktor.network (auto)
+[INFO]    io.ktor:ktor-client-cio-jvm:jar:3.2.3:compile -- module io.ktor.client.cio [auto]
+[INFO]    io.ktor:ktor-websockets-jvm:jar:3.2.3:compile -- module io.ktor.websockets [auto]
+[INFO]    io.ktor:ktor-network-tls-jvm:jar:3.2.3:compile -- module io.ktor.network.tls [auto]
+[INFO]    io.ktor:ktor-client-websockets:jar:3.2.3:compile -- module ktor.client.websockets (auto)
+[INFO]    org.javassist:javassist:jar:3.30.2-GA:compile -- module org.javassist [auto]
+[INFO]    ai.platon.pulsar:pulsar-ql-common:jar:4.7.2-SNAPSHOT:compile -- module pulsar.ql.common (auto)
+[INFO]    com.fasterxml.jackson.core:jackson-databind:jar:2.20.1:compile -- module com.fasterxml.jackson.databind
+[INFO]    ai.platon.pulsar:pulsar-h2:jar:1.4.197:compile -- module com.h2database [auto]
+[INFO]    javax.servlet:javax.servlet-api:jar:3.1.0:compile -- module javax.servlet.api (auto)
+[INFO]    org.apache.lucene:lucene-core:jar:7.3.1:compile -- module lucene.core (auto)
+[INFO]    org.osgi:org.osgi.core:jar:4.2.0:compile -- module org.osgi.core (auto)
+[INFO]    org.osgi:org.osgi.enterprise:jar:4.2.0:compile -- module org.osgi.enterprise (auto)
+[INFO]    org.locationtech.jts:jts-core:jar:1.15.0:compile -- module jts.core (auto)
+[INFO]    ai.platon.pulsar:pulsar-llm:jar:4.7.2-SNAPSHOT:compile -- module pulsar.llm (auto)
+[INFO]    dev.langchain4j:langchain4j-core:jar:1.5.0:compile -- module langchain4j.core (auto)
+[INFO]    org.ehcache:ehcache:jar:3.11.1:compile -- module ehcache (auto)
+[INFO]    javax.cache:cache-api:jar:1.1.1:compile -- module cache.api (auto)
+[INFO]    org.glassfish.jaxb:jaxb-runtime:jar:4.0.6:runtime -- module org.glassfish.jaxb.runtime
+[INFO]    org.glassfish.jaxb:jaxb-core:jar:4.0.6:runtime -- module org.glassfish.jaxb.core
+[INFO]    jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.4:runtime -- module jakarta.xml.bind
+[INFO]    jakarta.activation:jakarta.activation-api:jar:2.1.4:runtime -- module jakarta.activation
+[INFO]    org.eclipse.angus:angus-activation:jar:2.0.3:runtime -- module org.eclipse.angus.activation
+[INFO]    org.glassfish.jaxb:txw2:jar:4.0.6:runtime -- module com.sun.xml.txw2
+[INFO]    com.sun.istack:istack-commons-runtime:jar:4.1.2:runtime -- module com.sun.istack.runtime
+[INFO]    dev.langchain4j:langchain4j-open-ai:jar:1.5.0:compile -- module langchain4j.open.ai (auto)
+[INFO]    dev.langchain4j:langchain4j-http-client:jar:1.5.0:compile -- module langchain4j.http.client (auto)
+[INFO]    dev.langchain4j:langchain4j-http-client-jdk:jar:1.5.0:runtime -- module langchain4j.http.client.jdk (auto)
+[INFO]    com.fasterxml.jackson.core:jackson-annotations:jar:2.20:compile -- module com.fasterxml.jackson.annotation
+[INFO]    com.fasterxml.jackson.core:jackson-core:jar:2.20.1:compile -- module com.fasterxml.jackson.core
+[INFO]    com.knuddels:jtokkit:jar:1.1.0:compile -- module jtokkit (auto)
+[INFO]    org.springframework:spring-context:jar:7.0.2:compile -- module spring.context [auto]
+[INFO]    org.springframework:spring-aop:jar:7.0.2:compile -- module spring.aop [auto]
+[INFO]    org.springframework:spring-beans:jar:7.0.2:compile -- module spring.beans [auto]
+[INFO]    org.springframework:spring-expression:jar:7.0.2:compile -- module spring.expression [auto]
+[INFO]    io.micrometer:micrometer-observation:jar:1.16.1:compile -- module micrometer.observation [auto]
+[INFO]    io.micrometer:micrometer-commons:jar:1.16.1:compile -- module micrometer.commons [auto]
+[INFO]    org.apache.commons:commons-collections4:jar:4.4:compile -- module org.apache.commons.collections4 [auto]
+[INFO]    com.google.code.crawler-commons:crawler-commons:jar:0.5:compile -- module crawler.commons (auto)
+[INFO]    org.apache.httpcomponents:httpclient:jar:4.5.13:compile -- module org.apache.httpcomponents.httpclient [auto]
+[INFO]    org.apache.httpcomponents:httpcore:jar:4.4.15:compile -- module org.apache.httpcomponents.httpcore [auto]
+[INFO]    org.apache.tika:tika-core:jar:2.9.0:compile -- module org.apache.tika.core [auto]
+[INFO]    com.google.guava:guava:jar:33.2.1-jre:compile -- module com.google.common [auto]
+[INFO]    com.google.guava:failureaccess:jar:1.0.2:compile -- module com.google.common.util.concurrent.internal [auto]
+[INFO]    com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile -- module listenablefuture (auto)
+[INFO]    com.google.code.findbugs:jsr305:jar:3.0.2:compile -- module jsr305 (auto)
+[INFO]    org.checkerframework:checker-qual:jar:3.42.0:compile -- module org.checkerframework.checker.qual [auto]
+[INFO]    com.google.errorprone:error_prone_annotations:jar:2.26.1:compile -- module com.google.errorprone.annotations
+[INFO]    com.google.j2objc:j2objc-annotations:jar:3.0.0:compile -- module com.google.j2objc.annotations
+[INFO]    com.google.code.gson:gson:jar:2.13.2:compile -- module com.google.gson
+[INFO]    com.beust:jcommander:jar:1.82:compile -- module jcommander (auto)
+[INFO]    com.github.oshi:oshi-core:jar:6.6.6:compile -- module com.github.oshi [auto]
+[INFO]    net.java.dev.jna:jna:jar:5.16.0:compile -- module com.sun.jna [auto]
+[INFO]    net.java.dev.jna:jna-platform:jar:5.16.0:compile -- module com.sun.jna.platform [auto]
+[INFO]    io.dropwizard.metrics:metrics-graphite:jar:4.2.12:compile -- module com.codahale.metrics.graphite [auto]
+[INFO]    com.rabbitmq:amqp-client:jar:5.27.1:compile -- module com.rabbitmq.client [auto]
+[INFO]    io.netty:netty-transport:jar:4.2.9.Final:compile -- module io.netty.transport
+[INFO]    io.netty:netty-common:jar:4.2.9.Final:compile -- module io.netty.common
+[INFO]    io.netty:netty-buffer:jar:4.2.9.Final:compile -- module io.netty.buffer
+[INFO]    io.netty:netty-resolver:jar:4.2.9.Final:compile -- module io.netty.resolver
+[INFO]    io.netty:netty-codec:jar:4.2.9.Final:compile -- module io.netty.codec.unused
+[INFO]    io.netty:netty-codec-base:jar:4.2.9.Final:compile -- module io.netty.codec
+[INFO]    io.netty:netty-codec-compression:jar:4.2.9.Final:compile -- module io.netty.codec.compression
+[INFO]    io.netty:netty-codec-protobuf:jar:4.2.9.Final:compile -- module io.netty.codec.protobuf
+[INFO]    io.netty:netty-codec-marshalling:jar:4.2.9.Final:compile -- module io.netty.codec.marshalling
+[INFO]    io.netty:netty-handler:jar:4.2.9.Final:compile -- module io.netty.handler
+[INFO]    io.netty:netty-transport-native-unix-common:jar:4.2.9.Final:compile -- module io.netty.transport.unix.common
+[INFO]    org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:jar:1.10.2:compile -- module kotlinx.coroutines.jdk8
+[INFO]    org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:jar:1.10.2:compile -- module kotlinx.coroutines.core
+[INFO]    ai.platon.pulsar:pulsar-resources:test-jar:tests:4.7.2-SNAPSHOT:test
+[INFO]    org.springframework:spring-test:jar:7.0.2:test -- module spring.test [auto]
+[INFO]    org.junit.jupiter:junit-jupiter-api:jar:6.0.1:test -- module org.junit.jupiter.api
+[INFO]    org.opentest4j:opentest4j:jar:1.3.0:test -- module org.opentest4j
+[INFO]    org.junit.platform:junit-platform-commons:jar:6.0.1:test -- module org.junit.platform.commons
+[INFO]    org.apiguardian:apiguardian-api:jar:1.1.2:test -- module org.apiguardian.api
+[INFO]    org.jspecify:jspecify:jar:1.0.0:compile -- module org.jspecify
+[INFO]    org.junit.jupiter:junit-jupiter-engine:jar:6.0.1:test -- module org.junit.jupiter.engine
+[INFO]    org.junit.platform:junit-platform-engine:jar:6.0.1:test -- module org.junit.platform.engine
+[INFO]    org.mockito:mockito-core:jar:5.20.0:test -- module org.mockito
+[INFO]    net.bytebuddy:byte-buddy:jar:1.17.8:test -- module net.bytebuddy
+[INFO]    net.bytebuddy:byte-buddy-agent:jar:1.17.8:test -- module net.bytebuddy.agent
+[INFO]    org.objenesis:objenesis:jar:3.3:test -- module org.objenesis [auto]
+[INFO]    io.mockk:mockk:jar:1.14.6:test -- module mockk (auto)
+[INFO]    io.mockk:mockk-dsl:jar:1.14.6:test -- module mockk.dsl (auto)
+[INFO]    io.mockk:mockk-agent:jar:1.14.6:test -- module mockk.agent (auto)
+[INFO]    io.mockk:mockk-agent-api:jar:1.14.6:test -- module mockk.agent.api (auto)
+[INFO]    io.mockk:mockk-core:jar:1.14.6:test -- module mockk.core (auto)
+[INFO]    io.mockk:mockk-jvm:jar:1.14.6:test -- module mockk.jvm (auto)
+[INFO]    io.mockk:mockk-dsl-jvm:jar:1.14.6:test -- module mockk.dsl.jvm (auto)
+[INFO]    io.mockk:mockk-agent-jvm:jar:1.14.6:test -- module mockk.agent.jvm (auto)
+[INFO]    io.mockk:mockk-agent-api-jvm:jar:1.14.6:test -- module mockk.agent.api.jvm (auto)
+[INFO]    io.mockk:mockk-core-jvm:jar:1.14.6:test -- module mockk.core.jvm (auto)
+[INFO]    junit:junit:jar:4.13.2:test -- module junit [auto]
+[INFO]    org.hamcrest:hamcrest-core:jar:3.0:test -- module org.hamcrest.core.deprecated [auto]
+[INFO]    org.hamcrest:hamcrest:jar:3.0:test -- module org.hamcrest [auto]
+[INFO]    org.junit.jupiter:junit-jupiter:jar:6.0.1:test -- module org.junit.jupiter
+[INFO]    org.junit.jupiter:junit-jupiter-params:jar:6.0.1:test -- module org.junit.jupiter.params
+[INFO]    ai.platon.pulsar:pulsar-tests-common:jar:4.7.2-SNAPSHOT:test -- module pulsar.tests.common (auto)
+[INFO]    org.jetbrains.kotlinx:kotlinx-serialization-json:jar:1.9.0:test -- module kotlinx.serialization.json (auto)
+[INFO]    org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:jar:1.9.0:test -- module kotlinx.serialization.json
+[INFO]    org.springframework.boot:spring-boot-starter-web:jar:4.0.1:test -- module spring.boot.starter.web [auto]
+[INFO]    org.springframework.boot:spring-boot-starter-jackson:jar:4.0.1:test -- module spring.boot.starter.jackson [auto]
+[INFO]    org.springframework.boot:spring-boot-jackson:jar:4.0.1:test -- module spring.boot.jackson [auto]
+[INFO]    tools.jackson.core:jackson-databind:jar:3.0.3:test -- module tools.jackson.databind
+[INFO]    tools.jackson.core:jackson-core:jar:3.0.3:test -- module tools.jackson.core
+[INFO]    org.springframework.boot:spring-boot-starter-tomcat:jar:4.0.1:test -- module spring.boot.starter.tomcat [auto]
+[INFO]    org.springframework.boot:spring-boot-starter-tomcat-runtime:jar:4.0.1:test -- module spring.boot.starter.tomcat.runtime [auto]
+[INFO]    org.springframework.boot:spring-boot-web-server:jar:4.0.1:test -- module spring.boot.web.server [auto]
+[INFO]    org.apache.tomcat.embed:tomcat-embed-core:jar:11.0.15:test -- module org.apache.tomcat.embed.core
+[INFO]    org.apache.tomcat.embed:tomcat-embed-el:jar:11.0.15:test -- module org.apache.tomcat.embed.el
+[INFO]    org.apache.tomcat.embed:tomcat-embed-websocket:jar:11.0.15:test -- module org.apache.tomcat.embed.websocket
+[INFO]    org.springframework.boot:spring-boot-tomcat:jar:4.0.1:test -- module spring.boot.tomcat [auto]
+[INFO]    org.springframework.boot:spring-boot-http-converter:jar:4.0.1:test -- module spring.boot.http.converter [auto]
+[INFO]    org.springframework.boot:spring-boot:jar:4.0.1:test -- module spring.boot [auto]
+[INFO]    org.springframework:spring-web:jar:7.0.2:test -- module spring.web [auto]
+[INFO]    org.springframework.boot:spring-boot-webmvc:jar:4.0.1:test -- module spring.boot.webmvc [auto]
+[INFO]    org.springframework.boot:spring-boot-servlet:jar:4.0.1:test -- module spring.boot.servlet [auto]
+[INFO]    org.springframework:spring-webmvc:jar:7.0.2:test -- module spring.webmvc [auto]
+[INFO]    org.springframework.boot:spring-boot-starter-actuator:jar:4.0.1:test -- module spring.boot.starter.actuator [auto]
+[INFO]    org.springframework.boot:spring-boot-starter:jar:4.0.1:test -- module spring.boot.starter [auto]
+[INFO]    org.springframework.boot:spring-boot-starter-logging:jar:4.0.1:test -- module spring.boot.starter.logging [auto]
+[INFO]    org.apache.logging.log4j:log4j-to-slf4j:jar:2.25.3:test -- module org.apache.logging.log4j.to.slf4j
+[INFO]    org.slf4j:jul-to-slf4j:jar:2.0.17:test -- module jul.to.slf4j
+[INFO]    org.springframework.boot:spring-boot-autoconfigure:jar:4.0.1:test -- module spring.boot.autoconfigure [auto]
+[INFO]    jakarta.annotation:jakarta.annotation-api:jar:3.0.0:test -- module jakarta.annotation
+[INFO]    org.springframework.boot:spring-boot-starter-micrometer-metrics:jar:4.0.1:test -- module spring.boot.starter.micrometer.metrics [auto]
+[INFO]    org.springframework.boot:spring-boot-micrometer-metrics:jar:4.0.1:test -- module spring.boot.micrometer.metrics [auto]
+[INFO]    org.springframework.boot:spring-boot-micrometer-observation:jar:4.0.1:test -- module spring.boot.micrometer.observation [auto]
+[INFO]    org.springframework.boot:spring-boot-actuator-autoconfigure:jar:4.0.1:test -- module spring.boot.actuator.autoconfigure [auto]
+[INFO]    org.springframework.boot:spring-boot-actuator:jar:4.0.1:test -- module spring.boot.actuator [auto]
+[INFO]    org.springframework.boot:spring-boot-health:jar:4.0.1:test -- module spring.boot.health [auto]
+[INFO]    io.micrometer:micrometer-jakarta9:jar:1.16.1:test -- module micrometer.jakarta9 [auto]
+[INFO]    io.micrometer:micrometer-core:jar:1.16.1:test -- module micrometer.core [auto]
+[INFO]    org.hdrhistogram:HdrHistogram:jar:2.2.2:test -- module HdrHistogram (auto)
+[INFO]    org.latencyutils:LatencyUtils:jar:2.0.3:test -- module LatencyUtils (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-stdlib:jar:2.2.21:compile -- module kotlin.stdlib
+[INFO]    org.jetbrains:annotations:jar:13.0:compile -- module annotations (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-reflect:jar:2.2.21:compile -- module kotlin.reflect
+[INFO]    org.jetbrains.kotlinx:kotlinx-coroutines-core:jar:1.10.2:compile -- module kotlinx.coroutines.core (auto)
+[INFO]    org.jetbrains.kotlin:kotlin-test-junit5:jar:2.2.21:test -- module kotlin.test.junit5
+[INFO]    org.jetbrains.kotlin:kotlin-test:jar:2.2.21:test -- module kotlin.test
+[INFO]    org.junit.platform:junit-platform-launcher:jar:6.0.1:test -- module org.junit.platform.launcher
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.954 s
+[INFO] Finished at: 2026-04-24T00:48:29+08:00
+[INFO] ------------------------------------------------------------------------
