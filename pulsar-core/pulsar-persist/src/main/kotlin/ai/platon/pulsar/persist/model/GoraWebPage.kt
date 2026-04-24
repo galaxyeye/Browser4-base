@@ -532,17 +532,11 @@ class GoraWebPage(
 
     override var signature: ByteBuffer? = null
 
-    override val signatureAsString: String
-        get() = getSignatureAsString0()
-
     override var prevSignature: ByteBuffer?
         get() = page.prevSignature
         set(value) {
             page.prevSignature = value
         }
-
-    override val prevSignatureAsString: String
-        get() = getPrevSignatureAsString0()
 
     override var proxy: String?
         get() = page.proxy?.toString()
@@ -725,21 +719,5 @@ class GoraWebPage(
                 clearPersistContent()
             }
         }
-    }
-
-    private fun getSignatureAsString0(): String {
-        var sig = signature
-        if (sig == null) {
-            sig = ByteBuffer.wrap("".toByteArray())
-        }
-        return Strings.toHexString(sig)
-    }
-
-    private fun getPrevSignatureAsString0(): String {
-        var sig: ByteBuffer? = prevSignature
-        if (sig == null) {
-            sig = ByteBuffer.wrap("".toByteArray())
-        }
-        return Strings.toHexString(sig)
     }
 }

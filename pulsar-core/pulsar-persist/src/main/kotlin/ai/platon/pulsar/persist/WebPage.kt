@@ -169,19 +169,9 @@ interface WebPage : PageSnapshot {
     var prevSignature: ByteBuffer?
 
     /**
-     * The previous signature of the web page, stored as a `String`.
-     */
-    val prevSignatureAsString: String
-
-    /**
      * The current signature of the web page, stored as a `ByteBuffer`.
      */
     val signature: ByteBuffer?
-
-    /**
-     * The current signature of the web page, stored as a `String`.
-     */
-    val signatureAsString: String
 
     /**
      * The title of the web page.

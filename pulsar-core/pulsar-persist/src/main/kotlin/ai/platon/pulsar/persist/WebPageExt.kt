@@ -1,12 +1,14 @@
 package ai.platon.pulsar.persist
 
 import ai.platon.pulsar.common.DateTimes.constructTimeHistory
+import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.model.ActiveDOMStat
 import ai.platon.pulsar.persist.model.ActiveDOMStatus
 import ai.platon.pulsar.persist.model.GoraWebPage
+import java.nio.ByteBuffer
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -132,4 +134,26 @@ class WebPageExt(private val page: WebPage) {
     fun isValidContentModifyTime(publishTime: Instant): Boolean {
         return publishTime.isAfter(AppConstants.MIN_ARTICLE_PUBLISH_TIME)
     }
+}
+
+val WebPage.prevSignatureAsString: String
+    get() = getPrevSignatureAsString0()
+
+val WebPage.signatureAsString: String
+    get() = getSignatureAsString0()
+
+private fun WebPage.getSignatureAsString0(): String {
+    var sig = signature
+    if (sig == null) {
+        sig = ByteBuffer.wrap("".toByteArray())
+    }
+    return Strings.toHexString(sig)
+}
+
+private fun WebPage.getPrevSignatureAsString0(): String {
+    var sig: ByteBuffer? = prevSignature
+    if (sig == null) {
+        sig = ByteBuffer.wrap("".toByteArray())
+    }
+    return Strings.toHexString(sig)
 }

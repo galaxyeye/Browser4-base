@@ -18,6 +18,8 @@ package ai.platon.pulsar.persist.model
 
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.persist.WebPageExt
+import ai.platon.pulsar.persist.prevSignatureAsString
+import ai.platon.pulsar.persist.signatureAsString
 import com.google.gson.GsonBuilder
 import org.apache.gora.util.ByteUtils
 import org.jsoup.nodes.Document
@@ -31,7 +33,6 @@ class WebPageFormatter(val page: WebPage) {
     private var withContent = false
     private var withLinks = false
     private var withFields = false
-    private var withEntities = false
     private val pageExt = WebPageExt(page)
     private val zoneId = page.zoneId
 
@@ -72,16 +73,6 @@ class WebPageFormatter(val page: WebPage) {
 
     fun withFields(): WebPageFormatter {
         withFields = true
-        return this
-    }
-
-    fun withEntities(withEntities: Boolean): WebPageFormatter {
-        this.withEntities = withEntities
-        return this
-    }
-
-    fun withEntities(): WebPageFormatter {
-        withEntities = true
         return this
     }
 
@@ -136,13 +127,6 @@ class WebPageFormatter(val page: WebPage) {
         }
         if (withContent && page.content != null) {
             fields["content"] = page.contentAsString
-        }
-        if (withEntities) {
-            val pageModel = page.gPageModel
-            if (pageModel != null) {
-                val pageEntities = pageModel.unboxedFieldGroups.map { FieldGroupFormatter(it).fields.entries }
-                fields["pageEntities"] = pageEntities
-            }
         }
         return fields.filterValues { it != null }.entries.associate { it.key to it.value!! }
     }
@@ -231,16 +215,6 @@ class WebPageFormatter(val page: WebPage) {
                 sb.append("pageText:START>>>\n")
                         .append(page.pageText)
                         .append("\n<<<END:pageText\n")
-            }
-        }
-        if (withEntities) {
-            val pageModel = page.gPageModel
-            if (pageModel != null) {
-                sb.append("\n").append("entityField:START>>>\n")
-                pageModel.unboxedFieldGroups
-                    .flatMap { FieldGroupFormatter(it).fields.entries }
-                    .joinTo(sb) { it.key + ": " + it.value }
-                sb.append("\n<<<END:pageText\n")
             }
         }
         sb.append("\n")
