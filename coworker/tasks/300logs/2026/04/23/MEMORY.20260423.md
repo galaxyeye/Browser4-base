@@ -1,3 +1,4 @@
 ## 2026-04-24
 
 - Completed `decouple-plainwebpage-from-gwebpage`: replaced the accidental `GoraWebPage` copy with a storage-agnostic `PlainWebPage` data model that stores native Kotlin/JDK fields, added snapshot converters from `WebPage`, and covered the new behavior with focused persist-module tests. Lesson learned: this class had only been renamed before, so the safest fix was to make it truly plain and detached rather than preserving the old wrapper API around `GWebPage`.
+- Completed `remove-page-model-interface`: removed `ensurePageModel()` from the `WebPage` interface and the `GoraWebPage` override, switched persist call sites and tests to initialize `pageModel` explicitly via `PageModel.new()` when needed, and kept behavior covered with the existing persist-module tests. Lesson learned: this helper was only used locally, so removing it cleanly was safer than preserving a nullable-state convenience method in the shared page contract.

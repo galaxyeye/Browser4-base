@@ -1,0 +1,258 @@
+I’m reading the task brief and scanning the repo surfaces it likely touches so I can implement the change end to end.
+
+● Read remove-page-model-interface.md
+  │ coworker\tasks\2working\remove-page-model-interface.md
+  └ 7 lines read
+
+● Check git status and root pom (shell)
+  │ git --no-pager status --short && Get-Content pom.xml -TotalCount 220
+  └ 203 lines...
+
+I found the task is very small on paper, but I’m checking every caller and implementer so the interface removal is clean instead of leaving dead contracts behind.● Response was interrupted due to a server error. Retrying...
+
+I found the brief: it’s a narrow API cleanup, so I’m tracing where `PageModel` and `ensurePageModel()` are defined and consumed before editing.
+
+● Search (grep)
+  │ "\bPageModel\b" in **/*.{kt,kts,java}
+  └ 12 lines found
+
+● Search (grep)
+  │ "ensurePageModel\s*\(" in **/*.{kt,kts,java}
+  └ 8 lines found
+
+● Search (glob)
+  │ "**/*PageModel*.{kt,kts,java}"
+  └ 3 files found
+
+● Read WebPageExt.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPageE
+  │ xt.kt
+  └ 136 lines read
+
+● Read GoraWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Go
+  │ raWebPage.kt
+  └ L670:735 (66 lines read)
+
+● Read WebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPage.
+  │ kt
+  └ L210:320 (90 lines read)
+
+● Read TestFileBackendStore.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\TestFile
+  │ BackendStore.kt
+  └ 96 lines read
+
+● Read TestPageModel.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\TestPage
+  │ Model.kt
+  └ 72 lines read
+
+I’ve narrowed it down to the persist module. Next I’m checking how `pageModel` is created and whether there’s already a pattern to replace `ensurePageModel()` cleanly.
+
+● Read PageModel.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pa
+  │ geModel.kt
+  └ L1:240 (212 lines read)
+
+● Search (grep)
+  │ "ensure[A-Z]\w+\s*\(" in **/*.{kt,kts}
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 3 lines found
+
+● Search (grep)
+  │ "pageModel\s*=\s*" in **/*.{kt,kts}
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 8 lines found
+
+The usage is local to `pulsar-persist`, so I’m going to remove the interface method, replace the handful of call sites with direct `pageModel` initialization, and keep the creation path readable with a small factory.
+
+● Run baseline persist tests (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist
+  │ -Dtest=TestPageModel,TestFileBackendStore test -q
+  └ 10 lines...
+
+● Read pom.xml
+  │ pulsar-core\pulsar-persist\pom.xml
+  └ L1:220 (107 lines read)
+
+● Run baseline persist tests (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist
+  │ "-Dtest=TestPageModel,TestFileBackendStore" test -q
+  └ 11 lines...
+
+● Read GoraWebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Go
+  │ raWebPage.kt
+  └ L1:60 (60 lines read)
+
+● Search (grep)
+  │ "Objects\." (pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\per
+  │ sist\model\GoraWebPage.kt)
+  └ 1 line found
+
+● Search (grep)
+  │ "GPageModel\.newBuilder\(\)\.build\(\)" in **/*.{kt,kts}
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 1 line found
+
+● Search (grep)
+  │ "\bGPageModel\b" (pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsa
+  │ r\persist\model\GoraWebPage.kt)
+  └ 2 lines found
+
+● Search (grep)
+  │ "class\s+AbstractWebPage|abstract class AbstractWebPage" in **/*.{kt,kts}
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 1 line found
+
+● Search (grep)
+  │ "interface\s+WebPage|class\s+.*:.*WebPage" in **/*.{kt,kts}
+  │ (pulsar-core\pulsar-persist\src\main\kotlin)
+  └ 3 lines found
+
+I’ve confirmed there aren’t hidden consumers outside the persist module, so I can make this a surgical API removal without chasing broader compatibility shims.
+
+● Edit
+  │ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Web
+  │ Page.kt
+  │ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\mod
+  │ el\PageModel.kt
+  │ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\mod
+  │ el\GoraWebPage.kt
+  │ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Web
+  │ PageExt.kt
+  │ Edit pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\Tes
+  │ tPageModel.kt
+  └ Edit pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\Tes
+    tFileBackendStore.kt
+
+● Search (grep)
+  │ "ensurePageModel\s*\(" in **/*.{kt,kts,java}
+  └ No matches found
+
+● Run persist tests after change (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist
+  │ "-Dtest=TestPageModel,TestFileBackendStore" test -q
+  └ 11 lines...
+
+The code change is in place and holding up in the persist tests. I’m doing the required memory-file bookkeeping now so the task closes cleanly.
+
+● Read MEMORY.20260423.md
+  │ coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+  └ 3 lines read
+
+● Read MEMORY.202604.md
+  │ coworker\tasks\300logs\2026\04\MEMORY.202604.md
+  └ 3 lines read
+
+● Search (glob)
+  │ "**\MEMORY.202604*.md" in coworker\tasks\300logs\2026\04
+  └ 2 files found
+
+● Edit
+  └ Edit coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+
+● Read WebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPage.
+  │ kt
+  └ L286:304 (12 lines read)
+
+● Read WebPageExt.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPageE
+  │ xt.kt
+  └ L16:27 (12 lines read)
+
+● Read PageModel.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\Pa
+  │ geModel.kt
+  └ L12:28 (16 lines read)
+
+● Read TestPageModel.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\TestPage
+  │ Model.kt
+  └ L18:25 (8 lines read)
+
+● Read TestFileBackendStore.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\TestFile
+  │ BackendStore.kt
+  └ L50:95 (46 lines read)
+
+● Read MEMORY.20260423.md
+  │ coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+  └ 4 lines read
+
+● Show diff stat for touched files (shell)
+  │ git --no-pager diff --stat -- pulsar-core\pulsar-persist
+  │ coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md
+  └ 16 lines...
+
+● Show patch for touched files (shell)
+  │ git --no-pager diff -- pulsar-core\pulsar-persist\src\main\kotlin\ai\plato
+  │ n\pulsar\persist\WebPage.kt pulsar-core\pulsar-persist\src\main\kotlin\ai\
+  │ platon\pulsar\persist\model\PageModel.kt pulsar-core\pulsar-persist\src\ma
+  │ in\kotlin\ai\platon\pulsar\persist\model\GoraWebPage.kt pulsar-core\pulsar
+  │ -persist\src\main\kotlin\ai\platon\pulsar\persist\WebPageExt.kt pulsar-cor…
+  └ 168 lines...
+
+● Read WebPage.kt
+  │ pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPage.
+  │ kt
+  └ L1:20 (20 lines read)
+
+● Read TestFileBackendStore.kt
+  │ pulsar-core\pulsar-persist\src\test\kotlin\ai\platon\pulsar\persist\TestFile
+  │ BackendStore.kt
+  └ L52:58 (6 lines read)
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Web
+    Page.kt
+
+● Search (grep)
+  │ "import ai\.platon\.pulsar\.persist\.model\.PageModel" (pulsar-core\pulsar-p
+  │ ersist\src\main\kotlin\ai\platon\pulsar\persist\WebPage.kt)
+  └ No matches found
+
+● Re-run persist tests after cleanup (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist
+  │ "-Dtest=TestPageModel,TestFileBackendStore" test -q
+  └ 29 lines...
+
+I tripped a compile-only cleanup regression by removing the `PageModel` import from the interface file. I’m restoring that and re-running the same persist tests.
+
+● Edit
+  └ Edit pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\Web
+    Page.kt
+
+● Search (grep)
+  │ "ensurePageModel\s*\(" in **/*.{kt,kts,java}
+  └ No matches found
+
+● Re-run persist tests after fix (shell)
+  │ .\mvnw.cmd -pl pulsar-core\pulsar-persist
+  │ "-Dtest=TestPageModel,TestFileBackendStore" test -q
+  └ 11 lines...
+
+● Memory stored build commands
+  └ The persist module can be targeted from the repo root with Maven using -pl
+    pulsa…
+
+Done: `ensurePageModel()` is removed from the `WebPage` contract, and all persist-module usages now initialize `pageModel` explicitly when needed via `PageModel.new()`.
+
+Key edits:
+- `pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\WebPage.kt`: removed `fun ensurePageModel(): PageModel`
+- `pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\GoraWebPage.kt`: removed the override
+- `pulsar-core\pulsar-persist\src\main\kotlin\ai\platon\pulsar\persist\model\PageModel.kt`: added `PageModel.new()` for explicit creation
+- Updated local call sites/tests in `WebPageExt.kt`, `TestPageModel.kt`, and `TestFileBackendStore.kt` to use `page.pageModel ?: PageModel.new().also { page.pageModel = it }`
+
+I also appended the task summary to `coworker\tasks\300logs\2026\04\23\MEMORY.20260423.md`. The monthly memory file for `2026-04` was already up to date through `2026-04-23`, so no monthly append was needed.
+
+
+=== COPILOT STDERR ===
+
+
+Changes   +16 -19
+Requests  1 Premium (6m 5s)
+Tokens    ↑ 806.7k • ↓ 9.2k • 780.8k (cached) • 3.1k (reasoning)

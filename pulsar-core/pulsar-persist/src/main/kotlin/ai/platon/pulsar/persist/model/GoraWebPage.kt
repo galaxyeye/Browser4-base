@@ -12,7 +12,6 @@ import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.common.urls.URLUtils.unreverseUrl
 import ai.platon.pulsar.persist.*
-import ai.platon.pulsar.persist.gora.generated.GPageModel
 import ai.platon.pulsar.persist.gora.generated.GParseStatus
 import ai.platon.pulsar.persist.gora.generated.GProtocolStatus
 import ai.platon.pulsar.persist.gora.generated.GWebPage
@@ -703,15 +702,6 @@ class GoraWebPage(
                 page.pageModel = lazyPage.pageModel
             }
             return if (page.pageModel == null) null else box(page.pageModel)
-        }
-    }
-
-    override fun ensurePageModel(): PageModel {
-        synchronized(PAGE_MODEL_MONITOR) {
-            if (page.pageModel == null) {
-                page.pageModel = GPageModel.newBuilder().build()
-            }
-            return Objects.requireNonNull(pageModel)!!
         }
     }
 

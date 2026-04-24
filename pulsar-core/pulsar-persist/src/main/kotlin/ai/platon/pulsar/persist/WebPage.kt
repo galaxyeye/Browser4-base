@@ -294,6 +294,4 @@ interface WebPage : PageSnapshot {
      * Clears the persisted content of the web page.
      */
     fun clearPersistContent()
-
-    fun ensurePageModel(): PageModel
 }

@@ -16,6 +16,11 @@ class PageModel(
         const val DEFAULT_GROUP_ID = 1
 
         @JvmStatic
+        fun new(): PageModel {
+            return PageModel(GPageModel.newBuilder().build())
+        }
+
+        @JvmStatic
         fun box(pageModel: GPageModel): PageModel {
             return PageModel(pageModel)
         }
