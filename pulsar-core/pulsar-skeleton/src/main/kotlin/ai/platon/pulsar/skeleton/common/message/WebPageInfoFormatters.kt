@@ -8,6 +8,10 @@ import ai.platon.pulsar.persist.AbstractWebPage
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.model.ActiveDOMStat
+import ai.platon.pulsar.persist.model.gPageModel
+import ai.platon.pulsar.persist.model.numFields
+import ai.platon.pulsar.persist.model.numNonBlankFields
+import ai.platon.pulsar.persist.model.numNonNullFields
 import ai.platon.pulsar.skeleton.common.persist.ext.options
 import ai.platon.pulsar.skeleton.crawl.common.FetchState
 import org.apache.commons.lang3.StringUtils
@@ -59,7 +63,7 @@ class PageLoadStatusFormatter(
     private val proxy get() = page.proxy
     private val protocolStatus get() = page.protocolStatus
     private val activeDOMStatTrace = page.activeDOMStatTrace
-    private val m = page.pageModel
+    private val m = page.gPageModel
 
     private val taskStatusSymbol: String get() = when {
         prefix.isNotBlank() -> ""

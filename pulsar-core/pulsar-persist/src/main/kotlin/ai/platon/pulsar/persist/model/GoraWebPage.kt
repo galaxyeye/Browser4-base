@@ -19,7 +19,6 @@ import ai.platon.pulsar.persist.metadata.FetchMode
 import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.metadata.OpenPageCategory
 import ai.platon.pulsar.persist.model.Converters.convert
-import ai.platon.pulsar.persist.model.PageModel.Companion.box
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.nio.ByteBuffer
 import java.time.Duration

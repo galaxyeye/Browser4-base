@@ -8,7 +8,6 @@ import ai.platon.pulsar.persist.metadata.OpenPageCategory
 import ai.platon.pulsar.persist.model.ActiveDOMMetadata
 import ai.platon.pulsar.persist.model.ActiveDOMStat
 import ai.platon.pulsar.persist.model.ActiveDOMStatus
-import ai.platon.pulsar.persist.model.PageModel
 import org.xml.sax.InputSource
 import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer

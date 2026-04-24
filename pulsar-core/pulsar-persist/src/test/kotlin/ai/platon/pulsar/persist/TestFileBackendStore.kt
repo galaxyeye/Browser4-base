@@ -5,7 +5,11 @@ import ai.platon.pulsar.common.config.VolatileConfig
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.persist.gora.FileBackendPageStore
 import ai.platon.pulsar.persist.model.GoraWebPage
-import ai.platon.pulsar.persist.model.PageModel
+import ai.platon.pulsar.persist.model.emplace
+import ai.platon.pulsar.persist.model.ensureGPageModel
+import ai.platon.pulsar.persist.model.findGroup
+import ai.platon.pulsar.persist.model.findValue
+import ai.platon.pulsar.persist.model.put
 import ai.platon.pulsar.test.TestUrls
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.RandomUtils
@@ -49,11 +53,11 @@ class TestFileBackendStore {
     }
 
     @Test
-    fun whenUpdatePageModel_ThenSuccess() {
+    fun whenUpdateGPageModel_ThenSuccess() {
         val url2 = url + "/" + RandomUtils.secure().randomInt()
         val page2 = WebPageExt.newTestWebPage(url2)
         val groupId = 100
-        (page2.pageModel ?: PageModel.new().also { page2.pageModel = it }).emplace(100, mapOf("a" to "1", "b" to "2"))
+        page2.ensureGPageModel().emplace(100, mapOf("a" to "1", "b" to "2"))
         store.writeAvro(page2)
 
         val key = URLUtils.reverseUrl(url2)
@@ -61,8 +65,7 @@ class TestFileBackendStore {
         assertNotNull(loadedGPage)
         val loadedPage = GoraWebPage.box(url2, loadedGPage, VolatileConfig.UNSAFE)
         assertNotNull(loadedPage)
-        var pageModel = loadedPage.pageModel
-        assertNotNull(pageModel)
+        var pageModel = requireNotNull(loadedPage.unbox().pageModel)
 
         val group = pageModel.findGroup(groupId)
         assertNotNull(group)
@@ -79,10 +82,9 @@ class TestFileBackendStore {
         val loadedGPage2 = store.readAvro(key2)
         assertNotNull(loadedGPage2)
         val loadedPage2 = GoraWebPage.box(url2, loadedGPage2, VolatileConfig.UNSAFE)
-        pageModel = loadedPage2.pageModel
-        assertNotNull(pageModel)
+        pageModel = requireNotNull(loadedPage2.unbox().pageModel)
 
-        assertEquals("3", loadedPage2.pageModel?.findValue(groupId, "c"))
+        assertEquals("3", loadedPage2.unbox().pageModel?.findValue(groupId, "c"))
 
         // clear
         pageModel.findGroup(groupId)?.clear()
@@ -90,7 +92,7 @@ class TestFileBackendStore {
         val loadedGPage3 = store.readAvro(key2)
         assertNotNull(loadedGPage3)
         val loadedPage3 = GoraWebPage.box(url2, loadedGPage3, VolatileConfig.UNSAFE)
-        val group3 = loadedPage3.pageModel?.findGroup(groupId)
+        val group3 = loadedPage3.unbox().pageModel?.findGroup(groupId)
         assertNotNull(group3)
         assertNull(group3["c"])
     }

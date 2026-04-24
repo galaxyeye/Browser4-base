@@ -7,6 +7,10 @@ import ai.platon.pulsar.common.config.Parameterized
 import ai.platon.pulsar.common.readable
 import ai.platon.pulsar.persist.ParseStatus
 import ai.platon.pulsar.persist.WebPage
+import ai.platon.pulsar.persist.model.gPageModel
+import ai.platon.pulsar.persist.model.numFields
+import ai.platon.pulsar.persist.model.numNonBlankFields
+import ai.platon.pulsar.persist.model.numNonNullFields
 import ai.platon.pulsar.skeleton.common.message.MiscMessageWriter
 import ai.platon.pulsar.skeleton.common.persist.ext.loadEventHandlers
 import ai.platon.pulsar.skeleton.crawl.PulsarEventBus
@@ -158,7 +162,7 @@ class PageParser(
             }
             parseResult.parsers.add(parser::class)
 
-            val m = page.pageModel
+            val m = page.gPageModel
             if (logger.isDebugEnabled && millis > 10_000 && m != null) {
                 logger.debug("It takes {} to parse {}/{}/{} fields | {}", Duration.ofMillis(millis).readable(),
                         m.numNonBlankFields, m.numNonNullFields, m.numFields, page.url)
