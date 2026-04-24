@@ -120,21 +120,12 @@ abstract class AbstractWebPage(
         protected set
 
     /**
-     * Get the cached content
-     */
-    /**
-     * Set the cached content, keep the persisted page content unmodified
-     */
-    /**
      * The cached content.
      * TODO: use a loading cache for all cached page contents.
      */
     @Volatile
-    override var tmpContent: ByteBuffer? = null
+    var tmpContent: ByteBuffer? = null
 
-    /**
-     * The delay time to retry if a retry is needed
-     */
     override var retryDelay: Duration = Duration.ZERO
 
     override var href: String?

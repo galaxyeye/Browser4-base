@@ -129,11 +129,6 @@ interface WebPage : PageSnapshot {
     var pageCategory: OpenPageCategory
 
     /**
-     * The temporary content of the web page, stored as a `ByteBuffer`.
-     */
-    var tmpContent: ByteBuffer?
-
-    /**
      * The content of the web page, stored as a `ByteBuffer` for persistence.
      */
     val persistContent: ByteBuffer?
