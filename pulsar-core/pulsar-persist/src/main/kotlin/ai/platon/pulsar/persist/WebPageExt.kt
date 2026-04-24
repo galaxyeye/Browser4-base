@@ -16,6 +16,32 @@ import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+/**
+ * The content of the web page, stored as a `ByteArray`.
+ */
+val WebPage.contentAsBytes: ByteArray get() = WebPageExt(this).getContentAsBytes()
+
+/**
+ * The content of the web page, stored as a `String`.
+ */
+val WebPage.contentAsString: String get() = WebPageExt(this).getContentAsString()
+
+val WebPage.prevSignatureAsString: String
+    get() = WebPageExt(this).getPrevSignatureAsString()
+
+val WebPage.signatureAsString: String
+    get() = WebPageExt(this).getSignatureAsString()
+
+/**
+ * The content of the web page, stored as a `ByteArrayInputStream`.
+ */
+val WebPage.contentAsInputStream: ByteArrayInputStream get() = WebPageExt(this).getContentAsInputStream()
+
+/**
+ * The content of the web page, stored as an `InputSource` for SAX parsing.
+ */
+val WebPage.contentAsSaxInputSource: InputSource? get() = WebPageExt(this).getContentAsSaxInputSource()
+
 class WebPageExt(private val page: WebPage) {
 
     companion object {
@@ -137,55 +163,53 @@ class WebPageExt(private val page: WebPage) {
     fun isValidContentModifyTime(publishTime: Instant): Boolean {
         return publishTime.isAfter(AppConstants.MIN_ARTICLE_PUBLISH_TIME)
     }
-}
 
-val WebPage.prevSignatureAsString: String
-    get() = getPrevSignatureAsString0()
-
-val WebPage.signatureAsString: String
-    get() = getSignatureAsString0()
-
-/**
- * The content of the web page, stored as a `ByteArrayInputStream`.
- */
-val WebPage.contentAsInputStream: ByteArrayInputStream get() = getContentAsInputStream0()
-
-/**
- * The content of the web page, stored as an `InputSource` for SAX parsing.
- */
-val WebPage.contentAsSaxInputSource: InputSource? get() = getContentAsSaxInputSource0()
-
-private fun WebPage.getSignatureAsString0(): String {
-    var sig = signature
-    if (sig == null) {
-        sig = ByteBuffer.wrap("".toByteArray())
+    fun getSignatureAsString(): String {
+        var sig = page.signature
+        if (sig == null) {
+            sig = ByteBuffer.wrap("".toByteArray())
+        }
+        return Strings.toHexString(sig)
     }
-    return Strings.toHexString(sig)
-}
 
-private fun WebPage.getPrevSignatureAsString0(): String {
-    var sig: ByteBuffer? = prevSignature
-    if (sig == null) {
-        sig = ByteBuffer.wrap("".toByteArray())
+    fun getPrevSignatureAsString(): String {
+        var sig: ByteBuffer? = page.prevSignature
+        if (sig == null) {
+            sig = ByteBuffer.wrap("".toByteArray())
+        }
+        return Strings.toHexString(sig)
     }
-    return Strings.toHexString(sig)
-}
 
-private fun WebPage.getContentAsInputStream0(): ByteArrayInputStream {
-    val contentInOctets = content ?: return ByteArrayInputStream(ByteUtils.toBytes('\u0000'))
+    fun getContentAsInputStream(): ByteArrayInputStream {
+        val contentInOctets = page.content ?: return ByteArrayInputStream(ByteUtils.toBytes('\u0000'))
 
-    return ByteArrayInputStream(
-        content!!.array(),
-        contentInOctets.arrayOffset() + contentInOctets.position(),
-        contentInOctets.remaining()
-    )
-}
-
-private fun WebPage.getContentAsSaxInputSource0(): InputSource {
-    val inputSource = InputSource(contentAsInputStream)
-    val encoding = encoding
-    if (encoding != null) {
-        inputSource.encoding = encoding
+        return ByteArrayInputStream(
+            page.content!!.array(),
+            contentInOctets.arrayOffset() + contentInOctets.position(),
+            contentInOctets.remaining()
+        )
     }
-    return inputSource
+
+    fun getContentAsSaxInputSource(): InputSource {
+        val inputSource = InputSource(page.contentAsInputStream)
+        val encoding = page.encoding
+        if (encoding != null) {
+            inputSource.encoding = encoding
+        }
+        return inputSource
+    }
+
+    fun getContentAsBytes(): ByteArray {
+        val content = page.content ?: return ByteUtils.toBytes('\u0000')
+        return ByteUtils.toBytes(content)
+    }
+
+    fun getContentAsString(): String {
+        val buffer = page.content
+        if (buffer == null || buffer.remaining() == 0) {
+            return ""
+        }
+
+        return String(buffer.array(), buffer.arrayOffset(), buffer.limit())
+    }
 }

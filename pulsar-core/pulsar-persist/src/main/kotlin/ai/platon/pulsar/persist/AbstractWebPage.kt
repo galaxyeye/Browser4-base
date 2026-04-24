@@ -263,10 +263,6 @@ abstract class AbstractWebPage(
     override val configuredUrl: String
         get() = mergeUrlArgs(url, args)
 
-    override val contentAsBytes get() = getContentAsBytes0()
-
-    override val contentAsString get() = getContentAsString0()
-
     override fun hashCode(): Int {
         return url.hashCode()
     }
@@ -285,19 +281,5 @@ abstract class AbstractWebPage(
 
     override fun toString(): String {
         return WebPageFormatter(this).format()
-    }
-
-    private fun getContentAsBytes0(): ByteArray {
-        val content = content ?: return ByteUtils.toBytes('\u0000')
-        return ByteUtils.toBytes(content)
-    }
-
-    private fun getContentAsString0(): String {
-        val buffer = content
-        if (buffer == null || buffer.remaining() == 0) {
-            return ""
-        }
-
-        return String(buffer.array(), buffer.arrayOffset(), buffer.limit())
     }
 }

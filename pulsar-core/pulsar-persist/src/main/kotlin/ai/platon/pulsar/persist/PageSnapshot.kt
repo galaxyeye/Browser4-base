@@ -148,16 +148,6 @@ interface PageSnapshot : Comparable<PageSnapshot> {
     val content: ByteBuffer?
 
     /**
-     * The content of the web page, stored as a `ByteArray`.
-     */
-    val contentAsBytes: ByteArray
-
-    /**
-     * The content of the web page, stored as a `String`.
-     */
-    val contentAsString: String
-
-    /**
      * The length of the content of the web page.
      */
     val contentLength: Long
