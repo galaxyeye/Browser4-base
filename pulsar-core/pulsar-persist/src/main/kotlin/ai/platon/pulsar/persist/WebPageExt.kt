@@ -8,6 +8,9 @@ import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.model.ActiveDOMStat
 import ai.platon.pulsar.persist.model.ActiveDOMStatus
 import ai.platon.pulsar.persist.model.GoraWebPage
+import org.apache.gora.util.ByteUtils
+import org.xml.sax.InputSource
+import java.io.ByteArrayInputStream
 import java.nio.ByteBuffer
 import java.time.Duration
 import java.time.Instant
@@ -142,6 +145,16 @@ val WebPage.prevSignatureAsString: String
 val WebPage.signatureAsString: String
     get() = getSignatureAsString0()
 
+/**
+ * The content of the web page, stored as a `ByteArrayInputStream`.
+ */
+val WebPage.contentAsInputStream: ByteArrayInputStream get() = getContentAsInputStream0()
+
+/**
+ * The content of the web page, stored as an `InputSource` for SAX parsing.
+ */
+val WebPage.contentAsSaxInputSource: InputSource? get() = getContentAsSaxInputSource0()
+
 private fun WebPage.getSignatureAsString0(): String {
     var sig = signature
     if (sig == null) {
@@ -156,4 +169,23 @@ private fun WebPage.getPrevSignatureAsString0(): String {
         sig = ByteBuffer.wrap("".toByteArray())
     }
     return Strings.toHexString(sig)
+}
+
+private fun WebPage.getContentAsInputStream0(): ByteArrayInputStream {
+    val contentInOctets = content ?: return ByteArrayInputStream(ByteUtils.toBytes('\u0000'))
+
+    return ByteArrayInputStream(
+        content!!.array(),
+        contentInOctets.arrayOffset() + contentInOctets.position(),
+        contentInOctets.remaining()
+    )
+}
+
+private fun WebPage.getContentAsSaxInputSource0(): InputSource {
+    val inputSource = InputSource(contentAsInputStream)
+    val encoding = encoding
+    if (encoding != null) {
+        inputSource.encoding = encoding
+    }
+    return inputSource
 }

@@ -267,10 +267,6 @@ abstract class AbstractWebPage(
 
     override val contentAsString get() = getContentAsString0()
 
-    override val contentAsInputStream get() = getContentAsInputStream0()
-
-    override val contentAsSaxInputSource get() = getContentAsSaxInputSource0()
-
     override fun hashCode(): Int {
         return url.hashCode()
     }
@@ -303,24 +299,5 @@ abstract class AbstractWebPage(
         }
 
         return String(buffer.array(), buffer.arrayOffset(), buffer.limit())
-    }
-
-    private fun getContentAsInputStream0(): ByteArrayInputStream {
-        val contentInOctets = content ?: return ByteArrayInputStream(ByteUtils.toBytes('\u0000'))
-
-        return ByteArrayInputStream(
-            content!!.array(),
-            contentInOctets.arrayOffset() + contentInOctets.position(),
-            contentInOctets.remaining()
-        )
-    }
-
-    private fun getContentAsSaxInputSource0(): InputSource {
-        val inputSource = InputSource(contentAsInputStream)
-        val encoding = encoding
-        if (encoding != null) {
-            inputSource.encoding = encoding
-        }
-        return inputSource
     }
 }

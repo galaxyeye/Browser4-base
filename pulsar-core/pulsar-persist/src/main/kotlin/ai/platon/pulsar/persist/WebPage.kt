@@ -139,16 +139,6 @@ interface WebPage : PageSnapshot {
     val persistContent: ByteBuffer?
 
     /**
-     * The content of the web page, stored as a `ByteArrayInputStream`.
-     */
-    val contentAsInputStream: ByteArrayInputStream
-
-    /**
-     * The content of the web page, stored as an `InputSource` for SAX parsing.
-     */
-    val contentAsSaxInputSource: InputSource?
-
-    /**
      * The length of the persisted content of the web page.
      */
     var persistedContentLength: Long
