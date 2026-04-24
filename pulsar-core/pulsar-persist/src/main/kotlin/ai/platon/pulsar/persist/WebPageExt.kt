@@ -3,12 +3,10 @@ package ai.platon.pulsar.persist
 import ai.platon.pulsar.common.DateTimes.constructTimeHistory
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.VolatileConfig
-import ai.platon.pulsar.persist.model.GoraWebPage
-import ai.platon.pulsar.persist.model.emplace
-import ai.platon.pulsar.persist.model.ensureGPageModel
 import ai.platon.pulsar.persist.metadata.Name
 import ai.platon.pulsar.persist.model.ActiveDOMStat
 import ai.platon.pulsar.persist.model.ActiveDOMStatus
+import ai.platon.pulsar.persist.model.GoraWebPage
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -22,7 +20,6 @@ class WebPageExt(private val page: WebPage) {
 
             page.activeDOMStatus = ActiveDOMStatus(1, 1, "1", "1", "1")
             page.activeDOMStatTrace = mapOf("a" to ActiveDOMStat(), "b" to ActiveDOMStat())
-            page.ensureGPageModel().emplace(1, "g", mapOf("a" to "b"))
 
             return page
         }
