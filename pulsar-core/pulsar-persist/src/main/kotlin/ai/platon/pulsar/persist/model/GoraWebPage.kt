@@ -680,31 +680,6 @@ class GoraWebPage(
             page.referrer = value
         }
 
-    override var pageModelUpdateTime: Instant?
-        get() = page.pageModelUpdateTime?.let { Instant.ofEpochMilli(it) }
-        set(value) {
-            page.pageModelUpdateTime = value?.toEpochMilli()
-        }
-
-    override var pageModel: PageModel?
-        get() = getPageModel0()
-        set(value) {
-            page.pageModel = value?.unbox()
-        }
-
-    private fun getPageModel0(): PageModel? {
-        synchronized(PAGE_MODEL_MONITOR) {
-            val fieldName = GWebPage.Field.PAGE_MODEL.getName()
-            // load content lazily
-            if (page.pageModel == null && lazyFieldLoader != null && !lazyLoadedFields.contains(fieldName)) {
-                lazyLoadedFields.add(fieldName)
-                val lazyPage = lazyFieldLoader!!.apply(fieldName)
-                page.pageModel = lazyPage.pageModel
-            }
-            return if (page.pageModel == null) null else box(page.pageModel)
-        }
-    }
-
     private fun getTmpContentOrPersistContent(): ByteBuffer? {
         if (tmpContent != null) {
             return tmpContent

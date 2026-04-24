@@ -226,10 +226,6 @@ interface WebPage : PageSnapshot {
 
     var anchor: CharSequence?
 
-    var pageModelUpdateTime: Instant?
-
-    var pageModel: PageModel?
-
     /**
      * Retrieves the bean of the specified class type associated with the web page.
      *
