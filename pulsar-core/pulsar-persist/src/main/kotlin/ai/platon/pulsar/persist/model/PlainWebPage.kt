@@ -6,10 +6,10 @@ import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.persist.ParseStatus
 import ai.platon.pulsar.persist.ProtocolStatus
 import ai.platon.pulsar.persist.WebPage
+import ai.platon.pulsar.persist.contentAsBytes
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.LinkedHashMap
 
 /**
  * A storage-agnostic snapshot of a web page that only uses plain Kotlin/JDK types.
@@ -194,7 +194,8 @@ data class PlainProtocolStatus(
                 majorCode = status.majorCode,
                 minorCode = status.minorCode,
                 name = status.name,
-                args = LinkedHashMap(status.args.mapKeys { it.key.toString() }.mapValues { it.value?.toString().orEmpty() })
+                args = LinkedHashMap(status.args.mapKeys { it.key.toString() }
+                    .mapValues { it.value?.toString().orEmpty() })
             )
         }
     }
@@ -212,7 +213,8 @@ data class PlainParseStatus(
                 majorCode = status.majorCode,
                 minorCode = status.minorCode,
                 name = status.name,
-                args = LinkedHashMap(status.args.mapKeys { it.key.toString() }.mapValues { it.value?.toString().orEmpty() })
+                args = LinkedHashMap(status.args.mapKeys { it.key.toString() }
+                    .mapValues { it.value?.toString().orEmpty() })
             )
         }
     }

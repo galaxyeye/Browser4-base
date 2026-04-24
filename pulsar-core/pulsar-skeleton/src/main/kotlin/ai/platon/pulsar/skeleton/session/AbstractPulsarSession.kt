@@ -16,6 +16,7 @@ import ai.platon.pulsar.dom.select.firstTextOrNull
 import ai.platon.pulsar.dom.select.selectFirstOrNull
 import ai.platon.pulsar.external.ModelResponse
 import ai.platon.pulsar.persist.WebPage
+import ai.platon.pulsar.persist.contentAsString
 import ai.platon.pulsar.persist.model.GoraWebPage
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.common.urls.NormURL

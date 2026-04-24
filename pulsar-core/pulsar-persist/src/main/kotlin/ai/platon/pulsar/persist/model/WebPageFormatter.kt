@@ -16,10 +16,7 @@
  */
 package ai.platon.pulsar.persist.model
 
-import ai.platon.pulsar.persist.WebPage
-import ai.platon.pulsar.persist.WebPageExt
-import ai.platon.pulsar.persist.prevSignatureAsString
-import ai.platon.pulsar.persist.signatureAsString
+import ai.platon.pulsar.persist.*
 import com.google.gson.GsonBuilder
 import org.apache.gora.util.ByteUtils
 import org.jsoup.nodes.Document
@@ -117,7 +114,8 @@ class WebPageFormatter(val page: WebPage) {
                 + page.vividLinks.size + " vivid links, "
                 + page.inlinks.size + " inlinks")
         if (withLinks) {
-            fields["links"] = page.links.stream().map { obj: CharSequence -> obj.toString() }.collect(Collectors.toList())
+            fields["links"] =
+                page.links.stream().map { obj: CharSequence -> obj.toString() }.collect(Collectors.toList())
 //            fields["inlinks"] = page.inlinks.entries.stream()
 //                    .map { il: Map.Entry<CharSequence, CharSequence> -> il.key.toString() + "\t" + il.value }.collect(Collectors.joining("\n"))
         }
@@ -139,39 +137,39 @@ class WebPageFormatter(val page: WebPage) {
     fun format(): String {
         val sb = StringBuilder()
         sb.append("url:\t" + page.url + "\n")
-                .append("baseUrl:\t" + page.location + "\n")
-                .append("protocolStatus:\t" + page.protocolStatus + "\n")
-                .append("depth:\t" + page.distance + "\n")
-                .append("pageCategory:\t" + page.pageCategory + "\n")
-                .append("fetchCount:\t" + page.fetchCount + "\n")
-                .append("fetchInterval:\t" + page.fetchInterval + "\n")
-                .append("retriesSinceFetch:\t" + page.fetchRetries + "\n")
+            .append("baseUrl:\t" + page.location + "\n")
+            .append("protocolStatus:\t" + page.protocolStatus + "\n")
+            .append("depth:\t" + page.distance + "\n")
+            .append("pageCategory:\t" + page.pageCategory + "\n")
+            .append("fetchCount:\t" + page.fetchCount + "\n")
+            .append("fetchInterval:\t" + page.fetchInterval + "\n")
+            .append("retriesSinceFetch:\t" + page.fetchRetries + "\n")
         sb.append("\n")
-                .append("options:\t" + page.args + "\n")
+            .append("options:\t" + page.args + "\n")
         sb.append("\n")
-                .append("createTime:\t" + format(page.createTime) + "\n")
-                .append("prevFetchTime:\t" + format(page.prevFetchTime) + "\n")
-                .append("fetchTime:\t" + format(page.fetchTime) + "\n")
-                .append("prevModifiedTime:\t" + format(page.prevModifiedTime) + "\n")
-                .append("modifiedTime:\t" + format(page.modifiedTime) + "\n")
+            .append("createTime:\t" + format(page.createTime) + "\n")
+            .append("prevFetchTime:\t" + format(page.prevFetchTime) + "\n")
+            .append("fetchTime:\t" + format(page.fetchTime) + "\n")
+            .append("prevModifiedTime:\t" + format(page.prevModifiedTime) + "\n")
+            .append("modifiedTime:\t" + format(page.modifiedTime) + "\n")
 
         sb.append("\n")
-                .append("pageTitle:\t" + page.pageTitle + "\n")
-                .append("contentTitle:\t" + page.contentTitle + "\n")
-                .append("anchor:\t" + page.anchor + "\n")
-                .append("title:\t" + pageExt.sniffTitle() + "\n")
+            .append("pageTitle:\t" + page.pageTitle + "\n")
+            .append("contentTitle:\t" + page.contentTitle + "\n")
+            .append("anchor:\t" + page.anchor + "\n")
+            .append("title:\t" + pageExt.sniffTitle() + "\n")
         sb.append("\n")
-                .append("parseStatus:\t" + page.parseStatus.toString() + "\n")
-                .append("prevSignature:\t" + page.prevSignatureAsString + "\n")
-                .append("signature:\t" + page.signatureAsString + "\n")
+            .append("parseStatus:\t" + page.parseStatus.toString() + "\n")
+            .append("prevSignature:\t" + page.prevSignatureAsString + "\n")
+            .append("signature:\t" + page.signatureAsString + "\n")
 
         val metadata = page.metadata.asStringMap()
         if (metadata.isNotEmpty()) {
             sb.append("\n")
             metadata.entries.stream().filter { it.value.startsWith("meta_") }
-                    .forEach { (key, value) -> sb.append("metadata $key:\t$value\n") }
+                .forEach { (key, value) -> sb.append("metadata $key:\t$value\n") }
             metadata.entries.stream().filter { e -> e.value.startsWith("meta_") }
-                    .forEach { (key, value) -> sb.append("metadata $key:\t$value\n") }
+                .forEach { (key, value) -> sb.append("metadata $key:\t$value\n") }
         }
         val headers = page.headers.unbox()
         if (headers != null && headers.isNotEmpty()) {
@@ -181,8 +179,8 @@ class WebPageFormatter(val page: WebPage) {
 
         sb.append("\n")
         sb.append("Total " + page.links.size + " links, ")
-                .append(page.vividLinks.size.toString() + " vivid links, ")
-                .append(page.inlinks.size.toString() + " inlinks\n")
+            .append(page.vividLinks.size.toString() + " vivid links, ")
+            .append(page.inlinks.size.toString() + " inlinks\n")
 
         if (withLinks) {
             sb.append("\n")
@@ -199,22 +197,22 @@ class WebPageFormatter(val page: WebPage) {
             if (content != null) {
                 sb.append("\n")
                 sb.append("contentType:\t" + page.contentType + "\n")
-                        .append("content:START>>>\n")
-                        .append(ByteUtils.toString(content.array()))
-                        .append("\n<<<END:content\n")
+                    .append("content:START>>>\n")
+                    .append(ByteUtils.toString(content.array()))
+                    .append("\n<<<END:content\n")
             }
         }
         if (withText) {
             if (page.contentText != null) {
                 sb.append("\n")
                 sb.append("contentText:START>>>\n")
-                        .append(page.contentText)
-                        .append("\n<<<END:contentText\n")
+                    .append(page.contentText)
+                    .append("\n<<<END:contentText\n")
             }
             if (page.pageText != null) {
                 sb.append("pageText:START>>>\n")
-                        .append(page.pageText)
-                        .append("\n<<<END:pageText\n")
+                    .append(page.pageText)
+                    .append("\n<<<END:pageText\n")
             }
         }
         sb.append("\n")
@@ -226,22 +224,22 @@ class WebPageFormatter(val page: WebPage) {
         doc.head().appendElement("title").appendText(page.pageTitle ?: "")
         doc.body().appendElement("h1").appendText(page.contentTitle ?: "")
         doc.body().appendElement("div")
-                .attr("class", "content")
-                .append(page.contentText ?: "")
+            .attr("class", "content")
+            .append(page.contentText ?: "")
         createLinksElement(doc.body())
         return doc
     }
 
     fun createLinksElement(parent: Element) {
         val links = parent.appendElement("div")
-                .attr("class", "links")
-                .appendElement("ul")
+            .attr("class", "links")
+            .appendElement("ul")
         var i = 0
         val vividLinks = page.vividLinks ?: return
         for (l in vividLinks) {
             ++i
             links.appendElement("li")
-                    .appendElement("a").attr("href", l.toString()).appendText(l.key.toString())
+                .appendElement("a").attr("href", l.toString()).appendText(l.key.toString())
         }
     }
 
