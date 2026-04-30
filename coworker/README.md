@@ -1,4 +1,4 @@
-﻿# Builtin AI Coworker
+# Builtin AI Coworker
 
 The Builtin AI Coworker is an agent that assists you with various tasks in your repository. It processes task files that you create, executes them, and can commit changes back to your repository.
 
