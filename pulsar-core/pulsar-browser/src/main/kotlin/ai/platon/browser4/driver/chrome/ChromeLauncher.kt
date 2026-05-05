@@ -96,7 +96,7 @@ class ChromeLauncher constructor(
     private val portPath get() = userDataDir.resolveSibling(PORT_FILE_NAME)
     private val cdpUrlPath get() = userDataDir.resolveSibling(CDP_URL_FILE_NAME)
     private val lastOutputPath get() = userDataDir.resolveSibling("chrome-launch-output.log")
-    private val temporaryUddExpiry = BrowserFiles.TEMPORARY_UDD_EXPIRY
+    private val temporaryUddExpiry = Duration.ofMinutes(60) // BrowserFiles.TEMPORARY_UDD_EXPIRY
 
     // The number of recent temporary user data directories to keep, the browser has to be closed
     private val recentNToKeep = 10
@@ -108,11 +108,9 @@ class ChromeLauncher constructor(
     private val isClosed get() = closed.get()
     private val isActive get() = AppContext.isActive && !Thread.currentThread().isInterrupted
     private val shutdownHookThread = Thread {
-        // System.err.println("Shutting down chrome process ...")
-
         // the upper layer should also close the launcher
         if (!isClosed) {
-            sleepSeconds(10)
+            // sleepSeconds(10)
             this.close()
         }
     }
@@ -259,14 +257,7 @@ class ChromeLauncher constructor(
             clearProcessMarkers()
         }
 
-        try {
-            BrowserFiles.runCatching {
-                cleanUpContextTmpDir(temporaryUddExpiry)
-                cleanOldestContextTmpDirs(Duration.ofMinutes(2), recentNToKeep)
-            }.onFailure { warnForClose(this, it) }
-        } catch (t: Throwable) {
-            // ignored
-        }
+        cleanUpContextFiles()
     }
 
     /**
@@ -393,15 +384,14 @@ class ChromeLauncher constructor(
         try {
             logger.info("Attempting to find and kill process holding lock on {}", userDataDir)
             val killedByProcessHandle = ProcessHandle.allProcesses()
-                .toList()
-                .asSequence()
                 .filter { isBrowserProcess(it) }
                 .filter { isCommandLineMatch(it.info().commandLine().orElse("") ?: "") }
                 .map { it.pid() }
                 .distinct()
-                .count { pid -> killProcessByPid(pid, "ProcessHandle") }
+                .map { pid -> killProcessByPid(pid, "ProcessHandle") }
+                .count()
 
-            val killedByFallback = if (killedByProcessHandle == 0) {
+            val killedByFallback = if (killedByProcessHandle == 0L) {
                 when {
                     SystemUtils.IS_OS_WINDOWS -> killLockingProcessWindows()
                     SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_LINUX -> killLockingProcessPosix()
@@ -442,15 +432,15 @@ class ChromeLauncher constructor(
         try {
             logger.info("Trying PowerShell fallback to kill locking process")
             val normalizedPath = normalizeCommandText(userDataDir.toAbsolutePath().toString()).replace("'", "''")
-            val command = """
-                ${'$'}path = '$normalizedPath'
+            val command = $$"""
+                $path = '$$normalizedPath'
                 Get-CimInstance Win32_Process |
                     Where-Object {
-                        ${'$'}_.Name -match '^(chrome|chromium)\.exe$' -and
-                        ${'$'}_.CommandLine -and
-                        ${'$'}_.CommandLine.Replace('\', '/') -like "*${'$'}path*"
+                        $_.Name -match '^(chrome|chromium)\.exe$' -and
+                        $_.CommandLine -and
+                        $_.CommandLine.Replace('\', '/') -like "*$path*"
                     } |
-                    ForEach-Object { "{0}`t{1}" -f ${'$'}_.ProcessId, ${'$'}_.CommandLine }
+                    ForEach-Object { "{0}`t{1}" -f $_.ProcessId, $_.CommandLine }
             """.trimIndent()
 
             val output = runCommandAndCollectOutput("powershell.exe", "-NoProfile", "-Command", command)
@@ -823,6 +813,18 @@ ${scriptPath.toUri()}
         }
     }
 
+    private fun cleanUpContextFiles() {
+        try {
+            runCatching {
+                clearProcessMarkers()
+                BrowserFiles.cleanUpContextTmpDir(temporaryUddExpiry)
+                BrowserFiles.cleanOldestContextTmpDirs(Duration.ofMinutes(2), recentNToKeep)
+            }.onFailure { warnForClose(this, it) }
+        } catch (t: Throwable) {
+            // ignored
+        }
+    }
+
     /**
      * Prepare user data dir.
      *
@@ -869,6 +871,7 @@ ${scriptPath.toUri()}
 //                        // Copy only the default profile directory
 //                        && f.name == "Default"
 //                    }
+                    // Copy data from prototype user data dir to inherit the user data
                     FileUtils.copyDirectory(prototypeUserDataDir.toFile(), userDataDir.toFile(), fileFilter)
                 } else {
                     handleExistUserDataDir(prototypeUserDataDir)
