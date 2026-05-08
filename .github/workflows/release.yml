@@ -3,8 +3,10 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+      # GitHub Actions uses glob patterns here, not regex.
+      - 'v*.*.*'
+      - '!v*.*.*-*'
+      - 'v*.*.*-rc.*'
   workflow_dispatch:
     inputs:
       tag:
@@ -70,6 +72,45 @@ jobs:
           skip_tests: ${{ inputs.skip_tests || 'false' }}
           timeout_minutes: '30'
 
+      - name: Find Release Artifact
+        id: find-jar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ steps.version.outputs.version }}"
+          JAR_PATH=""
+
+          for candidate in \
+            "pulsar-core/pulsar-browser/target/pulsar-browser-${VERSION}.jar" \
+            "pulsar-core/pulsar-browser/target/pulsar-browser-${VERSION}-SNAPSHOT.jar"
+          do
+            if [ -f "$candidate" ]; then
+              JAR_PATH="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$JAR_PATH" ]; then
+            JAR_PATH=$(find . -path '*/target/*.jar' \
+              ! -name '*-sources.jar' \
+              ! -name '*-javadoc.jar' \
+              ! -name '*-tests.jar' \
+              ! -name '*-shaded.jar' \
+              ! -path '*/central-staging/*' \
+              | sort \
+              | head -n 1)
+          fi
+
+          if [ -z "$JAR_PATH" ]; then
+            echo "❌ No release artifact was found under target/"
+            exit 1
+          fi
+
+          echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
+          echo "jar_name=$(basename "$JAR_PATH")" >> "$GITHUB_OUTPUT"
+          echo "📦 Release artifact: $JAR_PATH"
+
       - name: Run Tests
         id: tests
         if: ${{ !inputs.skip_tests }}
@@ -106,9 +147,56 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           push_changes: 'true'
 
-  release-summary:
+  deploy:
     runs-on: ubuntu-latest
     needs: ci-build
+    if: needs.ci-build.result == 'success'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }} for Deployment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          server-id: 'central'
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Prepare Maven Wrapper
+        shell: bash
+        run: chmod +x ./mvnw
+
+      - name: Deploy to Sonatype Central
+        shell: bash
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          echo "=== Deploying to Maven Central ==="
+          ./mvnw --batch-mode --no-transfer-progress deploy -P deploy -DskipTests \
+            -Dgpg.passphrase="$GPG_PASSPHRASE" \
+            -Dgpg.batch=true \
+            -Dgpg.pinentry-mode=loopback \
+            --show-version --errors
+
+  release-summary:
+    runs-on: ubuntu-latest
+    needs:
+      - ci-build
+      - deploy
     if: always()
     permissions: {}
 
@@ -120,5 +208,6 @@ jobs:
           echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.ci-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy | ${{ needs.deploy.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Test Results | ${{ needs.ci-build.outputs.test_results || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Image Tag | ${{ needs.ci-build.outputs.image_tag || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
