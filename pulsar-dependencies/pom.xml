@@ -244,35 +244,6 @@
                 <version>${mcp-sdk.version}</version>
             </dependency>
 
-            <!--  NLP  -->
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-core</artifactId>
-                <version>${lucene.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-analyzers-common</artifactId>
-                <version>${lucene.version}</version>
-            </dependency>
-            <!--  https://mvnrepository.com/artifact/org.apache.lucene/lucene-analyzers-smartcn  -->
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-analyzers-smartcn</artifactId>
-                <version>${lucene.version}</version>
-            </dependency>
-            <!--  First introduced for hyperlink graph computing  -->
-            <dependency>
-                <groupId>org.jgrapht</groupId>
-                <artifactId>jgrapht-core</artifactId>
-                <version>${jgrapht.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jgrapht</groupId>
-                <artifactId>jgrapht-ext</artifactId>
-                <version>${jgrapht.version}</version>
-            </dependency>
-
             <!--  Commander line parser  -->
             <dependency>
                 <groupId>com.beust</groupId>
@@ -454,10 +425,6 @@
 
         <guava.version>33.6.0-jre</guava.version>
         <dataframe.version>0.13.1</dataframe.version>
-        <jgrapht.version>1.0.1</jgrapht.version>
-
-        <!-- NLP -->
-        <lucene.version>7.3.1</lucene.version>
 
         <!-- AI -->
         <langchain4j.version>1.5.0</langchain4j.version>

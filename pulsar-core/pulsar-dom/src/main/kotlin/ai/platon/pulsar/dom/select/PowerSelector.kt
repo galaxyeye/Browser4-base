@@ -187,7 +187,7 @@ object PowerSelector {
         } catch (e: PowerSelectorParseException) {
             var message = e.brief()
             if (!message.isNullOrBlank()) {
-                val host = URLUtils.getURLOrNull(baseUri)?.host
+                val host = URLUtils.getURLOrNull2(baseUri)?.host
                 val key = "$host $cssQuery"
                 message = "$key\n>>>$message<<<"
                 val count1 = totalParseExceptions.computeIfAbsent(cssQuery) { AtomicInteger() }.incrementAndGet()

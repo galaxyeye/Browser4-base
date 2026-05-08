@@ -24,7 +24,7 @@ class TestProxyEntry {
     fun testTestUrls() {
         ResourceLoader
             .readAllLines(ProxyEntry.PROXY_TEST_WEB_SITES_FILE)
-            .mapNotNullTo(ProxyEntry.TEST_URLS) { URLUtils.getURLOrNull(it) }
+            .mapNotNullTo(ProxyEntry.TEST_URLS) { URLUtils.getURLOrNull2(it) }
         assertTrue(ProxyEntry.TEST_URLS.isNotEmpty())
         assertTrue(URI.create("http://www.dongqiudi.com").toURL() in ProxyEntry.TEST_URLS)
     }
