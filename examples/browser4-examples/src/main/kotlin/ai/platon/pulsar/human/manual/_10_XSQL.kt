@@ -1,8 +1,8 @@
 package ai.platon.pulsar.human.manual
 
-import ai.platon.pulsar.agentic.context.AgenticContexts
 import ai.platon.pulsar.common.sql.ResultSetFormatter
-import ai.platon.pulsar.skeleton.PulsarSettings
+import ai.platon.pulsar.core.api.PulsarSettings
+import ai.platon.pulsar.ql.context.SQLContexts
 
 /**
  * # X-SQL Reference - Query the Web with SQL Syntax
@@ -62,7 +62,7 @@ import ai.platon.pulsar.skeleton.PulsarSettings
  * - Useful for AI-powered data extraction pipelines
  *
  * @see ResultSetFormatter Formats SQL results for display
- * @see AgenticContexts Context with AI and SQL capabilities
+ * @see SQLContexts Context with AI and SQL capabilities
  */
 fun main() {
     // =====================================================================
@@ -72,8 +72,8 @@ fun main() {
     PulsarSettings.withDefaultBrowser()
 
     // Create an agentic context which supports X-SQL execution
-    // AI Note: AgenticContexts provides both SQL execution and AI features
-    val context = AgenticContexts.create()
+    // AI Note: PulsarContexts provides both SQL execution and AI features
+    val context = SQLContexts.create()
 
     // =====================================================================
     // STEP 2: X-SQL Query Definition

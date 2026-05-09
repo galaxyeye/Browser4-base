@@ -5,8 +5,8 @@ import ai.platon.pulsar.dom.FeaturedDocument
 import ai.platon.pulsar.persist.WebPage
 import ai.platon.pulsar.skeleton.PulsarSettings
 import ai.platon.pulsar.skeleton.context.PulsarContexts
+import ai.platon.pulsar.skeleton.event.impl.DefaultPageEventHandlers
 import ai.platon.pulsar.skeleton.workflow.common.url.ListenableHyperlink
-import ai.platon.pulsar.skeleton.workflow.event.impl.DefaultPageEventHandlers
 import ai.platon.pulsar.skeleton.workflow.fetch.driver.WebDriver
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * AI Note: This class shows all available event hooks. In production,
  * you only need to override the events you care about.
  */
-class PrintFlowEventHandlers: DefaultPageEventHandlers() {
+class PrintFlowEventHandlers : DefaultPageEventHandlers() {
     // Atomic counter for tracking event sequence
     private val sequencer = AtomicInteger()
     private val seq get() = sequencer.incrementAndGet()

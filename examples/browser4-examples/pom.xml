@@ -78,7 +78,7 @@
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-bom</artifactId>
-                <version>${pulsar.version}</version>
+                <version>${browser4-base.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -88,13 +88,18 @@
     <dependencies>
         <dependency>
             <groupId>ai.platon.pulsar</groupId>
-            <artifactId>pulsar-agentic</artifactId>
+            <artifactId>pulsar-skeleton</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-ql</artifactId>
         </dependency>
 
         <!-- Only for demo server starter -->
         <dependency>
             <groupId>ai.platon.pulsar</groupId>
             <artifactId>pulsar-tests-common</artifactId>
+            <version>${browser4-base.version}</version>
         </dependency>
     </dependencies>
 
@@ -106,7 +111,6 @@
 
         <kotlin.version>2.2.21</kotlin.version>
         <spring-boot.version>4.0.1</spring-boot.version>
-        <pulsar.version>4.7.2-SNAPSHOT</pulsar.version>
-        <exec.mainClass>ai.platon.pulsar.examples.agent.Browser4AgentKt</exec.mainClass>
+        <browser4-base.version>4.7.4-SNAPSHOT</browser4-base.version>
     </properties>
 </project>

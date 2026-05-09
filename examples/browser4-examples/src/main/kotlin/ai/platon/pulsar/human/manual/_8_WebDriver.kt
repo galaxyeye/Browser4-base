@@ -1,7 +1,7 @@
 package ai.platon.pulsar.human.manual
 
-import ai.platon.pulsar.agentic.AgenticSession
-import ai.platon.pulsar.agentic.context.AgenticContexts
+import ai.platon.pulsar.core.api.PulsarContexts
+import ai.platon.pulsar.core.api.PulsarSession
 import ai.platon.pulsar.skeleton.common.options.LoadOptions
 import ai.platon.pulsar.skeleton.workflow.fetch.driver.WebDriver
 import org.slf4j.LoggerFactory
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
  *
  * ## Key Concepts:
  * 1. **WebDriver** - Interface for browser automation (click, type, scroll, etc.)
- * 2. **AgenticSession** - Enhanced session with AI capabilities
+ * 2. **PulsarSession** - Enhanced session with AI capabilities
  * 3. **Event Handlers** - Hook points for WebDriver interactions
  *
  * ## Main WebDriver Methods Demonstrated:
@@ -55,9 +55,9 @@ import org.slf4j.LoggerFactory
  * - Combine programmatic control with AI for robust automation
  *
  * @see WebDriver The main browser automation interface
- * @see AgenticSession Session with AI capabilities
+ * @see PulsarSession Session with AI capabilities
  */
-internal class WebDriverDemo(private val session: AgenticSession = AgenticContexts.createSession()) {
+internal class WebDriverDemo(private val session: PulsarSession = PulsarContexts.createSession()) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
     // =====================================================================
@@ -251,14 +251,13 @@ internal class WebDriverDemo(private val session: AgenticSession = AgenticContex
         println("Using plain language, tell the browser to click $selector ...")
         // Only works when LLM is configured
         session.bindDriver(driver)
-        session.act("scroll to middle")
     }
 }
 
 /**
  * Main entry point demonstrating comprehensive WebDriver usage.
  *
- * AI Note: This example uses AgenticSession which provides:
+ * AI Note: This example uses PulsarSession which provides:
  * - All standard PulsarSession features
  * - AI-powered browser control via natural language
  * - WebDriver binding for direct AI interaction
@@ -269,8 +268,8 @@ fun main() {
     val args = "-refresh -parse"
 
     // Set the system to work with single page applications (SPA)
-    // AI Note: AgenticSession is the AI-enhanced version of PulsarSession
-    val session = AgenticContexts.createSession()
+    // AI Note: PulsarSession is the AI-enhanced version of PulsarSession
+    val session = PulsarContexts.createSession()
 
     // Create demo crawler with WebDriver interaction handlers
     val crawler = WebDriverDemo(session)
