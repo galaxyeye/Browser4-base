@@ -43,7 +43,6 @@
         <module>pulsar-browser</module>
         <module>pulsar-ql-common</module>
         <module>pulsar-ql</module>
-        <module>pulsar-spring-support</module>
 
         <module>pulsar-core-tests</module>
     </modules>
