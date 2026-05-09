@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image_tag: ${{ steps.build.outputs.image_tag }}
+      version: ${{ steps.version.outputs.version }}
       test_results: ${{ steps.tests.outputs.test_status }}
 
     steps:
@@ -72,45 +72,6 @@ jobs:
           skip_tests: ${{ inputs.skip_tests || 'false' }}
           timeout_minutes: '30'
 
-      - name: Find Release Artifact
-        id: find-jar
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          VERSION="${{ steps.version.outputs.version }}"
-          JAR_PATH=""
-
-          for candidate in \
-            "pulsar-core/pulsar-browser/target/pulsar-browser-${VERSION}.jar" \
-            "pulsar-core/pulsar-browser/target/pulsar-browser-${VERSION}-SNAPSHOT.jar"
-          do
-            if [ -f "$candidate" ]; then
-              JAR_PATH="$candidate"
-              break
-            fi
-          done
-
-          if [ -z "$JAR_PATH" ]; then
-            JAR_PATH=$(find . -path '*/target/*.jar' \
-              ! -name '*-sources.jar' \
-              ! -name '*-javadoc.jar' \
-              ! -name '*-tests.jar' \
-              ! -name '*-shaded.jar' \
-              ! -path '*/central-staging/*' \
-              | sort \
-              | head -n 1)
-          fi
-
-          if [ -z "$JAR_PATH" ]; then
-            echo "❌ No release artifact was found under target/"
-            exit 1
-          fi
-
-          echo "jar_path=$JAR_PATH" >> "$GITHUB_OUTPUT"
-          echo "jar_name=$(basename "$JAR_PATH")" >> "$GITHUB_OUTPUT"
-          echo "📦 Release artifact: $JAR_PATH"
-
       - name: Run Tests
         id: tests
         if: ${{ !inputs.skip_tests }}
@@ -124,8 +85,6 @@ jobs:
         uses: ./.github/actions/create-release-notes
         with:
           version: ${{ steps.version.outputs.version }}
-          jar_name: ${{ steps.find-jar.outputs.jar_name }}
-          jar_path: ${{ steps.find-jar.outputs.jar_path }}
           java_version: ${{ env.JAVA_VERSION }}
           output_file: 'release_notes.md'
 
@@ -137,9 +96,6 @@ jobs:
           body_path: release_notes.md
           draft: false
           prerelease: ${{ contains(steps.version.outputs.tag, '-rc.') || contains(steps.version.outputs.tag, '-alpha') || contains(steps.version.outputs.tag, '-beta') }}
-          files: |
-            ${{ steps.find-jar.outputs.jar_path }}
-
       - name: Update Documentation
         id: update-docs
         uses: ./.github/actions/update-docs
@@ -210,4 +166,4 @@ jobs:
           echo "| Build | ${{ needs.ci-build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Deploy | ${{ needs.deploy.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Test Results | ${{ needs.ci-build.outputs.test_results || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Image Tag | ${{ needs.ci-build.outputs.image_tag || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.ci-build.outputs.version || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY

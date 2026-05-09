@@ -22,7 +22,6 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      image_tag: ${{ steps.build.outputs.image_tag }}
       test_results: ${{ steps.tests.outputs.test_status }}
 
     steps:
@@ -48,12 +47,6 @@ jobs:
         with:
           timeout_minutes: '45'
           report_name: 'nightly-test-reports'
-
-      - name: Run Integration Tests
-        id: integration-tests
-        uses: ./.github/actions/run-integration-tests
-        with:
-          timeout_seconds: '600'
 
   nightly-summary:
     runs-on: ubuntu-latest

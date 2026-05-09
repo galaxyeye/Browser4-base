@@ -4,12 +4,6 @@ inputs:
   version:
     description: 'Release version'
     required: true
-  jar_name:
-    description: 'JAR file name'
-    required: true
-  jar_path:
-    description: 'JAR file path'
-    required: true
   java_version:
     description: 'Java version requirement'
     required: true
@@ -28,10 +22,6 @@ runs:
 
         # Get previous tag for changelog
         PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-        # Get JAR size
-        JAR_SIZE=$(stat -c%s "${{ inputs.jar_path }}" 2>/dev/null || echo 0)
-        JAR_SIZE_HUMAN=$(numfmt --to=iec --suffix=B $JAR_SIZE)
 
         # Get commit count and contributors
         if [ -n "$PREV_TAG" ]; then
@@ -62,7 +52,6 @@ runs:
         ### 📊 Release Statistics
         | Metric | Value |
         |--------|-------|
-        | 📁 **JAR Size** | $JAR_SIZE_HUMAN |
         | 📝 **Commits** | $COMMIT_COUNT |
         | 👥 **Contributors** | $CONTRIBUTOR_COUNT |
         | 🏗️ **Build Date** | $BUILD_DATE |
