@@ -58,25 +58,21 @@ class PulsarWebDriver constructor(
 
     @Deprecated("Use CDP facade (cdp) instead of direct devTools access")
     val devTools: RemoteDevTools get() = cdp.remoteDevTools
-    private val browserAPI get() = cdp.browser.takeIf { isActive }
     private val pageAPI get() = cdp.page.takeIf { isActive }
-    private val targetAPI get() = cdp.target.takeIf { isActive }
     private val domAPI get() = cdp.dom.takeIf { isActive }
     private val cssAPI get() = cdp.css.takeIf { isActive }
-    private val inputAPI get() = cdp.input.takeIf { isActive }
-    private val mainFrameAPI get() = runBlocking { pageAPI?.getFrameTree()?.frame }
     private val networkAPI get() = cdp.network.takeIf { isActive }
     private val fetchAPI get() = cdp.fetch.takeIf { isActive }
     private val runtimeAPI get() = cdp.runtime.takeIf { isActive }
     private val emulationAPI get() = cdp.emulation.takeIf { isActive }
 
-    private val isolatedWorldManager = IsolatedWorldManager(cdp.remoteDevTools, settings)
-    private val page = PageHandler(cdp.remoteDevTools, isolatedWorldManager)
+    private val isolatedWorldManager = IsolatedWorldManager(cdp, settings)
+    private val page = PageHandler(cdp, isolatedWorldManager)
     private val jsHandler get() = page.jsHandler
     private val mouse get() = page.mouse.takeIf { isActive }
     private val keyboard get() = page.keyboard.takeIf { isActive }
-    private val screenshot = ScreenshotHandler(page, cdp.remoteDevTools)
-    private val emulator get() = EmulationHandler(pageAPI, domAPI, keyboard, mouse, cdp.remoteDevTools)
+    private val screenshot = ScreenshotHandler(page, cdp)
+    private val emulator get() = EmulationHandler(pageAPI, domAPI, keyboard, mouse, cdp)
 
     private val rpc = RobustRPC(this)
     private val networkManager by lazy { NetworkManager(this, rpc) }

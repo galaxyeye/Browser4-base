@@ -33,12 +33,9 @@ class DomTreeHandler(private val cdp: CDP) {
      */
     suspend fun getDocument(target: PageTarget?, maxDepth: Int = 0): MergedDOMTreeNode {
         val maxDepth = if (maxDepth > 0) maxDepth else 999999
-        val depth = maxDepth.takeIf { it > 0 }
+        val depth = maxDepth.takeIf { true }
         val document = try {
-            when {
-                depth != null -> cdp.getDocument(depth, pierce = true)
-                else -> cdp.getDocument(null, pierce = true)
-            }
+            cdp.getDocument(depth, pierce = true)
         } catch (e: Exception) {
             logger.warn("DOM.getDocument failed | frameId={} | err={}", target?.frameId, e.toString())
             tracer?.debug("DOM.getDocument exception", e)
@@ -148,11 +145,11 @@ class DomTreeHandler(private val cdp: CDP) {
         }
 
         val enhanced = MergedDOMTreeNode(
-            nodeId = node.nodeId ?: 0,
+            nodeId = node.nodeId,
             backendNodeId = node.backendNodeId,
-            nodeName = node.nodeName ?: "",
-            nodeType = NodeType.fromValue(node.nodeType ?: 1),
-            nodeValue = node.nodeValue ?: "",
+            nodeName = node.nodeName,
+            nodeType = NodeType.fromValue(node.nodeType),
+            nodeValue = node.nodeValue,
             attributes = attrs,
             frameId = node.frameId ?: frameId,
             targetId = targetId,

@@ -11,7 +11,6 @@ import kotlin.test.*
 class BrowserFilesTests {
 
     private val group = "BrowserFilesTests"
-    private val groupBaseDir = AppPaths.getContextGroupDir(group)
     private val contextBaseDir = AppPaths.getContextBaseDir(group, BrowserType.PULSAR_CHROME)
 
     private val tempContextGroupDir = AppPaths.getTmpContextGroupDir(group)

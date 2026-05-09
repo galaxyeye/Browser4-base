@@ -77,13 +77,12 @@ import java.util.*
  * ```
  */
 class CDPSnapshotService(
-    devTools: RemoteDevTools,
+    private val cdp: CDP,
 ) : SnapshotService {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
-    private val cdp = CDP(devTools)
 
-    private val accessibility = AccessibilityHandler(devTools)
+    private val accessibility = AccessibilityHandler(cdp)
     private val domTree = DomTreeHandler(cdp)
     private val snapshot = DomSnapshotHandler(cdp)
     private val highlightManager = HighlightManager(cdp)
