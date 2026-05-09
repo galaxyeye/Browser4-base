@@ -1,6 +1,6 @@
 package ai.platon.pulsar.browser
 
-import ai.platon.browser4.driver.chrome.RemoteDevTools
+import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.core.api.Browser
@@ -93,15 +93,15 @@ class PulsarWebDriverCDPTests : WebDriverTestBase() {
             browser.newDriver().use { driver ->
                 assertIs<PulsarWebDriver>(driver)
 
-                val devTools = driver.implementation as RemoteDevTools
+                val cdp = driver.implementation as CDP
 
-                devTools.dom.onAttributeModified { e ->
+                cdp.devTools.dom.onAttributeModified { e ->
                     val message = MessageFormat.format("> {0}. node changed | {1} := {2}", e.nodeId, e.name, e.value)
                     printlnPro(message)
                 }
 
-                devTools.console.enable()
-                devTools.console.onMessageAdded { e ->
+                cdp.devTools.console.enable()
+                cdp.devTools.console.onMessageAdded { e ->
                     printlnPro(e.message)
                 }
 

@@ -1,12 +1,10 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
+import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.pulsar.common.getLogger
-import kotlin.jvm.Volatile
 
 typealias CdpNode = ai.platon.cdt.kt.protocol.types.dom.Node
 
@@ -14,10 +12,9 @@ typealias CdpNode = ai.platon.cdt.kt.protocol.types.dom.Node
  * Handler for DOM tree operations.
  * Fetches and converts CDP DOM tree to enhanced representation.
  */
-class DomTreeHandler(devTools: RemoteDevTools) {
+class DomTreeHandler(private val cdp: CDP) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
-    private val cdp = CDP(devTools)
 
     @Volatile
     private var lastBackendLookup: Map<Int, MergedDOMTreeNode> = emptyMap()
@@ -112,6 +109,7 @@ class DomTreeHandler(devTools: RemoteDevTools) {
                     )
                 }
             }
+
             else -> emptyList()
         }
 

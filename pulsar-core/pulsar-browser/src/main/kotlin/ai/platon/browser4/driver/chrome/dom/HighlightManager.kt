@@ -1,18 +1,16 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.browser4.driver.chrome.dom.model.InteractiveDOMTreeNodeList
+import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 class HighlightManager(
-    devTools: RemoteDevTools,
+    private val cdp: CDP
 ) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
-    private val cdp = CDP(devTools)
 
     suspend fun addHighlights(elements: InteractiveDOMTreeNodeList) {
         addHighlights0(elements)

@@ -1,11 +1,11 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.model.ViewportSpec
+import ai.platon.browser4.driver.chrome.experimental.CDP
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeIOException
@@ -35,8 +35,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils
 import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
@@ -99,7 +99,7 @@ class PulsarWebDriver constructor(
     /**
      * Expose the underlying implementation, used for diagnosis purpose
      * */
-    override val implementation: Any get() = cdp.remoteDevTools
+    override val implementation: Any get() = cdp
 
     override val snapshotService: SnapshotService get() = page.snapshotService
 
@@ -877,13 +877,13 @@ function() {
 }
                     """.trimIndent()
                     withNodeObjectId(cdp, node) { objectId ->
-                            val remoteObject = runtimeAPI?.callFunctionOn(
-                                functionDeclaration,
-                                objectId = objectId,
-                                returnByValue = true
-                            )
-                            // TODO: performance issue for large text (memory copy)
-                            remoteObject?.result?.value?.toString()
+                        val remoteObject = runtimeAPI?.callFunctionOn(
+                            functionDeclaration,
+                            objectId = objectId,
+                            returnByValue = true
+                        )
+                        // TODO: performance issue for large text (memory copy)
+                        remoteObject?.result?.value?.toString()
                     }
                 }
             }
@@ -967,16 +967,6 @@ function() {
         val safeSelector = page.normalizeLocatorForJs(selector)
         evaluate("__pulsar_utils__.clickMatches('$safeSelector', '$attrName', '$pattern')")
     }
-
-
-
-
-
-
-
-
-
-
 
 
     @Throws(WebDriverException::class)
