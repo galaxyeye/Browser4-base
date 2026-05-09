@@ -147,6 +147,10 @@ object PulsarContexts {
     @Throws(Exception::class)
     fun getOrCreateSession() = getOrCreate().getOrCreateSession()
 
+    @JvmStatic
+    @Throws(Exception::class)
+    fun launchDefaultBrowser() = getOrCreate().launchDefaultBrowser()
+
     /**
      * Waits for all submitted URLs to be processed.
      */

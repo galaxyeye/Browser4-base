@@ -101,6 +101,10 @@
             <artifactId>pulsar-tests-common</artifactId>
             <version>${browser4-base.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-protocol</artifactId>
+        </dependency>
     </dependencies>
 
     <properties>
