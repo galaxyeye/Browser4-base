@@ -108,4 +108,3 @@ class PulsarWebDriverProxyTests : WebDriverTestBase() {
         }
     }
 }
-
