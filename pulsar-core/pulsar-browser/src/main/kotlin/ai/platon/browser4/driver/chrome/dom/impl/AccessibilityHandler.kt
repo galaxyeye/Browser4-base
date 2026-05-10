@@ -1,9 +1,10 @@
-package ai.platon.browser4.driver.chrome.dom
+package ai.platon.browser4.driver.chrome.dom.impl
 
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.cdt.kt.protocol.types.page.FrameTree
 import ai.platon.pulsar.common.getLogger
+import kotlin.collections.plusAssign
 
 class AccessibilityHandler(
     private val bp: RemoteBrowserProtocol

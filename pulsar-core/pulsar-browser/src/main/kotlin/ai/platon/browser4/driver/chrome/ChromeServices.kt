@@ -1,5 +1,9 @@
 package ai.platon.browser4.driver.chrome
 
+import ai.platon.browser4.driver.BrowserTab
+import ai.platon.browser4.driver.ChromeVersion
+import ai.platon.browser4.driver.DevToolsConfig
+import ai.platon.browser4.driver.MethodInvocation
 import ai.platon.cdt.kt.protocol.ChromeDevTools
 import ai.platon.cdt.kt.protocol.support.types.EventHandler
 import ai.platon.cdt.kt.protocol.support.types.EventListener
@@ -34,30 +38,30 @@ interface ChromeService : AutoCloseable {
     fun canConnect(): Boolean
 
     @Throws(ChromeServiceException::class)
-    fun listTabs(): Array<ChromeTab>
+    fun listTabs(): Array<BrowserTab>
 
     @Throws(ChromeServiceException::class)
-    fun createTab(): ChromeTab
+    fun createTab(): BrowserTab
 
     @Throws(ChromeServiceException::class)
-    fun createTab(url: String): ChromeTab
+    fun createTab(url: String): BrowserTab
 
     @Throws(ChromeServiceException::class)
-    fun activateTab(tab: ChromeTab)
+    fun activateTab(tab: BrowserTab)
 
     @Throws(ChromeServiceException::class)
-    fun closeTab(tab: ChromeTab)
+    fun closeTab(tab: BrowserTab)
 
     @Throws(ChromeServiceException::class)
-    fun createDevTools(tab: ChromeTab, config: DevToolsConfig = DevToolsConfig()): ChromeDevToolsService
-
-    // Compatibility
-    @Throws(ChromeServiceException::class)
-    fun createDevToolsService(tab: ChromeTab): ChromeDevToolsService = createDevTools(tab, DevToolsConfig())
+    fun createDevTools(tab: BrowserTab, config: DevToolsConfig = DevToolsConfig()): ChromeDevToolsService
 
     // Compatibility
     @Throws(ChromeServiceException::class)
-    fun createDevToolsService(tab: ChromeTab, config: DevToolsConfig = DevToolsConfig()): ChromeDevToolsService = createDevTools(tab, config)
+    fun createDevToolsService(tab: BrowserTab): ChromeDevToolsService = createDevTools(tab, DevToolsConfig())
+
+    // Compatibility
+    @Throws(ChromeServiceException::class)
+    fun createDevToolsService(tab: BrowserTab, config: DevToolsConfig = DevToolsConfig()): ChromeDevToolsService = createDevTools(tab, config)
 }
 
 interface ChromeDevToolsService : ChromeDevTools, AutoCloseable {

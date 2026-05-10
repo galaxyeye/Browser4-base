@@ -1,8 +1,8 @@
 package ai.platon.browser4.driver.chrome.impl
 
-import ai.platon.browser4.driver.chrome.ChromeTab
-import ai.platon.browser4.driver.chrome.ChromeVersion
-import ai.platon.browser4.driver.chrome.DevToolsConfig
+import ai.platon.browser4.driver.BrowserTab
+import ai.platon.browser4.driver.ChromeVersion
+import ai.platon.browser4.driver.DevToolsConfig
 import ai.platon.browser4.driver.chrome.RemoteChrome
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.Transport
@@ -63,9 +63,9 @@ class ChromeImpl(
     constructor(port: Int) : this(LOCALHOST, port)
 
     @Throws(ChromeIOException::class)
-    override fun listTabs(): Array<ChromeTab> {
+    override fun listTabs(): Array<BrowserTab> {
         return try {
-            request(Array<ChromeTab>::class.java, HttpMethod.GET, "http://%s:%d/%s", host, port, LIST_TABS)
+            request(Array<BrowserTab>::class.java, HttpMethod.GET, "http://%s:%d/%s", host, port, LIST_TABS)
                 ?: throw ChromeServiceException("Failed to list tabs, unexpected null response")
         } catch (e: ChromeIOException) {
             if (isActive) {
@@ -77,25 +77,25 @@ class ChromeImpl(
     }
 
     @Throws(ChromeIOException::class)
-    override fun createTab(): ChromeTab {
+    override fun createTab(): BrowserTab {
         return createTab(ABOUT_BLANK_PAGE)
     }
 
     @Throws(ChromeIOException::class)
-    override fun createTab(url: String): ChromeTab {
-        val chromeTab =
-            request(ChromeTab::class.java, HttpMethod.PUT, "http://%s:%d/%s?%s", host, port, CREATE_TAB, url)
+    override fun createTab(url: String): BrowserTab {
+        val browserTab =
+            request(BrowserTab::class.java, HttpMethod.PUT, "http://%s:%d/%s?%s", host, port, CREATE_TAB, url)
                 ?: throw ChromeIOException("Failed to create tab, unexpected null response | $url")
-        return chromeTab
+        return browserTab
     }
 
     @Throws(ChromeIOException::class)
-    override fun activateTab(tab: ChromeTab) {
+    override fun activateTab(tab: BrowserTab) {
         request(Void::class.java, HttpMethod.PUT, "http://%s:%d/%s/%s", host, port, ACTIVATE_TAB, tab.id)
     }
 
     @Throws(ChromeIOException::class)
-    override fun closeTab(tab: ChromeTab) {
+    override fun closeTab(tab: BrowserTab) {
         if (!isActive || !canConnect()) {
             return
         }
@@ -104,7 +104,7 @@ class ChromeImpl(
 
     @Throws(ChromeIOException::class)
     @Synchronized
-    override fun createDevTools(tab: ChromeTab, config: DevToolsConfig): RemoteDevTools {
+    override fun createDevTools(tab: BrowserTab, config: DevToolsConfig): RemoteDevTools {
         return remoteDevTools.computeIfAbsent(tab.id) { createDevTools0(version, tab, config) }
     }
 
@@ -132,7 +132,7 @@ class ChromeImpl(
     }
 
     @Throws(ChromeIOException::class)
-    private fun createDevTools0(version: ChromeVersion, tab: ChromeTab, config: DevToolsConfig): RemoteDevTools {
+    private fun createDevTools0(version: ChromeVersion, tab: BrowserTab, config: DevToolsConfig): RemoteDevTools {
         val browserUrl = version.webSocketDebuggerUrl
             ?: throw ChromeIOException("Invalid web socket url to browser")
         val browserTransport = KtorTransport.create(URI.create(browserUrl))

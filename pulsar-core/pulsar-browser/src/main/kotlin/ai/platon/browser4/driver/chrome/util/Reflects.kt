@@ -291,11 +291,11 @@ object ProxyClasses {
      * paramTypes:
      *   - interface ai.platon.browser4.driver.chrome.Transport,
      *   - interface ai.platon.browser4.driver.chrome.Transport,
-     *   - class ai.platon.browser4.driver.chrome.DevToolsConfig
+     *   - class ai.platon.browser4.driver.DevToolsConfig
      * args:
      *   - ws://localhost:4644/devtools/browser/fefcf5b0-eb7f-4158-8a07-d5be61024292,
      *   - ws://localhost:4644/devtools/page/8A485D7DE2D7E9A0971C47686A81B645,
-     *   - ai.platon.browser4.driver.chrome.DevToolsConfig@257cc1fc
+     *   - ai.platon.browser4.driver.DevToolsConfig@257cc1fc
      * */
     private fun <T> debugParameters(clazz: Class<T>, paramTypes: Array<Class<*>>, args: Array<Any>? = null) {
 

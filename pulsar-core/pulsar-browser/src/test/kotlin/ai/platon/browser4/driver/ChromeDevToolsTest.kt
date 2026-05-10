@@ -3,7 +3,7 @@ package ai.platon.browser4.driver
 import ai.platon.browser4.driver.chrome.ChromeLauncher
 import ai.platon.browser4.driver.chrome.RemoteChrome
 import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.common.LauncherOptions
+import ai.platon.browser4.driver.chrome.LauncherOptions
 import ai.platon.browser4.driver.chrome.invoke
 import ai.platon.cdt.kt.protocol.types.page.Navigate
 import ai.platon.pulsar.common.browser.BrowserFiles

@@ -1,6 +1,6 @@
 package ai.platon.pulsar.skeleton.workflow.fetch.driver
 
-import ai.platon.browser4.driver.chrome.NetworkResourceResponse
+import ai.platon.browser4.driver.NetworkResourceResponse
 import org.jsoup.Connection
 import java.util.*
 

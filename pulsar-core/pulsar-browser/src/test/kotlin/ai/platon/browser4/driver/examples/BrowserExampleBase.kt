@@ -20,8 +20,8 @@
 package ai.platon.browser4.driver.examples
 
 import ai.platon.browser4.driver.chrome.ChromeLauncher
-import ai.platon.browser4.driver.chrome.DevToolsConfig
-import ai.platon.browser4.driver.chrome.common.ChromeOptions
+import ai.platon.browser4.driver.DevToolsConfig
+import ai.platon.browser4.driver.chrome.ChromeOptions
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.browser.BrowserFiles
 import kotlinx.coroutines.runBlocking

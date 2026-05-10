@@ -1,12 +1,13 @@
-package ai.platon.browser4.driver.chrome.dom
+package ai.platon.browser4.driver.chrome.dom.impl
 
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.chrome.impl.RemoteBrowserProtocol
+import ai.platon.cdt.kt.protocol.types.dom.Node
 import ai.platon.pulsar.common.getLogger
 
-typealias CdpNode = ai.platon.cdt.kt.protocol.types.dom.Node
+typealias CdpNode = Node
 
 /**
  * Handler for DOM tree operations.

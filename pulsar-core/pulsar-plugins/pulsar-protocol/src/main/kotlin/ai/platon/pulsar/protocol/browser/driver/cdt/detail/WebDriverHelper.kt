@@ -1,8 +1,8 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
-import ai.platon.browser4.driver.chrome.NodeRef
-import ai.platon.browser4.driver.chrome.PageHandler
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.NodeRef
+import ai.platon.browser4.driver.chrome.impl.PageHandler
+import ai.platon.browser4.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.types.network.ResourceType

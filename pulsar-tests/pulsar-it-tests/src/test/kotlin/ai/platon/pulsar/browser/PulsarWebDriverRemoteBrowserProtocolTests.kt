@@ -1,6 +1,6 @@
 package ai.platon.pulsar.browser
 
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.core.api.Browser

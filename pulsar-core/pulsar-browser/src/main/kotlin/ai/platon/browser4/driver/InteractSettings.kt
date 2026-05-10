@@ -1,4 +1,4 @@
-package ai.platon.browser4.driver.common
+package ai.platon.browser4.driver
 
 import ai.platon.pulsar.common.Systems
 import ai.platon.pulsar.common.browser.InteractLevel

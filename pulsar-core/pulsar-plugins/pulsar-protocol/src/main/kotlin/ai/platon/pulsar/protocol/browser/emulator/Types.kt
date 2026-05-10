@@ -16,7 +16,7 @@
 package ai.platon.pulsar.protocol.browser.emulator
 
 import ai.platon.browser4.driver.common.BrowserSettings
-import ai.platon.browser4.driver.common.InteractSettings
+import ai.platon.browser4.driver.InteractSettings
 import ai.platon.pulsar.common.FlowState
 import ai.platon.pulsar.common.HttpHeaders
 import ai.platon.pulsar.persist.AbstractWebPage

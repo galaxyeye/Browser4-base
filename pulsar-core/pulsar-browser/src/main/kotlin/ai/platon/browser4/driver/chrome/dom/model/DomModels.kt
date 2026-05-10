@@ -1,8 +1,8 @@
 package ai.platon.browser4.driver.chrome.dom.model
 
 import ai.platon.browser4.driver.chrome.dom.DOMSerializer
-import ai.platon.browser4.driver.chrome.dom.FBNLocator
-import ai.platon.browser4.driver.chrome.dom.LocatorMap
+import ai.platon.browser4.driver.chrome.FBNLocator
+import ai.platon.browser4.driver.chrome.LocatorMap
 import ai.platon.browser4.driver.chrome.dom.util.CSSSelectorUtils
 import ai.platon.browser4.driver.chrome.dom.util.DOMUtils
 import ai.platon.browser4.driver.chrome.dom.util.InteractiveNodeListBuilder

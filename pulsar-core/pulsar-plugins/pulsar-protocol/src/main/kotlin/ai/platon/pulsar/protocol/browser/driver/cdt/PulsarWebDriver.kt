@@ -1,12 +1,21 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
+import ai.platon.browser4.driver.BrowserTab
+import ai.platon.browser4.driver.NetworkResourceResponse
+import ai.platon.browser4.driver.NodeRef
 import ai.platon.browser4.driver.chrome.*
 import ai.platon.browser4.driver.chrome.dom.SnapshotService
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotOptions
 import ai.platon.browser4.driver.chrome.dom.model.ViewportSpec
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.chrome.impl.CheckableElementJs
+import ai.platon.browser4.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
+import ai.platon.browser4.driver.chrome.impl.ClickableDOM
+import ai.platon.browser4.driver.chrome.impl.EmulationHandler
+import ai.platon.browser4.driver.chrome.impl.PageHandler
+import ai.platon.browser4.driver.chrome.impl.ScreenshotHandler
+import ai.platon.browser4.driver.chrome.impl.withNodeObjectId
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.chrome.util.ChromeIOException
 import ai.platon.cdt.kt.protocol.events.network.RequestWillBeSent
@@ -44,7 +53,7 @@ import kotlin.random.Random
 
 class PulsarWebDriver constructor(
     uniqueID: String,
-    val chromeTab: ChromeTab,
+    val browserTab: BrowserTab,
     val bp: RemoteBrowserProtocol,
     override val browser: PulsarBrowser
 ) : AbstractWebDriver(uniqueID, browser) {
@@ -84,7 +93,7 @@ class PulsarWebDriver constructor(
     private val isGone get() = closed.get() || isQuit || !AppContext.isActive || !bp.isOpen
 
     var userTypedUrl: String? = null
-    var navigateUrl: String? = chromeTab.url
+    var navigateUrl: String? = browserTab.url
     private var credentials: Credentials? = null
 
     val isNetworkIdle get() = networkManager.isIdle
@@ -186,9 +195,7 @@ class PulsarWebDriver constructor(
     override suspend fun evaluateDetail(expression: String): JsEvaluation? {
         return driverHelper.invokeOnPage("evaluateDetail") {
             driverHelper.createJsEvaluate(
-                jsHandler.evaluateDetail(
-                    expression
-                )
+                jsHandler.evaluateDetail(expression)
             )
         }
     }
@@ -239,8 +246,6 @@ class PulsarWebDriver constructor(
     @Throws(WebDriverException::class)
     override suspend fun exists(selector: String): Boolean {
         return page.exists(selector)
-//        driverHelper.predicateOnElement(selector) {
-//        }
     }
 
     /**
@@ -337,47 +342,8 @@ class PulsarWebDriver constructor(
     }
 
     @Throws(WebDriverException::class)
-    override suspend fun mouseWheelDown(count: Int, deltaX: Double, deltaY: Double, delayMillis: Long) {
-        try {
-            rpc.invokeWithRetry("mouseWheelDown", 1) {
-                repeat(count) { i ->
-                    if (i > 0) {
-                        if (delayMillis > 0) gap(delayMillis) else gap("mouseWheel")
-                    }
-
-                    mouse?.wheel(deltaX, deltaY)
-                }
-            }
-        } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "mouseWheelDown")
-        }
-    }
-
-    @Throws(WebDriverException::class)
-    override suspend fun mouseWheelUp(count: Int, deltaX: Double, deltaY: Double, delayMillis: Long) {
-        try {
-            rpc.invokeWithRetry("mouseWheelUp", 1) {
-                repeat(count) { i ->
-                    if (i > 0) {
-                        if (delayMillis > 0) gap(delayMillis) else gap("mouseWheel")
-                    }
-
-                    mouse?.wheel(deltaX, deltaY)
-                }
-            }
-        } catch (e: ChromeDriverException) {
-            rpc.handleChromeException(e, "mouseWheelUp")
-        }
-    }
-
-    @Throws(WebDriverException::class)
     override suspend fun mouseWheel(deltaX: Double, deltaY: Double) {
         driverHelper.invokeOnPage("mouseWheel") { mouse?.wheel(deltaX, deltaY) }
-    }
-
-    @Throws(WebDriverException::class)
-    override suspend fun moveMouseTo(x: Double, y: Double) {
-        driverHelper.invokeOnPage("moveMouseTo") { mouse?.moveTo(x, y) }
     }
 
     @Throws(WebDriverException::class)
@@ -959,7 +925,6 @@ function() {
         val safeSelector = page.normalizeLocatorForJs(selector)
         evaluate("__pulsar_utils__.clickMatches('$safeSelector', '$attrName', '$pattern')")
     }
-
 
     @Throws(WebDriverException::class)
     override suspend fun clickablePoint(selector: String): PointD? {

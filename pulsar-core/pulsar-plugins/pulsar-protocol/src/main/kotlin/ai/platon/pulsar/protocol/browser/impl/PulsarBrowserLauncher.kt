@@ -1,8 +1,8 @@
 package ai.platon.pulsar.protocol.browser.impl
 
 import ai.platon.browser4.driver.chrome.ChromeLauncher
-import ai.platon.browser4.driver.chrome.common.ChromeOptions
-import ai.platon.browser4.driver.chrome.common.LauncherOptions
+import ai.platon.browser4.driver.chrome.ChromeOptions
+import ai.platon.browser4.driver.chrome.LauncherOptions
 import ai.platon.browser4.driver.chrome.util.ChromeLaunchException
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarBrowser

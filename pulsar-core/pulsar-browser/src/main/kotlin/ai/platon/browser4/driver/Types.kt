@@ -1,4 +1,4 @@
-package ai.platon.browser4.driver.chrome
+package ai.platon.browser4.driver
 
 import ai.platon.cdt.kt.protocol.types.network.LoadNetworkResourcePageResult
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -65,20 +65,14 @@ class ChromeVersion {
     val webSocketDebuggerUrl: String? = null
 }
 
-class ChromeTab {
+class BrowserTab {
     var id: String = ""
     var parentId: String? = null
     var description: String? = null
     var title: String? = null
     var type: String? = null
     var url: String? = null
-    var devtoolsFrontendUrl: String? = null
     var webSocketDebuggerUrl: String? = null
-    var faviconUrl: String? = null
-
-    val createTime = Instant.now()
-
-    val urlOrEmpty get() = url ?: ""
 
     fun isPageType(): Boolean = PAGE_TYPE == type
 

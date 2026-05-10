@@ -1,7 +1,7 @@
 package ai.platon.pulsar.skeleton.workflow.fetch.driver
 
-import ai.platon.browser4.driver.chrome.NetworkResourceResponse
-import ai.platon.browser4.driver.chrome.NodeRef
+import ai.platon.browser4.driver.NetworkResourceResponse
+import ai.platon.browser4.driver.NodeRef
 import ai.platon.browser4.driver.chrome.dom.model.NanoDOMTree
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.ai.llm.MCP
@@ -1211,40 +1211,6 @@ interface WebDriver : Closeable {
     suspend fun scrollToViewport(n: Double, smooth: Boolean = true): Double
 
     /**
-     * The mouse wheels down for [count] times. @mcp
-     *
-     * ```kotlin
-     * driver.mouseWheelDown(3)
-     * ```
-     *
-     * @param count The times to wheel down.
-     * @param deltaX The distance to wheel horizontally.
-     * @param deltaY The distance to wheel vertically.
-     * @param delayMillis The delay time in milliseconds.
-     */
-    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
-    @Throws(WebDriverException::class)
-    @MCP
-    suspend fun mouseWheelDown(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = 150.0, delayMillis: Long = 0)
-
-    /**
-     * The mouse wheels up for [count] times. @mcp
-     *
-     * ```kotlin
-     * driver.mouseWheelUp(3)
-     * ```
-     *
-     * @param count The times to wheel up.
-     * @param deltaX The distance to wheel horizontally.
-     * @param deltaY The distance to wheel vertically.
-     * @param delayMillis The delay time in milliseconds.
-     */
-    @Deprecated("Use mouseWheel(deltaX, deltaY) instead", replaceWith = ReplaceWith("mouseWheel(deltaX, deltaY)"))
-    @Throws(WebDriverException::class)
-    @MCP
-    suspend fun mouseWheelUp(count: Int = 1, deltaX: Double = 0.0, deltaY: Double = -150.0, delayMillis: Long = 0)
-
-    /**
      * Scrolls the mouse wheel by the provided deltas. @mcp
      *
      * Positive [deltaY] scrolls down and negative [deltaY] scrolls up.
@@ -1260,21 +1226,6 @@ interface WebDriver : Closeable {
     @Throws(WebDriverException::class)
     @MCP
     suspend fun mouseWheel(deltaX: Double = 0.0, deltaY: Double = 150.0)
-
-    /**
-     * The mouse moves to the position specified by [x] and [y]. @mcp
-     *
-     * ```kotlin
-     * driver.moveMouseTo(100.0, 200.0)
-     * ```
-     *
-     * @param x The x coordinate to move to.
-     * @param y The y coordinate to move to.
-     */
-    @Deprecated("Use mouseMove instead", replaceWith = ReplaceWith("mouseMove(x, y)"))
-    @Throws(WebDriverException::class)
-    @MCP
-    suspend fun moveMouseTo(x: Double, y: Double)
 
     /**
      * Moves the mouse to the position specified by [x] and [y]. @mcp

@@ -16,7 +16,7 @@
 package ai.platon.pulsar.protocol.browser.emulator.impl
 
 import ai.platon.browser4.driver.common.BrowserSettings
-import ai.platon.browser4.driver.common.DomSettlePolicy
+import ai.platon.browser4.driver.DomSettlePolicy
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.config.AppConstants
 import ai.platon.pulsar.common.config.AppConstants.VAR_CAPTURE

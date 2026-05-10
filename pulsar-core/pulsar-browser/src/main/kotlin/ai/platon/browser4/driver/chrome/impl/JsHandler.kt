@@ -1,6 +1,6 @@
-package ai.platon.browser4.driver.chrome
+package ai.platon.browser4.driver.chrome.impl
 
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.chrome.IsolatedWorldManager
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
 import ai.platon.browser4.driver.common.B4JsUtils
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
@@ -24,7 +24,7 @@ class JsHandler(
      *
      * @param script JavaScript expression to evaluate
      * @return Detailed evaluation result including remote object and exception details, or null if evaluation fails
-     * @throws ChromeDriverException if the script fails to execute
+     * @throws ai.platon.browser4.driver.chrome.util.ChromeDriverException if the script fails to execute
      * */
     @Throws(ChromeDriverException::class)
     suspend fun evaluateDetail(script: String): Evaluate? {
@@ -70,13 +70,13 @@ class JsHandler(
     @Throws(ChromeDriverException::class)
     suspend fun evaluate(script: String): Any? {
         require(script.isNotBlank()) { "Script must not be blank" }
-        val evaluate = evaluateDetail(script.trim())
+        val evaluate = evaluateDetail(script)
 
         val exception = evaluate?.exceptionDetails?.exception
         if (exception != null) {
-            val errorMsg = "${exception.description}\n>>>$script<<<"
-            logger.warn(errorMsg)
-            throw ChromeDriverException(errorMsg)
+            val message = "${exception.description}\n>>>$script<<<"
+            logger.warn("Failed to evaluate JavaScript. $message")
+            throw ChromeDriverException(message)
         }
 
         val result = evaluate?.result

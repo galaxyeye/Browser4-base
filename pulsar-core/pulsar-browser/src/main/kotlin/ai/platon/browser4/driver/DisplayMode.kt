@@ -1,4 +1,4 @@
-package ai.platon.browser4.driver.common
+package ai.platon.browser4.driver
 
 /**
  * The browser display mode.
@@ -17,7 +17,7 @@ enum class DisplayMode {
             return if (name.isNullOrEmpty()) {
                 GUI
             } else try {
-                DisplayMode.valueOf(name.uppercase())
+                valueOf(name.uppercase())
             } catch (e: Throwable) {
                 GUI
             }

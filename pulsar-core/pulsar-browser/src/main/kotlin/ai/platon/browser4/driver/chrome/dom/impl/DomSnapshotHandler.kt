@@ -1,9 +1,9 @@
-package ai.platon.browser4.driver.chrome.dom
+package ai.platon.browser4.driver.chrome.dom.impl
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
 import ai.platon.browser4.driver.chrome.dom.model.SnapshotNodeEx
 import ai.platon.browser4.driver.chrome.dom.util.DomDebug
-import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
+import ai.platon.browser4.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.support.annotations.Experimental
 import ai.platon.cdt.kt.protocol.support.annotations.Optional
 import ai.platon.cdt.kt.protocol.support.annotations.ParamName

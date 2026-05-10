@@ -8,8 +8,8 @@ import ai.platon.browser4.driver.chrome.util.ProxyClasses
 import ai.platon.browser4.driver.chrome.util.SuspendAwareHandler
 import ai.platon.cdt.kt.protocol.support.types.EventHandler
 import ai.platon.cdt.kt.protocol.support.types.EventListener
-import ai.platon.browser4.driver.chrome.DevToolsConfig
-import ai.platon.browser4.driver.chrome.MethodInvocation
+import ai.platon.browser4.driver.DevToolsConfig
+import ai.platon.browser4.driver.MethodInvocation
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.Transport
 import ai.platon.pulsar.common.config.AppConstants
@@ -279,7 +279,7 @@ abstract class ChromeDevToolsImpl(
         } else {
             Duration.ofSeconds(3)
         }
-        
+
         waitUntilIdle(shutdownWaitTimeout)
 
         logger.debug("Closing devtools client ...")

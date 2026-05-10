@@ -1,4 +1,4 @@
-package ai.platon.browser4.driver.chrome.dom
+package ai.platon.browser4.driver.chrome.dom.impl
 
 import ai.platon.browser4.driver.chrome.dom.model.DOMRect
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode

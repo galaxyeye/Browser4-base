@@ -1,17 +1,13 @@
 package ai.platon.pulsar.skeleton.workflow.fetch.driver
 
-import ai.platon.browser4.driver.chrome.NetworkResourceResponse
-import ai.platon.browser4.driver.chrome.dom.Locator
+import ai.platon.browser4.driver.NetworkResourceResponse
 import ai.platon.browser4.driver.chrome.dom.SnapshotService
-import ai.platon.browser4.driver.chrome.dom.model.ElementRefCriteria
 import ai.platon.pulsar.common.*
 import ai.platon.pulsar.common.urls.Hyperlink
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.dom.nodes.GeoAnchor
 import ai.platon.pulsar.external.ChatModelFactory
 import ai.platon.pulsar.external.ModelResponse
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.google.common.annotations.Beta
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

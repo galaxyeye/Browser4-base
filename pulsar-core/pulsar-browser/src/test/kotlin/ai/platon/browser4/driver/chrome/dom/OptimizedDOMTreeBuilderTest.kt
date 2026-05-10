@@ -1,5 +1,6 @@
 package ai.platon.browser4.driver.chrome.dom
 
+import ai.platon.browser4.driver.chrome.dom.impl.OptimizedDOMTreeBuilder
 import ai.platon.browser4.driver.chrome.dom.model.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test

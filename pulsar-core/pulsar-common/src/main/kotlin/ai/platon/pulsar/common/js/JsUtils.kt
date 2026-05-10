@@ -5,7 +5,6 @@ import ai.platon.pulsar.common.getLogger
 object JsUtils {
     private val logger = getLogger(this)
 
-
     /**
      * Convert any given JS snippet to an evaluable expression compatible with Chrome DevTools Protocol.
      *

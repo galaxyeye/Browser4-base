@@ -1,4 +1,4 @@
-package ai.platon.browser4.driver.chrome.dom
+package ai.platon.browser4.driver.chrome
 
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import org.apache.commons.lang3.StringUtils

@@ -6,7 +6,7 @@ import ai.platon.cdt.kt.protocol.support.annotations.ReturnTypeParameter
 import ai.platon.cdt.kt.protocol.support.annotations.Returns
 import ai.platon.cdt.kt.protocol.support.types.EventHandler
 import ai.platon.cdt.kt.protocol.support.types.EventListener
-import ai.platon.browser4.driver.chrome.MethodInvocation
+import ai.platon.browser4.driver.MethodInvocation
 import ai.platon.browser4.driver.chrome.RemoteDevTools
 import ai.platon.browser4.driver.chrome.impl.EventDispatcher.Companion.ID_PROPERTY
 import ai.platon.browser4.driver.chrome.util.ChromeIOException
