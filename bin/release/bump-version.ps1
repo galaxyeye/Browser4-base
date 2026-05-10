@@ -46,6 +46,11 @@ if ($null -eq $repoRoot) {
 Set-Location $repoRoot
 Write-Host "Project root is: $repoRoot"
 
+# Import common utility script
+. $repoRoot\bin\common\Util.ps1
+
+Fix-Encoding-UTF8
+
 # Ensure we are not on the master/main branch
 $currentBranch = git rev-parse --abbrev-ref HEAD
 if ($currentBranch -in @('master', 'main')) {
