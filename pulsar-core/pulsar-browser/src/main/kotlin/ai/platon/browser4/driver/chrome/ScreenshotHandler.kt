@@ -12,11 +12,11 @@ import kotlin.math.roundToInt
 
 class ScreenshotHandler(
     private val pageHandler: PageHandler,
-    private val remoteBrowserProtocol: RemoteBrowserProtocol,
+    private val bp: RemoteBrowserProtocol,
 ) {
     private val logger = getLogger(this)
-    private val isActive get() = AppContext.isActive && remoteBrowserProtocol.isOpen
-    private fun activeCdp() = remoteBrowserProtocol.takeIf { isActive }
+    private val isActive get() = AppContext.isActive && bp.isOpen
+    private fun activeCdp() = bp.takeIf { isActive }
     private val debugLevel = System.getProperty("browser.additionalDebugLevel")?.toIntOrNull() ?: 0
 
     /**
@@ -32,7 +32,7 @@ class ScreenshotHandler(
         val width = rect.width.toInt()
         val height = rect.height.toInt()
 
-        remoteBrowserProtocol.setDeviceMetricsOverride(
+        bp.setDeviceMetricsOverride(
             mobile = false,
             width = width,
             height = height,
@@ -44,12 +44,12 @@ class ScreenshotHandler(
         // PNG = Crisp, precise, lossless, and supports transparency (ideal for testing and UI design)
         // JPEG = Compact, softly detailed, lossy, and opaque (suitable for presentation and archiving)
         val format = CaptureScreenshotFormat.JPEG
-        val result = remoteBrowserProtocol.captureScreenshot(
+        val result = bp.captureScreenshot(
             format = format,
             captureBeyondViewport = true,
         )
 
-        remoteBrowserProtocol.clearDeviceMetricsOverride()
+        bp.clearDeviceMetricsOverride()
 
         return result
     }
@@ -113,7 +113,7 @@ class ScreenshotHandler(
             return null
         }
 
-        return remoteBrowserProtocol.captureScreenshot(
+        return bp.captureScreenshot(
             format = format,
             quality = quality,
             clip = viewport,

@@ -93,15 +93,15 @@ class PulsarWebDriverRemoteBrowserProtocolTests : WebDriverTestBase() {
             browser.newDriver().use { driver ->
                 assertIs<PulsarWebDriver>(driver)
 
-                val remoteBrowserProtocol = driver.implementation as RemoteBrowserProtocol
+                val bp = driver.implementation as RemoteBrowserProtocol
 
-                remoteBrowserProtocol.devTools.dom.onAttributeModified { e ->
+                bp.devTools.dom.onAttributeModified { e ->
                     val message = MessageFormat.format("> {0}. node changed | {1} := {2}", e.nodeId, e.name, e.value)
                     printlnPro(message)
                 }
 
-                remoteBrowserProtocol.devTools.console.enable()
-                remoteBrowserProtocol.devTools.console.onMessageAdded { e ->
+                bp.devTools.console.enable()
+                bp.devTools.console.onMessageAdded { e ->
                     printlnPro(e.message)
                 }
 

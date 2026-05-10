@@ -28,10 +28,10 @@ class WebDriverHelper(
     val driver: WebDriver,
     val rpc: RobustRPC,
     val page: PageHandler,
-    val remoteBrowserProtocol: RemoteBrowserProtocol?,
+    val bp: RemoteBrowserProtocol?,
     val messageWriter: MultiSinkMessageWriter
 ) {
-    private val fetchAPI = remoteBrowserProtocol?.fetch
+    private val fetchAPI = bp?.fetch
 
     suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
         runCatching { traceInterestingResources0(entry, event) }.onFailure { warnInterruptible(this, it) }

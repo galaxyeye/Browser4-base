@@ -27,18 +27,18 @@ suspend fun resolveNodeObjectId(devTools: RemoteDevTools, node: NodeRef): Resolv
         return null
     }
 
-    val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
+    val bp = RemoteBrowserProtocol(devTools)
     val objectId = when {
-        node.nodeId > 0 -> remoteBrowserProtocol.resolveNodeByNodeId(node.nodeId).objectId
-        node.backendNodeId > 0 -> remoteBrowserProtocol.resolveNodeByBackendNodeId(node.backendNodeId).objectId
+        node.nodeId > 0 -> bp.resolveNodeByNodeId(node.nodeId).objectId
+        node.backendNodeId > 0 -> bp.resolveNodeByBackendNodeId(node.backendNodeId).objectId
         else -> null
     }
 
     return objectId?.let { ResolvedNodeObjectId(it, true) }
 }
 
-suspend fun resolveNodeObjectId(remoteBrowserProtocol: RemoteBrowserProtocol, node: NodeRef): ResolvedNodeObjectId? {
-    val devTools = remoteBrowserProtocol.remoteDevToolsOrNull ?: return null
+suspend fun resolveNodeObjectId(bp: RemoteBrowserProtocol, node: NodeRef): ResolvedNodeObjectId? {
+    val devTools = bp.remoteDevToolsOrNull ?: return null
     return resolveNodeObjectId(devTools, node)
 }
 
@@ -50,12 +50,12 @@ suspend fun releaseNodeObjectIfNeeded(devTools: RemoteDevTools, resolved: Resolv
         return
     }
 
-    val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
-    runCatching { remoteBrowserProtocol.releaseObject(resolved.objectId) }
+    val bp = RemoteBrowserProtocol(devTools)
+    runCatching { bp.releaseObject(resolved.objectId) }
 }
 
-suspend fun releaseNodeObjectIfNeeded(remoteBrowserProtocol: RemoteBrowserProtocol, resolved: ResolvedNodeObjectId?) {
-    val devTools = remoteBrowserProtocol.remoteDevToolsOrNull ?: return
+suspend fun releaseNodeObjectIfNeeded(bp: RemoteBrowserProtocol, resolved: ResolvedNodeObjectId?) {
+    val devTools = bp.remoteDevToolsOrNull ?: return
     releaseNodeObjectIfNeeded(devTools, resolved)
 }
 
@@ -77,11 +77,11 @@ suspend inline fun <T> withNodeObjectId(
 }
 
 suspend inline fun <T> withNodeObjectId(
-    remoteBrowserProtocol: RemoteBrowserProtocol,
+    bp: RemoteBrowserProtocol,
     node: NodeRef,
     block: suspend (String) -> T,
 ): T? {
-    val devTools = remoteBrowserProtocol.remoteDevToolsOrNull ?: return null
+    val devTools = bp.remoteDevToolsOrNull ?: return null
     return withNodeObjectId(devTools, node, block)
 }
 

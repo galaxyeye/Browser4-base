@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 class HighlightManager(
-    private val remoteBrowserProtocol: RemoteBrowserProtocol
+    private val bp: RemoteBrowserProtocol
 ) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
@@ -29,7 +29,7 @@ class HighlightManager(
         var attempts = 5
         while (attempts-- > 0) {
             val eval = runCatching {
-                remoteBrowserProtocol.evaluate("Boolean(document.querySelector('[data-b4-highlight]'))")
+                bp.evaluate("Boolean(document.querySelector('[data-b4-highlight]'))")
             }.getOrNull()
             val hasHighlights = eval?.result?.value == true
             if (!hasHighlights) break
@@ -162,7 +162,7 @@ class HighlightManager(
             """.trimIndent()
 
             runCatching {
-                remoteBrowserProtocol.evaluate(script)
+                bp.evaluate(script)
             }.onFailure { e ->
                 logger.warn("Failed to add highlights | err={}", e.toString())
                 tracer?.trace("addHighlights exception", e)
@@ -198,7 +198,7 @@ class HighlightManager(
             """.trimIndent()
 
             runCatching {
-                remoteBrowserProtocol.evaluate(script)
+                bp.evaluate(script)
             }.onFailure { e ->
                 logger.warn("Failed to remove highlights | err={}", e.toString())
                 tracer?.trace("removeHighlights exception", e)
