@@ -2,9 +2,8 @@ package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
 import ai.platon.browser4.driver.chrome.NodeRef
 import ai.platon.browser4.driver.chrome.PageHandler
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
-import ai.platon.cdt.kt.protocol.commands.Fetch
 import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
@@ -29,10 +28,10 @@ class WebDriverHelper(
     val driver: WebDriver,
     val rpc: RobustRPC,
     val page: PageHandler,
-    val cdp: CDP?,
+    val remoteBrowserProtocol: RemoteBrowserProtocol?,
     val messageWriter: MultiSinkMessageWriter
 ) {
-    private val fetchAPI = cdp?.fetch
+    private val fetchAPI = remoteBrowserProtocol?.fetch
 
     suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
         runCatching { traceInterestingResources0(entry, event) }.onFailure { warnInterruptible(this, it) }

@@ -3,7 +3,7 @@ package ai.platon.browser4.driver.chrome.dom
 import ai.platon.browser4.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.browser4.driver.chrome.dom.model.NodeType
 import ai.platon.browser4.driver.chrome.dom.model.PageTarget
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.pulsar.common.getLogger
 
 typealias CdpNode = ai.platon.cdt.kt.protocol.types.dom.Node
@@ -12,7 +12,7 @@ typealias CdpNode = ai.platon.cdt.kt.protocol.types.dom.Node
  * Handler for DOM tree operations.
  * Fetches and converts CDP DOM tree to enhanced representation.
  */
-class DomTreeHandler(private val cdp: CDP) {
+class DomTreeHandler(private val remoteBrowserProtocol: RemoteBrowserProtocol) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 
@@ -35,7 +35,7 @@ class DomTreeHandler(private val cdp: CDP) {
         val maxDepth = if (maxDepth > 0) maxDepth else 999999
         val depth = maxDepth.takeIf { true }
         val document = try {
-            cdp.getDocument(depth, pierce = true)
+            remoteBrowserProtocol.getDocument(depth, pierce = true)
         } catch (e: Exception) {
             logger.warn("DOM.getDocument failed | frameId={} | err={}", target?.frameId, e.toString())
             tracer?.debug("DOM.getDocument exception", e)

@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.pulsar.common.AppContext
 
 /**
@@ -27,18 +27,18 @@ suspend fun resolveNodeObjectId(devTools: RemoteDevTools, node: NodeRef): Resolv
         return null
     }
 
-    val cdp = CDP(devTools)
+    val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
     val objectId = when {
-        node.nodeId > 0 -> cdp.resolveNodeByNodeId(node.nodeId).objectId
-        node.backendNodeId > 0 -> cdp.resolveNodeByBackendNodeId(node.backendNodeId).objectId
+        node.nodeId > 0 -> remoteBrowserProtocol.resolveNodeByNodeId(node.nodeId).objectId
+        node.backendNodeId > 0 -> remoteBrowserProtocol.resolveNodeByBackendNodeId(node.backendNodeId).objectId
         else -> null
     }
 
     return objectId?.let { ResolvedNodeObjectId(it, true) }
 }
 
-suspend fun resolveNodeObjectId(cdp: CDP, node: NodeRef): ResolvedNodeObjectId? {
-    val devTools = cdp.remoteDevToolsOrNull ?: return null
+suspend fun resolveNodeObjectId(remoteBrowserProtocol: RemoteBrowserProtocol, node: NodeRef): ResolvedNodeObjectId? {
+    val devTools = remoteBrowserProtocol.remoteDevToolsOrNull ?: return null
     return resolveNodeObjectId(devTools, node)
 }
 
@@ -50,12 +50,12 @@ suspend fun releaseNodeObjectIfNeeded(devTools: RemoteDevTools, resolved: Resolv
         return
     }
 
-    val cdp = CDP(devTools)
-    runCatching { cdp.releaseObject(resolved.objectId) }
+    val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
+    runCatching { remoteBrowserProtocol.releaseObject(resolved.objectId) }
 }
 
-suspend fun releaseNodeObjectIfNeeded(cdp: CDP, resolved: ResolvedNodeObjectId?) {
-    val devTools = cdp.remoteDevToolsOrNull ?: return
+suspend fun releaseNodeObjectIfNeeded(remoteBrowserProtocol: RemoteBrowserProtocol, resolved: ResolvedNodeObjectId?) {
+    val devTools = remoteBrowserProtocol.remoteDevToolsOrNull ?: return
     releaseNodeObjectIfNeeded(devTools, resolved)
 }
 
@@ -77,11 +77,11 @@ suspend inline fun <T> withNodeObjectId(
 }
 
 suspend inline fun <T> withNodeObjectId(
-    cdp: CDP,
+    remoteBrowserProtocol: RemoteBrowserProtocol,
     node: NodeRef,
     block: suspend (String) -> T,
 ): T? {
-    val devTools = cdp.remoteDevToolsOrNull ?: return null
+    val devTools = remoteBrowserProtocol.remoteDevToolsOrNull ?: return null
     return withNodeObjectId(devTools, node, block)
 }
 

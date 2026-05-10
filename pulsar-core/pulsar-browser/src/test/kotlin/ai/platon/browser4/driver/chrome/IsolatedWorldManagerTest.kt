@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.cdt.kt.protocol.types.page.*
 import kotlinx.coroutines.runBlocking
@@ -31,12 +31,12 @@ class IsolatedWorldManagerTest {
     @Test
     fun testCreateIsolatedWorldUsesResolvedMainFrameId() {
         val devTools = mock<RemoteDevTools>()
-        val cdp = CDP(devTools)
+        val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
         val page = mock<ai.platon.cdt.kt.protocol.commands.Page>()
         whenever(devTools.page).thenReturn(page)
 
         val settings = mock<BrowserSettings>()
-        val mgr = IsolatedWorldManager(cdp, settings)
+        val mgr = IsolatedWorldManager(remoteBrowserProtocol, settings)
 
         val mainFrame = createFrame("main")
         wheneverBlocking { page.getFrameTree() }.thenReturn(FrameTree(mainFrame, childFrames = null))
@@ -60,12 +60,12 @@ class IsolatedWorldManagerTest {
     @Test
     fun testCreateIsolatedWorldRejectsMissingFrameWhenTreeAvailable() {
         val devTools = mock<RemoteDevTools>()
-        val cdp = CDP(devTools)
+        val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
         val page = mock<ai.platon.cdt.kt.protocol.commands.Page>()
         whenever(devTools.page).thenReturn(page)
 
         val settings = mock<BrowserSettings>()
-        val mgr = IsolatedWorldManager(cdp, settings)
+        val mgr = IsolatedWorldManager(remoteBrowserProtocol, settings)
 
         val mainFrame = createFrame("main")
         wheneverBlocking { page.getFrameTree() }.thenReturn(FrameTree(mainFrame, childFrames = null))

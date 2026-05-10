@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.cdt.kt.protocol.types.page.CaptureScreenshotFormat
 import ai.platon.cdt.kt.protocol.types.page.Viewport
@@ -12,11 +12,11 @@ import kotlin.math.roundToInt
 
 class ScreenshotHandler(
     private val pageHandler: PageHandler,
-    private val cdp: CDP,
+    private val remoteBrowserProtocol: RemoteBrowserProtocol,
 ) {
     private val logger = getLogger(this)
-    private val isActive get() = AppContext.isActive && cdp.isOpen
-    private fun activeCdp() = cdp.takeIf { isActive }
+    private val isActive get() = AppContext.isActive && remoteBrowserProtocol.isOpen
+    private fun activeCdp() = remoteBrowserProtocol.takeIf { isActive }
     private val debugLevel = System.getProperty("browser.additionalDebugLevel")?.toIntOrNull() ?: 0
 
     /**
@@ -32,7 +32,7 @@ class ScreenshotHandler(
         val width = rect.width.toInt()
         val height = rect.height.toInt()
 
-        cdp.setDeviceMetricsOverride(
+        remoteBrowserProtocol.setDeviceMetricsOverride(
             mobile = false,
             width = width,
             height = height,
@@ -44,12 +44,12 @@ class ScreenshotHandler(
         // PNG = Crisp, precise, lossless, and supports transparency (ideal for testing and UI design)
         // JPEG = Compact, softly detailed, lossy, and opaque (suitable for presentation and archiving)
         val format = CaptureScreenshotFormat.JPEG
-        val result = cdp.captureScreenshot(
+        val result = remoteBrowserProtocol.captureScreenshot(
             format = format,
             captureBeyondViewport = true,
         )
 
-        cdp.clearDeviceMetricsOverride()
+        remoteBrowserProtocol.clearDeviceMetricsOverride()
 
         return result
     }
@@ -113,7 +113,7 @@ class ScreenshotHandler(
             return null
         }
 
-        return cdp.captureScreenshot(
+        return remoteBrowserProtocol.captureScreenshot(
             format = format,
             quality = quality,
             clip = viewport,

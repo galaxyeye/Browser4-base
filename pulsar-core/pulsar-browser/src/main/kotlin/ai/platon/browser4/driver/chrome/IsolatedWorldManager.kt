@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.browser4.driver.common.BrowserSettings
 import ai.platon.pulsar.common.getLogger
 import org.apache.commons.lang3.StringUtils
@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils
  * 6. Runtime is observable, extensible, and evolvable
  */
 class IsolatedWorldManager(
-    val cdp: CDP,
+    val remoteBrowserProtocol: RemoteBrowserProtocol,
     val settings: BrowserSettings
 ) {
     companion object {
@@ -57,7 +57,7 @@ class IsolatedWorldManager(
      * @return The execution context ID of the created isolated world
      */
     suspend fun createIsolatedWorld(frameId: String? = null): Int {
-        val resolvedFrameId: String? = frameId ?: runCatching { cdp.mainFrame().id }.getOrNull()
+        val resolvedFrameId: String? = frameId ?: runCatching { remoteBrowserProtocol.mainFrame().id }.getOrNull()
 
         logger.debug(
             "Creating isolated world '{}' for frame: {}",
@@ -68,7 +68,7 @@ class IsolatedWorldManager(
         var lastError: Exception? = null
         repeat(DEFAULT_CREATE_WORLD_RETRIES) { attempt ->
             try {
-                val executionContextId = cdp.createIsolatedWorld(
+                val executionContextId = remoteBrowserProtocol.createIsolatedWorld(
                     frameId = resolvedFrameId ?: "main",
                     worldName = RUNTIME_WORLD_NAME,
                     grantUniveralAccess = true,
@@ -114,7 +114,7 @@ class IsolatedWorldManager(
      * @return The result of the evaluation
      */
     suspend fun evaluateInIsolatedWorld(script: String, contextId: Int? = null): Any? {
-        val result = cdp.evaluate(
+        val result = remoteBrowserProtocol.evaluate(
             expression = confuser.confuse(script),
             contextId = contextId,
             returnByValue = true,

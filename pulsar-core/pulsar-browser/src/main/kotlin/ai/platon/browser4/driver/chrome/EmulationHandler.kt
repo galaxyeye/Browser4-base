@@ -1,6 +1,6 @@
 package ai.platon.browser4.driver.chrome
 
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.types.input.DispatchDragEventType
 import ai.platon.cdt.kt.protocol.types.input.DispatchKeyEventType
 import ai.platon.cdt.kt.protocol.types.input.DragData
@@ -73,22 +73,22 @@ internal fun normalizeKeyStringForPress(keyString: String): String {
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
  */
 class ClickableDOM(
-    val cdp: CDP,
+    val remoteBrowserProtocol: RemoteBrowserProtocol,
     val node: NodeRef,
     val offset: OffsetD? = null
 ) {
     companion object {
-        fun create(cdp: CDP?, node: NodeRef?, offset: OffsetD? = null): ClickableDOM? {
+        fun create(remoteBrowserProtocol: RemoteBrowserProtocol?, node: NodeRef?, offset: OffsetD? = null): ClickableDOM? {
             if (node == null) return null
-            if (cdp == null) return null
-            return ClickableDOM(cdp, node, offset)
+            if (remoteBrowserProtocol == null) return null
+            return ClickableDOM(remoteBrowserProtocol, node, offset)
         }
     }
 
     suspend fun clickablePoint(): DescriptiveResult<PointD> {
         val contentQuads = runCatching {
             // dom.getContentQuads(node.nodeId, node.backendNodeId, node.objectId)
-            cdp.getContentQuads(node.nodeId)
+            remoteBrowserProtocol.getContentQuads(node.nodeId)
         }
             .onFailure { getLogger(this).warn("Failed to get content quads for node ${node.nodeId}", it) }
             .getOrNull()
@@ -98,7 +98,7 @@ class ClickableDOM(
             return DescriptiveResult("error:notvisible")
         }
 
-        val layoutMetrics = cdp.getLayoutMetrics()
+        val layoutMetrics = remoteBrowserProtocol.getLayoutMetrics()
 
         val viewport = layoutMetrics.cssLayoutViewport
 
@@ -152,7 +152,7 @@ class ClickableDOM(
 
     suspend fun boundingBox(): RectD? {
         // Only provide nodeId to satisfy the "exactly one id" requirement
-        val box = cdp.getBoxModel(node.nodeId)
+        val box = remoteBrowserProtocol.getBoxModel(node.nodeId)
 
         val quad = box.border.takeIf { it.isNotEmpty() } ?: return null
 
@@ -211,7 +211,7 @@ class ClickableDOM(
  *
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
  */
-class Mouse(private val cdp: CDP) {
+class Mouse(private val remoteBrowserProtocol: RemoteBrowserProtocol) {
     var currentX = 0.0
     var currentY = 0.0
 
@@ -269,7 +269,7 @@ class Mouse(private val cdp: CDP) {
     }
 
     private suspend fun cdpMoveTo(x: Double, y: Double) {
-        cdp.dispatchMouseMoved(x, y, buttonsState)
+        remoteBrowserProtocol.dispatchMouseMoved(x, y, buttonsState)
     }
 
     /**
@@ -297,7 +297,7 @@ class Mouse(private val cdp: CDP) {
     suspend fun down(x: Double, y: Double, clickCount: Int = 1, modifiers: Int? = null) {
         // Update buttons bitfield to include left button (1)
         buttonsState = buttonsState or 1
-        cdp.dispatchMousePressed(x, y, clickCount, modifiers, buttonsState)
+        remoteBrowserProtocol.dispatchMousePressed(x, y, clickCount, modifiers, buttonsState)
     }
 
     suspend fun up() {
@@ -311,11 +311,11 @@ class Mouse(private val cdp: CDP) {
     suspend fun up(x: Double, y: Double, clickCount: Int = 1, modifiers: Int? = null) {
         // Update buttons bitfield to reflect release of left button
         buttonsState = buttonsState and 1.inv()
-        cdp.dispatchMouseReleased(x, y, clickCount, modifiers, buttonsState)
+        remoteBrowserProtocol.dispatchMouseReleased(x, y, clickCount, modifiers, buttonsState)
     }
 
     suspend fun scroll(deltaX: Double = 0.0, deltaY: Double = 10.0) {
-        cdp.dispatchMouseWheel(currentX, currentY, deltaX, deltaY)
+        remoteBrowserProtocol.dispatchMouseWheel(currentX, currentY, deltaX, deltaY)
     }
 
     /**
@@ -378,7 +378,7 @@ class Mouse(private val cdp: CDP) {
      * @param y Y coordinate
      */
     suspend fun wheel(x: Double, y: Double, deltaX: Double, deltaY: Double) {
-        cdp.dispatchMouseWheel(x, y, deltaX, deltaY)
+        remoteBrowserProtocol.dispatchMouseWheel(x, y, deltaX, deltaY)
     }
 
     /**
@@ -390,8 +390,8 @@ class Mouse(private val cdp: CDP) {
     suspend fun drag(start: PointD, target: PointD): DragData? {
         var dragData: DragData? = null
 
-        cdp.setInterceptDrags(true)
-        cdp.onDragIntercepted {
+        remoteBrowserProtocol.setInterceptDrags(true)
+        remoteBrowserProtocol.onDragIntercepted {
             dragData = it.data
         }
 
@@ -409,7 +409,7 @@ class Mouse(private val cdp: CDP) {
         } finally {
             // Always release button and disable interception
             runCatching { up() }
-            runCatching { cdp.setInterceptDrags(false) }
+            runCatching { remoteBrowserProtocol.setInterceptDrags(false) }
         }
 
         return dragData
@@ -421,7 +421,7 @@ class Mouse(private val cdp: CDP) {
      * @param data - drag data containing items and operations mask
      */
     suspend fun dragEnter(target: PointD, data: DragData) {
-        cdp.dispatchDragEvent(
+        remoteBrowserProtocol.dispatchDragEvent(
             DispatchDragEventType.DRAG_ENTER, target.x, target.y,
             data
         )
@@ -433,7 +433,7 @@ class Mouse(private val cdp: CDP) {
      * @param data - drag data containing items and operations mask
      */
     suspend fun dragOver(target: PointD, data: DragData) {
-        cdp.dispatchDragEvent(
+        remoteBrowserProtocol.dispatchDragEvent(
             DispatchDragEventType.DRAG_OVER, target.x, target.y,
             data
         )
@@ -445,7 +445,7 @@ class Mouse(private val cdp: CDP) {
      * @param data - drag data containing items and operations mask
      */
     suspend fun drop(target: PointD, data: DragData) {
-        cdp.dispatchDragEvent(
+        remoteBrowserProtocol.dispatchDragEvent(
             DispatchDragEventType.DROP, target.x, target.y,
             data
         )
@@ -481,7 +481,7 @@ class Mouse(private val cdp: CDP) {
 /**
  * Keyboard provides an api for managing a virtual keyboard.
  * */
-class Keyboard(private val cdp: CDP) {
+class Keyboard(private val remoteBrowserProtocol: RemoteBrowserProtocol) {
     private val pressedModifiers = mutableSetOf<String>()
     private val pressedKeys = mutableSetOf<String>()
 
@@ -490,7 +490,7 @@ class Keyboard(private val cdp: CDP) {
             if (Character.isISOControl(char)) {
                 press("$char", delayMillis)
             } else {
-                cdp.insertText("$char")
+                remoteBrowserProtocol.insertText("$char")
             }
 
             if (delayMillis > 0) {
@@ -558,7 +558,7 @@ class Keyboard(private val cdp: CDP) {
         try {
             val autoRepeat = pressedKeys.contains(baseVirtualKey.code)
             pressedKeys.add(baseVirtualKey.code)
-            cdp.dispatchKeyEvent(
+            remoteBrowserProtocol.dispatchKeyEvent(
                 type = DispatchKeyEventType.KEY_DOWN,
                 modifiers = toModifiersMask(pressedModifiers),
                 windowsVirtualKeyCode = baseVirtualKey.keyCodeWithoutLocation,
@@ -572,7 +572,7 @@ class Keyboard(private val cdp: CDP) {
                 commands = emptyList(),
             )
             delay(delayMillis.coerceAtLeast(60).milliseconds)
-            cdp.dispatchKeyEvent(
+            remoteBrowserProtocol.dispatchKeyEvent(
                 type = DispatchKeyEventType.KEY_UP,
                 modifiers = toModifiersMask(pressedModifiers),
                 windowsVirtualKeyCode = baseVirtualKey.keyCodeWithoutLocation,
@@ -695,7 +695,7 @@ class Keyboard(private val cdp: CDP) {
 
         val type = if (key.text.isEmpty()) DispatchKeyEventType.RAW_KEY_DOWN else DispatchKeyEventType.KEY_DOWN
         val commands = emptyList<String>()
-        cdp.dispatchKeyEvent(
+        remoteBrowserProtocol.dispatchKeyEvent(
             type = type,
             modifiers = toModifiersMask(modifiers),
             windowsVirtualKeyCode = key.keyCodeWithoutLocation,
@@ -719,7 +719,7 @@ class Keyboard(private val cdp: CDP) {
         }
         pressedKeys.remove(key.code)
 
-        cdp.dispatchKeyEvent(
+        remoteBrowserProtocol.dispatchKeyEvent(
             type = DispatchKeyEventType.KEY_UP,
             modifiers = toModifiersMask(modifiers),
             key = key.key,
@@ -733,10 +733,10 @@ class Keyboard(private val cdp: CDP) {
 class EmulationHandler(
     private val keyboard: Keyboard?,
     private val mouse: Mouse?,
-    private val cdp: CDP? = null
+    private val remoteBrowserProtocol: RemoteBrowserProtocol? = null
 ) {
     private val logger = getLogger(this)
-    private val isActive get() = cdp != null
+    private val isActive get() = remoteBrowserProtocol != null
 
     suspend fun click(
         node: NodeRef, count: Int, position: String = "center", modifier: String? = null, delayMillis: Long = 100
@@ -770,7 +770,7 @@ class EmulationHandler(
         val point = getInteractPoint(node, position, useRandomOffset = false) ?: return
 
         // Get bounding box to calculate a point outside the element
-        val clickableDOM = ClickableDOM.create(cdp, node, null) ?: return
+        val clickableDOM = ClickableDOM.create(remoteBrowserProtocol, node, null) ?: return
         val box = runCatching { clickableDOM.boundingBox() }
             .onFailure { logger.warn("Failed to get bounding box for hover", it) }
             .getOrNull()
@@ -811,7 +811,7 @@ class EmulationHandler(
 
         if (!isActive) return null
 
-        val clickableDOM = ClickableDOM.create(cdp, node, offset) ?: return null
+        val clickableDOM = ClickableDOM.create(remoteBrowserProtocol, node, offset) ?: return null
         val point = clickableDOM.clickablePoint().value ?: return null
 
         val box = runCatching { clickableDOM.boundingBox() }
@@ -907,7 +907,7 @@ class EmulationHandler(
         modifier: String?,
         delayMillis: Long,
     ): Boolean {
-        val localCdp = cdp ?: return false
+        val localCdp = remoteBrowserProtocol ?: return false
         val m = mouse ?: return false
         val clickCount = max(1, count)
         val modifierState = buildMouseModifierState(modifier)

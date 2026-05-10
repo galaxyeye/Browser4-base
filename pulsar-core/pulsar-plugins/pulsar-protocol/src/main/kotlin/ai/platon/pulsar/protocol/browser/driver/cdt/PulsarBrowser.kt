@@ -1,7 +1,7 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt
 
 import ai.platon.browser4.driver.chrome.*
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl
 import ai.platon.browser4.driver.chrome.impl.ChromeImpl.Companion.ABOUT_BLANK_PAGE
 import ai.platon.browser4.driver.chrome.util.ChromeDriverException
@@ -212,8 +212,8 @@ class PulsarBrowser(
 
         val uniqueID = chromeTab.id
         val devTools = createDevTools(chromeTab, toolsConfig)
-        val cdp = CDP(devTools)
-        val driver = PulsarWebDriver(uniqueID, chromeTab, cdp, this)
+        val remoteBrowserProtocol = RemoteBrowserProtocol(devTools)
+        val driver = PulsarWebDriver(uniqueID, chromeTab, remoteBrowserProtocol, this)
         mutableDrivers[chromeTab.id] = driver
 
         if (recovered) {

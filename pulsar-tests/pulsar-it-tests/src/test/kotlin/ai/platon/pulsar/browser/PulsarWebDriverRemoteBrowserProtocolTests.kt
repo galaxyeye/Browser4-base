@@ -1,6 +1,6 @@
 package ai.platon.pulsar.browser
 
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.pulsar.WebDriverTestBase
 import ai.platon.pulsar.common.printlnPro
 import ai.platon.pulsar.core.api.Browser
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
 import java.text.MessageFormat
 import kotlin.test.*
 
-class PulsarWebDriverCDPTests : WebDriverTestBase() {
+class PulsarWebDriverRemoteBrowserProtocolTests : WebDriverTestBase() {
     fun setLogLevel(loggerName: String?, level: Level?) {
         val targetLogger: Logger = LoggerFactory.getLogger(loggerName) as Logger
         targetLogger.level = level
@@ -93,15 +93,15 @@ class PulsarWebDriverCDPTests : WebDriverTestBase() {
             browser.newDriver().use { driver ->
                 assertIs<PulsarWebDriver>(driver)
 
-                val cdp = driver.implementation as CDP
+                val remoteBrowserProtocol = driver.implementation as RemoteBrowserProtocol
 
-                cdp.devTools.dom.onAttributeModified { e ->
+                remoteBrowserProtocol.devTools.dom.onAttributeModified { e ->
                     val message = MessageFormat.format("> {0}. node changed | {1} := {2}", e.nodeId, e.name, e.value)
                     printlnPro(message)
                 }
 
-                cdp.devTools.console.enable()
-                cdp.devTools.console.onMessageAdded { e ->
+                remoteBrowserProtocol.devTools.console.enable()
+                remoteBrowserProtocol.devTools.console.onMessageAdded { e ->
                     printlnPro(e.message)
                 }
 

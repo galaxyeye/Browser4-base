@@ -1,18 +1,17 @@
 package ai.platon.browser4.driver.chrome.dom
 
-import ai.platon.browser4.driver.chrome.RemoteDevTools
-import ai.platon.browser4.driver.chrome.experimental.CDP
+import ai.platon.browser4.driver.chrome.experimental.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.cdt.kt.protocol.types.page.FrameTree
 import ai.platon.pulsar.common.getLogger
 
 class AccessibilityHandler(
-    private val cdp: CDP
+    private val remoteBrowserProtocol: RemoteBrowserProtocol
 ) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 
-    private val isActive get() = cdp.isOpen
+    private val isActive get() = remoteBrowserProtocol.isOpen
 
     @Volatile
     private var accessibilityEnabled = false
@@ -31,10 +30,10 @@ class AccessibilityHandler(
         // Small retry loop to wait for AX cache to populate on dynamic pages
         repeat(5) { attempt ->
             val frameTree = try {
-                cdp.getFrameTree()
+                remoteBrowserProtocol.getFrameTree()
             } catch (e: Exception) {
                 tracer?.debug("Page.getFrameTree failed, using last known tree | err={}", e.toString())
-                cdp.getFrameTree()
+                remoteBrowserProtocol.getFrameTree()
             }
 
             val frameById = linkedMapOf<String, FrameTree>()
@@ -48,14 +47,14 @@ class AccessibilityHandler(
 
             if (frameIds.isEmpty()) {
                 // Fallback: try fetching AX tree without specifying a frameId (root document)
-                val nodes = runCatching { cdp.getFullAXTree(depth) }.getOrElse { emptyList() }
+                val nodes = runCatching { remoteBrowserProtocol.getFullAXTree(depth) }.getOrElse { emptyList() }
                 if (nodes.isNotEmpty()) {
                     val rootFrameId = frameTree.frame.id
                     return singleFrameResult(nodes, rootFrameId)
                 }
                 // If a specific target frame was requested, try that directly as well
                 if (targetFrameId != null) {
-                    val targeted = runCatching { cdp.getFullAXTree(depth) }.getOrElse { emptyList() }
+                    val targeted = runCatching { remoteBrowserProtocol.getFullAXTree(depth) }.getOrElse { emptyList() }
                     if (targeted.isNotEmpty()) return singleFrameResult(targeted, targetFrameId)
                 }
                 // Wait a bit and retry
@@ -67,7 +66,7 @@ class AccessibilityHandler(
                 val byBackend = LinkedHashMap<Int, MutableList<AXNode>>()
 
                 frameIds.forEach { frameId ->
-                    val nodes = runCatching { cdp.getFullAXTree(depth) }
+                    val nodes = runCatching { remoteBrowserProtocol.getFullAXTree(depth) }
                         .onFailure { e -> logger.warn("Accessibility.getFullAXTree failed | frameId={} err={}", frameId, e.toString()) }
                         .getOrElse { emptyList() }
                     if (nodes.isEmpty()) {
@@ -150,12 +149,12 @@ class AccessibilityHandler(
     private suspend fun ensureEnabled() {
         if (!isActive) return
         // Enable Page/DOM domains to stabilize frame tree & AX associations
-        runCatching { cdp.pageEnable() }
-        runCatching { cdp.domEnable() }
+        runCatching { remoteBrowserProtocol.pageEnable() }
+        runCatching { remoteBrowserProtocol.domEnable() }
 
         if (!isActive) return
         if (!accessibilityEnabled) {
-            runCatching { cdp.accessibilityEnable() }
+            runCatching { remoteBrowserProtocol.accessibilityEnable() }
                 .onFailure { e -> logger.warn("Accessibility.enable failed | err={}", e.toString()) }
             accessibilityEnabled = true
         }
