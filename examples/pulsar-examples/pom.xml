@@ -14,7 +14,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ai.platon.pulsar</groupId>
-    <artifactId>browser4-examples</artifactId>
+    <artifactId>pulsar-examples</artifactId>
     <version>4.7.4-SNAPSHOT</version>
 
     <name>Browser4 Kotlin Examples</name>
