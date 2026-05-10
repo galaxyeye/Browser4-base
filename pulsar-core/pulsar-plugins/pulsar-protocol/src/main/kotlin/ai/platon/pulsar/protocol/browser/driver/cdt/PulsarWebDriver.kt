@@ -15,6 +15,7 @@ import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
 import ai.platon.pulsar.common.urls.URLUtils
+import ai.platon.pulsar.driver.BrowserProtocol
 import ai.platon.pulsar.driver.BrowserTab
 import ai.platon.pulsar.driver.NetworkResourceResponse
 import ai.platon.pulsar.driver.NodeRef
@@ -55,17 +56,12 @@ class PulsarWebDriver constructor(
 
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 
+    private val cp = bp as RemoteChromeProtocol
+
     override val browserType: BrowserType = BrowserType.PULSAR_CHROME
 
     @Deprecated("Use CDP facade (cdp) instead of direct devTools access")
-    val devTools: RemoteDevTools get() = bp.remoteDevTools
-//    private val pageAPI get() = cdp.page.takeIf { isActive }
-//    private val domAPI get() = cdp.dom.takeIf { isActive }
-//    private val cssAPI get() = cdp.css.takeIf { isActive }
-//    private val networkAPI get() = cdp.network.takeIf { isActive }
-//    private val fetchAPI get() = cdp.fetch.takeIf { isActive }
-//    private val runtimeAPI get() = cdp.runtime.takeIf { isActive }
-//    private val emulationAPI get() = cdp.emulation.takeIf { isActive }
+    val devTools: RemoteDevTools get() = cp.remoteDevTools
 
     private val isolatedWorldManager = IsolatedWorldManager(bp, settings)
     private val page = PageHandler(bp, isolatedWorldManager)
@@ -83,7 +79,7 @@ class PulsarWebDriver constructor(
 
     private val closed = AtomicBoolean()
 
-    private val isGone get() = closed.get() || isQuit || !AppContext.isActive || !bp.isOpen
+    private val isGone get() = closed.get() || isQuit || !AppContext.isActive || !cp.isOpen
 
     var userTypedUrl: String? = null
     var navigateUrl: String? = browserTab.url
@@ -128,32 +124,32 @@ class PulsarWebDriver constructor(
 
     override suspend fun reload() {
         driverHelper.invokeOnPage("reload") {
-            bp.reload()
+            cp.reload()
         }
     }
 
     override suspend fun goBack() {
         driverHelper.invokeOnPage("goBack") {
-            val history = bp.getNavigationHistory()
+            val history = cp.getNavigationHistory()
             val currentIndex = history.currentIndex
             val entries = history.entries
             val targetIndex = currentIndex - 1
             if (targetIndex >= 0 && targetIndex < entries.size) {
                 val entryId = entries[targetIndex].id
-                bp.navigateToHistoryEntry(entryId)
+                cp.navigateToHistoryEntry(entryId)
             }
         }
     }
 
     override suspend fun goForward() {
         driverHelper.invokeOnPage("goForward") {
-            val history = bp.getNavigationHistory()
+            val history = cp.getNavigationHistory()
             val currentIndex = history.currentIndex
             val entries = history.entries
             val targetIndex = currentIndex + 1
             if (targetIndex >= 0 && targetIndex < entries.size) {
                 val entryId = entries[targetIndex].id
-                bp.navigateToHistoryEntry(entryId)
+                cp.navigateToHistoryEntry(entryId)
             }
         }
     }
@@ -168,7 +164,7 @@ class PulsarWebDriver constructor(
     }
 
     override suspend fun clearBrowserCookies() {
-        driverHelper.invokeOnPage("clearBrowserCookies") { bp.clearBrowserCookies() }
+        driverHelper.invokeOnPage("clearBrowserCookies") { cp.clearBrowserCookies() }
     }
 
     // Use the JavaScript version in super class
@@ -262,7 +258,7 @@ class PulsarWebDriver constructor(
         try {
             val channel = Channel<String>()
 
-            bp.onDocumentOpened {
+            cp.onDocumentOpened {
                 // keep oldUrl check for debugging / future use
                 @Suppress("UNUSED_VARIABLE")
                 val navigated = it.frame.url != oldUrl
@@ -316,7 +312,7 @@ class PulsarWebDriver constructor(
         val actionName = if (shouldCheck) "check" else "uncheck"
         driverHelper.invokeOnElement(selector, actionName, scrollIntoView = true) { node ->
             withNodeObjectId(bp, node) { objectId ->
-                val result = bp.callFunctionOn(
+                val result = cp.callFunctionOn(
                     CheckableElementJs.SET_CHECKED_FUNCTION_DECLARATION,
                     objectId = objectId,
                     arguments = listOf(CallArgument(value = shouldCheck)),
@@ -545,7 +541,7 @@ class PulsarWebDriver constructor(
     @Throws(WebDriverException::class)
     override suspend fun resize(width: Int, height: Int) {
         driverHelper.invokeOnPage("resize") {
-            bp.setDeviceMetricsOverride(
+            cp.setDeviceMetricsOverride(
                 width = width,
                 height = height,
                 deviceScaleFactor = 0.0,
@@ -557,14 +553,14 @@ class PulsarWebDriver constructor(
     @Throws(WebDriverException::class)
     override suspend fun dialogAccept(promptText: String?) {
         driverHelper.invokeOnPage("dialogAccept") {
-            bp.handleJavaScriptDialog(accept = true, promptText = promptText)
+            cp.handleJavaScriptDialog(accept = true, promptText = promptText)
         }
     }
 
     @Throws(WebDriverException::class)
     override suspend fun dialogDismiss() {
         driverHelper.invokeOnPage("dialogDismiss") {
-            bp.handleJavaScriptDialog(accept = false)
+            cp.handleJavaScriptDialog(accept = false)
         }
     }
 
@@ -617,8 +613,8 @@ class PulsarWebDriver constructor(
         //| attribute | HTML 初始声明 | ❌ 不变（除非手动 setAttribute） |
         //| property  | DOM 当前状态  | ✅ 会变（用户交互 / JS 修改）      |
 
-        return withNodeObjectId(bp, node) { objectId ->
-            bp.callFunctionOn(
+        return withNodeObjectId(cp, node) { objectId ->
+            cp.callFunctionOn(
                 "function() { return this && typeof this.value !== 'undefined' ? this.value : null; }",
                 objectId = objectId,
                 returnByValue = true
@@ -659,7 +655,7 @@ class PulsarWebDriver constructor(
     @Throws(WebDriverException::class)
     override suspend fun upload(selector: String, paths: List<String>) {
         driverHelper.invokeOnElement(selector, "upload", focus = true) { node ->
-            bp.setFileInputFiles(files = paths, nodeId = node.nodeId)
+            cp.setFileInputFiles(files = paths, nodeId = node.nodeId)
         }
     }
 
@@ -770,7 +766,7 @@ class PulsarWebDriver constructor(
             when {
                 node.isNull() -> null
                 // TODO: performance issue for large HTML (memory copy), consider accept the raw byte stream and convert to string in native code
-                else -> bp.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
+                else -> cp.getOuterHTML(node.nodeId, node.backendNodeId, node.objectId)
             }
         }
     }
@@ -828,7 +824,7 @@ function() {
 }
                     """.trimIndent()
                     withNodeObjectId(bp, node) { objectId ->
-                        val remoteObject = bp.callFunctionOn(
+                        val remoteObject = cp.callFunctionOn(
                             functionDeclaration,
                             objectId = objectId,
                             returnByValue = true
@@ -997,9 +993,9 @@ function() {
         return driverHelper.invokeOnPage("pageSource") {
             // TODO: use cdp.page.getResourceContent instead 1. semantic consistency 2. performance
             // cdp.page.getResourceContent(mainFrameAPI?.id, currentUrl())
-            val document = bp.getDocument()
+            val document = cp.getDocument()
             // TODO: pass only one of nodeId and backendNodeId
-            bp.getOuterHTML(document.nodeId, document.backendNodeId)
+            cp.getOuterHTML(document.nodeId, document.backendNodeId)
         }
     }
 
@@ -1013,13 +1009,13 @@ function() {
 
     override suspend fun bringToFront() {
         rpc.invokeDeferredSilently("bringToFront") {
-            bp.bringToFront()
+            cp.bringToFront()
             browser.frontDriver = this
         }
     }
 
     override fun awaitTermination() {
-        bp.awaitTermination()
+        cp.awaitTermination()
     }
 
     override suspend fun loadResource(url: String): NetworkResourceResponse {
@@ -1028,8 +1024,8 @@ function() {
         )
 
         val response = rpc.invokeWithRetry("loadNetworkResource") {
-            val frameId = bp.getFrameTree().frame.id ?: return@invokeWithRetry null
-            val resource = bp.loadNetworkResource(frameId, url, options) ?: return@invokeWithRetry null
+            val frameId = cp.getFrameTree().frame.id ?: return@invokeWithRetry null
+            val resource = cp.loadNetworkResource(frameId, url, options) ?: return@invokeWithRetry null
             NetworkResourceResponse.from(resource)
         }
 
@@ -1048,13 +1044,13 @@ function() {
         super.close()
 
         if (closed.compareAndSet(false, true)) {
-            runCatching { bp.close() }.onFailure { warnForClose(this, it) }
+            runCatching { cp.close() }.onFailure { warnForClose(this, it) }
         }
     }
 
     @Throws(WebDriverException::class)
     override suspend fun pause() {
-        driverHelper.invokeOnPage("pause") { bp.stopLoading() }
+        driverHelper.invokeOnPage("pause") { cp.stopLoading() }
     }
 
     @Throws(WebDriverException::class)
@@ -1069,17 +1065,17 @@ function() {
 
             if (browser.isGUI) {
                 // in gui mode, just stop the loading, so we can diagnose
-                bp.stopLoading()
+                cp.stopLoading()
             } else {
                 // go to about:blank, so the browser stops the previous page and releases all resources
                 navigate(ChromeImpl.ABOUT_BLANK_PAGE)
             }
         } catch (e: ChromeIOException) {
-            if (!e.isOpen || !bp.isOpen) {
+            if (!e.isOpen || !cp.isOpen) {
                 // intentionally ignored: the chrome is closed
             }
         } catch (e: ChromeDriverException) {
-            if (bp.isOpen) {
+            if (cp.isOpen) {
                 try {
                     rpc.handleChromeException(e, "terminate")
                 } catch (e: Exception) {
@@ -1097,21 +1093,21 @@ function() {
     @Throws(ChromeIOException::class)
     suspend fun enableAPIAgents() {
         try {
-            bp.pageEnable()
-            bp.domEnable()
-            bp.runtimeEnable()
-            bp.networkEnable()
-            bp.cssEnable()
+            cp.pageEnable()
+            cp.domEnable()
+            cp.runtimeEnable()
+            cp.networkEnable()
+            cp.cssEnable()
 
             if (resourceBlockProbability > 1e-6) {
-                bp.fetchEnable()
+                cp.fetchEnable()
             }
 
             val proxyUsername = browser.id.fingerprint.proxyEntry?.username
             if (!proxyUsername.isNullOrBlank()) {
                 // allow all url patterns
                 val patterns = listOf(RequestPattern())
-                bp.fetchEnable(patterns, true)
+                cp.fetchEnable(patterns, true)
             }
         } catch (e: Exception) {
             logger.warn("Failed to enable CDT agents", e)
@@ -1129,7 +1125,7 @@ function() {
 
         if (blockedURLs.isNotEmpty()) {
             // Blocks URLs from loading.
-            bp.setBlockedURLs(blockedURLs)
+            cp.setBlockedURLs(blockedURLs)
         }
 
         networkManager.enable()
@@ -1141,9 +1137,9 @@ function() {
             onResponseReceived(entry, event)
         }
 
-        bp.onFrameNavigated { onFrameNavigated(entry, it) }
-        bp.onDocumentOpened { entry.mainRequestCookies = getCookies0() }
-        bp.onWindowOpen { onWindowOpen(it) }
+        cp.onFrameNavigated { onFrameNavigated(entry, it) }
+        cp.onDocumentOpened { entry.mainRequestCookies = getCookies0() }
+        cp.onWindowOpen { onWindowOpen(it) }
 
         val proxyEntry = browser.id.fingerprint.proxyEntry
         if (proxyEntry?.username != null) {
@@ -1205,7 +1201,7 @@ function() {
         // simulate blocking logic
         val isMinor = chromeNavigateEntry.isMinorResource(event)
         if (isMinor && isBlocked(event.request.url)) {
-            bp.failRequest(event.requestId, ErrorReason.ABORTED)
+            cp.failRequest(event.requestId, ErrorReason.ABORTED)
         }
 
         // handle user-defined events
@@ -1258,7 +1254,7 @@ function() {
         try {
             val isolatedWorldJs = settings.dualWorldScriptLoader.getIsolatedWorldJs(false)
             if (isolatedWorldJs.isNotBlank()) {
-                val targetFrameId = bp.getFrameTree()?.frame?.id ?: event.frame.id
+                val targetFrameId = cp.getFrameTree()?.frame?.id ?: event.frame.id
                 val contextId = isolatedWorldManager.ensureRuntime(targetFrameId, isolatedWorldJs)
                 logger.debug(
                     "Ensured Browser4 runtime in isolated world after main-frame navigation | frame={}",
@@ -1324,8 +1320,8 @@ function() {
             mimeType == "application/json" && event.response.encodedDataLength < 1_000_000 && alwaysFalse()
         if (saveResourceBody) {
             val body = rpc.invokeSilently("getResponseBody") {
-                bp.fetchEnable()
-                bp.getResponseBody(event.requestId).body
+                cp.fetchEnable()
+                cp.getResponseBody(event.requestId).body
             }
             if (!body.isNullOrBlank()) {
                 suffix = "-" + event.type.name.lowercase() + "-body.txt"
@@ -1360,7 +1356,7 @@ function() {
         // 1. Inject Page World scripts (stealth patches)
         val pageWorldJs = loader.getPageWorldJs(false)
         if (pageWorldJs.isNotBlank()) {
-            bp.addScriptToEvaluateOnNewDocument("\n;;\n$pageWorldJs\n;;\n")
+            cp.addScriptToEvaluateOnNewDocument("\n;;\n$pageWorldJs\n;;\n")
             logger.debug("Injected Page World scripts (stealth patches)")
         }
 
@@ -1377,7 +1373,7 @@ function() {
                     "Injected Browser4 runtime into Isolated World (context: {}) | {}",
                     contextId, StringUtils.abbreviateMiddle(userTypedUrl, "...", 200)
                 )
-                val evaluate = bp.evaluate("typeof(__pulsar_utils__)", contextId = contextId)
+                val evaluate = cp.evaluate("typeof(__pulsar_utils__)", contextId = contextId)
                 if (evaluate.result.value != "function") {
                     logger.warn(
                         "Failed to verify isolated world injection: typeof(__pulsar_utils__) should be 'function' but got: {}",
@@ -1404,7 +1400,7 @@ function() {
 
     @Throws(WebDriverException::class)
     private suspend fun getCookies0(): List<Map<String, String>> {
-        val cookies = bp.getCookies()?.map { serialize(it) }
+        val cookies = cp.getCookies()?.map { serialize(it) }
         return cookies ?: listOf()
     }
 
@@ -1416,7 +1412,7 @@ function() {
     private suspend fun cdpDeleteCookies(
         name: String, url: String? = null, domain: String? = null, path: String? = null
     ) {
-        bp.deleteCookies(name, url, domain, path)
+        cp.deleteCookies(name, url, domain, path)
     }
 
     private suspend fun waitForScrollSettled(selector: String, timeout: Duration = Duration.ofMillis(5_000)) {

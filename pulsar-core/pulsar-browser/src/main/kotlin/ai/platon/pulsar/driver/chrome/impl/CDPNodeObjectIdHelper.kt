@@ -3,6 +3,7 @@ package ai.platon.pulsar.driver.chrome.impl
 import ai.platon.pulsar.driver.NodeRef
 import ai.platon.pulsar.driver.chrome.RemoteDevTools
 import ai.platon.pulsar.common.AppContext
+import ai.platon.pulsar.driver.BrowserProtocol
 
 /**
  * Result of resolving a DOM node to a temporary or pre-existing runtime object id.
@@ -38,8 +39,8 @@ suspend fun resolveNodeObjectId(devTools: RemoteDevTools, node: NodeRef): Resolv
     return objectId?.let { ResolvedNodeObjectId(it, true) }
 }
 
-suspend fun resolveNodeObjectId(bp: RemoteChromeProtocol, node: NodeRef): ResolvedNodeObjectId? {
-    val devTools = bp.remoteDevToolsOrNull ?: return null
+suspend fun resolveNodeObjectId(bp: BrowserProtocol, node: NodeRef): ResolvedNodeObjectId? {
+    val devTools = (bp as RemoteChromeProtocol).remoteDevToolsOrNull ?: return null
     return resolveNodeObjectId(devTools, node)
 }
 
@@ -55,8 +56,8 @@ suspend fun releaseNodeObjectIfNeeded(devTools: RemoteDevTools, resolved: Resolv
     runCatching { bp.releaseObject(resolved.objectId) }
 }
 
-suspend fun releaseNodeObjectIfNeeded(bp: RemoteChromeProtocol, resolved: ResolvedNodeObjectId?) {
-    val devTools = bp.remoteDevToolsOrNull ?: return
+suspend fun releaseNodeObjectIfNeeded(bp: BrowserProtocol, resolved: ResolvedNodeObjectId?) {
+    val devTools = (bp as RemoteChromeProtocol).remoteDevToolsOrNull ?: return
     releaseNodeObjectIfNeeded(devTools, resolved)
 }
 
@@ -78,11 +79,11 @@ suspend inline fun <T> withNodeObjectId(
 }
 
 suspend inline fun <T> withNodeObjectId(
-    bp: RemoteChromeProtocol,
+    bp: BrowserProtocol,
     node: NodeRef,
     block: suspend (String) -> T,
 ): T? {
-    val devTools = bp.remoteDevToolsOrNull ?: return null
+    val devTools = (bp as RemoteChromeProtocol).remoteDevToolsOrNull ?: return null
     return withNodeObjectId(devTools, node, block)
 }
 

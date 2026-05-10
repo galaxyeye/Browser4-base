@@ -1,6 +1,5 @@
 package ai.platon.pulsar.driver.chrome.impl
 
-import ai.platon.pulsar.driver.NodeRef
 import ai.platon.cdt.kt.protocol.types.input.DispatchDragEventType
 import ai.platon.cdt.kt.protocol.types.input.DispatchKeyEventType
 import ai.platon.cdt.kt.protocol.types.input.DragData
@@ -14,6 +13,8 @@ import ai.platon.pulsar.common.math.geometric.DimD
 import ai.platon.pulsar.common.math.geometric.OffsetD
 import ai.platon.pulsar.common.math.geometric.PointD
 import ai.platon.pulsar.common.math.geometric.RectD
+import ai.platon.pulsar.driver.BrowserProtocol
+import ai.platon.pulsar.driver.NodeRef
 import kotlinx.coroutines.delay
 import org.apache.commons.lang3.SystemUtils
 import org.apache.commons.math3.util.Precision
@@ -78,7 +79,7 @@ class ClickableDOM(
     val offset: OffsetD? = null
 ) {
     companion object {
-        fun create(bp: RemoteChromeProtocol?, node: NodeRef?, offset: OffsetD? = null): ClickableDOM? {
+        fun create(bp: BrowserProtocol?, node: NodeRef?, offset: OffsetD? = null): ClickableDOM? {
             if (node == null) return null
             if (bp == null) return null
             return ClickableDOM(bp, node, offset)

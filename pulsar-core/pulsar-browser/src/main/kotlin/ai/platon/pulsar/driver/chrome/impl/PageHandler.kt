@@ -20,6 +20,7 @@ import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.Strings
 import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.getLogger
+import ai.platon.pulsar.driver.BrowserProtocol
 
 data class LocatorAndCssSelector(
     val locator: Locator,
@@ -37,7 +38,9 @@ class PageHandler(
 
     private val logger = getLogger(this)
 
-    private val isActive get() = AppContext.isActive && bp.isOpen
+    private val cp = bp as RemoteChromeProtocol
+
+    private val isActive get() = AppContext.isActive && cp.isOpen
 
     private var lastBrowserUseState: BrowserUseState? = null
 
@@ -429,7 +432,7 @@ class PageHandler(
 
     @Throws(ChromeDriverException::class)
     suspend fun isChecked(selector: String): Boolean {
-        return driverHelper.predicateOnElement(selector) { isChecked(it) }
+        return predicateOnElement(selector) { isChecked(it) }
     }
 
     @Throws(ChromeDriverException::class)
