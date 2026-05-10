@@ -10,7 +10,7 @@ import ai.platon.pulsar.protocol.browser.emulator.WebDriverPoolException
 import ai.platon.pulsar.protocol.browser.emulator.WebDriverPoolExhaustedException
 import ai.platon.pulsar.protocol.browser.impl.BasicBrowserManager
 import ai.platon.pulsar.skeleton.browser.driver.AbstractWebDriver
-import ai.platon.pulsar.skeleton.browser.BrowserLaunchException
+import ai.platon.pulsar.skeleton.browser.driver.BrowserLaunchException
 import ai.platon.pulsar.skeleton.browser.BrowserManager
 import ai.platon.pulsar.skeleton.browser.BrowserUnavailableException
 import ai.platon.pulsar.skeleton.browser.driver.WebDriver
