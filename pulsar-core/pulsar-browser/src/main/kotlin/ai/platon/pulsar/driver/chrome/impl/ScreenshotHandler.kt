@@ -12,7 +12,7 @@ import kotlin.math.roundToInt
 
 class ScreenshotHandler(
     private val pageHandler: PageHandler,
-    private val bp: RemoteBrowserProtocol,
+    private val bp: BrowserProtocol,
 ) {
     private val logger = getLogger(this)
     private val isActive get() = AppContext.isActive && bp.isOpen

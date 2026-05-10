@@ -1,13 +1,12 @@
 package ai.platon.pulsar.driver.chrome.dom
 
 import ai.platon.pulsar.driver.chrome.dom.model.InteractiveDOMTreeNodeList
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.pulsar.common.getLogger
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 class HighlightManager(
-    private val bp: RemoteBrowserProtocol
+    private val bp: BrowserProtocol
 ) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }

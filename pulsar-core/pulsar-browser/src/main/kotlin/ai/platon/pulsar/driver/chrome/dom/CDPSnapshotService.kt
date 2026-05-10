@@ -10,7 +10,6 @@ import ai.platon.pulsar.driver.chrome.dom.util.DomDebug
 import ai.platon.pulsar.driver.chrome.dom.util.HashUtils
 import ai.platon.pulsar.driver.chrome.dom.util.ScrollUtils
 import ai.platon.pulsar.driver.chrome.dom.util.XPathUtils
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.pulsar.common.getLogger
 import java.awt.Dimension
@@ -80,7 +79,7 @@ import java.util.*
  * ```
  */
 class CDPSnapshotService(
-    private val bp: RemoteBrowserProtocol,
+    private val bp: BrowserProtocol,
 ) : SnapshotService {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }

@@ -1,6 +1,5 @@
 package ai.platon.pulsar.driver.chrome
 
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.pulsar.driver.common.BrowserSettings
 import ai.platon.pulsar.common.getLogger
 import org.apache.commons.lang3.StringUtils
@@ -21,7 +20,7 @@ import org.apache.commons.lang3.StringUtils
  * 6. Runtime is observable, extensible, and evolvable
  */
 class IsolatedWorldManager(
-    val bp: RemoteBrowserProtocol,
+    val bp: BrowserProtocol,
     val settings: BrowserSettings
 ) {
     companion object {

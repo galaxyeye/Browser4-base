@@ -1,9 +1,5 @@
 package ai.platon.pulsar.protocol.browser.driver.cdt.detail
 
-import ai.platon.pulsar.driver.NodeRef
-import ai.platon.pulsar.driver.chrome.impl.PageHandler
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
-import ai.platon.pulsar.driver.chrome.util.ChromeDriverException
 import ai.platon.cdt.kt.protocol.events.network.ResponseReceived
 import ai.platon.cdt.kt.protocol.types.network.ResourceType
 import ai.platon.cdt.kt.protocol.types.runtime.CallFunctionOn
@@ -13,6 +9,11 @@ import ai.platon.pulsar.common.MultiSinkMessageWriter
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.common.warnInterruptible
+import ai.platon.pulsar.driver.BrowserProtocol
+import ai.platon.pulsar.driver.NodeRef
+import ai.platon.pulsar.driver.chrome.impl.PageHandler
+import ai.platon.pulsar.driver.chrome.impl.RemoteChromeProtocol
+import ai.platon.pulsar.driver.chrome.util.ChromeDriverException
 import ai.platon.pulsar.skeleton.workflow.fetch.driver.JsEvaluation
 import ai.platon.pulsar.skeleton.workflow.fetch.driver.JsException
 import ai.platon.pulsar.skeleton.workflow.fetch.driver.NavigateEntry
@@ -28,11 +29,9 @@ class WebDriverHelper(
     val driver: WebDriver,
     val rpc: RobustRPC,
     val page: PageHandler,
-    val bp: RemoteBrowserProtocol?,
+    val bp: BrowserProtocol?,
     val messageWriter: MultiSinkMessageWriter
 ) {
-    private val fetchAPI = bp?.fetch
-
     suspend fun reportInterestingResources(entry: NavigateEntry, event: ResponseReceived) {
         runCatching { traceInterestingResources0(entry, event) }.onFailure { warnInterruptible(this, it) }
     }
@@ -84,9 +83,10 @@ class WebDriverHelper(
         val saveResourceBody =
             mimeType == "application/json" && event.response.encodedDataLength < 1_000_000 && alwaysFalse()
         if (saveResourceBody) {
+            val fetch = (bp as RemoteChromeProtocol).fetch
             val body = rpc.invokeSilently("getResponseBody") {
-                fetchAPI?.enable()
-                fetchAPI?.getResponseBody(event.requestId)?.body
+                fetch.enable()
+                fetch.getResponseBody(event.requestId).body
             }
             if (!body.isNullOrBlank()) {
                 suffix = "-" + event.type.name.lowercase() + "-body.txt"

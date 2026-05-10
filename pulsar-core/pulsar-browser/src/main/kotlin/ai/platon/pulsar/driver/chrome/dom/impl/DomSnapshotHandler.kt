@@ -3,7 +3,6 @@ package ai.platon.pulsar.driver.chrome.dom.impl
 import ai.platon.pulsar.driver.chrome.dom.model.DOMRect
 import ai.platon.pulsar.driver.chrome.dom.model.SnapshotNodeEx
 import ai.platon.pulsar.driver.chrome.dom.util.DomDebug
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.support.annotations.Experimental
 import ai.platon.cdt.kt.protocol.support.annotations.Optional
 import ai.platon.cdt.kt.protocol.support.annotations.ParamName
@@ -14,7 +13,7 @@ import ai.platon.pulsar.common.getLogger
  * Handler for DOMSnapshot domain operations.
  * Captures and processes layout snapshots with style and rect information.
  */
-class DomSnapshotHandler(private val bp: RemoteBrowserProtocol) {
+class DomSnapshotHandler(private val bp: BrowserProtocol) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 

@@ -3,7 +3,7 @@ package ai.platon.pulsar.protocol.browser.driver.cdt
 import ai.platon.pulsar.driver.BrowserTab
 import ai.platon.pulsar.driver.DevToolsConfig
 import ai.platon.pulsar.driver.chrome.*
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
+import ai.platon.pulsar.driver.chrome.impl.RemoteChromeProtocol
 import ai.platon.pulsar.driver.chrome.impl.ChromeImpl
 import ai.platon.pulsar.driver.chrome.impl.ChromeImpl.Companion.ABOUT_BLANK_PAGE
 import ai.platon.pulsar.driver.chrome.util.ChromeDriverException
@@ -214,7 +214,7 @@ class PulsarBrowser(
 
         val uniqueID = browserTab.id
         val devTools = createDevTools(browserTab, toolsConfig)
-        val bp = RemoteBrowserProtocol(devTools)
+        val bp = RemoteChromeProtocol(devTools)
         val driver = PulsarWebDriver(uniqueID, browserTab, bp, this)
         mutableDrivers[browserTab.id] = driver
 

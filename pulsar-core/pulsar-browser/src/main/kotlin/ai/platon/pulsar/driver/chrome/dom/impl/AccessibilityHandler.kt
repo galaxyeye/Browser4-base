@@ -1,13 +1,12 @@
 package ai.platon.pulsar.driver.chrome.dom.impl
 
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.types.accessibility.AXNode
 import ai.platon.cdt.kt.protocol.types.page.FrameTree
 import ai.platon.pulsar.common.getLogger
 import kotlin.collections.plusAssign
 
 class AccessibilityHandler(
-    private val bp: RemoteBrowserProtocol
+    private val bp: BrowserProtocol
 ) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }

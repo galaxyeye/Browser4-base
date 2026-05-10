@@ -47,7 +47,7 @@ import kotlin.random.Random
 class PulsarWebDriver constructor(
     uniqueID: String,
     val browserTab: BrowserTab,
-    val bp: RemoteBrowserProtocol,
+    val bp: BrowserProtocol,
     override val browser: PulsarBrowser
 ) : AbstractWebDriver(uniqueID, browser) {
 

@@ -73,12 +73,12 @@ internal fun normalizeKeyStringForPress(keyString: String): String {
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
  */
 class ClickableDOM(
-    val bp: RemoteBrowserProtocol,
+    val bp: BrowserProtocol,
     val node: NodeRef,
     val offset: OffsetD? = null
 ) {
     companion object {
-        fun create(bp: RemoteBrowserProtocol?, node: NodeRef?, offset: OffsetD? = null): ClickableDOM? {
+        fun create(bp: RemoteChromeProtocol?, node: NodeRef?, offset: OffsetD? = null): ClickableDOM? {
             if (node == null) return null
             if (bp == null) return null
             return ClickableDOM(bp, node, offset)
@@ -211,7 +211,7 @@ class ClickableDOM(
  *
  * @author Vincent Zhang, ivincent.zhang@gmail.com, platon.ai
  */
-class Mouse(private val bp: RemoteBrowserProtocol) {
+class Mouse(private val bp: BrowserProtocol) {
     var currentX = 0.0
     var currentY = 0.0
 
@@ -481,7 +481,7 @@ class Mouse(private val bp: RemoteBrowserProtocol) {
 /**
  * Keyboard provides an api for managing a virtual keyboard.
  * */
-class Keyboard(private val bp: RemoteBrowserProtocol) {
+class Keyboard(private val bp: BrowserProtocol) {
     private val pressedModifiers = mutableSetOf<String>()
     private val pressedKeys = mutableSetOf<String>()
 
@@ -733,7 +733,7 @@ class Keyboard(private val bp: RemoteBrowserProtocol) {
 class EmulationHandler(
     private val keyboard: Keyboard?,
     private val mouse: Mouse?,
-    private val bp: RemoteBrowserProtocol? = null
+    private val bp: BrowserProtocol? = null
 ) {
     private val logger = getLogger(this)
     private val isActive get() = bp != null

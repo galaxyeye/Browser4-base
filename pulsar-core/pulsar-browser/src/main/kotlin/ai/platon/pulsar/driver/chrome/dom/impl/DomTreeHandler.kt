@@ -3,7 +3,6 @@ package ai.platon.pulsar.driver.chrome.dom.impl
 import ai.platon.pulsar.driver.chrome.dom.model.MergedDOMTreeNode
 import ai.platon.pulsar.driver.chrome.dom.model.NodeType
 import ai.platon.pulsar.driver.chrome.dom.model.PageTarget
-import ai.platon.pulsar.driver.chrome.impl.RemoteBrowserProtocol
 import ai.platon.cdt.kt.protocol.types.dom.Node
 import ai.platon.pulsar.common.getLogger
 
@@ -13,7 +12,7 @@ typealias CdpNode = Node
  * Handler for DOM tree operations.
  * Fetches and converts CDP DOM tree to enhanced representation.
  */
-class DomTreeHandler(private val bp: RemoteBrowserProtocol) {
+class DomTreeHandler(private val bp: BrowserProtocol) {
     private val logger = getLogger(this)
     private val tracer get() = logger.takeIf { it.isTraceEnabled }
 

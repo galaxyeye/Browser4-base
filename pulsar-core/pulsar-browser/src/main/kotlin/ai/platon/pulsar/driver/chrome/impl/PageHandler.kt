@@ -27,7 +27,7 @@ data class LocatorAndCssSelector(
 )
 
 class PageHandler(
-    private val bp: RemoteBrowserProtocol,
+    private val bp: BrowserProtocol,
     private val isolatedWorldManager: IsolatedWorldManager,
 ) {
     companion object {
@@ -429,7 +429,7 @@ class PageHandler(
 
     @Throws(ChromeDriverException::class)
     suspend fun isChecked(selector: String): Boolean {
-        return predicateOnElement(selector) { isChecked(it) }
+        return driverHelper.predicateOnElement(selector) { isChecked(it) }
     }
 
     @Throws(ChromeDriverException::class)

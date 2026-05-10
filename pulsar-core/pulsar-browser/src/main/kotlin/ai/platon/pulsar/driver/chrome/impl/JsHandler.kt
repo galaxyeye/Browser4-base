@@ -9,7 +9,7 @@ import ai.platon.pulsar.common.AppContext
 import ai.platon.pulsar.common.getLogger
 
 class JsHandler(
-    private val bp: RemoteBrowserProtocol,
+    private val bp: BrowserProtocol,
     private val pageHandler: PageHandler,
     private val isolatedWorldManager: IsolatedWorldManager,
 ) {

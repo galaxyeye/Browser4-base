@@ -32,7 +32,7 @@ import ai.platon.cdt.kt.protocol.types.runtime.Evaluate
  * All direct usage of [ai.platon.cdt.kt.protocol.ChromeDevTools] should go through this class to improve
  * maintainability and provide a consistent, centralized interface.
  */
-class RemoteBrowserProtocol(
+class RemoteChromeProtocol(
     val devTools: ChromeDevTools
 ): BrowserProtocol {
     val remoteDevTools: RemoteDevTools =
