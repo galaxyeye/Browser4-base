@@ -1,11 +1,11 @@
 package ai.platon.pulsar.browser
 
 import ai.platon.pulsar.WebDriverTestBase
-import ai.platon.pulsar.common.browser.*
+import ai.platon.pulsar.common.browser.BrowserType
+import ai.platon.pulsar.common.browser.ProfileHealthMonitor
 import ai.platon.pulsar.common.browser.fingerprint.BasicFingerprintGenerator
 import ai.platon.pulsar.common.browser.fingerprint.Fingerprint
 import ai.platon.pulsar.common.browser.fingerprint.FingerprintDriftDetector
-import ai.platon.pulsar.common.browser.fingerprint.FingerprintGenerator
 import ai.platon.pulsar.common.browser.fingerprint.FingerprintValidator
 import ai.platon.pulsar.skeleton.workflow.fetch.privacy.BrowserProfile
 import org.junit.jupiter.api.Assertions.*
@@ -112,8 +112,10 @@ class BrowserProfileIT : WebDriverTestBase() {
         val validationResult = validator.validate(loadedFingerprint)
 
         // Should be valid
-        assertTrue(validationResult.isValid,
-            "Fingerprint should be valid. Errors: ${validationResult.errors}")
+        assertTrue(
+            validationResult.isValid,
+            "Fingerprint should be valid. Errors: ${validationResult.errors}"
+        )
 
         println("✓ Loaded fingerprint passed validation: ${validationResult.summary()}")
     }
@@ -139,8 +141,10 @@ class BrowserProfileIT : WebDriverTestBase() {
         val report = monitor.checkHealth(fingerprint, contextDir)
 
         // Should be healthy
-        assertTrue(report.isHealthy,
-            "Profile should be healthy. Failed checks: ${report.failedChecks}")
+        assertTrue(
+            report.isHealthy,
+            "Profile should be healthy. Failed checks: ${report.failedChecks}"
+        )
 
         println("✓ Profile health check passed:")
         report.checks.forEach { println("  $it") }
@@ -208,8 +212,10 @@ class BrowserProfileIT : WebDriverTestBase() {
         val detector = FingerprintDriftDetector()
         for (i in 1 until loadedFingerprints.size) {
             val report = detector.detectDrift(loadedFingerprints[0], loadedFingerprints[i])
-            assertFalse(report.hasDrift,
-                "Fingerprint should remain stable across loads. Drift detected: ${report.drifts}")
+            assertFalse(
+                report.hasDrift,
+                "Fingerprint should remain stable across loads. Drift detected: ${report.drifts}"
+            )
         }
 
         println("✓ Fingerprint remained stable across 3 session loads")
@@ -234,8 +240,10 @@ class BrowserProfileIT : WebDriverTestBase() {
             val fingerprint = generator.generate(BrowserType.PULSAR_CHROME, preset)
             val result = validator.validate(fingerprint)
 
-            assertTrue(result.isValid,
-                "Preset $preset should generate valid fingerprint. Errors: ${result.errors}")
+            assertTrue(
+                result.isValid,
+                "Preset $preset should generate valid fingerprint. Errors: ${result.errors}"
+            )
 
             println("✓ Preset $preset validated successfully")
         }
