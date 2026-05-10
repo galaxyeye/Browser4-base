@@ -5,8 +5,8 @@ import ai.platon.pulsar.driver.chrome.LauncherOptions
 import ai.platon.pulsar.driver.common.BrowserSettings
 import ai.platon.pulsar.common.browser.BrowserType
 import ai.platon.pulsar.common.config.ImmutableConfig
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.Browser
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.BrowserLauncher
+import ai.platon.pulsar.skeleton.browser.driver.Browser
+import ai.platon.pulsar.skeleton.browser.driver.BrowserLauncher
 import ai.platon.pulsar.skeleton.workflow.fetch.privacy.BrowserId
 
 class DefaultBrowserFactory(

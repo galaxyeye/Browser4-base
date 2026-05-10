@@ -14,16 +14,17 @@ import ai.platon.pulsar.driver.NodeRef
 import ai.platon.pulsar.driver.chrome.impl.PageHandler
 import ai.platon.pulsar.driver.chrome.impl.RemoteChromeProtocol
 import ai.platon.pulsar.driver.chrome.util.ChromeDriverException
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.JsEvaluation
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.JsException
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.NavigateEntry
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.WebDriver
+import ai.platon.pulsar.skeleton.browser.driver.JsEvaluation
+import ai.platon.pulsar.skeleton.browser.driver.JsException
+import ai.platon.pulsar.skeleton.browser.driver.NavigateEntry
+import ai.platon.pulsar.skeleton.browser.driver.WebDriver
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
+
 
 class WebDriverHelper(
     val driver: WebDriver,

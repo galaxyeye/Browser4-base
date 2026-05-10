@@ -29,7 +29,13 @@ import ai.platon.pulsar.driver.chrome.impl.*
 import ai.platon.pulsar.driver.chrome.util.ChromeDriverException
 import ai.platon.pulsar.driver.chrome.util.ChromeIOException
 import ai.platon.pulsar.protocol.browser.driver.cdt.detail.*
-import ai.platon.pulsar.skeleton.workflow.fetch.driver.*
+import ai.platon.pulsar.skeleton.browser.driver.AbstractWebDriver
+import ai.platon.pulsar.skeleton.browser.driver.BrowserEvents
+import ai.platon.pulsar.skeleton.browser.driver.IllegalWebDriverStateException
+import ai.platon.pulsar.skeleton.browser.driver.JsEvaluation
+import ai.platon.pulsar.skeleton.browser.driver.NavigateEntry
+import ai.platon.pulsar.skeleton.browser.driver.WebDriver
+import ai.platon.pulsar.skeleton.browser.driver.WebDriverException
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
